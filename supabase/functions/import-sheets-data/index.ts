@@ -22,7 +22,24 @@ interface SheetRow {
 }
 
 async function getAccessToken(): Promise<string> {
-  const serviceAccount = JSON.parse(Deno.env.get('GOOGLE_SHEETS_SERVICE_ACCOUNT') || '{}');
+  const serviceAccountJson = Deno.env.get('GOOGLE_SHEETS_SERVICE_ACCOUNT');
+  
+  if (!serviceAccountJson) {
+    throw new Error('GOOGLE_SHEETS_SERVICE_ACCOUNT environment variable is not set');
+  }
+
+  console.log('Service account JSON length:', serviceAccountJson.length);
+  console.log('First 50 chars:', serviceAccountJson.substring(0, 50));
+  
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(serviceAccountJson);
+  } catch (e) {
+    console.error('Failed to parse service account JSON:', e);
+    console.error('Raw value:', serviceAccountJson);
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    throw new Error(`Invalid service account JSON: ${errorMessage}`);
+  }
   
   const header = {
     alg: 'RS256',
