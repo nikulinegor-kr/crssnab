@@ -61,6 +61,9 @@ const Dashboard = () => {
             <p className="text-muted-foreground mt-1">Система управления заявками отдела снабжения</p>
           </div>
           <div className="flex items-center gap-3">
+            <a href="/import" className="text-sm text-primary hover:text-primary/80 transition-colors font-medium">
+              Импорт данных
+            </a>
             <span className="text-sm text-muted-foreground">Иванов Алексей</span>
             <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
               ИА
