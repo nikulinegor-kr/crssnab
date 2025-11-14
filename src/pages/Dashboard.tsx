@@ -1,60 +1,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { useRequests, useRequestStats } from "@/hooks/useRequests";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
-  const stats = [
+  const { data: requests, isLoading: requestsLoading } = useRequests();
+  const { data: stats, isLoading: statsLoading } = useRequestStats();
+
+  const statsCards = [
     {
       title: "Всего заявок",
-      value: "156",
+      value: stats?.total.toString() || "0",
       icon: FileText,
       color: "text-primary",
       bgColor: "bg-primary/10"
     },
     {
       title: "Новые сегодня",
-      value: "12",
+      value: stats?.newToday.toString() || "0",
       icon: Clock,
       color: "text-info",
       bgColor: "bg-info/10"
     },
     {
       title: "Аварийно",
-      value: "3",
+      value: stats?.emergency.toString() || "0",
       icon: AlertCircle,
       color: "text-accent",
       bgColor: "bg-accent/10"
     },
     {
       title: "Выполнено",
-      value: "89",
+      value: stats?.completed.toString() || "0",
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10"
     },
   ];
 
-  const recentRequests = [
-    { id: "REQ-245", client: "ООО Техносервис", priority: "Высокий", status: "В работе", assignee: "Иванов А." },
-    { id: "REQ-244", client: "АО Промснаб", priority: "Средний", status: "Новая", assignee: "Петров В." },
-    { id: "REQ-243", client: "ИП Козлов", priority: "Низкий", status: "Выполнена", assignee: "Сидоров М." },
-    { id: "REQ-242", client: "ООО Стройматериалы", priority: "Аварийно", status: "В работе", assignee: "Иванов А." },
-  ];
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "Аварийно": return "text-destructive font-semibold";
-      case "Высокий": return "text-accent font-semibold";
-      case "Средний": return "text-warning";
-      case "Низкий": return "text-muted-foreground";
-      default: return "text-foreground";
-    }
-  };
+  const recentRequests = requests?.slice(0, 5) || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "Доставлено": return "text-success";
       case "Выполнена": return "text-success";
       case "В работе": return "text-info";
       case "Новая": return "text-accent";
+      case "Аварийно": return "text-destructive font-semibold";
       default: return "text-foreground";
     }
   };
@@ -78,24 +70,34 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="border-none shadow-card hover:shadow-elevated transition-shadow">
+          {statsLoading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="border-none shadow-card">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground font-medium">{stat.title}</p>
-                      <p className="text-3xl font-bold mt-2 text-foreground">{stat.value}</p>
-                    </div>
-                    <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                  </div>
+                  <Skeleton className="h-20 w-full" />
                 </CardContent>
               </Card>
-            );
-          })}
+            ))
+          ) : (
+            statsCards.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={index} className="border-none shadow-card hover:shadow-elevated transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground font-medium">{stat.title}</p>
+                        <p className="text-3xl font-bold mt-2 text-foreground">{stat.value}</p>
+                      </div>
+                      <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
+                        <Icon className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Recent Requests */}
@@ -105,28 +107,42 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">№ Заявки</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Клиент</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Приоритет</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Статус</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Ответственный</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentRequests.map((request, index) => (
-                    <tr key={index} className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                      <td className="py-3 px-4 font-mono text-sm text-foreground">{request.id}</td>
-                      <td className="py-3 px-4 text-sm text-foreground">{request.client}</td>
-                      <td className={`py-3 px-4 text-sm ${getPriorityColor(request.priority)}`}>{request.priority}</td>
-                      <td className={`py-3 px-4 text-sm ${getStatusColor(request.status)}`}>{request.status}</td>
-                      <td className="py-3 px-4 text-sm text-foreground">{request.assignee}</td>
-                    </tr>
+              {requestsLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Skeleton key={index} className="h-12 w-full" />
                   ))}
-                </tbody>
-              </table>
+                </div>
+              ) : recentRequests.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Заявок пока нет
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">№ Заявки</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Описание</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Контрагент</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Статус</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Дата заявки</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentRequests.map((request) => (
+                      <tr key={request.id} className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                        <td className="py-3 px-4 font-mono text-sm text-foreground">{request.request_number}</td>
+                        <td className="py-3 px-4 text-sm text-foreground">{request.description}</td>
+                        <td className="py-3 px-4 text-sm text-foreground">{request.contractor || "—"}</td>
+                        <td className={`py-3 px-4 text-sm ${getStatusColor(request.status)}`}>{request.status}</td>
+                        <td className="py-3 px-4 text-sm text-muted-foreground">
+                          {new Date(request.request_date).toLocaleDateString("ru-RU")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </CardContent>
         </Card>
