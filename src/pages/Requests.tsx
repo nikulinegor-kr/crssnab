@@ -24,6 +24,7 @@ import { Search, Plus, Calendar, Package, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -85,10 +86,12 @@ const Requests = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => navigate("/dashboard")} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Создать заявку
-        </Button>
+        <CreateRequestDialog>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Создать заявку
+          </Button>
+        </CreateRequestDialog>
       </div>
 
       <Card className="p-6">
