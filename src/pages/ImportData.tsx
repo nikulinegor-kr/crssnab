@@ -3,135 +3,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileSpreadsheet, CheckCircle } from "lucide-react";
 
-interface ParsedRequest {
-  request_number: string;
-  request_date: string;
-  description: string;
-  status: string;
-  availability_delivery_time: string | null;
-  contractor: string | null;
-  invoice_number: string | null;
-  payment_percentage: number;
-  shipment_date: string | null;
-  delivery_date: string | null;
-  transport_company: string | null;
-  waybill_number: string | null;
-  comments: string | null;
-}
-
 const ImportData = () => {
-  const [sheetsData, setSheetsData] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2019");
+  const [spreadsheetId, setSpreadsheetId] = useState("");
+  const [sheetRange, setSheetRange] = useState("Лист1!A:K");
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
 
-  const years = ["2019", "2020", "2021", "2022", "2023", "2024"];
+  const years = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
 
-  const parseDate = (dateStr: string): string | null => {
-    if (!dateStr || dateStr.trim() === "") return null;
-    
-    // Format: DD.MM.YY or DD.MM.YYYY
-    const parts = dateStr.split(".");
-    if (parts.length === 3) {
-      const day = parts[0].padStart(2, "0");
-      const month = parts[1].padStart(2, "0");
-      let year = parts[2];
-      
-      // Convert 2-digit year to 4-digit
-      if (year.length === 2) {
-        year = parseInt(year) < 50 ? `20${year}` : `19${year}`;
-      }
-      
-      return `${year}-${month}-${day}`;
+  const handleImportFromSheets = async (year: string) => {
+    if (!spreadsheetId) {
+      toast({
+        title: "Ошибка",
+        description: "Введите ID таблицы Google Sheets",
+        variant: "destructive",
+      });
+      return;
     }
-    return null;
-  };
 
-  const parsePayment = (paymentStr: string): number => {
-    if (!paymentStr) return 0;
-    const match = paymentStr.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  };
-
-  const parseTableRow = (row: string): ParsedRequest | null => {
-    // Split by | and filter empty cells
-    const cells = row.split("|").map(c => c.trim()).filter(c => c && c !== "---");
-    
-    if (cells.length < 8) return null;
-
-    // Extract date and description from first cell (format: MM/DD.MM.YYYY Description)
-    const firstCell = cells[0];
-    const match = firstCell.match(/(\d+)\/(\d+\.\d+\.\d+)\s+(.+)/);
-    
-    if (!match) return null;
-
-    const requestNumber = match[1];
-    const dateStr = match[2];
-    const description = match[3];
-
-    return {
-      request_number: requestNumber,
-      request_date: parseDate(dateStr) || new Date().toISOString().split("T")[0],
-      description: description,
-      status: cells[1] || "Новая",
-      availability_delivery_time: cells[2] || null,
-      contractor: cells[3] || null,
-      invoice_number: cells[4] || null,
-      payment_percentage: parsePayment(cells[5]),
-      shipment_date: parseDate(cells[6]),
-      delivery_date: parseDate(cells[7]),
-      transport_company: cells[8] || null,
-      waybill_number: cells[9] || null,
-      comments: cells[10] || null,
-    };
-  };
-
-  const handleImport = async (year: string) => {
     setImporting(true);
     try {
-      const lines = sheetsData.split("\n").filter(line => line.includes("|"));
-      const requests: ParsedRequest[] = [];
-
-      for (const line of lines) {
-        // Skip header rows
-        if (line.includes("Заявка") || line.includes("---")) continue;
-        
-        const parsed = parseTableRow(line);
-        if (parsed && parsed.request_date.startsWith(year)) {
-          requests.push(parsed);
-        }
-      }
-
-      if (requests.length === 0) {
-        toast({
-          title: "Нет данных",
-          description: `Не найдено заявок за ${year} год`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from("requests")
-        .insert(requests);
+      const { data, error } = await supabase.functions.invoke('import-sheets-data', {
+        body: {
+          spreadsheetId,
+          range: sheetRange,
+          year,
+        },
+      });
 
       if (error) throw error;
 
-      setImported({ ...imported, [year]: true });
+      if (data.success) {
+        toast({
+          title: "Успешно",
+          description: data.message,
+        });
+        setImported({ ...imported, [year]: true });
+      } else {
+        toast({
+          title: "Нет данных",
+          description: data.message,
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: "Успешно!",
-        description: `Импортировано ${requests.length} заявок за ${year} год`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Ошибка импорта",
-        description: error.message,
+        title: "Ошибка",
+        description: err.message || "Произошла ошибка при импорте",
         variant: "destructive",
       });
     } finally {
@@ -140,97 +62,97 @@ const ImportData = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Импорт данных</h1>
-            <p className="text-muted-foreground mt-1">Импорт заявок из Google Sheets по годам</p>
-          </div>
-          <FileSpreadsheet className="h-10 w-10 text-primary" />
+    <div className="container mx-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">Импорт данных</h1>
         </div>
 
-        <Card className="border-none shadow-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Вставьте данные таблицы
-            </CardTitle>
+            <CardTitle>Настройки Google Sheets</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Скопируйте данные из Google Sheets и вставьте их в поле ниже в формате Markdown таблицы:
+              <label className="text-sm font-medium">ID таблицы Google Sheets</label>
+              <Input
+                placeholder="1abc...xyz"
+                value={spreadsheetId}
+                onChange={(e) => setSpreadsheetId(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Найдите ID в URL таблицы: docs.google.com/spreadsheets/d/<strong>ID</strong>/edit
               </p>
-              <Textarea
-                placeholder="| Заявка | Статус | Наличие/ Сроки поставки | Контрагент | Счет | Оплата | ... |"
-                value={sheetsData}
-                onChange={(e) => setSheetsData(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
+            </div>
+            <div>
+              <label className="text-sm font-medium">Диапазон</label>
+              <Input
+                placeholder="Лист1!A:K"
+                value={sheetRange}
+                onChange={(e) => setSheetRange(e.target.value)}
+                className="mt-1"
               />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-card">
+        <Card>
           <CardHeader>
             <CardTitle>Импорт по годам</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={selectedYear} onValueChange={setSelectedYear}>
-              <TabsList className="grid w-full grid-cols-6">
+            <Tabs defaultValue="2019" className="w-full">
+              <TabsList className="grid w-full grid-cols-7">
                 {years.map((year) => (
                   <TabsTrigger key={year} value={year}>
                     {year}
                   </TabsTrigger>
                 ))}
               </TabsList>
-
               {years.map((year) => (
-                <TabsContent key={year} value={year} className="space-y-4 mt-4">
-                  <div className="flex items-center justify-between p-6 bg-muted/50 rounded-lg">
-                    <div>
-                      <h3 className="font-semibold text-lg">Заявки за {year} год</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {imported[year] 
-                          ? "✓ Данные импортированы" 
-                          : "Нажмите кнопку для импорта данных"}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => handleImport(year)}
-                      disabled={importing || !sheetsData || imported[year]}
-                      className="gap-2"
-                    >
-                      {imported[year] ? (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          Импортировано
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4" />
-                          {importing ? "Импорт..." : "Импортировать"}
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                <TabsContent key={year} value={year} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Импортируйте данные за {year} год из Google Sheets
+                  </p>
+                  <Button
+                    onClick={() => handleImportFromSheets(year)}
+                    disabled={importing || !spreadsheetId}
+                    className="w-full"
+                  >
+                    {importing ? (
+                      "Импорт..."
+                    ) : imported[year] ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Импортировано
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Импортировать {year}
+                      </>
+                    )}
+                  </Button>
                 </TabsContent>
               ))}
             </Tabs>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-card bg-info/5 border-info/20">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-info mb-2">Инструкция по импорту</h3>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Откройте Google Sheets таблицу</li>
-              <li>Выделите все данные (включая заголовки)</li>
-              <li>Скопируйте и вставьте в текстовое поле выше</li>
-              <li>Выберите год для импорта</li>
-              <li>Нажмите кнопку "Импортировать"</li>
-            </ol>
+        <Card>
+          <CardHeader>
+            <CardTitle>Инструкции</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p>1. Скопируйте ID вашей таблицы Google Sheets из URL</p>
+            <p>2. Вставьте ID в поле выше</p>
+            <p>3. Укажите диапазон ячеек (по умолчанию Лист1!A:K)</p>
+            <p>4. Выберите год и нажмите "Импортировать"</p>
+            <p className="text-sm text-muted-foreground mt-4">
+              Примечание: Убедитесь, что сервисный аккаунт имеет доступ к таблице
+            </p>
           </CardContent>
         </Card>
       </div>
