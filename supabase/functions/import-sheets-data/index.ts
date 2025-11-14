@@ -142,15 +142,21 @@ Deno.serve(async (req) => {
 
     const accessToken = await getAccessToken();
     
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
+    console.log('Fetching from URL:', url);
+    
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
 
+    console.log('Response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Error response:', errorBody);
+      throw new Error(`Failed to fetch sheet data: ${response.statusText}. Details: ${errorBody}`);
     }
 
     const data = await response.json();
