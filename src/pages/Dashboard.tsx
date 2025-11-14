@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload } from "lucide-react";
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -71,10 +72,12 @@ const Dashboard = () => {
               <Upload className="h-4 w-4" />
               Импорт
             </Button>
-            <Button size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Создать
-            </Button>
+            <CreateRequestDialog>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Создать
+              </Button>
+            </CreateRequestDialog>
           </div>
         </div>
 
