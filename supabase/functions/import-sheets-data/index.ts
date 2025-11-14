@@ -166,14 +166,50 @@ Deno.serve(async (req) => {
 
     const requests: SheetRow[] = [];
     
+    // Log first few rows to debug format
+    console.log('First 5 rows sample:');
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      console.log(`Row ${i}:`, JSON.stringify(rows[i]));
+    }
+    
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length < 2) continue;
 
       const firstCell = row[0] || '';
+      console.log(`Processing row ${i}, firstCell:`, firstCell);
+      
       const match = firstCell.match(/(\d+)\/(\d+\.\d+\.\d+)\s+(.+)/);
       
-      if (!match) continue;
+      if (!match) {
+        // Try alternative format: just number and date in separate columns
+        if (row[0] && row[1]) {
+          const requestNumber = String(row[0]).trim();
+          const dateStr = String(row[1]).trim();
+          const requestDate = parseDate(dateStr);
+          
+          console.log(`Alternative format - number: ${requestNumber}, date: ${dateStr}, parsed: ${requestDate}`);
+          
+          if (requestDate && requestDate.startsWith(year)) {
+            requests.push({
+              request_number: requestNumber,
+              request_date: requestDate,
+              description: row[2] || '',
+              status: row[3] || 'Новая',
+              availability_delivery_time: row[4] || null,
+              contractor: row[5] || null,
+              invoice_number: row[6] || null,
+              payment_percentage: parsePayment(row[7]),
+              shipment_date: parseDate(row[8]),
+              delivery_date: parseDate(row[9]),
+              transport_company: row[10] || null,
+              waybill_number: row[11] || null,
+              comments: row[12] || null,
+            });
+          }
+        }
+        continue;
+      }
 
       const requestNumber = match[1];
       const dateStr = match[2];
