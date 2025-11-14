@@ -1,9 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload } from "lucide-react";
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading } = useRequests();
   const { data: stats, isLoading: statsLoading } = useRequestStats();
 
@@ -54,24 +57,27 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">KR Заявки</h1>
             <p className="text-muted-foreground mt-1">Система управления заявками отдела снабжения</p>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="/import" className="text-sm text-primary hover:text-primary/80 transition-colors font-medium">
-              Импорт данных
-            </a>
-            <span className="text-sm text-muted-foreground">Иванов Алексей</span>
-            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-              ИА
-            </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate("/requests")} variant="outline" size="sm" className="gap-2">
+              <List className="h-4 w-4" />
+              Все заявки
+            </Button>
+            <Button onClick={() => navigate("/import")} variant="outline" size="sm" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Импорт
+            </Button>
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Создать
+            </Button>
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statsLoading ? (
             Array.from({ length: 4 }).map((_, index) => (
@@ -103,79 +109,74 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Recent Requests */}
         <Card className="border-none shadow-card">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Последние заявки</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-xl">Последние заявки</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/requests")}
+              className="text-primary hover:text-primary/80"
+            >
+              Смотреть все →
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              {requestsLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Skeleton key={index} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : recentRequests.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Заявок пока нет
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">№ Заявки</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Описание</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Контрагент</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Статус</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Дата заявки</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentRequests.map((request) => (
-                      <tr key={request.id} className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer">
-                        <td className="py-3 px-4 font-mono text-sm text-foreground">{request.request_number}</td>
-                        <td className="py-3 px-4 text-sm text-foreground">{request.description}</td>
-                        <td className="py-3 px-4 text-sm text-foreground">{request.contractor || "—"}</td>
-                        <td className={`py-3 px-4 text-sm ${getStatusColor(request.status)}`}>{request.status}</td>
-                        <td className="py-3 px-4 text-sm text-muted-foreground">
-                          {new Date(request.request_date).toLocaleDateString("ru-RU")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            {requestsLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : recentRequests.length > 0 ? (
+              <div className="space-y-3">
+                {recentRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="p-4 rounded-lg border border-border/50 hover:border-border transition-all hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {request.description}
+                        </p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span className="font-mono">{request.request_number}</span>
+                          <span>•</span>
+                          <span>{new Date(request.request_date).toLocaleDateString('ru-RU')}</span>
+                          {request.contractor && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate">{request.contractor}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`text-sm font-medium ${getStatusColor(request.status)}`}>
+                          {request.status}
+                        </span>
+                        {request.payment_percentage > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {request.payment_percentage}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">Заявок пока нет</p>
+                <Button onClick={() => navigate("/import")} variant="outline" size="sm">
+                  Импортировать данные
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-none shadow-card hover:shadow-elevated transition-all cursor-pointer bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Создать заявку</h3>
-                  <p className="text-sm opacity-90 mt-1">Добавить новую заявку в систему</p>
-                </div>
-                <FileText className="h-8 w-8 opacity-80" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-card hover:shadow-elevated transition-all cursor-pointer bg-gradient-to-br from-accent to-accent/80 text-accent-foreground">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Все заявки</h3>
-                  <p className="text-sm opacity-90 mt-1">Просмотр и управление заявками</p>
-                </div>
-                <FileText className="h-8 w-8 opacity-80" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
