@@ -1,1 +1,4 @@
 project_id = "cfdwsdydbtwaljnidirf"
+
+[functions.import-sheets-data]
+verify_jwt = false
