@@ -35,18 +35,11 @@ import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { Request } from "@/hooks/useRequests";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
-import { useDemoData } from "@/hooks/useDemoData";
-import { DemoBanner } from "@/components/DemoBanner";
-import { useToast } from "@/hooks/use-toast";
 
 const Requests = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isDemoMode = searchParams.get("demo") === "true";
-  const demoData = useDemoData();
-  const { toast } = useToast();
-  
-  const { data: realRequests, isLoading: realLoading } = useRequests();
+  const { data: requests, isLoading } = useRequests();
   const { canCreate } = useUserRole();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -54,10 +47,6 @@ const Requests = () => {
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  // Use demo data when in demo mode
-  const requests = isDemoMode ? demoData.requests : realRequests;
-  const isLoading = isDemoMode ? false : realLoading;
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -133,9 +122,6 @@ const Requests = () => {
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
-      {/* Demo Banner */}
-      {isDemoMode && <DemoBanner />}
-      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>

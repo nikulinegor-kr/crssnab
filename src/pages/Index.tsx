@@ -239,7 +239,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Button 
               size="lg" 
-              onClick={() => navigate("/dashboard?demo=true")}
+              onClick={() => navigate("/demo")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
             >
               Открыть демо
@@ -498,7 +498,7 @@ const Index = () => {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate("/dashboard?demo=true")}
+              onClick={() => navigate("/demo")}
               className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-12 py-6 text-lg transition-all"
             >
               Открыть демо
