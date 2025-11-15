@@ -46,11 +46,6 @@ const SelectOrganization = () => {
       if (error) throw error;
 
       setOrganizations(data || []);
-      
-      // If user has only one organization, auto-select it
-      if (data && data.length === 1) {
-        selectOrganization(data[0].organization_id);
-      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -61,6 +56,13 @@ const SelectOrganization = () => {
       setLoading(false);
     }
   };
+
+  // Auto-select if user has only one organization
+  useEffect(() => {
+    if (!loading && organizations.length === 1) {
+      selectOrganization(organizations[0].organization_id);
+    }
+  }, [loading, organizations]);
 
   const selectOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
