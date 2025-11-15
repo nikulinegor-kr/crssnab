@@ -152,11 +152,11 @@ const Dashboard = () => {
         {!requestsLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ProgressWidget requests={requests} />
-            <DeadlinesWidget requests={requests} />
             <EmergencyRequestsWidget 
               requests={requests} 
               onRequestClick={handleRequestClick}
             />
+            <DeadlinesWidget requests={requests} />
           </div>
         )}
 
