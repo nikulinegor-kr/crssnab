@@ -30,8 +30,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Header with Login Button */}
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        <div className="flex justify-end">
+          <Button 
+            onClick={() => navigate("/auth")}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary/10"
+          >
+            Войти в систему
+          </Button>
+        </div>
+      </div>
+      
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="text-center space-y-6 mb-16">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground">
             KR <span className="text-primary">Заявки</span>
