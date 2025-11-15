@@ -43,6 +43,7 @@ import { Loader2, X, Image, FileText, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -119,6 +120,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canEdit, isViewer } = useUserRole();
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -291,9 +293,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Редактировать заявку</DialogTitle>
+          <DialogTitle>{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</DialogTitle>
           <DialogDescription>
-            Внесите изменения в заявку {request?.request_number}
+            {isViewer 
+              ? `Просмотр заявки ${request?.request_number}` 
+              : `Внесите изменения в заявку ${request?.request_number}`
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -307,7 +312,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Дата заявки *</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} disabled={isViewer} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -320,7 +325,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Статус *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите статус" />
@@ -345,7 +350,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Приоритет *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Выберите приоритет" />
@@ -375,6 +380,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     <Textarea
                       placeholder="Опишите заявку..."
                       className="min-h-[80px]"
+                      disabled={isViewer}
                       {...field}
                     />
                   </FormControl>
@@ -391,7 +397,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Иванов И.И." {...field} />
+                      <Input placeholder="Иванов И.И." disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -405,7 +411,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Исполнитель</FormLabel>
                     <FormControl>
-                      <Input placeholder="Петров П.П." {...field} />
+                      <Input placeholder="Петров П.П." disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -421,7 +427,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Контрагент</FormLabel>
                     <FormControl>
-                      <Input placeholder="ООО Компания" {...field} />
+                      <Input placeholder="ООО Компания" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -435,7 +441,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Наличие / Сроки поставки</FormLabel>
                     <FormControl>
-                      <Input placeholder="В наличии / 2 недели" {...field} />
+                      <Input placeholder="В наличии / 2 недели" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -451,7 +457,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Номер счета</FormLabel>
                     <FormControl>
-                      <Input placeholder="№ 123" {...field} />
+                      <Input placeholder="№ 123" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -470,6 +476,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                         min="0"
                         max="100"
                         placeholder="0"
+                        disabled={isViewer}
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
@@ -488,7 +495,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Дата отгрузки</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -502,7 +509,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Дата доставки</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -518,7 +525,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Транспортная компания</FormLabel>
                     <FormControl>
-                      <Input placeholder="ТК Компания" {...field} />
+                      <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -532,7 +539,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Номер ТТН</FormLabel>
                     <FormControl>
-                      <Input placeholder="№ ТТН" {...field} />
+                      <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -550,6 +557,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     <Textarea
                       placeholder="Дополнительная информация..."
                       className="min-h-[60px]"
+                      disabled={isViewer}
                       {...field}
                     />
                   </FormControl>
@@ -568,45 +576,49 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     </a>
                   </div>
                 )}
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => photoInputRef.current?.click()}
-                    className="gap-2"
-                  >
-                    <Image className="h-4 w-4" />
-                    Выбрать фото
-                  </Button>
-                  {photoFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="truncate max-w-[150px]">{photoFile.name}</span>
+                {!isViewer && (
+                  <>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          if (photoInputRef.current) photoInputRef.current.value = "";
-                        }}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="gap-2"
                       >
-                        <X className="h-4 w-4" />
+                        <Image className="h-4 w-4" />
+                        Выбрать фото
                       </Button>
+                      {photoFile && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="truncate max-w-[150px]">{photoFile.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              setPhotoFile(null);
+                              if (photoInputRef.current) photoInputRef.current.value = "";
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, WEBP до 5 МБ
-                </p>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG, WEBP до 5 МБ
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -618,72 +630,80 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     </a>
                   </div>
                 )}
-                <input
-                  ref={documentInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
-                  onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => documentInputRef.current?.click()}
-                    className="gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Выбрать файл
-                  </Button>
-                  {documentFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="truncate max-w-[150px]">{documentFile.name}</span>
+                {!isViewer && (
+                  <>
+                    <input
+                      ref={documentInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
+                      onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          setDocumentFile(null);
-                          if (documentInputRef.current) documentInputRef.current.value = "";
-                        }}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => documentInputRef.current?.click()}
+                        className="gap-2"
                       >
-                        <X className="h-4 w-4" />
+                        <FileText className="h-4 w-4" />
+                        Выбрать файл
                       </Button>
+                      {documentFile && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="truncate max-w-[150px]">{documentFile.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              setDocumentFile(null);
+                              if (documentInputRef.current) documentInputRef.current.value = "";
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  PDF, DOC, DOCX, XLS, XLSX до 10 МБ
-                </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, XLS, XLSX до 10 МБ
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="flex justify-between gap-2 pt-4">
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isSubmitting || isDeleting}
-                className="gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Удалить
-              </Button>
-              <div className="flex gap-2">
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isSubmitting || isDeleting}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Удалить
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
                   disabled={isSubmitting || isDeleting}
                 >
-                  Отмена
+                  {isViewer ? "Закрыть" : "Отмена"}
                 </Button>
-                <Button type="submit" disabled={isSubmitting || isDeleting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Сохранить изменения
-                </Button>
+                {canEdit && (
+                  <Button type="submit" disabled={isSubmitting || isDeleting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Сохранить изменения
+                  </Button>
+                )}
               </div>
             </div>
           </form>

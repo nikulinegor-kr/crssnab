@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRequests } from "@/hooks/useRequests";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ const Requests = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: requests, isLoading } = useRequests();
+  const { canCreate } = useUserRole();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -131,12 +133,14 @@ const Requests = () => {
             </p>
           </div>
         </div>
-        <CreateRequestDialog>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Создать заявку
-          </Button>
-        </CreateRequestDialog>
+        {canCreate && (
+          <CreateRequestDialog>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Создать заявку
+            </Button>
+          </CreateRequestDialog>
+        )}
       </div>
 
       <Card className="p-6">
