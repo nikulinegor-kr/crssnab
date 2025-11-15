@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield, Sparkles, Zap, TrendingUp, Lock } from "lucide-react";
+import { FileText, BarChart3, Users, Shield, TrendingUp, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
@@ -41,7 +41,7 @@ const Index = () => {
 
       {/* Header with Login Button */}
       <div className="relative max-w-7xl mx-auto px-6 pt-8 animate-fade-in">
-        <div className="flex justify-end items-center backdrop-blur-sm bg-card/50 rounded-2xl px-6 py-4 border border-border/50 shadow-lg">
+        <div className="flex justify-end items-center">
           <Button 
             onClick={() => navigate("/auth")}
             className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -54,10 +54,6 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative max-w-7xl mx-auto px-6 py-20">
         <div className="text-center space-y-8 mb-24 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Zap className="h-4 w-4" />
-            Корпоративная система управления
-          </div>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
             <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
               Corporate Resource
@@ -144,10 +140,10 @@ const Index = () => {
               </div>
               <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
                 <div className="flex items-center justify-center mb-4">
-                  <Users className="h-8 w-8 mr-2" />
-                  <p className="text-5xl md:text-6xl font-bold">98%</p>
+                  <TrendingUp className="h-8 w-8 mr-2" />
+                  <p className="text-5xl md:text-6xl font-bold">5+</p>
                 </div>
-                <p className="text-base opacity-90 font-medium">Довольных клиентов</p>
+                <p className="text-base opacity-90 font-medium">Лет успешной работы</p>
               </div>
               <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
                 <div className="flex items-center justify-center mb-4">
