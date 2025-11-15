@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { DeadlinesWidget } from "@/components/dashboard/DeadlinesWidget";
-import { TopPerformersWidget } from "@/components/dashboard/TopPerformersWidget";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { ProgressWidget } from "@/components/dashboard/ProgressWidget";
 import { ExportButton } from "@/components/dashboard/ExportButton";
@@ -153,7 +152,6 @@ const Dashboard = () => {
         {!requestsLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ProgressWidget requests={requests} />
-            <TopPerformersWidget requests={requests} />
             <DeadlinesWidget requests={requests} />
             <EmergencyRequestsWidget 
               requests={requests} 
