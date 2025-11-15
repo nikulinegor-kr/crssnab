@@ -56,7 +56,7 @@ const Dashboard = () => {
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10",
-      link: "/requests?status=Выполнено"
+      link: "/requests?status=Доставлено"
     },
   ];
 

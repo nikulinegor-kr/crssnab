@@ -61,7 +61,7 @@ export const useRequestStats = () => {
       ).length || 0;
       
       const completed = data?.filter(
-        (r: any) => r.status === "Доставлено" || r.status === "Выполнено" || r.status === "Доставлено в ТК"
+        (r: any) => r.status === "Доставлено"
       ).length || 0;
 
       return {
