@@ -14,9 +14,19 @@ serve(async (req) => {
   try {
     const { email, password, organizationId, role } = await req.json();
 
+    // Validate required fields
     if (!email || !password || !organizationId || !role) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -26,6 +36,14 @@ serve(async (req) => {
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ error: "Invalid role" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: "Password must be at least 6 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,9 +62,9 @@ serve(async (req) => {
 
     // Create user (profile will be created automatically by trigger)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: email.trim().toLowerCase(),
       password,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
     });
 
     if (userError) {
