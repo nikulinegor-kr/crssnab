@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
         // Generate request number from row index if not available
         const requestNumber = `REQ-${year}-${i}`;
         const originalStatus = String(row[3] || 'Новая').trim();
-        const priorityColumn = String(row[12] || '').trim(); // Колонка с приоритетом
+        const priorityColumn = String(row[2] || '').trim(); // Колонка с приоритетом
         
         requests.push({
           request_number: requestNumber,
@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
           description: description,
           status: normalizeStatus(originalStatus),
           priority: determinePriority(priorityColumn, originalStatus),
-          applicant: row[2] || null,
+          applicant: row[12] || null,
           executor: null,
           availability_delivery_time: row[4] || null,
           contractor: row[5] || null,
