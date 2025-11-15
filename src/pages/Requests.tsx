@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRequests } from "@/hooks/useRequests";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,32 @@ import { Request } from "@/hooks/useRequests";
 
 const Requests = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: requests, isLoading } = useRequests();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Apply filters from URL params on mount
+  useEffect(() => {
+    const status = searchParams.get("status");
+    const priority = searchParams.get("priority");
+    const isNew = searchParams.get("new");
+    
+    if (status) {
+      setStatusFilter(status);
+    }
+    if (priority) {
+      setPriorityFilter(priority);
+    }
+    if (isNew === "true") {
+      const today = new Date().toISOString().split("T")[0];
+      setYearFilter(new Date().getFullYear().toString());
+    }
+  }, [searchParams]);
 
   const handleRowClick = (request: Request) => {
     setSelectedRequest(request);
@@ -47,10 +67,12 @@ const Requests = () => {
       request.request_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || request.status === statusFilter;
+    const matchesPriority =
+      priorityFilter === "all" || request.priority === priorityFilter;
     const matchesYear =
       yearFilter === "all" ||
       request.request_date.startsWith(yearFilter);
-    return matchesSearch && matchesStatus && matchesYear;
+    return matchesSearch && matchesStatus && matchesPriority && matchesYear;
   });
 
   const getStatusColor = (status: string) => {
@@ -86,6 +108,7 @@ const Requests = () => {
     "Доставлено",
     "Выполнено",
   ];
+  const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -129,6 +152,19 @@ const Requests = () => {
               {statuses.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <SelectValue placeholder="Все приоритеты" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все приоритеты</SelectItem>
+              {priorities.map((priority) => (
+                <SelectItem key={priority} value={priority}>
+                  {priority}
                 </SelectItem>
               ))}
             </SelectContent>

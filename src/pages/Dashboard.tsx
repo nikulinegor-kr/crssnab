@@ -17,28 +17,32 @@ const Dashboard = () => {
       value: stats?.total.toString() || "0",
       icon: FileText,
       color: "text-primary",
-      bgColor: "bg-primary/10"
+      bgColor: "bg-primary/10",
+      link: "/requests"
     },
     {
       title: "Новые сегодня",
       value: stats?.newToday.toString() || "0",
       icon: Clock,
       color: "text-info",
-      bgColor: "bg-info/10"
+      bgColor: "bg-info/10",
+      link: "/requests?new=true"
     },
     {
       title: "Аварийно",
       value: stats?.emergency.toString() || "0",
       icon: AlertCircle,
       color: "text-accent",
-      bgColor: "bg-accent/10"
+      bgColor: "bg-accent/10",
+      link: "/requests?priority=Аварийно"
     },
     {
       title: "Выполнено",
       value: stats?.completed.toString() || "0",
       icon: CheckCircle,
       color: "text-success",
-      bgColor: "bg-success/10"
+      bgColor: "bg-success/10",
+      link: "/requests?status=Выполнено"
     },
   ];
 
@@ -98,7 +102,11 @@ const Dashboard = () => {
             statsCards.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <Card key={index} className="border-none shadow-card hover:shadow-elevated transition-shadow">
+                <Card 
+                  key={index} 
+                  className="border-none shadow-card hover:shadow-elevated transition-shadow cursor-pointer"
+                  onClick={() => navigate(stat.link)}
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
