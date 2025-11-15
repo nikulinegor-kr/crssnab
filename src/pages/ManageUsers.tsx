@@ -19,10 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { z } from "zod";
 
 const emailSchema = z.string().trim().email({ message: "Неверный формат email" }).max(255);
@@ -279,7 +278,7 @@ const ManageUsers = () => {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="w-full p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <Card className="border-border">
             <CardHeader>
@@ -288,11 +287,6 @@ const ManageUsers = () => {
                 У вас нет прав для управления пользователями
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate("/dashboard")}>
-                Вернуться в дашборд
-              </Button>
-            </CardContent>
           </Card>
         </div>
       </div>
@@ -300,34 +294,17 @@ const ManageUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/dashboard")}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Управление пользователями
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Добавляйте и управляйте пользователями организации
-                </p>
-              </div>
-            </div>
-            <OrganizationSwitcher />
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="w-full">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         <Card className="border-border">
+          <CardHeader>
+            <CardTitle>
+              Управление пользователями
+            </CardTitle>
+            <CardDescription>
+              Добавляйте и управляйте пользователями организации
+            </CardDescription>
+          </CardHeader>
           <CardHeader>
             <CardTitle>Создать пользователя</CardTitle>
             <CardDescription>

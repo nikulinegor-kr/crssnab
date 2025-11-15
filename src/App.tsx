@@ -12,6 +12,7 @@ import SelectOrganization from "./pages/SelectOrganization";
 import ManageUsers from "./pages/ManageUsers";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AppLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +37,9 @@ const App = () => (
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -44,7 +47,9 @@ const App = () => (
             path="/import"
             element={
               <ProtectedRoute>
-                <ImportData />
+                <AppLayout>
+                  <ImportData />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -52,7 +57,9 @@ const App = () => (
             path="/requests"
             element={
               <ProtectedRoute>
-                <Requests />
+                <AppLayout>
+                  <Requests />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -60,7 +67,9 @@ const App = () => (
             path="/manage-users"
             element={
               <ProtectedRoute>
-                <ManageUsers />
+                <AppLayout>
+                  <ManageUsers />
+                </AppLayout>
               </ProtectedRoute>
             }
           />

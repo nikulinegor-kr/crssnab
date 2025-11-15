@@ -1,14 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload, LogOut, Users } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useEffect, useState } from "react";
 import type { Request } from "@/hooks/useRequests";
@@ -17,7 +14,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { data: stats, isLoading: statsLoading } = useRequestStats();
-  const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -27,19 +23,6 @@ const Dashboard = () => {
       navigate("/select-organization");
     }
   }, [currentOrgId, navigate]);
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось выйти из системы",
-        variant: "destructive",
-      });
-    } else {
-      navigate("/auth");
-    }
-  };
 
   const statsCards = [
     {
@@ -107,36 +90,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 pb-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          <div className="flex items-center gap-2 flex-wrap">
-            <OrganizationSwitcher />
-            <Button onClick={() => navigate("/requests")} variant="outline" size="sm" className="gap-2">
-              <List className="h-4 w-4" />
-              <span className="hidden sm:inline">Все заявки</span>
-            </Button>
-            <Button onClick={() => navigate("/import")} variant="outline" size="sm" className="gap-2">
-              <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Импорт</span>
-            </Button>
-            <Button onClick={() => navigate("/manage-users")} variant="outline" size="sm" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Пользователи</span>
-            </Button>
-            <CreateRequestDialog>
-              <Button size="sm" className="gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Создать</span>
-              </Button>
-            </CreateRequestDialog>
-            <Button onClick={handleLogout} variant="ghost" size="sm" className="gap-2">
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Выход</span>
-            </Button>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsLoading ? (
@@ -184,7 +137,6 @@ const Dashboard = () => {
               <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
               <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 Все заявки
-                <List className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
@@ -209,7 +161,7 @@ const Dashboard = () => {
                 <h3 className="text-lg font-semibold mb-2">У вас пока нет заявок</h3>
                 <p className="text-sm text-muted-foreground mb-4">Начните с импорта данных из Google Sheets</p>
                 <Button onClick={() => navigate("/import")} className="gap-2" size="sm">
-                  <Upload className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                   Импортировать данные
                 </Button>
               </div>
