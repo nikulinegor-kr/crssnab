@@ -9,6 +9,7 @@ import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useEffect, useState } from "react";
 import type { Request } from "@/hooks/useRequests";
+import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ const Dashboard = () => {
     },
   ];
 
-  const recentRequests = requests?.slice(0, 10) || [];
+  const recentRequests = requests?.slice(0, 3) || [];
 
   const handleRequestClick = (request: Request) => {
     setSelectedRequest(request);
@@ -130,6 +131,11 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Аналитика */}
+        {!requestsLoading && requests && requests.length > 0 && (
+          <RequestsAnalytics requests={requests} />
+        )}
+
         {/* Recent Requests */}
         <Card className="bg-card border-border/40 shadow-sm">
           <CardHeader className="border-b border-border/40">
@@ -143,7 +149,7 @@ const Dashboard = () => {
           <CardContent className="p-4">
             {requestsLoading ? (
               <div className="space-y-2">
-                {[...Array(10)].map((_, i) => (
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 border border-border/40 rounded-lg">
                     <Skeleton className="h-10 w-10 rounded" />
                     <div className="flex-1 space-y-2">
