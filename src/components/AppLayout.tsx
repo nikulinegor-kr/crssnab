@@ -2,6 +2,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode } from "react";
+import { DemoBanner } from "./DemoBanner";
+import { SubscriptionBanner } from "./SubscriptionBanner";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,7 +22,11 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           <main className="flex-1 overflow-auto">
-            {children}
+            <div className="container mx-auto p-6">
+              <DemoBanner />
+              <SubscriptionBanner />
+              {children}
+            </div>
           </main>
         </div>
       </div>

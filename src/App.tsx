@@ -10,6 +10,7 @@ import Requests from "./pages/Requests";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import ManageUsers from "./pages/ManageUsers";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
@@ -74,6 +75,14 @@ const App = () => (
                     <ManageUsers />
                   </AppLayout>
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pricing"
+              element={
+                <AppLayout>
+                  <Pricing />
+                </AppLayout>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
