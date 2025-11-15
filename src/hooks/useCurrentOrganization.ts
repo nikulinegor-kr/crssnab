@@ -1,17 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export const useCurrentOrganization = () => {
-  const [currentOrgId, setCurrentOrgId] = useState<string | null>(() => {
+  const [currentOrgId, _setCurrentOrgId] = useState<string | null>(() => {
     return localStorage.getItem("currentOrganizationId");
   });
 
-  useEffect(() => {
-    if (currentOrgId) {
-      localStorage.setItem("currentOrganizationId", currentOrgId);
+  // Синхронно сохраняем выбор, чтобы избежать гонок при навигации
+  const setCurrentOrgId = (id: string | null) => {
+    if (id) {
+      localStorage.setItem("currentOrganizationId", id);
     } else {
       localStorage.removeItem("currentOrganizationId");
     }
-  }, [currentOrgId]);
+    _setCurrentOrgId(id);
+  };
 
   return {
     currentOrgId,
