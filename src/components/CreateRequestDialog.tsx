@@ -43,6 +43,8 @@ const requestSchema = z.object({
     .max(500, "Описание не должно превышать 500 символов"),
   status: z.string()
     .min(1, "Выберите статус"),
+  priority: z.string()
+    .min(1, "Выберите приоритет"),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -98,6 +100,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
       request_date: new Date().toISOString().split("T")[0],
       description: "",
       status: "Новая",
+      priority: "Планово",
       availability_delivery_time: "",
       contractor: "",
       invoice_number: "",
@@ -122,6 +125,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         request_date: data.request_date,
         description: data.description,
         status: data.status,
+        priority: data.priority,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
@@ -162,6 +166,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
   };
 
   const statuses = ["Новая", "КП", "Плановый", "Аварийно", "Доставлено", "Выполнена"];
+  const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -207,6 +212,31 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
                         {statuses.map((status) => (
                           <SelectItem key={status} value={status}>
                             {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Приоритет *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите приоритет" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {priorities.map((priority) => (
+                          <SelectItem key={priority} value={priority}>
+                            {priority}
                           </SelectItem>
                         ))}
                       </SelectContent>
