@@ -23,6 +23,10 @@ import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { z } from "zod";
+
+const emailSchema = z.string().trim().email({ message: "Неверный формат email" }).max(255);
+const passwordSchema = z.string().min(6, { message: "Пароль должен содержать минимум 6 символов" });
 
 interface OrgMember {
   id: string;
@@ -116,20 +120,24 @@ const ManageUsers = () => {
   };
 
   const addUser = async () => {
-    if (!newUserEmail.trim()) {
+    // Validate email
+    const emailValidation = emailSchema.safeParse(newUserEmail);
+    if (!emailValidation.success) {
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Введите email пользователя",
+        description: emailValidation.error.errors[0].message,
       });
       return;
     }
 
-    if (!newUserPassword.trim() || newUserPassword.length < 6) {
+    // Validate password
+    const passwordValidation = passwordSchema.safeParse(newUserPassword);
+    if (!passwordValidation.success) {
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Пароль должен содержать минимум 6 символов",
+        description: passwordValidation.error.errors[0].message,
       });
       return;
     }
@@ -148,8 +156,8 @@ const ManageUsers = () => {
             "Authorization": `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
-            email: newUserEmail.trim(),
-            password: newUserPassword,
+            email: emailValidation.data,
+            password: passwordValidation.data,
             organizationId: currentOrgId,
             role: newUserRole,
           }),
@@ -164,7 +172,7 @@ const ManageUsers = () => {
 
       toast({
         title: "Успешно",
-        description: `Пользователь ${newUserEmail} создан и добавлен в организацию`,
+        description: `Пользователь ${emailValidation.data} создан и добавлен в организацию`,
       });
       
       setNewUserEmail("");
