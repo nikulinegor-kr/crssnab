@@ -12,17 +12,24 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
+    // Listen for auth changes FIRST to avoid missing initial events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       setIsLoading(false);
+      console.debug("[ProtectedRoute] onAuthStateChange", { hasSession: !!session });
     });
+
+    // Then check current session
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setIsAuthenticated(!!session);
+        setIsLoading(false);
+        console.debug("[ProtectedRoute] getSession", { hasSession: !!session });
+      })
+      .catch((err) => {
+        console.error("[ProtectedRoute] getSession error", err);
+        setIsLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
