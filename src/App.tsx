@@ -24,60 +24,62 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/select-organization"
-            element={
-              <ProtectedRoute>
-                <SelectOrganization />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <DemoOrProtectedRoute>
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              </DemoOrProtectedRoute>
-            }
-          />
-          <Route
-            path="/import"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ImportData />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/requests"
-            element={
-              <DemoOrProtectedRoute>
-                <AppLayout>
-                  <Requests />
-                </AppLayout>
-              </DemoOrProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage-users"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ManageUsers />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <DemoProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/select-organization"
+              element={
+                <ProtectedRoute>
+                  <SelectOrganization />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <DemoOrProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </DemoOrProtectedRoute>
+              }
+            />
+            <Route
+              path="/import"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ImportData />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/requests"
+              element={
+                <DemoOrProtectedRoute>
+                  <AppLayout>
+                    <Requests />
+                  </AppLayout>
+                </DemoOrProtectedRoute>
+              }
+            />
+            <Route
+              path="/manage-users"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ManageUsers />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </DemoProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

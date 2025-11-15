@@ -1,6 +1,6 @@
 import { Home, FileText, Upload, Users, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
@@ -31,10 +31,16 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
   const handleLogout = async () => {
+    if (isDemoMode) {
+      navigate("/");
+      return;
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
@@ -65,11 +71,16 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => {
                 const isActive = currentPath === item.url;
+                const url = isDemoMode ? `${item.url}?demo=true` : item.url;
+                // Скрываем "Импорт данных" и "Пользователи" в демо-режиме
+                if (isDemoMode && (item.url === "/import" || item.url === "/manage-users")) {
+                  return null;
+                }
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive}>
                       <NavLink 
-                        to={item.url} 
+                        to={url} 
                         end 
                         className="hover:bg-muted/50"
                         activeClassName="bg-muted text-primary font-medium"
@@ -94,7 +105,7 @@ export function AppSidebar() {
           className="w-full justify-start gap-2"
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span>Выход</span>}
+          {!collapsed && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
