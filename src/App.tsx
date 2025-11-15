@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import ImportData from "./pages/ImportData";
 import Requests from "./pages/Requests";
 import Auth from "./pages/Auth";
+import SelectOrganization from "./pages/SelectOrganization";
+import ManageUsers from "./pages/ManageUsers";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -22,6 +24,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/select-organization"
+            element={
+              <ProtectedRoute>
+                <SelectOrganization />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -43,6 +53,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Requests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage-users"
+            element={
+              <ProtectedRoute>
+                <ManageUsers />
               </ProtectedRoute>
             }
           />

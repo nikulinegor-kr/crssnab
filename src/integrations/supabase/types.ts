@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -52,6 +73,7 @@ export type Database = {
           executor: string | null
           id: string
           invoice_number: string | null
+          organization_id: string | null
           payment_percentage: number | null
           photo_url: string | null
           priority: string | null
@@ -76,6 +98,7 @@ export type Database = {
           executor?: string | null
           id?: string
           invoice_number?: string | null
+          organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
           priority?: string | null
@@ -100,6 +123,7 @@ export type Database = {
           executor?: string | null
           id?: string
           invoice_number?: string | null
+          organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
           priority?: string | null
@@ -111,17 +135,72 @@ export type Database = {
           updated_at?: string | null
           waybill_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["organization_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["organization_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["organization_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_has_org_access: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_org_role: {
+        Args: {
+          _org_id: string
+          _role: Database["public"]["Enums"]["organization_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      user_is_org_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      organization_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -248,6 +327,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      organization_role: ["owner", "admin", "member"],
+    },
   },
 } as const

@@ -39,13 +39,13 @@ export default function Auth() {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        navigate("/select-organization");
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/dashboard");
+        navigate("/select-organization");
       }
     });
 
@@ -109,7 +109,7 @@ export default function Auth() {
   const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      const redirectUrl = `${window.location.origin}/select-organization`;
       
       const { error } = await supabase.auth.signUp({
         email: data.email,
@@ -158,9 +158,13 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold">KR Заявки</CardTitle>
+          <CardTitle className="text-3xl font-bold">
+            <span className="text-primary">CRSS</span>
+          </CardTitle>
           <CardDescription>
-            Система управления заявками отдела снабжения
+            Corporate Resource Supply System
+            <br />
+            <span className="text-xs">Система Управления Поставками Компании</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
