@@ -27,11 +27,28 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const resetPasswordSchema = z.object({
+  email: z.string().email("Неверный формат email"),
+});
+
+const phoneLoginSchema = z.object({
+  phone: z.string().min(10, "Введите корректный номер телефона"),
+});
+
+const phoneVerifySchema = z.object({
+  code: z.string().length(6, "Код должен содержать 6 цифр"),
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type PhoneLoginFormData = z.infer<typeof phoneLoginSchema>;
+type PhoneVerifyFormData = z.infer<typeof phoneVerifySchema>;
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPhoneVerify, setShowPhoneVerify] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -67,6 +84,27 @@ export default function Auth() {
       password: "",
       confirmPassword: "",
       organizationName: "",
+    },
+  });
+
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const phoneLoginForm = useForm<PhoneLoginFormData>({
+    resolver: zodResolver(phoneLoginSchema),
+    defaultValues: {
+      phone: "",
+    },
+  });
+
+  const phoneVerifyForm = useForm<PhoneVerifyFormData>({
+    resolver: zodResolver(phoneVerifySchema),
+    defaultValues: {
+      code: "",
     },
   });
 
@@ -154,6 +192,82 @@ export default function Auth() {
     }
   };
 
+  const handleResetPassword = async (data: ResetPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Проверьте почту",
+        description: "Ссылка для сброса пароля отправлена на ваш email",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось отправить ссылку для сброса пароля",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneLogin = async (data: PhoneLoginFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: data.phone,
+      });
+
+      if (error) throw error;
+
+      setPhoneNumber(data.phone);
+      setShowPhoneVerify(true);
+      toast({
+        title: "Код отправлен",
+        description: "Проверьте SMS с кодом подтверждения",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось отправить код",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneVerify = async (data: PhoneVerifyFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: data.code,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешно",
+        description: "Вы вошли в систему",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Неверный код подтверждения",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <Card className="w-full max-w-md shadow-elevated">
@@ -169,9 +283,11 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="login">Вход</TabsTrigger>
               <TabsTrigger value="signup">Регистрация</TabsTrigger>
+              <TabsTrigger value="phone">Телефон</TabsTrigger>
+              <TabsTrigger value="reset">Сброс</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -274,6 +390,88 @@ export default function Auth() {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Зарегистрироваться
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="phone">
+              {!showPhoneVerify ? (
+                <form onSubmit={phoneLoginForm.handleSubmit(handlePhoneLogin)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Номер телефона</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+7 (999) 123-45-67"
+                      {...phoneLoginForm.register("phone")}
+                    />
+                    {phoneLoginForm.formState.errors.phone && (
+                      <p className="text-sm text-destructive">
+                        {phoneLoginForm.formState.errors.phone.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Получить код
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={phoneVerifyForm.handleSubmit(handlePhoneVerify)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="code">Код подтверждения</Label>
+                    <Input
+                      id="code"
+                      type="text"
+                      placeholder="123456"
+                      maxLength={6}
+                      {...phoneVerifyForm.register("code")}
+                    />
+                    {phoneVerifyForm.formState.errors.code && (
+                      <p className="text-sm text-destructive">
+                        {phoneVerifyForm.formState.errors.code.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Подтвердить
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => setShowPhoneVerify(false)}
+                  >
+                    Назад
+                  </Button>
+                </form>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reset">
+              <form onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="email@example.com"
+                    {...resetPasswordForm.register("email")}
+                  />
+                  {resetPasswordForm.formState.errors.email && (
+                    <p className="text-sm text-destructive">
+                      {resetPasswordForm.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Отправить ссылку
                 </Button>
               </form>
             </TabsContent>
