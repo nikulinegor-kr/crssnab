@@ -57,6 +57,29 @@ const ManageUsers = () => {
     }
     checkAdminStatus();
     fetchMembers();
+
+    // Subscribe to real-time updates for user_organizations
+    const channel = supabase
+      .channel('user-organizations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_organizations',
+          filter: `organization_id=eq.${currentOrgId}`
+        },
+        (payload) => {
+          console.log('User organization change:', payload);
+          // Refetch members when changes occur
+          fetchMembers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentOrgId]);
 
   const checkAdminStatus = async () => {
@@ -84,6 +107,8 @@ const ManageUsers = () => {
 
   const fetchMembers = async () => {
     try {
+      setLoading(true);
+      
       // First get user_organizations
       const { data: userOrgs, error: orgsError } = await supabase
         .from("user_organizations")
@@ -92,8 +117,13 @@ const ManageUsers = () => {
 
       if (orgsError) throw orgsError;
 
+      if (!userOrgs || userOrgs.length === 0) {
+        setMembers([]);
+        return;
+      }
+
       // Then get profiles for each user
-      const userIds = userOrgs?.map(org => org.user_id) || [];
+      const userIds = userOrgs.map(org => org.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, organization_name")
@@ -102,13 +132,14 @@ const ManageUsers = () => {
       if (profilesError) throw profilesError;
 
       // Combine the data
-      const combined = userOrgs?.map(org => ({
+      const combined = userOrgs.map(org => ({
         ...org,
-        profiles: profiles?.find(p => p.id === org.user_id) || { email: "", organization_name: "" }
-      })) || [];
+        profiles: profiles?.find(p => p.id === org.user_id) || { email: "Loading...", organization_name: "" }
+      }));
 
       setMembers(combined);
     } catch (error: any) {
+      console.error("Error fetching members:", error);
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -177,7 +208,12 @@ const ManageUsers = () => {
       
       setNewUserEmail("");
       setNewUserPassword("");
-      fetchMembers();
+      setNewUserRole("viewer");
+      
+      // Wait a bit for trigger to complete, then refetch
+      setTimeout(() => {
+        fetchMembers();
+      }, 500);
     } catch (error: any) {
       toast({
         variant: "destructive",
