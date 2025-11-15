@@ -46,9 +46,12 @@ const Index = () => {
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="text-center space-y-6 mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-            KR <span className="text-primary">Заявки</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground">
+            <span className="text-primary">CRSS</span> — Corporate Resource Supply System
           </h1>
+          <p className="text-2xl font-semibold text-foreground mb-4">
+            Система Управления Поставками Компании
+          </p>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Современная система управления заявками для отдела снабжения. 
             Упростите работу с заявками клиентов и повысьте эффективность команды.
