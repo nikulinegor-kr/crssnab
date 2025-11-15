@@ -24,6 +24,8 @@ import { Search, Plus, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
+import { Request } from "@/hooks/useRequests";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -31,6 +33,13 @@ const Requests = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const handleRowClick = (request: Request) => {
+    setSelectedRequest(request);
+    setEditDialogOpen(true);
+  };
 
   const filteredRequests = requests?.filter((request) => {
     const matchesSearch =
@@ -170,7 +179,11 @@ const Requests = () => {
               </TableHeader>
               <TableBody>
                 {filteredRequests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-muted/30">
+                  <TableRow 
+                    key={request.id} 
+                    className="hover:bg-muted/30 cursor-pointer"
+                    onClick={() => handleRowClick(request)}
+                  >
                     <TableCell className="text-xs whitespace-nowrap">
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
@@ -258,6 +271,12 @@ const Requests = () => {
           </div>
         )}
       </Card>
+
+      <EditRequestDialog 
+        request={selectedRequest}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
     </div>
   );
 };
