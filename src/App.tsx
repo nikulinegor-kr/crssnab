@@ -13,6 +13,8 @@ import ManageUsers from "./pages/ManageUsers";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
+import { DemoProvider } from "./contexts/DemoContext";
+import { DemoOrProtectedRoute } from "./components/DemoOrProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -36,11 +38,11 @@ const App = () => (
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <DemoOrProtectedRoute>
                 <AppLayout>
                   <Dashboard />
                 </AppLayout>
-              </ProtectedRoute>
+              </DemoOrProtectedRoute>
             }
           />
           <Route
@@ -56,11 +58,11 @@ const App = () => (
           <Route
             path="/requests"
             element={
-              <ProtectedRoute>
+              <DemoOrProtectedRoute>
                 <AppLayout>
                   <Requests />
                 </AppLayout>
-              </ProtectedRoute>
+              </DemoOrProtectedRoute>
             }
           />
           <Route

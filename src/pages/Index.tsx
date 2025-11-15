@@ -211,10 +211,10 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Button 
               size="lg" 
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/dashboard?demo=true")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
             >
-              Перейти к дашборду
+              Открыть демо
               <TrendingUp className="ml-2 h-5 w-5" />
             </Button>
             <Button 
@@ -392,14 +392,14 @@ const Index = () => {
                 Начать работу
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate("/dashboard")}
-                className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-12 py-6 text-lg transition-all"
-              >
-                Открыть демо
-              </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => navigate("/dashboard?demo=true")}
+              className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-12 py-6 text-lg transition-all"
+            >
+              Открыть демо
+            </Button>
             </div>
           </div>
         </div>

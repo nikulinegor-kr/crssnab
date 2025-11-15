@@ -35,11 +35,18 @@ import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { Request } from "@/hooks/useRequests";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { useDemoData } from "@/hooks/useDemoData";
+import { DemoBanner } from "@/components/DemoBanner";
+import { useToast } from "@/hooks/use-toast";
 
 const Requests = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { data: requests, isLoading } = useRequests();
+  const isDemoMode = searchParams.get("demo") === "true";
+  const demoData = useDemoData();
+  const { toast } = useToast();
+  
+  const { data: realRequests, isLoading: realLoading } = useRequests();
   const { canCreate } = useUserRole();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -47,6 +54,10 @@ const Requests = () => {
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Use demo data when in demo mode
+  const requests = isDemoMode ? demoData.requests : realRequests;
+  const isLoading = isDemoMode ? false : realLoading;
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -67,6 +78,14 @@ const Requests = () => {
   }, [searchParams]);
 
   const handleRowClick = (request: Request) => {
+    if (isDemoMode) {
+      toast({
+        title: "Демо-режим",
+        description: "Редактирование недоступно в демо-режиме. Войдите в систему для полного доступа.",
+        variant: "default",
+      });
+      return;
+    }
     setSelectedRequest(request);
     setEditDialogOpen(true);
   };
@@ -122,6 +141,9 @@ const Requests = () => {
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
+      {/* Demo Banner */}
+      {isDemoMode && <DemoBanner />}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>
@@ -136,7 +158,7 @@ const Requests = () => {
               filteredRequests={filteredRequests}
             />
           )}
-          {canCreate && (
+          {!isDemoMode && canCreate && (
             <CreateRequestDialog>
               <Button className="gap-2" size="sm">
                 <Plus className="h-4 w-4" />

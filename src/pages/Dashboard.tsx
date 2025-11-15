@@ -17,20 +17,33 @@ import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletio
 import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
 import { PriorityChartWidget } from "@/components/dashboard/PriorityChartWidget";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { useDemoMode } from "@/contexts/DemoContext";
+import { useDemoData } from "@/hooks/useDemoData";
+import { DemoBanner } from "@/components/DemoBanner";
+import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
-  const { data: stats, isLoading: statsLoading } = useRequestStats();
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "true";
+  const demoData = useDemoData();
+  
+  const { data: realRequests, isLoading: requestsLoading, refetch } = useRequests();
+  const { data: realStats, isLoading: statsLoading } = useRequestStats();
   const { currentOrgId } = useCurrentOrganization();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
+  // Use demo data when in demo mode
+  const requests = isDemoMode ? demoData.requests : realRequests;
+  const stats = isDemoMode ? demoData.stats : realStats;
+  const isLoading = isDemoMode ? false : (requestsLoading || statsLoading);
+
   useEffect(() => {
-    if (!currentOrgId) {
+    if (!isDemoMode && !currentOrgId) {
       navigate("/select-organization");
     }
-  }, [currentOrgId, navigate]);
+  }, [currentOrgId, navigate, isDemoMode]);
 
   const statsCards = [
     {
@@ -98,11 +111,14 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        {/* Demo Banner */}
+        {isDemoMode && <DemoBanner />}
+        
         {/* Header with Export */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
           <div className="flex gap-2">
-            {!requestsLoading && requests && requests.length > 0 && (
+            {!isLoading && requests && requests.length > 0 && (
               <>
                 <ExcelExportButton requests={requests} />
                 <ExportButton requests={requests} />
@@ -113,7 +129,7 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statsLoading ? (
+          {isLoading ? (
             <>
               {[...Array(4)].map((_, i) => (
                 <Card key={i} className="bg-card border-border/40 shadow-sm">
@@ -152,12 +168,12 @@ const Dashboard = () => {
         </div>
 
         {/* Аналитика */}
-        {!requestsLoading && requests && requests.length > 0 && (
+        {!isLoading && requests && requests.length > 0 && (
           <RequestsAnalytics requests={requests} />
         )}
 
         {/* Дополнительные виджеты - первая линия */}
-        {!requestsLoading && requests && requests.length > 0 && (
+        {!isLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <AverageCompletionWidget requests={requests} />
             <TopExecutorsWidget requests={requests} />
@@ -166,7 +182,7 @@ const Dashboard = () => {
         )}
 
         {/* Дополнительные виджеты - вторая линия */}
-        {!requestsLoading && requests && requests.length > 0 && (
+        {!isLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CalendarWidget requests={requests} />
             <EmergencyRequestsWidget 
@@ -181,13 +197,13 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border/40">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
-              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button onClick={() => navigate(isDemoMode ? "/requests?demo=true" : "/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 Все заявки
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            {requestsLoading ? (
+            {isLoading ? (
               <div className="space-y-2">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 border border-border/40 rounded-lg">
