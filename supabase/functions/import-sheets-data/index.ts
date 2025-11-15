@@ -150,8 +150,18 @@ function normalizeStatus(status: string): string {
   return statusMap[status] || status || 'Новая заявка';
 }
 
-function determinePriority(status: string): string {
-  if (status === 'Аварийно') return 'Аварийно';
+function determinePriority(priorityStr: string, statusStr: string): string {
+  // Сначала проверяем явно указанный приоритет
+  const priorityLower = priorityStr?.toLowerCase().trim() || '';
+  if (priorityLower.includes('аварийн')) return 'Аварийно';
+  if (priorityLower.includes('приоритет')) return 'Приоритетно';
+  if (priorityLower.includes('планов')) return 'Планово';
+  
+  // Если приоритет не указан, определяем по статусу
+  const statusLower = statusStr?.toLowerCase().trim() || '';
+  if (statusLower.includes('аварийн')) return 'Аварийно';
+  if (statusLower.includes('приоритет')) return 'Приоритетно';
+  
   return 'Планово';
 }
 
@@ -235,13 +245,14 @@ Deno.serve(async (req) => {
         // Generate request number from row index if not available
         const requestNumber = `REQ-${year}-${i}`;
         const originalStatus = String(row[3] || 'Новая').trim();
+        const priorityColumn = String(row[12] || '').trim(); // Колонка с приоритетом
         
         requests.push({
           request_number: requestNumber,
           request_date: requestDate,
           description: description,
           status: normalizeStatus(originalStatus),
-          priority: determinePriority(originalStatus),
+          priority: determinePriority(priorityColumn, originalStatus),
           applicant: row[2] || null,
           executor: null,
           availability_delivery_time: row[4] || null,
