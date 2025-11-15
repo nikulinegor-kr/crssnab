@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, organizationId, role } = await req.json();
+    const { email, password, organizationId, role, fullName, position } = await req.json();
 
     // Validate required fields
     if (!email || !password || !organizationId || !role) {
@@ -65,6 +65,10 @@ serve(async (req) => {
       email: email.trim().toLowerCase(),
       password,
       email_confirm: true,
+      user_metadata: {
+        full_name: fullName || "",
+        position: position || ""
+      }
     });
 
     if (userError) {
