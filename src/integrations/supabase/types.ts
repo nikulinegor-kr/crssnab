@@ -182,6 +182,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_user_initialized: {
+        Args: { _org_name?: string }
+        Returns: undefined
+      }
       user_has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

@@ -30,6 +30,11 @@ const SelectOrganization = () => {
 
   const fetchOrganizations = async () => {
     try {
+      // Гарантируем, что у пользователя есть организация и членство
+      try {
+        await supabase.rpc('ensure_user_initialized');
+      } catch {}
+
       const { data, error } = await supabase
         .from("user_organizations")
         .select(`
