@@ -42,7 +42,7 @@ export const useRequestStats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("requests")
-        .select("status, payment_percentage, delivery_date, created_at");
+        .select("status, priority, payment_percentage, delivery_date, created_at");
 
       if (error) throw error;
 
@@ -53,7 +53,7 @@ export const useRequestStats = () => {
       ).length || 0;
       
       const emergency = data?.filter(
-        (r: any) => r.status === "Аварийно"
+        (r: any) => r.priority === "Аварийно"
       ).length || 0;
       
       const completed = data?.filter(
