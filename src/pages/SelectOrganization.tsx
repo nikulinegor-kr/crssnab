@@ -101,13 +101,7 @@ const SelectOrganization = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-6">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            <span className="text-primary">CRSS</span>
-          </h1>
-          <p className="text-lg font-semibold text-foreground mb-1">
-            Corporate Resource Supply System
-          </p>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-lg font-semibold text-foreground mb-6">
             Выберите организацию для работы
           </p>
         </div>
