@@ -35,6 +35,8 @@ interface OrgMember {
   profiles: {
     email: string;
     organization_name: string;
+    full_name?: string;
+    position?: string;
   };
 }
 
@@ -46,6 +48,8 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserFullName, setNewUserFullName] = useState("");
+  const [newUserPosition, setNewUserPosition] = useState("");
   const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">("viewer");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -126,7 +130,7 @@ const ManageUsers = () => {
       const userIds = userOrgs.map(org => org.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, email, organization_name")
+        .select("id, email, organization_name, full_name, position")
         .in("id", userIds);
 
       if (profilesError) throw profilesError;
@@ -134,7 +138,12 @@ const ManageUsers = () => {
       // Combine the data
       const combined = userOrgs.map(org => ({
         ...org,
-        profiles: profiles?.find(p => p.id === org.user_id) || { email: "Loading...", organization_name: "" }
+        profiles: profiles?.find(p => p.id === org.user_id) || { 
+          email: "Loading...", 
+          organization_name: "",
+          full_name: "",
+          position: ""
+        }
       }));
 
       setMembers(combined);
@@ -189,6 +198,8 @@ const ManageUsers = () => {
           body: JSON.stringify({
             email: emailValidation.data,
             password: passwordValidation.data,
+            fullName: newUserFullName.trim(),
+            position: newUserPosition.trim(),
             organizationId: currentOrgId,
             role: newUserRole,
           }),
@@ -208,6 +219,8 @@ const ManageUsers = () => {
       
       setNewUserEmail("");
       setNewUserPassword("");
+      setNewUserFullName("");
+      setNewUserPosition("");
       setNewUserRole("viewer");
       
       // Wait a bit for trigger to complete, then refetch
@@ -323,20 +336,32 @@ const ManageUsers = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 mb-6">
-              <div className="flex gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  type="text"
+                  placeholder="ФИО"
+                  value={newUserFullName}
+                  onChange={(e) => setNewUserFullName(e.target.value)}
+                />
+                <Input
+                  type="text"
+                  placeholder="Должность"
+                  value={newUserPosition}
+                  onChange={(e) => setNewUserPosition(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   type="email"
                   placeholder="Email пользователя"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="flex-1"
                 />
                 <Input
                   type="password"
                   placeholder="Пароль (мин. 6 символов)"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
-                  className="flex-1"
                 />
               </div>
               <div className="flex gap-4">
@@ -350,7 +375,7 @@ const ManageUsers = () => {
                     <SelectItem value="viewer">Только чтение</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={addUser} disabled={isCreating}>
+                <Button onClick={addUser} disabled={isCreating} className="min-w-[140px]">
                   {isCreating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -381,7 +406,9 @@ const ManageUsers = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>ФИО</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Должность</TableHead>
                     <TableHead>Роль</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
@@ -389,7 +416,13 @@ const ManageUsers = () => {
                 <TableBody>
                   {members.map((member) => (
                     <TableRow key={member.id}>
+                      <TableCell className="font-medium">
+                        {member.profiles.full_name || "—"}
+                      </TableCell>
                       <TableCell>{member.profiles.email}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {member.profiles.position || "—"}
+                      </TableCell>
                       <TableCell>
                         <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium">
                           {getRoleName(member.role)}
