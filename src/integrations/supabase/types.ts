@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       requests: {
         Row: {
+          applicant: string | null
           availability_delivery_time: string | null
           comments: string | null
           contractor: string | null
@@ -24,6 +25,7 @@ export type Database = {
           delivery_date: string | null
           description: string
           document_url: string | null
+          executor: string | null
           id: string
           invoice_number: string | null
           payment_percentage: number | null
@@ -38,6 +40,7 @@ export type Database = {
           waybill_number: string | null
         }
         Insert: {
+          applicant?: string | null
           availability_delivery_time?: string | null
           comments?: string | null
           contractor?: string | null
@@ -46,6 +49,7 @@ export type Database = {
           delivery_date?: string | null
           description: string
           document_url?: string | null
+          executor?: string | null
           id?: string
           invoice_number?: string | null
           payment_percentage?: number | null
@@ -60,6 +64,7 @@ export type Database = {
           waybill_number?: string | null
         }
         Update: {
+          applicant?: string | null
           availability_delivery_time?: string | null
           comments?: string | null
           contractor?: string | null
@@ -68,6 +73,7 @@ export type Database = {
           delivery_date?: string | null
           description?: string
           document_url?: string | null
+          executor?: string | null
           id?: string
           invoice_number?: string | null
           payment_percentage?: number | null
