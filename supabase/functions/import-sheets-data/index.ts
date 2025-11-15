@@ -10,6 +10,7 @@ interface SheetRow {
   request_date: string;
   description: string;
   status: string;
+  priority: string;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
@@ -19,6 +20,8 @@ interface SheetRow {
   transport_company: string | null;
   waybill_number: string | null;
   comments: string | null;
+  photo_url: string | null;
+  document_url: string | null;
 }
 
 async function getAccessToken(): Promise<string> {
@@ -130,6 +133,26 @@ function parsePayment(paymentStr: string): number {
   return match ? parseInt(match[1]) : 0;
 }
 
+function normalizeStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    'Новая': 'Новая заявка',
+    'Альтернативу!': 'На согласовании',
+    'Доставлено ': 'Доставлено',
+    'В пути в НСК': 'В пути',
+    'Готов к отгрузке': 'В пути',
+    'Счёт в бух': 'Счёт',
+    'Плановый': 'В работе',
+    'Аварийно': 'В работе'
+  };
+  
+  return statusMap[status] || status || 'Новая заявка';
+}
+
+function determinePriority(status: string): string {
+  if (status === 'Аварийно') return 'Аварийно';
+  return 'Планово';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -180,12 +203,14 @@ Deno.serve(async (req) => {
       if (requestDate && requestDate.startsWith(year)) {
         // Generate request number from row index if not available
         const requestNumber = `REQ-${year}-${i}`;
+        const originalStatus = String(row[3] || 'Новая').trim();
         
         requests.push({
           request_number: requestNumber,
           request_date: requestDate,
           description: description,
-          status: row[3] || 'Новая',
+          status: normalizeStatus(originalStatus),
+          priority: determinePriority(originalStatus),
           availability_delivery_time: row[4] || null,
           contractor: row[5] || null,
           invoice_number: row[6] || null,
@@ -195,6 +220,8 @@ Deno.serve(async (req) => {
           transport_company: row[10] || null,
           waybill_number: row[11] || null,
           comments: row[13] || null,
+          photo_url: null,
+          document_url: null,
         });
       }
     }
