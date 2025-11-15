@@ -1,15 +1,31 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload, LogOut } from "lucide-react";
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading } = useRequests();
   const { data: stats, isLoading: statsLoading } = useRequestStats();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось выйти из системы",
+        variant: "destructive",
+      });
+    } else {
+      navigate("/auth");
+    }
+  };
 
   const statsCards = [
     {
@@ -86,6 +102,10 @@ const Dashboard = () => {
                 Создать
               </Button>
             </CreateRequestDialog>
+            <Button onClick={handleLogout} variant="ghost" size="sm" className="gap-2">
+              <LogOut className="h-4 w-4" />
+              Выход
+            </Button>
           </div>
         </div>
 
