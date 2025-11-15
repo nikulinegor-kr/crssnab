@@ -149,77 +149,100 @@ const Requests = () => {
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Описание</TableHead>
-                  <TableHead>Заявитель</TableHead>
-                  <TableHead>Исполнитель</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Приоритет</TableHead>
-                  <TableHead>Контрагент</TableHead>
-                  <TableHead>Наличие/Сроки</TableHead>
-                  <TableHead>Счет</TableHead>
-                  <TableHead>Оплата</TableHead>
-                  <TableHead>Отгрузка</TableHead>
-                  <TableHead>Доставка</TableHead>
-                  <TableHead>ТК</TableHead>
-                  <TableHead>ТТН</TableHead>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="whitespace-nowrap w-20">Дата</TableHead>
+                  <TableHead className="min-w-[200px]">Заявка</TableHead>
+                  <TableHead className="w-24">Приоритет</TableHead>
+                  <TableHead className="w-32">Статус</TableHead>
+                  <TableHead className="w-32">Наличие</TableHead>
+                  <TableHead className="w-40">Контрагент</TableHead>
+                  <TableHead className="w-24">Счет</TableHead>
+                  <TableHead className="w-20">Оплата</TableHead>
+                  <TableHead className="w-20">ДатаО</TableHead>
+                  <TableHead className="w-20">ДатаД</TableHead>
+                  <TableHead className="w-32">ТК</TableHead>
+                  <TableHead className="w-24">№ ТТН</TableHead>
+                  <TableHead className="w-32">Заявитель</TableHead>
+                  <TableHead className="w-40">Комментарий</TableHead>
+                  <TableHead className="w-32">Исполнитель</TableHead>
+                  <TableHead className="w-24">Счёт/Кп</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="whitespace-nowrap">
+                  <TableRow key={request.id} className="hover:bg-muted/30">
+                    <TableCell className="text-xs whitespace-nowrap">
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
-                    <TableCell className="max-w-[250px] truncate">
-                      {request.description}
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2 min-w-[200px]">
+                        {request.description}
+                      </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {request.applicant || "-"}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {request.executor || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(request.status)}>
-                        {request.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={request.priority === "Аварийно" ? "destructive" : "outline"}>
+                    <TableCell className="text-xs">
+                      <Badge 
+                        variant={request.priority === "Аварийно" ? "destructive" : "outline"}
+                        className="text-[10px] px-1.5 py-0.5"
+                      >
                         {request.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {request.contractor || "-"}
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {request.availability_delivery_time || "-"}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {request.invoice_number || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {request.payment_percentage}%
+                    <TableCell className="text-xs">
+                      <Badge className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}>
+                        {request.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.availability_delivery_time || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.contractor || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {request.invoice_number || "-"}
+                    </TableCell>
+                    <TableCell className="text-xs text-center">
+                      {request.payment_percentage}%
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
                       {request.shipment_date
                         ? format(new Date(request.shipment_date), "dd.MM.yy")
                         : "-"}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="text-xs whitespace-nowrap">
                       {request.delivery_date
                         ? format(new Date(request.delivery_date), "dd.MM.yy")
                         : "-"}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {request.transport_company || "-"}
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.transport_company || "-"}
+                      </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="text-xs">
                       {request.waybill_number || "-"}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.applicant || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.comments || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.executor || "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs text-center">
+                      {(request.photo_url || request.document_url) ? "📎" : "-"}
                     </TableCell>
                   </TableRow>
                 ))}
