@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield } from "lucide-react";
+import { FileText, BarChart3, Users, Shield, Sparkles, Zap, TrendingUp, Lock } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -29,14 +30,27 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-primary/10 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
       {/* Header with Login Button */}
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <div className="flex justify-end">
+      <div className="relative max-w-7xl mx-auto px-6 pt-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              CRSS
+            </span>
+          </div>
           <Button 
             onClick={() => navigate("/auth")}
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary/10"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
           >
             Войти в систему
           </Button>
@@ -44,30 +58,37 @@ const Index = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="text-center space-y-6 mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground">
-            <span className="text-primary">CRSS</span> — Corporate Resource Supply System
+      <div className="relative max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center space-y-8 mb-24 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Zap className="h-4 w-4" />
+            Корпоративная система управления
+          </div>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+            <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
+              Corporate Resource
+            </span>
+            <br />
+            <span className="text-foreground">Supply System</span>
           </h1>
-          <p className="text-2xl font-semibold text-foreground mb-4">
-            Система Управления Поставками Компании
-          </p>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Современная система управления заявками для отдела снабжения. 
-            Упростите работу с заявками клиентов и повысьте эффективность команды.
+            <br />
+            <span className="text-foreground font-medium">Упростите работу и повысьте эффективность команды.</span>
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Button 
               size="lg" 
               onClick={() => navigate("/dashboard")}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
             >
               Перейти к дашборду
+              <TrendingUp className="ml-2 h-5 w-5" />
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 font-semibold px-8"
+              className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-10 py-6 text-lg hover:border-primary/70 transition-all"
             >
               Узнать больше
             </Button>
@@ -75,41 +96,75 @@ const Index = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <div 
+              <Card 
                 key={index}
-                className="bg-card p-6 rounded-lg shadow-card hover:shadow-elevated transition-all border border-border"
+                className="group relative p-8 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in overflow-hidden"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="bg-primary/10 text-primary p-3 rounded-lg w-fit mb-4">
-                  <Icon className="h-6 w-6" />
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="relative">
+                  <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4 rounded-xl w-fit mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
-              </div>
+              </Card>
             );
           })}
         </div>
 
         {/* Stats Section */}
-        <div className="mt-20 bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-8 text-primary-foreground">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <p className="text-4xl font-bold mb-2">500+</p>
-              <p className="text-sm opacity-90">Заявок обработано</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-3xl p-12 text-primary-foreground border-0 shadow-2xl">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+          
+          <div className="relative">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                Доверьтесь цифрам
+              </h2>
+              <p className="text-primary-foreground/80 text-lg">
+                Результаты, которыми мы гордимся
+              </p>
             </div>
-            <div>
-              <p className="text-4xl font-bold mb-2">98%</p>
-              <p className="text-sm opacity-90">Довольных клиентов</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold mb-2">24/7</p>
-              <p className="text-sm opacity-90">Доступность системы</p>
+            
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+                <div className="flex items-center justify-center mb-4">
+                  <FileText className="h-8 w-8 mr-2" />
+                  <p className="text-5xl md:text-6xl font-bold">500+</p>
+                </div>
+                <p className="text-base opacity-90 font-medium">Заявок обработано</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+                <div className="flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 mr-2" />
+                  <p className="text-5xl md:text-6xl font-bold">98%</p>
+                </div>
+                <p className="text-base opacity-90 font-medium">Довольных клиентов</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+                <div className="flex items-center justify-center mb-4">
+                  <Lock className="h-8 w-8 mr-2" />
+                  <p className="text-5xl md:text-6xl font-bold">24/7</p>
+                </div>
+                <p className="text-base opacity-90 font-medium">Доступность системы</p>
+              </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
