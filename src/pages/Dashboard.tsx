@@ -105,48 +105,50 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        <div className="flex items-center justify-end gap-4 pb-6 border-b border-border/50">
+    <div className="min-h-screen bg-muted/30">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 pb-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
           <div className="flex items-center gap-2 flex-wrap">
             <OrganizationSwitcher />
             <Button onClick={() => navigate("/requests")} variant="outline" size="sm" className="gap-2">
               <List className="h-4 w-4" />
-              Все заявки
+              <span className="hidden sm:inline">Все заявки</span>
             </Button>
             <Button onClick={() => navigate("/import")} variant="outline" size="sm" className="gap-2">
               <Upload className="h-4 w-4" />
-              Импорт
+              <span className="hidden sm:inline">Импорт</span>
             </Button>
             <Button onClick={() => navigate("/manage-users")} variant="outline" size="sm" className="gap-2">
               <Users className="h-4 w-4" />
-              Пользователи
+              <span className="hidden sm:inline">Пользователи</span>
             </Button>
             <CreateRequestDialog>
               <Button size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
-                Создать
+                <span className="hidden sm:inline">Создать</span>
               </Button>
             </CreateRequestDialog>
             <Button onClick={handleLogout} variant="ghost" size="sm" className="gap-2">
               <LogOut className="h-4 w-4" />
-              Выход
+              <span className="hidden sm:inline">Выход</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsLoading ? (
             <>
               {[...Array(4)].map((_, i) => (
-                <Card key={i} className="border-border/50">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <Card key={i} className="bg-card border-border/40 shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="h-5 w-5 rounded" />
                   </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-10 w-16" />
+                  <CardContent className="pt-2">
+                    <Skeleton className="h-8 w-20" />
                   </CardContent>
                 </Card>
               ))}
@@ -157,19 +159,17 @@ const Dashboard = () => {
               return (
                 <Card 
                   key={stat.title} 
-                  className="hover:shadow-xl transition-all duration-300 cursor-pointer border-border/50 hover:border-primary/30 hover:-translate-y-1 bg-card/80 backdrop-blur-sm"
+                  className="bg-card border-border/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/50"
                   onClick={() => navigate(stat.link)}
                 >
-                  <CardHeader className="flex flex-row items-center justify-between pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
                       {stat.title}
                     </CardTitle>
-                    <div className={`p-3 rounded-lg ${stat.bgColor} shadow-sm`}>
-                      <Icon className={`h-6 w-6 ${stat.color}`} />
-                    </div>
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-4xl font-bold tracking-tight">{stat.value}</div>
+                  <CardContent className="pt-2">
+                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
                   </CardContent>
                 </Card>
               );
@@ -178,74 +178,74 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Requests */}
-        <Card className="border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
-          <CardHeader className="border-b border-border/50 bg-muted/20">
+        <Card className="bg-card border-border/40 shadow-sm">
+          <CardHeader className="border-b border-border/40">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold">Последние заявки</CardTitle>
-              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2">
+              <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
+              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 Все заявки
                 <List className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             {requestsLoading ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 border border-border/50 rounded-xl">
-                    <Skeleton className="h-14 w-14 rounded-lg" />
+                  <div key={i} className="flex items-center gap-3 p-3 border border-border/40 rounded-lg">
+                    <Skeleton className="h-10 w-10 rounded" />
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-5 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-2/3" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : recentRequests.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="p-6 rounded-full bg-muted/30 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                  <FileText className="h-12 w-12 text-muted-foreground" />
+              <div className="text-center py-12">
+                <div className="p-4 rounded-full bg-muted w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">У вас пока нет заявок</h3>
-                <p className="text-muted-foreground mb-6">Начните с импорта данных из Google Sheets</p>
-                <Button onClick={() => navigate("/import")} className="gap-2">
+                <h3 className="text-lg font-semibold mb-2">У вас пока нет заявок</h3>
+                <p className="text-sm text-muted-foreground mb-4">Начните с импорта данных из Google Sheets</p>
+                <Button onClick={() => navigate("/import")} className="gap-2" size="sm">
                   <Upload className="h-4 w-4" />
                   Импортировать данные
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentRequests.map((request) => (
                   <div
                     key={request.id}
                     onClick={() => handleRequestClick(request)}
-                    className="flex items-start gap-4 p-4 border border-border/50 rounded-xl hover:bg-muted/30 hover:border-primary/30 transition-all duration-200 cursor-pointer group hover:shadow-md"
+                    className="flex items-start gap-3 p-3 border border-border/40 rounded-lg hover:bg-muted/50 hover:border-primary/40 transition-all duration-150 cursor-pointer group"
                   >
-                    <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <FileText className="h-6 w-6 text-primary" />
+                    <div className="p-2 rounded bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                      <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="flex-1">
-                          <p className="font-semibold text-foreground truncate text-lg">
+                          <p className="font-semibold text-foreground truncate text-sm">
                             {request.request_number}
                           </p>
-                          <p className="text-sm text-muted-foreground truncate mt-1.5">
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
                             {request.description}
                           </p>
                         </div>
-                        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm ${getStatusColor(request.status)} bg-opacity-10`}>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap ${getStatusColor(request.status)} bg-opacity-10`}>
                           {request.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
                           {new Date(request.request_date).toLocaleDateString("ru-RU")}
                         </span>
                         {request.priority && (
-                          <span className="flex items-center gap-1.5 font-medium">
-                            <AlertCircle className="h-3.5 w-3.5" />
+                          <span className="flex items-center gap-1 font-medium">
+                            <AlertCircle className="h-3 w-3" />
                             {request.priority}
                           </span>
                         )}
@@ -262,8 +262,8 @@ const Dashboard = () => {
         </Card>
       </div>
       <CreateRequestDialog>
-        <Button className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl hover:shadow-2xl transition-all" size="icon">
-          <Plus className="h-6 w-6" />
+        <Button className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" size="icon">
+          <Plus className="h-5 w-5" />
         </Button>
       </CreateRequestDialog>
       {selectedRequest && (
