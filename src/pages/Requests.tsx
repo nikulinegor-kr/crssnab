@@ -118,7 +118,7 @@ const Requests = () => {
   const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="w-full p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
