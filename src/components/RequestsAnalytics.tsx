@@ -60,7 +60,9 @@ export function RequestsAnalytics({ requests }: RequestsAnalyticsProps) {
     }));
 
   // Вычисление метрик
-  const completedRequests = requests.filter(r => r.status === "Выполнено").length;
+  const completedRequests = requests.filter(r => 
+    r.status === "Выполнено" || r.status === "Доставлено" || r.status === "Доставлено в ТК"
+  ).length;
   const completionRate = requests.length > 0 ? ((completedRequests / requests.length) * 100).toFixed(1) : "0";
   
   const inProgressRequests = requests.filter(r => 
