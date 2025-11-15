@@ -13,6 +13,10 @@ import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { ExportButton } from "@/components/dashboard/ExportButton";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
+import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletionWidget";
+import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
+import { PriorityChartWidget } from "@/components/dashboard/PriorityChartWidget";
+import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -97,9 +101,14 @@ const Dashboard = () => {
         {/* Header with Export */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          {!requestsLoading && requests && requests.length > 0 && (
-            <ExportButton requests={requests} />
-          )}
+          <div className="flex gap-2">
+            {!requestsLoading && requests && requests.length > 0 && (
+              <>
+                <ExcelExportButton requests={requests} />
+                <ExportButton requests={requests} />
+              </>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -147,7 +156,16 @@ const Dashboard = () => {
           <RequestsAnalytics requests={requests} />
         )}
 
-        {/* Дополнительные виджеты */}
+        {/* Дополнительные виджеты - первая линия */}
+        {!requestsLoading && requests && requests.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AverageCompletionWidget requests={requests} />
+            <TopExecutorsWidget requests={requests} />
+            <PriorityChartWidget requests={requests} />
+          </div>
+        )}
+
+        {/* Дополнительные виджеты - вторая линия */}
         {!requestsLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CalendarWidget requests={requests} />
