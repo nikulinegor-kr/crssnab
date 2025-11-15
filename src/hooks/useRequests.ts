@@ -7,6 +7,7 @@ export interface Request {
   request_date: string;
   description: string;
   status: string;
+  priority: string;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
