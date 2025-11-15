@@ -24,17 +24,40 @@ export function RequestsAnalytics({ requests }: RequestsAnalyticsProps) {
   }, [] as { month: string; count: number }[]).slice(-12);
 
   // Подготовка данных для круговой диаграммы (по статусам)
-  const statusData = requests.reduce((acc, req) => {
-    const existing = acc.find(item => item.name === req.status);
-    if (existing) {
-      existing.value += 1;
-    } else {
-      acc.push({ name: req.status, value: 1 });
-    }
-    return acc;
-  }, [] as { name: string; value: number }[]);
+  const statusOrder = [
+    "Новая заявка",
+    "КП", 
+    "Счёт",
+    "В работе",
+    "В пути",
+    "Доставлено в ТК",
+    "Доставлено"
+  ];
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--info))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
+  const statusColors: Record<string, string> = {
+    "Новая заявка": "hsl(var(--accent))",
+    "КП": "hsl(220, 70%, 60%)",
+    "Счёт": "hsl(30, 80%, 55%)",
+    "В работе": "hsl(var(--info))",
+    "В пути": "hsl(200, 75%, 50%)",
+    "Доставлено в ТК": "hsl(150, 60%, 50%)",
+    "Доставлено": "hsl(var(--success))"
+  };
+
+  // Подсчет заявок по статусам
+  const statusCounts = requests.reduce((acc, req) => {
+    acc[req.status] = (acc[req.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Формирование данных в нужном порядке
+  const statusData = statusOrder
+    .filter(status => statusCounts[status] > 0)
+    .map(status => ({
+      name: status,
+      value: statusCounts[status],
+      color: statusColors[status] || "hsl(var(--muted))"
+    }));
 
   // Вычисление метрик
   const completedRequests = requests.filter(r => r.status === "Выполнено").length;
@@ -110,7 +133,7 @@ export function RequestsAnalytics({ requests }: RequestsAnalyticsProps) {
                   dataKey="value"
                 >
                   {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -123,17 +146,17 @@ export function RequestsAnalytics({ requests }: RequestsAnalyticsProps) {
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="mt-2 space-y-1">
-              {statusData.slice(0, 3).map((item, idx) => (
+            <div className="mt-2 space-y-1 max-h-[120px] overflow-y-auto">
+              {statusData.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: item.color }}
                     />
                     <span className="text-muted-foreground truncate">{item.name}</span>
                   </div>
-                  <span className="font-medium">{item.value}</span>
+                  <span className="font-medium flex-shrink-0">{item.value}</span>
                 </div>
               ))}
             </div>
