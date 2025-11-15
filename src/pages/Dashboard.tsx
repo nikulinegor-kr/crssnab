@@ -1,18 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload, LogOut } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload, LogOut, Users } from "lucide-react";
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useEffect } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading } = useRequests();
   const { data: stats, isLoading: statsLoading } = useRequestStats();
   const { toast } = useToast();
+  const { currentOrgId } = useCurrentOrganization();
+
+  useEffect(() => {
+    if (!currentOrgId) {
+      navigate("/select-organization");
+    }
+  }, [currentOrgId, navigate]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -84,10 +94,13 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">KR Заявки</h1>
-            <p className="text-muted-foreground mt-1">Система управления заявками отдела снабжения</p>
+            <h1 className="text-3xl font-bold text-foreground">
+              <span className="text-primary">CRSS</span>
+            </h1>
+            <p className="text-muted-foreground mt-1">Система Управления Поставками Компании</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <OrganizationSwitcher />
             <Button onClick={() => navigate("/requests")} variant="outline" size="sm" className="gap-2">
               <List className="h-4 w-4" />
               Все заявки
@@ -95,6 +108,10 @@ const Dashboard = () => {
             <Button onClick={() => navigate("/import")} variant="outline" size="sm" className="gap-2">
               <Upload className="h-4 w-4" />
               Импорт
+            </Button>
+            <Button onClick={() => navigate("/manage-users")} variant="outline" size="sm" className="gap-2">
+              <Users className="h-4 w-4" />
+              Пользователи
             </Button>
             <CreateRequestDialog>
               <Button size="sm" className="gap-2">
