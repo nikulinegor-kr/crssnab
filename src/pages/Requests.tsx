@@ -34,6 +34,7 @@ import { format } from "date-fns";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { Request } from "@/hooks/useRequests";
+import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -128,14 +129,22 @@ const Requests = () => {
             {filteredRequests?.length || 0} заявок найдено
           </p>
         </div>
-        {canCreate && (
-          <CreateRequestDialog>
-            <Button className="gap-2" size="sm">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Создать заявку</span>
-            </Button>
-          </CreateRequestDialog>
-        )}
+        <div className="flex gap-2">
+          {requests && requests.length > 0 && (
+            <ExcelExportButton 
+              requests={requests} 
+              filteredRequests={filteredRequests}
+            />
+          )}
+          {canCreate && (
+            <CreateRequestDialog>
+              <Button className="gap-2" size="sm">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Создать заявку</span>
+              </Button>
+            </CreateRequestDialog>
+          )}
+        </div>
       </div>
 
       <Card className="p-6">
