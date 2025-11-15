@@ -26,7 +26,7 @@ const Dashboard = () => {
       icon: Clock,
       color: "text-info",
       bgColor: "bg-info/10",
-      link: "/requests?new=true"
+      link: "/requests?status=Новая заявка"
     },
     {
       title: "Аварийно",
