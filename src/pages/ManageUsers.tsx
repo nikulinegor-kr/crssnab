@@ -41,8 +41,10 @@ const ManageUsers = () => {
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"admin" | "member">("member");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">("viewer");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!currentOrgId) {
@@ -123,40 +125,50 @@ const ManageUsers = () => {
       return;
     }
 
+    if (!newUserPassword.trim() || newUserPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Пароль должен содержать минимум 6 символов",
+      });
+      return;
+    }
+
+    setIsCreating(true);
     try {
-      // Find user by email
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", newUserEmail.trim())
-        .single();
+      // Call Edge Function to create user
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            email: newUserEmail.trim(),
+            password: newUserPassword,
+            organizationId: currentOrgId,
+            role: newUserRole,
+          }),
+        }
+      );
 
-      if (profileError) {
-        toast({
-          variant: "destructive",
-          title: "Ошибка",
-          description: "Пользователь с таким email не найден",
-        });
-        return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create user");
       }
-
-      // Add user to organization
-      const { error } = await supabase
-        .from("user_organizations")
-        .insert({
-          user_id: profile.id,
-          organization_id: currentOrgId,
-          role: newUserRole,
-        });
-
-      if (error) throw error;
 
       toast({
         title: "Успешно",
-        description: "Пользователь добавлен в организацию",
+        description: `Пользователь ${newUserEmail} создан и добавлен в организацию`,
       });
-
+      
       setNewUserEmail("");
+      setNewUserPassword("");
       fetchMembers();
     } catch (error: any) {
       toast({
@@ -164,6 +176,8 @@ const ManageUsers = () => {
         title: "Ошибка",
         description: error.message,
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -192,12 +206,18 @@ const ManageUsers = () => {
   };
 
   const getRoleName = (role: string) => {
-    const roleMap: Record<string, string> = {
-      owner: "Владелец",
-      admin: "Администратор",
-      member: "Сотрудник",
-    };
-    return roleMap[role] || role;
+    switch (role) {
+      case "owner":
+        return "Владелец";
+      case "admin":
+        return "Управляющий";
+      case "editor":
+        return "Может добавлять заявки";
+      case "viewer":
+        return "Только чтение";
+      default:
+        return role;
+    }
   };
 
   if (!isAdmin) {
@@ -252,37 +272,54 @@ const ManageUsers = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>Добавить пользователя</CardTitle>
+            <CardTitle>Создать пользователя</CardTitle>
             <CardDescription>
-              Введите email пользователя, который уже зарегистрирован в системе
+              Создайте нового пользователя и добавьте его в организацию
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input
-                placeholder="Email пользователя"
-                value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
-                className="flex-1"
-              />
-              <Select
-                value={newUserRole}
-                onValueChange={(value: "admin" | "member") =>
-                  setNewUserRole(value)
-                }
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Администратор</SelectItem>
-                  <SelectItem value="member">Сотрудник</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={addUser}>
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить
-              </Button>
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex gap-4">
+                <Input
+                  type="email"
+                  placeholder="Email пользователя"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  type="password"
+                  placeholder="Пароль (мин. 6 символов)"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex gap-4">
+                <Select value={newUserRole} onValueChange={(value: any) => setNewUserRole(value)}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Выберите роль" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Управляющий (все права)</SelectItem>
+                    <SelectItem value="editor">Может добавлять заявки</SelectItem>
+                    <SelectItem value="viewer">Только чтение</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={addUser} disabled={isCreating}>
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Создание...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Создать
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

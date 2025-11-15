@@ -186,6 +186,14 @@ export type Database = {
         Args: { _org_name?: string }
         Returns: undefined
       }
+      user_can_create_requests: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_edit_requests: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
@@ -204,7 +212,7 @@ export type Database = {
       }
     }
     Enums: {
-      organization_role: "owner" | "admin" | "member"
+      organization_role: "owner" | "admin" | "member" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -332,7 +340,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      organization_role: ["owner", "admin", "member"],
+      organization_role: ["owner", "admin", "member", "editor", "viewer"],
     },
   },
 } as const
