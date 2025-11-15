@@ -47,10 +47,14 @@ const Dashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Доставлено": return "text-success";
-      case "Выполнена": return "text-success";
+      case "Доставлено в ТК": return "text-success";
+      case "Выполнено": return "text-success";
       case "В работе": return "text-info";
-      case "Новая": return "text-accent";
-      case "Аварийно": return "text-destructive font-semibold";
+      case "В пути": return "text-info";
+      case "Новая заявка": return "text-accent";
+      case "На согласовании": return "text-purple-500";
+      case "КП": return "text-purple-500";
+      case "Счёт": return "text-orange-500";
       default: return "text-foreground";
     }
   };
