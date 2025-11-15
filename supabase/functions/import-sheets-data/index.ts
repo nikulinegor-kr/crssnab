@@ -230,6 +230,14 @@ Deno.serve(async (req) => {
 
     const requests: SheetRow[] = [];
     
+    // Log first data row to understand structure
+    if (rows.length > 1) {
+      console.log('First data row structure:');
+      for (let j = 0; j < Math.min(15, rows[1].length); j++) {
+        console.log(`  Column ${j}: "${rows[1][j]}"`);
+      }
+    }
+    
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length < 2) continue;
