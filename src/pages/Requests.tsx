@@ -20,7 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, ArrowLeft } from "lucide-react";
+import { Search, Plus, ArrowLeft, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -32,7 +39,7 @@ const Requests = () => {
   const [searchParams] = useSearchParams();
   const { data: requests, isLoading } = useRequests();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -45,7 +52,7 @@ const Requests = () => {
     const isNew = searchParams.get("new");
     
     if (status) {
-      setStatusFilter(status);
+      setStatusFilter([status]);
     }
     if (priority) {
       setPriorityFilter(priority);
@@ -66,7 +73,7 @@ const Requests = () => {
       request.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.request_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || request.status === statusFilter;
+      statusFilter.length === 0 || statusFilter.includes(request.status);
     const matchesPriority =
       priorityFilter === "all" || request.priority === priorityFilter;
     const matchesYear =
@@ -143,19 +150,50 @@ const Requests = () => {
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Все статусы" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все статусы</SelectItem>
-              {statuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full md:w-[200px] justify-between">
+                {statusFilter.length === 0 
+                  ? "Все статусы" 
+                  : `Статусы (${statusFilter.length})`}
+                {statusFilter.length > 0 && (
+                  <X 
+                    className="h-4 w-4 ml-2" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStatusFilter([]);
+                    }}
+                  />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Выберите статусы</Label>
+                {statuses.map((status) => (
+                  <div key={status} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`status-${status}`}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setStatusFilter([...statusFilter, status]);
+                        } else {
+                          setStatusFilter(statusFilter.filter(s => s !== status));
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor={`status-${status}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {status}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Все приоритеты" />
