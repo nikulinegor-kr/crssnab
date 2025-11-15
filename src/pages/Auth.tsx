@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const loginSchema = z.object({
@@ -286,8 +286,17 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <Card className="w-full max-w-md shadow-elevated">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">
+        <CardHeader className="space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="w-fit -ml-2 mb-2 text-muted-foreground hover:text-primary"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            На главную
+          </Button>
+          <CardTitle className="text-2xl font-bold text-center">
             Вход в систему
           </CardTitle>
         </CardHeader>
