@@ -42,7 +42,7 @@ serve(async (req) => {
       }
     );
 
-    // Create user
+    // Create user (profile will be created automatically by trigger)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -57,24 +57,8 @@ serve(async (req) => {
       );
     }
 
-    // Create profile
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: userData.user.id,
-        email: email,
-        organization_name: "",
-      });
-
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      // Try to clean up the user
-      await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
-      return new Response(
-        JSON.stringify({ error: "Failed to create user profile" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Wait a bit for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // Add user to organization
     const { error: orgError } = await supabaseAdmin
