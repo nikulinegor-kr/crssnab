@@ -10,9 +10,7 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useEffect, useState } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
-import { DeadlinesWidget } from "@/components/dashboard/DeadlinesWidget";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
-import { ProgressWidget } from "@/components/dashboard/ProgressWidget";
 import { ExportButton } from "@/components/dashboard/ExportButton";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 
@@ -152,13 +150,11 @@ const Dashboard = () => {
         {/* Дополнительные виджеты */}
         {!requestsLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ProgressWidget requests={requests} />
+            <CalendarWidget requests={requests} />
             <EmergencyRequestsWidget 
               requests={requests} 
               onRequestClick={handleRequestClick}
             />
-            <DeadlinesWidget requests={requests} />
-            <CalendarWidget requests={requests} />
           </div>
         )}
 
