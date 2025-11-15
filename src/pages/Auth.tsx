@@ -287,14 +287,9 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold">
-            <span className="text-primary">CRSS</span>
+          <CardTitle className="text-2xl font-bold">
+            Вход в систему
           </CardTitle>
-          <CardDescription>
-            Corporate Resource Supply System
-            <br />
-            <span className="text-xs">Система Управления Поставками Компании</span>
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">

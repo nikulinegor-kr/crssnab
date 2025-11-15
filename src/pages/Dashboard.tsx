@@ -107,13 +107,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-border/50">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              CRSS
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">Система Управления Поставками Компании</p>
-          </div>
+        <div className="flex items-center justify-end gap-4 pb-6 border-b border-border/50">
           <div className="flex items-center gap-2 flex-wrap">
             <OrganizationSwitcher />
             <Button onClick={() => navigate("/requests")} variant="outline" size="sm" className="gap-2">
