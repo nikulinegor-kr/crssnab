@@ -108,15 +108,15 @@ const Index = () => {
       {/* Hero Section */}
       <div className="relative max-w-7xl mx-auto px-6 py-20">
         <div className="text-center space-y-8 mb-24 animate-fade-in">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
             <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-              Corporate Resource
+              CRSS
             </span>
-            <br />
-            <span className="text-foreground">Supply System</span>
+            {" — "}
+            <span className="text-foreground">Corporate Resource Supply System</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground italic">
-            Корпоративная система управления ресурсами
+          <p className="text-xl md:text-2xl text-muted-foreground font-medium mt-4">
+            Система Управления Поставками Компании
           </p>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Современная система управления заявками для отдела снабжения. 
