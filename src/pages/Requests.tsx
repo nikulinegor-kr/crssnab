@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, ArrowLeft, X } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -120,24 +120,19 @@ const Requests = () => {
   const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="w-full p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Все заявки</h1>
-            <p className="text-muted-foreground">
-              {filteredRequests?.length || 0} заявок найдено
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>
+          <p className="text-sm text-muted-foreground">
+            {filteredRequests?.length || 0} заявок найдено
+          </p>
         </div>
         {canCreate && (
           <CreateRequestDialog>
-            <Button className="gap-2">
+            <Button className="gap-2" size="sm">
               <Plus className="h-4 w-4" />
-              Создать заявку
+              <span className="hidden sm:inline">Создать заявку</span>
             </Button>
           </CreateRequestDialog>
         )}
