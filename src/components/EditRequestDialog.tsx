@@ -570,9 +570,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               <div className="space-y-2">
                 <Label>Фото заявки</Label>
                 {request?.photo_url && (
-                  <div className="text-xs text-muted-foreground mb-2">
-                    <a href={request.photo_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                      Текущее фото
+                  <div className="mb-2">
+                    <a 
+                      href={request.photo_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Image className="h-4 w-4" />
+                      Открыть фото
                     </a>
                   </div>
                 )}
@@ -624,9 +630,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               <div className="space-y-2">
                 <Label>Документ (Счёт/КП)</Label>
                 {request?.document_url && (
-                  <div className="text-xs text-muted-foreground mb-2">
-                    <a href={request.document_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                      Текущий документ
+                  <div className="mb-2">
+                    <a 
+                      href={request.document_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Открыть документ
                     </a>
                   </div>
                 )}
