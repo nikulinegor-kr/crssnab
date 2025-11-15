@@ -115,6 +115,9 @@ const Index = () => {
             <br />
             <span className="text-foreground">Supply System</span>
           </h1>
+          <p className="text-lg md:text-xl text-muted-foreground italic">
+            Корпоративная система управления ресурсами
+          </p>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Современная система управления заявками для отдела снабжения. 
             <br />
