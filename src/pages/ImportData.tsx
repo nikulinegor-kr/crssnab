@@ -6,7 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileSpreadsheet, CheckCircle, ArrowLeft } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, ArrowLeft, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 const ImportData = () => {
   const navigate = useNavigate();
@@ -14,9 +26,47 @@ const ImportData = () => {
   const [sheetRange, setSheetRange] = useState("Лист1!A:K");
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<{ [key: string]: boolean }>({});
+  const [clearing, setClearing] = useState(false);
   const { toast } = useToast();
+  const { currentOrgId } = useCurrentOrganization();
 
   const years = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
+
+  const handleClearAllRequests = async () => {
+    if (!currentOrgId) {
+      toast({
+        title: "Ошибка",
+        description: "Организация не найдена",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setClearing(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .delete()
+        .eq("organization_id", currentOrgId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешно",
+        description: "Все заявки успешно удалены",
+      });
+      
+      setImported({});
+    } catch (err: any) {
+      toast({
+        title: "Ошибка",
+        description: err.message || "Произошла ошибка при удалении",
+        variant: "destructive",
+      });
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const handleImportFromSheets = async (year: string) => {
     if (!spreadsheetId) {
@@ -85,7 +135,32 @@ const ImportData = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Настройки Google Sheets</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Настройки Google Sheets</span>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={clearing}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Очистить все заявки
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Это действие удалит все заявки вашей организации из базы данных. 
+                      Это действие необратимо.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Отмена</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAllRequests} className="bg-destructive hover:bg-destructive/90">
+                      Удалить всё
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
