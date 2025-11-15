@@ -25,6 +25,12 @@ const SelectOrganization = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Если уже выбранная организация сохранена — сразу в дашборд
+    const saved = localStorage.getItem("currentOrganizationId");
+    if (saved) {
+      navigate("/dashboard");
+      return;
+    }
     fetchOrganizations();
   }, []);
 
@@ -114,6 +120,12 @@ const SelectOrganization = () => {
                 У вас пока нет доступа ни к одной организации
               </CardDescription>
             </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button onClick={async () => { await supabase.rpc('ensure_user_initialized'); await fetchOrganizations(); }}>
+                <Plus className="h-4 w-4 mr-2" /> Создать мою организацию
+              </Button>
+              <Button variant="outline" onClick={fetchOrganizations}>Обновить</Button>
+            </CardContent>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
