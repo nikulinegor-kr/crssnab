@@ -162,6 +162,35 @@ Deno.serve(async (req) => {
 
   try {
     const { spreadsheetId, range, year } = await req.json();
+    
+    // Get user from authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get user's organization
+    const { data: userOrg, error: orgError } = await supabaseClient
+      .from('user_organizations')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (orgError || !userOrg) {
+      throw new Error('User organization not found');
+    }
 
     console.log('Importing data from sheet:', { spreadsheetId, range, year });
 
@@ -244,7 +273,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { error } = await supabase.from('requests').insert(requests);
+    // Add organization_id and created_by to all requests
+    const requestsWithOrg = requests.map(req => ({
+      ...req,
+      organization_id: userOrg.organization_id,
+      created_by: user.id,
+    }));
+
+    const { error } = await supabase.from('requests').insert(requestsWithOrg);
 
     if (error) {
       console.error('Error inserting data:', error);
