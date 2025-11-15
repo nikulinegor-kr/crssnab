@@ -1,31 +1,85 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield, TrendingUp, Lock } from "lucide-react";
+import { FileText, BarChart3, Users, Shield, TrendingUp, Lock, CheckCircle, Zap, Clock, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [counts, setCounts] = useState({ requests: 0, uptime: 0, years: 0 });
+
+  // Animated counters
+  useEffect(() => {
+    const duration = 2000;
+    const steps = 60;
+    const interval = duration / steps;
+    let step = 0;
+
+    const timer = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      setCounts({
+        requests: Math.floor(500 * progress),
+        uptime: Math.floor(247 * progress),
+        years: Math.floor(5 * progress)
+      });
+
+      if (step >= steps) {
+        clearInterval(timer);
+        setCounts({ requests: 500, uptime: 247, years: 5 });
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const features = [
     {
       icon: FileText,
       title: "Управление заявками",
-      description: "Создавайте, отслеживайте и управляйте всеми заявками в одном месте"
+      description: "Создавайте, отслеживайте и управляйте всеми заявками в одном месте",
+      color: "from-blue-500 to-cyan-500"
     },
     {
       icon: BarChart3,
       title: "Аналитика и отчёты",
-      description: "Получайте детальную статистику по заявкам и исполнителям"
+      description: "Получайте детальную статистику по заявкам и исполнителям",
+      color: "from-purple-500 to-pink-500"
     },
     {
       icon: Users,
       title: "Командная работа",
-      description: "Назначайте ответственных и отслеживайте прогресс в реальном времени"
+      description: "Назначайте ответственных и отслеживайте прогресс в реальном времени",
+      color: "from-orange-500 to-red-500"
     },
     {
       icon: Shield,
       title: "Безопасность данных",
-      description: "Контроль доступа и защита конфиденциальной информации"
+      description: "Контроль доступа и защита конфиденциальной информации",
+      color: "from-green-500 to-emerald-500"
+    }
+  ];
+
+  const workflow = [
+    {
+      icon: CheckCircle,
+      title: "Создайте заявку",
+      description: "Быстрое создание заявки с необходимой информацией"
+    },
+    {
+      icon: Users,
+      title: "Назначьте исполнителя",
+      description: "Распределите задачи между сотрудниками"
+    },
+    {
+      icon: Clock,
+      title: "Отслеживайте прогресс",
+      description: "Следите за статусом выполнения в реальном времени"
+    },
+    {
+      icon: Target,
+      title: "Завершите успешно",
+      description: "Получите результат и аналитику"
     }
   ];
 
@@ -86,32 +140,71 @@ const Index = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <Card 
                 key={index}
-                className="group relative p-8 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in overflow-hidden"
+                className="group relative p-6 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in overflow-hidden"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                 
                 <div className="relative">
-                  <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4 rounded-xl w-fit mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <Icon className="h-7 w-7" />
+                  <div className={`bg-gradient-to-br ${feature.color} text-white p-3 rounded-xl w-fit mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="h-6 w-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
               </Card>
             );
           })}
+        </div>
+
+        {/* How it works section */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Zap className="h-4 w-4" />
+              Простой процесс работы
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Как это работает?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Всего четыре простых шага отделяют вас от эффективного управления заявками
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {/* Connection lines for desktop */}
+            <div className="hidden lg:block absolute top-16 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20 -z-10"></div>
+            
+            {workflow.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div key={index} className="relative">
+                  <Card className="p-6 text-center hover:shadow-xl transition-all duration-300 border-border/50 bg-card/80 backdrop-blur-sm group hover:-translate-y-2">
+                    <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="h-8 w-8" />
+                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-accent-foreground text-sm font-bold flex items-center justify-center">
+                        {index + 1}
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Stats Section */}
@@ -131,23 +224,23 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
                 <div className="flex items-center justify-center mb-4">
-                  <FileText className="h-8 w-8 mr-2" />
-                  <p className="text-5xl md:text-6xl font-bold">500+</p>
+                  <FileText className="h-8 w-8 mr-2 group-hover:animate-pulse" />
+                  <p className="text-5xl md:text-6xl font-bold">{counts.requests}+</p>
                 </div>
                 <p className="text-base opacity-90 font-medium">Заявок обработано</p>
               </div>
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
                 <div className="flex items-center justify-center mb-4">
-                  <TrendingUp className="h-8 w-8 mr-2" />
-                  <p className="text-5xl md:text-6xl font-bold">5+</p>
+                  <TrendingUp className="h-8 w-8 mr-2 group-hover:animate-pulse" />
+                  <p className="text-5xl md:text-6xl font-bold">{counts.years}+</p>
                 </div>
                 <p className="text-base opacity-90 font-medium">Лет успешной работы</p>
               </div>
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105">
+              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
                 <div className="flex items-center justify-center mb-4">
-                  <Lock className="h-8 w-8 mr-2" />
+                  <Lock className="h-8 w-8 mr-2 group-hover:animate-pulse" />
                   <p className="text-5xl md:text-6xl font-bold">24/7</p>
                 </div>
                 <p className="text-base opacity-90 font-medium">Доступность системы</p>
