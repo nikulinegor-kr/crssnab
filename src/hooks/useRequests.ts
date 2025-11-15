@@ -8,6 +8,8 @@ export interface Request {
   description: string;
   status: string;
   priority: string;
+  applicant: string | null;
+  executor: string | null;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;

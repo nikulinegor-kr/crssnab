@@ -20,10 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Calendar, Package, ArrowLeft } from "lucide-react";
+import { Search, Plus, ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 
 const Requests = () => {
@@ -147,55 +146,80 @@ const Requests = () => {
             ))}
           </div>
         ) : filteredRequests && filteredRequests.length > 0 ? (
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Номер</TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead>Описание</TableHead>
+                  <TableHead>Заявитель</TableHead>
+                  <TableHead>Исполнитель</TableHead>
                   <TableHead>Статус</TableHead>
+                  <TableHead>Приоритет</TableHead>
                   <TableHead>Контрагент</TableHead>
+                  <TableHead>Наличие/Сроки</TableHead>
+                  <TableHead>Счет</TableHead>
                   <TableHead>Оплата</TableHead>
+                  <TableHead>Отгрузка</TableHead>
                   <TableHead>Доставка</TableHead>
+                  <TableHead>ТК</TableHead>
+                  <TableHead>ТТН</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRequests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell className="font-mono text-sm">
-                      {request.request_number}
+                    <TableCell className="whitespace-nowrap">
+                      {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {format(new Date(request.request_date), "dd.MM.yyyy", {
-                          locale: ru,
-                        })}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
+                    <TableCell className="max-w-[250px] truncate">
                       {request.description}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.applicant || "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.executor || "-"}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(request.status)}>
                         {request.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell>
+                      <Badge variant={request.priority === "Аварийно" ? "destructive" : "outline"}>
+                        {request.priority}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {request.contractor || "-"}
+                    </TableCell>
+                    <TableCell className="max-w-[150px] truncate">
+                      {request.availability_delivery_time || "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.invoice_number || "-"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {request.payment_percentage}%
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {request.delivery_date
-                        ? format(new Date(request.delivery_date), "dd.MM.yy", {
-                            locale: ru,
-                          })
+                    <TableCell className="whitespace-nowrap">
+                      {request.shipment_date
+                        ? format(new Date(request.shipment_date), "dd.MM.yy")
                         : "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.delivery_date
+                        ? format(new Date(request.delivery_date), "dd.MM.yy")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.transport_company || "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {request.waybill_number || "-"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -204,7 +228,6 @@ const Requests = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg font-medium">Заявки не найдены</p>
             <p className="text-muted-foreground">
               Попробуйте изменить фильтры или импортировать данные

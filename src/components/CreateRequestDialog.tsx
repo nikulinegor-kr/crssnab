@@ -46,6 +46,14 @@ const requestSchema = z.object({
     .min(1, "Выберите статус"),
   priority: z.string()
     .min(1, "Выберите приоритет"),
+  applicant: z.string()
+    .trim()
+    .min(1, "Укажите заявителя")
+    .max(200, "Максимум 200 символов"),
+  executor: z.string()
+    .trim()
+    .max(200, "Максимум 200 символов")
+    .optional(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -106,6 +114,8 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
       description: "",
       status: "Новая заявка",
       priority: "Планово",
+      applicant: "",
+      executor: "",
       availability_delivery_time: "",
       contractor: "",
       invoice_number: "",
@@ -166,6 +176,8 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         description: data.description,
         status: data.status,
         priority: data.priority,
+        applicant: data.applicant,
+        executor: data.executor || null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
@@ -308,6 +320,36 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="applicant"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Заявитель *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Иванов И.И." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="executor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Исполнитель</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Петров П.П." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField

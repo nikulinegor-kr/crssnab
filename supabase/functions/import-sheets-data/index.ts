@@ -11,6 +11,8 @@ interface SheetRow {
   description: string;
   status: string;
   priority: string;
+  applicant: string | null;
+  executor: string | null;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
@@ -211,6 +213,8 @@ Deno.serve(async (req) => {
           description: description,
           status: normalizeStatus(originalStatus),
           priority: determinePriority(originalStatus),
+          applicant: row[2] || null,
+          executor: null,
           availability_delivery_time: row[4] || null,
           contractor: row[5] || null,
           invoice_number: row[6] || null,

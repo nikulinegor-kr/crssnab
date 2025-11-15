@@ -147,10 +147,20 @@ const Dashboard = () => {
                         <p className="text-sm font-medium text-foreground truncate">
                           {request.description}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span className="font-mono">{request.request_number}</span>
-                          <span>•</span>
-                          <span>{new Date(request.request_date).toLocaleDateString('ru-RU')}</span>
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{new Date(request.request_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+                          {request.applicant && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate">👤 {request.applicant}</span>
+                            </>
+                          )}
+                          {request.executor && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate">⚙️ {request.executor}</span>
+                            </>
+                          )}
                           {request.contractor && (
                             <>
                               <span>•</span>
