@@ -23,9 +23,11 @@ export type Database = {
           created_by: string | null
           delivery_date: string | null
           description: string
+          document_url: string | null
           id: string
           invoice_number: string | null
           payment_percentage: number | null
+          photo_url: string | null
           priority: string | null
           request_date: string
           request_number: string
@@ -43,9 +45,11 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description: string
+          document_url?: string | null
           id?: string
           invoice_number?: string | null
           payment_percentage?: number | null
+          photo_url?: string | null
           priority?: string | null
           request_date: string
           request_number: string
@@ -63,9 +67,11 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description?: string
+          document_url?: string | null
           id?: string
           invoice_number?: string | null
           payment_percentage?: number | null
+          photo_url?: string | null
           priority?: string | null
           request_date?: string
           request_number?: string
