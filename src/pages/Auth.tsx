@@ -53,14 +53,15 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Сначала слушаем изменения аутентификации, чтобы не пропустить событие входа
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         navigate("/select-organization");
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Затем проверим существующую сессию
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/select-organization");
       }
@@ -138,6 +139,8 @@ export default function Auth() {
         title: "Успешно",
         description: "Вы вошли в систему",
       });
+
+      navigate("/select-organization");
     } catch (error: any) {
       toast({
         title: "Ошибка",
@@ -267,6 +270,8 @@ export default function Auth() {
         title: "Успешно",
         description: "Вы вошли в систему",
       });
+
+      navigate("/select-organization");
     } catch (error: any) {
       toast({
         title: "Ошибка",
