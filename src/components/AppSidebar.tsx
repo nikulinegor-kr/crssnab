@@ -1,4 +1,4 @@
-import { Home, FileText, Upload, Users, LogOut } from "lucide-react";
+import { Home, FileText, Upload, Users, LogOut, CreditCard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ const menuItems = [
   { title: "Все заявки", url: "/requests", icon: FileText },
   { title: "Импорт данных", url: "/import", icon: Upload },
   { title: "Пользователи", url: "/manage-users", icon: Users },
+  { title: "Тарифы", url: "/pricing", icon: CreditCard },
 ];
 
 export function AppSidebar() {
@@ -72,8 +73,8 @@ export function AppSidebar() {
               {menuItems.map((item) => {
                 const isActive = currentPath === item.url;
                 const url = isDemoMode ? `${item.url}?demo=true` : item.url;
-                // Скрываем "Импорт данных" и "Пользователи" в демо-режиме
-                if (isDemoMode && (item.url === "/import" || item.url === "/manage-users")) {
+                // Скрываем "Импорт данных", "Пользователи" и "Тарифы" в демо-режиме
+                if (isDemoMode && (item.url === "/import" || item.url === "/manage-users" || item.url === "/pricing")) {
                   return null;
                 }
                 return (

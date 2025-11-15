@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield, TrendingUp, Lock, CheckCircle, Zap, Clock, Target, ChevronDown, HelpCircle, ArrowRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { FileText, BarChart3, Users, Shield, TrendingUp, Lock, CheckCircle, Zap, Clock, Target, ChevronDown, HelpCircle, ArrowRight, Check } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -10,10 +10,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+
+type SubscriptionPlan = Tables<"subscription_plans">;
 
 const Index = () => {
   const navigate = useNavigate();
   const [counts, setCounts] = useState({ requests: 0, uptime: 0, years: 0 });
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
 
   // Smooth scroll to section
   const scrollToSection = (sectionId: string) => {
@@ -40,6 +45,23 @@ const Index = () => {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
+  }, []);
+
+  // Fetch subscription plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      const { data } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .eq("is_active", true)
+        .order("price_monthly", { ascending: true });
+      
+      if (data) {
+        setPlans(data);
+      }
+    };
+
+    fetchPlans();
   }, []);
 
   // Animated counters
@@ -170,6 +192,12 @@ const Index = () => {
                   Как работает
                 </button>
                 <button
+                  onClick={() => scrollToSection("pricing")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Тарифы
+                </button>
+                <button
                   onClick={() => scrollToSection("faq")}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
@@ -292,6 +320,81 @@ const Index = () => {
                     <p className="text-sm text-muted-foreground">{step.description}</p>
                   </Card>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Pricing Section */}
+        <div id="pricing" className="mb-20 scroll-animate">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-primary text-sm font-medium mb-4">
+              <TrendingUp className="h-4 w-4" />
+              Прозрачное ценообразование
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+              Выберите подходящий тариф
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Первый месяц бесплатно для всех новых пользователей
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {plans.map((plan) => {
+              const features = Array.isArray(plan.features) ? plan.features : [];
+              
+              return (
+                <Card 
+                  key={plan.id} 
+                  className={`flex flex-col relative overflow-hidden transition-all hover:scale-105 ${
+                    plan.slug === "professional" 
+                      ? "border-2 border-primary shadow-xl bg-primary/5" 
+                      : "hover:shadow-lg"
+                  }`}
+                >
+                  {plan.slug === "professional" && (
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                      Популярный
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">{plan.price_monthly}₽</span>
+                      <span className="text-muted-foreground">/месяц</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                        <span className="text-sm">До {plan.max_users} пользователей</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                        <span className="text-sm">До {plan.max_requests_per_month} заявок/месяц</span>
+                      </div>
+                      {features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                          <span className="text-sm">{String(feature)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => navigate("/auth")}
+                      variant={plan.slug === "professional" ? "default" : "outline"}
+                    >
+                      Начать
+                    </Button>
+                  </CardFooter>
+                </Card>
               );
             })}
           </div>
