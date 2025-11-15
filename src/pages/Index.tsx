@@ -42,17 +42,9 @@ const Index = () => {
       {/* Header with Login Button */}
       <div className="relative max-w-7xl mx-auto px-6 pt-8 animate-fade-in">
         <div className="flex justify-between items-center backdrop-blur-sm bg-card/50 rounded-2xl px-6 py-4 border border-border/50 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-              <Sparkles className="h-7 w-7 text-primary-foreground animate-pulse" />
-            </div>
-            <div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
-                CRSS
-              </span>
-              <p className="text-xs text-muted-foreground">Corporate Resource Supply</p>
-            </div>
-          </div>
+          <span className="text-2xl font-bold text-foreground">
+            CRSS
+          </span>
           <Button 
             onClick={() => navigate("/auth")}
             className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
