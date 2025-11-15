@@ -1,12 +1,46 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield, TrendingUp, Lock, CheckCircle, Zap, Clock, Target } from "lucide-react";
+import { FileText, BarChart3, Users, Shield, TrendingUp, Lock, CheckCircle, Zap, Clock, Target, ChevronDown, HelpCircle, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const Index = () => {
   const navigate = useNavigate();
   const [counts, setCounts] = useState({ requests: 0, uptime: 0, years: 0 });
+
+  // Smooth scroll to section
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-fade-in");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".scroll-animate");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
 
   // Animated counters
   useEffect(() => {
@@ -83,6 +117,29 @@ const Index = () => {
     }
   ];
 
+  const faqItems = [
+    {
+      question: "Как начать работу с системой?",
+      answer: "Зарегистрируйтесь, создайте организацию и начните добавлять заявки. Процесс занимает менее 5 минут."
+    },
+    {
+      question: "Есть ли мобильная версия?",
+      answer: "Да, система полностью адаптивна и отлично работает на всех устройствах - телефонах, планшетах и компьютерах."
+    },
+    {
+      question: "Как обеспечивается безопасность данных?",
+      answer: "Мы используем современные методы шифрования, разграничение прав доступа и регулярное резервное копирование данных."
+    },
+    {
+      question: "Можно ли интегрировать систему с другими сервисами?",
+      answer: "Да, система поддерживает интеграции с Telegram для уведомлений, экспорт в Excel и другие популярные инструменты."
+    },
+    {
+      question: "Сколько пользователей может работать одновременно?",
+      answer: "Система поддерживает неограниченное количество пользователей с гибкой системой ролей и прав доступа."
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
       {/* Animated mesh gradient background */}
@@ -93,17 +150,45 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Header with Login Button */}
-      <div className="relative max-w-7xl mx-auto px-6 pt-8 animate-fade-in">
-        <div className="flex justify-end items-center">
-          <Button 
-            onClick={() => navigate("/auth")}
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
-          >
-            Войти в систему
-          </Button>
+      {/* Sticky Header with Navigation */}
+      <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <h1 className="text-xl font-bold text-primary">CRSS</h1>
+              <nav className="hidden md:flex items-center gap-6">
+                <button
+                  onClick={() => scrollToSection("features")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Возможности
+                </button>
+                <button
+                  onClick={() => scrollToSection("workflow")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Как работает
+                </button>
+                <button
+                  onClick={() => scrollToSection("faq")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  FAQ
+                </button>
+              </nav>
+            </div>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Button 
+                onClick={() => navigate("/auth")}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Войти
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
       
       {/* Hero Section */}
       <div className="relative max-w-7xl mx-auto px-6 py-20">
@@ -135,9 +220,11 @@ const Index = () => {
             <Button 
               size="lg" 
               variant="outline"
+              onClick={() => scrollToSection("features")}
               className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-10 py-6 text-lg hover:border-primary/70 transition-all"
             >
               Узнать больше
+              <ChevronDown className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -149,7 +236,7 @@ const Index = () => {
             return (
               <Card 
                 key={index}
-                className="group relative p-6 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-fade-in overflow-hidden"
+                className="scroll-animate group relative p-6 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 overflow-hidden"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Gradient overlay on hover */}
@@ -172,7 +259,7 @@ const Index = () => {
         </div>
 
         {/* How it works section */}
-        <div className="mb-20">
+        <div id="workflow" className="mb-20 scroll-animate">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
               <Zap className="h-4 w-4" />
@@ -193,7 +280,7 @@ const Index = () => {
             {workflow.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div key={index} className="relative">
+                <div key={index} className="relative scroll-animate" style={{ animationDelay: `${index * 100}ms` }}>
                   <Card className="p-6 text-center hover:shadow-xl transition-all duration-300 border-border/50 bg-card/80 backdrop-blur-sm group hover:-translate-y-2">
                     <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-4 group-hover:scale-110 transition-transform duration-300">
                       <Icon className="h-8 w-8" />
@@ -210,8 +297,43 @@ const Index = () => {
           </div>
         </div>
 
+        {/* FAQ Section */}
+        <div id="faq" className="mb-20 scroll-animate">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <HelpCircle className="h-4 w-4" />
+              Часто задаваемые вопросы
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Ответы на ваши вопросы
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Всё, что вам нужно знать о системе управления заявками
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqItems.map((item, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-6 hover:shadow-lg transition-all"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary hover:no-underline">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+
         {/* Stats Section */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-3xl p-12 text-primary-foreground border-0 shadow-2xl">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-3xl p-12 text-primary-foreground border-0 shadow-2xl scroll-animate mb-20">
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
@@ -251,6 +373,36 @@ const Index = () => {
             </div>
           </div>
         </Card>
+
+        {/* Final CTA Section */}
+        <div className="text-center py-20 scroll-animate">
+          <div className="max-w-3xl mx-auto space-y-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Готовы начать?
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Присоединяйтесь к компаниям, которые уже упростили управление заявками
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/auth")}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-12 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                Начать работу
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/dashboard")}
+                className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-12 py-6 text-lg transition-all"
+              >
+                Открыть демо
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
