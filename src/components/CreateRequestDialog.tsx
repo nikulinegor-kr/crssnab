@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,8 +30,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X, Image, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Label } from "@/components/ui/label";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -91,6 +92,10 @@ interface CreateRequestDialogProps {
 export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -120,6 +125,41 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
       const date = new Date(data.request_date);
       const requestNumber = `REQ-${date.getFullYear()}-${Date.now()}`;
 
+      let photoUrl = null;
+      let documentUrl = null;
+
+      // Upload photo if selected
+      if (photoFile) {
+        const photoPath = `${requestNumber}/${Date.now()}-${photoFile.name}`;
+        const { error: photoError } = await supabase.storage
+          .from("request-photos")
+          .upload(photoPath, photoFile);
+
+        if (photoError) throw photoError;
+
+        const { data: photoData } = supabase.storage
+          .from("request-photos")
+          .getPublicUrl(photoPath);
+        
+        photoUrl = photoData.publicUrl;
+      }
+
+      // Upload document if selected
+      if (documentFile) {
+        const documentPath = `${requestNumber}/${Date.now()}-${documentFile.name}`;
+        const { error: documentError } = await supabase.storage
+          .from("request-documents")
+          .upload(documentPath, documentFile);
+
+        if (documentError) throw documentError;
+
+        const { data: documentData } = supabase.storage
+          .from("request-documents")
+          .getPublicUrl(documentPath);
+        
+        documentUrl = documentData.publicUrl;
+      }
+
       const requestData = {
         request_number: requestNumber,
         request_date: data.request_date,
@@ -135,6 +175,8 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        photo_url: photoUrl,
+        document_url: documentUrl,
       };
 
       const { error } = await supabase
@@ -153,6 +195,8 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
       form.reset();
+      setPhotoFile(null);
+      setDocumentFile(null);
       setOpen(false);
     } catch (error: any) {
       toast({
@@ -409,6 +453,94 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Фото заявки</Label>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Image className="h-4 w-4" />
+                    Выбрать фото
+                  </Button>
+                  {photoFile && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="truncate max-w-[150px]">{photoFile.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          if (photoInputRef.current) photoInputRef.current.value = "";
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG, WEBP до 5 МБ
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Документ (Счёт/КП)</Label>
+                <input
+                  ref={documentInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => documentInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Выбрать файл
+                  </Button>
+                  {documentFile && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="truncate max-w-[150px]">{documentFile.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          setDocumentFile(null);
+                          if (documentInputRef.current) documentInputRef.current.value = "";
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  PDF, DOC, DOCX, XLS, XLSX до 10 МБ
+                </p>
+              </div>
+            </div>
 
             <div className="flex justify-end gap-2 pt-4">
               <Button

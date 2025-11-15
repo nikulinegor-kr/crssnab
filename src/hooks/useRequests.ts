@@ -17,6 +17,8 @@ export interface Request {
   transport_company: string | null;
   waybill_number: string | null;
   comments: string | null;
+  photo_url: string | null;
+  document_url: string | null;
   created_at: string;
   updated_at: string;
 }
