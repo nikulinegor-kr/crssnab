@@ -14,6 +14,7 @@ import { DeadlinesWidget } from "@/components/dashboard/DeadlinesWidget";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { ProgressWidget } from "@/components/dashboard/ProgressWidget";
 import { ExportButton } from "@/components/dashboard/ExportButton";
+import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -157,6 +158,7 @@ const Dashboard = () => {
               onRequestClick={handleRequestClick}
             />
             <DeadlinesWidget requests={requests} />
+            <CalendarWidget requests={requests} />
           </div>
         )}
 
