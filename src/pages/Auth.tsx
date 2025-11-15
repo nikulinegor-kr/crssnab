@@ -129,6 +129,11 @@ export default function Auth() {
         return;
       }
 
+      // Инициализируем профиль и организацию при первом входе
+      try {
+        await supabase.rpc('ensure_user_initialized');
+      } catch {}
+
       toast({
         title: "Успешно",
         description: "Вы вошли в систему",
@@ -173,12 +178,17 @@ export default function Auth() {
         return;
       }
 
+      // Инициализируем профиль и организацию на основании введённого названия
+      try {
+        await supabase.rpc('ensure_user_initialized', { _org_name: data.organizationName });
+      } catch {}
+
       toast({
         title: "Регистрация успешна",
         description: "Вы можете войти в систему",
       });
       
-      // Switch to login tab
+      // Переключаемся на вкладку входа
       const loginTab = document.querySelector('[value="login"]') as HTMLElement;
       loginTab?.click();
     } catch (error: any) {
