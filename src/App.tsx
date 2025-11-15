@@ -11,11 +11,10 @@ import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import ManageUsers from "./pages/ManageUsers";
 import Pricing from "./pages/Pricing";
+import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
-import { DemoProvider } from "./contexts/DemoContext";
-import { DemoOrProtectedRoute } from "./components/DemoOrProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,70 +24,69 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <DemoProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/select-organization"
-              element={
-                <ProtectedRoute>
-                  <SelectOrganization />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <DemoOrProtectedRoute>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </DemoOrProtectedRoute>
-              }
-            />
-            <Route
-              path="/import"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ImportData />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/requests"
-              element={
-                <DemoOrProtectedRoute>
-                  <AppLayout>
-                    <Requests />
-                  </AppLayout>
-                </DemoOrProtectedRoute>
-              }
-            />
-            <Route
-              path="/manage-users"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ManageUsers />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/pricing"
-              element={
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route
+            path="/select-organization"
+            element={
+              <ProtectedRoute>
+                <SelectOrganization />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
                 <AppLayout>
-                  <Pricing />
+                  <Dashboard />
                 </AppLayout>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </DemoProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/import"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ImportData />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/requests"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Requests />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage-users"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ManageUsers />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pricing"
+            element={
+              <AppLayout>
+                <Pricing />
+              </AppLayout>
+            }
+          />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

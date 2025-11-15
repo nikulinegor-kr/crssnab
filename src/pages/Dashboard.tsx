@@ -17,33 +17,21 @@ import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletio
 import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
 import { PriorityChartWidget } from "@/components/dashboard/PriorityChartWidget";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
-import { useDemoMode } from "@/contexts/DemoContext";
-import { useDemoData } from "@/hooks/useDemoData";
-import { DemoBanner } from "@/components/DemoBanner";
-import { useSearchParams } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isDemoMode = searchParams.get("demo") === "true";
-  const demoData = useDemoData();
-  
-  const { data: realRequests, isLoading: requestsLoading, refetch } = useRequests();
-  const { data: realStats, isLoading: statsLoading } = useRequestStats();
+  const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
+  const { data: stats, isLoading: statsLoading } = useRequestStats();
   const { currentOrgId } = useCurrentOrganization();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  // Use demo data when in demo mode
-  const requests = isDemoMode ? demoData.requests : realRequests;
-  const stats = isDemoMode ? demoData.stats : realStats;
-  const isLoading = isDemoMode ? false : (requestsLoading || statsLoading);
+  const isLoading = requestsLoading || statsLoading;
 
   useEffect(() => {
-    if (!isDemoMode && !currentOrgId) {
+    if (!currentOrgId) {
       navigate("/select-organization");
     }
-  }, [currentOrgId, navigate, isDemoMode]);
+  }, [currentOrgId, navigate]);
 
   const statsCards = [
     {
@@ -111,9 +99,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Demo Banner */}
-        {isDemoMode && <DemoBanner />}
-        
         {/* Header with Export */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
@@ -197,7 +182,7 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border/40">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
-              <Button onClick={() => navigate(isDemoMode ? "/requests?demo=true" : "/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 Все заявки
               </Button>
             </div>
