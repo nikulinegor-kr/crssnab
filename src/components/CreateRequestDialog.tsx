@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, X, Image, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -106,6 +107,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrgId } = useCurrentOrganization();
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -131,6 +133,29 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);
     try {
+      // Check if organization is selected
+      if (!currentOrgId) {
+        toast({
+          title: "Ошибка",
+          description: "Выберите организацию",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Ошибка",
+          description: "Пользователь не авторизован",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Generate request number based on date
       const date = new Date(data.request_date);
       const requestNumber = `REQ-${date.getFullYear()}-${Date.now()}`;
@@ -189,6 +214,8 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         comments: data.comments || null,
         photo_url: photoUrl,
         document_url: documentUrl,
+        organization_id: currentOrgId,
+        created_by: user.id,
       };
 
       const { error } = await supabase
