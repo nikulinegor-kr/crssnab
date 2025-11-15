@@ -99,7 +99,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
     defaultValues: {
       request_date: new Date().toISOString().split("T")[0],
       description: "",
-      status: "Новая",
+      status: "Новая заявка",
       priority: "Планово",
       availability_delivery_time: "",
       contractor: "",
@@ -165,7 +165,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
     }
   };
 
-  const statuses = ["Новая", "КП", "Плановый", "Аварийно", "Доставлено", "Выполнена"];
+  const statuses = ["Новая заявка", "На согласовании", "КП", "Счёт", "В работе", "В пути", "Доставлено в ТК", "Доставлено", "Выполнено"];
   const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (

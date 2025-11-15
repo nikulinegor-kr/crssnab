@@ -48,14 +48,18 @@ const Requests = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Доставлено":
-      case "Выполнена":
+      case "Доставлено в ТК":
+      case "Выполнено":
         return "bg-green-500/10 text-green-500 border-green-500/20";
-      case "Аварийно":
-        return "bg-red-500/10 text-red-500 border-red-500/20";
-      case "КП":
-      case "Новая":
+      case "Новая заявка":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-      case "Плановый":
+      case "На согласовании":
+      case "КП":
+        return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "Счёт":
+        return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+      case "В работе":
+      case "В пути":
         return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
       default:
         return "bg-muted text-muted-foreground";
@@ -64,12 +68,15 @@ const Requests = () => {
 
   const years = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
   const statuses = [
-    "Новая",
+    "Новая заявка",
+    "На согласовании",
     "КП",
-    "Плановый",
-    "Аварийно",
+    "Счёт",
+    "В работе",
+    "В пути",
+    "Доставлено в ТК",
     "Доставлено",
-    "Выполнена",
+    "Выполнено",
   ];
 
   return (
