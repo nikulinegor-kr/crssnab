@@ -5,18 +5,22 @@ import { FileText, Clock, AlertCircle, CheckCircle, Plus, List, Upload, LogOut, 
 import { useRequests, useRequestStats } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { Request } from "@/hooks/useRequests";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { data: requests, isLoading: requestsLoading } = useRequests();
+  const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { data: stats, isLoading: statsLoading } = useRequestStats();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!currentOrgId) {
@@ -72,7 +76,18 @@ const Dashboard = () => {
     },
   ];
 
-  const recentRequests = requests?.slice(0, 5) || [];
+  const recentRequests = requests?.slice(0, 10) || [];
+
+  const handleRequestClick = (request: Request) => {
+    setSelectedRequest(request);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
+    setSelectedRequest(null);
+    refetch();
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -90,14 +105,14 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-border/50">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              <span className="text-primary">CRSS</span>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              CRSS
             </h1>
-            <p className="text-muted-foreground mt-1">Система Управления Поставками Компании</p>
+            <p className="text-muted-foreground mt-2 text-lg">Система Управления Поставками Компании</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <OrganizationSwitcher />
@@ -126,34 +141,41 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statsLoading ? (
-            Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} className="border-none shadow-card">
-                <CardContent className="p-6">
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
-            ))
+            <>
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="border-border/50">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-10 w-16" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
           ) : (
-            statsCards.map((stat, index) => {
+            statsCards.map((stat) => {
               const Icon = stat.icon;
               return (
                 <Card 
-                  key={index} 
-                  className="border-none shadow-card hover:shadow-elevated transition-shadow cursor-pointer"
+                  key={stat.title} 
+                  className="hover:shadow-xl transition-all duration-300 cursor-pointer border-border/50 hover:border-primary/30 hover:-translate-y-1 bg-card/80 backdrop-blur-sm"
                   onClick={() => navigate(stat.link)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground font-medium">{stat.title}</p>
-                        <p className="text-3xl font-bold mt-2 text-foreground">{stat.value}</p>
-                      </div>
-                      <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
+                  <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {stat.title}
+                    </CardTitle>
+                    <div className={`p-3 rounded-lg ${stat.bgColor} shadow-sm`}>
+                      <Icon className={`h-6 w-6 ${stat.color}`} />
                     </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold tracking-tight">{stat.value}</div>
                   </CardContent>
                 </Card>
               );
@@ -161,85 +183,102 @@ const Dashboard = () => {
           )}
         </div>
 
-        <Card className="border-none shadow-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Последние заявки</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/requests")}
-              className="text-primary hover:text-primary/80"
-            >
-              Смотреть все →
-            </Button>
+        {/* Recent Requests */}
+        <Card className="border-border/50 shadow-lg bg-card/80 backdrop-blur-sm">
+          <CardHeader className="border-b border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-bold">Последние заявки</CardTitle>
+              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2">
+                Все заявки
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {requestsLoading ? (
               <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className="h-16 w-full" />
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 border border-border/50 rounded-xl">
+                    <Skeleton className="h-14 w-14 rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  </div>
                 ))}
               </div>
-            ) : recentRequests.length > 0 ? (
+            ) : recentRequests.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="p-6 rounded-full bg-muted/30 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                  <FileText className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">У вас пока нет заявок</h3>
+                <p className="text-muted-foreground mb-6">Начните с импорта данных из Google Sheets</p>
+                <Button onClick={() => navigate("/import")} className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Импортировать данные
+                </Button>
+              </div>
+            ) : (
               <div className="space-y-3">
                 {recentRequests.map((request) => (
                   <div
                     key={request.id}
-                    className="p-4 rounded-lg border border-border/50 hover:border-border transition-all hover:shadow-sm"
+                    onClick={() => handleRequestClick(request)}
+                    className="flex items-start gap-4 p-4 border border-border/50 rounded-xl hover:bg-muted/30 hover:border-primary/30 transition-all duration-200 cursor-pointer group hover:shadow-md"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {request.description}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>{new Date(request.request_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
-                          {request.applicant && (
-                            <>
-                              <span>•</span>
-                              <span className="truncate">👤 {request.applicant}</span>
-                            </>
-                          )}
-                          {request.executor && (
-                            <>
-                              <span>•</span>
-                              <span className="truncate">⚙️ {request.executor}</span>
-                            </>
-                          )}
-                          {request.contractor && (
-                            <>
-                              <span>•</span>
-                              <span className="truncate">{request.contractor}</span>
-                            </>
-                          )}
+                    <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-foreground truncate text-lg">
+                            {request.request_number}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate mt-1.5">
+                            {request.description}
+                          </p>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`text-sm font-medium ${getStatusColor(request.status)}`}>
+                        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm ${getStatusColor(request.status)} bg-opacity-10`}>
                           {request.status}
                         </span>
-                        {request.payment_percentage > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {request.payment_percentage}%
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {new Date(request.request_date).toLocaleDateString("ru-RU")}
+                        </span>
+                        {request.priority && (
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {request.priority}
                           </span>
+                        )}
+                        {request.applicant && (
+                          <span className="truncate">Заявитель: {request.applicant}</span>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">Заявок пока нет</p>
-                <Button onClick={() => navigate("/import")} variant="outline" size="sm">
-                  Импортировать данные
-                </Button>
-              </div>
             )}
           </CardContent>
         </Card>
       </div>
+      <CreateRequestDialog>
+        <Button className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl hover:shadow-2xl transition-all" size="icon">
+          <Plus className="h-6 w-6" />
+        </Button>
+      </CreateRequestDialog>
+      {selectedRequest && (
+        <EditRequestDialog
+          request={selectedRequest}
+          open={editDialogOpen}
+          onOpenChange={handleEditDialogClose}
+        />
+      )}
     </div>
   );
 };
