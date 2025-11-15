@@ -17,15 +17,15 @@ export function DemoBanner() {
         <div className="flex-1">
           <span className="font-medium text-accent">Демо-режим: </span>
           <span className="text-foreground">
-            Вы просматриваете демонстрацию с тестовыми данными. 
-            Для полного доступа{" "}
+            Вы можете создавать и редактировать заявки. Все изменения временные и не сохраняются.{" "}
             <Button
               variant="link"
               className="h-auto p-0 text-accent underline"
               onClick={() => navigate("/auth")}
             >
-              войдите в систему
+              Войдите
             </Button>
+            {" "}для работы с реальными данными.
           </span>
         </div>
         <Button

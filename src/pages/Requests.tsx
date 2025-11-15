@@ -78,14 +78,6 @@ const Requests = () => {
   }, [searchParams]);
 
   const handleRowClick = (request: Request) => {
-    if (isDemoMode) {
-      toast({
-        title: "Демо-режим",
-        description: "Редактирование недоступно в демо-режиме. Войдите в систему для полного доступа.",
-        variant: "default",
-      });
-      return;
-    }
     setSelectedRequest(request);
     setEditDialogOpen(true);
   };
@@ -158,7 +150,7 @@ const Requests = () => {
               filteredRequests={filteredRequests}
             />
           )}
-          {!isDemoMode && canCreate && (
+          {canCreate && (
             <CreateRequestDialog>
               <Button className="gap-2" size="sm">
                 <Plus className="h-4 w-4" />
