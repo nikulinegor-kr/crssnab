@@ -11,7 +11,7 @@ import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequest
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletionWidget";
 import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
-import { PriorityChartWidget } from "@/components/dashboard/PriorityChartWidget";
+import { EmergencyInProgressWidget } from "@/components/dashboard/EmergencyInProgressWidget";
 import { useDemoData } from "@/hooks/useDemoData";
 import { DemoBanner } from "@/components/DemoBanner";
 import { Input } from "@/components/ui/input";
@@ -224,7 +224,7 @@ const Demo = () => {
 
             <div className="grid gap-6 md:grid-cols-2">
               <TopExecutorsWidget requests={requests || []} />
-              <PriorityChartWidget requests={requests || []} />
+              <EmergencyInProgressWidget requests={requests || []} />
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
