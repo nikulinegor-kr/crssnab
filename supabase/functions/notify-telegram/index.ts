@@ -93,36 +93,55 @@ serve(async (req) => {
   try {
     // Verify user is authenticated
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
+      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ 
-          success: false,
           error: "Требуется авторизация" 
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Extract token from Bearer format
+    const token = authHeader.replace("Bearer ", "");
+    console.log("Token extracted, length:", token.length);
+
     const supabaseClient = createClient(
       SUPABASE_URL,
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
         global: {
-          headers: { Authorization: authHeader },
+          headers: { Authorization: `Bearer ${token}` },
         },
       }
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
+    
+    if (authError) {
+      console.error("Auth error:", authError.message);
       return new Response(
         JSON.stringify({ 
-          success: false,
-          error: "Неверный токен авторизации" 
+          error: `Ошибка авторизации: ${authError.message}` 
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    if (!user) {
+      console.error("No user found");
+      return new Response(
+        JSON.stringify({ 
+          error: "Пользователь не найден" 
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("User authenticated:", user.id);
 
     const requestBody = await req.json();
     

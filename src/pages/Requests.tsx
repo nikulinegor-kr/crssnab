@@ -122,15 +122,31 @@ const Requests = () => {
 
     setIsSending(true);
     try {
+      // Verify user session before sending
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session:", !!session);
+      
+      if (!session) {
+        toast({
+          title: "Ошибка авторизации",
+          description: "Сессия истекла. Пожалуйста, войдите снова.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       let successCount = 0;
       let errorCount = 0;
       let errorMessages: string[] = [];
 
       for (const requestId of Array.from(selectedRequestIds)) {
         try {
+          console.log("Sending request to Telegram:", requestId);
           const { data, error } = await supabase.functions.invoke('notify-telegram', {
             body: { requestId }
           });
+
+          console.log("Response:", { data, error });
 
           if (error) {
             console.error(`Error sending request ${requestId}:`, error);
