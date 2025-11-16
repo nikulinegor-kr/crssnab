@@ -19,7 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Loader2, Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Trash2, Loader2, Users, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -53,6 +61,14 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
   const [newUserPosition, setNewUserPosition] = useState("");
   const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">("viewer");
   const [isCreating, setIsCreating] = useState(false);
+  
+  // Edit user state
+  const [editingUser, setEditingUser] = useState<OrgMember | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFullName, setEditFullName] = useState("");
+  const [editPosition, setEditPosition] = useState("");
+  const [editRole, setEditRole] = useState<"admin" | "editor" | "viewer" | "member">("viewer");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchMembers();
@@ -230,6 +246,14 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
 
       if (error) throw error;
 
+      await supabase.rpc("log_audit_event", {
+        _organization_id: organizationId,
+        _action: "delete",
+        _entity_type: "user",
+        _entity_id: memberId,
+        _old_values: { email: userEmail },
+      });
+
       toast({
         title: "Успешно",
         description: "Пользователь удален",
@@ -242,6 +266,87 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
         title: "Ошибка",
         description: error.message,
       });
+    }
+  };
+
+  const openEditDialog = (member: OrgMember) => {
+    setEditingUser(member);
+    setEditFullName(member.profiles.full_name || "");
+    setEditPosition(member.profiles.position || "");
+    setEditRole(member.role === "owner" ? "admin" : member.role);
+    setEditDialogOpen(true);
+  };
+
+  const updateUser = async () => {
+    if (!editingUser) return;
+
+    if (!editFullName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка валидации",
+        description: "Введите ФИО пользователя",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const oldValues = {
+        full_name: editingUser.profiles.full_name,
+        position: editingUser.profiles.position,
+        role: editingUser.role,
+      };
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editFullName.trim(),
+          position: editPosition.trim() || null,
+        })
+        .eq("id", editingUser.user_id);
+
+      if (profileError) throw profileError;
+
+      // Update role if changed
+      if (editRole !== editingUser.role) {
+        const { error: roleError } = await supabase
+          .from("user_organizations")
+          .update({ role: editRole })
+          .eq("id", editingUser.id);
+
+        if (roleError) throw roleError;
+      }
+
+      await supabase.rpc("log_audit_event", {
+        _organization_id: organizationId,
+        _action: "update",
+        _entity_type: "user",
+        _entity_id: editingUser.id,
+        _old_values: oldValues,
+        _new_values: {
+          full_name: editFullName.trim(),
+          position: editPosition.trim() || null,
+          role: editRole,
+        },
+      });
+
+      toast({
+        title: "Успешно",
+        description: "Данные пользователя обновлены",
+      });
+
+      setEditDialogOpen(false);
+      setEditingUser(null);
+      fetchMembers();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: error.message,
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -383,13 +488,22 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                     <TableCell>{getRoleName(member.role)}</TableCell>
                     <TableCell className="text-right">
                       {member.role !== "owner" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeUser(member.id, member.profiles.email)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(member)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeUser(member.id, member.profiles.email)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -399,6 +513,66 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Редактировать пользователя</DialogTitle>
+            <DialogDescription>
+              Измените данные пользователя и его роль
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-fullName">ФИО *</Label>
+              <Input
+                id="edit-fullName"
+                value={editFullName}
+                onChange={(e) => setEditFullName(e.target.value)}
+                placeholder="Иванов Иван Иванович"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-position">Должность</Label>
+              <Input
+                id="edit-position"
+                value={editPosition}
+                onChange={(e) => setEditPosition(e.target.value)}
+                placeholder="Менеджер"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Роль *</Label>
+              <Select value={editRole} onValueChange={(value: any) => setEditRole(value)}>
+                <SelectTrigger id="edit-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Администратор</SelectItem>
+                  <SelectItem value="editor">Редактор</SelectItem>
+                  <SelectItem value="viewer">Наблюдатель</SelectItem>
+                  <SelectItem value="member">Участник</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={isUpdating}
+            >
+              Отмена
+            </Button>
+            <Button onClick={updateUser} disabled={isUpdating}>
+              {isUpdating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
