@@ -21,8 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, Send } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -48,6 +50,9 @@ const Requests = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [hideDelivered, setHideDelivered] = useState(true);
+  const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -67,9 +72,83 @@ const Requests = () => {
     }
   }, [searchParams]);
 
-  const handleRowClick = (request: Request) => {
+  const handleRowClick = (request: Request, e: React.MouseEvent) => {
+    // Don't open dialog if clicking on checkbox
+    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
+      return;
+    }
     setSelectedRequest(request);
     setEditDialogOpen(true);
+  };
+
+  const toggleRequestSelection = (requestId: string) => {
+    setSelectedRequestIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllRequests = () => {
+    if (selectedRequestIds.size === filteredRequests?.length) {
+      setSelectedRequestIds(new Set());
+    } else {
+      setSelectedRequestIds(new Set(filteredRequests?.map(r => r.id) || []));
+    }
+  };
+
+  const handleSendToTelegram = async () => {
+    if (selectedRequestIds.size === 0) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите хотя бы одну заявку для отправки",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const requestId of Array.from(selectedRequestIds)) {
+        try {
+          const { error } = await supabase.functions.invoke('notify-telegram', {
+            body: { requestId }
+          });
+
+          if (error) throw error;
+          successCount++;
+        } catch (err) {
+          console.error(`Error sending request ${requestId}:`, err);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: "Успешно отправлено",
+          description: `Отправлено заявок: ${successCount}${errorCount > 0 ? `, ошибок: ${errorCount}` : ''}`,
+        });
+        setSelectedRequestIds(new Set());
+      } else {
+        throw new Error("Не удалось отправить ни одной заявки");
+      }
+    } catch (error) {
+      console.error('Error sending to Telegram:', error);
+      toast({
+        title: "Ошибка отправки",
+        description: "Не удалось отправить заявки в Telegram",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const filteredRequests = requests?.filter((request) => {
@@ -141,6 +220,20 @@ const Requests = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          {selectedRequestIds.size > 0 && (
+            <Button 
+              onClick={handleSendToTelegram}
+              disabled={isSending}
+              className="gap-2" 
+              size="sm"
+              variant="default"
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                Отправить ({selectedRequestIds.size})
+              </span>
+            </Button>
+          )}
           {requests && requests.length > 0 && (
             <ExcelExportButton 
               requests={requests} 
@@ -272,6 +365,12 @@ const Requests = () => {
             <Table className="w-full table-auto">
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
+                      onCheckedChange={toggleAllRequests}
+                    />
+                  </TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead>Заявка</TableHead>
                   <TableHead>Приоритет</TableHead>
@@ -295,8 +394,14 @@ const Requests = () => {
                   <TableRow 
                     key={request.id} 
                     className="hover:bg-muted/30 cursor-pointer"
-                    onClick={() => handleRowClick(request)}
+                    onClick={(e) => handleRowClick(request, e)}
                   >
+                    <TableCell className="text-xs" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedRequestIds.has(request.id)}
+                        onCheckedChange={() => toggleRequestSelection(request.id)}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
                         {format(new Date(request.request_date), "dd.MM.yy")}
