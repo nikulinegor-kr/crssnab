@@ -91,6 +91,39 @@ serve(async (req) => {
   }
 
   try {
+    // Verify user is authenticated
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Требуется авторизация" 
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Неверный токен авторизации" 
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const requestBody = await req.json();
     
     // Validate input
@@ -115,6 +148,24 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Заявка не найдена" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify user has access to this organization
+    const { data: membership } = await supabase
+      .from("user_organizations")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("organization_id", request.organization_id)
+      .single();
+
+    if (!membership) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Недостаточно прав для отправки уведомлений" 
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

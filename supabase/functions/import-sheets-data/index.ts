@@ -218,6 +218,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Verify user is admin/owner of the organization
+    const { data: membership } = await supabaseClient
+      .from('user_organizations')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('organization_id', userOrg.organization_id)
+      .single();
+
+    if (!membership || !['owner', 'admin'].includes(membership.role)) {
+      return new Response(
+        JSON.stringify({ error: 'Недостаточно прав для импорта данных' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Importing data from sheet:', { spreadsheetId, range, year });
 
     const accessToken = await getAccessToken();
