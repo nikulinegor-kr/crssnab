@@ -356,6 +356,17 @@ const Requests = () => {
               filteredRequests={filteredRequests}
             />
           )}
+          {selectedRequestIds.size > 0 && (
+            <Button
+              onClick={handleSendToTelegram}
+              disabled={isSending}
+              className="gap-2"
+              size="sm"
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Отправить в Telegram</span>
+            </Button>
+          )}
           {canCreate && (
             <CreateRequestDialog>
               <Button className="gap-2" size="sm">
@@ -737,17 +748,6 @@ const Requests = () => {
             <Plus className="h-6 w-6" />
           </Button>
         </>
-      )}
-
-      {selectedRequestIds.size > 0 && (
-        <Button
-          onClick={handleSendToTelegram}
-          disabled={isSending}
-          className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 bg-primary hover:bg-primary/90"
-          size="icon"
-        >
-          <Send className="h-6 w-6" />
-        </Button>
       )}
 
       {selectedRequest && (
