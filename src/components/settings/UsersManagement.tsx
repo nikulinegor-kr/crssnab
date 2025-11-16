@@ -487,15 +487,15 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                     <TableCell>{member.profiles.position || "—"}</TableCell>
                     <TableCell>{getRoleName(member.role)}</TableCell>
                     <TableCell className="text-right">
-                      {member.role !== "owner" && (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(member)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(member)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {member.role !== "owner" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -503,8 +503,8 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
