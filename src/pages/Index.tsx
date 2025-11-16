@@ -163,43 +163,45 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
-      {/* Animated mesh gradient background */}
-      <div className="absolute inset-0 pointer-events-none opacity-60">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
-        <div className="absolute top-20 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 -right-20 w-[600px] h-[600px] bg-accent/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="fixed inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+        <div className="absolute top-20 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 -right-20 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Sticky Header with Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-background/90 border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold text-primary">CRSS</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                CRSS
+              </h1>
               <nav className="hidden md:flex items-center gap-6">
                 <button
                   onClick={() => scrollToSection("features")}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Возможности
                 </button>
                 <button
                   onClick={() => scrollToSection("workflow")}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Как работает
                 </button>
                 <button
                   onClick={() => scrollToSection("pricing")}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Тарифы
                 </button>
                 <button
                   onClick={() => scrollToSection("faq")}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   FAQ
                 </button>
@@ -209,7 +211,7 @@ const Index = () => {
               <ThemeToggle />
               <Button 
                 onClick={() => navigate("/auth")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                className="shadow-md hover:shadow-lg transition-shadow"
               >
                 Войти
               </Button>
@@ -218,82 +220,90 @@ const Index = () => {
         </div>
       </header>
       
-      {/* Hero Section */}
-      <div className="relative max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center space-y-8 mb-24 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-            <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-              CRSS
-            </span>
-            {" — "}
-            <span className="text-foreground">Corporate Resource Supply System</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground font-medium mt-4">
-            Система Управления Поставками Компании
-          </p>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Современная система управления заявками для отдела снабжения. 
-            <br />
-            <span className="text-foreground font-medium">Упростите работу и повысьте эффективность команды.</span>
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <Button 
-              size="lg" 
-              onClick={() => navigate("/demo")}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-            >
-              Открыть демо
-              <TrendingUp className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => scrollToSection("features")}
-              className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-10 py-6 text-lg hover:border-primary/70 transition-all"
-            >
-              Узнать больше
-              <ChevronDown className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <Card 
-                key={index}
-                className="scroll-animate group relative p-6 bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 overflow-hidden"
-                style={{ animationDelay: `${index * 100}ms` }}
+      {/* Main Content */}
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+          <div className="text-center space-y-8 animate-fade-in">
+            <div className="space-y-4">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
+                  CRSS
+                </span>
+                <span className="text-foreground"> — Corporate Resource Supply System</span>
+              </h1>
+              <p className="text-xl sm:text-2xl font-semibold text-muted-foreground">
+                Система Управления Поставками Компании
+              </p>
+            </div>
+            
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Современная система управления заявками для отдела снабжения.<br />
+              <span className="text-foreground font-semibold">Упростите работу и повысьте эффективность команды.</span>
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/demo")}
+                className="text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
-                {/* Gradient overlay on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                
-                <div className="relative">
-                  <div className={`bg-gradient-to-br ${feature.color} text-white p-3 rounded-xl w-fit mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                Открыть демо
+                <TrendingUp className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => scrollToSection("features")}
+                className="text-base font-semibold border-2"
+              >
+                Узнать больше
+                <ChevronDown className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </section>
 
-        {/* How it works section */}
-        <div id="workflow" className="mb-20 scroll-animate">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+        {/* Features Section */}
+        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <Card 
+                  key={index}
+                  className="scroll-animate group relative p-6 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-lg`}></div>
+                  
+                  <div className="relative space-y-4">
+                    <div className={`bg-gradient-to-br ${feature.color} text-white p-3 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Workflow Section */}
+        <section id="workflow" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-12 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
               <Zap className="h-4 w-4" />
               Простой процесс работы
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Как это работает?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -301,38 +311,37 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {/* Connection lines for desktop */}
-            <div className="hidden lg:block absolute top-16 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20 -z-10"></div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            <div className="hidden lg:block absolute top-16 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"></div>
             
             {workflow.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div key={index} className="relative scroll-animate" style={{ animationDelay: `${index * 100}ms` }}>
-                  <Card className="p-6 text-center hover:shadow-xl transition-all duration-300 border-border/50 bg-card/80 backdrop-blur-sm group hover:-translate-y-2">
-                    <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Card className="p-6 text-center hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+                    <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-4 group-hover:scale-110 transition-transform">
                       <Icon className="h-8 w-8" />
-                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-accent-foreground text-sm font-bold flex items-center justify-center">
+                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-accent-foreground text-sm font-bold flex items-center justify-center shadow-md">
                         {index + 1}
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">{step.title}</h3>
+                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
                     <p className="text-sm text-muted-foreground">{step.description}</p>
                   </Card>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
 
         {/* Pricing Section */}
-        <div id="pricing" className="mb-20 scroll-animate">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-primary text-sm font-medium mb-4">
+        <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-12 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
               <TrendingUp className="h-4 w-4" />
               Прозрачное ценообразование
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Выберите подходящий тариф
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -340,56 +349,60 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plans.map((plan) => {
               const features = Array.isArray(plan.features) ? plan.features : [];
+              const isPopular = plan.slug === "professional";
               
               return (
                 <Card 
                   key={plan.id} 
-                  className={`flex flex-col relative overflow-hidden transition-all hover:scale-105 ${
-                    plan.slug === "professional" 
-                      ? "border-2 border-primary shadow-xl bg-primary/5" 
+                  className={`flex flex-col relative transition-all duration-300 hover:-translate-y-1 ${
+                    isPopular
+                      ? "border-2 border-primary shadow-xl scale-105" 
                       : "hover:shadow-lg"
                   }`}
                 >
-                  {plan.slug === "professional" && (
-                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-4 py-1 rounded-full shadow-md">
                       Популярный
                     </div>
                   )}
-                  <CardHeader>
-                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
+                  
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                    <CardDescription className="text-base">{plan.description}</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">{plan.price_monthly}₽</span>
-                      <span className="text-muted-foreground">/месяц</span>
+                  
+                  <CardContent className="flex-1 space-y-6">
+                    <div className="text-center py-4">
+                      <span className="text-5xl font-bold">{plan.price_monthly}₽</span>
+                      <span className="text-muted-foreground text-lg">/месяц</span>
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         <span className="text-sm">До {plan.max_users} пользователей</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         <span className="text-sm">До {plan.max_requests_per_month} заявок/месяц</span>
                       </div>
                       {features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div key={idx} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                           <span className="text-sm">{String(feature)}</span>
                         </div>
                       ))}
                     </div>
                   </CardContent>
+                  
                   <CardFooter>
                     <Button 
-                      className="w-full" 
+                      className="w-full font-semibold" 
                       onClick={() => navigate("/auth")}
-                      variant={plan.slug === "professional" ? "default" : "outline"}
+                      variant={isPopular ? "default" : "outline"}
                     >
                       Начать
                     </Button>
@@ -398,16 +411,16 @@ const Index = () => {
               );
             })}
           </div>
-        </div>
+        </section>
 
         {/* FAQ Section */}
-        <div id="faq" className="mb-20 scroll-animate">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+        <section id="faq" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-12 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
               <HelpCircle className="h-4 w-4" />
               Часто задаваемые вопросы
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Ответы на ваши вопросы
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -421,92 +434,95 @@ const Index = () => {
                 <AccordionItem 
                   key={index} 
                   value={`item-${index}`}
-                  className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-6 hover:shadow-lg transition-all"
+                  className="border border-border rounded-xl px-6 hover:shadow-md transition-all"
                 >
-                  <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary hover:no-underline">
+                  <AccordionTrigger className="text-left font-semibold hover:text-primary hover:no-underline py-4">
                     {item.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground leading-relaxed">
+                  <AccordionContent className="text-muted-foreground leading-relaxed pb-4">
                     {item.answer}
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           </div>
-        </div>
+        </section>
 
         {/* Stats Section */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 rounded-3xl p-12 text-primary-foreground border-0 shadow-2xl scroll-animate mb-20">
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
-          
-          <div className="relative">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                Доверьтесь цифрам
-              </h2>
-              <p className="text-primary-foreground/80 text-lg">
-                Результаты, которыми мы гордимся
-              </p>
-            </div>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 border-0 shadow-2xl scroll-animate">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
             
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                <div className="flex items-center justify-center mb-4">
-                  <FileText className="h-8 w-8 mr-2 group-hover:animate-pulse" />
-                  <p className="text-5xl md:text-6xl font-bold">{counts.requests}+</p>
-                </div>
-                <p className="text-base opacity-90 font-medium">Заявок обработано</p>
+            <CardContent className="relative p-8 sm:p-12">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold text-primary-foreground mb-3">
+                  Доверьтесь цифрам
+                </h2>
+                <p className="text-primary-foreground/90 text-lg">
+                  Результаты, которыми мы гордимся
+                </p>
               </div>
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                <div className="flex items-center justify-center mb-4">
-                  <TrendingUp className="h-8 w-8 mr-2 group-hover:animate-pulse" />
-                  <p className="text-5xl md:text-6xl font-bold">{counts.years}+</p>
+              
+              <div className="grid sm:grid-cols-3 gap-6 text-center">
+                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <FileText className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">{counts.requests}+</p>
+                  </div>
+                  <p className="text-base text-primary-foreground/90 font-medium">Заявок обработано</p>
                 </div>
-                <p className="text-base opacity-90 font-medium">Лет успешной работы</p>
-              </div>
-              <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                <div className="flex items-center justify-center mb-4">
-                  <Lock className="h-8 w-8 mr-2 group-hover:animate-pulse" />
-                  <p className="text-5xl md:text-6xl font-bold">24/7</p>
+                
+                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <TrendingUp className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">{counts.years}+</p>
+                  </div>
+                  <p className="text-base text-primary-foreground/90 font-medium">Лет успешной работы</p>
                 </div>
-                <p className="text-base opacity-90 font-medium">Доступность системы</p>
+                
+                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Lock className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">24/7</p>
+                  </div>
+                  <p className="text-base text-primary-foreground/90 font-medium">Доступность системы</p>
+                </div>
               </div>
-            </div>
-          </div>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
 
-        {/* Final CTA Section */}
-        <div className="text-center py-20 scroll-animate">
-          <div className="max-w-3xl mx-auto space-y-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+        {/* Final CTA */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center space-y-8 scroll-animate">
+            <h2 className="text-3xl sm:text-4xl font-bold">
               Готовы начать?
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Присоединяйтесь к компаниям, которые уже упростили управление заявками
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button 
                 size="lg" 
                 onClick={() => navigate("/auth")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-12 py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+                className="text-base font-semibold shadow-lg hover:shadow-xl transition-all"
               >
                 Начать работу
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate("/demo")}
-              className="border-2 border-primary text-primary hover:bg-primary/10 font-semibold px-12 py-6 text-lg transition-all"
-            >
-              Открыть демо
-            </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/demo")}
+                className="text-base font-semibold border-2"
+              >
+                Открыть демо
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 };
