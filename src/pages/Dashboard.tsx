@@ -13,8 +13,6 @@ import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { ExportButton } from "@/components/dashboard/ExportButton";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletionWidget";
-import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
 import { EmergencyInProgressWidget } from "@/components/dashboard/EmergencyInProgressWidget";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 
@@ -157,12 +155,10 @@ const Dashboard = () => {
           <RequestsAnalytics requests={requests} />
         )}
 
-        {/* Дополнительные виджеты - первая линия */}
+        {/* Виджет аварийных заявок */}
         {!isLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AverageCompletionWidget requests={requests} />
-            <TopExecutorsWidget requests={requests} />
-            <EmergencyInProgressWidget requests={requests} />
+            <EmergencyInProgressWidget requests={requests} onClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")} />
           </div>
         )}
 
