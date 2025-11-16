@@ -10,8 +10,15 @@ interface RequestsAnalyticsProps {
 }
 
 export function RequestsAnalytics({ requests, onEmergencyClick }: RequestsAnalyticsProps) {
-  // Подготовка данных для графика по времени
-  const timelineData = requests.reduce((acc, req) => {
+  // Фильтрация заявок по текущему году для графика
+  const currentYear = new Date().getFullYear();
+  const currentYearRequests = requests.filter(req => {
+    const requestYear = new Date(req.request_date).getFullYear();
+    return requestYear === currentYear;
+  });
+
+  // Подготовка данных для графика по времени (данные за текущий год)
+  const timelineData = currentYearRequests.reduce((acc, req) => {
     const month = new Date(req.request_date).toLocaleDateString("ru-RU", { 
       month: "short", 
       year: "2-digit" 
@@ -23,7 +30,7 @@ export function RequestsAnalytics({ requests, onEmergencyClick }: RequestsAnalyt
       acc.push({ month, count: 1 });
     }
     return acc;
-  }, [] as { month: string; count: number }[]).slice(-12);
+  }, [] as { month: string; count: number }[]);
 
 
   // Вычисление метрик
