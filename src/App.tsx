@@ -10,7 +10,7 @@ import Requests from "./pages/Requests";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
-import ManageUsers from "./pages/ManageUsers";
+
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
@@ -63,16 +63,6 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Requests />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage-users"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ManageUsers />
                 </AppLayout>
               </ProtectedRoute>
             }
