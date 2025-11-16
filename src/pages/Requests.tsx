@@ -376,6 +376,7 @@ const Requests = () => {
                   <TableHead>Статус</TableHead>
                   <TableHead>Наличие</TableHead>
                   <TableHead>Контрагент</TableHead>
+                  <TableHead>Счёт</TableHead>
                   <TableHead>Оплата</TableHead>
                   <TableHead>ДатаО</TableHead>
                   <TableHead>ДатаД</TableHead>
@@ -384,7 +385,7 @@ const Requests = () => {
                   <TableHead>Заявитель</TableHead>
                   <TableHead>Комментарий</TableHead>
                   <TableHead>Исполнитель</TableHead>
-                  <TableHead>Счёт</TableHead>
+                  <TableHead>Счёт/КП</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -438,6 +439,11 @@ const Requests = () => {
                     </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
+                        {request.invoice_number || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
                         {request.payment_percentage}%
                       </div>
                     </TableCell>
@@ -480,10 +486,19 @@ const Requests = () => {
                         {request.executor || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="line-clamp-2">
-                        {request.invoice_number || "—"}
-                      </div>
+                    <TableCell className="text-xs" onClick={(e) => e.stopPropagation()}>
+                      {request.document_url ? (
+                        <a 
+                          href={request.document_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          Открыть
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
