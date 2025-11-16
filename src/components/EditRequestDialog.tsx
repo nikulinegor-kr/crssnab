@@ -260,8 +260,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         description: "Заявка обновлена",
       });
 
-      // Send Telegram notification
-      await notifyTelegram(request.id);
+      // Send Telegram notification if auto-send is enabled and status changed
+      const statusChanged = data.status !== request.status;
+      
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("telegram_auto_send_on_status_change")
+        .eq("id", request.organization_id)
+        .single();
+      
+      if (orgData?.telegram_auto_send_on_status_change && statusChanged) {
+        await notifyTelegram(request.id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });

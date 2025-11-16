@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Bot, Info, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 
 interface TelegramSettingsProps {
   organizationId: string;
@@ -18,6 +19,8 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
   const [saving, setSaving] = useState(false);
   const [botToken, setBotToken] = useState("");
   const [chatId, setChatId] = useState("");
+  const [autoSendOnCreate, setAutoSendOnCreate] = useState(true);
+  const [autoSendOnStatusChange, setAutoSendOnStatusChange] = useState(true);
 
   useEffect(() => {
     loadSettings();
@@ -27,7 +30,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
     try {
       const { data, error } = await supabase
         .from("organizations")
-        .select("telegram_bot_token, telegram_chat_id")
+        .select("telegram_bot_token, telegram_chat_id, telegram_auto_send_on_create, telegram_auto_send_on_status_change")
         .eq("id", organizationId)
         .single();
 
@@ -36,6 +39,8 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
       if (data) {
         setBotToken(data.telegram_bot_token || "");
         setChatId(data.telegram_chat_id || "");
+        setAutoSendOnCreate(data.telegram_auto_send_on_create ?? true);
+        setAutoSendOnStatusChange(data.telegram_auto_send_on_status_change ?? true);
       }
     } catch (error: any) {
       toast({
@@ -75,6 +80,8 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         .update({
           telegram_bot_token: botToken || null,
           telegram_chat_id: chatId || null,
+          telegram_auto_send_on_create: autoSendOnCreate,
+          telegram_auto_send_on_status_change: autoSendOnStatusChange,
         })
         .eq("id", organizationId);
 
@@ -158,6 +165,38 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
             <p className="text-xs text-muted-foreground">
               Для групп обычно начинается с <code className="bg-muted px-1 py-0.5 rounded">-100</code>
             </p>
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t">
+          <h4 className="text-sm font-medium">Условия автоматической отправки</h4>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="autoSendOnCreate">При создании заявки</Label>
+              <p className="text-xs text-muted-foreground">
+                Автоматически отправлять уведомление при создании новой заявки
+              </p>
+            </div>
+            <Switch
+              id="autoSendOnCreate"
+              checked={autoSendOnCreate}
+              onCheckedChange={setAutoSendOnCreate}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="autoSendOnStatusChange">При изменении статуса</Label>
+              <p className="text-xs text-muted-foreground">
+                Автоматически отправлять уведомление при изменении статуса заявки
+              </p>
+            </div>
+            <Switch
+              id="autoSendOnStatusChange"
+              checked={autoSendOnStatusChange}
+              onCheckedChange={setAutoSendOnStatusChange}
+            />
           </div>
         </div>
 

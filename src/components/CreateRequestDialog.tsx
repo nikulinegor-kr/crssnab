@@ -264,9 +264,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         description: "Заявка создана",
       });
 
-      // Send Telegram notification
+      // Send Telegram notification if auto-send is enabled
       if (newRequest) {
-        await notifyTelegram(newRequest.id);
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("telegram_auto_send_on_create")
+          .eq("id", currentOrgId)
+          .single();
+        
+        if (orgData?.telegram_auto_send_on_create) {
+          await notifyTelegram(newRequest.id);
+        }
       }
 
       // Invalidate queries to refresh data
