@@ -62,7 +62,15 @@ const Requests = () => {
     const isNew = searchParams.get("new");
     
     if (status) {
-      setStatusFilter([status]);
+      // Handle negative filter (exclude status)
+      if (status.startsWith("!")) {
+        const excludeStatus = status.substring(1);
+        if (excludeStatus === "Доставлено") {
+          setHideDelivered(true);
+        }
+      } else {
+        setStatusFilter([status]);
+      }
     }
     if (priority) {
       setPriorityFilter(priority);
