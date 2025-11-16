@@ -13,6 +13,39 @@ serve(async (req) => {
   }
 
   try {
+    // Create Supabase client for auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Требуется авторизация" 
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Неверный токен авторизации" 
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const requestBody = await req.json();
     
     // Validate input with zod
@@ -39,8 +72,38 @@ serve(async (req) => {
       }
     );
 
+    // Verify user is admin/owner of the target organization
+    const { data: membership } = await supabaseAdmin
+      .from("user_organizations")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("organization_id", validated.organizationId)
+      .single();
+
+    if (!membership || !['owner', 'admin'].includes(membership.role)) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Недостаточно прав для создания пользователей" 
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Continue with validated admin client
+    const supabaseAdminForCreation = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     // Validate organization exists
-    const { data: orgExists } = await supabaseAdmin
+    const { data: orgExists } = await supabaseAdminForCreation
       .from("organizations")
       .select("id")
       .eq("id", validated.organizationId)
@@ -57,7 +120,7 @@ serve(async (req) => {
     }
 
     // Create user (profile will be created automatically by trigger)
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: userData, error: userError } = await supabaseAdminForCreation.auth.admin.createUser({
       email: validated.email.trim().toLowerCase(),
       password: validated.password,
       email_confirm: true,
@@ -94,7 +157,7 @@ serve(async (req) => {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Add user to organization
-    const { error: orgError } = await supabaseAdmin
+    const { error: orgError } = await supabaseAdminForCreation
       .from("user_organizations")
       .insert({
         user_id: userData.user.id,
@@ -105,7 +168,7 @@ serve(async (req) => {
     if (orgError) {
       console.error("Error adding user to organization:", orgError);
       // Try to clean up
-      await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
+      await supabaseAdminForCreation.auth.admin.deleteUser(userData.user.id);
       return new Response(
         JSON.stringify({ 
           success: false,
