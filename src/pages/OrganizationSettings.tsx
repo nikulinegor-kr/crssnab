@@ -8,6 +8,10 @@ import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { UsersManagement } from "@/components/settings/UsersManagement";
+import { GeneralSettings } from "@/components/settings/GeneralSettings";
+import { BrandingSettings } from "@/components/settings/BrandingSettings";
+import { RequestSettings } from "@/components/settings/RequestSettings";
+import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -78,14 +82,18 @@ const OrganizationSettings = () => {
         <p className="text-muted-foreground">{orgName}</p>
       </div>
 
-      <Tabs defaultValue="telegram" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="telegram">Уведомления</TabsTrigger>
+      <Tabs defaultValue="general" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+          <TabsTrigger value="general">Общие</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
+          <TabsTrigger value="notifications">Уведомления</TabsTrigger>
+          <TabsTrigger value="requests">Заявки</TabsTrigger>
+          <TabsTrigger value="branding">Брендинг</TabsTrigger>
+          <TabsTrigger value="subscription">Подписка</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="telegram">
-          <TelegramSettings organizationId={currentOrgId!} />
+        <TabsContent value="general">
+          <GeneralSettings organizationId={currentOrgId!} />
         </TabsContent>
 
         <TabsContent value="users">
@@ -93,6 +101,22 @@ const OrganizationSettings = () => {
             organizationId={currentOrgId!} 
             isAdmin={isAdmin}
           />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <TelegramSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="requests">
+          <RequestSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="branding">
+          <BrandingSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="subscription">
+          <SubscriptionSettings organizationId={currentOrgId!} />
         </TabsContent>
       </Tabs>
     </div>
