@@ -47,6 +47,7 @@ const Requests = () => {
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [hideDelivered, setHideDelivered] = useState(true);
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -82,7 +83,9 @@ const Requests = () => {
     const matchesYear =
       yearFilter === "all" ||
       request.request_date.startsWith(yearFilter);
-    return matchesSearch && matchesStatus && matchesPriority && matchesYear;
+    const matchesDelivered =
+      !hideDelivered || request.status !== "Доставлено";
+    return matchesSearch && matchesStatus && matchesPriority && matchesYear && matchesDelivered;
   });
 
   const getStatusColor = (status: string) => {
@@ -119,6 +122,14 @@ const Requests = () => {
     "Выполнено",
   ];
   const priorities = ["Аварийно", "Планово", "Приоритетно"];
+
+  const selectAllStatuses = () => {
+    if (statusFilter.length === statuses.length) {
+      setStatusFilter([]);
+    } else {
+      setStatusFilter([...statuses]);
+    }
+  };
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
@@ -176,29 +187,39 @@ const Requests = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="text-sm font-semibold">Выберите статусы</Label>
-                {statuses.map((status) => (
-                  <div key={status} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`status-${status}`}
-                      checked={statusFilter.includes(status)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setStatusFilter([...statusFilter, status]);
-                        } else {
-                          setStatusFilter(statusFilter.filter(s => s !== status));
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={`status-${status}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {status}
-                    </label>
-                  </div>
-                ))}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={selectAllStatuses}
+                  className="w-full"
+                >
+                  {statusFilter.length === statuses.length ? "Снять всё" : "Выбрать всё"}
+                </Button>
+                <div className="space-y-2">
+                  {statuses.map((status) => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${status}`}
+                        checked={statusFilter.includes(status)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setStatusFilter([...statusFilter, status]);
+                          } else {
+                            setStatusFilter(statusFilter.filter(s => s !== status));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`status-${status}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {status}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -228,6 +249,16 @@ const Requests = () => {
               ))}
             </SelectContent>
           </Select>
+          <div className="flex items-center space-x-2 bg-muted/30 px-3 py-2 rounded-md">
+            <Checkbox
+              id="hideDelivered"
+              checked={hideDelivered}
+              onCheckedChange={(checked) => setHideDelivered(checked as boolean)}
+            />
+            <Label htmlFor="hideDelivered" className="cursor-pointer text-sm">
+              Скрыть доставленные
+            </Label>
+          </div>
         </div>
 
         {isLoading ? (
