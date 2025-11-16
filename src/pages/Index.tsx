@@ -19,6 +19,12 @@ const Index = () => {
   const navigate = useNavigate();
   const [counts, setCounts] = useState({ requests: 0, uptime: 0, years: 0 });
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [heroContent, setHeroContent] = useState({
+    title: "Система управления заявками для вашего бизнеса",
+    subtitle: "Оптимизируйте процессы, повышайте эффективность и контролируйте выполнение задач в режиме реального времени",
+    cta_primary: "Попробовать бесплатно",
+    cta_secondary: "Демо-версия"
+  });
 
   // Smooth scroll to section
   const scrollToSection = (sectionId: string) => {
@@ -62,6 +68,31 @@ const Index = () => {
     };
 
     fetchPlans();
+  }, []);
+
+  // Fetch hero content
+  useEffect(() => {
+    const fetchHeroContent = async () => {
+      const { data } = await supabase
+        .from("site_content")
+        .select("content")
+        .eq("section", "hero")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      
+      if (data && data.content) {
+        const content = data.content as any;
+        setHeroContent({
+          title: content.title || heroContent.title,
+          subtitle: content.subtitle || heroContent.subtitle,
+          cta_primary: content.cta_primary || heroContent.cta_primary,
+          cta_secondary: content.cta_secondary || heroContent.cta_secondary,
+        });
+      }
+    };
+
+    fetchHeroContent();
   }, []);
 
   // Animated counters
@@ -228,18 +259,13 @@ const Index = () => {
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-                  CRSS
+                  {heroContent.title}
                 </span>
-                <span className="text-foreground"> — Corporate Resource Supply System</span>
               </h1>
-              <p className="text-lg sm:text-xl font-semibold text-muted-foreground">
-                Система Управления Поставками Компании
-              </p>
             </div>
             
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
-              Современная система управления заявками для отдела снабжения.<br />
-              <span className="text-foreground font-semibold">Упростите работу и повысьте эффективность команды.</span>
+              {heroContent.subtitle}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -248,7 +274,7 @@ const Index = () => {
                 onClick={() => navigate("/demo")}
                 className="text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
-                Открыть демо
+                {heroContent.cta_secondary}
                 <TrendingUp className="ml-2 h-5 w-5" />
               </Button>
               <Button 
