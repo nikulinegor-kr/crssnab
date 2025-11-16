@@ -12,6 +12,8 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+import { AuditLog } from "@/components/settings/AuditLog";
+import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -83,13 +85,15 @@ const OrganizationSettings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="general">Общие</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="requests">Заявки</TabsTrigger>
           <TabsTrigger value="branding">Брендинг</TabsTrigger>
           <TabsTrigger value="subscription">Подписка</TabsTrigger>
+          <TabsTrigger value="integrations">Интеграции</TabsTrigger>
+          <TabsTrigger value="audit">История</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -117,6 +121,14 @@ const OrganizationSettings = () => {
 
         <TabsContent value="subscription">
           <SubscriptionSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationsSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <AuditLog organizationId={currentOrgId!} />
         </TabsContent>
       </Tabs>
     </div>
