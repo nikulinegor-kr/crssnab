@@ -15,7 +15,6 @@ import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings
 import { AuditLog } from "@/components/settings/AuditLog";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
-import { SiteContentSettings } from "@/components/settings/SiteContentSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -94,7 +93,6 @@ const OrganizationSettings = () => {
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="requests">Заявки</TabsTrigger>
           <TabsTrigger value="branding">Брендинг</TabsTrigger>
-          <TabsTrigger value="site">Контент сайта</TabsTrigger>
           <TabsTrigger value="subscription">Подписка</TabsTrigger>
           <TabsTrigger value="integrations">Интеграции</TabsTrigger>
           <TabsTrigger value="audit">История</TabsTrigger>
@@ -125,10 +123,6 @@ const OrganizationSettings = () => {
 
         <TabsContent value="branding">
           <BrandingSettings organizationId={currentOrgId!} />
-        </TabsContent>
-
-        <TabsContent value="site">
-          <SiteContentSettings organizationId={currentOrgId!} />
         </TabsContent>
 
         <TabsContent value="subscription">
