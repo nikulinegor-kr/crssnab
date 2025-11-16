@@ -272,23 +272,14 @@ const Requests = () => {
           <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>
           <p className="text-sm text-muted-foreground">
             {filteredRequests?.length || 0} заявок найдено
+            {selectedRequestIds.size > 0 && (
+              <span className="ml-2 text-primary font-medium">
+                • Выбрано: {selectedRequestIds.size}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
-          {selectedRequestIds.size > 0 && (
-            <Button 
-              onClick={handleSendToTelegram}
-              disabled={isSending}
-              className="gap-2" 
-              size="sm"
-              variant="default"
-            >
-              <Send className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                Отправить ({selectedRequestIds.size})
-              </span>
-            </Button>
-          )}
           {requests && requests.length > 0 && (
             <ExcelExportButton 
               requests={requests} 
@@ -672,6 +663,17 @@ const Requests = () => {
             <Plus className="h-6 w-6" />
           </Button>
         </>
+      )}
+
+      {selectedRequestIds.size > 0 && (
+        <Button
+          onClick={handleSendToTelegram}
+          disabled={isSending}
+          className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 bg-primary hover:bg-primary/90"
+          size="icon"
+        >
+          <Send className="h-6 w-6" />
+        </Button>
       )}
 
       {selectedRequest && (
