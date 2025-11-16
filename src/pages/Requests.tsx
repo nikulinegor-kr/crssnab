@@ -180,19 +180,32 @@ const Requests = () => {
       case "Доставлено":
       case "Доставлено в ТК":
       case "Выполнено":
-        return "bg-green-500/10 text-green-500 border-green-500/20";
+        return "#10b981";
       case "Новая заявка":
-        return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+        return "#3b82f6";
       case "На согласовании":
       case "КП":
-        return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+        return "#a855f7";
       case "Счёт":
-        return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+        return "#f97316";
       case "В работе":
       case "В пути":
-        return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+        return "#eab308";
       default:
-        return "bg-muted text-muted-foreground";
+        return "#6b7280";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Аварийно":
+        return "#ef4444";
+      case "Приоритетно":
+        return "#f97316";
+      case "Планово":
+        return "#3b82f6";
+      default:
+        return "#6b7280";
     }
   };
 
@@ -259,261 +272,348 @@ const Requests = () => {
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск по описанию..."
+              placeholder="Поиск..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full md:w-[200px] justify-between">
-                {statusFilter.length === 0 
-                  ? "Все статусы" 
-                  : `Статусы (${statusFilter.length})`}
-                {statusFilter.length > 0 && (
-                  <X 
-                    className="h-4 w-4 ml-2" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setStatusFilter([]);
-                    }}
-                  />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">Выберите статусы</Label>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={selectAllStatuses}
-                  className="w-full"
-                >
-                  {statusFilter.length === statuses.length ? "Снять всё" : "Выбрать всё"}
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-between text-sm">
+                  {statusFilter.length === 0 
+                    ? "Статус" 
+                    : `Статус (${statusFilter.length})`}
+                  {statusFilter.length > 0 && (
+                    <X 
+                      className="h-4 w-4 ml-2" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStatusFilter([]);
+                      }}
+                    />
+                  )}
                 </Button>
-                <div className="space-y-2">
-                  {statuses.map((status) => (
-                    <div key={status} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`status-${status}`}
-                        checked={statusFilter.includes(status)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setStatusFilter([...statusFilter, status]);
-                          } else {
-                            setStatusFilter(statusFilter.filter(s => s !== status));
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor={`status-${status}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        {status}
-                      </label>
-                    </div>
-                  ))}
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Выберите статусы</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={selectAllStatuses}
+                    className="w-full"
+                  >
+                    {statusFilter.length === statuses.length ? "Снять всё" : "Выбрать всё"}
+                  </Button>
+                  <div className="space-y-2">
+                    {statuses.map((status) => (
+                      <div key={status} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`status-${status}`}
+                          checked={statusFilter.includes(status)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setStatusFilter([...statusFilter, status]);
+                            } else {
+                              setStatusFilter(statusFilter.filter(s => s !== status));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`status-${status}`}
+                          className="text-sm cursor-pointer"
+                        >
+                          {status}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Все приоритеты" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все приоритеты</SelectItem>
-              {priorities.map((priority) => (
-                <SelectItem key={priority} value={priority}>
-                  {priority}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={yearFilter} onValueChange={setYearFilter}>
-            <SelectTrigger className="w-full md:w-[150px]">
-              <SelectValue placeholder="Все годы" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все годы</SelectItem>
-              {years.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center space-x-2 bg-muted/30 px-3 py-2 rounded-md">
-            <Checkbox
-              id="hideDelivered"
-              checked={hideDelivered}
-              onCheckedChange={(checked) => setHideDelivered(checked as boolean)}
-            />
-            <Label htmlFor="hideDelivered" className="cursor-pointer text-sm">
-              Скрыть доставленные
-            </Label>
+              </PopoverContent>
+            </Popover>
+            
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Приоритет" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-background">
+                <SelectItem value="all">Все приоритеты</SelectItem>
+                {priorities.map((priority) => (
+                  <SelectItem key={priority} value={priority}>
+                    {priority}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Год" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-background">
+                <SelectItem value="all">Все годы</SelectItem>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="flex items-center space-x-2 bg-muted/30 px-3 py-2 rounded-md">
+              <Checkbox
+                id="hideDelivered"
+                checked={hideDelivered}
+                onCheckedChange={(checked) => setHideDelivered(checked as boolean)}
+              />
+              <Label htmlFor="hideDelivered" className="cursor-pointer text-xs sm:text-sm whitespace-nowrap">
+                Скрыть доставленные
+              </Label>
+            </div>
           </div>
         </div>
 
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+              <Skeleton key={i} className="h-20 sm:h-12 w-full" />
             ))}
           </div>
         ) : filteredRequests && filteredRequests.length > 0 ? (
-          <div className="rounded-md border overflow-x-auto">
-            <Table className="w-full table-auto border-collapse">
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow className="bg-muted/50 border-b">
-                  <TableHead className="w-12 text-center border-r">
+          <>
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-3">
+              {filteredRequests.map((request) => (
+                <Card 
+                  key={request.id} 
+                  className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={(e) => {
+                    if (!(e.target as HTMLElement).closest('input[type="checkbox"]')) {
+                      handleRowClick(request, e);
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-3">
                     <Checkbox
-                      checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
-                      onCheckedChange={toggleAllRequests}
+                      checked={selectedRequestIds.has(request.id)}
+                      onCheckedChange={() => toggleRequestSelection(request.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-1"
                     />
-                  </TableHead>
-                  <TableHead className="text-center border-r">Дата</TableHead>
-                  <TableHead className="text-center border-r">Заявка</TableHead>
-                  <TableHead className="text-center border-r">Приоритет</TableHead>
-                  <TableHead className="text-center border-r">Статус</TableHead>
-                  <TableHead className="text-center border-r">Наличие</TableHead>
-                  <TableHead className="text-center border-r">Контрагент</TableHead>
-                  <TableHead className="text-center border-r">Счёт</TableHead>
-                  <TableHead className="text-center border-r">Оплата</TableHead>
-                  <TableHead className="text-center border-r">ДатаО</TableHead>
-                  <TableHead className="text-center border-r">ДатаД</TableHead>
-                  <TableHead className="text-center border-r">ТК</TableHead>
-                  <TableHead className="text-center border-r">№ ТТН</TableHead>
-                  <TableHead className="text-center border-r">Заявитель</TableHead>
-                  <TableHead className="text-center border-r">Комментарий</TableHead>
-                  <TableHead className="text-center border-r">Исполнитель</TableHead>
-                  <TableHead className="text-center">Счёт/КП</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRequests.map((request) => (
-                  <TableRow 
-                    key={request.id} 
-                    className="hover:bg-muted/30 cursor-pointer border-b"
-                    onClick={(e) => handleRowClick(request, e)}
-                  >
-                    <TableCell className="text-xs text-center border-r" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedRequestIds.has(request.id)}
-                        onCheckedChange={() => toggleRequestSelection(request.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {format(new Date(request.request_date), "dd.MM.yy")}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {format(new Date(request.request_date), "dd.MM.yy")}
+                          </div>
+                          <div className="font-medium text-sm line-clamp-2">
+                            {request.description}
+                          </div>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.description}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <Badge 
-                        variant={request.priority === "Аварийно" ? "destructive" : "outline"}
-                        className="text-[10px] px-1.5 py-0.5"
-                      >
-                        {request.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <Badge 
-                        variant="outline" 
-                        className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}
-                      >
-                        {request.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.availability_delivery_time || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.contractor || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.invoice_number || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.payment_percentage}%
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.shipment_date
-                          ? format(new Date(request.shipment_date), "dd.MM.yy")
-                          : "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.delivery_date
-                          ? format(new Date(request.delivery_date), "dd.MM.yy")
-                          : "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.transport_company || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.waybill_number || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.applicant || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.comments || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center border-r">
-                      <div className="line-clamp-2">
-                        {request.executor || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
-                      {request.document_url ? (
-                        <a 
-                          href={request.document_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs"
+                          style={{ 
+                            borderColor: getPriorityColor(request.priority || "Планово"),
+                            color: getPriorityColor(request.priority || "Планово")
+                          }}
                         >
-                          Открыть
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
+                          {request.priority || "Планово"}
+                        </Badge>
+                        <Badge 
+                          className="text-xs"
+                          style={{ 
+                            backgroundColor: getStatusColor(request.status),
+                            color: "white"
+                          }}
+                        >
+                          {request.status}
+                        </Badge>
+                      </div>
+                      
+                      {(request.contractor || request.applicant || request.executor) && (
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          {request.contractor && (
+                            <div className="truncate">Контрагент: {request.contractor}</div>
+                          )}
+                          {request.applicant && (
+                            <div className="truncate">Заявитель: {request.applicant}</div>
+                          )}
+                          {request.executor && (
+                            <div className="truncate">Исполнитель: {request.executor}</div>
+                          )}
+                        </div>
                       )}
-                    </TableCell>
+                      
+                      {request.comments && (
+                        <div className="text-xs text-muted-foreground line-clamp-2 bg-muted/30 p-2 rounded">
+                          {request.comments}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block rounded-md border overflow-x-auto">
+              <Table className="w-full table-auto border-collapse">
+                <TableHeader className="sticky top-0 z-10 bg-background">
+                  <TableRow className="bg-muted/50 border-b">
+                    <TableHead className="w-12 text-center border-r">
+                      <Checkbox
+                        checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
+                        onCheckedChange={toggleAllRequests}
+                      />
+                    </TableHead>
+                    <TableHead className="text-center border-r">Дата</TableHead>
+                    <TableHead className="text-center border-r">Заявка</TableHead>
+                    <TableHead className="text-center border-r">Приоритет</TableHead>
+                    <TableHead className="text-center border-r">Статус</TableHead>
+                    <TableHead className="text-center border-r">Наличие</TableHead>
+                    <TableHead className="text-center border-r">Контрагент</TableHead>
+                    <TableHead className="text-center border-r">Счёт</TableHead>
+                    <TableHead className="text-center border-r">Оплата</TableHead>
+                    <TableHead className="text-center border-r">ДатаО</TableHead>
+                    <TableHead className="text-center border-r">ДатаД</TableHead>
+                    <TableHead className="text-center border-r">ТК</TableHead>
+                    <TableHead className="text-center border-r">№ ТТН</TableHead>
+                    <TableHead className="text-center border-r">Заявитель</TableHead>
+                    <TableHead className="text-center border-r">Комментарий</TableHead>
+                    <TableHead className="text-center border-r">Исполнитель</TableHead>
+                    <TableHead className="text-center">Счёт/КП</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredRequests.map((request) => (
+                    <TableRow 
+                      key={request.id} 
+                      className="hover:bg-muted/30 cursor-pointer border-b"
+                      onClick={(e) => handleRowClick(request, e)}
+                    >
+                      <TableCell className="text-xs text-center border-r" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedRequestIds.has(request.id)}
+                          onCheckedChange={() => toggleRequestSelection(request.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {format(new Date(request.request_date), "dd.MM.yy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.description}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <Badge 
+                          variant="outline" 
+                          className="whitespace-nowrap"
+                          style={{ 
+                            borderColor: getPriorityColor(request.priority || "Планово"),
+                            color: getPriorityColor(request.priority || "Планово")
+                          }}
+                        >
+                          {request.priority || "Планово"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <Badge 
+                          className="whitespace-nowrap"
+                          style={{ 
+                            backgroundColor: getStatusColor(request.status),
+                            color: "white"
+                          }}
+                        >
+                          {request.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.availability_delivery_time || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.contractor || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.invoice_number || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.payment_percentage !== null && request.payment_percentage !== undefined 
+                            ? `${request.payment_percentage}%` 
+                            : "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.shipment_date 
+                            ? format(new Date(request.shipment_date), "dd.MM.yy")
+                            : "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.delivery_date 
+                            ? format(new Date(request.delivery_date), "dd.MM.yy")
+                            : "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.transport_company || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.waybill_number || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.applicant || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.comments || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center border-r">
+                        <div className="line-clamp-2">
+                          {request.executor || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center">
+                        <div className="line-clamp-2">
+                          {request.document_url ? "Есть" : "-"}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         ) : (
           <div className="text-center py-12">
             <p className="text-lg font-medium">Заявки не найдены</p>
