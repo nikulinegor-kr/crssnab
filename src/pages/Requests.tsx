@@ -364,28 +364,28 @@ const Requests = () => {
             <Table className="w-full table-auto">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-12">
+                  <TableHead className="w-12 text-center">
                     <Checkbox
                       checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
                       onCheckedChange={toggleAllRequests}
                     />
                   </TableHead>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Заявка</TableHead>
-                  <TableHead>Приоритет</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Наличие</TableHead>
-                  <TableHead>Контрагент</TableHead>
-                  <TableHead>Счёт</TableHead>
-                  <TableHead>Оплата</TableHead>
-                  <TableHead>ДатаО</TableHead>
-                  <TableHead>ДатаД</TableHead>
-                  <TableHead>ТК</TableHead>
-                  <TableHead>№ ТТН</TableHead>
-                  <TableHead>Заявитель</TableHead>
-                  <TableHead>Комментарий</TableHead>
-                  <TableHead>Исполнитель</TableHead>
-                  <TableHead>Счёт/КП</TableHead>
+                  <TableHead className="text-center">Дата</TableHead>
+                  <TableHead className="text-center">Заявка</TableHead>
+                  <TableHead className="text-center">Приоритет</TableHead>
+                  <TableHead className="text-center">Статус</TableHead>
+                  <TableHead className="text-center">Наличие</TableHead>
+                  <TableHead className="text-center">Контрагент</TableHead>
+                  <TableHead className="text-center">Счёт</TableHead>
+                  <TableHead className="text-center">Оплата</TableHead>
+                  <TableHead className="text-center">ДатаО</TableHead>
+                  <TableHead className="text-center">ДатаД</TableHead>
+                  <TableHead className="text-center">ТК</TableHead>
+                  <TableHead className="text-center">№ ТТН</TableHead>
+                  <TableHead className="text-center">Заявитель</TableHead>
+                  <TableHead className="text-center">Комментарий</TableHead>
+                  <TableHead className="text-center">Исполнитель</TableHead>
+                  <TableHead className="text-center">Счёт/КП</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -395,23 +395,23 @@ const Requests = () => {
                     className="hover:bg-muted/30 cursor-pointer"
                     onClick={(e) => handleRowClick(request, e)}
                   >
-                    <TableCell className="text-xs" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
                         onCheckedChange={() => toggleRequestSelection(request.id)}
                       />
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {format(new Date(request.request_date), "dd.MM.yy")}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.description}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <Badge 
                         variant={request.priority === "Аварийно" ? "destructive" : "outline"}
                         className="text-[10px] px-1.5 py-0.5"
@@ -419,7 +419,7 @@ const Requests = () => {
                         {request.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <Badge 
                         variant="outline" 
                         className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}
@@ -427,66 +427,66 @@ const Requests = () => {
                         {request.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.availability_delivery_time || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.contractor || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.invoice_number || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.payment_percentage}%
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.shipment_date
                           ? format(new Date(request.shipment_date), "dd.MM.yy")
                           : "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.delivery_date
                           ? format(new Date(request.delivery_date), "dd.MM.yy")
                           : "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.transport_company || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.waybill_number || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.applicant || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.comments || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs text-center">
                       <div className="line-clamp-2">
                         {request.executor || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                       {request.document_url ? (
                         <a 
                           href={request.document_url} 
