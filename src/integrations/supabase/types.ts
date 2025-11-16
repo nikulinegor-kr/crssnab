@@ -139,6 +139,44 @@ export type Database = {
         }
         Relationships: []
       }
+      request_participants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          participant_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          participant_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          participant_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_participants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_priorities: {
         Row: {
           color: string | null

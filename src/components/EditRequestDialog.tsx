@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,27 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canEdit, isViewer } = useUserRole();
+
+  // Fetch participants
+  const { data: participants } = useQuery({
+    queryKey: ["request-participants", request?.organization_id],
+    queryFn: async () => {
+      if (!request?.organization_id) return [];
+      const { data, error } = await supabase
+        .from("request_participants")
+        .select("*")
+        .eq("organization_id", request.organization_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.organization_id && open,
+  });
+
+  const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
+  const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -400,9 +422,20 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Иванов И.И." disabled={isViewer} {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите заявителя" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {applicants.map((applicant) => (
+                          <SelectItem key={applicant.id} value={applicant.name}>
+                            {applicant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -414,9 +447,20 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Исполнитель</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Петров П.П." disabled={isViewer} {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите исполнителя" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {executors.map((executor) => (
+                          <SelectItem key={executor.id} value={executor.name}>
+                            {executor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
