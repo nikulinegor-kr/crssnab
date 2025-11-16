@@ -58,6 +58,8 @@ const Requests = () => {
   const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean | null>(null);
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [years, setYears] = useState<string[]>(["2019", "2020", "2021", "2022", "2023", "2024", "2025"]);
+  const [newYear, setNewYear] = useState("");
 
   // Check Telegram configuration
   useEffect(() => {
@@ -294,7 +296,6 @@ const Requests = () => {
     }
   };
 
-  const years = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
   const statuses = [
     "Новая заявка",
     "На согласовании",
@@ -313,6 +314,24 @@ const Requests = () => {
       setStatusFilter([]);
     } else {
       setStatusFilter([...statuses]);
+    }
+  };
+
+  const addYear = () => {
+    const trimmedYear = newYear.trim();
+    if (trimmedYear && !years.includes(trimmedYear)) {
+      setYears([...years, trimmedYear].sort());
+      setNewYear("");
+      toast({
+        title: "Год добавлен",
+        description: `Год ${trimmedYear} добавлен в список`,
+      });
+    } else if (years.includes(trimmedYear)) {
+      toast({
+        title: "Год уже существует",
+        description: `Год ${trimmedYear} уже есть в списке`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -460,19 +479,51 @@ const Requests = () => {
               </SelectContent>
             </Select>
             
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Год" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-background">
-                <SelectItem value="all">Все годы</SelectItem>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="text-sm">
+                  {yearFilter === "all" ? "Год" : yearFilter}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Выберите год</Label>
+                  <Select value={yearFilter} onValueChange={setYearFilter}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Год" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-background">
+                      <SelectItem value="all">Все годы</SelectItem>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="space-y-2 border-t pt-3">
+                    <Label className="text-sm font-semibold">Добавить новый год</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="2026"
+                        value={newYear}
+                        onChange={(e) => setNewYear(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            addYear();
+                          }
+                        }}
+                        className="text-sm"
+                      />
+                      <Button onClick={addYear} size="sm">
+                        Добавить
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             
             <div className="flex items-center space-x-2 bg-muted/30 px-3 py-2 rounded-md">
               <Checkbox
