@@ -757,6 +757,17 @@ const Requests = () => {
           onOpenChange={setEditDialogOpen}
         />
       )}
+
+      {selectedRequestIds.size > 0 && (
+        <Button
+          onClick={handleSendToTelegram}
+          disabled={isSending}
+          className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 bg-primary hover:bg-primary/90"
+          size="icon"
+        >
+          <Send className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 };
