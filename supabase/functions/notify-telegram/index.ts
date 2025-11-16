@@ -48,7 +48,7 @@ function formatRequestMessage(request: any): string {
   const applicant = request.applicant || "Не указан";
   const comments = request.comments || "Нет";
 
-  return `🧾 Заявка — ${request.request_number}\n` +
+  return `🧾 Заявка — ${request.description}\n` +
     `${getPriorityEmoji(priority)} Приоритет — ${priority}\n` +
     `${getStatusEmoji(status)} Статус — ${status}\n` +
     `🚛 ТК — ${transportCompany}\n` +
