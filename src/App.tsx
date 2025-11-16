@@ -9,6 +9,7 @@ import ImportData from "./pages/ImportData";
 import Requests from "./pages/Requests";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
+import OrganizationSettings from "./pages/OrganizationSettings";
 import ManageUsers from "./pages/ManageUsers";
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
@@ -72,6 +73,16 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <ManageUsers />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organization/settings"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrganizationSettings />
                 </AppLayout>
               </ProtectedRoute>
             }
