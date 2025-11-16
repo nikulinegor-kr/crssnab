@@ -238,25 +238,25 @@ const Requests = () => {
           </div>
         ) : filteredRequests && filteredRequests.length > 0 ? (
           <div className="rounded-md border overflow-x-auto">
-            <Table>
+            <Table className="w-full table-auto">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="whitespace-nowrap w-20">Дата</TableHead>
-                  <TableHead className="min-w-[200px]">Заявка</TableHead>
-                  <TableHead className="w-24">Приоритет</TableHead>
-                  <TableHead className="w-32">Статус</TableHead>
-                  <TableHead className="w-32">Наличие</TableHead>
-                  <TableHead className="w-40">Контрагент</TableHead>
-                  <TableHead className="w-24">Счет</TableHead>
-                  <TableHead className="w-20">Оплата</TableHead>
-                  <TableHead className="w-20">ДатаО</TableHead>
-                  <TableHead className="w-20">ДатаД</TableHead>
-                  <TableHead className="w-32">ТК</TableHead>
-                  <TableHead className="w-24">№ ТТН</TableHead>
-                  <TableHead className="w-32">Заявитель</TableHead>
-                  <TableHead className="w-40">Комментарий</TableHead>
-                  <TableHead className="w-32">Исполнитель</TableHead>
-                  <TableHead className="w-24">Счёт/Кп</TableHead>
+                  <TableHead>Дата</TableHead>
+                  <TableHead>Заявка</TableHead>
+                  <TableHead>Приоритет</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead>Наличие</TableHead>
+                  <TableHead>Контрагент</TableHead>
+                  <TableHead>Счет</TableHead>
+                  <TableHead>Оплата</TableHead>
+                  <TableHead>ДатаО</TableHead>
+                  <TableHead>ДатаД</TableHead>
+                  <TableHead>ТК</TableHead>
+                  <TableHead>№ ТТН</TableHead>
+                  <TableHead>Заявитель</TableHead>
+                  <TableHead>Комментарий</TableHead>
+                  <TableHead>Исполнитель</TableHead>
+                  <TableHead>Счёт/Кп</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -266,11 +266,13 @@ const Requests = () => {
                     className="hover:bg-muted/30 cursor-pointer"
                     onClick={() => handleRowClick(request)}
                   >
-                    <TableCell className="text-xs whitespace-nowrap">
-                      {format(new Date(request.request_date), "dd.MM.yy")}
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {format(new Date(request.request_date), "dd.MM.yy")}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs">
-                      <div className="line-clamp-2 min-w-[200px]">
+                      <div className="line-clamp-2">
                         {request.description}
                       </div>
                     </TableCell>
@@ -283,61 +285,76 @@ const Requests = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">
-                      <Badge className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}>
+                      <Badge 
+                        variant="outline" 
+                        className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}
+                      >
                         {request.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
-                        {request.availability_delivery_time || "-"}
+                        {request.availability_delivery_time || "—"}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
-                        {request.contractor || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {request.invoice_number || "-"}
-                    </TableCell>
-                    <TableCell className="text-xs text-center">
-                      {request.payment_percentage}%
-                    </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">
-                      {request.shipment_date
-                        ? format(new Date(request.shipment_date), "dd.MM.yy")
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">
-                      {request.delivery_date
-                        ? format(new Date(request.delivery_date), "dd.MM.yy")
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="line-clamp-2">
-                        {request.transport_company || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {request.waybill_number || "-"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="line-clamp-2">
-                        {request.applicant || "-"}
+                        {request.contractor || "—"}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
-                        {request.comments || "-"}
+                        {request.request_number}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
-                        {request.executor || "-"}
+                        {request.payment_percentage}%
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
-                      {(request.photo_url || request.document_url) ? "📎" : "-"}
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.shipment_date
+                          ? format(new Date(request.shipment_date), "dd.MM.yy")
+                          : "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.delivery_date
+                          ? format(new Date(request.delivery_date), "dd.MM.yy")
+                          : "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.transport_company || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.waybill_number || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.applicant || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.comments || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.executor || "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="line-clamp-2">
+                        {request.invoice_number || "—"}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
