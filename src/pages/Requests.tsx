@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X, Send } from "lucide-react";
+import { Search, Plus, X, Send, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,12 +37,15 @@ import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { Request } from "@/hooks/useRequests";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 const Requests = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: requests, isLoading } = useRequests();
   const { canCreate } = useUserRole();
+  const { currentOrgId } = useCurrentOrganization();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -52,8 +55,34 @@ const Requests = () => {
   const [hideDelivered, setHideDelivered] = useState(true);
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
+  const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean | null>(null);
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Check Telegram configuration
+  useEffect(() => {
+    const checkTelegramConfig = async () => {
+      if (!currentOrgId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("organizations")
+          .select("telegram_bot_token, telegram_chat_id")
+          .eq("id", currentOrgId)
+          .single();
+
+        if (error) throw error;
+        
+        const isConfigured = !!(data?.telegram_bot_token && data?.telegram_chat_id);
+        setIsTelegramConfigured(isConfigured);
+      } catch (error) {
+        console.error("Error checking Telegram config:", error);
+        setIsTelegramConfigured(false);
+      }
+    };
+
+    checkTelegramConfig();
+  }, [currentOrgId]);
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -184,12 +213,24 @@ const Requests = () => {
         setSelectedRequestIds(new Set());
       } else {
         const uniqueErrors = [...new Set(errorMessages)];
-        const errorDetail = uniqueErrors.length > 0 ? uniqueErrors[0] : "Проверьте настройки Telegram в разделе Настройки → Интеграции";
+        const errorDetail = uniqueErrors.length > 0 ? uniqueErrors[0] : "Проверьте настройки Telegram";
+        
+        // Check if it's a Telegram configuration error
+        const isTelegramConfigError = errorDetail.includes("Telegram не настроен");
         
         toast({
           title: "Ошибка отправки",
           description: errorDetail,
           variant: "destructive",
+          action: isTelegramConfigError ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/settings?tab=integrations")}
+            >
+              Настроить Telegram
+            </Button>
+          ) : undefined,
         });
       }
     } catch (error: any) {
@@ -277,6 +318,25 @@ const Requests = () => {
 
   return (
     <div className="w-full p-4 md:p-6 space-y-6">
+      {isTelegramConfigured === false && (
+        <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-sm text-blue-800 dark:text-blue-200">
+              Telegram не настроен. Настройте его для отправки уведомлений о заявках.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/settings")}
+              className="ml-4"
+            >
+              Настроить
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>
