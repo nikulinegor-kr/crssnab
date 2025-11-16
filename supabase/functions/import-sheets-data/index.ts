@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,16 +35,13 @@ async function getAccessToken(): Promise<string> {
   }
 
   console.log('Service account JSON length:', serviceAccountJson.length);
-  console.log('First 50 chars:', serviceAccountJson.substring(0, 50));
   
   let serviceAccount;
   try {
     serviceAccount = JSON.parse(serviceAccountJson);
   } catch (e) {
-    console.error('Failed to parse service account JSON:', e);
-    console.error('Raw value:', serviceAccountJson);
-    const errorMessage = e instanceof Error ? e.message : String(e);
-    throw new Error(`Invalid service account JSON: ${errorMessage}`);
+    console.error('Failed to parse service account JSON');
+    throw new Error('Некорректный формат учетных данных сервисного аккаунта');
   }
   
   const header = {
@@ -171,12 +169,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { spreadsheetId, range, year } = await req.json();
+    const requestBody = await req.json();
+    
+    // Validate input
+    const schema = z.object({
+      spreadsheetId: z.string().min(1).max(200),
+      range: z.string().min(1).max(100),
+      year: z.string().regex(/^\d{4}$/)
+    });
+    
+    const { spreadsheetId, range, year } = schema.parse(requestBody);
     
     // Get user from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Требуется авторизация' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const supabaseClient = createClient(
@@ -188,7 +198,10 @@ Deno.serve(async (req) => {
     // Get current user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      throw new Error('User not authenticated');
+      return new Response(
+        JSON.stringify({ error: 'Не удалось авторизовать пользователя' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get user's organization
@@ -199,7 +212,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (orgError || !userOrg) {
-      throw new Error('User organization not found');
+      return new Response(
+        JSON.stringify({ error: 'Организация пользователя не найдена' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Importing data from sheet:', { spreadsheetId, range, year });
@@ -318,9 +334,17 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in import-sheets-data function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Некорректные параметры запроса' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ success: false, error: 'Не удалось импортировать данные' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,41 +13,19 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, organizationId, role, fullName, position } = await req.json();
+    const requestBody = await req.json();
+    
+    // Validate input with zod
+    const schema = z.object({
+      email: z.string().email().max(255),
+      password: z.string().min(6).max(100),
+      organizationId: z.string().uuid(),
+      role: z.enum(['owner', 'admin', 'editor', 'viewer']),
+      fullName: z.string().trim().min(1).max(100).optional(),
+      position: z.string().trim().max(100).optional()
+    });
 
-    // Validate required fields
-    if (!email || !password || !organizationId || !role) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Validate role
-    const validRoles = ['owner', 'admin', 'editor', 'viewer'];
-    if (!validRoles.includes(role)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid role" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const validated = schema.parse(requestBody);
 
     // Create Supabase admin client with service role key
     const supabaseAdmin = createClient(
@@ -60,14 +39,31 @@ serve(async (req) => {
       }
     );
 
+    // Validate organization exists
+    const { data: orgExists } = await supabaseAdmin
+      .from("organizations")
+      .select("id")
+      .eq("id", validated.organizationId)
+      .single();
+    
+    if (!orgExists) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Организация не найдена" 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create user (profile will be created automatically by trigger)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email: email.trim().toLowerCase(),
-      password,
+      email: validated.email.trim().toLowerCase(),
+      password: validated.password,
       email_confirm: true,
       user_metadata: {
-        full_name: fullName || "",
-        position: position || ""
+        full_name: validated.fullName || "",
+        position: validated.position || ""
       }
     });
 
@@ -81,16 +77,16 @@ serve(async (req) => {
             success: false,
             error: "Пользователь с таким email уже существует" 
           }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: userError.message || "Не удалось создать пользователя"
+          error: "Не удалось создать пользователя"
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -102,8 +98,8 @@ serve(async (req) => {
       .from("user_organizations")
       .insert({
         user_id: userData.user.id,
-        organization_id: organizationId,
-        role: role,
+        organization_id: validated.organizationId,
+        role: validated.role,
       });
 
     if (orgError) {
@@ -115,7 +111,7 @@ serve(async (req) => {
           success: false,
           error: "Не удалось добавить пользователя в организацию" 
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -129,13 +125,24 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: "Некорректные данные"
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: errorMessage 
+        error: "Произошла ошибка при создании пользователя" 
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
