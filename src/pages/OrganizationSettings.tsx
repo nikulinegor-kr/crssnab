@@ -14,6 +14,7 @@ import { RequestSettings } from "@/components/settings/RequestSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { AuditLog } from "@/components/settings/AuditLog";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
+import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -85,9 +86,10 @@ const OrganizationSettings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-1">
           <TabsTrigger value="general">Общие</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
+          <TabsTrigger value="participants">Участники</TabsTrigger>
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="requests">Заявки</TabsTrigger>
           <TabsTrigger value="branding">Брендинг</TabsTrigger>
@@ -105,6 +107,10 @@ const OrganizationSettings = () => {
             organizationId={currentOrgId!} 
             isAdmin={isAdmin}
           />
+        </TabsContent>
+
+        <TabsContent value="participants">
+          <ParticipantsManagement />
         </TabsContent>
 
         <TabsContent value="notifications">

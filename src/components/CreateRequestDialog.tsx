@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -119,6 +120,27 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
+
+  // Fetch participants
+  const { data: participants } = useQuery({
+    queryKey: ["request-participants", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("request_participants")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
+  const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -373,9 +395,20 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Иванов И.И." {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите заявителя" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {applicants.map((applicant) => (
+                          <SelectItem key={applicant.id} value={applicant.name}>
+                            {applicant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -387,9 +420,20 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Исполнитель</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Петров П.П." {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите исполнителя" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {executors.map((executor) => (
+                          <SelectItem key={executor.id} value={executor.name}>
+                            {executor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
