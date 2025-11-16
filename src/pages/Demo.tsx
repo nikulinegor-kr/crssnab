@@ -9,7 +9,6 @@ import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { EmergencyInProgressWidget } from "@/components/dashboard/EmergencyInProgressWidget";
 import { useDemoData } from "@/hooks/useDemoData";
 import { DemoBanner } from "@/components/DemoBanner";
 import { Input } from "@/components/ui/input";
@@ -215,10 +214,10 @@ const Demo = () => {
             </div>
 
             {/* Analytics and Widgets */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <RequestsAnalytics requests={requests || []} />
-              <EmergencyInProgressWidget requests={requests || []} />
-            </div>
+            <RequestsAnalytics 
+              requests={requests || []} 
+              onEmergencyClick={() => {}}
+            />
 
             <div className="grid gap-6 md:grid-cols-2">
               <CalendarWidget requests={requests || []} />
