@@ -223,26 +223,26 @@ const Index = () => {
       {/* Main Content */}
       <main className="relative">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="text-center space-y-8 animate-fade-in">
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="text-center space-y-6 animate-fade-in">
+            <div className="space-y-3">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
                   CRSS
                 </span>
                 <span className="text-foreground"> — Corporate Resource Supply System</span>
               </h1>
-              <p className="text-xl sm:text-2xl font-semibold text-muted-foreground">
+              <p className="text-lg sm:text-xl font-semibold text-muted-foreground">
                 Система Управления Поставками Компании
               </p>
             </div>
             
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
               Современная система управления заявками для отдела снабжения.<br />
               <span className="text-foreground font-semibold">Упростите работу и повысьте эффективность команды.</span>
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <Button 
                 size="lg" 
                 onClick={() => navigate("/demo")}
@@ -265,27 +265,27 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <Card 
                   key={index}
-                  className="scroll-animate group relative p-6 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                  className="scroll-animate group relative p-4 sm:p-6 h-full flex flex-col hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-lg`}></div>
                   
-                  <div className="relative space-y-4">
-                    <div className={`bg-gradient-to-br ${feature.color} text-white p-3 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="h-6 w-6" />
+                  <div className="relative flex flex-col items-center text-center space-y-3 sm:space-y-4 flex-1">
+                    <div className={`bg-gradient-to-br ${feature.color} text-white p-2.5 sm:p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
+                    <div className="space-y-2 flex-1 flex flex-col">
+                      <h3 className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors">
                         {feature.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                         {feature.description}
                       </p>
                     </div>
@@ -297,36 +297,36 @@ const Index = () => {
         </section>
 
         {/* Workflow Section */}
-        <section id="workflow" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-12 scroll-animate">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+        <section id="workflow" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-8 sm:mb-10 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               <Zap className="h-4 w-4" />
               Простой процесс работы
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
               Как это работает?
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Всего четыре простых шага отделяют вас от эффективного управления заявками
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
             <div className="hidden lg:block absolute top-16 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"></div>
             
             {workflow.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div key={index} className="relative scroll-animate" style={{ animationDelay: `${index * 100}ms` }}>
-                  <Card className="p-6 text-center hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-                    <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-4 group-hover:scale-110 transition-transform">
-                      <Icon className="h-8 w-8" />
-                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-accent-foreground text-sm font-bold flex items-center justify-center shadow-md">
+                  <Card className="p-4 sm:p-6 text-center h-full flex flex-col hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+                    <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground mb-3 sm:mb-4 group-hover:scale-110 transition-transform mx-auto">
+                      <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
+                      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-accent text-accent-foreground text-xs sm:text-sm font-bold flex items-center justify-center shadow-md">
                         {index + 1}
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <h3 className="text-base sm:text-lg font-semibold mb-2">{step.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{step.description}</p>
                   </Card>
                 </div>
               );
@@ -335,16 +335,16 @@ const Index = () => {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-12 scroll-animate">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+        <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-8 sm:mb-10 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               <TrendingUp className="h-4 w-4" />
               Прозрачное ценообразование
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
               Выберите подходящий тариф
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Первый месяц бесплатно для всех новых пользователей
             </p>
           </div>
@@ -414,16 +414,16 @@ const Index = () => {
         </section>
 
         {/* FAQ Section */}
-        <section id="faq" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-12 scroll-animate">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+        <section id="faq" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-8 sm:mb-10 scroll-animate">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               <HelpCircle className="h-4 w-4" />
               Часто задаваемые вопросы
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
               Ответы на ваши вопросы
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Всё, что вам нужно знать о системе управления заявками
             </p>
           </div>
@@ -449,44 +449,44 @@ const Index = () => {
         </section>
 
         {/* Stats Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Card className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 border-0 shadow-2xl scroll-animate">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
             
-            <CardContent className="relative p-8 sm:p-12">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl sm:text-4xl font-bold text-primary-foreground mb-3">
+            <CardContent className="relative p-6 sm:p-10">
+              <div className="text-center mb-8 sm:mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-primary-foreground mb-2">
                   Доверьтесь цифрам
                 </h2>
-                <p className="text-primary-foreground/90 text-lg">
+                <p className="text-primary-foreground/90 text-base sm:text-lg">
                   Результаты, которыми мы гордимся
                 </p>
               </div>
               
-              <div className="grid sm:grid-cols-3 gap-6 text-center">
-                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <FileText className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
-                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">{counts.requests}+</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
+                <div className="p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex flex-col items-center gap-2 mb-2 sm:mb-4">
+                    <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-4xl sm:text-5xl font-bold text-primary-foreground">{counts.requests}+</p>
                   </div>
-                  <p className="text-base text-primary-foreground/90 font-medium">Заявок обработано</p>
+                  <p className="text-sm sm:text-base text-primary-foreground/90 font-medium">Заявок обработано</p>
                 </div>
                 
-                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <TrendingUp className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
-                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">{counts.years}+</p>
+                <div className="p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex flex-col items-center gap-2 mb-2 sm:mb-4">
+                    <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-4xl sm:text-5xl font-bold text-primary-foreground">{counts.years}+</p>
                   </div>
-                  <p className="text-base text-primary-foreground/90 font-medium">Лет успешной работы</p>
+                  <p className="text-sm sm:text-base text-primary-foreground/90 font-medium">Лет успешной работы</p>
                 </div>
                 
-                <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <Lock className="h-8 w-8 text-primary-foreground group-hover:animate-pulse" />
-                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">24/7</p>
+                <div className="p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all hover:scale-105 group">
+                  <div className="flex flex-col items-center gap-2 mb-2 sm:mb-4">
+                    <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground group-hover:animate-pulse" />
+                    <p className="text-4xl sm:text-5xl font-bold text-primary-foreground">24/7</p>
                   </div>
-                  <p className="text-base text-primary-foreground/90 font-medium">Доступность системы</p>
+                  <p className="text-sm sm:text-base text-primary-foreground/90 font-medium">Доступность системы</p>
                 </div>
               </div>
             </CardContent>
@@ -494,15 +494,15 @@ const Index = () => {
         </section>
 
         {/* Final CTA */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center space-y-8 scroll-animate">
-            <h2 className="text-3xl sm:text-4xl font-bold">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="text-center space-y-6 scroll-animate">
+            <h2 className="text-2xl sm:text-3xl font-bold">
               Готовы начать?
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Присоединяйтесь к компаниям, которые уже упростили управление заявками
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <Button 
                 size="lg" 
                 onClick={() => navigate("/auth")}
