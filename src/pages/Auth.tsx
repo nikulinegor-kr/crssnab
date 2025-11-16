@@ -22,6 +22,8 @@ const signupSchema = z.object({
   password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
   confirmPassword: z.string(),
   organizationName: z.string().min(2, "Название организации обязательно"),
+  fullName: z.string().min(2, "ФИО обязательно"),
+  position: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Пароли не совпадают",
   path: ["confirmPassword"],
@@ -85,6 +87,8 @@ export default function Auth() {
       password: "",
       confirmPassword: "",
       organizationName: "",
+      fullName: "",
+      position: "",
     },
   });
 
@@ -164,6 +168,8 @@ export default function Auth() {
           emailRedirectTo: redirectUrl,
           data: {
             organization_name: data.organizationName,
+            full_name: data.fullName,
+            position: data.position || null,
           },
         },
       });
@@ -361,6 +367,29 @@ export default function Auth() {
                       {signupForm.formState.errors.organizationName.message}
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-fullName">ФИО *</Label>
+                  <Input
+                    id="signup-fullName"
+                    placeholder="Иванов Иван Иванович"
+                    {...signupForm.register("fullName")}
+                  />
+                  {signupForm.formState.errors.fullName && (
+                    <p className="text-sm text-destructive">
+                      {signupForm.formState.errors.fullName.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-position">Должность</Label>
+                  <Input
+                    id="signup-position"
+                    placeholder="Директор"
+                    {...signupForm.register("position")}
+                  />
                 </div>
 
                 <div className="space-y-2">
