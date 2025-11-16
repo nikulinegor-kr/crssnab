@@ -152,12 +152,8 @@ const Dashboard = () => {
 
         {/* Аналитика */}
         {!isLoading && requests && requests.length > 0 && (
-          <RequestsAnalytics requests={requests} />
-        )}
-
-        {/* Виджет аварийных заявок */}
-        {!isLoading && requests && requests.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RequestsAnalytics requests={requests} />
             <EmergencyInProgressWidget requests={requests} onClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")} />
           </div>
         )}
