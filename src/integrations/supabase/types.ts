@@ -75,6 +75,8 @@ export type Database = {
           name: string
           primary_color: string | null
           secondary_color: string | null
+          telegram_auto_send_on_create: boolean | null
+          telegram_auto_send_on_status_change: boolean | null
           telegram_bot_token: string | null
           telegram_chat_id: string | null
           updated_at: string | null
@@ -89,6 +91,8 @@ export type Database = {
           name: string
           primary_color?: string | null
           secondary_color?: string | null
+          telegram_auto_send_on_create?: boolean | null
+          telegram_auto_send_on_status_change?: boolean | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
           updated_at?: string | null
@@ -103,6 +107,8 @@ export type Database = {
           name?: string
           primary_color?: string | null
           secondary_color?: string | null
+          telegram_auto_send_on_create?: boolean | null
+          telegram_auto_send_on_status_change?: boolean | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
           updated_at?: string | null
