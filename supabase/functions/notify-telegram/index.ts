@@ -91,52 +91,37 @@ serve(async (req) => {
   }
 
   try {
-    // Verify user is authenticated
+    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
-    console.log("Auth header present:", !!authHeader);
-    
+    console.log("Authorization header present:", !!authHeader);
+
     if (!authHeader) {
-      console.error("No authorization header provided");
+      console.error("No Authorization header");
       return new Response(
-        JSON.stringify({ 
-          error: "Требуется авторизация" 
-        }),
+        JSON.stringify({ error: "Требуется авторизация" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Extract token from Bearer format
+    // Get user from the authorization token
     const token = authHeader.replace("Bearer ", "");
-    console.log("Token extracted, length:", token.length);
+    console.log("Token length:", token.length);
 
-    const supabaseClient = createClient(
-      SUPABASE_URL,
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Use service role to verify the user's JWT
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
-    if (authError) {
-      console.error("Auth error:", authError.message);
+    if (userError) {
+      console.error("Error getting user:", userError);
       return new Response(
-        JSON.stringify({ 
-          error: `Ошибка авторизации: ${authError.message}` 
-        }),
+        JSON.stringify({ error: `Ошибка авторизации: ${userError.message}` }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     if (!user) {
       console.error("No user found");
       return new Response(
-        JSON.stringify({ 
-          error: "Пользователь не найден" 
-        }),
+        JSON.stringify({ error: "Пользователь не найден" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
