@@ -15,7 +15,7 @@ import { ExportButton } from "@/components/dashboard/ExportButton";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { AverageCompletionWidget } from "@/components/dashboard/AverageCompletionWidget";
 import { TopExecutorsWidget } from "@/components/dashboard/TopExecutorsWidget";
-import { PriorityChartWidget } from "@/components/dashboard/PriorityChartWidget";
+import { EmergencyInProgressWidget } from "@/components/dashboard/EmergencyInProgressWidget";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 
 const Dashboard = () => {
@@ -162,7 +162,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <AverageCompletionWidget requests={requests} />
             <TopExecutorsWidget requests={requests} />
-            <PriorityChartWidget requests={requests} />
+            <EmergencyInProgressWidget requests={requests} />
           </div>
         )}
 
