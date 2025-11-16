@@ -73,9 +73,24 @@ serve(async (req) => {
 
     if (userError) {
       console.error("Error creating user:", userError);
+      
+      // Check if email already exists
+      if (userError.message?.includes("already been registered") || userError.code === "email_exists") {
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: "Пользователь с таким email уже существует" 
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       return new Response(
-        JSON.stringify({ error: userError.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          success: false,
+          error: userError.message || "Не удалось создать пользователя"
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -96,8 +111,11 @@ serve(async (req) => {
       // Try to clean up
       await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
       return new Response(
-        JSON.stringify({ error: "Failed to add user to organization" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          success: false,
+          error: "Не удалось добавить пользователя в организацию" 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -111,10 +129,13 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        success: false,
+        error: errorMessage 
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
