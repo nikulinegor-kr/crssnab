@@ -153,8 +153,7 @@ const Requests = () => {
 
   const filteredRequests = requests?.filter((request) => {
     const matchesSearch =
-      request.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.request_number.toLowerCase().includes(searchQuery.toLowerCase());
+      request.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter.length === 0 || statusFilter.includes(request.status);
     const matchesPriority =
@@ -256,7 +255,7 @@ const Requests = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск по описанию или номеру..."
+              placeholder="Поиск по описанию..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -377,7 +376,6 @@ const Requests = () => {
                   <TableHead>Статус</TableHead>
                   <TableHead>Наличие</TableHead>
                   <TableHead>Контрагент</TableHead>
-                  <TableHead>Счет</TableHead>
                   <TableHead>Оплата</TableHead>
                   <TableHead>ДатаО</TableHead>
                   <TableHead>ДатаД</TableHead>
@@ -386,7 +384,7 @@ const Requests = () => {
                   <TableHead>Заявитель</TableHead>
                   <TableHead>Комментарий</TableHead>
                   <TableHead>Исполнитель</TableHead>
-                  <TableHead>Счёт/Кп</TableHead>
+                  <TableHead>Счёт</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -436,11 +434,6 @@ const Requests = () => {
                     <TableCell className="text-xs">
                       <div className="line-clamp-2">
                         {request.contractor || "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="line-clamp-2">
-                        {request.request_number}
                       </div>
                     </TableCell>
                     <TableCell className="text-xs">
