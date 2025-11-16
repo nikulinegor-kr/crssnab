@@ -142,8 +142,18 @@ const Requests = () => {
       for (const requestId of Array.from(selectedRequestIds)) {
         try {
           console.log("Sending request to Telegram:", requestId);
+          
+          // Get current session token
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) {
+            throw new Error("Токен авторизации недоступен");
+          }
+
           const { data, error } = await supabase.functions.invoke('notify-telegram', {
-            body: { requestId }
+            body: { requestId },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
           });
 
           console.log("Response:", { data, error });
