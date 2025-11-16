@@ -568,10 +568,12 @@ const Requests = () => {
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow className="bg-muted/50 border-b">
                     <TableHead className="w-12 text-center border-r">
-                      <Checkbox
-                        checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
-                        onCheckedChange={toggleAllRequests}
-                      />
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
+                          onCheckedChange={toggleAllRequests}
+                        />
+                      </div>
                     </TableHead>
                     <TableHead className="text-center border-r">Дата</TableHead>
                     <TableHead className="text-center border-r">Заявка</TableHead>
@@ -599,10 +601,12 @@ const Requests = () => {
                       onClick={(e) => handleRowClick(request, e)}
                     >
                       <TableCell className="text-xs text-center border-r" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedRequestIds.has(request.id)}
-                          onCheckedChange={() => toggleRequestSelection(request.id)}
-                        />
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={selectedRequestIds.has(request.id)}
+                            onCheckedChange={() => toggleRequestSelection(request.id)}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r">
                         <div className="line-clamp-2">
