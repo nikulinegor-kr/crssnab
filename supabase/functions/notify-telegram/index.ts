@@ -175,9 +175,9 @@ serve(async (req) => {
       console.log("Telegram not configured for this organization");
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          message: "Telegram не настроен для этой организации" 
+          error: "Telegram не настроен для этой организации. Перейдите в Настройки → Интеграции → Telegram" 
         }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
