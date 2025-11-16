@@ -10,7 +10,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         
@@ -21,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6">
+            <div className="w-full p-6">
               <SubscriptionBanner />
               {children}
             </div>
