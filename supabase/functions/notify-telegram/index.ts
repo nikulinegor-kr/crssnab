@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -90,12 +91,14 @@ serve(async (req) => {
   }
 
   try {
-    const { requestId } = await req.json();
-
-    if (!requestId) {
-      throw new Error("requestId is required");
-    }
-
+    const requestBody = await req.json();
+    
+    // Validate input
+    const schema = z.object({
+      requestId: z.string().uuid()
+    });
+    
+    const { requestId } = schema.parse(requestBody);
     console.log("Notifying about request:", requestId);
 
     // Get request details with organization info
@@ -109,17 +112,21 @@ serve(async (req) => {
       .single();
 
     if (error || !request) {
-      throw new Error("Request not found");
+      return new Response(
+        JSON.stringify({ error: "Заявка не найдена" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Check if organization has Telegram configured
     const org = request.organizations;
     if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
       console.log("Telegram not configured for this organization");
-      return new Response(JSON.stringify({ 
-        success: false, 
-        message: "Telegram not configured for this organization" 
-      }), {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Telegram не настроен для этой организации" 
+        }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -159,11 +166,20 @@ serve(async (req) => {
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  } catch (error) {
+    console.error("Error in notify-telegram function:", error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: "Некорректные данные запроса" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    return new Response(
+      JSON.stringify({ error: "Не удалось отправить уведомление" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
