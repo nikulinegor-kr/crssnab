@@ -53,6 +53,7 @@ const Requests = () => {
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Apply filters from URL params on mount
   useEffect(() => {
@@ -361,30 +362,30 @@ const Requests = () => {
           </div>
         ) : filteredRequests && filteredRequests.length > 0 ? (
           <div className="rounded-md border overflow-x-auto">
-            <Table className="w-full table-auto">
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-12 text-center">
+            <Table className="w-full table-auto border-collapse">
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                <TableRow className="bg-muted/50 border-b">
+                  <TableHead className="w-12 text-center border-r">
                     <Checkbox
                       checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
                       onCheckedChange={toggleAllRequests}
                     />
                   </TableHead>
-                  <TableHead className="text-center">Дата</TableHead>
-                  <TableHead className="text-center">Заявка</TableHead>
-                  <TableHead className="text-center">Приоритет</TableHead>
-                  <TableHead className="text-center">Статус</TableHead>
-                  <TableHead className="text-center">Наличие</TableHead>
-                  <TableHead className="text-center">Контрагент</TableHead>
-                  <TableHead className="text-center">Счёт</TableHead>
-                  <TableHead className="text-center">Оплата</TableHead>
-                  <TableHead className="text-center">ДатаО</TableHead>
-                  <TableHead className="text-center">ДатаД</TableHead>
-                  <TableHead className="text-center">ТК</TableHead>
-                  <TableHead className="text-center">№ ТТН</TableHead>
-                  <TableHead className="text-center">Заявитель</TableHead>
-                  <TableHead className="text-center">Комментарий</TableHead>
-                  <TableHead className="text-center">Исполнитель</TableHead>
+                  <TableHead className="text-center border-r">Дата</TableHead>
+                  <TableHead className="text-center border-r">Заявка</TableHead>
+                  <TableHead className="text-center border-r">Приоритет</TableHead>
+                  <TableHead className="text-center border-r">Статус</TableHead>
+                  <TableHead className="text-center border-r">Наличие</TableHead>
+                  <TableHead className="text-center border-r">Контрагент</TableHead>
+                  <TableHead className="text-center border-r">Счёт</TableHead>
+                  <TableHead className="text-center border-r">Оплата</TableHead>
+                  <TableHead className="text-center border-r">ДатаО</TableHead>
+                  <TableHead className="text-center border-r">ДатаД</TableHead>
+                  <TableHead className="text-center border-r">ТК</TableHead>
+                  <TableHead className="text-center border-r">№ ТТН</TableHead>
+                  <TableHead className="text-center border-r">Заявитель</TableHead>
+                  <TableHead className="text-center border-r">Комментарий</TableHead>
+                  <TableHead className="text-center border-r">Исполнитель</TableHead>
                   <TableHead className="text-center">Счёт/КП</TableHead>
                 </TableRow>
               </TableHeader>
@@ -392,26 +393,26 @@ const Requests = () => {
                 {filteredRequests.map((request) => (
                   <TableRow 
                     key={request.id} 
-                    className="hover:bg-muted/30 cursor-pointer"
+                    className="hover:bg-muted/30 cursor-pointer border-b"
                     onClick={(e) => handleRowClick(request, e)}
                   >
-                    <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-xs text-center border-r" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
                         onCheckedChange={() => toggleRequestSelection(request.id)}
                       />
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {format(new Date(request.request_date), "dd.MM.yy")}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.description}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <Badge 
                         variant={request.priority === "Аварийно" ? "destructive" : "outline"}
                         className="text-[10px] px-1.5 py-0.5"
@@ -419,7 +420,7 @@ const Requests = () => {
                         {request.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <Badge 
                         variant="outline" 
                         className={`${getStatusColor(request.status)} text-[10px] px-1.5 py-0.5`}
@@ -427,61 +428,61 @@ const Requests = () => {
                         {request.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.availability_delivery_time || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.contractor || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.invoice_number || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.payment_percentage}%
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.shipment_date
                           ? format(new Date(request.shipment_date), "dd.MM.yy")
                           : "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.delivery_date
                           ? format(new Date(request.delivery_date), "dd.MM.yy")
                           : "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.transport_company || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.waybill_number || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.applicant || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.comments || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-center">
+                    <TableCell className="text-xs text-center border-r">
                       <div className="line-clamp-2">
                         {request.executor || "—"}
                       </div>
@@ -515,11 +516,29 @@ const Requests = () => {
         )}
       </Card>
 
-      <EditRequestDialog 
-        request={selectedRequest}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-      />
+      {canCreate && (
+        <>
+          <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <span className="hidden" />
+          </CreateRequestDialog>
+          
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+            size="icon"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </>
+      )}
+
+      {selectedRequest && (
+        <EditRequestDialog 
+          request={selectedRequest}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+        />
+      )}
     </div>
   );
 };

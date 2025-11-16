@@ -97,10 +97,20 @@ type RequestFormData = z.infer<typeof requestSchema>;
 
 interface CreateRequestDialogProps {
   children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange }: CreateRequestDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const handleOpenChange = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -244,7 +254,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
       form.reset();
       setPhotoFile(null);
       setDocumentFile(null);
-      setOpen(false);
+      handleOpenChange(false);
     } catch (error: any) {
       toast({
         title: "Ошибка",
@@ -260,7 +270,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
   const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -623,7 +633,7 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Отмена
