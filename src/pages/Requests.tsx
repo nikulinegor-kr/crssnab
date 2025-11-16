@@ -124,17 +124,28 @@ const Requests = () => {
     try {
       let successCount = 0;
       let errorCount = 0;
+      let errorMessages: string[] = [];
 
       for (const requestId of Array.from(selectedRequestIds)) {
         try {
-          const { error } = await supabase.functions.invoke('notify-telegram', {
+          const { data, error } = await supabase.functions.invoke('notify-telegram', {
             body: { requestId }
           });
 
-          if (error) throw error;
-          successCount++;
-        } catch (err) {
+          if (error) {
+            console.error(`Error sending request ${requestId}:`, error);
+            errorMessages.push(error.message || 'Неизвестная ошибка');
+            errorCount++;
+          } else if (data?.error) {
+            console.error(`Error sending request ${requestId}:`, data.error);
+            errorMessages.push(data.error);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err: any) {
           console.error(`Error sending request ${requestId}:`, err);
+          errorMessages.push(err.message || 'Неизвестная ошибка');
           errorCount++;
         }
       }
@@ -146,13 +157,20 @@ const Requests = () => {
         });
         setSelectedRequestIds(new Set());
       } else {
-        throw new Error("Не удалось отправить ни одной заявки");
+        const uniqueErrors = [...new Set(errorMessages)];
+        const errorDetail = uniqueErrors.length > 0 ? uniqueErrors[0] : "Проверьте настройки Telegram в разделе Настройки → Интеграции";
+        
+        toast({
+          title: "Ошибка отправки",
+          description: errorDetail,
+          variant: "destructive",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending to Telegram:', error);
       toast({
         title: "Ошибка отправки",
-        description: "Не удалось отправить заявки в Telegram",
+        description: error.message || "Не удалось отправить заявки в Telegram. Проверьте настройки Telegram в разделе Настройки → Интеграции",
         variant: "destructive",
       });
     } finally {
