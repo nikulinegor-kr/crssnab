@@ -16,25 +16,43 @@ export type Database = {
     Tables: {
       organizations: {
         Row: {
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string | null
+          description: string | null
           id: string
+          logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           telegram_bot_token: string | null
           telegram_chat_id: string | null
           updated_at: string | null
         }
         Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
           updated_at?: string | null
