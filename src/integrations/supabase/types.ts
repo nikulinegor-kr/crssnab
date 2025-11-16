@@ -69,6 +69,7 @@ export type Database = {
         Row: {
           applicant: string | null
           availability_delivery_time: string | null
+          awaiting_comment_from: string | null
           comments: string | null
           contractor: string | null
           created_at: string | null
@@ -87,6 +88,7 @@ export type Database = {
           request_number: string
           shipment_date: string | null
           status: string
+          telegram_message_id: number | null
           transport_company: string | null
           updated_at: string | null
           waybill_number: string | null
@@ -94,6 +96,7 @@ export type Database = {
         Insert: {
           applicant?: string | null
           availability_delivery_time?: string | null
+          awaiting_comment_from?: string | null
           comments?: string | null
           contractor?: string | null
           created_at?: string | null
@@ -112,6 +115,7 @@ export type Database = {
           request_number: string
           shipment_date?: string | null
           status?: string
+          telegram_message_id?: number | null
           transport_company?: string | null
           updated_at?: string | null
           waybill_number?: string | null
@@ -119,6 +123,7 @@ export type Database = {
         Update: {
           applicant?: string | null
           availability_delivery_time?: string | null
+          awaiting_comment_from?: string | null
           comments?: string | null
           contractor?: string | null
           created_at?: string | null
@@ -137,6 +142,7 @@ export type Database = {
           request_number?: string
           shipment_date?: string | null
           status?: string
+          telegram_message_id?: number | null
           transport_company?: string | null
           updated_at?: string | null
           waybill_number?: string | null

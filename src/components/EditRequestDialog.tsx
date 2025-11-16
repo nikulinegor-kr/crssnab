@@ -44,6 +44,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
+import { notifyTelegram } from "@/lib/telegram";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -236,6 +237,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         title: "Успешно",
         description: "Заявка обновлена",
       });
+
+      // Send Telegram notification
+      await notifyTelegram(request.id);
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });

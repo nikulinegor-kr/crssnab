@@ -34,6 +34,7 @@ import { Loader2, Upload, X, Image, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { notifyTelegram } from "@/lib/telegram";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -218,9 +219,11 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         created_by: user.id,
       };
 
-      const { error } = await supabase
+      const { data: newRequest, error } = await supabase
         .from("requests")
-        .insert([requestData]);
+        .insert([requestData])
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -228,6 +231,11 @@ export const CreateRequestDialog = ({ children }: CreateRequestDialogProps) => {
         title: "Успешно",
         description: "Заявка создана",
       });
+
+      // Send Telegram notification
+      if (newRequest) {
+        await notifyTelegram(newRequest.id);
+      }
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["requests"] });

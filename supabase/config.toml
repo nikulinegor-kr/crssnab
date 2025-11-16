@@ -2,3 +2,9 @@ project_id = "cfdwsdydbtwaljnidirf"
 
 [functions.import-sheets-data]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.notify-telegram]
+verify_jwt = false
