@@ -389,13 +389,29 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</DialogTitle>
-          <DialogDescription>
-            {isViewer 
-              ? `Просмотр заявки ${request?.request_number}` 
-              : `Внесите изменения в заявку ${request?.request_number}`
-            }
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</DialogTitle>
+              <DialogDescription>
+                {isViewer 
+                  ? `Просмотр заявки ${request?.request_number}` 
+                  : `Внесите изменения в заявку ${request?.request_number}`
+                }
+              </DialogDescription>
+            </div>
+            {request?.invoice_number && (request.invoice_number.startsWith('http://') || request.invoice_number.startsWith('https://')) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(request.invoice_number!, '_blank')}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Открыть счёт
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <Form {...form}>
