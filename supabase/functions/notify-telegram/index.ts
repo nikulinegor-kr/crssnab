@@ -95,7 +95,7 @@ function formatRequestMessage(request: any): string {
   return lines.join('\n');
 }
 
-function createKeyboard(request: any) {
+async function createKeyboard(request: any, supabaseClient: any) {
   const status = request.status?.toLowerCase() || "";
   const comments = request.comments?.toLowerCase() || "";
   const documentUrl = request.document_url || "";
@@ -114,9 +114,34 @@ function createKeyboard(request: any) {
     keyboard.push([{ text: "❌ ОТКЛОНЕНО", callback_data: "reject" }]);
   }
 
-  // Кнопка открыть счёт - используем document_url
+  // Кнопка открыть счёт - используем document_url с signed URL
   if (documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
-    keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+    try {
+      // Extract file path from URL
+      const url = new URL(documentUrl);
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+      if (bucketIndex !== -1) {
+        const filePath = pathParts.slice(bucketIndex + 1).join('/');
+        
+        // Generate signed URL with 24 hour expiry
+        const { data, error } = await supabaseClient.storage
+          .from('request-documents')
+          .createSignedUrl(filePath, 86400);
+        
+        if (!error && data?.signedUrl) {
+          keyboard.push([{ text: "📄 Открыть счёт", url: data.signedUrl }]);
+        } else {
+          console.error('Error creating signed URL:', error);
+          keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+        }
+      } else {
+        keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+      }
+    } catch (error) {
+      console.error('Error processing document URL:', error);
+      keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+    }
   }
 
   return keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined;
@@ -225,7 +250,7 @@ serve(async (req) => {
     }
 
     const message = formatRequestMessage(request);
-    const keyboard = createKeyboard(request);
+    const keyboard = await createKeyboard(request, supabase);
 
     // Send or update message based on mode
     let result;

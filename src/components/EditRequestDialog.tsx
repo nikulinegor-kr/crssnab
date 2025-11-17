@@ -404,7 +404,35 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(request.document_url!, '_blank')}
+                onClick={async () => {
+                  try {
+                    // Extract bucket and path from document_url
+                    const url = new URL(request.document_url!);
+                    const pathParts = url.pathname.split('/');
+                    const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                    if (bucketIndex === -1) {
+                      window.open(request.document_url!, '_blank');
+                      return;
+                    }
+                    const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                    
+                    // Generate signed URL
+                    const { data, error } = await supabase.storage
+                      .from('request-documents')
+                      .createSignedUrl(filePath, 3600); // 1 hour expiry
+                    
+                    if (error || !data) {
+                      console.error('Error creating signed URL:', error);
+                      window.open(request.document_url!, '_blank');
+                      return;
+                    }
+                    
+                    window.open(data.signedUrl, '_blank');
+                  } catch (error) {
+                    console.error('Error opening document:', error);
+                    window.open(request.document_url!, '_blank');
+                  }
+                }}
                 className="gap-2"
               >
                 <FileText className="h-4 w-4" />
