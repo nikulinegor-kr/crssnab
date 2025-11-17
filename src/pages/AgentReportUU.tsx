@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileDown, FileText, Loader2 } from "lucide-react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Request } from "@/hooks/useRequests";
@@ -17,6 +18,7 @@ export default function AgentReportUU() {
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["requests", currentOrgId],
@@ -26,7 +28,7 @@ export default function AgentReportUU() {
         .from("requests")
         .select("*")
         .eq("organization_id", currentOrgId)
-        .order("request_date", { ascending: false });
+        .order("request_date", { ascending: false});
 
       if (error) throw error;
       return data as Request[];
@@ -63,14 +65,35 @@ export default function AgentReportUU() {
     return { value: year.toString(), label: year.toString() };
   });
 
+  const selectedRequestsForExport = filteredRequests.filter(req => selectedRows.has(req.id));
+  const requestsToExport = selectedRows.size > 0 ? selectedRequestsForExport : filteredRequests;
+
+  const toggleRow = (id: string) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedRows.size === filteredRequests.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(filteredRequests.map(r => r.id)));
+    }
+  };
+
   const exportToExcel = () => {
     const monthName = months.find(m => m.value === selectedMonth)?.label || "";
-    const exportData = filteredRequests.map((req, index) => ({
+    const exportData = requestsToExport.map((req, index) => ({
       "№": index + 1,
       "ТМЦ": req.description,
       "Контрагент": req.contractor || "Не указан",
       "№ Счета": req.invoice_number || "Не указан",
-      "Сумма закупа": req.amount.toFixed(2),
+      "Сумма закупа": req.amount ? req.amount.toFixed(2) : "0.00",
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -90,12 +113,12 @@ export default function AgentReportUU() {
     doc.text(`За период: ${monthName} ${selectedYear}`, 105, 30, { align: "center" });
 
     // Prepare table data
-    const tableData = filteredRequests.map((req, index) => [
+    const tableData = requestsToExport.map((req, index) => [
       (index + 1).toString(),
       req.description,
       req.contractor || "Не указан",
       req.invoice_number || "Не указан",
-      req.amount.toFixed(2),
+      req.amount ? req.amount.toFixed(2) : "0.00",
     ]);
 
     autoTable(doc, {
@@ -168,12 +191,23 @@ export default function AgentReportUU() {
               PDF
             </Button>
           </div>
+          {selectedRows.size > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Выбрано: {selectedRows.size} из {filteredRequests.length}
+            </p>
+          )}
         </div>
 
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={filteredRequests.length > 0 && selectedRows.size === filteredRequests.length}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
                 <TableHead className="w-[50px]">№</TableHead>
                 <TableHead>ТМЦ</TableHead>
                 <TableHead>Контрагент</TableHead>
@@ -184,22 +218,25 @@ export default function AgentReportUU() {
             <TableBody>
               {filteredRequests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Нет данных за выбранный период
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredRequests.map((request, index) => (
                   <TableRow key={request.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell className="font-medium">{request.description}</TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRows.has(request.id)}
+                        onCheckedChange={() => toggleRow(request.id)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell>{request.description}</TableCell>
                     <TableCell>{request.contractor || "Не указан"}</TableCell>
                     <TableCell>{request.invoice_number || "Не указан"}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {request.amount.toLocaleString("ru-RU", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })} ₽
+                    <TableCell className="text-right">
+                      {request.amount ? `${request.amount.toFixed(2)} ₽` : "0.00 ₽"}
                     </TableCell>
                   </TableRow>
                 ))
@@ -208,16 +245,18 @@ export default function AgentReportUU() {
           </Table>
         </div>
 
-        {filteredRequests.length > 0 && (
-          <div className="mt-4 flex justify-end">
-            <div className="text-lg font-semibold">
-              Итого: {filteredRequests.reduce((sum, req) => sum + req.amount, 0).toLocaleString("ru-RU", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })} ₽
-            </div>
+        {/* Summary */}
+        <div className="mt-4 flex justify-end">
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Общая сумма</p>
+            <p className="text-lg font-semibold">
+              {requestsToExport
+                .reduce((sum, req) => sum + (req.amount || 0), 0)
+                .toFixed(2)}{" "}
+              ₽
+            </p>
           </div>
-        )}
+        </div>
       </Card>
     </div>
   );
