@@ -38,24 +38,61 @@ function getStatusEmoji(status: string): string {
 }
 
 function formatRequestMessage(request: any): string {
-  const priority = request.priority || "Не указан";
-  const status = request.status || "Не указан";
-  const transportCompany = request.transport_company || "Не указана";
-  const waybillNumber = request.waybill_number || "Не указан";
-  const shipmentDate = request.shipment_date ? new Date(request.shipment_date).toLocaleDateString("ru-RU") : "Не указана";
-  const deliveryDate = request.delivery_date ? new Date(request.delivery_date).toLocaleDateString("ru-RU") : "Не указана";
-  const applicant = request.applicant || "Не указан";
-  const comments = request.comments || "Нет";
-
-  return `🧾 Заявка — ${request.description}\n` +
-    `${getPriorityEmoji(priority)} Приоритет — ${priority}\n` +
-    `${getStatusEmoji(status)} Статус — ${status}\n` +
-    `🚛 ТК — ${transportCompany}\n` +
-    `📄 № ТТН — ${waybillNumber}\n` +
-    `📅 Дата отгрузки — ${shipmentDate}\n` +
-    `📅 Дата прибытия — ${deliveryDate}\n` +
-    `👤 Заявитель — ${applicant}\n` +
-    `📝 Комментарий — ${comments}`;
+  const lines: string[] = [];
+  
+  // Обязательные поля
+  lines.push(`🧾 Заявка — ${request.description}`);
+  
+  if (request.priority) {
+    lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
+  }
+  
+  if (request.status) {
+    lines.push(`${getStatusEmoji(request.status)} Статус — ${request.status}`);
+  }
+  
+  // Опциональные поля - показываем только если заполнены
+  if (request.applicant) {
+    lines.push(`👤 Заявитель — ${request.applicant}`);
+  }
+  
+  if (request.executor) {
+    lines.push(`🔧 Исполнитель — ${request.executor}`);
+  }
+  
+  if (request.contractor) {
+    lines.push(`🏢 Контрагент — ${request.contractor}`);
+  }
+  
+  if (request.invoice_number) {
+    lines.push(`💳 № Счета — ${request.invoice_number}`);
+  }
+  
+  if (request.amount && request.amount > 0) {
+    lines.push(`💰 Сумма — ${request.amount.toLocaleString('ru-RU')} ₽`);
+  }
+  
+  if (request.transport_company) {
+    lines.push(`🚛 ТК — ${request.transport_company}`);
+  }
+  
+  if (request.waybill_number) {
+    lines.push(`📄 № ТТН — ${request.waybill_number}`);
+  }
+  
+  if (request.shipment_date) {
+    lines.push(`📅 Дата отгрузки — ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
+  }
+  
+  if (request.delivery_date) {
+    lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+  }
+  
+  if (request.comments) {
+    lines.push(`📝 Комментарий — ${request.comments}`);
+  }
+  
+  return lines.join('\n');
 }
 
 function createKeyboard(request: any) {

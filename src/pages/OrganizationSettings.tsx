@@ -79,24 +79,71 @@ const OrganizationSettings = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      <div className="mb-6">
+    <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Настройки организации</h1>
         <p className="text-muted-foreground">{orgName}</p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-1">
-          <TabsTrigger value="general">Общие</TabsTrigger>
-          <TabsTrigger value="users">Пользователи</TabsTrigger>
-          <TabsTrigger value="participants">Участники</TabsTrigger>
-          <TabsTrigger value="notifications">Уведомления</TabsTrigger>
-          <TabsTrigger value="requests">Заявки</TabsTrigger>
-          <TabsTrigger value="branding">Брендинг</TabsTrigger>
-          <TabsTrigger value="subscription">Подписка</TabsTrigger>
-          <TabsTrigger value="integrations">Интеграции</TabsTrigger>
-          <TabsTrigger value="audit">История</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="general" className="space-y-6" orientation="horizontal">
+        <div className="border-b">
+          <TabsList className="inline-flex h-auto w-auto rounded-none bg-transparent p-0">
+            <TabsTrigger 
+              value="general"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Общие
+            </TabsTrigger>
+            <TabsTrigger 
+              value="users"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Пользователи
+            </TabsTrigger>
+            <TabsTrigger 
+              value="participants"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Участники
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Уведомления
+            </TabsTrigger>
+            <TabsTrigger 
+              value="requests"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Заявки
+            </TabsTrigger>
+            <TabsTrigger 
+              value="branding"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Брендинг
+            </TabsTrigger>
+            <TabsTrigger 
+              value="subscription"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Подписка
+            </TabsTrigger>
+            <TabsTrigger 
+              value="integrations"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Интеграции
+            </TabsTrigger>
+            <TabsTrigger 
+              value="audit"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              История
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="general">
           <GeneralSettings organizationId={currentOrgId!} />
