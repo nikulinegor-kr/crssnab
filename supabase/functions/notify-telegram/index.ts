@@ -153,6 +153,8 @@ async function createKeyboard(request: any, supabaseClient: any) {
       keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
     }
   }
+  // Кнопка исключения заявки — всегда показываем
+  keyboard.push([{ text: "🗑 Исключить заявку", callback_data: "exclude" }]);
 
   return keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined;
 }

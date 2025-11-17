@@ -12,7 +12,7 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_WEBHOOK_SECRET_TOKEN || !SUPABASE_URL || !S
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-telegram-bot-api-secret-token",
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -100,7 +100,6 @@ async function notifyAdmins(request: any, status: string, username: string, full
 }
 
 async function handleCallbackQuery(callbackQuery: any) {
-  console.log("=== HANDLING CALLBACK QUERY ===");
   const data = callbackQuery.data;
   const messageId = callbackQuery.message.message_id;
   const chatId = callbackQuery.message.chat.id;
@@ -175,10 +174,72 @@ async function handleCallbackQuery(callbackQuery: any) {
     if (updateError) {
       console.error("Error updating awaiting_comment_from:", updateError);
     }
+  } else if (data === "exclude") {
+    // Показываем подтверждение удаления
+    await sendTelegramRequest("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "✅ Да, исключить", callback_data: "confirm_exclude" }],
+          [{ text: "↩️ Отмена", callback_data: "cancel_exclude" }]
+        ]
+      }
+    });
+
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Подтвердите исключение заявки",
+    });
+    return;
+  } else if (data === "cancel_exclude") {
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Отменено",
+    });
+    return;
+  } else if (data === "confirm_exclude") {
+    // Удаляем заявку и обновляем сообщение
+    try {
+      // Аудит
+      await supabase.from("audit_logs").insert({
+        organization_id: requests.organization_id,
+        user_id: callbackQuery.from.id?.toString?.() || "",
+        action: "delete",
+        entity_type: "request",
+        entity_id: requests.id,
+        old_values: {
+          request_number: requests.request_number,
+          description: requests.description,
+          status: requests.status,
+          deletion_reason: "Исключена по просьбе заявителя",
+          deleted_by: username || fullName,
+        }
+      });
+
+      const { error: delErr } = await supabase
+        .from("requests")
+        .delete()
+        .eq("id", requests.id);
+
+      if (delErr) throw delErr;
+
+      newText += `\n\n🗑 Исключена по просьбе заявителя — исключил: @${username || fullName}`;
+      removeKeyboard = true;
+      alertText = "Заявка исключена";
+    } catch (err) {
+      console.error("Error deleting request:", err);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Ошибка исключения",
+        show_alert: true,
+      });
+      return;
+    }
   }
 
-  // Update status in database (except for rework, which happens after comment)
-  if (data !== "rework") {
+  // Update status in database (except for rework, which happens after comment and exclude which deletes)
+  if (data !== "rework" && data !== "confirm_exclude") {
     await updateRequestStatus(requests.id, newStatus, username, fullName);
     // Notify admins about status change
     await notifyAdmins(requests, newStatus, username, fullName);
