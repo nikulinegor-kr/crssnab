@@ -86,58 +86,62 @@ export default function AgentReportUU() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     const monthName = months.find(m => m.value === selectedMonth)?.label || "";
     
     // Определяем первый и последний день выбранного месяца
     const firstDay = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1);
     const lastDay = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0);
-    const formatDate = (date: Date) => date.toLocaleDateString('ru-RU');
+    const formatDate = (date: Date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    };
     
-    // Создаем рабочую книгу
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([]);
-    
-    // Добавляем заголовок
-    XLSX.utils.sheet_add_aoa(ws, [
-      ["ПРИЛОЖЕНИЕ №1"],
-      [],
-      ['К агентскому договору № 1-21 от «28» мая 2021 г.'],
-      [],
-      ["Кому: ООО «САХАРЕСУРС»"],
-      ["Республика Саха (Якутия), г. Нерюнгри,"],
-      ["пос. Серебряный Бор, д. 401"],
-      ["тел./факс: +7 (41147) 6-46-62"],
-      [],
-      ["Отчет агента - УУ"],
-      ["по агентскому договору №1-21 от 28.05.2021г."],
-      [`За период с ${formatDate(firstDay)} по ${formatDate(lastDay)} произведен закуп ТМЦ:`],
-      [],
-      ["№", "ТМЦ", "Контрагент", "№ Счета", "Сумма закупа"]
-    ], { origin: "A1" });
-    
-    // Добавляем данные таблицы
-    const tableData = requestsToExport.map((req, index) => [
-      index + 1,
-      req.description,
-      req.contractor || "Не указан",
-      req.invoice_number || "Не указан",
-      req.amount ? req.amount.toFixed(2) : "0.00"
-    ]);
-    
-    XLSX.utils.sheet_add_aoa(ws, tableData, { origin: "A15" });
-    
-    // Устанавливаем ширину колонок
-    ws['!cols'] = [
-      { wch: 5 },   // №
-      { wch: 40 },  // ТМЦ
-      { wch: 25 },  // Контрагент
-      { wch: 15 },  // № Счета
-      { wch: 15 }   // Сумма закупа
-    ];
-    
-    XLSX.utils.book_append_sheet(wb, ws, "Отчет");
-    XLSX.writeFile(wb, `Отчет_агента_УУ_${monthName}_${selectedYear}.xlsx`);
+    try {
+      // Загружаем шаблон
+      const response = await fetch('/templates/agent-report-template.xlsx');
+      const arrayBuffer = await response.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      
+      // Работаем с первой страницей (лист "Отчет агента - УУ")
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      
+      // Обновляем период в ячейке A14
+      ws['A14'] = { 
+        t: 's', 
+        v: `За период с ${formatDate(firstDay)} г. по ${formatDate(lastDay)} г. произведен закуп ТМЦ:` 
+      };
+      
+      // Удаляем старые данные (строки с 17 по последнюю перед подписями)
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let row = 16; row < range.e.r - 5; row++) {
+        for (let col = 0; col <= 4; col++) {
+          const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
+          delete ws[cellAddr];
+        }
+      }
+      
+      // Добавляем новые данные начиная с A17
+      requestsToExport.forEach((req, index) => {
+        const rowNum = 16 + index;
+        ws[XLSX.utils.encode_cell({ r: rowNum, c: 0 })] = { t: 'n', v: index + 1 };
+        ws[XLSX.utils.encode_cell({ r: rowNum, c: 1 })] = { t: 's', v: req.description };
+        ws[XLSX.utils.encode_cell({ r: rowNum, c: 2 })] = { t: 's', v: req.contractor || "Не указан" };
+        ws[XLSX.utils.encode_cell({ r: rowNum, c: 3 })] = { t: 's', v: req.invoice_number || "Не указан" };
+        ws[XLSX.utils.encode_cell({ r: rowNum, c: 4 })] = { t: 'n', v: req.amount || 0, z: '#,##0.00' };
+      });
+      
+      // Обновляем диапазон листа
+      const newRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      newRange.e.r = 16 + requestsToExport.length + 5;
+      ws['!ref'] = XLSX.utils.encode_range(newRange);
+      
+      XLSX.writeFile(wb, `Отчет_агента_УУ_${monthName}_${selectedYear}.xlsx`);
+    } catch (error) {
+      console.error("Ошибка при экспорте:", error);
+    }
   };
 
   const exportToPDF = () => {
