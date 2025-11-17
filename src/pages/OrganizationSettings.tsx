@@ -15,6 +15,7 @@ import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings
 import { AuditLog } from "@/components/settings/AuditLog";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -89,6 +90,12 @@ const OrganizationSettings = () => {
         <div className="border-b">
           <TabsList className="inline-flex h-auto w-auto rounded-none bg-transparent p-0">
             <TabsTrigger 
+              value="profile"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Профиль
+            </TabsTrigger>
+            <TabsTrigger 
               value="general"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
             >
@@ -144,6 +151,10 @@ const OrganizationSettings = () => {
             </TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="profile" className="space-y-4">
+          <ProfileSettings />
+        </TabsContent>
 
         <TabsContent value="general">
           <GeneralSettings organizationId={currentOrgId!} />
