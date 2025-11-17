@@ -68,6 +68,9 @@ const requestSchema = z.object({
     .trim()
     .max(100, "Номер счета не должен превышать 100 символов")
     .optional(),
+  amount: z.number()
+    .min(0, "Сумма не может быть отрицательной")
+    .default(0),
   payment_percentage: z.number()
     .min(0, "Процент не может быть отрицательным")
     .max(100, "Процент не может превышать 100")
@@ -188,10 +191,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       priority: "Планово",
       applicant: "",
       executor: "",
-      availability_delivery_time: "",
-      contractor: "",
-      invoice_number: "",
-      payment_percentage: 0,
+    availability_delivery_time: "",
+    contractor: "",
+    invoice_number: "",
+    amount: 0,
+    payment_percentage: 0,
       shipment_date: "",
       delivery_date: "",
       transport_company: "",
@@ -296,6 +300,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
+        amount: data.amount || 0,
         payment_percentage: data.payment_percentage,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
@@ -532,7 +537,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="invoice_number"
@@ -541,6 +546,27 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                     <FormLabel>Номер счета</FormLabel>
                     <FormControl>
                       <Input placeholder="№ 123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Сумма</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,4 +1,4 @@
-import { Home, FileText, Upload, LogOut, CreditCard, Settings } from "lucide-react";
+import { Home, FileText, Upload, LogOut, CreditCard, Settings, FileBarChart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Все заявки", url: "/requests", icon: FileText },
+  { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
+  { title: "Отчет агента - УУ", url: "/agent-report-uu", icon: FileBarChart },
   { title: "Импорт данных", url: "/import", icon: Upload },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
   { title: "Тарифы", url: "/pricing", icon: CreditCard },
@@ -73,8 +75,8 @@ export function AppSidebar() {
               {menuItems.map((item) => {
                 const isActive = currentPath === item.url;
                 const url = isDemoMode ? `${item.url}?demo=true` : item.url;
-                // Скрываем "Импорт данных", "Настройки" и "Тарифы" в демо-режиме
-                if (isDemoMode && (item.url === "/import" || item.url === "/organization/settings" || item.url === "/pricing")) {
+                // Скрываем "Импорт данных", "Настройки", "Тарифы" и отчеты в демо-режиме
+                if (isDemoMode && (item.url === "/import" || item.url === "/organization/settings" || item.url === "/pricing" || item.url === "/agent-report" || item.url === "/agent-report-uu")) {
                   return null;
                 }
                 return (
