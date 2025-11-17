@@ -98,7 +98,7 @@ function formatRequestMessage(request: any): string {
 function createKeyboard(request: any) {
   const status = request.status?.toLowerCase() || "";
   const comments = request.comments?.toLowerCase() || "";
-  const invoiceNumber = request.invoice_number || "";
+  const documentUrl = request.document_url || "";
   
   const keyboard: any[][] = [];
 
@@ -114,9 +114,9 @@ function createKeyboard(request: any) {
     keyboard.push([{ text: "❌ ОТКЛОНЕНО", callback_data: "reject" }]);
   }
 
-  // Кнопка открыть счёт
-  if (invoiceNumber && (invoiceNumber.startsWith("http://") || invoiceNumber.startsWith("https://"))) {
-    keyboard.push([{ text: "📄 Открыть счёт", url: invoiceNumber }]);
+  // Кнопка открыть счёт - используем document_url
+  if (documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
+    keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
   }
 
   return keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined;
