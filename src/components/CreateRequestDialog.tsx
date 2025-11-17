@@ -142,6 +142,43 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
   const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
+  // Fetch statuses
+  const { data: statusesData } = useQuery({
+    queryKey: ["request-statuses", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("request_statuses")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .order("order");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Fetch priorities
+  const { data: prioritiesData } = useQuery({
+    queryKey: ["request-priorities", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("request_priorities")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .order("order");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const statuses = statusesData?.map((s) => s.name) || [];
+  const priorities = prioritiesData?.map((p) => p.name) || [];
+
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
@@ -196,9 +233,28 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       let photoUrl = null;
       let documentUrl = null;
 
+      // Helper function to sanitize filenames
+      const sanitizeFilename = (filename: string): string => {
+        const extension = filename.split('.').pop() || '';
+        // Remove all non-ASCII characters and special chars, keep only alphanumeric, dots, hyphens
+        const sanitized = filename
+          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII (cyrillic, etc)
+          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
+          .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+          .replace(/^_+|_+$/g, ''); // Trim underscores from start/end
+        
+        // If sanitization removed everything, use timestamp
+        if (!sanitized || sanitized === `.${extension}`) {
+          return `file_${Date.now()}.${extension}`;
+        }
+        
+        return sanitized;
+      };
+
       // Upload photo if selected
       if (photoFile) {
-        const photoPath = `${requestNumber}/${Date.now()}-${photoFile.name}`;
+        const sanitizedPhotoName = sanitizeFilename(photoFile.name);
+        const photoPath = `${requestNumber}/${Date.now()}-${sanitizedPhotoName}`;
         const { error: photoError } = await supabase.storage
           .from("request-photos")
           .upload(photoPath, photoFile);
@@ -214,7 +270,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
       // Upload document if selected
       if (documentFile) {
-        const documentPath = `${requestNumber}/${Date.now()}-${documentFile.name}`;
+        const sanitizedDocName = sanitizeFilename(documentFile.name);
+        const documentPath = `${requestNumber}/${Date.now()}-${sanitizedDocName}`;
         const { error: documentError } = await supabase.storage
           .from("request-documents")
           .upload(documentPath, documentFile);
@@ -295,9 +352,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       setIsSubmitting(false);
     }
   };
-
-  const statuses = ["Новая заявка", "На согласовании", "КП", "Счёт", "В работе", "В пути", "Доставлено в ТК", "Доставлено", "Выполнено"];
-  const priorities = ["Аварийно", "Планово", "Приоритетно"];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
