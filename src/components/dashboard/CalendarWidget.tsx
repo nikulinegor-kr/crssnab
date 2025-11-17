@@ -54,6 +54,7 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
           selected={selectedDate}
           onSelect={setSelectedDate}
           locale={ru}
+          numberOfMonths={2}
           className="rounded-md border border-border/40 pointer-events-auto"
           modifiers={{
             delivery: deliveryDates,
