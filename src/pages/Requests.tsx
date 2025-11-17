@@ -268,9 +268,41 @@ const Requests = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!requestToDelete) return;
+    if (!requestToDelete || !currentOrgId) return;
 
     try {
+      // Получаем текущего пользователя
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("Пользователь не авторизован");
+      }
+
+      // Получаем информацию о профиле пользователя
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
+
+      // Логируем удаление в audit_logs
+      await supabase.rpc("log_audit_event", {
+        _organization_id: currentOrgId,
+        _action: "delete",
+        _entity_type: "request",
+        _entity_id: requestToDelete.id,
+        _old_values: {
+          request_number: requestToDelete.request_number,
+          description: requestToDelete.description,
+          status: requestToDelete.status,
+          deleted_by: userName,
+          deletion_reason: "Исключена по просьбе заявителя"
+        }
+      });
+
+      // Удаляем заявку
       const { error } = await supabase
         .from("requests")
         .delete()
@@ -279,8 +311,8 @@ const Requests = () => {
       if (error) throw error;
 
       toast({
-        title: "Успешно",
-        description: "Заявка удалена",
+        title: "Заявка исключена",
+        description: `Заявка "${requestToDelete.request_number}" исключена по просьбе заявителя. Исключил: ${userName}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
@@ -290,7 +322,7 @@ const Requests = () => {
       console.error("Error deleting request:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось удалить заявку",
+        description: "Не удалось исключить заявку",
         variant: "destructive",
       });
     }
