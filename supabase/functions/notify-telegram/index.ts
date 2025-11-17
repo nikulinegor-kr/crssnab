@@ -199,6 +199,20 @@ serve(async (req) => {
         text: message,
         reply_markup: keyboard,
       });
+      
+      // Handle "message is not modified" error - this is not a real error
+      if (!result.ok && result.error_code === 400 && 
+          result.description?.includes("message is not modified")) {
+        console.log("Message content unchanged, skipping update");
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            skipped: true,
+            message: "Сообщение не изменилось" 
+          }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     } else {
       // Send new message
       result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
@@ -217,6 +231,19 @@ serve(async (req) => {
     }
 
     console.log("Telegram result:", result);
+    
+    // Check for other errors
+    if (!result.ok) {
+      console.error("Telegram API error:", result);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Ошибка Telegram API: ${result.description || 'Неизвестная ошибка'}` 
+        }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true, result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
