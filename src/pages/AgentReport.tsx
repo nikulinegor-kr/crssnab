@@ -88,16 +88,54 @@ export default function AgentReport() {
 
   const exportToExcel = () => {
     const monthName = months.find(m => m.value === selectedMonth)?.label || "";
-    const exportData = requestsToExport.map((req, index) => ({
-      "№": index + 1,
-      "ТМЦ": req.description,
-      "Контрагент": req.contractor || "Не указан",
-      "№ Счета": req.invoice_number || "Не указан",
-      "Сумма закупа": req.amount ? req.amount.toFixed(2) : "0.00",
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Определяем первый и последний день выбранного месяца
+    const firstDay = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1);
+    const lastDay = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0);
+    const formatDate = (date: Date) => date.toLocaleDateString('ru-RU');
+    
+    // Создаем рабочую книгу
     const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([]);
+    
+    // Добавляем заголовок
+    XLSX.utils.sheet_add_aoa(ws, [
+      ["ПРИЛОЖЕНИЕ №1"],
+      [],
+      ['К агентскому договору № 1-21 от «28» мая 2021 г.'],
+      [],
+      ["Кому: ООО «САХАРЕСУРС»"],
+      ["Республика Саха (Якутия), г. Нерюнгри,"],
+      ["пос. Серебряный Бор, д. 401"],
+      ["тел./факс: +7 (41147) 6-46-62"],
+      [],
+      ["Отчет агента"],
+      ["по агентскому договору №1-21 от 28.05.2021г."],
+      [`За период с ${formatDate(firstDay)} по ${formatDate(lastDay)} произведен закуп ТМЦ:`],
+      [],
+      ["№", "ТМЦ", "Контрагент", "№ Счета", "Сумма закупа"]
+    ], { origin: "A1" });
+    
+    // Добавляем данные таблицы
+    const tableData = requestsToExport.map((req, index) => [
+      index + 1,
+      req.description,
+      req.contractor || "Не указан",
+      req.invoice_number || "Не указан",
+      req.amount ? req.amount.toFixed(2) : "0.00"
+    ]);
+    
+    XLSX.utils.sheet_add_aoa(ws, tableData, { origin: "A15" });
+    
+    // Устанавливаем ширину колонок
+    ws['!cols'] = [
+      { wch: 5 },   // №
+      { wch: 40 },  // ТМЦ
+      { wch: 25 },  // Контрагент
+      { wch: 15 },  // № Счета
+      { wch: 15 }   // Сумма закупа
+    ];
+    
     XLSX.utils.book_append_sheet(wb, ws, "Отчет");
     XLSX.writeFile(wb, `Отчет_агента_${monthName}_${selectedYear}.xlsx`);
   };
