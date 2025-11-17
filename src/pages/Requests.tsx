@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X, Send, AlertCircle } from "lucide-react";
+import { Search, Plus, X, Send, AlertCircle, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,17 @@ import { Request } from "@/hooks/useRequests";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -60,6 +71,9 @@ const Requests = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [years, setYears] = useState<string[]>(["2019", "2020", "2021", "2022", "2023", "2024", "2025"]);
   const [newYear, setNewYear] = useState("");
+  const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   // Check Telegram configuration
   useEffect(() => {
@@ -244,6 +258,41 @@ const Requests = () => {
       });
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRequestToDelete(request);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!requestToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .delete()
+        .eq("id", requestToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешно",
+        description: "Заявка удалена",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setShowDeleteDialog(false);
+      setRequestToDelete(null);
+    } catch (error) {
+      console.error("Error deleting request:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить заявку",
+        variant: "destructive",
+      });
     }
   };
 
@@ -618,6 +667,18 @@ const Requests = () => {
                           {request.comments}
                         </div>
                       )}
+                      
+                      <div className="pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                          onClick={(e) => handleDeleteClick(request, e)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Исключить заявку
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -652,7 +713,8 @@ const Requests = () => {
                     <TableHead className="text-center border-r">Заявитель</TableHead>
                     <TableHead className="text-center border-r">Комментарий</TableHead>
                     <TableHead className="text-center border-r">Исполнитель</TableHead>
-                    <TableHead className="text-center">Счёт/КП</TableHead>
+                    <TableHead className="text-center border-r">Счёт/КП</TableHead>
+                    <TableHead className="text-center">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -764,10 +826,20 @@ const Requests = () => {
                           {request.executor || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center">
+                      <TableCell className="text-xs text-center border-r">
                         <div className="line-clamp-2">
                           {request.document_url ? "Есть" : "-"}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => handleDeleteClick(request, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -819,6 +891,27 @@ const Requests = () => {
           <Send className="h-6 w-6" />
         </Button>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Подтверждение удаления</AlertDialogTitle>
+            <AlertDialogDescription>
+              Действительно ли исключить заявку "{requestToDelete?.description}"?
+              Это действие нельзя будет отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Исключить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
