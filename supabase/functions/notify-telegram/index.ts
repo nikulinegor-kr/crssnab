@@ -132,11 +132,12 @@ serve(async (req) => {
     
     // Validate input
     const schema = z.object({
-      requestId: z.string().uuid()
+      requestId: z.string().uuid(),
+      mode: z.enum(["auto", "send", "edit"]).optional().default("auto"),
     });
     
-    const { requestId } = schema.parse(requestBody);
-    console.log("Notifying about request:", requestId);
+    const { requestId, mode } = schema.parse(requestBody);
+    console.log("Notifying about request:", requestId, "mode:", mode);
 
     // Get request details with organization info
     const { data: request, error } = await supabase
@@ -189,9 +190,10 @@ serve(async (req) => {
     const message = formatRequestMessage(request);
     const keyboard = createKeyboard(request);
 
-    // Send or update message
+    // Send or update message based on mode
     let result;
-    if (request.telegram_message_id) {
+    const shouldEdit = request.telegram_message_id && mode !== "send";
+    if (shouldEdit) {
       // Update existing message
       result = await sendTelegramRequest(org.telegram_bot_token, "editMessageText", {
         chat_id: org.telegram_chat_id,
@@ -221,7 +223,7 @@ serve(async (req) => {
         reply_markup: keyboard,
       });
 
-      // Save message_id to database
+      // Save message_id to database (track the latest message)
       if (result.ok && result.result) {
         await supabase
           .from("requests")
