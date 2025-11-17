@@ -68,10 +68,6 @@ function formatRequestMessage(request: any): string {
     lines.push(`💳 № Счета — ${request.invoice_number}`);
   }
   
-  if (request.amount && request.amount > 0) {
-    lines.push(`💰 Сумма — ${request.amount.toLocaleString('ru-RU')} ₽`);
-  }
-  
   if (request.transport_company) {
     lines.push(`🚛 ТК — ${request.transport_company}`);
   }
