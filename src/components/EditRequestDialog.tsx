@@ -399,12 +399,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 }
               </DialogDescription>
             </div>
-            {request?.invoice_number && (request.invoice_number.startsWith('http://') || request.invoice_number.startsWith('https://')) && (
+            {request?.document_url && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(request.invoice_number!, '_blank')}
+                onClick={() => window.open(request.document_url!, '_blank')}
                 className="gap-2"
               >
                 <FileText className="h-4 w-4" />
