@@ -22,16 +22,20 @@ async function sendTelegramRequest(method: string, body: any) {
 }
 
 async function updateRequestStatus(requestId: string, status: string, username: string, fullName: string) {
-  const { error } = await supabase
+  console.log("Updating request status:", { requestId, status, username, fullName });
+  
+  const { data, error } = await supabase
     .from("requests")
     .update({ status, awaiting_comment_from: null })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .select();
 
   if (error) {
     console.error("Error updating request:", error);
     throw error;
   }
 
+  console.log("Request updated successfully:", data);
   return { username, fullName };
 }
 
@@ -69,9 +73,10 @@ async function handleCallbackQuery(callbackQuery: any) {
   if (data === "received") {
     // ТМЦ ПОЛУЧЕНО
     newStatus = "Доставлено";
-    newText += `\n\n📌 ТМЦ получено — отметил: @${username || fullName}`;
+    newText += `\n\n✅ ПОЛУЧЕНО — отметил: @${username || fullName}`;
     removeKeyboard = true;
     alertText = "ТМЦ отмечено как получено";
+    console.log("Processing 'received' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "approve") {
     // В РАБОТУ
     newStatus = "В РАБОТУ: СОГЛАСОВАНО";
