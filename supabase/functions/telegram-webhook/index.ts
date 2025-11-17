@@ -190,6 +190,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only accept POST requests from Telegram
+  if (req.method !== "POST") {
+    console.log("Non-POST request - returning info message");
+    return new Response(JSON.stringify({ status: "ok", message: "Telegram webhook is running" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const update = await req.json();
     console.log("=== Telegram update received ===");
