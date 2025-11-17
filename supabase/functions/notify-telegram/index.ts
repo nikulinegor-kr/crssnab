@@ -98,8 +98,8 @@ async function createKeyboard(request: any, supabaseClient: any) {
   
   const keyboard: any[][] = [];
 
-  // Кнопка ТМЦ ПОЛУЧЕНО - показываем для всех статусов кроме уже доставленных
-  if (!status.includes("доставлено") || status.includes("доставлено в тк")) {
+  // Кнопка ТМЦ ПОЛУЧЕНО - показываем только если статус "Доставлено в ТК"
+  if (status.includes("доставлено в тк")) {
     keyboard.push([{ text: "📦 ТМЦ ПОЛУЧЕНО", callback_data: "received" }]);
   }
 

@@ -73,27 +73,27 @@ async function handleCallbackQuery(callbackQuery: any) {
   if (data === "received") {
     // ТМЦ ПОЛУЧЕНО
     newStatus = "Доставлено";
-    newText += `\n\n✅ ПОЛУЧЕНО — отметил: @${username || fullName}`;
+    newText += `\n\n📌 ТМЦ получено — отметил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "ТМЦ отмечено как получено";
+    alertText = "Отмечено как получено 📦";
     console.log("Processing 'received' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "approve") {
     // В РАБОТУ
     newStatus = "В РАБОТУ: СОГЛАСОВАНО";
     newText += `\n\n📌 В РАБОТУ — подтвердил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Заявка согласована";
+    alertText = "Отмечено: В РАБОТУ ✅";
   } else if (data === "reject") {
     // ОТКЛОНЕНО
     newStatus = "ОТКЛОНЕНО";
     newText += `\n\n📌 ОТКЛОНЕНО — отметил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Заявка отклонена";
+    alertText = "Отмечено: ОТКЛОНЕНО";
   } else if (data === "rework") {
     // НА ДОРАБОТКУ
     newText += `\n\n📌 НА ДОРАБОТКУ — ждём комментарий от: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Ожидаем комментарий";
+    alertText = "Пришлите одним сообщением комментарий 🔧";
 
     // Save who we're waiting comment from
     const { error: updateError } = await supabase
