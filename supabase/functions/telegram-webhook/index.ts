@@ -40,6 +40,7 @@ async function updateRequestStatus(requestId: string, status: string, username: 
 }
 
 async function handleCallbackQuery(callbackQuery: any) {
+  console.log("=== HANDLING CALLBACK QUERY ===");
   const data = callbackQuery.data;
   const messageId = callbackQuery.message.message_id;
   const chatId = callbackQuery.message.chat.id;
@@ -47,6 +48,9 @@ async function handleCallbackQuery(callbackQuery: any) {
   const fullName = `${callbackQuery.from.first_name || ""} ${callbackQuery.from.last_name || ""}`.trim();
 
   console.log("Callback data:", data);
+  console.log("Message ID:", messageId);
+  console.log("Chat ID:", chatId);
+  console.log("User:", username || fullName);
 
   // Find request by telegram_message_id
   const { data: requests, error: findError } = await supabase
@@ -55,8 +59,11 @@ async function handleCallbackQuery(callbackQuery: any) {
     .eq("telegram_message_id", messageId)
     .single();
 
+  console.log("Finding request by telegram_message_id:", messageId);
+  
   if (findError || !requests) {
     console.error("Request not found:", findError);
+    console.error("Search criteria: telegram_message_id =", messageId);
     await sendTelegramRequest("answerCallbackQuery", {
       callback_query_id: callbackQuery.id,
       text: "Заявка не найдена",
@@ -64,6 +71,8 @@ async function handleCallbackQuery(callbackQuery: any) {
     });
     return;
   }
+
+  console.log("Request found:", requests.id, "Current status:", requests.status);
 
   let newText = callbackQuery.message.text;
   let newStatus = requests.status;
@@ -172,25 +181,37 @@ async function handleMessage(message: any) {
 }
 
 serve(async (req) => {
+  console.log("=== TELEGRAM WEBHOOK CALLED ===");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  
   if (req.method === "OPTIONS") {
+    console.log("OPTIONS request - returning CORS headers");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const update = await req.json();
-    console.log("Telegram update:", JSON.stringify(update, null, 2));
+    console.log("=== Telegram update received ===");
+    console.log("Full update:", JSON.stringify(update, null, 2));
 
     if (update.callback_query) {
+      console.log("Processing callback_query");
       await handleCallbackQuery(update.callback_query);
     } else if (update.message) {
+      console.log("Processing message");
       await handleMessage(update.message);
+    } else {
+      console.log("Unknown update type:", Object.keys(update));
     }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    console.error("=== ERROR IN WEBHOOK ===");
     console.error("Error:", error);
+    console.error("Stack:", error.stack);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
