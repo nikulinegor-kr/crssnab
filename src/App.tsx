@@ -10,7 +10,8 @@ import Requests from "./pages/Requests";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
-
+import AgentReport from "./pages/AgentReport";
+import AgentReportUU from "./pages/AgentReportUU";
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,26 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <OrganizationSettings />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agent-report"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentReport />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agent-report-uu"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentReportUU />
                 </AppLayout>
               </ProtectedRoute>
             }

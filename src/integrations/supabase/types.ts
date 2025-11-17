@@ -267,6 +267,7 @@ export type Database = {
       }
       requests: {
         Row: {
+          amount: number | null
           applicant: string | null
           availability_delivery_time: string | null
           awaiting_comment_from: string | null
@@ -294,6 +295,7 @@ export type Database = {
           waybill_number: string | null
         }
         Insert: {
+          amount?: number | null
           applicant?: string | null
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
@@ -321,6 +323,7 @@ export type Database = {
           waybill_number?: string | null
         }
         Update: {
+          amount?: number | null
           applicant?: string | null
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null

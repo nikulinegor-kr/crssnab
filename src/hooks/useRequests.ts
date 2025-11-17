@@ -13,6 +13,7 @@ export interface Request {
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
+  amount: number;
   payment_percentage: number;
   shipment_date: string | null;
   delivery_date: string | null;
