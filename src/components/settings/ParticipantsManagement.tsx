@@ -35,6 +35,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 interface Participant {
   id: string;
   name: string;
+  telegram_username?: string;
   participant_type: "applicant" | "executor";
   is_active: boolean;
   created_at: string;
@@ -47,6 +48,7 @@ export function ParticipantsManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
   const [newParticipantName, setNewParticipantName] = useState("");
+  const [newParticipantTelegramUsername, setNewParticipantTelegramUsername] = useState("");
   const [newParticipantType, setNewParticipantType] = useState<"applicant" | "executor">("applicant");
 
   // Fetch participants
@@ -70,7 +72,7 @@ export function ParticipantsManagement() {
 
   // Add participant mutation
   const addMutation = useMutation({
-    mutationFn: async (data: { name: string; type: "applicant" | "executor" }) => {
+    mutationFn: async (data: { name: string; telegram_username?: string; type: "applicant" | "executor" }) => {
       if (!currentOrgId) throw new Error("No organization selected");
 
       const { error } = await supabase
@@ -78,6 +80,7 @@ export function ParticipantsManagement() {
         .insert({
           organization_id: currentOrgId,
           name: data.name.trim(),
+          telegram_username: data.telegram_username?.trim() || null,
           participant_type: data.type,
         });
 
@@ -91,6 +94,7 @@ export function ParticipantsManagement() {
       });
       setIsAddDialogOpen(false);
       setNewParticipantName("");
+      setNewParticipantTelegramUsername("");
       setNewParticipantType("applicant");
     },
     onError: (error: any) => {
@@ -104,11 +108,12 @@ export function ParticipantsManagement() {
 
   // Update participant mutation
   const updateMutation = useMutation({
-    mutationFn: async (data: { id: string; name: string; type: "applicant" | "executor" }) => {
+    mutationFn: async (data: { id: string; name: string; telegram_username?: string; type: "applicant" | "executor" }) => {
       const { error } = await supabase
         .from("request_participants")
         .update({
           name: data.name.trim(),
+          telegram_username: data.telegram_username?.trim() || null,
           participant_type: data.type,
         })
         .eq("id", data.id);
@@ -171,6 +176,7 @@ export function ParticipantsManagement() {
 
     addMutation.mutate({
       name: newParticipantName,
+      telegram_username: newParticipantTelegramUsername,
       type: newParticipantType,
     });
   };
@@ -188,6 +194,7 @@ export function ParticipantsManagement() {
     updateMutation.mutate({
       id: editingParticipant.id,
       name: newParticipantName,
+      telegram_username: newParticipantTelegramUsername,
       type: newParticipantType,
     });
   };
@@ -195,6 +202,7 @@ export function ParticipantsManagement() {
   const openEditDialog = (participant: Participant) => {
     setEditingParticipant(participant);
     setNewParticipantName(participant.name);
+    setNewParticipantTelegramUsername(participant.telegram_username || "");
     setNewParticipantType(participant.participant_type);
   };
 
@@ -215,6 +223,7 @@ export function ParticipantsManagement() {
             <Button
               onClick={() => {
                 setNewParticipantName("");
+                setNewParticipantTelegramUsername("");
                 setNewParticipantType("applicant");
                 setIsAddDialogOpen(true);
               }}
@@ -233,6 +242,7 @@ export function ParticipantsManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Имя</TableHead>
+                    <TableHead>Telegram</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -240,6 +250,9 @@ export function ParticipantsManagement() {
                   {applicants.map((participant) => (
                     <TableRow key={participant.id}>
                       <TableCell>{participant.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {participant.telegram_username || "—"}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -279,6 +292,7 @@ export function ParticipantsManagement() {
             <Button
               onClick={() => {
                 setNewParticipantName("");
+                setNewParticipantTelegramUsername("");
                 setNewParticipantType("executor");
                 setIsAddDialogOpen(true);
               }}
@@ -297,6 +311,7 @@ export function ParticipantsManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Имя</TableHead>
+                    <TableHead>Telegram</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -304,6 +319,9 @@ export function ParticipantsManagement() {
                   {executors.map((participant) => (
                     <TableRow key={participant.id}>
                       <TableCell>{participant.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {participant.telegram_username || "—"}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -339,6 +357,7 @@ export function ParticipantsManagement() {
             setIsAddDialogOpen(false);
             setEditingParticipant(null);
             setNewParticipantName("");
+            setNewParticipantTelegramUsername("");
           }
         }}
       >
@@ -363,6 +382,19 @@ export function ParticipantsManagement() {
                 onChange={(e) => setNewParticipantName(e.target.value)}
                 placeholder="Введите имя"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="telegram">Telegram username (без @)</Label>
+              <Input
+                id="telegram"
+                value={newParticipantTelegramUsername}
+                onChange={(e) => setNewParticipantTelegramUsername(e.target.value.replace(/^@/, ""))}
+                placeholder="username"
+              />
+              <p className="text-xs text-muted-foreground">
+                Для упоминания в уведомлениях Telegram
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -391,6 +423,7 @@ export function ParticipantsManagement() {
                 setIsAddDialogOpen(false);
                 setEditingParticipant(null);
                 setNewParticipantName("");
+                setNewParticipantTelegramUsername("");
               }}
             >
               Отмена

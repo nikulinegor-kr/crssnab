@@ -156,6 +156,7 @@ export type Database = {
           name: string
           organization_id: string
           participant_type: string
+          telegram_username: string | null
           updated_at: string
         }
         Insert: {
@@ -165,6 +166,7 @@ export type Database = {
           name: string
           organization_id: string
           participant_type: string
+          telegram_username?: string | null
           updated_at?: string
         }
         Update: {
@@ -174,6 +176,7 @@ export type Database = {
           name?: string
           organization_id?: string
           participant_type?: string
+          telegram_username?: string | null
           updated_at?: string
         }
         Relationships: [
