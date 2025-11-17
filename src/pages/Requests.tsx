@@ -181,7 +181,7 @@ const Requests = () => {
           }
 
           const { data, error } = await supabase.functions.invoke('notify-telegram', {
-            body: { requestId },
+            body: { requestId, mode: 'send' },
             headers: {
               Authorization: `Bearer ${session.access_token}`
             }
