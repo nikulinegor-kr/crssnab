@@ -37,8 +37,20 @@ function getStatusEmoji(status: string): string {
   return "🚚";
 }
 
-function formatRequestMessage(request: any): string {
+function formatRequestMessage(request: any, participants: any[] = []): string {
   const lines: string[] = [];
+  
+  // Helper to find participant username
+  const getParticipantMention = (name: string, type: "applicant" | "executor"): string => {
+    if (!name) return "";
+    const participant = participants.find(
+      p => p.name === name && p.participant_type === type
+    );
+    if (participant?.telegram_username) {
+      return `@${participant.telegram_username}`;
+    }
+    return name;
+  };
   
   // Обязательные поля
   lines.push(`🧾 Заявка — ${request.description}`);
@@ -53,11 +65,13 @@ function formatRequestMessage(request: any): string {
   
   // Опциональные поля - показываем только если заполнены
   if (request.applicant) {
-    lines.push(`👤 Заявитель — ${request.applicant}`);
+    const mention = getParticipantMention(request.applicant, "applicant");
+    lines.push(`👤 Заявитель — ${mention}`);
   }
   
   if (request.executor) {
-    lines.push(`🔧 Исполнитель — ${request.executor}`);
+    const mention = getParticipantMention(request.executor, "executor");
+    lines.push(`🔧 Исполнитель — ${mention}`);
   }
   
   if (request.contractor) {
@@ -245,7 +259,14 @@ serve(async (req) => {
       });
     }
 
-    const message = formatRequestMessage(request);
+    // Get participants for mentions
+    const { data: participants } = await supabase
+      .from("request_participants")
+      .select("name, telegram_username, participant_type")
+      .eq("organization_id", request.organization_id)
+      .eq("is_active", true);
+
+    const message = formatRequestMessage(request, participants || []);
     const keyboard = await createKeyboard(request, supabase);
 
     // Send or update message based on mode
