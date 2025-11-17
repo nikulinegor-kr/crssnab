@@ -123,6 +123,7 @@ export type Database = {
           id: string
           organization_name: string
           position: string | null
+          telegram_user_id: number | null
           updated_at: string | null
         }
         Insert: {
@@ -132,6 +133,7 @@ export type Database = {
           id: string
           organization_name: string
           position?: string | null
+          telegram_user_id?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -141,6 +143,7 @@ export type Database = {
           id?: string
           organization_name?: string
           position?: string | null
+          telegram_user_id?: number | null
           updated_at?: string | null
         }
         Relationships: []
