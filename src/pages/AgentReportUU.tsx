@@ -199,16 +199,16 @@ export default function AgentReportUU() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Отчет агента - УУ</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Отчет агента - УУ</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Отчет по закупкам ТМЦ за выбранный период (для УУ)
         </p>
       </div>
 
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex-1">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger>
@@ -256,8 +256,8 @@ export default function AgentReportUU() {
           )}
         </div>
 
-        <div className="rounded-md border">
-          <Table>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">

@@ -80,54 +80,54 @@ const OrganizationSettings = () => {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Настройки организации</h1>
-        <p className="text-muted-foreground">{orgName}</p>
+    <div className="container max-w-7xl mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">Настройки организации</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">{orgName}</p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6" orientation="horizontal">
-        <div className="border-b">
-          <TabsList className="inline-flex h-auto w-auto rounded-none bg-transparent p-0">
+      <Tabs defaultValue="general" className="space-y-4 sm:space-y-6" orientation="horizontal">
+        <div className="border-b overflow-x-auto">
+          <TabsList className="inline-flex h-auto w-auto min-w-full sm:min-w-0 rounded-none bg-transparent p-0">
             <TabsTrigger 
               value="profile"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Профиль
             </TabsTrigger>
             <TabsTrigger 
               value="general"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Общие
             </TabsTrigger>
             <TabsTrigger 
               value="users"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Пользователи
             </TabsTrigger>
             <TabsTrigger 
               value="participants"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Участники
             </TabsTrigger>
             <TabsTrigger 
               value="notifications"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Уведомления
             </TabsTrigger>
             <TabsTrigger 
               value="requests"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Заявки
             </TabsTrigger>
             <TabsTrigger 
               value="branding"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               Брендинг
             </TabsTrigger>

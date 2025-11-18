@@ -290,9 +290,9 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-3 sm:p-4">
       <Card className="w-full max-w-md shadow-elevated">
-        <CardHeader className="space-y-1">
+        <CardHeader className="space-y-1 p-4 sm:p-6">
           <Button
             variant="ghost"
             size="sm"
@@ -302,17 +302,17 @@ export default function Auth() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             На главную
           </Button>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-center">
             Вход в систему
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="login">Вход</TabsTrigger>
-              <TabsTrigger value="signup">Регистрация</TabsTrigger>
-              <TabsTrigger value="phone">Телефон</TabsTrigger>
-              <TabsTrigger value="reset">Сброс</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-auto">
+              <TabsTrigger value="login" className="text-xs sm:text-sm px-2 py-2">Вход</TabsTrigger>
+              <TabsTrigger value="signup" className="text-xs sm:text-sm px-1 py-2">Регистр.</TabsTrigger>
+              <TabsTrigger value="phone" className="text-xs sm:text-sm px-2 py-2">Телефон</TabsTrigger>
+              <TabsTrigger value="reset" className="text-xs sm:text-sm px-2 py-2">Сброс</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">

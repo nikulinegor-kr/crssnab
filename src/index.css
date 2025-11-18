@@ -7,6 +7,22 @@ All colors MUST be HSL.
 */
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
   :root {
     --background: 0 0% 98%;
     --foreground: 213 24% 20%;
@@ -103,15 +119,5 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
   }
 }
