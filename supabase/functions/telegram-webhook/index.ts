@@ -174,6 +174,13 @@ async function handleCallbackQuery(callbackQuery: any) {
     if (updateError) {
       console.error("Error updating awaiting_comment_from:", updateError);
     }
+  } else if (data === "paid") {
+    // ОТПИСАНО В ОПЛАТУ
+    newStatus = "Оплачено";
+    newText += `\n\n📌 Отписано в оплату — отметил: @${username || fullName}`;
+    removeKeyboard = true;
+    alertText = "Отмечено: Оплачено ✅";
+    console.log("Processing 'paid' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "exclude") {
     // Показываем подтверждение удаления
     await sendTelegramRequest("editMessageReplyMarkup", {

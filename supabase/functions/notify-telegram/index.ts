@@ -124,6 +124,11 @@ async function createKeyboard(request: any, supabaseClient: any) {
     keyboard.push([{ text: "❌ ОТКЛОНЕНО", callback_data: "reject" }]);
   }
 
+  // Кнопка "Отписано в оплату" для статуса "Счёт в Бухгалтерии"
+  if (status.includes("счёт в бухгалтерии")) {
+    keyboard.push([{ text: "✅ Отписано в оплату", callback_data: "paid" }]);
+  }
+
   // Кнопка открыть счёт - используем document_url с signed URL
   if (documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
     try {
