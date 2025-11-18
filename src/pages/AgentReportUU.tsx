@@ -38,7 +38,8 @@ export default function AgentReportUU() {
 
   // Filter requests by selected month/year
   const filteredRequests = requests?.filter((request) => {
-    const requestDate = new Date(request.request_date);
+    // Parse as local date to avoid timezone shifting months
+    const requestDate = new Date(`${request.request_date}T00:00:00`);
     return (
       requestDate.getFullYear().toString() === selectedYear &&
       (requestDate.getMonth() + 1).toString() === selectedMonth
@@ -107,19 +108,52 @@ export default function AgentReportUU() {
       
       // Работаем с первой страницей (лист "Отчет агента - УУ")
       const ws = wb.Sheets[wb.SheetNames[0]];
-      
-      // Заменяем "октябрь" на выбранный месяц во всех ячейках
-      const sheetRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (let row = sheetRange.s.r; row <= sheetRange.e.r; row++) {
-        for (let col = sheetRange.s.c; col <= sheetRange.e.c; col++) {
-          const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
-          const cell = ws[cellAddr];
+
+      // Универсальная замена названий месяцев в ячейках листа
+      const monthMap: Record<string, { nom: string; gen: string }> = {
+        "1": { nom: "январь", gen: "января" },
+        "2": { nom: "февраль", gen: "февраля" },
+        "3": { nom: "март", gen: "марта" },
+        "4": { nom: "апрель", gen: "апреля" },
+        "5": { nom: "май", gen: "мая" },
+        "6": { nom: "июнь", gen: "июня" },
+        "7": { nom: "июль", gen: "июля" },
+        "8": { nom: "август", gen: "августа" },
+        "9": { nom: "сентябрь", gen: "сентября" },
+        "10": { nom: "октябрь", gen: "октября" },
+        "11": { nom: "ноябрь", gen: "ноября" },
+        "12": { nom: "декабрь", gen: "декабря" },
+      };
+
+      const sourceMonths = [
+        "январь","января","февраль","февраля","март","марта","апрель","апреля",
+        "май","мая","июнь","июня","июль","июля","август","августа",
+        "сентябрь","сентября","октябрь","октября","ноябрь","ноября","декабрь","декабря"
+      ];
+      const target = monthMap[selectedMonth];
+      const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+      const applyCase = (match: string, repl: string) => {
+        if (match === match.toUpperCase()) return repl.toUpperCase();
+        if (match[0] === match[0].toUpperCase()) return capitalize(repl);
+        return repl;
+      };
+
+      const rangeAll = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let r = rangeAll.s.r; r <= rangeAll.e.r; r++) {
+        for (let c = rangeAll.s.c; c <= rangeAll.e.c; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          const cell = ws[addr];
           if (cell && cell.t === 's' && typeof cell.v === 'string') {
-            const lowerValue = cell.v.toLowerCase();
-            if (lowerValue.includes('октябрь') || lowerValue.includes('октября')) {
-              cell.v = cell.v.replace(/октябрь/gi, monthName.toLowerCase());
-              cell.v = cell.v.replace(/октября/gi, monthName.toLowerCase().replace('ь', 'я'));
-            }
+            let v = cell.v;
+            sourceMonths.forEach((m) => {
+              const regex = new RegExp(`\\b${m}\\b`, 'gi');
+              v = v.replace(regex, (found) => {
+                const useGen = m.endsWith('а') || m.endsWith('я');
+                const repl = useGen ? target.gen : target.nom;
+                return applyCase(found, repl);
+              });
+            });
+            cell.v = v;
           }
         }
       }
