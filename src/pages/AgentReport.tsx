@@ -123,8 +123,11 @@ export default function AgentReport() {
       const arrayBuffer = await response.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: 'array' });
       
-      // Работаем со второй страницей (лист "Отчет агента")
-      const ws = wb.Sheets[wb.SheetNames[1]];
+      // Ищем лист "Отчет агента" по имени, по умолчанию берём первый
+      const agentSheetName =
+        wb.SheetNames.find((name) => name.toLowerCase().includes("отчет агента")) ||
+        wb.SheetNames[0];
+      const ws = wb.Sheets[agentSheetName];
 
       // Универсальная замена названий месяцев в ячейках листа
       const monthMap: Record<string, { nom: string; gen: string }> = {
@@ -205,6 +208,13 @@ export default function AgentReport() {
       const newRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       newRange.e.r = 16 + requestsToExport.length + 5;
       ws['!ref'] = XLSX.utils.encode_range(newRange);
+      
+      // Делаем лист "Отчет агента" первым, чтобы он открывался по умолчанию
+      const sheetIndex = wb.SheetNames.indexOf(agentSheetName);
+      if (sheetIndex > 0) {
+        wb.SheetNames.splice(sheetIndex, 1);
+        wb.SheetNames.unshift(agentSheetName);
+      }
       
       XLSX.writeFile(wb, `Отчет_агента_${monthName}_${selectedYear}.xlsx`);
     } catch (error) {
