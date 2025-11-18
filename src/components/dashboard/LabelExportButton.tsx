@@ -46,27 +46,31 @@ export function LabelExportButton({ selectedRequests }: LabelExportButtonProps) 
       // Создаем workbook
       const wb = XLSX.utils.book_new();
       
-      // Создаем массив данных для каждой этикетки
-      const allLabelsData: any[][] = [];
+      // Создаем массив данных с заголовками
+      const labelsData: any[][] = [
+        ["Организация", "Тел", "Заявка", "Ответственный"]
+      ];
 
-      selectedRequests.forEach((request, index) => {
-        if (index > 0) {
-          // Добавляем пустую строку между этикетками
-          allLabelsData.push([]);
-        }
-
-        // Формируем 4 строки для каждой этикетки
-        allLabelsData.push([orgData.name]);
-        allLabelsData.push([`${orgData.name} ${orgData.contact_phone || ""}`]);
-        allLabelsData.push([request.request_number]);
-        allLabelsData.push([request.applicant || ""]);
+      // Добавляем данные для каждой этикетки
+      selectedRequests.forEach((request) => {
+        labelsData.push([
+          orgData.name,
+          orgData.contact_phone || "",
+          request.request_number,
+          request.applicant || ""
+        ]);
       });
 
       // Создаем worksheet
-      const ws = XLSX.utils.aoa_to_sheet(allLabelsData);
+      const ws = XLSX.utils.aoa_to_sheet(labelsData);
 
-      // Устанавливаем ширину колонки
-      ws['!cols'] = [{ wch: 50 }];
+      // Устанавливаем ширину колонок
+      ws['!cols'] = [
+        { wch: 30 }, // Организация
+        { wch: 15 }, // Тел
+        { wch: 20 }, // Заявка
+        { wch: 25 }  // Ответственный
+      ];
 
       // Добавляем worksheet в workbook
       XLSX.utils.book_append_sheet(wb, ws, "Этикетки");
