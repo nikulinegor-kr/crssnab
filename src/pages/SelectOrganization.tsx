@@ -98,10 +98,10 @@ const SelectOrganization = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-3 sm:p-4 md:p-6">
       <div className="w-full max-w-4xl">
-        <div className="text-center mb-8">
-          <p className="text-lg font-semibold text-foreground mb-6">
+        <div className="text-center mb-6 sm:mb-8">
+          <p className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">
             Выберите организацию для работы
           </p>
         </div>
@@ -114,7 +114,7 @@ const SelectOrganization = () => {
                 У вас пока нет доступа ни к одной организации
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex gap-2">
+            <CardContent className="flex flex-col sm:flex-row gap-2">
               <Button onClick={async () => { await supabase.rpc('ensure_user_initialized'); await fetchOrganizations(); }}>
                 <Plus className="h-4 w-4 mr-2" /> Создать мою организацию
               </Button>
@@ -122,7 +122,7 @@ const SelectOrganization = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
             {organizations.map((userOrg) => (
               <Card
                 key={userOrg.id}

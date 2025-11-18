@@ -418,7 +418,7 @@ const Requests = () => {
   };
 
   return (
-    <div className="w-full p-4 md:p-6 space-y-6">
+    <div className="w-full max-w-full overflow-hidden p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
