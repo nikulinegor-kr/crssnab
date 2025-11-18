@@ -46,10 +46,8 @@ export function LabelExportButton({ selectedRequests }: LabelExportButtonProps) 
       // Создаем workbook
       const wb = XLSX.utils.book_new();
       
-      // Создаем массив данных с заголовками
-      const labelsData: any[][] = [
-        ["Организация", "Тел", "Заявка", "Ответственный"]
-      ];
+      // Создаем массив данных без заголовков
+      const labelsData: any[][] = [];
 
       // Добавляем данные для каждой этикетки
       selectedRequests.forEach((request) => {
