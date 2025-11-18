@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -19,11 +19,6 @@ export default function AgentReportUU() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((currentDate.getMonth() + 1).toString());
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-
-  // Сбрасываем выбранные строки при смене месяца или года
-  useEffect(() => {
-    setSelectedRows(new Set());
-  }, [selectedMonth, selectedYear]);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["requests", currentOrgId],
