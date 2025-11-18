@@ -37,6 +37,7 @@ import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { Request } from "@/hooks/useRequests";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { LabelExportButton } from "@/components/dashboard/LabelExportButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import {
@@ -451,10 +452,17 @@ const Requests = () => {
         </div>
         <div className="flex gap-2">
           {requests && requests.length > 0 && (
-            <ExcelExportButton 
-              requests={requests} 
-              filteredRequests={filteredRequests}
-            />
+            <>
+              <ExcelExportButton 
+                requests={requests} 
+                filteredRequests={filteredRequests}
+              />
+              <LabelExportButton 
+                selectedRequests={Array.from(selectedRequestIds).map(id => 
+                  requests.find(r => r.id === id)!
+                ).filter(Boolean)}
+              />
+            </>
           )}
           {selectedRequestIds.size > 0 && (
             <Button
