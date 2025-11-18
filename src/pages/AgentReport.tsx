@@ -108,6 +108,22 @@ export default function AgentReport() {
       // Работаем со второй страницей (лист "Отчет агента")
       const ws = wb.Sheets[wb.SheetNames[1]];
       
+      // Заменяем "октябрь" на выбранный месяц во всех ячейках
+      const sheetRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let row = sheetRange.s.r; row <= sheetRange.e.r; row++) {
+        for (let col = sheetRange.s.c; col <= sheetRange.e.c; col++) {
+          const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = ws[cellAddr];
+          if (cell && cell.t === 's' && typeof cell.v === 'string') {
+            const lowerValue = cell.v.toLowerCase();
+            if (lowerValue.includes('октябрь') || lowerValue.includes('октября')) {
+              cell.v = cell.v.replace(/октябрь/gi, monthName.toLowerCase());
+              cell.v = cell.v.replace(/октября/gi, monthName.toLowerCase().replace('ь', 'я'));
+            }
+          }
+        }
+      }
+      
       // Обновляем период в ячейке A14
       ws['A14'] = { 
         t: 's', 
