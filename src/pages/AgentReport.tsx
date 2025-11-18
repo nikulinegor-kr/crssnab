@@ -36,13 +36,30 @@ export default function AgentReport() {
     enabled: !!currentOrgId,
   });
 
-  // Filter requests by selected month/year
+  // Filter requests by selected month/year based on delivery/shipment date
   const filteredRequests = requests?.filter((request) => {
+    // Check status - must be "В пути" or "Доставлено"
+    const validStatuses = ["В пути", "Доставлено"];
+    if (!validStatuses.includes(request.status)) {
+      return false;
+    }
+
+    // Check if amount exists
+    if (!request.amount || request.amount === 0) {
+      return false;
+    }
+
+    // Check delivery_date or shipment_date (priority to delivery_date)
+    const dateToCheck = request.delivery_date || request.shipment_date;
+    if (!dateToCheck) {
+      return false;
+    }
+
     // Parse as local date to avoid timezone shifting months
-    const requestDate = new Date(`${request.request_date}T00:00:00`);
+    const date = new Date(`${dateToCheck}T00:00:00`);
     return (
-      requestDate.getFullYear().toString() === selectedYear &&
-      (requestDate.getMonth() + 1).toString() === selectedMonth
+      date.getFullYear().toString() === selectedYear &&
+      (date.getMonth() + 1).toString() === selectedMonth
     );
   }) || [];
 
