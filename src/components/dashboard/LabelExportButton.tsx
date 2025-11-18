@@ -56,7 +56,7 @@ export function LabelExportButton({ selectedRequests }: LabelExportButtonProps) 
         labelsData.push([
           orgData.name,
           orgData.contact_phone || "",
-          request.request_number,
+          request.description,
           request.applicant || ""
         ]);
       });
