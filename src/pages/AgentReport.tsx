@@ -37,7 +37,7 @@ export default function AgentReport() {
   });
 
   // Filter requests by selected month/year based on delivery/shipment date
-  const filteredRequests = requests?.filter((request) => {
+  const filteredRequests = (requests || []).filter((request) => {
     // Check status - must be "В пути" or "Доставлено"
     const validStatuses = ["В пути", "Доставлено"];
     if (!validStatuses.includes(request.status)) {
@@ -55,13 +55,17 @@ export default function AgentReport() {
       return false;
     }
 
-    // Parse as local date to avoid timezone shifting months
-    const date = new Date(`${dateToCheck}T00:00:00`);
+    // Use raw date string (YYYY-MM-DD) to avoid timezone issues
+    const [yearStr, monthStr] = dateToCheck.split("-");
+    if (!yearStr || !monthStr) {
+      return false;
+    }
+
     return (
-      date.getFullYear().toString() === selectedYear &&
-      (date.getMonth() + 1).toString() === selectedMonth
+      yearStr === selectedYear &&
+      String(parseInt(monthStr, 10)) === selectedMonth
     );
-  }) || [];
+  });
 
   const months = [
     { value: "1", label: "Январь" },
