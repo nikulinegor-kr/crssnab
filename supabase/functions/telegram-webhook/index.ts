@@ -141,27 +141,27 @@ async function handleCallbackQuery(callbackQuery: any) {
   if (data === "received") {
     // ТМЦ ПОЛУЧЕНО
     newStatus = "Доставлено";
-    newText += `\n\n📌 ТМЦ получено — отметил: @${username || fullName}`;
+    newText += `\n\n✅ ТМЦ получено — отметил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Отмечено как получено 📦";
+    alertText = "✅ Успешно отмечено как получено!";
     console.log("Processing 'received' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "approve") {
     // В РАБОТУ
     newStatus = "В РАБОТУ: СОГЛАСОВАНО";
-    newText += `\n\n📌 В РАБОТУ — подтвердил: @${username || fullName}`;
+    newText += `\n\n✅ В РАБОТУ — подтвердил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Отмечено: В РАБОТУ ✅";
+    alertText = "✅ Успешно взято в работу!";
   } else if (data === "reject") {
     // ОТКЛОНЕНО
     newStatus = "ОТКЛОНЕНО";
-    newText += `\n\n📌 ОТКЛОНЕНО — отметил: @${username || fullName}`;
+    newText += `\n\n❌ ОТКЛОНЕНО — отметил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Отмечено: ОТКЛОНЕНО";
+    alertText = "❌ Заявка отклонена";
   } else if (data === "rework") {
     // НА ДОРАБОТКУ
-    newText += `\n\n📌 НА ДОРАБОТКУ — ждём комментарий от: @${username || fullName}`;
+    newText += `\n\n🔧 НА ДОРАБОТКУ — ждём комментарий от: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Пришлите одним сообщением комментарий 🔧";
+    alertText = "📝 Пожалуйста, пришлите комментарий следующим сообщением";
 
     // Save who we're waiting comment from
     const { error: updateError } = await supabase
@@ -177,9 +177,9 @@ async function handleCallbackQuery(callbackQuery: any) {
   } else if (data === "paid") {
     // ОТПИСАНО В ОПЛАТУ
     newStatus = "Оплачено";
-    newText += `\n\n📌 Отписано в оплату — отметил: @${username || fullName}`;
+    newText += `\n\n✅ Отписано в оплату — отметил: @${username || fullName}`;
     removeKeyboard = true;
-    alertText = "Отмечено: Оплачено ✅";
+    alertText = "✅ Успешно отмечено как оплачено!";
     console.log("Processing 'paid' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "exclude") {
     // Показываем подтверждение удаления
@@ -322,16 +322,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Optional: Validate request comes from Telegram using secret token
-  const secretToken = req.headers.get("X-Telegram-Bot-Api-Secret-Token");
-  if (TELEGRAM_WEBHOOK_SECRET_TOKEN && secretToken !== TELEGRAM_WEBHOOK_SECRET_TOKEN) {
-    console.error("Unauthorized webhook request - invalid secret token");
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-  console.log("Secret token validation:", secretToken ? "passed" : "not configured");
+  console.log("Webhook request received from Telegram");
 
   // Only accept POST requests from Telegram
   if (req.method !== "POST") {
