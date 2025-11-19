@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
+import heroImage from "@/assets/hero-logistics.png";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -19,13 +20,12 @@ const Hero = () => {
         <Button variant="ghost" onClick={() => navigate("/auth")}>Начать бесплатно</Button>
       </div>
       <div className="w-full max-w-5xl mx-auto mt-12">
-        <div className="relative w-full aspect-[16/10] glassmorphism rounded-2xl border border-border shadow-2xl overflow-hidden group cursor-pointer">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent group-hover:from-primary/15 transition-all duration-300"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform group-hover:bg-primary">
-              <span className="material-symbols-outlined text-primary-foreground text-4xl">play_arrow</span>
-            </div>
-          </div>
+        <div className="relative w-full aspect-[16/10] rounded-2xl border border-border shadow-2xl overflow-hidden">
+          <img 
+            src={heroImage} 
+            alt="Глобальная логистическая сеть с воздушным, наземным транспортом и аналитикой" 
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
     </section>
