@@ -132,8 +132,7 @@ const Requests = () => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
       return;
     }
-    setSelectedRequest(request);
-    setEditDialogOpen(true);
+    navigate(`/requests/${request.id}`);
   };
 
   const toggleRequestSelection = (requestId: string) => {
