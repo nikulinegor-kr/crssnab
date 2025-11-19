@@ -161,7 +161,13 @@ const Dashboard = () => {
         {/* Дополнительные виджеты - вторая линия */}
         {!isLoading && requests && requests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CalendarWidget requests={requests} />
+            <CalendarWidget 
+              requests={requests.filter(r => {
+                if (!r.delivery_date) return false;
+                const deliveryYear = new Date(r.delivery_date).getFullYear();
+                return deliveryYear === new Date().getFullYear();
+              })} 
+            />
             <EmergencyRequestsWidget 
               requests={requests} 
               onRequestClick={handleRequestClick}
