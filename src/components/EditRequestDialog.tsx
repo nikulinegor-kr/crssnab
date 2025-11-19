@@ -815,15 +815,39 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 <Label>Документ (Счёт/КП)</Label>
                 {request?.document_url && (
                   <div className="mb-2">
-                    <a 
-                      href={request.document_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    <Button 
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="inline-flex items-center gap-2 px-0 h-auto"
+                      onClick={async () => {
+                        try {
+                          const url = new URL(request.document_url!);
+                          const pathParts = url.pathname.split('/');
+                          const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                          if (bucketIndex === -1) {
+                            window.open(request.document_url!, '_blank');
+                            return;
+                          }
+                          const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                          const { data, error } = await supabase.storage
+                            .from('request-documents')
+                            .createSignedUrl(filePath, 3600);
+                          if (error || !data) {
+                            console.error('Error creating signed URL:', error);
+                            window.open(request.document_url!, '_blank');
+                            return;
+                          }
+                          window.open(data.signedUrl, '_blank');
+                        } catch (error) {
+                          console.error('Error opening document:', error);
+                          window.open(request.document_url!, '_blank');
+                        }
+                      }}
                     >
                       <FileText className="h-4 w-4" />
                       Открыть документ
-                    </a>
+                    </Button>
                   </div>
                 )}
                 {!isViewer && (
