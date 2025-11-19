@@ -14,6 +14,8 @@ import AgentReport from "./pages/AgentReport";
 import AgentReportUU from "./pages/AgentReportUU";
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/demo" element={<Demo />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route
             path="/select-organization"
             element={
