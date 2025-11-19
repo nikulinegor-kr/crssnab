@@ -64,6 +64,59 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          event_type: string | null
+          id: string
+          organization_id: string
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_type?: string | null
+          id?: string
+          organization_id: string
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_type?: string | null
+          id?: string
+          organization_id?: string
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           contact_email: string | null
@@ -583,6 +636,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          organization_id: string
+          priority: string
+          status: string
+          task_number: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          organization_id: string
+          priority?: string
+          status?: string
+          task_number?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          task_number?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

@@ -9,6 +9,9 @@ import ImportData from "./pages/ImportData";
 import Requests from "./pages/Requests";
 import RequestDetail from "./pages/RequestDetail";
 import Suppliers from "./pages/Suppliers";
+import CalendarPage from "./pages/CalendarPage";
+import TasksPage from "./pages/TasksPage";
+import ProfilePage from "./pages/ProfilePage";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
@@ -91,6 +94,36 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Suppliers />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <CalendarPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <TasksPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ProfilePage />
                 </AppLayout>
               </ProtectedRoute>
             }
