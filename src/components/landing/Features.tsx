@@ -1,17 +1,19 @@
+import { Workflow, BarChart3, Users } from "lucide-react";
+
 const Features = () => {
   const features = [
     {
-      icon: "settings",
+      icon: <Workflow className="w-8 h-8" />,
       title: "Автоматизация процессов",
       description: "Оптимизируйте рабочие процессы и сократите ручной труд благодаря мощным инструментам для автоматизации множества задач"
     },
     {
-      icon: "analytics",
+      icon: <BarChart3 className="w-8 h-8" />,
       title: "Аналитика ресурсов",
       description: "Получайте мгновенные аналитические данные и превращайте их в основанные на данных решения для оптимизации бизнеса"
     },
     {
-      icon: "workspace_premium",
+      icon: <Users className="w-8 h-8" />,
       title: "Управление поставщиками",
       description: "Управляйте отношениями с поставщиками, отслеживайте контракты и оптимизируйте процесс закупок"
     }
@@ -31,13 +33,11 @@ const Features = () => {
         {features.map((feature, index) => (
           <div 
             key={index} 
-            className="flex flex-col gap-4 p-6 glassmorphism rounded-xl border border-border/50 hover:border-primary/30 transition-all text-center items-center animate-fade-in hover-scale"
+            className="flex flex-col gap-4 p-6 glassmorphism rounded-xl border border-border/50 hover:border-primary/30 hover:bg-card/50 transition-all text-center items-center animate-fade-in"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-3xl">
-                {feature.icon}
-              </span>
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              {feature.icon}
             </div>
             <h3 className="text-foreground text-lg font-bold leading-tight">
               {feature.title}
