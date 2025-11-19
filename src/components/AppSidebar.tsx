@@ -35,7 +35,7 @@ const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Поставки", url: "/requests", icon: Truck },
-  { title: "Клиенты", url: "/requests", icon: Users },
+  { title: "Поставщики", url: "/suppliers", icon: Users },
   { title: "Аналитика", url: "/requests", icon: BarChart3 },
 ];
 
