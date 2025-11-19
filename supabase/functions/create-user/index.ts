@@ -119,14 +119,23 @@ serve(async (req) => {
       );
     }
 
+    // Get organization name for profile
+    const { data: orgData } = await supabaseAdminForCreation
+      .from("organizations")
+      .select("name")
+      .eq("id", validated.organizationId)
+      .single();
+
     // Create user (profile will be created automatically by trigger)
+    // Do NOT include organization_name in metadata - that triggers org creation
     const { data: userData, error: userError } = await supabaseAdminForCreation.auth.admin.createUser({
       email: validated.email.trim().toLowerCase(),
       password: validated.password,
       email_confirm: true,
       user_metadata: {
         full_name: validated.fullName || "",
-        position: validated.position || ""
+        position: validated.position || "",
+        organization_name: orgData?.name || ""
       }
     });
 

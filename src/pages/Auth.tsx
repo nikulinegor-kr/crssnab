@@ -18,12 +18,12 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
+  organizationName: z.string().min(2, "Название организации обязательно"),
+  inn: z.string().min(10, "ИНН должен содержать минимум 10 цифр"),
   email: z.string().email("Неверный формат email"),
+  phone: z.string().min(10, "Введите корректный номер телефона"),
   password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
   confirmPassword: z.string(),
-  organizationName: z.string().min(2, "Название организации обязательно"),
-  fullName: z.string().min(2, "ФИО обязательно"),
-  position: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Пароли не совпадают",
   path: ["confirmPassword"],
@@ -64,12 +64,12 @@ export default function Auth() {
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      organizationName: "",
+      inn: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
-      organizationName: "",
-      fullName: "",
-      position: "",
     },
   });
 
@@ -105,10 +105,11 @@ export default function Auth() {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             organization_name: data.organizationName,
-            full_name: data.fullName,
-            position: data.position,
+            inn: data.inn,
+            phone: data.phone,
           },
         },
       });
@@ -246,26 +247,30 @@ export default function Auth() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-foreground">ФИО</Label>
+                    <Label htmlFor="inn" className="text-foreground">ИНН</Label>
                     <Input
-                      id="fullName"
-                      placeholder="Иванов Иван Иванович"
+                      id="inn"
+                      placeholder="1234567890"
                       className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("fullName")}
+                      {...signupForm.register("inn")}
                     />
-                    {signupForm.formState.errors.fullName && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.fullName.message}</p>
+                    {signupForm.formState.errors.inn && (
+                      <p className="text-xs text-destructive">{signupForm.formState.errors.inn.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="position" className="text-foreground">Должность (опционально)</Label>
+                    <Label htmlFor="phone" className="text-foreground">Телефон</Label>
                     <Input
-                      id="position"
-                      placeholder="Директор"
+                      id="phone"
+                      type="tel"
+                      placeholder="+7 (999) 123-45-67"
                       className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("position")}
+                      {...signupForm.register("phone")}
                     />
+                    {signupForm.formState.errors.phone && (
+                      <p className="text-xs text-destructive">{signupForm.formState.errors.phone.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
