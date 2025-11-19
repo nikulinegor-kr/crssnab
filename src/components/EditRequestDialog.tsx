@@ -46,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
+import { createNotification } from "@/hooks/useNotifications";
 
 const requestSchema = z.object({
   request_date: z.string()
