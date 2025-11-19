@@ -1,8 +1,16 @@
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import Button from "./ui/Button";
 
 const Header = () => {
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navLinks = [
+    { name: 'Возможности', href: '#features' },
+    { name: 'Цены', href: '#pricing' },
+    { name: 'О нас', href: '#about' },
+    { name: 'Контакты', href: '#contact' },
+  ];
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-border/30 px-4 md:px-6 py-3 glassmorphism rounded-xl mb-12">
@@ -14,20 +22,52 @@ const Header = () => {
         </div>
         <h2 className="text-foreground text-lg font-bold leading-tight">CRSS</h2>
       </div>
+
+      {/* Desktop Navigation */}
       <div className="hidden md:flex flex-1 justify-end gap-6">
         <nav className="flex items-center gap-7">
-          <a className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium" href="#features">Возможности</a>
-          <a className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium" href="#pricing">Цены</a>
-          <a className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium" href="#about">О нас</a>
-          <a className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium" href="#contact">Контакты</a>
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+            >
+              {link.name}
+            </a>
+          ))}
         </nav>
-        <Button onClick={() => navigate("/auth")} className="h-9 px-5 text-sm font-medium rounded-lg">
-          Войти
-        </Button>
+        <Button className="!h-9 !text-sm">Войти</Button>
       </div>
+
+      {/* Mobile Menu Toggle */}
       <div className="md:hidden">
-        <Button onClick={() => navigate("/auth")} size="sm" className="h-9 px-4 text-xs">Войти</Button>
+        <button 
+          className="text-foreground p-1 hover:text-primary transition-colors"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 mx-2 p-4 glassmorphism rounded-lg flex flex-col gap-4 md:hidden animate-fade-in border border-border/30">
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              className="text-muted-foreground hover:text-foreground transition-colors text-base font-medium py-2 border-b border-border/20 last:border-0"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {link.name}
+            </a>
+          ))}
+          <div className="pt-2">
+            <Button fullWidth onClick={() => setIsMenuOpen(false)}>Войти</Button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

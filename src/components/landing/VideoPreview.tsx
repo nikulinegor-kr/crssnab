@@ -1,3 +1,5 @@
+import { Play } from "lucide-react";
+
 const VideoPreview = () => {
   return (
     <section className="flex flex-col gap-10 py-12 animate-fade-in">
@@ -5,12 +7,15 @@ const VideoPreview = () => {
         Посмотрите в действии
       </h2>
       <div className="w-full max-w-5xl mx-auto">
-        <div className="relative w-full aspect-video glassmorphism rounded-2xl border border-border shadow-2xl overflow-hidden hover-scale">
-          <div className="absolute inset-0 bg-card/30"></div>
+        <div className="relative w-full aspect-video glassmorphism rounded-2xl border border-border shadow-2xl overflow-hidden group cursor-pointer">
+          <div className="absolute inset-0 bg-card/30 group-hover:bg-card/40 transition-colors duration-300"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform cursor-pointer">
-              <span className="material-symbols-outlined text-primary-foreground text-4xl">play_arrow</span>
-            </div>
+            <button 
+              className="relative flex items-center justify-center rounded-full w-20 h-20 bg-primary/80 text-primary-foreground backdrop-blur-sm hover:bg-primary transition-all duration-300 transform group-hover:scale-110 shadow-lg shadow-primary/20"
+              aria-label="Play demo video"
+            >
+              <Play className="w-10 h-10 fill-current ml-1" />
+            </button>
           </div>
         </div>
       </div>
