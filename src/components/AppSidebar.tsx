@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Sidebar,
   SidebarContent,
@@ -59,6 +60,7 @@ export function AppSidebar() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
+  const { isAdmin } = useUserRole();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -136,8 +138,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Отчеты агента - показываем только не в демо режиме */}
-        {!isDemoMode && (
+        {/* Отчеты агента - показываем только для администраторов */}
+        {!isDemoMode && isAdmin && (
           <>
             <SidebarSeparator />
             <SidebarGroup>

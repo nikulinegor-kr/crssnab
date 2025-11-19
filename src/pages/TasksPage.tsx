@@ -71,6 +71,7 @@ export default function TasksPage() {
     priority: "Средний",
     due_date: "",
     task_number: "",
+    assignee_id: "",
   });
 
   // Получаем задачи
@@ -89,17 +90,30 @@ export default function TasksPage() {
     enabled: !!currentOrgId,
   });
 
-  // Получаем профили пользователей
+  // Получаем профили пользователей организации
   const { data: profiles } = useQuery({
-    queryKey: ["profiles"],
+    queryKey: ["org-users", currentOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email");
+      const { data: userOrgs, error: userOrgsError } = await supabase
+        .from("user_organizations")
+        .select("user_id")
+        .eq("organization_id", currentOrgId);
 
-      if (error) throw error;
-      return data as Profile[];
+      if (userOrgsError) throw userOrgsError;
+      
+      const userIds = userOrgs?.map(uo => uo.user_id) || [];
+      
+      if (userIds.length === 0) return [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+      return profilesData as Profile[];
     },
+    enabled: !!currentOrgId,
   });
 
   // Создание/обновление задачи
@@ -115,7 +129,7 @@ export default function TasksPage() {
         if (error) throw error;
       } else {
         const taskNumber = data.task_number || `#T-${Date.now().toString().slice(-4)}`;
-        const { error } = await supabase
+        const { error: taskError } = await supabase
           .from("tasks")
           .insert([{ 
             ...data, 
@@ -123,7 +137,24 @@ export default function TasksPage() {
             organization_id: currentOrgId, 
             created_by: user.user?.id 
           }]);
-        if (error) throw error;
+        if (taskError) throw taskError;
+
+        // Если есть срок выполнения, создаем событие в календаре
+        if (data.due_date) {
+          const { error: calendarError } = await supabase
+            .from("calendar_events")
+            .insert([{
+              title: `Задача: ${data.title}`,
+              description: data.description,
+              start_date: new Date(data.due_date).toISOString(),
+              all_day: true,
+              organization_id: currentOrgId,
+              created_by: user.user?.id,
+              assignee_id: data.assignee_id || null,
+              event_type: "task"
+            }]);
+          if (calendarError) console.error("Ошибка создания события:", calendarError);
+        }
       }
     },
     onSuccess: () => {
@@ -166,6 +197,7 @@ export default function TasksPage() {
         priority: task.priority,
         due_date: task.due_date || "",
         task_number: task.task_number || "",
+        assignee_id: task.assignee_id || "",
       });
     }
     setIsDialogOpen(true);
@@ -181,6 +213,7 @@ export default function TasksPage() {
       priority: "Средний",
       due_date: "",
       task_number: "",
+      assignee_id: "",
     });
   };
 
@@ -414,6 +447,26 @@ export default function TasksPage() {
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="assignee">Ответственный</Label>
+                <Select
+                  value={formData.assignee_id}
+                  onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите ответственного" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Не назначен</SelectItem>
+                    {profiles?.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.full_name || profile.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <DialogFooter>
