@@ -21,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="w-full p-3 sm:p-6">
+            <div className="w-full p-2 sm:p-3 md:p-6">
               <SubscriptionBanner />
               {children}
             </div>
