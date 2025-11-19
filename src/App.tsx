@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import ImportData from "./pages/ImportData";
 import Requests from "./pages/Requests";
 import RequestDetail from "./pages/RequestDetail";
+import Suppliers from "./pages/Suppliers";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
@@ -80,6 +81,16 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <RequestDetail />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/suppliers"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Suppliers />
                 </AppLayout>
               </ProtectedRoute>
             }

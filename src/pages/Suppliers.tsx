@@ -1,0 +1,449 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, Search, Filter } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
+
+interface Supplier {
+  id: string;
+  name: string;
+  contact_person: string | null;
+  email: string | null;
+  phone: string | null;
+  category: string;
+  status: string;
+  address: string | null;
+  inn: string | null;
+  notes: string | null;
+  created_at: string;
+  organization_id: string;
+}
+
+const categories = ["Запасные части", "Материалы", "Услуги", "Оборудование", "Другое"];
+const statuses = ["Активный", "В ожидании", "Неактивный"];
+
+export default function Suppliers() {
+  const navigate = useNavigate();
+  const { currentOrgId } = useCurrentOrganization();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    contact_person: "",
+    email: "",
+    phone: "",
+    category: "Другое",
+    status: "Активный",
+    address: "",
+    inn: "",
+    notes: "",
+  });
+
+  // Получаем поставщиков
+  const { data: suppliers, isLoading } = useQuery({
+    queryKey: ["suppliers", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Supplier[];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Создание/обновление поставщика
+  const mutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (editingSupplier) {
+        const { error } = await supabase
+          .from("suppliers")
+          .update(data)
+          .eq("id", editingSupplier.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("suppliers")
+          .insert([{ ...data, organization_id: currentOrgId, created_by: user.user?.id }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast({
+        title: editingSupplier ? "Поставщик обновлен" : "Поставщик создан",
+        description: editingSupplier 
+          ? "Данные поставщика успешно обновлены"
+          : "Новый поставщик успешно добавлен",
+      });
+      handleCloseDialog();
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: `Не удалось ${editingSupplier ? "обновить" : "создать"} поставщика: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Удаление поставщика
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("suppliers")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast({
+        title: "Поставщик удален",
+        description: "Поставщик успешно удален из системы",
+      });
+    },
+  });
+
+  const handleOpenDialog = (supplier?: Supplier) => {
+    if (supplier) {
+      setEditingSupplier(supplier);
+      setFormData({
+        name: supplier.name,
+        contact_person: supplier.contact_person || "",
+        email: supplier.email || "",
+        phone: supplier.phone || "",
+        category: supplier.category,
+        status: supplier.status,
+        address: supplier.address || "",
+        inn: supplier.inn || "",
+        notes: supplier.notes || "",
+      });
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingSupplier(null);
+    setFormData({
+      name: "",
+      contact_person: "",
+      email: "",
+      phone: "",
+      category: "Другое",
+      status: "Активный",
+      address: "",
+      inn: "",
+      notes: "",
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(formData);
+  };
+
+  const filteredSuppliers = suppliers?.filter((supplier) =>
+    supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    supplier.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Активный": return "bg-success/20 text-success";
+      case "В ожидании": return "bg-warning/20 text-warning";
+      case "Неактивный": return "bg-destructive/20 text-destructive";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+        {/* Заголовок */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Поставщики</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Управление базой данных поставщиков
+              </p>
+            </div>
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Новый поставщик
+            </Button>
+          </div>
+
+          {/* Поиск и фильтры */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Поиск по поставщикам..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Фильтры
+            </Button>
+          </div>
+        </div>
+
+        {/* Таблица поставщиков */}
+        <Card className="bg-card border-border/40">
+          <CardHeader className="border-b border-border/40">
+            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
+              <div className="col-span-2">Название компании</div>
+              <div className="col-span-2">Контактное лицо</div>
+              <div className="col-span-2">Email</div>
+              <div className="col-span-2">Телефон</div>
+              <div className="col-span-2">Категория</div>
+              <div className="col-span-1">Статус</div>
+              <div className="col-span-1 text-right">Действия</div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Загрузка...
+              </div>
+            ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
+              <div className="divide-y divide-border/40">
+                {filteredSuppliers.map((supplier) => (
+                  <div
+                    key={supplier.id}
+                    className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                  >
+                    <div className="col-span-2 font-medium text-foreground">
+                      {supplier.name}
+                    </div>
+                    <div className="col-span-2 text-sm text-muted-foreground">
+                      {supplier.contact_person || "—"}
+                    </div>
+                    <div className="col-span-2 text-sm text-muted-foreground">
+                      {supplier.email || "—"}
+                    </div>
+                    <div className="col-span-2 text-sm text-muted-foreground">
+                      {supplier.phone || "—"}
+                    </div>
+                    <div className="col-span-2">
+                      <Badge variant="outline" className="font-normal">
+                        {supplier.category}
+                      </Badge>
+                    </div>
+                    <div className="col-span-1">
+                      <Badge className={getStatusColor(supplier.status)}>
+                        {supplier.status}
+                      </Badge>
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
+                            Редактировать
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => deleteMutation.mutate(supplier.id)}
+                            className="text-destructive"
+                          >
+                            Удалить
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">
+                {searchQuery ? "Поставщики не найдены" : "Нет поставщиков"}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Диалог создания/редактирования */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingSupplier ? "Редактировать поставщика" : "Новый поставщик"}
+              </DialogTitle>
+              <DialogDescription>
+                Заполните информацию о поставщике
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Название компании *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact_person">Контактное лицо</Label>
+                  <Input
+                    id="contact_person"
+                    value={formData.contact_person}
+                    onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Телефон</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Категория *</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Статус *</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inn">ИНН</Label>
+                  <Input
+                    id="inn"
+                    value={formData.inn}
+                    onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Адрес</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Примечания</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  Отменить
+                </Button>
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Сохранение..." : editingSupplier ? "Обновить" : "Создать"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
