@@ -418,7 +418,7 @@ const Requests = () => {
   };
 
   return (
-    <div className="w-full max-w-full overflow-hidden p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+    <div className="w-full overflow-hidden p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -438,10 +438,10 @@ const Requests = () => {
         </Alert>
       )}
       
-      <div className="flex items-center justify-between">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Все заявки</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Все заявки</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {filteredRequests?.length || 0} заявок найдено
             {selectedRequestIds.size > 0 && (
               <span className="ml-2 text-primary font-medium">
@@ -450,7 +450,8 @@ const Requests = () => {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
           {requests && requests.length > 0 && (
             <>
               <ExcelExportButton 
@@ -468,26 +469,26 @@ const Requests = () => {
             <Button
               onClick={handleSendToTelegram}
               disabled={isSending}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
               size="sm"
             >
               <Send className="h-4 w-4" />
-              <span className="hidden sm:inline">Отправить в Telegram</span>
+              <span>Отправить в Telegram</span>
             </Button>
           )}
           {canCreate && (
             <CreateRequestDialog>
-              <Button className="gap-2" size="sm">
+              <Button className="gap-2 w-full sm:w-auto" size="sm">
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Создать заявку</span>
+                <span>Создать заявку</span>
               </Button>
             </CreateRequestDialog>
           )}
         </div>
       </div>
 
-      <Card className="p-4 sm:p-6">
-        <div className="flex flex-col gap-3 mb-6">
+      <Card className="p-3 sm:p-4 md:p-6">
+        <div className="flex flex-col gap-3 mb-4 sm:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -635,8 +636,8 @@ const Requests = () => {
           </div>
         ) : filteredRequests && filteredRequests.length > 0 ? (
           <>
-            {/* Mobile Card View */}
-            <div className="lg:hidden space-y-3">
+            {/* Mobile and Tablet Card View */}
+            <div className="xl:hidden space-y-3">
               {filteredRequests.map((request) => (
                 <Card 
                   key={request.id} 
@@ -726,7 +727,7 @@ const Requests = () => {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden lg:block rounded-md border overflow-x-auto">
+            <div className="hidden xl:block rounded-md border overflow-x-auto">
               <Table className="w-full table-auto border-collapse">
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow className="bg-muted/50 border-b">
