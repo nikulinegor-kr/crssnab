@@ -62,7 +62,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-border/40 p-4">
+      <SidebarHeader className="border-b border-border/40 p-4 glassmorphism-light">
         {showText && (
           <div className="space-y-2">
             <OrganizationSwitcher />
@@ -89,8 +89,8 @@ export function AppSidebar() {
                       <NavLink 
                         to={url} 
                         end 
-                        className="hover:bg-muted/50"
-                        activeClassName="bg-muted text-primary font-medium"
+                        className="hover:bg-white/5 transition-colors rounded-md"
+                        activeClassName="bg-primary/20 text-primary font-medium border border-primary/30"
                       >
                         <item.icon className="h-4 w-4" />
                         {showText && <span>{item.title}</span>}
@@ -104,12 +104,12 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/40 p-4">
+      <SidebarFooter className="border-t border-border/40 p-4 glassmorphism-light">
         <Button 
           onClick={handleLogout} 
           variant="ghost" 
           size={(collapsed && !isMobile) ? "icon" : "default"}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 hover:bg-white/10 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
