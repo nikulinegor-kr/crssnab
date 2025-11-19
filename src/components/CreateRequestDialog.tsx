@@ -12,6 +12,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
   Form,
   FormControl,
   FormField,
@@ -108,6 +117,7 @@ interface CreateRequestDialogProps {
 export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange }: CreateRequestDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const isMobile = useIsMobile();
   const handleOpenChange = (newOpen: boolean) => {
     if (onOpenChange) {
       onOpenChange(newOpen);
@@ -358,19 +368,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Создать новую заявку</DialogTitle>
-          <DialogDescription>
-            Заполните форму для создания новой заявки в системе
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+  const formContent = (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -777,6 +777,38 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             </div>
           </form>
         </Form>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={handleOpenChange}>
+        <DrawerTrigger asChild>{children}</DrawerTrigger>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="text-left border-b pb-4">
+            <DrawerTitle>Создать новую заявку</DrawerTitle>
+            <DrawerDescription>
+              Заполните форму для создания новой заявки
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="overflow-y-auto p-4">
+            {formContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Создать новую заявку</DialogTitle>
+          <DialogDescription>
+            Заполните форму для создания новой заявки в системе
+          </DialogDescription>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );
