@@ -17,6 +17,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +38,13 @@ interface CalendarEvent {
   color: string | null;
   event_type: string | null;
   organization_id: string;
+  assignee_id: string | null;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string;
 }
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -50,6 +64,33 @@ export default function CalendarPage() {
     start_date: "",
     start_time: "09:00",
     all_day: false,
+    assignee_id: "",
+  });
+
+  // Получаем профили пользователей организации
+  const { data: profiles } = useQuery({
+    queryKey: ["org-users", currentOrgId],
+    queryFn: async () => {
+      const { data: userOrgs, error: userOrgsError } = await supabase
+        .from("user_organizations")
+        .select("user_id")
+        .eq("organization_id", currentOrgId);
+
+      if (userOrgsError) throw userOrgsError;
+      
+      const userIds = userOrgs?.map(uo => uo.user_id) || [];
+      
+      if (userIds.length === 0) return [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+      return profilesData as Profile[];
+    },
+    enabled: !!currentOrgId,
   });
 
   // Получаем события
@@ -85,7 +126,8 @@ export default function CalendarPage() {
           start_date: startDateTime,
           all_day: data.all_day,
           organization_id: currentOrgId,
-          created_by: user.user?.id 
+          created_by: user.user?.id,
+          assignee_id: data.assignee_id || null
         }]);
       if (error) throw error;
     },
@@ -135,12 +177,19 @@ export default function CalendarPage() {
       start_date: "",
       start_time: "09:00",
       all_day: false,
+      assignee_id: "",
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(formData);
+  };
+
+  const getAssigneeName = (assigneeId: string | null) => {
+    if (!assigneeId) return null;
+    const profile = profiles?.find(p => p.id === assigneeId);
+    return profile?.full_name || profile?.email || "Не назначен";
   };
 
   return (
@@ -299,6 +348,26 @@ export default function CalendarPage() {
                 <Label htmlFor="all_day" className="cursor-pointer">
                   Весь день
                 </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="assignee">Ответственный</Label>
+                <Select
+                  value={formData.assignee_id}
+                  onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите ответственного" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Не назначен</SelectItem>
+                    {profiles?.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.full_name || profile.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <DialogFooter>

@@ -67,6 +67,7 @@ export type Database = {
       calendar_events: {
         Row: {
           all_day: boolean
+          assignee_id: string | null
           color: string | null
           created_at: string
           created_by: string | null
@@ -81,6 +82,7 @@ export type Database = {
         }
         Insert: {
           all_day?: boolean
+          assignee_id?: string | null
           color?: string | null
           created_at?: string
           created_by?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           all_day?: boolean
+          assignee_id?: string | null
           color?: string | null
           created_at?: string
           created_by?: string | null
