@@ -23,6 +23,10 @@ All colors MUST be HSL.
     position: relative;
   }
   
+  html, body {
+    @apply dark;
+  }
+  
   :root {
     --background: 0 0% 98%;
     --foreground: 213 24% 20%;
