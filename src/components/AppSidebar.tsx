@@ -1,4 +1,16 @@
-import { Home, FileText, Upload, LogOut, CreditCard, Settings, FileBarChart } from "lucide-react";
+import { 
+  LayoutGrid, 
+  FileText, 
+  Truck, 
+  Users, 
+  BarChart3, 
+  Calendar, 
+  CheckSquare, 
+  UserCircle, 
+  Settings, 
+  LogOut,
+  FileBarChart
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,24 +22,36 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
-const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Все заявки", url: "/requests", icon: FileText },
+const mainMenuItems = [
+  { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+  { title: "Заявки", url: "/requests", icon: FileText },
+  { title: "Поставки", url: "/requests", icon: Truck },
+  { title: "Клиенты", url: "/requests", icon: Users },
+  { title: "Аналитика", url: "/requests", icon: BarChart3 },
+];
+
+const secondaryMenuItems = [
+  { title: "Календарь", url: "/dashboard", icon: Calendar },
+  { title: "Задачи", url: "/requests", icon: CheckSquare },
+];
+
+const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
   { title: "Отчет агента - УУ", url: "/agent-report-uu", icon: FileBarChart },
-  { title: "Импорт данных", url: "/import", icon: Upload },
+];
+
+const settingsMenuItems = [
+  { title: "Профиль", url: "/organization/settings", icon: UserCircle },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
-  { title: "Тарифы", url: "/pricing", icon: CreditCard },
 ];
 
 export function AppSidebar() {
@@ -60,9 +84,32 @@ export function AppSidebar() {
     }
   };
 
+  const renderMenuItems = (items: typeof mainMenuItems) => {
+    return items.map((item) => {
+      const isActive = currentPath === item.url;
+      const url = isDemoMode ? `${item.url}?demo=true` : item.url;
+      
+      return (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild isActive={isActive}>
+            <NavLink 
+              to={url} 
+              end 
+              className="hover:bg-accent/50 transition-colors rounded-md"
+              activeClassName="bg-primary/20 text-primary font-medium"
+            >
+              <item.icon className="h-4 w-4" />
+              {showText && <span>{item.title}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
+  };
+
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-border/40 p-4 glassmorphism-light">
+      <SidebarHeader className="border-b border-border/40 p-4">
         {showText && (
           <div className="space-y-2">
             <OrganizationSwitcher />
@@ -71,49 +118,61 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Основное меню */}
         <SidebarGroup>
-          {showText && <SidebarGroupLabel>Навигация</SidebarGroupLabel>}
-          
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
-                const isActive = currentPath === item.url;
-                const url = isDemoMode ? `${item.url}?demo=true` : item.url;
-                // Скрываем "Импорт данных", "Настройки", "Тарифы" и отчеты в демо-режиме
-                if (isDemoMode && (item.url === "/import" || item.url === "/organization/settings" || item.url === "/pricing" || item.url === "/agent-report" || item.url === "/agent-report-uu")) {
-                  return null;
-                }
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <NavLink 
-                        to={url} 
-                        end 
-                        className="hover:bg-white/5 transition-colors rounded-md"
-                        activeClassName="bg-primary/20 text-primary font-medium border border-primary/30"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {showText && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {renderMenuItems(mainMenuItems)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {/* Календарь и задачи */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {renderMenuItems(secondaryMenuItems)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Отчеты агента - показываем только не в демо режиме */}
+        {!isDemoMode && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderMenuItems(reportMenuItems)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        <SidebarSeparator />
+
+        {/* Профиль и настройки */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {!isDemoMode && renderMenuItems(settingsMenuItems)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/40 p-4 glassmorphism-light">
-        <Button 
-          onClick={handleLogout} 
-          variant="ghost" 
-          size={(collapsed && !isMobile) ? "icon" : "default"}
-          className="w-full justify-start gap-2 hover:bg-white/10 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
-        </Button>
+      <SidebarFooter className="border-t border-border/40 p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">
+              <LogOut className="h-4 w-4" />
+              {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
