@@ -11,6 +11,7 @@ import RequestDetail from "./pages/RequestDetail";
 import Suppliers from "./pages/Suppliers";
 import CalendarPage from "./pages/CalendarPage";
 import TasksPage from "./pages/TasksPage";
+import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
@@ -114,6 +115,16 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <TasksPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ChatPage />
                 </AppLayout>
               </ProtectedRoute>
             }

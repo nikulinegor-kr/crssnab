@@ -9,7 +9,8 @@ import {
   UserCircle, 
   Settings, 
   LogOut,
-  FileBarChart
+  FileBarChart,
+  MessageCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -41,6 +42,7 @@ const mainMenuItems = [
 const secondaryMenuItems = [
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
+  { title: "Чат", url: "/chat", icon: MessageCircle },
 ];
 
 const reportMenuItems = [

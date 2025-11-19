@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
+import { createNotification } from "@/hooks/useNotifications";
 import {
   Dialog,
   DialogContent,
@@ -130,6 +131,18 @@ export default function CalendarPage() {
           assignee_id: data.assignee_id || null
         }]);
       if (error) throw error;
+
+      // Если есть ответственный, отправляем уведомление
+      if (data.assignee_id) {
+        await createNotification({
+          userId: data.assignee_id,
+          organizationId: currentOrgId!,
+          type: "event_assigned",
+          title: "Вы назначены ответственным",
+          message: `Вы назначены ответственным за событие: ${data.title}`,
+          link: `/calendar`,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });

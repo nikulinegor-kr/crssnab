@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
+import { createNotification } from "@/hooks/useNotifications";
 import {
   Dialog,
   DialogContent,
@@ -127,6 +128,18 @@ export default function TasksPage() {
           .update(data)
           .eq("id", editingTask.id);
         if (error) throw error;
+
+        // Если изменился ответственный, отправляем уведомление
+        if (data.assignee_id && data.assignee_id !== editingTask.assignee_id) {
+          await createNotification({
+            userId: data.assignee_id,
+            organizationId: currentOrgId!,
+            type: "task_assigned",
+            title: "Вы назначены ответственным",
+            message: `Вы назначены ответственным за задачу: ${data.title}`,
+            link: `/tasks`,
+          });
+        }
       } else {
         const taskNumber = data.task_number || `#T-${Date.now().toString().slice(-4)}`;
         const { error: taskError } = await supabase
@@ -138,6 +151,18 @@ export default function TasksPage() {
             created_by: user.user?.id 
           }]);
         if (taskError) throw taskError;
+
+        // Если есть ответственный, отправляем уведомление
+        if (data.assignee_id) {
+          await createNotification({
+            userId: data.assignee_id,
+            organizationId: currentOrgId!,
+            type: "task_assigned",
+            title: "Вы назначены ответственным",
+            message: `Вы назначены ответственным за задачу: ${data.title}`,
+            link: `/tasks`,
+          });
+        }
 
         // Если есть срок выполнения, создаем событие в календаре
         if (data.due_date) {
