@@ -1,6 +1,5 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 
@@ -17,7 +16,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex flex-col">
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <SidebarTrigger className="hover:bg-white/10 transition-colors rounded-md" />
-            <ThemeToggle />
           </header>
 
           <main className="flex-1 overflow-auto">
