@@ -34,14 +34,12 @@ import {
 const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
-  { title: "Поставки", url: "/requests", icon: Truck },
   { title: "Поставщики", url: "/suppliers", icon: Users },
-  { title: "Аналитика", url: "/requests", icon: BarChart3 },
 ];
 
 const secondaryMenuItems = [
-  { title: "Календарь", url: "/dashboard", icon: Calendar },
-  { title: "Задачи", url: "/requests", icon: CheckSquare },
+  { title: "Календарь", url: "/calendar", icon: Calendar },
+  { title: "Задачи", url: "/tasks", icon: CheckSquare },
 ];
 
 const reportMenuItems = [
@@ -50,7 +48,7 @@ const reportMenuItems = [
 ];
 
 const settingsMenuItems = [
-  { title: "Профиль", url: "/organization/settings", icon: UserCircle },
+  { title: "Профиль", url: "/profile", icon: UserCircle },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
 ];
 
