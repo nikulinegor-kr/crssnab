@@ -2,122 +2,126 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* CRSS Premium Design System - Dark Theme
+   Modern, minimal, corporate SaaS style
+   Colors: Deep blue (#1A3C64, #132B4C), Graphite, Black
+   Accent: Golden Yellow #E5A100
+   Font: Manrope
 */
 
 @layer base {
   * {
     @apply border-border;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   
   html {
     overflow-x: hidden;
     width: 100%;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     overflow-x: hidden;
     width: 100%;
     position: relative;
   }
   
   :root {
-    --background: 0 0% 98%;
-    --foreground: 213 24% 20%;
+    /* CRSS Dark Theme - Deep Navy & Graphite */
+    --background: 210 50% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 213 24% 20%;
+    --card: 210 45% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 213 24% 20%;
+    --popover: 210 50% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 213 65% 25%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary - Deep Navy Blue */
+    --primary: 210 56% 24%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Darker Navy */
+    --secondary: 210 60% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 213 24% 20%;
+    /* Muted - Graphite */
+    --muted: 210 40% 18%;
+    --muted-foreground: 210 15% 65%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* Accent - Golden Yellow */
+    --accent: 43 96% 45%;
+    --accent-foreground: 210 50% 8%;
 
-    --accent: 43 100% 45%;
-    --accent-foreground: 213 24% 20%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 20%;
+    --input: 210 40% 18%;
+    --ring: 43 96% 45%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 213 65% 25%;
-
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(213, 65%, 25%), hsl(213, 65%, 35%));
-    --gradient-accent: linear-gradient(135deg, hsl(43, 100%, 45%), hsl(43, 100%, 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(213, 65%, 25%) 0%, hsl(213, 80%, 35%) 50%, hsl(43, 100%, 45%) 100%);
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 40px -10px hsl(213, 65%, 35%);
-    --shadow-accent-glow: 0 0 30px -5px hsl(43, 100%, 50%);
+    /* Premium gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210, 56%, 24%) 0%, hsl(210, 60%, 15%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(43, 96%, 45%) 0%, hsl(43, 96%, 55%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 50%, 8%) 0%, hsl(210, 56%, 24%) 50%, hsl(43, 96%, 45%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(210, 45%, 12%) 0%, hsl(210, 40%, 10%) 100%);
+    
+    /* Premium shadows */
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px rgba(229, 161, 0, 0.3);
+    --shadow-accent-glow: 0 0 30px rgba(229, 161, 0, 0.4);
+    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar - Premium Dark */
+    --sidebar-background: 210 55% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 43 96% 45%;
+    --sidebar-primary-foreground: 210 50% 8%;
+    --sidebar-accent: 210 50% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 210 40% 15%;
+    --sidebar-ring: 43 96% 45%;
   }
+}
 
-  .dark {
-    --background: 213 65% 8%;
-    --foreground: 0 0% 98%;
+@layer components {
+  /* Premium card styling */
+  .premium-card {
+    @apply bg-gradient-to-br from-card to-card/80 shadow-card border border-border/50 backdrop-blur-sm;
+  }
+  
+  /* Accent glow effect */
+  .accent-glow {
+    box-shadow: var(--shadow-accent-glow);
+  }
+  
+  /* Premium button base */
+  .btn-premium {
+    @apply font-medium tracking-wide transition-all duration-300 shadow-soft hover:shadow-elevated;
+  }
+}
 
-    --card: 213 50% 12%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 213 50% 12%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 43 100% 45%;
-    --primary-foreground: 213 24% 20%;
-
-    --secondary: 213 40% 18%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 213 40% 18%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 43 100% 45%;
-    --accent-foreground: 213 24% 20%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 213 40% 18%;
-    --input: 213 40% 18%;
-    --ring: 43 100% 45%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+@layer utilities {
+  /* Text gradients */
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+  
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent/80;
+  }
+  
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
