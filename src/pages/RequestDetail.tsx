@@ -371,23 +371,76 @@ export default function RequestDetail() {
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2"
-                            asChild
+                            onClick={async () => {
+                              try {
+                                const url = new URL(request.document_url!);
+                                const pathParts = url.pathname.split('/');
+                                const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                                if (bucketIndex === -1) {
+                                  window.open(request.document_url!, '_blank');
+                                  return;
+                                }
+                                
+                                const filePath = pathParts.slice(bucketIndex + 2).join('/');
+                                const { data, error } = await supabase.storage
+                                  .from('request-documents')
+                                  .createSignedUrl(filePath, 60);
+                                
+                                if (error || !data) {
+                                  console.error('Error creating signed URL:', error);
+                                  window.open(request.document_url!, '_blank');
+                                  return;
+                                }
+                                
+                                window.open(data.signedUrl, '_blank');
+                              } catch (error) {
+                                console.error('Error opening document:', error);
+                                window.open(request.document_url!, '_blank');
+                              }
+                            }}
                           >
-                            <a href={request.document_url} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-3 w-3 mr-1" />
-                              Открыть
-                            </a>
+                            <Eye className="h-3 w-3 mr-1" />
+                            Открыть
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2"
-                            asChild
+                            onClick={async () => {
+                              try {
+                                const url = new URL(request.document_url!);
+                                const pathParts = url.pathname.split('/');
+                                const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                                if (bucketIndex === -1) {
+                                  window.open(request.document_url!, '_blank');
+                                  return;
+                                }
+                                
+                                const filePath = pathParts.slice(bucketIndex + 2).join('/');
+                                const { data, error } = await supabase.storage
+                                  .from('request-documents')
+                                  .createSignedUrl(filePath, 60);
+                                
+                                if (error || !data) {
+                                  console.error('Error creating signed URL:', error);
+                                  window.open(request.document_url!, '_blank');
+                                  return;
+                                }
+                                
+                                const link = document.createElement('a');
+                                link.href = data.signedUrl;
+                                link.download = filePath.split('/').pop() || 'document';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              } catch (error) {
+                                console.error('Error downloading document:', error);
+                                window.open(request.document_url!, '_blank');
+                              }
+                            }}
                           >
-                            <a href={request.document_url} download>
-                              <Download className="h-3 w-3 mr-1" />
-                              Скачать
-                            </a>
+                            <Download className="h-3 w-3 mr-1" />
+                            Скачать
                           </Button>
                         </div>
                       </div>
