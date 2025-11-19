@@ -381,7 +381,7 @@ export default function RequestDetail() {
                                   return;
                                 }
                                 
-                                const filePath = pathParts.slice(bucketIndex + 2).join('/');
+                                const filePath = pathParts.slice(bucketIndex + 1).join('/');
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
                                   .createSignedUrl(filePath, 60);
@@ -416,7 +416,7 @@ export default function RequestDetail() {
                                   return;
                                 }
                                 
-                                const filePath = pathParts.slice(bucketIndex + 2).join('/');
+                                const filePath = pathParts.slice(bucketIndex + 1).join('/');
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
                                   .createSignedUrl(filePath, 60);
