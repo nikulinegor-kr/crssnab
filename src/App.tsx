@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import ImportData from "./pages/ImportData";
 import Requests from "./pages/Requests";
+import RequestDetail from "./pages/RequestDetail";
 import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
@@ -69,6 +70,16 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Requests />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/requests/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <RequestDetail />
                 </AppLayout>
               </ProtectedRoute>
             }
