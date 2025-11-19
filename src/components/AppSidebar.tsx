@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar,
   SidebarContent,
@@ -35,9 +36,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const isMobile = useIsMobile();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  // On mobile, always show text in menu
+  const showText = isMobile || !collapsed;
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -59,7 +63,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border/40 p-4">
-        {!collapsed && (
+        {showText && (
           <div className="space-y-2">
             <OrganizationSwitcher />
           </div>
@@ -68,7 +72,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Навигация</SidebarGroupLabel>}
+          {showText && <SidebarGroupLabel>Навигация</SidebarGroupLabel>}
           
           <SidebarGroupContent>
             <SidebarMenu>
@@ -89,7 +93,7 @@ export function AppSidebar() {
                         activeClassName="bg-muted text-primary font-medium"
                       >
                         <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
+                        {showText && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -104,11 +108,11 @@ export function AppSidebar() {
         <Button 
           onClick={handleLogout} 
           variant="ghost" 
-          size={collapsed ? "icon" : "default"}
+          size={(collapsed && !isMobile) ? "icon" : "default"}
           className="w-full justify-start gap-2"
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
+          {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
