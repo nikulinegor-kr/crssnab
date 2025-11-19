@@ -59,12 +59,8 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
           modifiers={{
             delivery: deliveryDates,
           }}
-          modifiersStyles={{
-            delivery: {
-              fontWeight: "bold",
-              textDecoration: "underline",
-              color: "hsl(var(--primary))",
-            },
+          modifiersClassNames={{
+            delivery: "font-bold bg-primary/20 text-primary hover:bg-primary/30",
           }}
         />
         
