@@ -13,6 +13,7 @@ import OrganizationSettings from "./pages/OrganizationSettings";
 import AgentReport from "./pages/AgentReport";
 import AgentReportUU from "./pages/AgentReportUU";
 import Pricing from "./pages/Pricing";
+import Features from "./pages/Features";
 import Demo from "./pages/Demo";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -102,14 +103,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/pricing"
-            element={
-              <AppLayout>
-                <Pricing />
-              </AppLayout>
-            }
-          />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/features" element={<Features />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
