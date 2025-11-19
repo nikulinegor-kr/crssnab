@@ -2,28 +2,73 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Clock, AlertCircle, CheckCircle, Plus } from "lucide-react";
-import { useRequests, useRequestStats } from "@/hooks/useRequests";
+import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
-import { ExportButton } from "@/components/dashboard/ExportButton";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { EmergencyInProgressWidget } from "@/components/dashboard/EmergencyInProgressWidget";
-import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
-  const { data: stats, isLoading: statsLoading } = useRequestStats();
   const { currentOrgId } = useCurrentOrganization();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const isLoading = requestsLoading || statsLoading;
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  
+  // Фильтрация заявок по выбранному году
+  const filteredRequests = useMemo(() => {
+    if (!requests) return [];
+    return requests.filter(r => {
+      if (!r.request_date) return false;
+      const requestYear = new Date(r.request_date).getFullYear();
+      return requestYear === parseInt(selectedYear);
+    });
+  }, [requests, selectedYear]);
+
+  // Вычисление статистики для отфильтрованных заявок
+  const stats = useMemo(() => {
+    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0 };
+    
+    const today = new Date().toISOString().split("T")[0];
+    const newToday = filteredRequests.filter(
+      r => r.created_at?.split("T")[0] === today
+    ).length;
+    
+    const emergency = filteredRequests.filter(
+      r => r.priority === "Аварийно"
+    ).length;
+    
+    const completed = filteredRequests.filter(
+      r => r.status === "Доставлено"
+    ).length;
+
+    return {
+      total: filteredRequests.length,
+      newToday,
+      emergency,
+      completed,
+    };
+  }, [filteredRequests]);
+
+  // Генерация списка доступных годов
+  const availableYears = useMemo(() => {
+    if (!requests) return [new Date().getFullYear().toString()];
+    const years = new Set(
+      requests
+        .filter(r => r.request_date)
+        .map(r => new Date(r.request_date).getFullYear().toString())
+    );
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
+  }, [requests]);
+
+  const isLoading = requestsLoading;
 
   useEffect(() => {
     if (!currentOrgId) {
@@ -34,7 +79,7 @@ const Dashboard = () => {
   const statsCards = [
     {
       title: "Всего заявок",
-      value: stats?.total.toString() || "0",
+      value: stats.total.toString(),
       icon: FileText,
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -42,7 +87,7 @@ const Dashboard = () => {
     },
     {
       title: "Новые сегодня",
-      value: stats?.newToday.toString() || "0",
+      value: stats.newToday.toString(),
       icon: Clock,
       color: "text-info",
       bgColor: "bg-info/10",
@@ -50,7 +95,7 @@ const Dashboard = () => {
     },
     {
       title: "Аварийно",
-      value: stats?.emergency.toString() || "0",
+      value: stats.emergency.toString(),
       icon: AlertCircle,
       color: "text-accent",
       bgColor: "bg-accent/10",
@@ -58,7 +103,7 @@ const Dashboard = () => {
     },
     {
       title: "Выполнено",
-      value: stats?.completed.toString() || "0",
+      value: stats.completed.toString(),
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10",
@@ -66,7 +111,7 @@ const Dashboard = () => {
     },
   ];
 
-  const recentRequests = requests?.slice(0, 3) || [];
+  const recentRequests = filteredRequests.slice(0, 3);
 
   const handleRequestClick = (request: Request) => {
     setSelectedRequest(request);
@@ -97,17 +142,21 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        {/* Header with Export */}
-        <div className="flex items-center justify-between">
+        {/* Header with Year Selector */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          <div className="flex gap-2">
-            {!isLoading && requests && requests.length > 0 && (
-              <>
-                <ExcelExportButton requests={requests} />
-                <ExportButton requests={requests} />
-              </>
-            )}
-          </div>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Выберите год" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>
+                  {year} год
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Stats Cards */}
@@ -151,25 +200,21 @@ const Dashboard = () => {
         </div>
 
         {/* Аналитика */}
-        {!isLoading && requests && requests.length > 0 && (
+        {!isLoading && filteredRequests.length > 0 && (
           <RequestsAnalytics 
-            requests={requests} 
+            requests={filteredRequests} 
             onEmergencyClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")}
           />
         )}
 
         {/* Дополнительные виджеты - вторая линия */}
-        {!isLoading && requests && requests.length > 0 && (
+        {!isLoading && filteredRequests.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CalendarWidget 
-              requests={requests.filter(r => {
-                if (!r.delivery_date) return false;
-                const deliveryYear = new Date(r.delivery_date).getFullYear();
-                return deliveryYear === new Date().getFullYear();
-              })} 
+              requests={filteredRequests.filter(r => r.delivery_date)} 
             />
             <EmergencyRequestsWidget 
-              requests={requests} 
+              requests={filteredRequests} 
               onRequestClick={handleRequestClick}
             />
           </div>
