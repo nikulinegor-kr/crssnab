@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  ArrowLeft, 
   Edit, 
-  RefreshCw, 
   Download, 
   FileImage, 
   FileText,
-  X,
-  Send,
-  UserPlus
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
 
 interface ActivityItem {
   id: string;
@@ -37,10 +34,10 @@ export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { canEdit } = useUserRole();
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -77,16 +74,7 @@ export default function RequestDetail() {
   };
 
   const handleEditClick = () => {
-    // Navigate back to requests with edit dialog
-    navigate(`/requests?edit=${id}`);
-  };
-
-  const handleChangeStatus = async () => {
-    // Placeholder for status change
-    toast({
-      title: "Функция в разработке",
-      description: "Изменение статуса будет доступно в следующей версии",
-    });
+    setEditDialogOpen(true);
   };
 
   const handleSubmitComment = async () => {
@@ -94,7 +82,6 @@ export default function RequestDetail() {
 
     setIsSubmitting(true);
     try {
-      // Here you would submit the comment to your backend
       toast({
         title: "Комментарий добавлен",
         description: "Ваш комментарий успешно отправлен",
@@ -155,6 +142,12 @@ export default function RequestDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 p-4 md:p-6">
+      <EditRequestDialog 
+        request={request}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -185,18 +178,12 @@ export default function RequestDetail() {
                 <span>Приоритет: <Badge variant={getPriorityColor(request.priority || "")} className="ml-1">{request.priority}</Badge></span>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {canEdit && (
-                <Button onClick={handleEditClick} variant="outline" className="gap-2">
-                  <Edit className="h-4 w-4" />
-                  Редактировать
-                </Button>
-              )}
-              <Button onClick={handleChangeStatus} className="gap-2">
-                <RefreshCw className="h-4 w-4" />
-                Изменить статус
+            {canEdit && (
+              <Button onClick={handleEditClick} variant="outline" className="gap-2">
+                <Edit className="h-4 w-4" />
+                Редактировать
               </Button>
-            </div>
+            )}
           </div>
         </div>
 
@@ -212,53 +199,108 @@ export default function RequestDetail() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Категория</p>
-                    <p className="text-sm font-medium">Техническая поддержка</p>
+                    <p className="text-sm text-muted-foreground mb-1">Дата заявки</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(request.request_date), "dd.MM.yyyy", { locale: ru })}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Тип запроса</p>
-                    <p className="text-sm font-medium">Ошибка в системе</p>
+                    <p className="text-sm text-muted-foreground mb-1">Статус</p>
+                    <Badge variant={getStatusColor(request.status)}>{request.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Приоритет</p>
+                    <Badge variant={getPriorityColor(request.priority || "")}>{request.priority}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Заявитель</p>
+                    <p className="text-sm font-medium">{request.applicant || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Исполнитель</p>
+                    <p className="text-sm font-medium">{request.executor || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Наличие/срок поставки</p>
+                    <p className="text-sm font-medium">{request.availability_delivery_time || "—"}</p>
                   </div>
                 </div>
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Описание</p>
                   <p className="text-sm leading-relaxed">{request.description}</p>
-                  {request.comments && (
-                    <p className="text-sm leading-relaxed mt-2 text-muted-foreground">{request.comments}</p>
-                  )}
+                </div>
+                {request.comments && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Комментарий</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{request.comments}</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Financial Information */}
+            <Card className="glassmorphism border-border/40">
+              <CardHeader>
+                <CardTitle className="text-lg">Финансовая информация</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Контрагент</p>
+                    <p className="text-sm font-medium">{request.contractor || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Номер счета</p>
+                    <p className="text-sm font-medium">{request.invoice_number || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Сумма</p>
+                    <p className="text-sm font-medium">{request.amount?.toLocaleString('ru-RU')} ₽</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">% оплаты</p>
+                    <p className="text-sm font-medium">{request.payment_percentage}%</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Client Information */}
+            {/* Delivery Information */}
             <Card className="glassmorphism border-border/40">
               <CardHeader>
-                <CardTitle className="text-lg">Информация о клиенте</CardTitle>
+                <CardTitle className="text-lg">Информация о доставке</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Имя</p>
-                      <p className="text-sm font-medium">{request.applicant || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Email</p>
-                      <p className="text-sm font-medium text-primary">
-                        {request.applicant ? `${request.applicant.toLowerCase().replace(/\s+/g, '.')}@innovate.com` : "—"}
-                      </p>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Дата отгрузки</p>
+                    <p className="text-sm font-medium">
+                      {request.shipment_date 
+                        ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
+                        : "—"
+                      }
+                    </p>
                   </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Компания</p>
-                      <p className="text-sm font-medium">ООО "Инновации"</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Телефон</p>
-                      <p className="text-sm font-medium">+7 (926) 123-45-67</p>
-                    </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Дата доставки</p>
+                    <p className="text-sm font-medium">
+                      {request.delivery_date 
+                        ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
+                        : "—"
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Транспортная компания</p>
+                    <p className="text-sm font-medium">{request.transport_company || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Номер ТТН</p>
+                    <p className="text-sm font-medium">{request.waybill_number || "—"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -356,35 +398,35 @@ export default function RequestDetail() {
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Status */}
+            {/* Status and Priority */}
             <Card className="glassmorphism border-border/40">
               <CardHeader>
-                <CardTitle className="text-lg">Статус</CardTitle>
+                <CardTitle className="text-lg">Статус и Приоритет</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
-                  className="w-full justify-center bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50"
-                  variant="outline"
-                >
-                  {request.status}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-center border-border/40 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Закрыть заявку
-                </Button>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Текущий статус</p>
+                  <Badge variant={getStatusColor(request.status)} className="w-full justify-center py-2">
+                    {request.status}
+                  </Badge>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Приоритет</p>
+                  <Badge variant={getPriorityColor(request.priority || "")} className="w-full justify-center py-2">
+                    {request.priority}
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
 
             {/* Executor */}
-            <Card className="glassmorphism border-border/40">
-              <CardHeader>
-                <CardTitle className="text-lg">Исполнитель</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {request.executor ? (
+            {request.executor && (
+              <Card className="glassmorphism border-border/40">
+                <CardHeader>
+                  <CardTitle className="text-lg">Исполнитель</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="flex items-center gap-3">
                     <Avatar>
                       <AvatarFallback className="bg-primary/20 text-primary">
@@ -393,18 +435,12 @@ export default function RequestDetail() {
                     </Avatar>
                     <div>
                       <p className="text-sm font-medium">{request.executor}</p>
-                      <p className="text-xs text-muted-foreground">Технический специалист</p>
+                      <p className="text-xs text-muted-foreground">Исполнитель</p>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Не назначен</p>
-                )}
-                <Button variant="outline" className="w-full gap-2 border-border/40">
-                  <UserPlus className="h-4 w-4" />
-                  Назначить исполнителя
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Key Dates */}
             <Card className="glassmorphism border-border/40">
@@ -413,25 +449,39 @@ export default function RequestDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Дата создания</span>
+                  <span className="text-sm text-muted-foreground">Дата заявки</span>
                   <span className="text-sm font-medium">
                     {format(new Date(request.request_date), "dd.MM.yyyy", { locale: ru })}
                   </span>
                 </div>
+                {request.shipment_date && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Дата отгрузки</span>
+                      <span className="text-sm font-medium">
+                        {format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {request.delivery_date && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Дата доставки</span>
+                      <span className="text-sm font-medium">
+                        {format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <Separator />
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Срок выполнения</span>
+                  <span className="text-sm text-muted-foreground">Создано</span>
                   <span className="text-sm font-medium">
-                    {request.delivery_date 
-                      ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
-                      : "—"
-                    }
+                    {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}
                   </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Дата закрытия</span>
-                  <span className="text-sm font-medium">—</span>
                 </div>
               </CardContent>
             </Card>
