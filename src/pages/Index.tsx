@@ -1,38 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, BarChart3, Users, Shield, ArrowRight, PlayCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
 
-  const features = [
-    {
-      icon: FileText,
-      title: "Управление заявками",
-      description: "Создавайте, отслеживайте и управляйте всеми заявками в одном месте с интуитивным интерфейсом."
-    },
-    {
-      icon: BarChart3,
-      title: "Аналитика и отчёты",
-      description: "Получайте детальную статистику по заявкам и исполнителям для принятия обоснованных решений."
-    },
-    {
-      icon: Users,
-      title: "Командная работа",
-      description: "Назначайте ответственных и отслеживайте прогресс в реальном времени для эффективного сотрудничества."
-    },
-    {
-      icon: Shield,
-      title: "Безопасность данных",
-      description: "Контроль доступа и защита конфиденциальной информации с современными методами шифрования."
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* TopNavBar */}
-      <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-white/10 px-6 py-4 glassmorphism rounded-lg mx-4 mt-4 sm:mx-6 lg:mx-10">
+      <div className="flex flex-1 justify-center py-5 px-4 md:px-10 lg:px-20">
+        <div className="flex w-full max-w-[1100px] flex-1 flex-col">
+          {/* Header */}
+          <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-white/10 px-6 py-4 glassmorphism rounded-lg mb-16">
         <div className="flex items-center gap-4">
           <div className="size-6 text-primary">
             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -54,10 +31,13 @@ const Index = () => {
               Возможности
             </a>
             <a className="text-white/80 hover:text-white transition-colors text-sm font-medium leading-normal" href="#pricing">
-              Тарифы
+              Цены
             </a>
-            <a className="text-white/80 hover:text-white transition-colors text-sm font-medium leading-normal" href="#faq">
-              О системе
+            <a className="text-white/80 hover:text-white transition-colors text-sm font-medium leading-normal" href="#about">
+              О нас
+            </a>
+            <a className="text-white/80 hover:text-white transition-colors text-sm font-medium leading-normal" href="#contact">
+              Контакты
             </a>
           </div>
           <Button 
@@ -78,17 +58,17 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex flex-col gap-20 md:gap-24 lg:gap-32 mt-16 px-4 md:px-10 lg:px-20">
-        {/* HeroSection */}
-        <section className="flex flex-col gap-6 text-center items-center py-10 max-w-[1100px] mx-auto">
-          <div className="flex flex-col gap-4">
-            <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] md:text-5xl lg:text-6xl max-w-4xl">
-              Оптимизируйте управление корпоративными ресурсами
-            </h1>
-            <h2 className="text-white/70 text-base font-normal leading-normal md:text-lg max-w-2xl mx-auto">
-              CRSS предоставляет мощную интегрированную платформу для управления ресурсами, автоматизации процессов и получения критической аналитики для максимальной эффективности.
-            </h2>
+          {/* Main Content */}
+          <main className="flex flex-col gap-20 md:gap-24 lg:gap-32">
+            {/* Hero Section */}
+            <section className="flex flex-col gap-6 text-center items-center py-10">
+              <div className="flex flex-col gap-4">
+                <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] md:text-5xl lg:text-6xl max-w-4xl">
+                  Оптимизируйте цепочку поставок корпоративных ресурсов
+                </h1>
+                <h2 className="text-white/70 text-base font-normal leading-normal md:text-lg max-w-2xl mx-auto">
+                  CRSS предоставляет мощную интегрированную платформу для управления ресурсами, автоматизации процессов и получения критически важных данных для максимальной эффективности.
+                </h2>
           </div>
           <div className="flex flex-wrap gap-4 justify-center mt-6">
             <Button 
