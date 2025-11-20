@@ -113,10 +113,10 @@ export default function AgentReportUU() {
     
     // Подготовка данных для экспорта
     const excelData = requestsToExport.map((request) => ({
-      "Описание": request.description || "",
+      "ТМЦ": request.description || "",
       "Контрагент": request.contractor || "",
-      "Сумма": request.amount || 0,
-      "Статус": request.status || ""
+      "№ Счета": request.invoice_number || "",
+      "Сумма закупа": request.amount || 0
     }));
 
     // Создание worksheet
@@ -124,10 +124,10 @@ export default function AgentReportUU() {
     
     // Установка ширины колонок
     ws['!cols'] = [
-      { wch: 40 }, // Описание
+      { wch: 40 }, // ТМЦ
       { wch: 25 }, // Контрагент
-      { wch: 15 }, // Сумма
-      { wch: 15 }  // Статус
+      { wch: 15 }, // № Счета
+      { wch: 15 }  // Сумма закупа
     ];
 
     // Создание workbook
