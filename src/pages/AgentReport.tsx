@@ -112,16 +112,10 @@ export default function AgentReport() {
     const monthName = months.find(m => m.value === selectedMonth)?.label || "";
     
     // Подготовка данных для экспорта
-    const excelData = requestsToExport.map((request, index) => ({
-      "№": index + 1,
-      "№ заявки": request.request_number || "",
-      "Дата заявки": request.request_date || "",
+    const excelData = requestsToExport.map((request) => ({
       "Описание": request.description || "",
-      "Исполнитель": request.executor || "",
       "Контрагент": request.contractor || "",
       "Сумма": request.amount || 0,
-      "Дата отгрузки": request.shipment_date || "",
-      "Дата доставки": request.delivery_date || "",
       "Статус": request.status || ""
     }));
 
@@ -130,15 +124,9 @@ export default function AgentReport() {
     
     // Установка ширины колонок
     ws['!cols'] = [
-      { wch: 5 },  // №
-      { wch: 12 }, // № заявки
-      { wch: 12 }, // Дата заявки
-      { wch: 30 }, // Описание
-      { wch: 20 }, // Исполнитель
-      { wch: 20 }, // Контрагент
-      { wch: 12 }, // Сумма
-      { wch: 12 }, // Дата отгрузки
-      { wch: 12 }, // Дата доставки
+      { wch: 40 }, // Описание
+      { wch: 25 }, // Контрагент
+      { wch: 15 }, // Сумма
       { wch: 15 }  // Статус
     ];
 
