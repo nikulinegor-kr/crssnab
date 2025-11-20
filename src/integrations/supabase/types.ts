@@ -190,6 +190,44 @@ export type Database = {
           },
         ]
       }
+      message_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          message_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          message_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -801,9 +839,45 @@ export type Database = {
           },
         ]
       }
+      task_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          notified: boolean
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notified?: boolean
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notified?: boolean
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_comment: string | null
+          completion_status: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -818,6 +892,10 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_comment?: string | null
+          completion_status?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -832,6 +910,10 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_comment?: string | null
+          completion_status?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
