@@ -108,123 +108,47 @@ export default function AgentReportUU() {
     }
   };
 
-  const exportToExcel = async () => {
+  const exportToExcel = () => {
     const monthName = months.find(m => m.value === selectedMonth)?.label || "";
     
-    // Определяем первый и последний день выбранного месяца
-    const firstDay = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1);
-    const lastDay = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0);
-    const formatDate = (date: Date) => {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}.${month}.${year}`;
-    };
+    // Подготовка данных для экспорта
+    const excelData = requestsToExport.map((request, index) => ({
+      "№": index + 1,
+      "№ заявки": request.request_number || "",
+      "Дата заявки": request.request_date || "",
+      "Описание": request.description || "",
+      "Исполнитель": request.executor || "",
+      "Контрагент": request.contractor || "",
+      "Сумма": request.amount || 0,
+      "Дата отгрузки": request.shipment_date || "",
+      "Дата доставки": request.delivery_date || "",
+      "Статус": request.status || ""
+    }));
+
+    // Создание worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
     
-    try {
-      // Загружаем шаблон
-      const response = await fetch('/templates/agent-report-template.xlsx');
-      const arrayBuffer = await response.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      
-      // Ищем лист "Отчет агента - УУ" по имени, по умолчанию берём первый
-      const uuSheetName =
-        wb.SheetNames.find((name) => {
-          const lower = name.toLowerCase();
-          return lower.includes("отчет агента") && lower.includes("уу");
-        }) || wb.SheetNames[0];
-      const ws = wb.Sheets[uuSheetName];
+    // Установка ширины колонок
+    ws['!cols'] = [
+      { wch: 5 },  // №
+      { wch: 12 }, // № заявки
+      { wch: 12 }, // Дата заявки
+      { wch: 30 }, // Описание
+      { wch: 20 }, // Исполнитель
+      { wch: 20 }, // Контрагент
+      { wch: 12 }, // Сумма
+      { wch: 12 }, // Дата отгрузки
+      { wch: 12 }, // Дата доставки
+      { wch: 15 }  // Статус
+    ];
 
-      // Универсальная замена названий месяцев в ячейках листа
-      const monthMap: Record<string, { nom: string; gen: string }> = {
-        "1": { nom: "январь", gen: "января" },
-        "2": { nom: "февраль", gen: "февраля" },
-        "3": { nom: "март", gen: "марта" },
-        "4": { nom: "апрель", gen: "апреля" },
-        "5": { nom: "май", gen: "мая" },
-        "6": { nom: "июнь", gen: "июня" },
-        "7": { nom: "июль", gen: "июля" },
-        "8": { nom: "август", gen: "августа" },
-        "9": { nom: "сентябрь", gen: "сентября" },
-        "10": { nom: "октябрь", gen: "октября" },
-        "11": { nom: "ноябрь", gen: "ноября" },
-        "12": { nom: "декабрь", gen: "декабря" },
-      };
+    // Создание workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Отчет агента УУ");
 
-      const sourceMonths = [
-        "январь","января","февраль","февраля","март","марта","апрель","апреля",
-        "май","мая","июнь","июня","июль","июля","август","августа",
-        "сентябрь","сентября","октябрь","октября","ноябрь","ноября","декабрь","декабря"
-      ];
-      const target = monthMap[selectedMonth];
-      const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-      const applyCase = (match: string, repl: string) => {
-        if (match === match.toUpperCase()) return repl.toUpperCase();
-        if (match[0] === match[0].toUpperCase()) return capitalize(repl);
-        return repl;
-      };
-
-      const rangeAll = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (let r = rangeAll.s.r; r <= rangeAll.e.r; r++) {
-        for (let c = rangeAll.s.c; c <= rangeAll.e.c; c++) {
-          const addr = XLSX.utils.encode_cell({ r, c });
-          const cell = ws[addr];
-          if (cell && cell.t === 's' && typeof cell.v === 'string') {
-            let v = cell.v;
-            sourceMonths.forEach((m) => {
-              const regex = new RegExp(`\\b${m}\\b`, 'gi');
-              v = v.replace(regex, (found) => {
-                const useGen = m.endsWith('а') || m.endsWith('я');
-                const repl = useGen ? target.gen : target.nom;
-                return applyCase(found, repl);
-              });
-            });
-            cell.v = v;
-          }
-        }
-      }
-      
-      // Обновляем период в ячейке A14
-      ws['A14'] = { 
-        t: 's', 
-        v: `За период с ${formatDate(firstDay)} г. по ${formatDate(lastDay)} г. произведен закуп ТМЦ:` 
-      };
-      
-      // Удаляем старые данные (строки с 17 по последнюю перед подписями)
-      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (let row = 16; row < range.e.r - 5; row++) {
-        for (let col = 0; col <= 4; col++) {
-          const cellAddr = XLSX.utils.encode_cell({ r: row, c: col });
-          delete ws[cellAddr];
-        }
-      }
-      
-      // Добавляем новые данные начиная с A17
-      requestsToExport.forEach((req, index) => {
-        const rowNum = 16 + index;
-        ws[XLSX.utils.encode_cell({ r: rowNum, c: 0 })] = { t: 'n', v: index + 1 };
-        ws[XLSX.utils.encode_cell({ r: rowNum, c: 1 })] = { t: 's', v: req.description };
-        ws[XLSX.utils.encode_cell({ r: rowNum, c: 2 })] = { t: 's', v: req.contractor || "Не указан" };
-        ws[XLSX.utils.encode_cell({ r: rowNum, c: 3 })] = { t: 's', v: req.invoice_number || "Не указан" };
-        ws[XLSX.utils.encode_cell({ r: rowNum, c: 4 })] = { t: 'n', v: req.amount || 0, z: '#,##0.00' };
-      });
-      
-      // Обновляем диапазон листа
-      const newRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      newRange.e.r = 16 + requestsToExport.length + 5;
-      ws['!ref'] = XLSX.utils.encode_range(newRange);
-      
-      // Делаем лист "Отчет агента - УУ" первым, чтобы он открывался по умолчанию
-      const sheetIndex = wb.SheetNames.indexOf(uuSheetName);
-      if (sheetIndex > 0) {
-        wb.SheetNames.splice(sheetIndex, 1);
-        wb.SheetNames.unshift(uuSheetName);
-      }
-      
-      XLSX.writeFile(wb, `Отчет_агента_УУ_${monthName}_${selectedYear}.xlsx`);
-    } catch (error) {
-      console.error("Ошибка при экспорте:", error);
-    }
+    // Скачивание файла
+    const filename = `Отчет_агента_УУ_${monthName}_${selectedYear}.xlsx`;
+    XLSX.writeFile(wb, filename);
   };
 
   const exportToPDF = () => {
