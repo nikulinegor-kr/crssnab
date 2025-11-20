@@ -316,6 +316,7 @@ export default function CalendarPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
+                  className="h-10"
                 />
               </div>
 
@@ -326,10 +327,11 @@ export default function CalendarPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
+                  className="min-h-[80px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Дата *</Label>
                   <Input
@@ -338,6 +340,7 @@ export default function CalendarPage() {
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     required
+                    className="h-10"
                   />
                 </div>
                 <div className="space-y-2">
@@ -348,6 +351,7 @@ export default function CalendarPage() {
                     value={formData.start_time}
                     onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                     disabled={formData.all_day}
+                    className="h-10"
                   />
                 </div>
               </div>
@@ -371,7 +375,7 @@ export default function CalendarPage() {
                   value={formData.assignee_id}
                   onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Выберите ответственного" />
                   </SelectTrigger>
                   <SelectContent>

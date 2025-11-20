@@ -155,6 +155,24 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
   const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
+  // Fetch suppliers
+  const { data: suppliers } = useQuery({
+    queryKey: ["suppliers", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .eq("status", "Активный")
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
   // Fetch statuses
   const { data: statusesData } = useQuery({
     queryKey: ["request-statuses", currentOrgId],
@@ -514,9 +532,32 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Контрагент</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ООО Компания" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {suppliers?.map((supplier) => (
+                            <SelectItem key={supplier.id} value={supplier.name}>
+                              {supplier.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormControl>
+                        <Input 
+                          placeholder="или введите название" 
+                          className="flex-1"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -528,9 +569,33 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Наличие / Сроки поставки</FormLabel>
-                    <FormControl>
-                      <Input placeholder="В наличии / 2 недели" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="В наличии">В наличии</SelectItem>
+                          <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                          <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                          <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                          <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                          <SelectItem value="Под заказ">Под заказ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormControl>
+                        <Input 
+                          placeholder="или введите сроки" 
+                          className="flex-1"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -557,7 +622,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Сумма</FormLabel>
+                    <FormLabel>Сумма (₽)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -585,8 +650,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                         onValueChange={(value) => field.onChange(parseInt(value))}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Выбрать" />
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -609,7 +674,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                           min="0"
                           max="100"
                           step="1"
-                          placeholder="или введите"
+                          placeholder="введите"
                           className="flex-1"
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}

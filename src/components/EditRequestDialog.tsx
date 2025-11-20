@@ -149,6 +149,24 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
   const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
+  // Fetch suppliers
+  const { data: suppliers } = useQuery({
+    queryKey: ["suppliers", request?.organization_id],
+    queryFn: async () => {
+      if (!request?.organization_id) return [];
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name")
+        .eq("organization_id", request.organization_id)
+        .eq("status", "Активный")
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.organization_id && open,
+  });
+
   // Fetch statuses
   const { data: statusesData } = useQuery({
     queryKey: ["request-statuses", request?.organization_id],
@@ -589,9 +607,34 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Контрагент</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ООО Компания" disabled={isViewer} {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""} 
+                        disabled={isViewer}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {suppliers?.map((supplier) => (
+                            <SelectItem key={supplier.id} value={supplier.name}>
+                              {supplier.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormControl>
+                        <Input 
+                          placeholder="или введите название" 
+                          disabled={isViewer} 
+                          className="flex-1"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -603,9 +646,35 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Наличие / Сроки поставки</FormLabel>
-                    <FormControl>
-                      <Input placeholder="В наличии / 2 недели" disabled={isViewer} {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""} 
+                        disabled={isViewer}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="В наличии">В наличии</SelectItem>
+                          <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                          <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                          <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                          <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                          <SelectItem value="Под заказ">Под заказ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormControl>
+                        <Input 
+                          placeholder="или введите сроки" 
+                          disabled={isViewer} 
+                          className="flex-1"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -632,7 +701,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Сумма</FormLabel>
+                    <FormLabel>Сумма (₽)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -662,8 +731,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                         disabled={isViewer}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Выбрать" />
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -686,7 +755,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           min="0"
                           max="100"
                           step="1"
-                          placeholder="или введите"
+                          placeholder="введите"
                           className="flex-1"
                           disabled={isViewer}
                           {...field}

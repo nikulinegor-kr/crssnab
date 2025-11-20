@@ -414,6 +414,7 @@ export default function TasksPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
+                  className="h-10"
                 />
               </div>
 
@@ -424,17 +425,18 @@ export default function TasksPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
+                  className="min-h-[80px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="status">Статус *</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -452,7 +454,7 @@ export default function TasksPage() {
                     value={formData.priority}
                     onValueChange={(value) => setFormData({ ...formData, priority: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -473,6 +475,7 @@ export default function TasksPage() {
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  className="h-10"
                 />
               </div>
 
@@ -482,7 +485,7 @@ export default function TasksPage() {
                   value={formData.assignee_id}
                   onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Выберите ответственного" />
                   </SelectTrigger>
                   <SelectContent>
