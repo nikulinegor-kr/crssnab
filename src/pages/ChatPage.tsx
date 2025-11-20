@@ -12,6 +12,7 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { DeleteChatDialog } from "@/components/DeleteChatDialog";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ interface Message {
   sender_id: string;
   created_at: string;
   is_read: boolean;
+  conversation_id: string;
   profiles?: {
     full_name: string | null;
     email: string;
@@ -85,6 +87,9 @@ export default function ChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -93,6 +98,32 @@ export default function ChatPage() {
     };
     getCurrentUser();
   }, []);
+
+  // Настройка presence для индикатора печатания
+  useEffect(() => {
+    if (!selectedConversation || !currentUserId) return;
+
+    const channel = supabase.channel(`typing:${selectedConversation}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typing = new Set<string>();
+        
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            if (presence.user_id !== currentUserId && presence.typing) {
+              typing.add(presence.user_id);
+            }
+          });
+        });
+        
+        setTypingUsers(prev => ({ ...prev, [selectedConversation]: typing }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedConversation, currentUserId]);
 
   // Получаем беседы
   const { data: conversations } = useQuery({
@@ -265,6 +296,72 @@ export default function ChatPage() {
 
     markAsRead();
   }, [selectedConversation, currentUserId, queryClient]);
+
+  // Создаем уведомления для новых сообщений
+  useEffect(() => {
+    if (!currentOrgId || !currentUserId) return;
+
+    const channel = supabase
+      .channel('new-messages-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        async (payload) => {
+          const newMessage = payload.new as Message;
+          
+          // Не создаем уведомление для собственных сообщений
+          if (newMessage.sender_id === currentUserId) return;
+          
+          // Проверяем, участвует ли текущий пользователь в этой беседе
+          const { data: participant } = await supabase
+            .from('conversation_participants')
+            .select('*')
+            .eq('conversation_id', newMessage.conversation_id)
+            .eq('user_id', currentUserId)
+            .single();
+          
+          if (!participant) return;
+          
+          // Получаем информацию об отправителе
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', newMessage.sender_id)
+            .single();
+          
+          // Получаем информацию о беседе
+          const { data: conversation } = await supabase
+            .from('conversations')
+            .select('name, type')
+            .eq('id', newMessage.conversation_id)
+            .single();
+          
+          const senderName = sender?.full_name || sender?.email || 'Пользователь';
+          const conversationName = conversation?.name || 'Личный чат';
+          
+          // Создаем уведомление
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: currentUserId,
+              organization_id: currentOrgId,
+              type: 'chat_message',
+              title: `Новое сообщение от ${senderName}`,
+              message: newMessage.content.substring(0, 100),
+              link: `/chat?conversation=${newMessage.conversation_id}`
+            });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrgId, currentUserId]);
 
   // Автопрокрутка к последнему сообщению
   useEffect(() => {
@@ -454,6 +551,82 @@ export default function ChatPage() {
     createConversationMutation.mutate();
   };
 
+  const deleteConversationMutation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      // Удаляем сообщения
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversation_id', conversationId);
+      
+      if (messagesError) throw messagesError;
+      
+      // Удаляем участников
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .delete()
+        .eq('conversation_id', conversationId);
+      
+      if (participantsError) throw participantsError;
+      
+      // Удаляем беседу
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+      
+      if (conversationError) throw conversationError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      if (selectedConversation === chatToDelete) {
+        setSelectedConversation(null);
+      }
+      setChatToDelete(null);
+      toast({
+        title: "Беседа удалена",
+        description: "Беседа успешно удалена",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting conversation:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить беседу",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTyping = async () => {
+    if (!selectedConversation || !currentUserId) return;
+
+    const channel = supabase.channel(`typing:${selectedConversation}`);
+    
+    await channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          user_id: currentUserId,
+          typing: true,
+        });
+      }
+    });
+
+    // Сбрасываем предыдущий таймаут
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Устанавливаем новый таймаут для остановки индикации печати
+    typingTimeoutRef.current = setTimeout(async () => {
+      await channel.track({
+        user_id: currentUserId,
+        typing: false,
+      });
+      await channel.unsubscribe();
+    }, 3000);
+  };
+
   const getConversationName = (conv: Conversation) => {
     if (conv.type === "group" || conv.type === "public") {
       return conv.name || "Без названия";
@@ -550,9 +723,32 @@ export default function ChatPage() {
             {selectedConversation ? (
               <>
                 <CardHeader className="pb-3 border-b">
-                  <h3 className="font-semibold">
-                    {conversations?.find(c => c.id === selectedConversation)?.name || "Беседа"}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold">
+                        {getConversationName(conversations?.find(c => c.id === selectedConversation)!)}
+                      </h3>
+                      {typingUsers[selectedConversation]?.size > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {Array.from(typingUsers[selectedConversation])
+                            .map(userId => {
+                              const user = orgUsers?.find(u => u.id === userId);
+                              return user?.full_name || user?.email || 'Пользователь';
+                            })
+                            .join(', ')}{' '}
+                          печатает...
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setChatToDelete(selectedConversation)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="flex-1 p-4 overflow-hidden">
                   <ScrollArea className="h-[calc(100vh-400px)]">
@@ -673,7 +869,10 @@ export default function ChatPage() {
                     </Button>
                     <Input
                       value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
+                      onChange={(e) => {
+                        setMessageText(e.target.value);
+                        handleTyping();
+                      }}
                       placeholder="Введите сообщение..."
                       className="flex-1"
                     />
@@ -786,6 +985,22 @@ export default function ChatPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Диалог подтверждения удаления беседы */}
+        <DeleteChatDialog
+          open={!!chatToDelete}
+          onOpenChange={(open) => !open && setChatToDelete(null)}
+          onConfirm={() => {
+            if (chatToDelete) {
+              deleteConversationMutation.mutate(chatToDelete);
+            }
+          }}
+          conversationName={
+            chatToDelete
+              ? getConversationName(conversations?.find(c => c.id === chatToDelete)!)
+              : ""
+          }
+        />
       </div>
     </div>
   );
