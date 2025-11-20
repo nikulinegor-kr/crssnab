@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   FileBarChart,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -38,6 +39,7 @@ const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Поставщики", url: "/suppliers", icon: Users },
+  { title: "О системе", url: "/system-demo", icon: Sparkles },
 ];
 
 const secondaryMenuItems = [
