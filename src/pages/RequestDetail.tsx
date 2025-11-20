@@ -393,17 +393,7 @@ export default function RequestDetail() {
                                 const pathParts = url.pathname.split('/');
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
                                 if (bucketIndex === -1) {
-                                  if (isMobile) {
-                                    const link = document.createElement('a');
-                                    link.href = request.document_url!;
-                                    link.download = 'document.pdf';
-                                    link.target = '_blank';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  } else {
-                                    window.open(request.document_url!, '_blank');
-                                  }
+                                  window.open(request.document_url!, '_blank');
                                   return;
                                 }
                                 
@@ -414,49 +404,19 @@ export default function RequestDetail() {
                                 
                                 if (error || !data) {
                                   console.error('Error creating signed URL:', error);
-                                  if (isMobile) {
-                                    const link = document.createElement('a');
-                                    link.href = request.document_url!;
-                                    link.download = 'document.pdf';
-                                    link.target = '_blank';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  } else {
-                                    window.open(request.document_url!, '_blank');
-                                  }
+                                  window.open(request.document_url!, '_blank');
                                   return;
                                 }
                                 
-                                if (isMobile) {
-                                  const link = document.createElement('a');
-                                  link.href = data.signedUrl;
-                                  link.download = filePath.split('/').pop() || 'document.pdf';
-                                  link.target = '_blank';
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                } else {
-                                  window.open(data.signedUrl, '_blank');
-                                }
+                                window.open(data.signedUrl, '_blank');
                               } catch (error) {
                                 console.error('Error opening document:', error);
-                                if (isMobile) {
-                                  const link = document.createElement('a');
-                                  link.href = request.document_url!;
-                                  link.download = 'document.pdf';
-                                  link.target = '_blank';
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                } else {
-                                  window.open(request.document_url!, '_blank');
-                                }
+                                window.open(request.document_url!, '_blank');
                               }
                             }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            {isMobile ? 'Скачать' : 'Открыть'}
+                            Просмотр
                           </Button>
                           <Button
                             variant="ghost"
