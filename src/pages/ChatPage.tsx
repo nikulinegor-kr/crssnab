@@ -50,9 +50,11 @@ interface Message {
   content: string;
   sender_id: string;
   created_at: string;
+  is_read: boolean;
   profiles?: {
     full_name: string | null;
     email: string;
+    position: string | null;
   };
   attachments?: MessageAttachment[];
 }
@@ -61,6 +63,12 @@ interface Profile {
   id: string;
   full_name: string | null;
   email: string;
+  position: string | null;
+}
+
+interface ConversationParticipant {
+  user_id: string;
+  conversation_id: string;
 }
 
 export default function ChatPage() {
@@ -102,6 +110,50 @@ export default function ChatPage() {
     enabled: !!currentOrgId,
   });
 
+  // Получаем участников бесед
+  const { data: conversationParticipants } = useQuery({
+    queryKey: ["conversation-participants", currentOrgId],
+    queryFn: async () => {
+      if (!conversations) return [];
+      
+      const conversationIds = conversations.map(c => c.id);
+      const { data, error } = await supabase
+        .from("conversation_participants")
+        .select("user_id, conversation_id")
+        .in("conversation_id", conversationIds);
+
+      if (error) throw error;
+      return data as ConversationParticipant[];
+    },
+    enabled: !!currentOrgId && !!conversations && conversations.length > 0,
+  });
+
+  // Получаем количество непрочитанных сообщений
+  const { data: unreadCounts } = useQuery({
+    queryKey: ["unread-counts", currentOrgId, currentUserId],
+    queryFn: async () => {
+      if (!conversations || !currentUserId) return {};
+      
+      const counts: Record<string, number> = {};
+      
+      for (const conv of conversations) {
+        const { count, error } = await supabase
+          .from("messages")
+          .select("*", { count: 'exact', head: true })
+          .eq("conversation_id", conv.id)
+          .eq("is_read", false)
+          .neq("sender_id", currentUserId);
+        
+        if (!error && count) {
+          counts[conv.id] = count;
+        }
+      }
+      
+      return counts;
+    },
+    enabled: !!currentOrgId && !!currentUserId && !!conversations && conversations.length > 0,
+  });
+
   // Получаем сообщения выбранной беседы
   const { data: messages } = useQuery({
     queryKey: ["messages", selectedConversation],
@@ -119,7 +171,7 @@ export default function ChatPage() {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, position")
         .in("id", senderIds);
 
       if (profilesError) throw profilesError;
@@ -160,7 +212,7 @@ export default function ChatPage() {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, position")
         .in("id", userIds);
 
       if (profilesError) throw profilesError;
@@ -185,6 +237,7 @@ export default function ChatPage() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["messages", selectedConversation] });
+          queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
         }
       )
       .subscribe();
@@ -193,6 +246,25 @@ export default function ChatPage() {
       supabase.removeChannel(channel);
     };
   }, [selectedConversation, queryClient]);
+
+  // Помечаем сообщения как прочитанные когда открывается беседа
+  useEffect(() => {
+    if (!selectedConversation || !currentUserId) return;
+
+    const markAsRead = async () => {
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", selectedConversation)
+        .eq("is_read", false)
+        .neq("sender_id", currentUserId);
+      
+      // Обновляем счетчики
+      queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+    };
+
+    markAsRead();
+  }, [selectedConversation, currentUserId, queryClient]);
 
   // Автопрокрутка к последнему сообщению
   useEffect(() => {
@@ -312,6 +384,18 @@ export default function ChatPage() {
     if (conv.type === "group" || conv.type === "public") {
       return conv.name || "Без названия";
     }
+    
+    // Для личного чата показываем имя собеседника
+    const participants = conversationParticipants?.filter(p => p.conversation_id === conv.id) || [];
+    const otherParticipantId = participants.find(p => p.user_id !== currentUserId)?.user_id;
+    
+    if (otherParticipantId) {
+      const otherUser = orgUsers?.find(u => u.id === otherParticipantId);
+      if (otherUser) {
+        return otherUser.full_name || otherUser.email;
+      }
+    }
+    
     return "Личный чат";
   };
 
@@ -345,31 +429,43 @@ export default function ChatPage() {
             <CardContent className="p-0">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-1 p-4">
-                  {conversations?.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => setSelectedConversation(conv.id)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedConversation === conv.id
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-accent"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {conv.type === "public" ? "П" : conv.type === "group" ? "Г" : "Л"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{getConversationName(conv)}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(conv.created_at), "dd MMM", { locale: ru })}
+                  {conversations?.map((conv) => {
+                    const unreadCount = unreadCounts?.[conv.id] || 0;
+                    return (
+                      <button
+                        key={conv.id}
+                        onClick={() => setSelectedConversation(conv.id)}
+                        className={`w-full text-left p-3 rounded-lg transition-colors relative ${
+                          selectedConversation === conv.id
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-accent"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {conv.type === "public" ? "П" : conv.type === "group" ? "Г" : "Л"}
+                              </AvatarFallback>
+                            </Avatar>
+                            {unreadCount > 0 && (
+                              <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                {unreadCount > 9 ? "9+" : unreadCount}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className={`font-medium truncate ${unreadCount > 0 ? "font-bold" : ""}`}>
+                              {getConversationName(conv)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(conv.created_at), "dd MMM", { locale: ru })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -387,30 +483,40 @@ export default function ChatPage() {
                 <CardContent className="flex-1 p-4 overflow-hidden">
                   <ScrollArea className="h-[calc(100vh-400px)]">
                     <div className="space-y-4 pr-4">
-                      {messages?.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.sender_id === currentUserId ? "justify-end" : "justify-start"}`}
-                        >
+                      {messages?.map((message) => {
+                        const isOwnMessage = message.sender_id === currentUserId;
+                        return (
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
-                              message.sender_id === currentUserId
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-accent"
-                            }`}
+                            key={message.id}
+                            className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                           >
-                            {message.sender_id !== currentUserId && (
-                              <div className="text-xs font-semibold mb-1">
-                                {message.profiles?.full_name || message.profiles?.email}
+                            <div
+                              className={`max-w-[70%] rounded-lg p-3 shadow-sm ${
+                                isOwnMessage
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-foreground border border-border"
+                              }`}
+                            >
+                              {!isOwnMessage && message.profiles && (
+                                <div className="mb-2 pb-2 border-b border-border/50">
+                                  <div className="text-sm font-semibold">
+                                    {message.profiles.full_name || message.profiles.email}
+                                  </div>
+                                  {message.profiles.position && (
+                                    <div className="text-xs text-muted-foreground">
+                                      {message.profiles.position}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                              <div className={`text-xs mt-1 ${isOwnMessage ? "opacity-70" : "text-muted-foreground"}`}>
+                                {format(new Date(message.created_at), "HH:mm", { locale: ru })}
                               </div>
-                            )}
-                            <div className="text-sm">{message.content}</div>
-                            <div className="text-xs opacity-70 mt-1">
-                              {format(new Date(message.created_at), "HH:mm", { locale: ru })}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
@@ -506,6 +612,11 @@ export default function ChatPage() {
                           <div className="font-medium truncate">
                             {user.full_name || user.email}
                           </div>
+                          {user.position && (
+                            <div className="text-xs text-muted-foreground truncate">
+                              {user.position}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
