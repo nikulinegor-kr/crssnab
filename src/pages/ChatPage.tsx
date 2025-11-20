@@ -270,6 +270,14 @@ export default function ChatPage() {
         description: "Новая беседа успешно создана",
       });
     },
+    onError: (error) => {
+      console.error("Error creating conversation:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать беседу. Попробуйте еще раз.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -470,7 +478,7 @@ export default function ChatPage() {
                 <Label>Участники ({selectedUsers.length})</Label>
                 <ScrollArea className="h-[200px] border rounded-lg p-2">
                   <div className="space-y-2">
-                    {orgUsers?.filter(u => u.id !== currentUserId).map((user) => (
+                    {orgUsers?.map((user) => (
                       <div
                         key={user.id}
                         onClick={() => {
