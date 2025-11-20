@@ -298,7 +298,10 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={day.toString()}
-                    onClick={() => handleOpenDialog(day)}
+                    onClick={() => {
+                      setSelectedDate(day);
+                      setView("day");
+                    }}
                     className={`
                       min-h-[120px] p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
                       ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
