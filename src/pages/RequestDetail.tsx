@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { ImageViewer } from "@/components/ImageViewer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Activity {
   id: string;
@@ -41,6 +42,7 @@ export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { canEdit } = useUserRole();
+  const isMobile = useIsMobile();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -120,6 +122,10 @@ export default function RequestDetail() {
     setImageViewerOpen(true);
   };
 
+  const handleBackClick = () => {
+    navigate("/requests");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 p-6">
@@ -161,6 +167,16 @@ export default function RequestDetail() {
       />
       
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Back button */}
+        <Button 
+          onClick={handleBackClick} 
+          variant="ghost" 
+          className="gap-2 h-10"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Назад к заявкам
+        </Button>
+
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <button 
@@ -338,20 +354,20 @@ export default function RequestDetail() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2"
+                            className="h-8 px-3"
                             onClick={() => handleImageClick(request.photo_url!)}
                           >
-                            <Eye className="h-3 w-3 mr-1" />
+                            <Eye className="h-4 w-4 mr-1" />
                             Просмотр
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2"
+                            className="h-8 px-3"
                             asChild
                           >
                             <a href={request.photo_url} download target="_blank" rel="noopener noreferrer">
-                              <Download className="h-3 w-3 mr-1" />
+                              <Download className="h-4 w-4 mr-1" />
                               Скачать
                             </a>
                           </Button>
@@ -370,14 +386,24 @@ export default function RequestDetail() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2"
+                            className="h-8 px-3"
                             onClick={async () => {
                               try {
                                 const url = new URL(request.document_url!);
                                 const pathParts = url.pathname.split('/');
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
                                 if (bucketIndex === -1) {
-                                  window.open(request.document_url!, '_blank');
+                                  if (isMobile) {
+                                    const link = document.createElement('a');
+                                    link.href = request.document_url!;
+                                    link.download = 'document.pdf';
+                                    link.target = '_blank';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  } else {
+                                    window.open(request.document_url!, '_blank');
+                                  }
                                   return;
                                 }
                                 
@@ -388,24 +414,54 @@ export default function RequestDetail() {
                                 
                                 if (error || !data) {
                                   console.error('Error creating signed URL:', error);
-                                  window.open(request.document_url!, '_blank');
+                                  if (isMobile) {
+                                    const link = document.createElement('a');
+                                    link.href = request.document_url!;
+                                    link.download = 'document.pdf';
+                                    link.target = '_blank';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  } else {
+                                    window.open(request.document_url!, '_blank');
+                                  }
                                   return;
                                 }
                                 
-                                window.open(data.signedUrl, '_blank');
+                                if (isMobile) {
+                                  const link = document.createElement('a');
+                                  link.href = data.signedUrl;
+                                  link.download = filePath.split('/').pop() || 'document.pdf';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                } else {
+                                  window.open(data.signedUrl, '_blank');
+                                }
                               } catch (error) {
                                 console.error('Error opening document:', error);
-                                window.open(request.document_url!, '_blank');
+                                if (isMobile) {
+                                  const link = document.createElement('a');
+                                  link.href = request.document_url!;
+                                  link.download = 'document.pdf';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                } else {
+                                  window.open(request.document_url!, '_blank');
+                                }
                               }
                             }}
                           >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Открыть
+                            <Eye className="h-4 w-4 mr-1" />
+                            {isMobile ? 'Скачать' : 'Открыть'}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2"
+                            className="h-8 px-3"
                             onClick={async () => {
                               try {
                                 const url = new URL(request.document_url!);
@@ -429,7 +485,8 @@ export default function RequestDetail() {
                                 
                                 const link = document.createElement('a');
                                 link.href = data.signedUrl;
-                                link.download = filePath.split('/').pop() || 'document';
+                                link.download = filePath.split('/').pop() || 'document.pdf';
+                                link.target = '_blank';
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
@@ -439,7 +496,7 @@ export default function RequestDetail() {
                               }
                             }}
                           >
-                            <Download className="h-3 w-3 mr-1" />
+                            <Download className="h-4 w-4 mr-1" />
                             Скачать
                           </Button>
                         </div>

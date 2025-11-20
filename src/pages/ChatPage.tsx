@@ -287,12 +287,22 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Чат</h1>
-          <Button onClick={() => setIsNewChatOpen(true)} className="gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Новая беседа
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsNewChatOpen(true)} 
+              variant="outline"
+              size="icon"
+              className="h-10 w-10"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => setIsNewChatOpen(true)} className="gap-2 h-10">
+              <MessageCircle className="h-4 w-4" />
+              Новая беседа
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[calc(100vh-200px)]">

@@ -15,7 +15,7 @@ const Hero = () => {
           CRSS предоставляет мощную интегрированную платформу для управления ресурсами, автоматизации процессов и получения критически важных данных для максимальной эффективности.
         </p>
       </div>
-      <div className="flex flex-wrap gap-3 justify-center mt-6">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
         <Button onClick={() => navigate("/demo?demo=true")}>Запросить демо</Button>
         <Button variant="ghost" onClick={() => navigate("/auth")}>Начать бесплатно</Button>
       </div>
