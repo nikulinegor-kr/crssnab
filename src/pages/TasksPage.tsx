@@ -122,7 +122,7 @@ export default function TasksPage() {
     mutationFn: async (data: typeof formData) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) throw new Error("User not authenticated");
+      if (!user?.id) throw new Error("User not authenticated");
       
       if (editingTask) {
         const { error } = await supabase

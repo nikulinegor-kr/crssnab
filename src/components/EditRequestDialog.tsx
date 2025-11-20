@@ -656,26 +656,16 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormItem>
                     <FormLabel>Оплата (%)</FormLabel>
                     <div className="flex gap-2">
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          placeholder="0"
-                          className="flex-1"
-                          disabled={isViewer}
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
                       <Select
                         value={field.value?.toString() || "0"}
                         onValueChange={(value) => field.onChange(parseInt(value))}
                         disabled={isViewer}
                       >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Выбрать" />
-                        </SelectTrigger>
+                        <FormControl>
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           <SelectItem value="0">0%</SelectItem>
                           <SelectItem value="10">10%</SelectItem>
@@ -690,6 +680,19 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           <SelectItem value="100">100%</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          placeholder="или введите"
+                          className="flex-1"
+                          disabled={isViewer}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
                     </div>
                     <FormMessage />
                   </FormItem>

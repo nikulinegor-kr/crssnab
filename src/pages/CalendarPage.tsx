@@ -115,7 +115,7 @@ export default function CalendarPage() {
     mutationFn: async (data: typeof formData) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) throw new Error("User not authenticated");
+      if (!user?.id) throw new Error("User not authenticated");
       
       const startDateTime = data.all_day 
         ? new Date(data.start_date).toISOString()
