@@ -376,10 +376,9 @@ export default function CalendarPage() {
                   onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
                 >
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Выберите ответственного" />
+                    <SelectValue placeholder="Не назначен" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Не назначен</SelectItem>
                     {profiles?.map((profile) => (
                       <SelectItem key={profile.id} value={profile.id}>
                         {profile.full_name || profile.email}
