@@ -159,6 +159,7 @@ export type Database = {
           id: string
           name: string | null
           organization_id: string
+          pinned: boolean | null
           type: string
           updated_at: string
         }
@@ -168,6 +169,7 @@ export type Database = {
           id?: string
           name?: string | null
           organization_id: string
+          pinned?: boolean | null
           type: string
           updated_at?: string
         }
@@ -177,6 +179,7 @@ export type Database = {
           id?: string
           name?: string | null
           organization_id?: string
+          pinned?: boolean | null
           type?: string
           updated_at?: string
         }

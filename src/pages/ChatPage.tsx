@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon, Trash2 } from "lucide-react";
+import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon, Trash2, Pin, Search, Forward } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -37,6 +37,7 @@ interface Conversation {
   name: string | null;
   type: string;
   created_at: string;
+  pinned: boolean;
 }
 
 interface MessageAttachment {
@@ -92,6 +93,9 @@ export default function ChatPage() {
   const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
+  const [forwardToConversation, setForwardToConversation] = useState<string | null>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -600,6 +604,76 @@ export default function ChatPage() {
     },
   });
 
+  const togglePinMutation = useMutation({
+    mutationFn: async ({ conversationId, pinned }: { conversationId: string; pinned: boolean }) => {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ pinned: !pinned })
+        .eq('id', conversationId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      toast({
+        title: "Готово",
+        description: "Статус закрепления изменен",
+      });
+    },
+    onError: (error) => {
+      console.error("Error toggling pin:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить статус закрепления",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const forwardMessageMutation = useMutation({
+    mutationFn: async ({ messageId, toConversationId }: { messageId: string; toConversationId: string }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error("User not authenticated");
+
+      // Получаем оригинальное сообщение
+      const { data: originalMessage, error: fetchError } = await supabase
+        .from('messages')
+        .select('content')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Создаем новое сообщение в целевой беседе
+      const { error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: toConversationId,
+          sender_id: user.user.id,
+          content: `📤 Пересланное: ${originalMessage.content}`
+        });
+
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      setForwardMessageId(null);
+      setForwardToConversation(null);
+      toast({
+        title: "Сообщение переслано",
+        description: "Сообщение успешно переслано",
+      });
+    },
+    onError: (error) => {
+      console.error("Error forwarding message:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось переслать сообщение",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTyping = async () => {
     if (!selectedConversation || !currentUserId) return;
 
@@ -649,6 +723,19 @@ export default function ChatPage() {
     return "Личный чат";
   };
 
+  // Фильтрация и сортировка бесед
+  const filteredConversations = conversations?.filter(conv => {
+    if (!searchQuery) return true;
+    const name = getConversationName(conv).toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  }).sort((a, b) => {
+    // Сначала закрепленные
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    // Затем по дате обновления
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 space-y-4">
@@ -680,11 +767,20 @@ export default function ChatPage() {
           <Card className="md:col-span-1">
             <CardHeader className="pb-3">
               <h3 className="font-semibold">Беседы</h3>
+              <div className="relative mt-2">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск бесед..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-280px)]">
+              <ScrollArea className="h-[calc(100vh-320px)]">
                 <div className="space-y-1 p-4">
-                  {conversations?.map((conv) => {
+                  {filteredConversations?.map((conv) => {
                     const unreadCount = unreadCounts?.[conv.id] || 0;
                     return (
                       <div
@@ -697,7 +793,7 @@ export default function ChatPage() {
                       >
                         <button
                           onClick={() => setSelectedConversation(conv.id)}
-                          className="w-full text-left p-3 pr-12"
+                          className="w-full text-left p-3 pr-20"
                         >
                           <div className="flex items-center gap-3">
                             <div className="relative">
@@ -713,8 +809,11 @@ export default function ChatPage() {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className={`font-medium truncate ${unreadCount > 0 ? "font-bold" : ""} ${selectedConversation === conv.id ? "text-primary" : ""}`}>
-                                {getConversationName(conv)}
+                              <div className="flex items-center gap-2">
+                                {conv.pinned && <Pin className="h-3 w-3 text-primary" />}
+                                <div className={`font-medium truncate ${unreadCount > 0 ? "font-bold" : ""} ${selectedConversation === conv.id ? "text-primary" : ""}`}>
+                                  {getConversationName(conv)}
+                                </div>
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {format(new Date(conv.created_at), "dd MMM", { locale: ru })}
@@ -722,17 +821,32 @@ export default function ChatPage() {
                             </div>
                           </div>
                         </button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setChatToDelete(conv.id);
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePinMutation.mutate({ conversationId: conv.id, pinned: conv.pinned });
+                            }}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            title={conv.pinned ? "Открепить" : "Закрепить"}
+                          >
+                            <Pin className={`h-4 w-4 ${conv.pinned ? 'fill-current' : ''}`} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChatToDelete(conv.id);
+                            }}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            title="Удалить беседу"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
@@ -768,7 +882,10 @@ export default function ChatPage() {
                 <CardContent className="flex-1 p-4 overflow-hidden">
                   <ScrollArea className="h-[calc(100vh-400px)]">
                     <div className="space-y-4 pr-4">
-                      {messages?.map((message) => {
+                      {messages?.filter(message => {
+                        if (!searchQuery) return true;
+                        return message.content.toLowerCase().includes(searchQuery.toLowerCase());
+                      }).map((message) => {
                         const isOwnMessage = message.sender_id === currentUserId;
                         return (
                           <div
@@ -831,8 +948,19 @@ export default function ChatPage() {
                                 </div>
                               )}
                               
-                              <div className={`text-xs mt-1 ${isOwnMessage ? "opacity-70" : "text-muted-foreground"}`}>
-                                {format(new Date(message.created_at), "HH:mm", { locale: ru })}
+                              <div className={`flex items-center justify-between mt-1 ${isOwnMessage ? "opacity-70" : "text-muted-foreground"}`}>
+                                <span className="text-xs">
+                                  {format(new Date(message.created_at), "HH:mm", { locale: ru })}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setForwardMessageId(message.id)}
+                                  className="h-6 w-6 opacity-70 hover:opacity-100"
+                                  title="Переслать сообщение"
+                                >
+                                  <Forward className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -996,6 +1124,60 @@ export default function ChatPage() {
               </Button>
               <Button onClick={handleCreateConversation} disabled={createConversationMutation.isPending}>
                 {createConversationMutation.isPending ? "Создание..." : "Создать"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Диалог пересылки сообщения */}
+        <Dialog open={!!forwardMessageId} onOpenChange={(open) => !open && setForwardMessageId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Переслать сообщение</DialogTitle>
+              <DialogDescription>
+                Выберите беседу для пересылки сообщения
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-[300px]">
+              <div className="space-y-2">
+                {conversations?.map((conv) => (
+                  <Button
+                    key={conv.id}
+                    variant={forwardToConversation === conv.id ? "default" : "outline"}
+                    onClick={() => setForwardToConversation(conv.id)}
+                    className="w-full justify-start"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {conv.type === "public" ? "П" : conv.type === "group" ? "Г" : "Л"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{getConversationName(conv)}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setForwardMessageId(null);
+                setForwardToConversation(null);
+              }}>
+                Отменить
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (forwardMessageId && forwardToConversation) {
+                    forwardMessageMutation.mutate({
+                      messageId: forwardMessageId,
+                      toConversationId: forwardToConversation
+                    });
+                  }
+                }}
+                disabled={!forwardToConversation || forwardMessageMutation.isPending}
+              >
+                {forwardMessageMutation.isPending ? "Пересылка..." : "Переслать"}
               </Button>
             </DialogFooter>
           </DialogContent>
