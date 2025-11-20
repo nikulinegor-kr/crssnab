@@ -252,29 +252,6 @@ const SystemDemo = () => {
                 </CardContent>
               </Card>
 
-              {/* Interactive Demo */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-primary" />
-                    Интерактивная демонстрация
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-8 text-center space-y-4">
-                    <div className="inline-flex p-4 rounded-full bg-primary/10">
-                      {currentFeature.icon}
-                    </div>
-                    <p className="text-muted-foreground">
-                      Нажмите на другие модули слева, чтобы изучить все возможности системы
-                    </p>
-                    <Button className="gap-2">
-                      <FileBarChart className="h-4 w-4" />
-                      Запросить полную демонстрацию
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </>
           )}
         </div>
