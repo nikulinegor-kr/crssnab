@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
 const TELEGRAM_WEBHOOK_SECRET_TOKEN = Deno.env.get("TELEGRAM_WEBHOOK_SECRET_TOKEN");
@@ -16,6 +17,31 @@ const corsHeaders = {
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Input validation schemas
+const telegramUserSchema = z.object({
+  username: z.string().max(100).optional(),
+  first_name: z.string().max(100).optional(),
+  last_name: z.string().max(100).optional(),
+});
+
+const callbackQuerySchema = z.object({
+  data: z.string().max(100),
+  from: telegramUserSchema,
+  message: z.object({
+    message_id: z.number(),
+    chat: z.object({ id: z.number() }),
+  }),
+});
+
+const messageSchema = z.object({
+  text: z.string().max(1000),
+  from: telegramUserSchema,
+  chat: z.object({ id: z.number() }),
+  reply_to_message: z.object({
+    message_id: z.number(),
+  }).optional(),
+});
 
 async function sendTelegramRequest(method: string, body: any) {
   const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
@@ -100,11 +126,14 @@ async function notifyAdmins(request: any, status: string, username: string, full
 }
 
 async function handleCallbackQuery(callbackQuery: any) {
-  const data = callbackQuery.data;
-  const messageId = callbackQuery.message.message_id;
-  const chatId = callbackQuery.message.chat.id;
-  const username = callbackQuery.from.username || "";
-  const fullName = `${callbackQuery.from.first_name || ""} ${callbackQuery.from.last_name || ""}`.trim();
+  // Validate input
+  const validated = callbackQuerySchema.parse(callbackQuery);
+  
+  const data = validated.data;
+  const messageId = validated.message.message_id;
+  const chatId = validated.message.chat.id;
+  const username = validated.from.username || "";
+  const fullName = `${validated.from.first_name || ""} ${validated.from.last_name || ""}`.trim();
 
   console.log("Callback data:", data);
   console.log("Message ID:", messageId);
@@ -268,10 +297,13 @@ async function handleCallbackQuery(callbackQuery: any) {
 }
 
 async function handleMessage(message: any) {
-  const chatId = message.chat.id;
-  const text = message.text;
-  const username = message.from.username || "";
-  const fullName = `${message.from.first_name || ""} ${message.from.last_name || ""}`.trim();
+  // Validate input
+  const validated = messageSchema.parse(message);
+
+  const chatId = validated.chat.id;
+  const text = validated.text;
+  const username = validated.from.username || "";
+  const fullName = `${validated.from.first_name || ""} ${validated.from.last_name || ""}`.trim();
 
   console.log("Message from:", username || fullName, "Text:", text);
 
