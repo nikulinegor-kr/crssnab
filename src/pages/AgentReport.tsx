@@ -130,6 +130,26 @@ export default function AgentReport() {
       { wch: 15 }  // Сумма закупа
     ];
 
+    // Применение стилей к ячейкам (шрифт Times New Roman, выравнивание по центру)
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellAddress]) continue;
+        
+        // Устанавливаем шрифт Times New Roman для всех ячеек
+        if (!ws[cellAddress].s) ws[cellAddress].s = {};
+        if (!ws[cellAddress].s.font) ws[cellAddress].s.font = {};
+        ws[cellAddress].s.font.name = "Times New Roman";
+        
+        // Выравнивание по центру для колонок B (Контрагент) и C (№ Счета)
+        if (C === 1 || C === 2) {
+          if (!ws[cellAddress].s.alignment) ws[cellAddress].s.alignment = {};
+          ws[cellAddress].s.alignment.horizontal = "center";
+        }
+      }
+    }
+
     // Создание workbook
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Отчет агента");
