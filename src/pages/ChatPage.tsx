@@ -14,6 +14,7 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { DeleteChatDialog } from "@/components/DeleteChatDialog";
+import { ChatAttachment } from "@/components/ChatAttachment";
 import {
   Dialog,
   DialogContent,
@@ -469,18 +470,20 @@ export default function ChatPage() {
 
           if (uploadError) throw uploadError;
 
-          // Получаем публичный URL
-          const { data: { publicUrl } } = supabase.storage
+          // Получаем signed URL (bucket теперь private)
+          const { data: signedData, error: signedUrlError } = await supabase.storage
             .from('chat-files')
-            .getPublicUrl(filePath);
+            .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 дней
 
-          // Сохраняем информацию о файле
+          if (signedUrlError) throw signedUrlError;
+
+          // Сохраняем информацию о файле с путём (не signed URL)
           const { error: attachmentError } = await supabase
             .from('message_attachments')
             .insert({
               message_id: message.id,
               file_name: file.name,
-              file_url: publicUrl,
+              file_url: filePath, // Сохраняем путь, а не URL
               file_type: file.type,
               file_size: file.size
             });
@@ -923,33 +926,11 @@ export default function ChatPage() {
                               {message.attachments && message.attachments.length > 0 && (
                                 <div className="mt-2 space-y-1">
                                   {message.attachments.map((attachment) => (
-                                    <a
+                                    <ChatAttachment
                                       key={attachment.id}
-                                      href={attachment.file_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`flex items-center gap-2 p-2 rounded ${
-                                        isOwnMessage ? "bg-primary-foreground/10" : "bg-background"
-                                      } hover:opacity-80 transition-opacity`}
-                                    >
-                                      {attachment.file_type.startsWith('image/') ? (
-                                        <img 
-                                          src={attachment.file_url} 
-                                          alt={attachment.file_name}
-                                          className="max-w-full max-h-48 rounded"
-                                        />
-                                      ) : (
-                                        <>
-                                          <Download className="h-4 w-4" />
-                                          <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-medium truncate">{attachment.file_name}</div>
-                                            <div className="text-xs opacity-70">
-                                              {(attachment.file_size / 1024).toFixed(1)} КБ
-                                            </div>
-                                          </div>
-                                        </>
-                                      )}
-                                    </a>
+                                      attachment={attachment}
+                                      isOwnMessage={isOwnMessage}
+                                    />
                                   ))}
                                 </div>
                               )}
