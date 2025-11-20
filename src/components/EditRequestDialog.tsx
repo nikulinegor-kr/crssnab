@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -120,6 +121,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    status: string;
+    priority: string;
+    executor?: string;
+    category: string;
+    reasoning: string;
+  } | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -248,6 +257,69 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       });
     }
   }, [request, open, form]);
+
+  const handleAiAnalysis = async () => {
+    const description = form.getValues("description");
+    
+    if (!description || description.trim().length < 10) {
+      toast({
+        title: "Недостаточно данных",
+        description: "Введите более подробное описание заявки для анализа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!request?.organization_id) {
+      toast({
+        title: "Ошибка",
+        description: "Организация не определена",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAiSuggestion(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-request", {
+        body: {
+          description,
+          organizationId: request.organization_id,
+        },
+      });
+
+      if (error) throw error;
+
+      setAiSuggestion(data);
+      
+      // Применяем рекомендации к форме
+      if (data.status) {
+        form.setValue("status", data.status);
+      }
+      if (data.priority) {
+        form.setValue("priority", data.priority);
+      }
+      if (data.executor) {
+        form.setValue("executor", data.executor);
+      }
+
+      toast({
+        title: "Анализ завершён",
+        description: "AI предложил рекомендации для заявки",
+      });
+    } catch (error: any) {
+      console.error("AI analysis error:", error);
+      toast({
+        title: "Ошибка анализа",
+        description: error.message || "Не удалось выполнить AI анализ",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const onSubmit = async (data: RequestFormData) => {
     if (!request) return;
@@ -534,7 +606,26 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Описание заявки *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Описание заявки *</FormLabel>
+                    {!isViewer && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAiAnalysis}
+                        disabled={isAnalyzing || !field.value || field.value.trim().length < 10}
+                        className="gap-2"
+                      >
+                        {isAnalyzing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                        AI Помощник
+                      </Button>
+                    )}
+                  </div>
                   <FormControl>
                     <Textarea
                       placeholder="Опишите заявку..."
@@ -547,6 +638,24 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 </FormItem>
               )}
             />
+
+            {aiSuggestion && (
+              <div className="p-4 rounded-lg border bg-muted/50 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Рекомендации AI
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p><span className="font-medium">Категория:</span> {aiSuggestion.category}</p>
+                  <p><span className="font-medium">Статус:</span> {aiSuggestion.status}</p>
+                  <p><span className="font-medium">Приоритет:</span> {aiSuggestion.priority}</p>
+                  {aiSuggestion.executor && (
+                    <p><span className="font-medium">Исполнитель:</span> {aiSuggestion.executor}</p>
+                  )}
+                  <p className="text-muted-foreground italic mt-2">{aiSuggestion.reasoning}</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
