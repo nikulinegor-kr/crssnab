@@ -33,7 +33,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Edit, Trash2, CheckCircle, Clock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Task {
   id: string;
@@ -46,6 +47,10 @@ interface Task {
   task_number: string | null;
   created_at: string;
   organization_id: string;
+  completion_status: string | null;
+  completion_comment: string | null;
+  completed_at: string | null;
+  completed_by: string | null;
 }
 
 interface Profile {
@@ -74,6 +79,12 @@ export default function TasksPage() {
     task_number: "",
     assignee_id: "",
   });
+  
+  const [completionStatus, setCompletionStatus] = useState("");
+  const [completionComment, setCompletionComment] = useState("");
+  const [notifyUsers, setNotifyUsers] = useState<string[]>([]);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   // Получаем задачи
   const { data: tasks, isLoading } = useQuery({

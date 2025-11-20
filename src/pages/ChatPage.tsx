@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users, MessageCircle } from "lucide-react";
+import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -36,6 +36,14 @@ interface Conversation {
   created_at: string;
 }
 
+interface MessageAttachment {
+  id: string;
+  file_url: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -45,6 +53,7 @@ interface Message {
     full_name: string | null;
     email: string;
   };
+  attachments?: MessageAttachment[];
 }
 
 interface Profile {
@@ -65,6 +74,8 @@ export default function ChatPage() {
   const [groupName, setGroupName] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -112,10 +123,18 @@ export default function ChatPage() {
 
       if (profilesError) throw profilesError;
 
+      // Получаем вложения для сообщений
+      const messageIds = messagesData.map(m => m.id);
+      const { data: attachmentsData } = await supabase
+        .from("message_attachments")
+        .select("*")
+        .in("message_id", messageIds);
+
       // Объединяем данные
       const messagesWithProfiles = messagesData.map(msg => ({
         ...msg,
-        profiles: profilesData?.find(p => p.id === msg.sender_id) || null
+        profiles: profilesData?.find(p => p.id === msg.sender_id) || null,
+        attachments: attachmentsData?.filter(a => a.message_id === msg.id) || []
       }));
 
       return messagesWithProfiles as Message[];
@@ -196,6 +215,7 @@ export default function ChatPage() {
     },
     onSuccess: () => {
       setMessageText("");
+      setSelectedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["messages", selectedConversation] });
     },
   });
