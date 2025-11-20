@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X, Send, AlertCircle, Trash2 } from "lucide-react";
+import { Search, Plus, X, Send, AlertCircle, Trash2, MessageCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -909,6 +909,15 @@ const Requests = () => {
             size="icon"
           >
             <Plus className="h-6 w-6" />
+          </Button>
+          
+          <Button
+            onClick={() => navigate("/chat")}
+            className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+            size="icon"
+            variant="secondary"
+          >
+            <MessageCircle className="h-6 w-6" />
           </Button>
         </>
       )}

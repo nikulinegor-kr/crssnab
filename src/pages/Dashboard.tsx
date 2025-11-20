@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle } from "lucide-react";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -308,6 +308,14 @@ const Dashboard = () => {
           <Plus className="h-5 w-5" />
         </Button>
       </CreateRequestDialog>
+      <Button 
+        onClick={() => navigate("/chat")}
+        className="fixed bottom-6 right-24 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" 
+        size="icon"
+        variant="secondary"
+      >
+        <MessageCircle className="h-5 w-5" />
+      </Button>
       {selectedRequest && (
         <EditRequestDialog
           request={selectedRequest}

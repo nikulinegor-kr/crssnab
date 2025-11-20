@@ -392,6 +392,7 @@ export default function RequestDetail() {
                                 const url = new URL(request.document_url!);
                                 const pathParts = url.pathname.split('/');
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                                
                                 if (bucketIndex === -1) {
                                   window.open(request.document_url!, '_blank');
                                   return;
@@ -400,15 +401,16 @@ export default function RequestDetail() {
                                 const filePath = pathParts.slice(bucketIndex + 1).join('/');
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
-                                  .createSignedUrl(filePath, 60);
+                                  .createSignedUrl(filePath, 3600);
                                 
-                                if (error || !data) {
+                                if (error || !data?.signedUrl) {
                                   console.error('Error creating signed URL:', error);
                                   window.open(request.document_url!, '_blank');
                                   return;
                                 }
                                 
-                                window.open(data.signedUrl, '_blank');
+                                // Open in new tab for viewing
+                                window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
                               } catch (error) {
                                 console.error('Error opening document:', error);
                                 window.open(request.document_url!, '_blank');
@@ -427,32 +429,63 @@ export default function RequestDetail() {
                                 const url = new URL(request.document_url!);
                                 const pathParts = url.pathname.split('/');
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                                
                                 if (bucketIndex === -1) {
-                                  window.open(request.document_url!, '_blank');
+                                  // Fallback for non-Supabase URLs
+                                  const link = document.createElement('a');
+                                  link.href = request.document_url!;
+                                  link.download = 'document.pdf';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
                                   return;
                                 }
                                 
                                 const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                                const fileName = filePath.split('/').pop() || 'document.pdf';
+                                
+                                // Get signed URL for download
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
                                   .createSignedUrl(filePath, 60);
                                 
-                                if (error || !data) {
+                                if (error || !data?.signedUrl) {
                                   console.error('Error creating signed URL:', error);
-                                  window.open(request.document_url!, '_blank');
+                                  // Fallback to direct download
+                                  const link = document.createElement('a');
+                                  link.href = request.document_url!;
+                                  link.download = fileName;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
                                   return;
                                 }
                                 
+                                // Download file using fetch for better mobile support
+                                const response = await fetch(data.signedUrl);
+                                const blob = await response.blob();
+                                const blobUrl = window.URL.createObjectURL(blob);
+                                
                                 const link = document.createElement('a');
-                                link.href = data.signedUrl;
-                                link.download = filePath.split('/').pop() || 'document.pdf';
+                                link.href = blobUrl;
+                                link.download = fileName;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                // Clean up blob URL
+                                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+                              } catch (error) {
+                                console.error('Error downloading document:', error);
+                                // Final fallback
+                                const link = document.createElement('a');
+                                link.href = request.document_url!;
+                                link.download = 'document.pdf';
                                 link.target = '_blank';
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
-                              } catch (error) {
-                                console.error('Error downloading document:', error);
-                                window.open(request.document_url!, '_blank');
                               }
                             }}
                           >
