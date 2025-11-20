@@ -57,6 +57,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [view, setView] = useState<"month" | "week" | "day">("month");
 
   const [formData, setFormData] = useState({
@@ -110,7 +111,7 @@ export default function CalendarPage() {
     enabled: !!currentOrgId,
   });
 
-  // Создание события
+  // Создание/редактирование события
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -121,21 +122,37 @@ export default function CalendarPage() {
         ? new Date(data.start_date).toISOString()
         : new Date(`${data.start_date}T${data.start_time}`).toISOString();
 
-      const { error } = await supabase
-        .from("calendar_events")
-        .insert([{ 
-          title: data.title,
-          description: data.description,
-          start_date: startDateTime,
-          all_day: data.all_day,
-          organization_id: currentOrgId,
-          created_by: user.id,
-          assignee_id: data.assignee_id || null
-        }]);
-      if (error) throw error;
+      if (editingEvent) {
+        // Редактирование существующего события
+        const { error } = await supabase
+          .from("calendar_events")
+          .update({ 
+            title: data.title,
+            description: data.description,
+            start_date: startDateTime,
+            all_day: data.all_day,
+            assignee_id: data.assignee_id || null
+          })
+          .eq("id", editingEvent.id);
+        if (error) throw error;
+      } else {
+        // Создание нового события
+        const { error } = await supabase
+          .from("calendar_events")
+          .insert([{ 
+            title: data.title,
+            description: data.description,
+            start_date: startDateTime,
+            all_day: data.all_day,
+            organization_id: currentOrgId,
+            created_by: user.id,
+            assignee_id: data.assignee_id || null
+          }]);
+        if (error) throw error;
+      }
 
       // Если есть ответственный, отправляем уведомление
-      if (data.assignee_id) {
+      if (data.assignee_id && !editingEvent) {
         await createNotification({
           userId: data.assignee_id,
           organizationId: currentOrgId!,
@@ -149,8 +166,10 @@ export default function CalendarPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       toast({
-        title: "Событие создано",
-        description: "Новое событие успешно добавлено в календарь",
+        title: editingEvent ? "Событие обновлено" : "Событие создано",
+        description: editingEvent 
+          ? "Событие успешно обновлено"
+          : "Новое событие успешно добавлено в календарь",
       });
       handleCloseDialog();
     },
@@ -172,8 +191,19 @@ export default function CalendarPage() {
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
-  const handleOpenDialog = (date?: Date) => {
-    if (date) {
+  const handleOpenDialog = (date?: Date, event?: CalendarEvent) => {
+    if (event) {
+      setEditingEvent(event);
+      const eventDate = new Date(event.start_date);
+      setFormData({
+        title: event.title,
+        description: event.description || "",
+        start_date: format(eventDate, "yyyy-MM-dd"),
+        start_time: format(eventDate, "HH:mm"),
+        all_day: event.all_day,
+        assignee_id: event.assignee_id || "",
+      });
+    } else if (date) {
       setSelectedDate(date);
       setFormData({
         ...formData,
@@ -186,6 +216,7 @@ export default function CalendarPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setSelectedDate(null);
+    setEditingEvent(null);
     setFormData({
       title: "",
       description: "",
@@ -281,7 +312,11 @@ export default function CalendarPage() {
                       {dayEvents.slice(0, 3).map((event) => (
                         <div
                           key={event.id}
-                          className="text-xs p-1 rounded bg-primary/20 text-primary truncate"
+                          className="text-xs p-1 rounded bg-primary/20 text-primary truncate cursor-pointer hover:bg-primary/30 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDialog(undefined, event);
+                          }}
                         >
                           {event.title}
                         </div>
@@ -303,9 +338,9 @@ export default function CalendarPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Новое событие</DialogTitle>
+              <DialogTitle>{editingEvent ? "Редактировать событие" : "Новое событие"}</DialogTitle>
               <DialogDescription>
-                Добавьте событие в календарь
+                {editingEvent ? "Измените детали события" : "Добавьте событие в календарь"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -393,7 +428,9 @@ export default function CalendarPage() {
                   Отменить
                 </Button>
                 <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? "Создание..." : "Создать"}
+                  {mutation.isPending 
+                    ? (editingEvent ? "Сохранение..." : "Создание...") 
+                    : (editingEvent ? "Сохранить" : "Создать")}
                 </Button>
               </DialogFooter>
             </form>
