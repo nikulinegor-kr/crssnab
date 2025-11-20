@@ -271,28 +271,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Отправка сообщения
-  const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const { data: user } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from("messages")
-        .insert([{
-          conversation_id: selectedConversation,
-          sender_id: user.user?.id,
-          content
-        }]);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setMessageText("");
-      setSelectedFiles([]);
-      queryClient.invalidateQueries({ queryKey: ["messages", selectedConversation] });
-    },
-  });
-
   // Создание беседы
   const createConversationMutation = useMutation({
     mutationFn: async () => {
@@ -352,10 +330,106 @@ export default function ChatPage() {
     },
   });
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !selectedConversation) return;
-    sendMessageMutation.mutate(messageText);
+    if ((!messageText.trim() && selectedFiles.length === 0) || !selectedConversation) return;
+    
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.id) throw new Error("User not authenticated");
+
+      // Создаем сообщение
+      const { data: message, error: messageError } = await supabase
+        .from("messages")
+        .insert([{
+          conversation_id: selectedConversation,
+          sender_id: user.user.id,
+          content: messageText || "📎 Файл"
+        }])
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Загружаем файлы если есть
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${selectedConversation}/${fileName}`;
+
+          // Загружаем файл в storage
+          const { error: uploadError } = await supabase.storage
+            .from('chat-files')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          // Получаем публичный URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('chat-files')
+            .getPublicUrl(filePath);
+
+          // Сохраняем информацию о файле
+          const { error: attachmentError } = await supabase
+            .from('message_attachments')
+            .insert({
+              message_id: message.id,
+              file_name: file.name,
+              file_url: publicUrl,
+              file_type: file.type,
+              file_size: file.size
+            });
+
+          if (attachmentError) throw attachmentError;
+        }
+      }
+
+      setMessageText("");
+      setSelectedFiles([]);
+      queryClient.invalidateQueries({ queryKey: ["messages", selectedConversation] });
+      queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+      
+      toast({
+        title: "Сообщение отправлено",
+        description: selectedFiles.length > 0 ? `Отправлено с ${selectedFiles.length} файл(ов)` : undefined,
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить сообщение",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + selectedFiles.length > 10) {
+      toast({
+        title: "Слишком много файлов",
+        description: "Можно прикрепить не более 10 файлов",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const invalidFiles = files.filter(f => f.size > 20 * 1024 * 1024);
+    if (invalidFiles.length > 0) {
+      toast({
+        title: "Файл слишком большой",
+        description: "Максимальный размер файла 20 МБ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleCreateConversation = () => {
@@ -510,6 +584,42 @@ export default function ChatPage() {
                                 </div>
                               )}
                               <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                              
+                              {/* Отображение прикрепленных файлов */}
+                              {message.attachments && message.attachments.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {message.attachments.map((attachment) => (
+                                    <a
+                                      key={attachment.id}
+                                      href={attachment.file_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`flex items-center gap-2 p-2 rounded ${
+                                        isOwnMessage ? "bg-primary-foreground/10" : "bg-background"
+                                      } hover:opacity-80 transition-opacity`}
+                                    >
+                                      {attachment.file_type.startsWith('image/') ? (
+                                        <img 
+                                          src={attachment.file_url} 
+                                          alt={attachment.file_name}
+                                          className="max-w-full max-h-48 rounded"
+                                        />
+                                      ) : (
+                                        <>
+                                          <Download className="h-4 w-4" />
+                                          <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-medium truncate">{attachment.file_name}</div>
+                                            <div className="text-xs opacity-70">
+                                              {(attachment.file_size / 1024).toFixed(1)} КБ
+                                            </div>
+                                          </div>
+                                        </>
+                                      )}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                              
                               <div className={`text-xs mt-1 ${isOwnMessage ? "opacity-70" : "text-muted-foreground"}`}>
                                 {format(new Date(message.created_at), "HH:mm", { locale: ru })}
                               </div>
@@ -522,14 +632,56 @@ export default function ChatPage() {
                   </ScrollArea>
                 </CardContent>
                 <div className="p-4 border-t">
+                  {/* Предпросмотр выбранных файлов */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg"
+                        >
+                          <FileIcon className="h-4 w-4" />
+                          <span className="text-sm truncate max-w-[150px]">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      accept="*/*"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
                     <Input
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       placeholder="Введите сообщение..."
                       className="flex-1"
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim()}>
+                    <Button 
+                      type="submit" 
+                      size="icon" 
+                      disabled={!messageText.trim() && selectedFiles.length === 0}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </form>
