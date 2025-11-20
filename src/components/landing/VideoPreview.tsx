@@ -2,7 +2,7 @@ import { Play } from "lucide-react";
 
 const VideoPreview = () => {
   return (
-    <section className="flex flex-col gap-10 py-12 animate-fade-in">
+    <section className="flex flex-col gap-6 py-6 animate-fade-in">
       <h2 className="text-foreground text-3xl md:text-4xl font-black text-center">
         Посмотрите в действии
       </h2>
