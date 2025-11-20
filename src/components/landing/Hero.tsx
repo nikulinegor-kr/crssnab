@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
-import heroImage from "@/assets/hero-logistics.png";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -21,9 +21,12 @@ const Hero = () => {
       </div>
       <div className="w-full max-w-5xl mx-auto mt-12">
         <div className="relative w-full aspect-[16/10] rounded-2xl border border-border shadow-2xl overflow-hidden">
-          <img 
-            src={heroImage} 
-            alt="Глобальная логистическая сеть с воздушным, наземным транспортом и аналитикой" 
+          <video 
+            src={heroVideo} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
             className="w-full h-full object-cover"
           />
         </div>
