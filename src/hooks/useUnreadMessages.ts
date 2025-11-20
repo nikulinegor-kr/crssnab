@@ -39,7 +39,7 @@ export const useUnreadMessages = () => {
       return count || 0;
     },
     enabled: !!currentOrgId && !!currentUserId,
-    refetchInterval: 30000, // Обновляем каждые 30 секунд
+    refetchInterval: 5000, // Обновляем каждые 5 секунд
   });
 
   // Подписываемся на изменения сообщений
