@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import {
   Sidebar,
   SidebarContent,
@@ -63,6 +64,7 @@ export function AppSidebar() {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { isAdmin } = useUserRole();
+  const totalUnread = useUnreadMessages();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -90,6 +92,7 @@ export function AppSidebar() {
     return items.map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
+      const showBadge = item.url === "/chat" && totalUnread > 0;
       
       return (
         <SidebarMenuItem key={item.title}>
@@ -97,11 +100,27 @@ export function AppSidebar() {
             <NavLink 
               to={url} 
               end 
-              className="hover:bg-accent/50 transition-colors rounded-md"
+              className="hover:bg-accent/50 transition-colors rounded-md relative"
               activeClassName="bg-primary/20 text-primary font-medium"
             >
-              <item.icon className="h-4 w-4" />
-              {showText && <span>{item.title}</span>}
+              <div className="relative">
+                <item.icon className="h-4 w-4" />
+                {showBadge && (
+                  <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                    {totalUnread > 9 ? "9+" : totalUnread}
+                  </div>
+                )}
+              </div>
+              {showText && (
+                <span className="flex items-center gap-2">
+                  {item.title}
+                  {showBadge && (
+                    <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-2 py-0.5 font-semibold">
+                      {totalUnread > 99 ? "99+" : totalUnread}
+                    </span>
+                  )}
+                </span>
+              )}
             </NavLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
