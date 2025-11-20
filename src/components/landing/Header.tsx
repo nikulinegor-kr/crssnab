@@ -25,7 +25,7 @@ const Header = () => {
       </div>
 
       {/* Desktop Navigation */}
-      <div className="hidden md:flex flex-1 justify-center gap-6">
+      <div className="hidden md:flex flex-1 items-center justify-center">
         <nav className="flex items-center gap-7">
           {navLinks.map((link) => (
             <a 
@@ -37,8 +37,10 @@ const Header = () => {
             </a>
           ))}
         </nav>
-        <Button className="!h-9 !text-sm" onClick={() => navigate("/auth")}>Войти</Button>
       </div>
+      <Button className="hidden md:inline-flex !h-9 !text-sm" onClick={() => navigate("/auth")}>
+        Войти
+      </Button>
 
       {/* Mobile Menu Toggle */}
       <div className="md:hidden flex flex-1 justify-center">
