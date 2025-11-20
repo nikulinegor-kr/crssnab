@@ -414,6 +414,7 @@ export default function ChatPage() {
     },
     onSuccess: (conversation) => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation-participants"] });
       setIsNewChatOpen(false);
       setSelectedConversation(conversation.id);
       setSelectedUsers([]);
@@ -720,6 +721,11 @@ export default function ChatPage() {
       }
     }
     
+    // Если не нашли участников, попробуем поискать в списке всех пользователей
+    if (!conversationParticipants || conversationParticipants.length === 0) {
+      return "Загрузка...";
+    }
+    
     return "Личный чат";
   };
 
@@ -899,13 +905,13 @@ export default function ChatPage() {
                                   : "bg-muted text-foreground border border-border"
                               }`}
                             >
-                              {!isOwnMessage && message.profiles && (
+                              {message.profiles && (
                                 <div className="mb-2 pb-2 border-b border-border/50">
                                   <div className="text-sm font-semibold">
                                     {message.profiles.full_name || message.profiles.email}
                                   </div>
                                   {message.profiles.position && (
-                                    <div className="text-xs text-muted-foreground">
+                                    <div className={`text-xs ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                                       {message.profiles.position}
                                     </div>
                                   )}
