@@ -116,7 +116,7 @@ export default function AgentReportUU() {
       "ТМЦ": request.description || "",
       "Контрагент": request.contractor || "",
       "№ Счета": request.invoice_number || "",
-      "Сумма закупа": request.amount || 0
+      "Сумма закупа": request.amount ? Number(request.amount) : 0
     }));
 
     // Создание worksheet
@@ -130,7 +130,7 @@ export default function AgentReportUU() {
       { wch: 15 }  // Сумма закупа
     ];
 
-    // Применение стилей к ячейкам (шрифт Times New Roman, выравнивание по центру)
+    // Применение стилей к ячейкам
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
     for (let R = range.s.r; R <= range.e.r; ++R) {
       for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -146,6 +146,12 @@ export default function AgentReportUU() {
         if (C === 1 || C === 2) {
           if (!ws[cellAddress].s.alignment) ws[cellAddress].s.alignment = {};
           ws[cellAddress].s.alignment.horizontal = "center";
+        }
+        
+        // Формат числа с двумя знаками после запятой для колонки D (Сумма закупа)
+        if (C === 3 && R > 0) { // R > 0 пропускает заголовок
+          ws[cellAddress].t = 'n'; // Тип - число
+          ws[cellAddress].z = '0.00'; // Формат числа с двумя знаками после запятой
         }
       }
     }
