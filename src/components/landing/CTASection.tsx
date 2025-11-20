@@ -14,7 +14,7 @@ const CTASection = () => {
           Готовы вывести свой бизнес на новый уровень? Начните работу с CRSS и открывайте для себя безграничные возможности оптимизации и контроля
         </p>
       </div>
-      <div className="flex flex-wrap gap-3 justify-center mt-2 w-full sm:w-auto">
+      <div className="flex flex-wrap gap-3 justify-center mt-2 mx-auto">
         <Button variant="white" onClick={() => navigate("/demo?demo=true")}>
           Запросить демо
         </Button>

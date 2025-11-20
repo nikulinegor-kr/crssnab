@@ -21,7 +21,7 @@ const Features = () => {
 
   return (
     <section id="features" className="flex flex-col gap-8 py-6">
-      <div className="flex flex-col gap-3 text-center max-w-2xl mx-auto animate-fade-in">
+      <div className="flex flex-col gap-3 items-center text-center max-w-2xl mx-auto animate-fade-in">
         <h2 className="text-foreground text-3xl md:text-4xl font-black leading-tight">
           Почему выбирают CRSS?
         </h2>
