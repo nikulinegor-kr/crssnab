@@ -388,12 +388,16 @@ export default function RequestDetail() {
                             size="sm"
                             className="h-8 px-3"
                             onClick={async () => {
+                              // Открываем окно СРАЗУ (синхронно) чтобы избежать блокировки на мобильных
+                              const newWindow = window.open('', '_blank');
+                              
                               try {
                                 const url = new URL(request.document_url!);
                                 const pathParts = url.pathname.split('/');
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
                                 
-                                if (bucketIndex === -1) {
+                                if (bucketIndex === -1 || !newWindow) {
+                                  if (newWindow) newWindow.close();
                                   window.open(request.document_url!, '_blank');
                                   return;
                                 }
@@ -405,15 +409,17 @@ export default function RequestDetail() {
                                 
                                 if (error || !data?.signedUrl) {
                                   console.error('Error creating signed URL:', error);
-                                  window.open(request.document_url!, '_blank');
+                                  newWindow.location.href = request.document_url!;
                                   return;
                                 }
                                 
-                                // Open in new tab for viewing
-                                window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+                                // Обновляем URL открытого окна
+                                newWindow.location.href = data.signedUrl;
                               } catch (error) {
                                 console.error('Error opening document:', error);
-                                window.open(request.document_url!, '_blank');
+                                if (newWindow) {
+                                  newWindow.location.href = request.document_url!;
+                                }
                               }
                             }}
                           >
@@ -431,61 +437,40 @@ export default function RequestDetail() {
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
                                 
                                 if (bucketIndex === -1) {
-                                  // Fallback for non-Supabase URLs
-                                  const link = document.createElement('a');
-                                  link.href = request.document_url!;
-                                  link.download = 'document.pdf';
-                                  link.target = '_blank';
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+                                  // Для не-Supabase URL просто открываем в новой вкладке
+                                  window.open(request.document_url!, '_blank');
                                   return;
                                 }
                                 
                                 const filePath = pathParts.slice(bucketIndex + 1).join('/');
                                 const fileName = filePath.split('/').pop() || 'document.pdf';
                                 
-                                // Get signed URL for download
+                                // Получаем signed URL
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
                                   .createSignedUrl(filePath, 60);
                                 
                                 if (error || !data?.signedUrl) {
                                   console.error('Error creating signed URL:', error);
-                                  // Fallback to direct download
-                                  const link = document.createElement('a');
-                                  link.href = request.document_url!;
-                                  link.download = fileName;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+                                  window.open(request.document_url!, '_blank');
                                   return;
                                 }
                                 
-                                // Download file using fetch for better mobile support
-                                const response = await fetch(data.signedUrl);
-                                const blob = await response.blob();
-                                const blobUrl = window.URL.createObjectURL(blob);
-                                
+                                // Используем простой подход с ссылкой и download атрибутом
                                 const link = document.createElement('a');
-                                link.href = blobUrl;
+                                link.href = data.signedUrl;
                                 link.download = fileName;
+                                link.style.display = 'none';
                                 document.body.appendChild(link);
                                 link.click();
-                                document.body.removeChild(link);
                                 
-                                // Clean up blob URL
-                                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+                                // Удаляем ссылку через небольшую задержку
+                                setTimeout(() => {
+                                  document.body.removeChild(link);
+                                }, 100);
                               } catch (error) {
                                 console.error('Error downloading document:', error);
-                                // Final fallback
-                                const link = document.createElement('a');
-                                link.href = request.document_url!;
-                                link.download = 'document.pdf';
-                                link.target = '_blank';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
+                                window.open(request.document_url!, '_blank');
                               }
                             }}
                           >

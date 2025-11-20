@@ -79,7 +79,7 @@ export default function TasksPage() {
     task_number: "",
     assignee_id: "",
   });
-  
+
   const [completionStatus, setCompletionStatus] = useState("");
   const [completionComment, setCompletionComment] = useState("");
   const [notifyUsers, setNotifyUsers] = useState<string[]>([]);
@@ -225,6 +225,58 @@ export default function TasksPage() {
     },
   });
 
+  // Обновление статуса выполнения
+  const updateCompletionStatus = useMutation({
+    mutationFn: async () => {
+      if (!selectedTask) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          completion_status: completionStatus,
+          completion_comment: completionComment,
+          completed_at: new Date().toISOString(),
+          completed_by: user?.id,
+          status: completionStatus === "completed" ? "Выполнено" : selectedTask.status,
+        })
+        .eq("id", selectedTask.id);
+
+      if (error) throw error;
+      
+      // Уведомляем выбранных пользователей
+      if (notifyUsers.length > 0) {
+        const notifications = notifyUsers.map(userId => ({
+          task_id: selectedTask.id,
+          user_id: userId,
+        }));
+        
+        await supabase.from("task_notifications").insert(notifications);
+        
+        for (const userId of notifyUsers) {
+          await createNotification({
+            userId,
+            organizationId: currentOrgId!,
+            type: "task_status_changed",
+            title: "Статус задачи изменен",
+            message: `Задача "${selectedTask.title}": ${completionStatus === "completed" ? "Выполнена" : "Перенесена"}${completionComment ? ` - ${completionComment}` : ""}`,
+            link: `/tasks`,
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Статус обновлен" });
+      setShowCompletionDialog(false);
+      setSelectedTask(null);
+      setCompletionStatus("");
+      setCompletionComment("");
+      setNotifyUsers([]);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
   const handleOpenDialog = (task?: Task) => {
     if (task) {
       setEditingTask(task);
@@ -244,6 +296,7 @@ export default function TasksPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingTask(null);
+    setNotifyUsers([]);
     setFormData({
       title: "",
       description: "",
@@ -253,6 +306,11 @@ export default function TasksPage() {
       task_number: "",
       assignee_id: "",
     });
+  };
+
+  const handleOpenCompletionDialog = (task: Task) => {
+    setSelectedTask(task);
+    setShowCompletionDialog(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -376,24 +434,42 @@ export default function TasksPage() {
                       {task.due_date ? new Date(task.due_date).toLocaleDateString("ru-RU") : "—"}
                     </div>
                     <div className="col-span-1 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenDialog(task)}>
-                            Редактировать
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => deleteMutation.mutate(task.id)}
-                            className="text-destructive"
-                          >
-                            Удалить
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex gap-1 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(task)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenCompletionDialog(task)}
+                        >
+                          {task.completion_status === "completed" ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Clock className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(task.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Удалить
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -518,6 +594,89 @@ export default function TasksPage() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Диалог статуса выполнения */}
+        <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Обновить статус выполнения</DialogTitle>
+              <DialogDescription>
+                Укажите статус выполнения задачи и комментарий
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Статус выполнения</Label>
+                <Select value={completionStatus} onValueChange={setCompletionStatus}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Выберите статус" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="completed">Выполнено</SelectItem>
+                    <SelectItem value="postponed">Перенесено</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Комментарий</Label>
+                <Textarea
+                  value={completionComment}
+                  onChange={(e) => setCompletionComment(e.target.value)}
+                  placeholder="Добавьте комментарий..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Уведомить пользователей</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                  {profiles?.map((profile) => (
+                    <div key={profile.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`notify-${profile.id}`}
+                        checked={notifyUsers.includes(profile.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNotifyUsers([...notifyUsers, profile.id]);
+                          } else {
+                            setNotifyUsers(notifyUsers.filter((id) => id !== profile.id));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`notify-${profile.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {profile.full_name || profile.email}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCompletionDialog(false);
+                  setSelectedTask(null);
+                  setCompletionStatus("");
+                  setCompletionComment("");
+                  setNotifyUsers([]);
+                }}
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={() => updateCompletionStatus.mutate()}
+                disabled={!completionStatus || updateCompletionStatus.isPending}
+              >
+                Сохранить
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
