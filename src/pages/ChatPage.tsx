@@ -629,7 +629,8 @@ export default function ChatPage() {
     }, 3000);
   };
 
-  const getConversationName = (conv: Conversation) => {
+  const getConversationName = (conv: Conversation | undefined) => {
+    if (!conv) return "Загрузка...";
     if (conv.type === "group" || conv.type === "public") {
       return conv.name || "Без названия";
     }
@@ -748,7 +749,7 @@ export default function ChatPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold">
-                        {getConversationName(conversations?.find(c => c.id === selectedConversation)!)}
+                        {getConversationName(conversations?.find(c => c.id === selectedConversation))}
                       </h3>
                       {typingUsers[selectedConversation]?.size > 0 && (
                         <p className="text-sm text-muted-foreground">
@@ -1011,7 +1012,7 @@ export default function ChatPage() {
           }}
           conversationName={
             chatToDelete
-              ? getConversationName(conversations?.find(c => c.id === chatToDelete)!)
+              ? getConversationName(conversations?.find(c => c.id === chatToDelete))
               : ""
           }
         />
