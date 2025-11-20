@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon } from "lucide-react";
+import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { DeleteChatDialog } from "@/components/DeleteChatDialog";
@@ -77,6 +78,7 @@ export default function ChatPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const totalUnread = useUnreadMessages();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
@@ -656,9 +658,14 @@ export default function ChatPage() {
               onClick={() => setIsNewChatOpen(true)} 
               variant="outline"
               size="icon"
-              className="h-10 w-10"
+              className="h-10 w-10 relative"
             >
               <MessageCircle className="h-4 w-4" />
+              {totalUnread > 0 && (
+                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </div>
+              )}
             </Button>
             <Button onClick={() => setIsNewChatOpen(true)} className="gap-2 h-10">
               <MessageCircle className="h-4 w-4" />
@@ -679,38 +686,53 @@ export default function ChatPage() {
                   {conversations?.map((conv) => {
                     const unreadCount = unreadCounts?.[conv.id] || 0;
                     return (
-                      <button
+                      <div
                         key={conv.id}
-                        onClick={() => setSelectedConversation(conv.id)}
-                        className={`w-full text-left p-3 rounded-lg transition-colors relative ${
+                        className={`group relative rounded-lg transition-colors ${
                           selectedConversation === conv.id
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-primary/10"
                             : "hover:bg-accent"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback>
-                                {conv.type === "public" ? "П" : conv.type === "group" ? "Г" : "Л"}
-                              </AvatarFallback>
-                            </Avatar>
-                            {unreadCount > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                                {unreadCount > 9 ? "9+" : unreadCount}
+                        <button
+                          onClick={() => setSelectedConversation(conv.id)}
+                          className="w-full text-left p-3 pr-12"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback>
+                                  {conv.type === "public" ? "П" : conv.type === "group" ? "Г" : "Л"}
+                                </AvatarFallback>
+                              </Avatar>
+                              {unreadCount > 0 && (
+                                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                  {unreadCount > 9 ? "9+" : unreadCount}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={`font-medium truncate ${unreadCount > 0 ? "font-bold" : ""} ${selectedConversation === conv.id ? "text-primary" : ""}`}>
+                                {getConversationName(conv)}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className={`font-medium truncate ${unreadCount > 0 ? "font-bold" : ""}`}>
-                              {getConversationName(conv)}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(new Date(conv.created_at), "dd MMM", { locale: ru })}
+                              <div className="text-xs text-muted-foreground">
+                                {format(new Date(conv.created_at), "dd MMM", { locale: ru })}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setChatToDelete(conv.id);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     );
                   })}
                 </div>
@@ -740,14 +762,6 @@ export default function ChatPage() {
                         </p>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setChatToDelete(selectedConversation)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 p-4 overflow-hidden">
