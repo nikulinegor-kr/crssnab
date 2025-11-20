@@ -203,7 +203,9 @@ export default function ChatPage() {
   // Создание беседы
   const createConversationMutation = useMutation({
     mutationFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
       
       // Создаем беседу
       const { data: conversation, error: convError } = await supabase
@@ -212,7 +214,7 @@ export default function ChatPage() {
           organization_id: currentOrgId,
           type: chatType,
           name: chatType === "group" ? groupName : null,
-          created_by: user.user?.id
+          created_by: user.id
         }])
         .select()
         .single();
@@ -221,7 +223,7 @@ export default function ChatPage() {
 
       // Добавляем участников
       const participants = [
-        { conversation_id: conversation.id, user_id: user.user?.id },
+        { conversation_id: conversation.id, user_id: user.id },
         ...selectedUsers.map(userId => ({
           conversation_id: conversation.id,
           user_id: userId

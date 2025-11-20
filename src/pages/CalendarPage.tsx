@@ -113,7 +113,9 @@ export default function CalendarPage() {
   // Создание события
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
       
       const startDateTime = data.all_day 
         ? new Date(data.start_date).toISOString()
@@ -127,7 +129,7 @@ export default function CalendarPage() {
           start_date: startDateTime,
           all_day: data.all_day,
           organization_id: currentOrgId,
-          created_by: user.user?.id,
+          created_by: user.id,
           assignee_id: data.assignee_id || null
         }]);
       if (error) throw error;

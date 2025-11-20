@@ -120,7 +120,9 @@ export default function TasksPage() {
   // Создание/обновление задачи
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
       
       if (editingTask) {
         const { error } = await supabase
@@ -148,7 +150,7 @@ export default function TasksPage() {
             ...data, 
             task_number: taskNumber,
             organization_id: currentOrgId, 
-            created_by: user.user?.id 
+            created_by: user.id 
           }]);
         if (taskError) throw taskError;
 
@@ -174,7 +176,7 @@ export default function TasksPage() {
               start_date: new Date(data.due_date).toISOString(),
               all_day: true,
               organization_id: currentOrgId,
-              created_by: user.user?.id,
+              created_by: user.id,
               assignee_id: data.assignee_id || null,
               event_type: "task"
             }]);
