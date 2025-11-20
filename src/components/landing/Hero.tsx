@@ -9,10 +9,10 @@ const Hero = () => {
     <section className="flex flex-col gap-6 text-center items-center py-12 animate-fade-in">
       <div className="flex flex-col gap-5 max-w-3xl mx-auto">
         <h1 className="text-foreground text-[2.5rem] md:text-5xl lg:text-[3.5rem] font-black leading-[1.1] tracking-tight">
-          Оптимизируйте цепочку поставок корпоративных ресурсов
+          CRSS: Оптимизируйте систему корпоративного снабжения!
         </h1>
         <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-xl mx-auto px-4">
-          CRSS предоставляет мощную интегрированную платформу для управления ресурсами, автоматизации процессов и получения критически важных данных для максимальной эффективности.
+          CRSS — единая платформа автоматизации и аналитики, которая делает поставки быстрее, прозрачнее и эффективнее.
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
