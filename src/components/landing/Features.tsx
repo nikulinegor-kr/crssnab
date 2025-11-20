@@ -33,10 +33,10 @@ const Features = () => {
         {features.map((feature, index) => (
           <div 
             key={index} 
-            className="flex flex-col gap-4 p-6 glassmorphism rounded-xl border border-border/50 hover:border-primary/30 hover:bg-card/50 transition-all text-center items-center animate-fade-in"
+            className="flex flex-col gap-4 p-6 glassmorphism rounded-xl border border-border/50 hover:border-primary/30 hover:bg-card/50 transition-all items-center animate-fade-in"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto">
               {feature.icon}
             </div>
             <h3 className="text-foreground text-lg font-bold leading-tight">
