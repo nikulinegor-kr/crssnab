@@ -186,7 +186,7 @@ export default function CalendarPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events", currentOrgId] });
       toast({
         title: editingEvent ? "Событие обновлено" : "Событие создано",
         description: editingEvent 
@@ -216,7 +216,7 @@ export default function CalendarPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events", currentOrgId] });
       toast({
         title: "Событие удалено",
         description: "Событие успешно удалено из календаря",
