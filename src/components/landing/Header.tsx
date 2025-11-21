@@ -42,19 +42,8 @@ const Header = () => {
         Войти
       </Button>
 
-      {/* Mobile Menu Toggle */}
-      <div className="md:hidden flex flex-1 justify-center">
-        <nav className="flex items-center gap-4 mr-4">
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-muted-foreground hover:text-foreground transition-colors text-xs font-medium"
-            >
-              {link.name}
-            </a>
-          ))}
-        </nav>
+      {/* Mobile Menu */}
+      <div className="md:hidden">
         <Button className="!h-9 !px-4 !text-xs" onClick={() => navigate("/auth")}>Войти</Button>
       </div>
     </header>
