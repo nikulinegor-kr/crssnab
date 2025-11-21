@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft, 
   Edit, 
   Download, 
   FileImage, 
   FileText,
-  Eye
+  Eye,
+  CalendarIcon,
+  Upload,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -22,6 +29,9 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { ImageViewer } from "@/components/ImageViewer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 interface Activity {
   id: string;
@@ -43,9 +53,15 @@ export default function RequestDetail() {
   const navigate = useNavigate();
   const { canEdit } = useUserRole();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { currentOrgId } = useCurrentOrganization();
+  
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -60,6 +76,35 @@ export default function RequestDetail() {
       return data as Request;
     },
     enabled: !!id,
+  });
+
+  // Fetch statuses and priorities
+  const { data: statuses } = useQuery({
+    queryKey: ["request-statuses", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_statuses")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .order("order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const { data: priorities } = useQuery({
+    queryKey: ["request-priorities", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_priorities")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .order("order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
   });
 
   // Fetch activities
@@ -93,6 +138,104 @@ export default function RequestDetail() {
     },
     enabled: !!id,
   });
+
+  // Mutation for updating request fields
+  const updateRequestMutation = useMutation({
+    mutationFn: async (updates: Partial<Request>) => {
+      const { data, error } = await supabase
+        .from("requests")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["request", id] });
+      queryClient.invalidateQueries({ queryKey: ["request-activities", id] });
+      toast({
+        title: "Успешно",
+        description: "Заявка обновлена",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить заявку",
+        variant: "destructive",
+      });
+      console.error("Update error:", error);
+    },
+  });
+
+  // File upload handlers
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !id) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("request-photos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("request-photos")
+        .getPublicUrl(filePath);
+
+      await updateRequestMutation.mutateAsync({ photo_url: publicUrl });
+    } catch (error) {
+      console.error("Photo upload error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить фото",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !id) return;
+
+    setIsUploadingDoc(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("request-documents")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("request-documents")
+        .getPublicUrl(filePath);
+
+      await updateRequestMutation.mutateAsync({ document_url: publicUrl });
+    } catch (error) {
+      console.error("Document upload error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить документ",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
 
   const getPriorityColor = (priority: string): "default" | "destructive" | "outline" | "secondary" => {
     const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
@@ -234,11 +377,47 @@ export default function RequestDetail() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Статус</p>
-                    <Badge variant={getStatusColor(request.status)}>{request.status}</Badge>
+                    {canEdit ? (
+                      <Select
+                        value={request.status}
+                        onValueChange={(value) => updateRequestMutation.mutate({ status: value })}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statuses?.map((status) => (
+                            <SelectItem key={status.id} value={status.name}>
+                              {status.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant={getStatusColor(request.status)}>{request.status}</Badge>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Приоритет</p>
-                    <Badge variant={getPriorityColor(request.priority || "")}>{request.priority}</Badge>
+                    {canEdit ? (
+                      <Select
+                        value={request.priority || ""}
+                        onValueChange={(value) => updateRequestMutation.mutate({ priority: value })}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {priorities?.map((priority) => (
+                            <SelectItem key={priority.id} value={priority.name}>
+                              {priority.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant={getPriorityColor(request.priority || "")}>{request.priority}</Badge>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Заявитель</p>
@@ -306,29 +485,121 @@ export default function RequestDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Дата отгрузки</p>
-                    <p className="text-sm font-medium">
-                      {request.shipment_date 
-                        ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
-                        : "—"
-                      }
-                    </p>
+                    {canEdit ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-9",
+                              !request.shipment_date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {request.shipment_date
+                              ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
+                              : "Выберите дату"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={request.shipment_date ? new Date(request.shipment_date) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                updateRequestMutation.mutate({ 
+                                  shipment_date: format(date, "yyyy-MM-dd") 
+                                });
+                              }
+                            }}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <p className="text-sm font-medium">
+                        {request.shipment_date 
+                          ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
+                          : "—"
+                        }
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Дата доставки</p>
-                    <p className="text-sm font-medium">
-                      {request.delivery_date 
-                        ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
-                        : "—"
-                      }
-                    </p>
+                    {canEdit ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-9",
+                              !request.delivery_date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {request.delivery_date
+                              ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
+                              : "Выберите дату"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={request.delivery_date ? new Date(request.delivery_date) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                updateRequestMutation.mutate({ 
+                                  delivery_date: format(date, "yyyy-MM-dd") 
+                                });
+                              }
+                            }}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <p className="text-sm font-medium">
+                        {request.delivery_date 
+                          ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
+                          : "—"
+                        }
+                      </p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Транспортная компания</p>
-                    <p className="text-sm font-medium">{request.transport_company || "—"}</p>
+                    {canEdit ? (
+                      <Input
+                        value={request.transport_company || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          updateRequestMutation.mutate({ transport_company: value || null });
+                        }}
+                        placeholder="Введите название ТК"
+                        className="h-9"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{request.transport_company || "—"}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Номер ТТН</p>
-                    <p className="text-sm font-medium">{request.waybill_number || "—"}</p>
+                    {canEdit ? (
+                      <Input
+                        value={request.waybill_number || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          updateRequestMutation.mutate({ waybill_number: value || null });
+                        }}
+                        placeholder="Введите номер ТТН"
+                        className="h-9"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{request.waybill_number || "—"}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -340,6 +611,36 @@ export default function RequestDetail() {
                 <CardTitle className="text-lg">
                   Прикреплённые файлы ({(request.photo_url ? 1 : 0) + (request.document_url ? 1 : 0)})
                 </CardTitle>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" disabled={isUploadingPhoto} asChild>
+                      <label>
+                        <Upload className="h-4 w-4" />
+                        {isUploadingPhoto ? "Загрузка..." : "Фото"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                          disabled={isUploadingPhoto}
+                        />
+                      </label>
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2" disabled={isUploadingDoc} asChild>
+                      <label>
+                        <Upload className="h-4 w-4" />
+                        {isUploadingDoc ? "Загрузка..." : "Документ"}
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx"
+                          onChange={handleDocumentUpload}
+                          className="hidden"
+                          disabled={isUploadingDoc}
+                        />
+                      </label>
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -528,16 +829,52 @@ export default function RequestDetail() {
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">Текущий статус</p>
-                  <Badge variant={getStatusColor(request.status)} className="w-full justify-center py-2">
-                    {request.status}
-                  </Badge>
+                  {canEdit ? (
+                    <Select
+                      value={request.status}
+                      onValueChange={(value) => updateRequestMutation.mutate({ status: value })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses?.map((status) => (
+                          <SelectItem key={status.id} value={status.name}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge variant={getStatusColor(request.status)} className="w-full justify-center py-2">
+                      {request.status}
+                    </Badge>
+                  )}
                 </div>
                 <Separator />
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">Приоритет</p>
-                  <Badge variant={getPriorityColor(request.priority || "")} className="w-full justify-center py-2">
-                    {request.priority}
-                  </Badge>
+                  {canEdit ? (
+                    <Select
+                      value={request.priority || ""}
+                      onValueChange={(value) => updateRequestMutation.mutate({ priority: value })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priorities?.map((priority) => (
+                          <SelectItem key={priority.id} value={priority.name}>
+                            {priority.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge variant={getPriorityColor(request.priority || "")} className="w-full justify-center py-2">
+                      {request.priority}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
