@@ -1,4 +1,4 @@
-import { Linkedin } from "lucide-react";
+
 
 const Footer = () => {
   return (
@@ -50,15 +50,10 @@ const Footer = () => {
         </div>
       </div>
       
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t border-border/50">
+      <div className="flex justify-center items-center pt-6 border-t border-border/50">
         <p className="text-muted-foreground text-xs">
           © 2025 CRSS, Inc. Все права защищены
         </p>
-        <div className="flex gap-4">
-          <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-            <Linkedin className="w-5 h-5" />
-          </a>
-        </div>
       </div>
     </footer>
   );
