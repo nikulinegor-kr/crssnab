@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
-
 const Header = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const navLinks = [
-    { name: 'Возможности', href: '/features' },
-    { name: 'Цены', href: '/pricing' },
-    { name: 'О нас', href: '/about' },
-    { name: 'Контакты', href: '/contact' },
-  ];
-
-  return (
-    <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-border/30 px-4 md:px-6 py-3 glassmorphism rounded-xl mb-12">
+  const navLinks = [{
+    name: 'Возможности',
+    href: '/features'
+  }, {
+    name: 'Цены',
+    href: '/pricing'
+  }, {
+    name: 'О нас',
+    href: '/about'
+  }, {
+    name: 'Контакты',
+    href: '/contact'
+  }];
+  return <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-border/30 px-4 md:px-6 py-3 glassmorphism rounded-xl mb-12">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
         <div className="size-5 text-primary">
           <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -27,15 +30,9 @@ const Header = () => {
       {/* Desktop Navigation */}
       <div className="hidden md:flex flex-1 items-center justify-center">
         <nav className="flex items-center gap-7">
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
-            >
+          {navLinks.map(link => <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
               {link.name}
-            </a>
-          ))}
+            </a>)}
         </nav>
       </div>
       <Button className="hidden md:inline-flex !h-9 !text-sm" onClick={() => navigate("/auth")}>
@@ -45,20 +42,12 @@ const Header = () => {
       {/* Mobile Menu */}
       <div className="md:hidden flex flex-1 justify-center items-center">
         <nav className="flex items-center gap-2 mr-2">
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-muted-foreground hover:text-foreground transition-colors text-[10px] font-medium"
-            >
+          {navLinks.map(link => <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-[10px] font-medium">
               {link.name}
-            </a>
-          ))}
+            </a>)}
         </nav>
-        <Button className="!h-8 !px-3 !text-[10px]" onClick={() => navigate("/auth")}>Войти</Button>
+        <Button onClick={() => navigate("/auth")} className="!h-8 !px-3 !text-[10px] text-right">Войти</Button>
       </div>
-    </header>
-  );
+    </header>;
 };
-
 export default Header;
