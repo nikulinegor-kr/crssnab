@@ -74,6 +74,13 @@ export default function CalendarPage() {
     priority: "Средний",
   });
 
+  // Генерация временных слотов с шагом 30 минут
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hours = Math.floor(i / 2).toString().padStart(2, '0');
+    const minutes = (i % 2 === 0 ? '00' : '30');
+    return `${hours}:${minutes}`;
+  });
+
   // Получаем профили пользователей организации
   const { data: profiles } = useQuery({
     queryKey: ["org-users", currentOrgId],
@@ -557,14 +564,22 @@ export default function CalendarPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="start_time">Время</Label>
-                  <Input
-                    id="start_time"
-                    type="time"
+                  <Select
                     value={formData.start_time}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    onValueChange={(value) => setFormData({ ...formData, start_time: value })}
                     disabled={(formData.all_day || (editingEvent?.event_type !== "manual" && !!editingEvent))}
-                    className="h-10"
-                  />
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Выберите время" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -635,9 +650,9 @@ export default function CalendarPage() {
                 </Select>
               </div>
 
-              <DialogFooter className="flex justify-between">
+              <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2">
                 <div className="flex-1">
-                  {editingEvent && editingEvent.event_type === "manual" && (
+                  {editingEvent && (editingEvent.event_type === "manual" || !editingEvent.event_type) && (
                     <Button 
                       type="button" 
                       variant="destructive" 
@@ -647,17 +662,27 @@ export default function CalendarPage() {
                         }
                       }}
                       disabled={deleteMutation.isPending}
+                      className="w-full sm:w-auto"
                     >
-                      {deleteMutation.isPending ? "Удаление..." : "Удалить"}
+                      {deleteMutation.isPending ? "Удаление..." : "Удалить событие"}
                     </Button>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleCloseDialog}
+                    className="flex-1 sm:flex-none"
+                  >
                     Отменить
                   </Button>
-                  {(!editingEvent || editingEvent.event_type === "manual") && (
-                    <Button type="submit" disabled={mutation.isPending}>
+                  {(!editingEvent || editingEvent.event_type === "manual" || !editingEvent.event_type) && (
+                    <Button 
+                      type="submit" 
+                      disabled={mutation.isPending}
+                      className="flex-1 sm:flex-none"
+                    >
                       {mutation.isPending 
                         ? (editingEvent ? "Сохранение..." : "Создание...") 
                         : (editingEvent ? "Сохранить" : "Создать")}
