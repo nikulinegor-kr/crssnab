@@ -40,13 +40,13 @@ const Header = () => {
       </Button>
 
       {/* Mobile Menu */}
-      <div className="md:hidden flex flex-1 justify-center items-center">
+      <div className="md:hidden flex flex-1 items-center">
         <nav className="flex items-center gap-2 mr-2">
           {navLinks.map(link => <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-[10px] font-medium">
               {link.name}
             </a>)}
         </nav>
-        <Button onClick={() => navigate("/auth")} className="!h-8 !px-3 !text-[10px] text-right">Войти</Button>
+        <Button onClick={() => navigate("/auth")} className="!h-8 !px-3 !text-[10px] ml-auto">Войти</Button>
       </div>
     </header>;
 };
