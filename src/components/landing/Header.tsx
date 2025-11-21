@@ -35,7 +35,7 @@ const Header = () => {
             </a>)}
         </nav>
       </div>
-      <Button className="hidden md:inline-flex !h-9 !text-sm" onClick={() => navigate("/auth")}>
+      <Button onClick={() => navigate("/auth")} className="hidden md:inline-flex !h-9 text-center mx-0 my-0 px-0 py-0 text-xs">
         Войти
       </Button>
 
