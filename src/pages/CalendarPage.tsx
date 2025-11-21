@@ -233,15 +233,13 @@ export default function CalendarPage() {
 
   const getEventsForDay = (day: Date) => {
     if (!events) return [];
+
+    const dayStr = format(day, "yyyy-MM-dd");
     
     return events.filter(event => {
-      const eventDate = new Date(event.start_date);
-      // Сравниваем только даты, игнорируя время
-      return (
-        eventDate.getFullYear() === day.getFullYear() &&
-        eventDate.getMonth() === day.getMonth() &&
-        eventDate.getDate() === day.getDate()
-      );
+      if (!event.start_date) return false;
+      const eventDateStr = event.start_date.slice(0, 10); // YYYY-MM-DD
+      return eventDateStr === dayStr;
     });
   };
 
