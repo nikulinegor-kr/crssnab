@@ -1,4 +1,4 @@
-import { Twitter, Linkedin, Github } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -20,7 +20,7 @@ const Footer = () => {
         </div>
 
         {/* Links Columns */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:col-span-3 gap-8">
+        <div className="grid grid-cols-3 md:col-span-3 gap-6 md:gap-8">
           <div className="flex flex-col gap-3">
             <h3 className="text-foreground font-bold text-xs uppercase tracking-wide">Продукт</h3>
             <div className="flex flex-col gap-2">
@@ -42,8 +42,8 @@ const Footer = () => {
           <div className="flex flex-col gap-3">
             <h3 className="text-foreground font-bold text-xs uppercase tracking-wide">Правовая информация</h3>
             <div className="flex flex-col gap-2">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-xs">Политика конфиденциальности</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-xs">Условия использования</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-xs">Конфиденциальность</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-xs">Условия</a>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-xs">Cookies</a>
             </div>
           </div>
@@ -56,13 +56,7 @@ const Footer = () => {
         </p>
         <div className="flex gap-4">
           <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-            <Twitter className="w-5 h-5" />
-          </a>
-          <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
             <Linkedin className="w-5 h-5" />
-          </a>
-          <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-            <Github className="w-5 h-5" />
           </a>
         </div>
       </div>

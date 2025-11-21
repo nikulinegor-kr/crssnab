@@ -83,7 +83,7 @@ export default function Pricing() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
               {plans.map((plan, index) => {
                 const features = Array.isArray(plan.features) ? plan.features : [];
                 const isPopular = index === 1;
