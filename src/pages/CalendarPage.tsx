@@ -289,6 +289,13 @@ export default function CalendarPage() {
     return profile?.full_name || profile?.email || "Не назначен";
   };
 
+  // Функция для определения, можно ли редактировать событие
+  const isEventEditable = (event: CalendarEvent | null) => {
+    if (!event) return true; // Новое событие - можно редактировать
+    // Событие редактируемое если это не событие из заявки
+    return event.event_type !== 'shipment' && event.event_type !== 'delivery';
+  };
+
   const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case "Высокий":
@@ -532,7 +539,7 @@ export default function CalendarPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
-                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                  disabled={!isEventEditable(editingEvent)}
                   className="h-10"
                 />
               </div>
@@ -544,7 +551,7 @@ export default function CalendarPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                  disabled={!isEventEditable(editingEvent)}
                   className="min-h-[80px]"
                 />
               </div>
@@ -558,7 +565,7 @@ export default function CalendarPage() {
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     required
-                    disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                    disabled={!isEventEditable(editingEvent)}
                     className="h-10"
                   />
                 </div>
@@ -567,7 +574,7 @@ export default function CalendarPage() {
                   <Select
                     value={formData.start_time}
                     onValueChange={(value) => setFormData({ ...formData, start_time: value })}
-                    disabled={(formData.all_day || (editingEvent?.event_type !== "manual" && !!editingEvent))}
+                    disabled={formData.all_day || !isEventEditable(editingEvent)}
                   >
                     <SelectTrigger className="h-10">
                       <SelectValue placeholder="Выберите время" />
@@ -589,7 +596,7 @@ export default function CalendarPage() {
                   id="all_day"
                   checked={formData.all_day}
                   onChange={(e) => setFormData({ ...formData, all_day: e.target.checked })}
-                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                  disabled={!isEventEditable(editingEvent)}
                   className="rounded"
                 />
                 <Label htmlFor="all_day" className="cursor-pointer">
@@ -602,7 +609,7 @@ export default function CalendarPage() {
                 <Select
                   value={formData.assignee_id}
                   onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
-                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                  disabled={!isEventEditable(editingEvent)}
                 >
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Не назначен" />
@@ -622,7 +629,7 @@ export default function CalendarPage() {
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => setFormData({ ...formData, priority: value })}
-                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
+                  disabled={!isEventEditable(editingEvent)}
                 >
                   <SelectTrigger className="h-10">
                     <SelectValue />
@@ -650,9 +657,16 @@ export default function CalendarPage() {
                 </Select>
               </div>
 
+              {!isEventEditable(editingEvent) && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded flex items-start gap-2">
+                  <span>ℹ️</span>
+                  <span>Это событие создано автоматически из заявки и не может быть отредактировано. Кликните на событие, чтобы перейти к заявке.</span>
+                </div>
+              )}
+
               <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2">
                 <div className="flex-1">
-                  {editingEvent && (editingEvent.event_type === "manual" || !editingEvent.event_type) && (
+                  {editingEvent && isEventEditable(editingEvent) && (
                     <Button 
                       type="button" 
                       variant="destructive" 
@@ -677,7 +691,7 @@ export default function CalendarPage() {
                   >
                     Отменить
                   </Button>
-                  {(!editingEvent || editingEvent.event_type === "manual" || !editingEvent.event_type) && (
+                  {isEventEditable(editingEvent) && (
                     <Button 
                       type="submit" 
                       disabled={mutation.isPending}
