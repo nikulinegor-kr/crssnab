@@ -135,10 +135,16 @@ export default function TasksPage() {
       
       if (!user?.id) throw new Error("User not authenticated");
       
+      // Подготовка данных: преобразуем пустую строку в null для due_date
+      const taskData = {
+        ...data,
+        due_date: data.due_date || null,
+      };
+      
       if (editingTask) {
         const { error } = await supabase
           .from("tasks")
-          .update(data)
+          .update(taskData)
           .eq("id", editingTask.id);
         if (error) throw error;
 
@@ -158,7 +164,7 @@ export default function TasksPage() {
         const { error: taskError } = await supabase
           .from("tasks")
           .insert([{ 
-            ...data, 
+            ...taskData, 
             task_number: taskNumber,
             organization_id: currentOrgId, 
             created_by: user.id 
@@ -196,7 +202,7 @@ export default function TasksPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentOrgId] });
       toast({
         title: editingTask ? "Задача обновлена" : "Задача создана",
         description: editingTask 
@@ -217,7 +223,7 @@ export default function TasksPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentOrgId] });
       toast({
         title: "Задача удалена",
         description: "Задача успешно удалена",
@@ -273,7 +279,7 @@ export default function TasksPage() {
       setCompletionStatus("");
       setCompletionComment("");
       setNotifyUsers([]);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentOrgId] });
     },
   });
 
