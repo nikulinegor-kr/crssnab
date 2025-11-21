@@ -77,6 +77,7 @@ export type Database = {
           id: string
           organization_id: string
           priority: string | null
+          request_id: string | null
           start_date: string
           title: string
           updated_at: string
@@ -93,6 +94,7 @@ export type Database = {
           id?: string
           organization_id: string
           priority?: string | null
+          request_id?: string | null
           start_date: string
           title: string
           updated_at?: string
@@ -109,6 +111,7 @@ export type Database = {
           id?: string
           organization_id?: string
           priority?: string | null
+          request_id?: string | null
           start_date?: string
           title?: string
           updated_at?: string
@@ -119,6 +122,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
             referencedColumns: ["id"]
           },
         ]
@@ -979,6 +989,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_upcoming_events: { Args: never; Returns: undefined }
       ensure_user_initialized: {
         Args: { _org_name?: string }
         Returns: undefined

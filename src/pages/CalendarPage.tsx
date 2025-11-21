@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { createNotification } from "@/hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, setMonth, setYear, getYear, getMonth } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -41,6 +42,7 @@ interface CalendarEvent {
   organization_id: string;
   assignee_id: string | null;
   priority: string | null;
+  request_id: string | null;
 }
 
 interface Profile {
@@ -55,11 +57,12 @@ export default function CalendarPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [view, setView] = useState<"month" | "day">("month");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -101,6 +104,13 @@ export default function CalendarPage() {
   const { data: events } = useQuery({
     queryKey: ["calendar-events", currentOrgId],
     queryFn: async () => {
+      // Check for upcoming events and create notifications
+      try {
+        await supabase.functions.invoke('check-event-notifications');
+      } catch (error) {
+        console.error('Failed to check event notifications:', error);
+      }
+
       const { data, error } = await supabase
         .from("calendar_events")
         .select("*")
@@ -214,8 +224,16 @@ export default function CalendarPage() {
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const handleMonthChange = (month: number) => setCurrentDate(setMonth(currentDate, month));
+  const handleYearChange = (year: number) => setCurrentDate(setYear(currentDate, year));
 
   const handleOpenDialog = (date?: Date, event?: CalendarEvent) => {
+    // Если это событие из заявки (отгрузка или доставка), перейти к заявке
+    if (event && event.request_id && (event.event_type === 'shipment' || event.event_type === 'delivery')) {
+      navigate(`/requests/${event.request_id}`);
+      return;
+    }
+
     if (event) {
       setEditingEvent(event);
       const eventDate = new Date(event.start_date);
@@ -339,6 +357,11 @@ export default function CalendarPage() {
                             👤 {getAssigneeName(event.assignee_id)}
                           </div>
                         )}
+                        {event.request_id && (event.event_type === 'shipment' || event.event_type === 'delivery') && (
+                          <div className="text-xs opacity-70 mt-1 italic">
+                            📋 Нажмите для перехода к заявке
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -362,7 +385,6 @@ export default function CalendarPage() {
             <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
               <TabsList>
                 <TabsTrigger value="month">Месяц</TabsTrigger>
-                <TabsTrigger value="week">Неделя</TabsTrigger>
                 <TabsTrigger value="day">День</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -382,9 +404,35 @@ export default function CalendarPage() {
                 <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
-                <h2 className="text-xl font-semibold capitalize">
-                  {format(currentDate, "LLLL yyyy", { locale: ru })}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <Select value={getMonth(currentDate).toString()} onValueChange={(value) => handleMonthChange(parseInt(value))}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          {format(new Date(2024, i), "LLLL", { locale: ru })}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={getYear(currentDate).toString()} onValueChange={(value) => handleYearChange(parseInt(value))}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const year = getYear(new Date()) - 5 + i;
+                        return (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button variant="ghost" size="icon" onClick={handleNextMonth}>
                   <ChevronRight className="h-5 w-5" />
                 </Button>
@@ -456,9 +504,17 @@ export default function CalendarPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingEvent ? "Редактировать событие" : "Новое событие"}</DialogTitle>
+              <DialogTitle>
+                {editingEvent?.request_id && (editingEvent.event_type === 'shipment' || editingEvent.event_type === 'delivery') 
+                  ? (editingEvent.event_type === 'shipment' ? "Событие отгрузки из заявки" : "Событие доставки из заявки")
+                  : (editingEvent ? "Редактировать событие" : "Новое событие")
+                }
+              </DialogTitle>
               <DialogDescription>
-                {editingEvent ? "Измените детали события" : "Добавьте событие в календарь"}
+                {editingEvent?.request_id && (editingEvent.event_type === 'shipment' || editingEvent.event_type === 'delivery')
+                  ? "Это событие создано автоматически из заявки и не может быть отредактировано"
+                  : (editingEvent ? "Измените детали события" : "Добавьте событие в календарь")
+                }
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -578,12 +634,6 @@ export default function CalendarPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {editingEvent?.event_type && editingEvent.event_type !== "manual" && (
-                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-                  ℹ️ Это событие создано автоматически из заявки и не может быть отредактировано
-                </div>
-              )}
 
               <DialogFooter className="flex justify-between">
                 <div className="flex-1">
