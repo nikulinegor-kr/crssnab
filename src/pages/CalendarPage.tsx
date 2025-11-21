@@ -150,7 +150,8 @@ export default function CalendarPage() {
             organization_id: currentOrgId,
             created_by: user.id,
             assignee_id: data.assignee_id || null,
-            priority: data.priority
+            priority: data.priority,
+            event_type: "manual"
           }]);
         if (error) throw error;
       }
@@ -174,6 +175,25 @@ export default function CalendarPage() {
         description: editingEvent 
           ? "Событие успешно обновлено"
           : "Новое событие успешно добавлено в календарь",
+      });
+      handleCloseDialog();
+    },
+  });
+
+  // Удаление события
+  const deleteMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from("calendar_events")
+        .delete()
+        .eq("id", eventId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      toast({
+        title: "Событие удалено",
+        description: "Событие успешно удалено из календаря",
       });
       handleCloseDialog();
     },
@@ -449,6 +469,7 @@ export default function CalendarPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
+                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                   className="h-10"
                 />
               </div>
@@ -460,6 +481,7 @@ export default function CalendarPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
+                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                   className="min-h-[80px]"
                 />
               </div>
@@ -473,6 +495,7 @@ export default function CalendarPage() {
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     required
+                    disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                     className="h-10"
                   />
                 </div>
@@ -483,7 +506,7 @@ export default function CalendarPage() {
                     type="time"
                     value={formData.start_time}
                     onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                    disabled={formData.all_day}
+                    disabled={(formData.all_day || (editingEvent?.event_type !== "manual" && !!editingEvent))}
                     className="h-10"
                   />
                 </div>
@@ -495,6 +518,7 @@ export default function CalendarPage() {
                   id="all_day"
                   checked={formData.all_day}
                   onChange={(e) => setFormData({ ...formData, all_day: e.target.checked })}
+                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                   className="rounded"
                 />
                 <Label htmlFor="all_day" className="cursor-pointer">
@@ -507,6 +531,7 @@ export default function CalendarPage() {
                 <Select
                   value={formData.assignee_id}
                   onValueChange={(value) => setFormData({ ...formData, assignee_id: value })}
+                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                 >
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Не назначен" />
@@ -526,6 +551,7 @@ export default function CalendarPage() {
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                  disabled={editingEvent?.event_type !== "manual" && !!editingEvent}
                 >
                   <SelectTrigger className="h-10">
                     <SelectValue />
@@ -553,15 +579,41 @@ export default function CalendarPage() {
                 </Select>
               </div>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                  Отменить
-                </Button>
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending 
-                    ? (editingEvent ? "Сохранение..." : "Создание...") 
-                    : (editingEvent ? "Сохранить" : "Создать")}
-                </Button>
+              {editingEvent?.event_type && editingEvent.event_type !== "manual" && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
+                  ℹ️ Это событие создано автоматически из заявки и не может быть отредактировано
+                </div>
+              )}
+
+              <DialogFooter className="flex justify-between">
+                <div className="flex-1">
+                  {editingEvent && editingEvent.event_type === "manual" && (
+                    <Button 
+                      type="button" 
+                      variant="destructive" 
+                      onClick={() => {
+                        if (confirm("Вы уверены, что хотите удалить это событие?")) {
+                          deleteMutation.mutate(editingEvent.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? "Удаление..." : "Удалить"}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                    Отменить
+                  </Button>
+                  {(!editingEvent || editingEvent.event_type === "manual") && (
+                    <Button type="submit" disabled={mutation.isPending}>
+                      {mutation.isPending 
+                        ? (editingEvent ? "Сохранение..." : "Создание...") 
+                        : (editingEvent ? "Сохранить" : "Создать")}
+                    </Button>
+                  )}
+                </div>
               </DialogFooter>
             </form>
           </DialogContent>
