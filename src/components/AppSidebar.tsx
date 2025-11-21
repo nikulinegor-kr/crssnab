@@ -39,7 +39,6 @@ const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Поставщики", url: "/suppliers", icon: Users },
-  { title: "О системе", url: "/system-demo", icon: Sparkles },
 ];
 
 const secondaryMenuItems = [
