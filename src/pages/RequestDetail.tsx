@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, 
   Edit, 
@@ -20,7 +21,8 @@ import {
   Eye,
   CalendarIcon,
   Upload,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -62,6 +64,7 @@ export default function RequestDetail() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -167,6 +170,33 @@ export default function RequestDetail() {
         variant: "destructive",
       });
       console.error("Update error:", error);
+    },
+  });
+
+  // Mutation for deleting request
+  const deleteRequestMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("requests")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "Заявка удалена",
+      });
+      navigate("/requests");
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить заявку",
+        variant: "destructive",
+      });
+      console.error("Delete error:", error);
     },
   });
 
@@ -944,6 +974,42 @@ export default function RequestDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Delete Request */}
+            {canEdit && (
+              <Card className="glassmorphism border-border/40 border-destructive/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-destructive">Опасная зона</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Удалить заявку
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Это действие нельзя отменить. Заявка #{request.request_number} будет удалена навсегда.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteRequestMutation.mutate()}
+                          className="bg-destructive hover:bg-destructive/90"
+                        >
+                          Удалить
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
