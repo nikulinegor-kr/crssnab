@@ -193,6 +193,15 @@ export default function CalendarPage() {
           ? "Событие успешно обновлено"
           : "Новое событие успешно добавлено в календарь",
       });
+      
+      // После создания/редактирования переключаемся на месяц с датой события
+      if (formData.start_date) {
+        const eventDate = new Date(formData.start_date);
+        setCurrentDate(eventDate);
+        setSelectedDate(eventDate);
+        setView("month");
+      }
+      
       handleCloseDialog();
     },
   });
@@ -223,10 +232,17 @@ export default function CalendarPage() {
   const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   const getEventsForDay = (day: Date) => {
-    return events?.filter(event => {
+    if (!events) return [];
+    
+    return events.filter(event => {
       const eventDate = new Date(event.start_date);
-      return isSameDay(eventDate, day);
-    }) || [];
+      // Сравниваем только даты, игнорируя время
+      return (
+        eventDate.getFullYear() === day.getFullYear() &&
+        eventDate.getMonth() === day.getMonth() &&
+        eventDate.getDate() === day.getDate()
+      );
+    });
   };
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
