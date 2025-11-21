@@ -76,6 +76,7 @@ export type Database = {
           event_type: string | null
           id: string
           organization_id: string
+          priority: string | null
           start_date: string
           title: string
           updated_at: string
@@ -91,6 +92,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           organization_id: string
+          priority?: string | null
           start_date: string
           title: string
           updated_at?: string
@@ -106,6 +108,7 @@ export type Database = {
           event_type?: string | null
           id?: string
           organization_id?: string
+          priority?: string | null
           start_date?: string
           title?: string
           updated_at?: string

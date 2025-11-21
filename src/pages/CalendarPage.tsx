@@ -40,6 +40,7 @@ interface CalendarEvent {
   event_type: string | null;
   organization_id: string;
   assignee_id: string | null;
+  priority: string | null;
 }
 
 interface Profile {
@@ -67,6 +68,7 @@ export default function CalendarPage() {
     start_time: "09:00",
     all_day: false,
     assignee_id: "",
+    priority: "Средний",
   });
 
   // Получаем профили пользователей организации
@@ -131,7 +133,8 @@ export default function CalendarPage() {
             description: data.description,
             start_date: startDateTime,
             all_day: data.all_day,
-            assignee_id: data.assignee_id || null
+            assignee_id: data.assignee_id || null,
+            priority: data.priority
           })
           .eq("id", editingEvent.id);
         if (error) throw error;
@@ -146,7 +149,8 @@ export default function CalendarPage() {
             all_day: data.all_day,
             organization_id: currentOrgId,
             created_by: user.id,
-            assignee_id: data.assignee_id || null
+            assignee_id: data.assignee_id || null,
+            priority: data.priority
           }]);
         if (error) throw error;
       }
@@ -202,6 +206,7 @@ export default function CalendarPage() {
         start_time: format(eventDate, "HH:mm"),
         all_day: event.all_day,
         assignee_id: event.assignee_id || "",
+        priority: event.priority || "Средний",
       });
     } else if (date) {
       setSelectedDate(date);
@@ -224,6 +229,7 @@ export default function CalendarPage() {
       start_time: "09:00",
       all_day: false,
       assignee_id: "",
+      priority: "Средний",
     });
   };
 
@@ -236,6 +242,93 @@ export default function CalendarPage() {
     if (!assigneeId) return null;
     const profile = profiles?.find(p => p.id === assigneeId);
     return profile?.full_name || profile?.email || "Не назначен";
+  };
+
+  const getPriorityColor = (priority: string | null) => {
+    switch (priority) {
+      case "Высокий":
+        return "bg-red-500/20 text-red-600 border-red-500";
+      case "Средний":
+        return "bg-yellow-500/20 text-yellow-600 border-yellow-500";
+      case "Низкий":
+        return "bg-green-500/20 text-green-600 border-green-500";
+      default:
+        return "bg-primary/20 text-primary border-primary";
+    }
+  };
+
+  const timeSlots = Array.from({ length: 24 }, (_, i) => {
+    const hour = i.toString().padStart(2, '0');
+    return `${hour}:00`;
+  });
+
+  const renderDayView = () => {
+    const dayToShow = selectedDate || new Date();
+    const dayEvents = getEventsForDay(dayToShow);
+    
+    return (
+      <Card className="bg-card border-border/40">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="ghost" size="icon" onClick={() => {
+              setSelectedDate(subMonths(dayToShow, 0));
+              const prevDay = new Date(dayToShow);
+              prevDay.setDate(prevDay.getDate() - 1);
+              setSelectedDate(prevDay);
+            }}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <h2 className="text-xl font-semibold">
+              {format(dayToShow, "d MMMM yyyy, EEEE", { locale: ru })}
+            </h2>
+            <Button variant="ghost" size="icon" onClick={() => {
+              const nextDay = new Date(dayToShow);
+              nextDay.setDate(nextDay.getDate() + 1);
+              setSelectedDate(nextDay);
+            }}>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="space-y-1 max-h-[600px] overflow-y-auto">
+            {timeSlots.map((time) => {
+              const eventsAtTime = dayEvents.filter(event => {
+                if (event.all_day) return time === "00:00";
+                const eventTime = format(new Date(event.start_date), "HH:mm");
+                return eventTime === time;
+              });
+
+              return (
+                <div key={time} className="flex gap-2 min-h-[50px] border-b border-border/20">
+                  <div className="w-16 flex-shrink-0 text-sm text-muted-foreground py-2">
+                    {time}
+                  </div>
+                  <div className="flex-1 py-1">
+                    {eventsAtTime.map((event) => (
+                      <div
+                        key={event.id}
+                        onClick={() => handleOpenDialog(undefined, event)}
+                        className={`p-2 rounded-md cursor-pointer hover:opacity-80 transition-opacity mb-1 border ${getPriorityColor(event.priority)}`}
+                      >
+                        <div className="font-medium text-sm">{event.title}</div>
+                        {event.description && (
+                          <div className="text-xs opacity-80 mt-1">{event.description}</div>
+                        )}
+                        {event.assignee_id && (
+                          <div className="text-xs opacity-70 mt-1">
+                            👤 {getAssigneeName(event.assignee_id)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -261,81 +354,83 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Навигация по месяцам */}
-        <Card className="bg-card border-border/40">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-6">
-              <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <h2 className="text-xl font-semibold capitalize">
-                {format(currentDate, "LLLL yyyy", { locale: ru })}
-              </h2>
-              <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
+        {/* Отображение в зависимости от вида */}
+        {view === "day" ? renderDayView() : (
+          <Card className="bg-card border-border/40">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-6">
+                <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <h2 className="text-xl font-semibold capitalize">
+                  {format(currentDate, "LLLL yyyy", { locale: ru })}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
 
-            {/* Дни недели */}
-            <div className="grid grid-cols-7 gap-px mb-px">
-              {weekDays.map((day) => (
-                <div
-                  key={day}
-                  className="p-2 text-center text-sm font-medium text-muted-foreground bg-muted/50"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Календарная сетка */}
-            <div className="grid grid-cols-7 gap-px bg-border">
-              {days.map((day) => {
-                const dayEvents = getEventsForDay(day);
-                const isCurrentMonth = isSameMonth(day, currentDate);
-                const isToday = isSameDay(day, new Date());
-
-                return (
+              {/* Дни недели */}
+              <div className="grid grid-cols-7 gap-px mb-px">
+                {weekDays.map((day) => (
                   <div
-                    key={day.toString()}
-                    onClick={() => {
-                      setSelectedDate(day);
-                      setView("day");
-                    }}
-                    className={`
-                      min-h-[120px] p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
-                      ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
-                      ${isToday ? "ring-2 ring-primary ring-inset" : ""}
-                    `}
+                    key={day}
+                    className="p-2 text-center text-sm font-medium text-muted-foreground bg-muted/50"
                   >
-                    <div className={`text-sm font-medium mb-1 ${isToday ? "text-primary" : ""}`}>
-                      {format(day, "d")}
-                    </div>
-                    <div className="space-y-1">
-                      {dayEvents.slice(0, 3).map((event) => (
-                        <div
-                          key={event.id}
-                          className="text-xs p-1 rounded bg-primary/20 text-primary truncate cursor-pointer hover:bg-primary/30 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenDialog(undefined, event);
-                          }}
-                        >
-                          {event.title}
-                        </div>
-                      ))}
-                      {dayEvents.length > 3 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{dayEvents.length - 3} еще
-                        </div>
-                      )}
-                    </div>
+                    {day}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+
+              {/* Календарная сетка */}
+              <div className="grid grid-cols-7 gap-px bg-border">
+                {days.map((day) => {
+                  const dayEvents = getEventsForDay(day);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const isToday = isSameDay(day, new Date());
+
+                  return (
+                    <div
+                      key={day.toString()}
+                      onClick={() => {
+                        setSelectedDate(day);
+                        setView("day");
+                      }}
+                      className={`
+                        min-h-[120px] p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
+                        ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
+                        ${isToday ? "ring-2 ring-primary ring-inset" : ""}
+                      `}
+                    >
+                      <div className={`text-sm font-medium mb-1 ${isToday ? "text-primary" : ""}`}>
+                        {format(day, "d")}
+                      </div>
+                      <div className="space-y-1">
+                        {dayEvents.slice(0, 3).map((event) => (
+                          <div
+                            key={event.id}
+                            className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border ${getPriorityColor(event.priority)}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDialog(undefined, event);
+                            }}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="text-xs text-muted-foreground">
+                            +{dayEvents.length - 3} еще
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Диалог создания события */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -422,6 +517,38 @@ export default function CalendarPage() {
                         {profile.full_name || profile.email}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Приоритет</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Высокий">
+                      <span className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                        Высокий
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="Средний">
+                      <span className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        Средний
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="Низкий">
+                      <span className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                        Низкий
+                      </span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
