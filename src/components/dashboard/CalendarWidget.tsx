@@ -49,20 +49,22 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={setSelectedDate}
-          locale={ru}
-          numberOfMonths={2}
-          className="rounded-md border border-border/40 pointer-events-auto"
-          modifiers={{
-            delivery: deliveryDates,
-          }}
-          modifiersClassNames={{
-            delivery: "font-bold bg-primary/20 text-primary hover:bg-primary/30",
-          }}
-        />
+        <div className="flex justify-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            locale={ru}
+            numberOfMonths={2}
+            className="rounded-md border border-border/40 pointer-events-auto [&_.rdp-months]:flex [&_.rdp-months]:flex-row [&_.rdp-months]:gap-4"
+            modifiers={{
+              delivery: deliveryDates,
+            }}
+            modifiersClassNames={{
+              delivery: "font-bold bg-primary/20 text-primary hover:bg-primary/30",
+            }}
+          />
+        </div>
         
         {selectedDate && requestsForSelectedDate.length > 0 && (
           <div className="mt-4 space-y-2">

@@ -62,6 +62,7 @@ const Requests = () => {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [applicantFilter, setApplicantFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [hideDelivered, setHideDelivered] = useState(true);
@@ -338,10 +339,17 @@ const Requests = () => {
     const matchesYear =
       yearFilter === "all" ||
       request.request_date.startsWith(yearFilter);
+    const matchesApplicant =
+      applicantFilter === "all" || request.applicant === applicantFilter;
     const matchesDelivered =
       !hideDelivered || request.status !== "Доставлено";
-    return matchesSearch && matchesStatus && matchesPriority && matchesYear && matchesDelivered;
+    return matchesSearch && matchesStatus && matchesPriority && matchesYear && matchesApplicant && matchesDelivered;
   });
+
+  // Получаем уникальных заявителей
+  const uniqueApplicants = Array.from(
+    new Set(requests?.map(r => r.applicant).filter(Boolean))
+  ).sort() as string[];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -498,7 +506,7 @@ const Requests = () => {
             />
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-between text-sm">
@@ -563,6 +571,20 @@ const Requests = () => {
                 {priorities.map((priority) => (
                   <SelectItem key={priority} value={priority}>
                     {priority}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={applicantFilter} onValueChange={setApplicantFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Заявитель" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-background">
+                <SelectItem value="all">Все заявители</SelectItem>
+                {uniqueApplicants.map((applicant) => (
+                  <SelectItem key={applicant} value={applicant}>
+                    {applicant}
                   </SelectItem>
                 ))}
               </SelectContent>
