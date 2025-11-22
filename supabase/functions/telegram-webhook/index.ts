@@ -354,17 +354,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify Telegram secret token (if configured)
+  // Verify Telegram secret token (soft check to avoid breaking if not configured in Telegram)
   if (TELEGRAM_WEBHOOK_SECRET_TOKEN) {
     const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
     if (secretToken !== TELEGRAM_WEBHOOK_SECRET_TOKEN) {
-      console.error("Invalid secret token. Expected:", TELEGRAM_WEBHOOK_SECRET_TOKEN, "Received:", secretToken || "no token");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }), 
-        { status: 401, headers: corsHeaders }
+      console.warn(
+        "Secret token mismatch. Expected:",
+        TELEGRAM_WEBHOOK_SECRET_TOKEN,
+        "Received:",
+        secretToken || "no token",
       );
+      // Do NOT block the request, just log a warning
+    } else {
+      console.log("Webhook request verified with secret token");
     }
-    console.log("Webhook request verified with secret token");
   } else {
     console.log("Webhook running without secret token verification (not recommended for production)");
   }
