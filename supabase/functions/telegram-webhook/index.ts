@@ -70,69 +70,42 @@ async function updateRequestStatus(requestId: string, status: string, username: 
   return { username, fullName };
 }
 
-async function notifyAdmins(request: any, status: string, username: string, fullName: string) {
-  console.log("Notifying admins about status change:", { requestId: request.id, status });
+async function notifyGroupAboutStatusChange(request: any, status: string, username: string, fullName: string) {
+  console.log("Notifying group about status change:", { requestId: request.id, status });
   
-  // Get organization admins
-  const { data: userOrgs, error: userOrgsError } = await supabase
-    .from("user_organizations")
-    .select("user_id")
-    .eq("organization_id", request.organization_id)
-    .in("role", ["owner", "admin"]);
+  // Get organization telegram settings
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("telegram_chat_id, telegram_bot_token")
+    .eq("id", request.organization_id)
+    .single();
 
-  if (userOrgsError) {
-    console.error("Error fetching user organizations:", userOrgsError);
+  if (orgError || !org) {
+    console.error("Error fetching organization:", orgError);
     return;
   }
 
-  if (!userOrgs || userOrgs.length === 0) {
-    console.log("No admins found for organization");
+  if (!org.telegram_chat_id || !org.telegram_bot_token) {
+    console.log("Telegram not configured for organization");
     return;
   }
 
-  const userIds = userOrgs.map(uo => uo.user_id);
+  const message = `🔔 Изменен статус заявки\n\n` +
+    `🧾 Заявка: ${request.description}\n` +
+    `📋 Номер: ${request.request_number}\n` +
+    `✅ Новый статус: ${status}\n` +
+    `👤 Изменил: @${username || fullName}\n` +
+    `📅 ${new Date().toLocaleString("ru-RU")}`;
 
-  // Get profiles with telegram_user_id
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, telegram_user_id, full_name")
-    .in("id", userIds)
-    .not("telegram_user_id", "is", null);
-
-  if (profilesError) {
-    console.error("Error fetching profiles:", profilesError);
-    return;
-  }
-
-  if (!profiles || profiles.length === 0) {
-    console.log("No admins with telegram_user_id found");
-    return;
-  }
-
-  console.log(`Found ${profiles.length} admins to notify`);
-
-  // Send notification to each admin
-  for (const profile of profiles) {
-    const telegramUserId = profile.telegram_user_id;
-    if (!telegramUserId) continue;
-
-    const message = `🔔 Изменен статус заявки\n\n` +
-      `🧾 Заявка: ${request.description}\n` +
-      `📋 Номер: ${request.request_number}\n` +
-      `✅ Новый статус: ${status}\n` +
-      `👤 Изменил: @${username || fullName}\n` +
-      `📅 ${new Date().toLocaleString("ru-RU")}`;
-
-    try {
-      await sendTelegramRequest("sendMessage", {
-        chat_id: telegramUserId,
-        text: message,
-        parse_mode: "HTML",
-      });
-      console.log(`Notification sent to admin: ${profile.full_name}`);
-    } catch (error) {
-      console.error(`Failed to notify admin ${profile.full_name}:`, error);
-    }
+  try {
+    await sendTelegramRequest("sendMessage", {
+      chat_id: org.telegram_chat_id,
+      text: message,
+      parse_mode: "HTML",
+    });
+    console.log("Status change notification sent to group");
+  } catch (error) {
+    console.error("Failed to send status change notification to group:", error);
   }
 }
 
@@ -288,8 +261,8 @@ async function handleCallbackQuery(callbackQuery: any) {
   // Update status in database (except for rework, which happens after comment and exclude which deletes)
   if (data !== "rework" && data !== "confirm_exclude") {
     await updateRequestStatus(requests.id, newStatus, username, fullName);
-    // Notify admins about status change
-    await notifyAdmins(requests, newStatus, username, fullName);
+    // Notify group about status change
+    await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
   }
 
   // Update message
@@ -349,8 +322,8 @@ async function handleMessage(message: any) {
       console.error("Error updating request:", updateError);
     } else {
       console.log("Comment added to request:", request.id);
-      // Notify admins about rework status
-      await notifyAdmins(request, "На доработку", username, fullName);
+      // Notify group about rework status
+      await notifyGroupAboutStatusChange(request, "На доработку", username, fullName);
     }
   }
 }
