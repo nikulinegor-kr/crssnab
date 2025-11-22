@@ -7,7 +7,7 @@ const TELEGRAM_WEBHOOK_SECRET_TOKEN = Deno.env.get("TELEGRAM_WEBHOOK_SECRET_TOKE
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_WEBHOOK_SECRET_TOKEN || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!TELEGRAM_BOT_TOKEN || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing required environment variables");
 }
 
@@ -354,14 +354,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify Telegram secret token
-  const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
-  if (secretToken !== TELEGRAM_WEBHOOK_SECRET_TOKEN) {
-    console.error("Invalid or missing secret token. Expected token but received:", secretToken ? "incorrect token" : "no token");
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }), 
-      { status: 401, headers: corsHeaders }
-    );
+  // Verify Telegram secret token (if configured)
+  if (TELEGRAM_WEBHOOK_SECRET_TOKEN) {
+    const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
+    if (secretToken !== TELEGRAM_WEBHOOK_SECRET_TOKEN) {
+      console.error("Invalid secret token. Expected:", TELEGRAM_WEBHOOK_SECRET_TOKEN, "Received:", secretToken || "no token");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }), 
+        { status: 401, headers: corsHeaders }
+      );
+    }
+    console.log("Webhook request verified with secret token");
+  } else {
+    console.log("Webhook running without secret token verification (not recommended for production)");
   }
 
   console.log("Webhook request received from Telegram with valid secret token");
