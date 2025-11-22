@@ -73,36 +73,47 @@ async function updateRequestStatus(requestId: string, status: string, username: 
 async function notifyAdmins(request: any, status: string, username: string, fullName: string) {
   console.log("Notifying admins about status change:", { requestId: request.id, status });
   
-  // Get organization admins with telegram_user_id
-  const { data: admins, error: adminsError } = await supabase
+  // Get organization admins
+  const { data: userOrgs, error: userOrgsError } = await supabase
     .from("user_organizations")
-    .select(`
-      user_id,
-      profiles!inner (
-        telegram_user_id,
-        full_name
-      )
-    `)
+    .select("user_id")
     .eq("organization_id", request.organization_id)
-    .in("role", ["owner", "admin"])
-    .not("profiles.telegram_user_id", "is", null);
+    .in("role", ["owner", "admin"]);
 
-  if (adminsError) {
-    console.error("Error fetching admins:", adminsError);
+  if (userOrgsError) {
+    console.error("Error fetching user organizations:", userOrgsError);
     return;
   }
 
-  if (!admins || admins.length === 0) {
+  if (!userOrgs || userOrgs.length === 0) {
+    console.log("No admins found for organization");
+    return;
+  }
+
+  const userIds = userOrgs.map(uo => uo.user_id);
+
+  // Get profiles with telegram_user_id
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, telegram_user_id, full_name")
+    .in("id", userIds)
+    .not("telegram_user_id", "is", null);
+
+  if (profilesError) {
+    console.error("Error fetching profiles:", profilesError);
+    return;
+  }
+
+  if (!profiles || profiles.length === 0) {
     console.log("No admins with telegram_user_id found");
     return;
   }
 
-  console.log(`Found ${admins.length} admins to notify`);
+  console.log(`Found ${profiles.length} admins to notify`);
 
   // Send notification to each admin
-  for (const admin of admins) {
-    const profile = Array.isArray(admin.profiles) ? admin.profiles[0] : admin.profiles;
-    const telegramUserId = profile?.telegram_user_id;
+  for (const profile of profiles) {
+    const telegramUserId = profile.telegram_user_id;
     if (!telegramUserId) continue;
 
     const message = `🔔 Изменен статус заявки\n\n` +
@@ -118,9 +129,9 @@ async function notifyAdmins(request: any, status: string, username: string, full
         text: message,
         parse_mode: "HTML",
       });
-      console.log(`Notification sent to admin: ${profile?.full_name}`);
+      console.log(`Notification sent to admin: ${profile.full_name}`);
     } catch (error) {
-      console.error(`Failed to notify admin ${profile?.full_name}:`, error);
+      console.error(`Failed to notify admin ${profile.full_name}:`, error);
     }
   }
 }
