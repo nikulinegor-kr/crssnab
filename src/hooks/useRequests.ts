@@ -25,16 +25,22 @@ export interface Request {
   organization_id: string | null;
   created_at: string;
   updated_at: string;
+  archived: boolean;
 }
 
-export const useRequests = () => {
+export const useRequests = (includeArchived: boolean = false) => {
   return useQuery({
-    queryKey: ["requests"],
+    queryKey: ["requests", includeArchived],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("requests")
-        .select("*")
-        .order("request_date", { ascending: false });
+        .select("*");
+      
+      if (!includeArchived) {
+        query = query.eq("archived", false);
+      }
+      
+      const { data, error } = await query.order("request_date", { ascending: false });
 
       if (error) throw error;
       return data as Request[];

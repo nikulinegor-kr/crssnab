@@ -594,6 +594,7 @@ export type Database = {
         Row: {
           amount: number | null
           applicant: string | null
+          archived: boolean
           availability_delivery_time: string | null
           awaiting_comment_from: string | null
           comments: string | null
@@ -622,6 +623,7 @@ export type Database = {
         Insert: {
           amount?: number | null
           applicant?: string | null
+          archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
           comments?: string | null
@@ -650,6 +652,7 @@ export type Database = {
         Update: {
           amount?: number | null
           applicant?: string | null
+          archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
           comments?: string | null

@@ -173,12 +173,12 @@ export default function RequestDetail() {
     },
   });
 
-  // Mutation for deleting request
+  // Mutation for archiving request
   const deleteRequestMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
         .from("requests")
-        .delete()
+        .update({ archived: true })
         .eq("id", id);
       
       if (error) throw error;
@@ -186,17 +186,17 @@ export default function RequestDetail() {
     onSuccess: () => {
       toast({
         title: "Успешно",
-        description: "Заявка удалена",
+        description: "Заявка перемещена в архив",
       });
       navigate("/requests");
     },
     onError: (error) => {
       toast({
         title: "Ошибка",
-        description: "Не удалось удалить заявку",
+        description: "Не удалось переместить заявку в архив",
         variant: "destructive",
       });
-      console.error("Delete error:", error);
+      console.error("Archive error:", error);
     },
   });
 
@@ -975,34 +975,34 @@ export default function RequestDetail() {
               </CardContent>
             </Card>
 
-            {/* Delete Request */}
+            {/* Archive Request */}
             {canEdit && (
-              <Card className="glassmorphism border-border/40 border-destructive/20">
+              <Card className="glassmorphism border-border/40 border-primary/20">
                 <CardHeader>
-                  <CardTitle className="text-lg text-destructive">Опасная зона</CardTitle>
+                  <CardTitle className="text-lg">Архивация</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full gap-2">
+                      <Button variant="outline" className="w-full gap-2">
                         <Trash2 className="h-4 w-4" />
-                        Удалить заявку
+                        Переместить в архив
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                        <AlertDialogTitle>Переместить в архив?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Это действие нельзя отменить. Заявка #{request.request_number} будет удалена навсегда.
+                          Заявка #{request.request_number} будет перемещена в архив и не будет отображаться в основном списке.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Отмена</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteRequestMutation.mutate()}
-                          className="bg-destructive hover:bg-destructive/90"
+                          className="bg-primary hover:bg-primary/90"
                         >
-                          Удалить
+                          В архив
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
