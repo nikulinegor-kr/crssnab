@@ -344,7 +344,9 @@ const Requests = () => {
     const matchesApplicant =
       applicantFilter === "all" || request.applicant === applicantFilter;
     const matchesDelivered =
-      !hideDelivered || request.status !== "Доставлено";
+      activeTab === "archived"
+        ? true
+        : (!hideDelivered || request.status !== "Доставлено");
     return matchesSearch && matchesStatus && matchesPriority && matchesYear && matchesApplicant && matchesDelivered;
   });
 
@@ -683,7 +685,7 @@ const Requests = () => {
                       checked={selectedRequestIds.has(request.id)}
                       onCheckedChange={() => toggleRequestSelection(request.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-1 h-5 w-5 md:h-4 md:w-4"
+                      className="mt-1 h-7 w-7 md:h-4 md:w-4"
                     />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
