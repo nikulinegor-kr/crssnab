@@ -959,7 +959,7 @@ const Requests = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                        <div className="line-clamp-2">
+                        <div className="line-clamp-3">
                           {request.waybill_number || "-"}
                         </div>
                       </TableCell>
