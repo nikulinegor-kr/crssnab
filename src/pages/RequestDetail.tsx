@@ -361,7 +361,7 @@ export default function RequestDetail() {
           <span>/</span>
           <span>Список</span>
           <span>/</span>
-          <span className="text-foreground">#{request.request_number}</span>
+          <span className="text-foreground">#{request.description}</span>
         </div>
 
         {/* Header */}
@@ -369,7 +369,7 @@ export default function RequestDetail() {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="space-y-2">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                Заявка #{request.request_number}: {request.description}
+                Заявка: {request.description}
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span>Создано: {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}</span>

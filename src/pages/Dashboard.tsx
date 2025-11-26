@@ -268,14 +268,14 @@ const Dashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground truncate text-sm">
-                            {request.request_number}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {request.description}
-                          </p>
-                        </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground truncate text-sm">
+                      {request.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {new Date(request.request_date).toLocaleDateString("ru-RU")}
+                    </p>
+                  </div>
                         <span className={`text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap ${getStatusColor(request.status)} bg-opacity-10`}>
                           {request.status}
                         </span>
