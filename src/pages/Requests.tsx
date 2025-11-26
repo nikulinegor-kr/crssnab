@@ -806,7 +806,7 @@ const Requests = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {format(new Date(request.request_date), "dd.MM.yy")}
                         </div>
                       </TableCell>
@@ -839,68 +839,68 @@ const Requests = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.availability_delivery_time || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.contractor || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.invoice_number || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.payment_percentage !== null && request.payment_percentage !== undefined 
                             ? `${request.payment_percentage}%` 
                             : "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.shipment_date 
                             ? format(new Date(request.shipment_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.delivery_date 
                             ? format(new Date(request.delivery_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.transport_company || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.waybill_number || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.applicant || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell max-w-[120px]">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.comments || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.executor || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
-                        <div className="line-clamp-1">
+                        <div className="line-clamp-2">
                           {request.document_url ? "Есть" : "-"}
                         </div>
                       </TableCell>
