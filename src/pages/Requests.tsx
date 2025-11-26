@@ -5,6 +5,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -55,7 +56,8 @@ import { useQueryClient } from "@tanstack/react-query";
 const Requests = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { data: requests, isLoading } = useRequests();
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const { data: requests, isLoading } = useRequests(activeTab === "archived");
   const { canCreate } = useUserRole();
   const { currentOrgId } = useCurrentOrganization();
   const [searchQuery, setSearchQuery] = useState("");
@@ -313,7 +315,7 @@ const Requests = () => {
 
       toast({
         title: "Заявка перемещена в архив",
-        description: `Заявка "${requestToDelete.request_number}" перемещена в архив.`,
+        description: `Заявка "${requestToDelete.description}" перемещена в архив.`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
@@ -445,18 +447,26 @@ const Requests = () => {
         </Alert>
       )}
       
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Все заявки</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            {filteredRequests?.length || 0} заявок найдено
-            {selectedRequestIds.size > 0 && (
-              <span className="ml-2 text-primary font-medium">
-                • Выбрано: {selectedRequestIds.size}
-              </span>
-            )}
-          </p>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "archived")} className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Все заявки</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {filteredRequests?.length || 0} заявок найдено
+              {selectedRequestIds.size > 0 && (
+                <span className="ml-2 text-primary font-medium">
+                  • Выбрано: {selectedRequestIds.size}
+                </span>
+              )}
+            </p>
+          </div>
+          <TabsList>
+            <TabsTrigger value="active">Активные</TabsTrigger>
+            <TabsTrigger value="archived">Архив</TabsTrigger>
+          </TabsList>
         </div>
+        
+        <TabsContent value={activeTab} className="space-y-4 mt-0">
         
         <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
           {requests && requests.length > 0 && (
@@ -492,7 +502,6 @@ const Requests = () => {
             </CreateRequestDialog>
           )}
         </div>
-      </div>
 
       <Card className="p-3 sm:p-4 md:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:mb-6">
@@ -918,6 +927,8 @@ const Requests = () => {
           </div>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {canCreate && (
         <>
