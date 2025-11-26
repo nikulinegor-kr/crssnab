@@ -331,6 +331,75 @@ const Requests = () => {
     }
   };
 
+  const handleBulkDelete = () => {
+    if (selectedRequestIds.size === 0) return;
+    setRequestToDelete(null);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirmBulk = async () => {
+    if (selectedRequestIds.size === 0 || !currentOrgId) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("Пользователь не авторизован");
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
+
+      // Архивируем все выбранные заявки
+      for (const requestId of Array.from(selectedRequestIds)) {
+        const request = requests?.find(r => r.id === requestId);
+        if (!request) continue;
+
+        // Логируем архивацию
+        await supabase.rpc("log_audit_event", {
+          _organization_id: currentOrgId,
+          _action: "archive",
+          _entity_type: "request",
+          _entity_id: requestId,
+          _old_values: {
+            request_number: request.request_number,
+            description: request.description,
+            status: request.status,
+            archived_by: userName,
+            archive_reason: "Перемещена в архив (массовое действие)"
+          }
+        });
+
+        // Архивируем заявку
+        await supabase
+          .from("requests")
+          .update({ archived: true })
+          .eq("id", requestId);
+      }
+
+      toast({
+        title: "Заявки перемещены в архив",
+        description: `Перемещено заявок: ${selectedRequestIds.size}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setShowDeleteDialog(false);
+      setSelectedRequestIds(new Set());
+    } catch (error) {
+      console.error("Error archiving requests:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось переместить заявки в архив",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredRequests = requests?.filter((request) => {
     const matchesSearch =
       request.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -470,40 +539,51 @@ const Requests = () => {
         
         <TabsContent value={activeTab} className="space-y-4 mt-0">
         
-        <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
-          {requests && requests.length > 0 && (
-            <>
-              <ExcelExportButton 
-                requests={requests} 
-                filteredRequests={filteredRequests}
-              />
-              <LabelExportButton 
-                selectedRequests={Array.from(selectedRequestIds).map(id => 
-                  requests.find(r => r.id === id)!
-                ).filter(Boolean)}
-              />
-            </>
-          )}
-          {selectedRequestIds.size > 0 && (
-            <Button
-              onClick={handleSendToTelegram}
-              disabled={isSending}
-              className="gap-2 w-full sm:w-auto"
-              size="sm"
-            >
-              <Send className="h-4 w-4" />
-              <span>Отправить в Telegram</span>
-            </Button>
-          )}
-          {canCreate && (
-            <CreateRequestDialog>
-              <Button className="gap-2 w-full sm:w-auto" size="sm">
-                <Plus className="h-4 w-4" />
-                <span>Создать заявку</span>
-              </Button>
-            </CreateRequestDialog>
-          )}
-        </div>
+         <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+           {requests && requests.length > 0 && (
+             <>
+               <ExcelExportButton 
+                 requests={requests} 
+                 filteredRequests={filteredRequests}
+               />
+               <LabelExportButton 
+                 selectedRequests={Array.from(selectedRequestIds).map(id => 
+                   requests.find(r => r.id === id)!
+                 ).filter(Boolean)}
+               />
+             </>
+           )}
+           {selectedRequestIds.size > 0 && (
+             <>
+               <Button
+                 onClick={handleSendToTelegram}
+                 disabled={isSending}
+                 className="gap-2 w-full sm:w-auto"
+                 size="sm"
+               >
+                 <Send className="h-4 w-4" />
+                 <span>Отправить в Telegram</span>
+               </Button>
+               <Button
+                 onClick={handleBulkDelete}
+                 variant="destructive"
+                 className="gap-2 w-full sm:w-auto"
+                 size="sm"
+               >
+                 <Trash2 className="h-4 w-4" />
+                 <span>Удалить выбранные ({selectedRequestIds.size})</span>
+               </Button>
+             </>
+           )}
+           {canCreate && (
+             <CreateRequestDialog>
+               <Button className="gap-2 w-full sm:w-auto" size="sm">
+                 <Plus className="h-4 w-4" />
+                 <span>Создать заявку</span>
+               </Button>
+             </CreateRequestDialog>
+           )}
+         </div>
 
       <Card className="p-3 sm:p-4 md:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:mb-6">
@@ -763,7 +843,7 @@ const Requests = () => {
               <Table className="w-full table-auto border-collapse">
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow className="bg-muted/50 border-b">
-                    <TableHead className="w-10 text-center border-r p-1">
+                    <TableHead className="w-10 text-center border-r p-2">
                       <div className="flex items-center justify-center">
                         <Checkbox
                           checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
@@ -771,23 +851,22 @@ const Requests = () => {
                         />
                       </div>
                     </TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Дата</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Заявка</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Приоритет</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Статус</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Наличие</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Контрагент</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Счёт</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Оплата</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ДатаО</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ДатаД</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ТК</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">№ ТТН</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs">Заявитель</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Комментарий</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Исполнитель</TableHead>
-                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Счёт/КП</TableHead>
-                    <TableHead className="text-center p-1 text-xs">Действия</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Дата</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Заявка</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Приоритет</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Статус</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">Наличие</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Контрагент</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">Счёт</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Оплата</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">ДатаО</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">ДатаД</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">ТК</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">№ ТТН</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm">Заявитель</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">Комментарий</TableHead>
+                    <TableHead className="text-center border-r p-2 text-sm hidden xl:table-cell">Исполнитель</TableHead>
+                    <TableHead className="text-center p-2 text-sm hidden xl:table-cell">Счёт/КП</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -797,7 +876,7 @@ const Requests = () => {
                       className="hover:bg-muted/30 cursor-pointer border-b"
                       onClick={(e) => handleRowClick(request, e)}
                     >
-                      <TableCell className="text-xs text-center border-r p-1" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="text-sm text-center border-r p-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center">
                           <Checkbox
                             checked={selectedRequestIds.has(request.id)}
@@ -805,20 +884,20 @@ const Requests = () => {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1">
+                      <TableCell className="text-sm text-center border-r p-2">
                         <div className="line-clamp-2">
                           {format(new Date(request.request_date), "dd.MM.yy")}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 max-w-[120px]">
+                      <TableCell className="text-sm text-center border-r p-2 max-w-[150px]">
                         <div className="line-clamp-2">
                           {request.description}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1">
+                      <TableCell className="text-sm text-center border-r p-2">
                         <Badge 
                           variant="outline" 
-                          className="whitespace-nowrap text-[10px] px-1 py-0"
+                          className="whitespace-nowrap text-xs px-2 py-1"
                           style={{ 
                             borderColor: getPriorityColor(request.priority || "Планово"),
                             color: getPriorityColor(request.priority || "Планово")
@@ -827,9 +906,9 @@ const Requests = () => {
                           {request.priority || "Планово"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1">
+                      <TableCell className="text-sm text-center border-r p-2">
                         <Badge 
-                          className="whitespace-nowrap text-[10px] px-1 py-0"
+                          className="whitespace-nowrap text-xs px-2 py-1"
                           style={{ 
                             backgroundColor: getStatusColor(request.status),
                             color: "white"
@@ -838,81 +917,71 @@ const Requests = () => {
                           {request.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.availability_delivery_time || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
+                      <TableCell className="text-sm text-center border-r p-2 max-w-[120px]">
                         <div className="line-clamp-2">
                           {request.contractor || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.invoice_number || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1">
+                      <TableCell className="text-sm text-center border-r p-2">
                         <div className="line-clamp-2">
                           {request.payment_percentage !== null && request.payment_percentage !== undefined 
                             ? `${request.payment_percentage}%` 
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.shipment_date 
                             ? format(new Date(request.shipment_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.delivery_date 
                             ? format(new Date(request.delivery_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.transport_company || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.waybill_number || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
+                      <TableCell className="text-sm text-center border-r p-2 max-w-[120px]">
                         <div className="line-clamp-2">
                           {request.applicant || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell max-w-[120px]">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell max-w-[150px]">
                         <div className="line-clamp-2">
                           {request.comments || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.executor || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                      <TableCell className="text-sm text-center p-2 hidden xl:table-cell">
                         <div className="line-clamp-2">
                           {request.document_url ? "Есть" : "-"}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-center p-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => handleDeleteClick(request, e)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -965,30 +1034,21 @@ const Requests = () => {
         />
       )}
 
-      {selectedRequestIds.size > 0 && (
-        <Button
-          onClick={handleSendToTelegram}
-          disabled={isSending}
-          className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 bg-primary hover:bg-primary/90"
-          size="icon"
-        >
-          <Send className="h-6 w-6" />
-        </Button>
-      )}
-
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Переместить в архив</AlertDialogTitle>
             <AlertDialogDescription>
-              Вы действительно хотите переместить заявку "{requestToDelete?.description}" в архив?
-              Архивированные заявки не будут отображаться в основном списке.
+              {requestToDelete 
+                ? `Вы действительно хотите переместить заявку "${requestToDelete.description}" в архив? Архивированные заявки не будут отображаться в основном списке.`
+                : `Вы действительно хотите переместить ${selectedRequestIds.size} заявок в архив? Архивированные заявки не будут отображаться в основном списке.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={requestToDelete ? handleDeleteConfirm : handleDeleteConfirmBulk}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               В архив
