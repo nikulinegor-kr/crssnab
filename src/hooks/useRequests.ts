@@ -28,17 +28,14 @@ export interface Request {
   archived: boolean;
 }
 
-export const useRequests = (includeArchived: boolean = false) => {
+export const useRequests = (showArchived: boolean = false) => {
   return useQuery({
-    queryKey: ["requests", includeArchived],
+    queryKey: ["requests", showArchived],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from("requests")
-        .select("*");
-      
-      if (!includeArchived) {
-        query = query.eq("archived", false);
-      }
+        .select("*")
+        .eq("archived", showArchived);
       
       const { data, error } = await query.order("request_date", { ascending: false });
 
