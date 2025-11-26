@@ -763,7 +763,7 @@ const Requests = () => {
               <Table className="w-full table-auto border-collapse">
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow className="bg-muted/50 border-b">
-                    <TableHead className="w-12 text-center border-r">
+                    <TableHead className="w-10 text-center border-r p-1">
                       <div className="flex items-center justify-center">
                         <Checkbox
                           checked={selectedRequestIds.size === filteredRequests?.length && filteredRequests.length > 0}
@@ -771,23 +771,23 @@ const Requests = () => {
                         />
                       </div>
                     </TableHead>
-                    <TableHead className="text-center border-r">Дата</TableHead>
-                    <TableHead className="text-center border-r">Заявка</TableHead>
-                    <TableHead className="text-center border-r">Приоритет</TableHead>
-                    <TableHead className="text-center border-r">Статус</TableHead>
-                    <TableHead className="text-center border-r">Наличие</TableHead>
-                    <TableHead className="text-center border-r">Контрагент</TableHead>
-                    <TableHead className="text-center border-r">Счёт</TableHead>
-                    <TableHead className="text-center border-r">Оплата</TableHead>
-                    <TableHead className="text-center border-r">ДатаО</TableHead>
-                    <TableHead className="text-center border-r">ДатаД</TableHead>
-                    <TableHead className="text-center border-r">ТК</TableHead>
-                    <TableHead className="text-center border-r">№ ТТН</TableHead>
-                    <TableHead className="text-center border-r">Заявитель</TableHead>
-                    <TableHead className="text-center border-r">Комментарий</TableHead>
-                    <TableHead className="text-center border-r">Исполнитель</TableHead>
-                    <TableHead className="text-center border-r">Счёт/КП</TableHead>
-                    <TableHead className="text-center">Действия</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Дата</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Заявка</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Приоритет</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Статус</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Наличие</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Контрагент</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Счёт</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Оплата</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ДатаО</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ДатаД</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">ТК</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">№ ТТН</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs">Заявитель</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Комментарий</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Исполнитель</TableHead>
+                    <TableHead className="text-center border-r p-1 text-xs hidden xl:table-cell">Счёт/КП</TableHead>
+                    <TableHead className="text-center p-1 text-xs">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -797,7 +797,7 @@ const Requests = () => {
                       className="hover:bg-muted/30 cursor-pointer border-b"
                       onClick={(e) => handleRowClick(request, e)}
                     >
-                      <TableCell className="text-xs text-center border-r" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="text-xs text-center border-r p-1" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center">
                           <Checkbox
                             checked={selectedRequestIds.has(request.id)}
@@ -805,20 +805,20 @@ const Requests = () => {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1">
+                        <div className="line-clamp-1">
                           {format(new Date(request.request_date), "dd.MM.yy")}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
+                      <TableCell className="text-xs text-center border-r p-1 max-w-[120px]">
                         <div className="line-clamp-2">
                           {request.description}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
+                      <TableCell className="text-xs text-center border-r p-1">
                         <Badge 
                           variant="outline" 
-                          className="whitespace-nowrap"
+                          className="whitespace-nowrap text-[10px] px-1 py-0"
                           style={{ 
                             borderColor: getPriorityColor(request.priority || "Планово"),
                             color: getPriorityColor(request.priority || "Планово")
@@ -827,9 +827,9 @@ const Requests = () => {
                           {request.priority || "Планово"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
+                      <TableCell className="text-xs text-center border-r p-1">
                         <Badge 
-                          className="whitespace-nowrap"
+                          className="whitespace-nowrap text-[10px] px-1 py-0"
                           style={{ 
                             backgroundColor: getStatusColor(request.status),
                             color: "white"
@@ -838,80 +838,80 @@ const Requests = () => {
                           {request.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.availability_delivery_time || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
+                        <div className="line-clamp-1">
                           {request.contractor || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.invoice_number || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1">
+                        <div className="line-clamp-1">
                           {request.payment_percentage !== null && request.payment_percentage !== undefined 
                             ? `${request.payment_percentage}%` 
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.shipment_date 
                             ? format(new Date(request.shipment_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.delivery_date 
                             ? format(new Date(request.delivery_date), "dd.MM.yy")
                             : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.transport_company || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.waybill_number || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 max-w-[100px]">
+                        <div className="line-clamp-1">
                           {request.applicant || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell max-w-[120px]">
+                        <div className="line-clamp-1">
                           {request.comments || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.executor || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center border-r">
-                        <div className="line-clamp-2">
+                      <TableCell className="text-xs text-center border-r p-1 hidden xl:table-cell">
+                        <div className="line-clamp-1">
                           {request.document_url ? "Есть" : "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="text-xs text-center p-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={(e) => handleDeleteClick(request, e)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </TableCell>
                     </TableRow>
