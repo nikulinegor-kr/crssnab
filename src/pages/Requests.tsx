@@ -958,8 +958,8 @@ const Requests = () => {
                           {request.transport_company || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                        <div className="line-clamp-3">
+                      <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell max-w-[100px]">
+                        <div className="truncate">
                           {request.waybill_number || "-"}
                         </div>
                       </TableCell>
