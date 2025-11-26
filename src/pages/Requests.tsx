@@ -517,7 +517,7 @@ const Requests = () => {
             />
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-between text-sm">
@@ -669,7 +669,7 @@ const Requests = () => {
         ) : filteredRequests && filteredRequests.length > 0 ? (
           <>
             {/* Mobile and Tablet Card View */}
-            <div className="xl:hidden space-y-3">
+            <div className="lg:hidden space-y-3">
               {filteredRequests.map((request) => (
                 <Card 
                   key={request.id} 
@@ -685,7 +685,7 @@ const Requests = () => {
                       checked={selectedRequestIds.has(request.id)}
                       onCheckedChange={() => toggleRequestSelection(request.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-1 h-7 w-7 md:h-4 md:w-4"
+                      className="mt-1 h-7 w-7 lg:h-4 lg:w-4"
                     />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -759,7 +759,7 @@ const Requests = () => {
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden xl:block rounded-md border overflow-x-auto">
+            <div className="hidden lg:block rounded-md border overflow-x-auto">
               <Table className="w-full table-auto border-collapse">
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow className="bg-muted/50 border-b">
