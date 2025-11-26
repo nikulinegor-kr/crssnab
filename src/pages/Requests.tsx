@@ -288,42 +288,42 @@ const Requests = () => {
 
       const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
 
-      // Логируем удаление в audit_logs
+      // Логируем архивацию в audit_logs
       await supabase.rpc("log_audit_event", {
         _organization_id: currentOrgId,
-        _action: "delete",
+        _action: "archive",
         _entity_type: "request",
         _entity_id: requestToDelete.id,
         _old_values: {
           request_number: requestToDelete.request_number,
           description: requestToDelete.description,
           status: requestToDelete.status,
-          deleted_by: userName,
-          deletion_reason: "Исключена по просьбе заявителя"
+          archived_by: userName,
+          archive_reason: "Перемещена в архив"
         }
       });
 
-      // Удаляем заявку
+      // Архивируем заявку вместо удаления
       const { error } = await supabase
         .from("requests")
-        .delete()
+        .update({ archived: true })
         .eq("id", requestToDelete.id);
 
       if (error) throw error;
 
       toast({
-        title: "Заявка исключена",
-        description: `Заявка "${requestToDelete.request_number}" исключена по просьбе заявителя. Исключил: ${userName}`,
+        title: "Заявка перемещена в архив",
+        description: `Заявка "${requestToDelete.request_number}" перемещена в архив.`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       setShowDeleteDialog(false);
       setRequestToDelete(null);
     } catch (error) {
-      console.error("Error deleting request:", error);
+      console.error("Error archiving request:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось исключить заявку",
+        description: "Не удалось переместить заявку в архив",
         variant: "destructive",
       });
     }
@@ -966,19 +966,19 @@ const Requests = () => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Подтверждение удаления</AlertDialogTitle>
+            <AlertDialogTitle>Переместить в архив</AlertDialogTitle>
             <AlertDialogDescription>
-              Действительно ли исключить заявку "{requestToDelete?.description}"?
-              Это действие нельзя будет отменить.
+              Вы действительно хотите переместить заявку "{requestToDelete?.description}" в архив?
+              Архивированные заявки не будут отображаться в основном списке.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Исключить
+              В архив
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
