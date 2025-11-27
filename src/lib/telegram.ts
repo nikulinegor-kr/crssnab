@@ -1,12 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-export async function notifyTelegram(requestId: string) {
+export async function notifyTelegram(requestId: string, mode: "auto" | "send" | "edit" = "send") {
   try {
-    console.log("Sending Telegram notification for request:", requestId);
+    console.log("Sending Telegram notification for request:", requestId, "mode:", mode);
     
     const { data, error } = await supabase.functions.invoke("notify-telegram", {
-      body: { requestId },
+      body: { requestId, mode },
     });
 
     if (error) {
