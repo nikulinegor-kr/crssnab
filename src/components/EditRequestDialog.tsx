@@ -718,8 +718,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     <FormLabel>Контрагент</FormLabel>
                     <div className="flex gap-2">
                       <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value || ""} 
+                        onValueChange={(value) => field.onChange(value)} 
                         disabled={isViewer}
                       >
                         <FormControl>
@@ -740,7 +739,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           placeholder="или введите название" 
                           disabled={isViewer} 
                           className="flex-1"
-                          {...field} 
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                     </div>
@@ -757,8 +757,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     <FormLabel>Наличие / Сроки поставки</FormLabel>
                     <div className="flex gap-2">
                       <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value || ""} 
+                        onValueChange={(value) => field.onChange(value)} 
                         disabled={isViewer}
                       >
                         <FormControl>
@@ -780,7 +779,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           placeholder="или введите сроки" 
                           disabled={isViewer} 
                           className="flex-1"
-                          {...field} 
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                     </div>
