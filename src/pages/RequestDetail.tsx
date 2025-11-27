@@ -22,7 +22,9 @@ import {
   CalendarIcon,
   Upload,
   X,
-  Trash2
+  Trash2,
+  Send,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -34,6 +36,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { notifyTelegram } from "@/lib/telegram";
 
 interface Activity {
   id: string;
@@ -65,6 +68,7 @@ export default function RequestDetail() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -207,8 +211,23 @@ export default function RequestDetail() {
 
     setIsUploadingPhoto(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${id}-${Date.now()}.${fileExt}`;
+      // Sanitize filename to prevent upload errors
+      const sanitizeFilename = (filename: string): string => {
+        const extension = filename.split('.').pop() || '';
+        const sanitized = filename
+          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII
+          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars
+          .replace(/_{2,}/g, '_') // Replace multiple underscores
+          .replace(/^_+|_+$/g, ''); // Trim underscores
+        
+        if (!sanitized || sanitized === `.${extension}`) {
+          return `file_${Date.now()}.${extension}`;
+        }
+        return sanitized;
+      };
+
+      const sanitizedName = sanitizeFilename(file.name);
+      const fileName = `${id}-${Date.now()}-${sanitizedName}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -240,8 +259,23 @@ export default function RequestDetail() {
 
     setIsUploadingDoc(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${id}-${Date.now()}.${fileExt}`;
+      // Sanitize filename to prevent upload errors
+      const sanitizeFilename = (filename: string): string => {
+        const extension = filename.split('.').pop() || '';
+        const sanitized = filename
+          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII
+          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars
+          .replace(/_{2,}/g, '_') // Replace multiple underscores
+          .replace(/^_+|_+$/g, ''); // Trim underscores
+        
+        if (!sanitized || sanitized === `.${extension}`) {
+          return `file_${Date.now()}.${extension}`;
+        }
+        return sanitized;
+      };
+
+      const sanitizedName = sanitizeFilename(file.name);
+      const fileName = `${id}-${Date.now()}-${sanitizedName}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -297,6 +331,30 @@ export default function RequestDetail() {
 
   const handleBackClick = () => {
     navigate("/requests");
+  };
+
+  const handleSendTelegram = async () => {
+    if (!id) return;
+    
+    setIsSendingTelegram(true);
+    try {
+      const success = await notifyTelegram(id);
+      if (success) {
+        toast({
+          title: "Успешно",
+          description: "Уведомление отправлено в Telegram",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending telegram:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить уведомление",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTelegram(false);
+    }
   };
 
   if (isLoading) {
@@ -380,10 +438,25 @@ export default function RequestDetail() {
               </div>
             </div>
             {canEdit && (
-              <Button onClick={handleEditClick} variant="outline" className="gap-2">
-                <Edit className="h-4 w-4" />
-                Редактировать
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleEditClick} variant="outline" className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  Редактировать
+                </Button>
+                <Button 
+                  onClick={handleSendTelegram} 
+                  variant="outline" 
+                  className="gap-2"
+                  disabled={isSendingTelegram}
+                >
+                  {isSendingTelegram ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Отправить в Telegram
+                </Button>
+              </div>
             )}
           </div>
         </div>
