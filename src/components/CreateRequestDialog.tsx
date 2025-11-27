@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -137,6 +137,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   } | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [isAddingSupplier, setIsAddingSupplier] = useState(false);
+  const [newSupplierName, setNewSupplierName] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -657,11 +659,109 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            className="shrink-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Добавить контрагента</DialogTitle>
+                            <DialogDescription>
+                              Создайте нового контрагента для быстрого выбора
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="supplier-name">Название</Label>
+                              <Input
+                                id="supplier-name"
+                                value={newSupplierName}
+                                onChange={(e) => setNewSupplierName(e.target.value)}
+                                placeholder="Название контрагента"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setIsAddingSupplier(false);
+                                setNewSupplierName("");
+                              }}
+                            >
+                              Отмена
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={async () => {
+                                if (!newSupplierName.trim()) {
+                                  toast({
+                                    title: "Ошибка",
+                                    description: "Введите название контрагента",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+
+                                try {
+                                  const { data: userData } = await supabase.auth.getUser();
+                                  
+                                  const { error } = await supabase
+                                    .from("suppliers")
+                                    .insert({
+                                      name: newSupplierName.trim(),
+                                      organization_id: currentOrgId || "",
+                                      created_by: userData.user?.id,
+                                      status: "Активный",
+                                      category: "Другое",
+                                    });
+
+                                  if (error) throw error;
+
+                                  toast({
+                                    title: "Успешно",
+                                    description: "Контрагент добавлен",
+                                  });
+
+                                  // Обновляем список контрагентов
+                                  queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                                  
+                                  // Выбираем нового контрагента
+                                  field.onChange(newSupplierName.trim());
+                                  
+                                  setIsAddingSupplier(false);
+                                  setNewSupplierName("");
+                                } catch (error) {
+                                  console.error("Error adding supplier:", error);
+                                  toast({
+                                    title: "Ошибка",
+                                    description: "Не удалось добавить контрагента",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                            >
+                              Добавить
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
                       <FormControl>
                         <Input 
                           placeholder="или введите название" 
                           className="flex-1"
-                          {...field} 
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                     </div>
