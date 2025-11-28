@@ -14,62 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
-      appendix_data: {
+      agent_report_data: {
         Row: {
-          amount: number | null
-          comments: string | null
-          contractor: string | null
+          company_address: string | null
+          company_name: string
+          company_phone: string | null
+          contract_date: string
+          contract_number: string
           created_at: string
           created_by: string | null
-          delivery_date: string | null
-          description: string | null
           id: string
           month: number
           organization_id: string
-          request_number: string | null
-          row_number: number
-          sheet_type: string
-          status: string | null
+          period_end: string
+          period_start: string
+          recipient_name: string | null
+          recipient_position: string | null
+          report_number: string
           updated_at: string
           year: number
         }
         Insert: {
-          amount?: number | null
-          comments?: string | null
-          contractor?: string | null
+          company_address?: string | null
+          company_name: string
+          company_phone?: string | null
+          contract_date: string
+          contract_number: string
           created_at?: string
           created_by?: string | null
-          delivery_date?: string | null
-          description?: string | null
           id?: string
           month: number
           organization_id: string
-          request_number?: string | null
-          row_number: number
-          sheet_type: string
-          status?: string | null
+          period_end: string
+          period_start: string
+          recipient_name?: string | null
+          recipient_position?: string | null
+          report_number: string
           updated_at?: string
           year: number
         }
         Update: {
-          amount?: number | null
-          comments?: string | null
-          contractor?: string | null
+          company_address?: string | null
+          company_name?: string
+          company_phone?: string | null
+          contract_date?: string
+          contract_number?: string
           created_at?: string
           created_by?: string | null
-          delivery_date?: string | null
-          description?: string | null
           id?: string
           month?: number
           organization_id?: string
-          request_number?: string | null
-          row_number?: number
-          sheet_type?: string
-          status?: string | null
+          period_end?: string
+          period_start?: string
+          recipient_name?: string | null
+          recipient_position?: string | null
+          report_number?: string
           updated_at?: string
           year?: number
         }
         Relationships: []
+      }
+      agent_report_rows: {
+        Row: {
+          amount: number | null
+          contractor: string | null
+          created_at: string
+          formula: string | null
+          id: string
+          invoice_number: string | null
+          report_id: string
+          row_number: number
+          tmc: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          contractor?: string | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          invoice_number?: string | null
+          report_id: string
+          row_number: number
+          tmc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          contractor?: string | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          invoice_number?: string | null
+          report_id?: string
+          row_number?: number
+          tmc?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_report_rows_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "agent_report_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
