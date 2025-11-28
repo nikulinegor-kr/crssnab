@@ -79,7 +79,7 @@ export const ReportTable = ({ rows, onChange }: ReportTableProps) => {
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={row.row_number} className={index % 2 === 0 ? "bg-green-50" : "bg-red-50"}>
+              <tr key={row.row_number} className="bg-background">
                 <td className="border border-border p-2 text-center">{row.row_number}</td>
                 <td className="border border-border p-1">
                   <Textarea
