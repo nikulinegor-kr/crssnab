@@ -40,30 +40,40 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       // Prepare data for Excel
       const excelData: any[] = [];
       
-      // Header
-      excelData.push(["ПРИЛОЖЕНИЕ №1"]);
-      excelData.push([`К агентскому договору № ${headerData.contract_number} от ${formattedContractDate}`]);
-      excelData.push([]);
-      excelData.push([`Кому: ${headerData.company_name}`]);
-      excelData.push([headerData.company_address]);
-      excelData.push([headerData.company_phone]);
-      excelData.push([]);
-      excelData.push(["Отчет агента"]);
-      excelData.push([`по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`]);
-      excelData.push([`За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`]);
-      excelData.push([]);
+      // Header rows (all centered)
+      excelData.push([{ v: "ПРИЛОЖЕНИЕ №1", s: { alignment: { horizontal: 'center' } } }]);
+      excelData.push([{ v: `К агентскому договору № ${headerData.contract_number} от ${formattedContractDate}`, s: { alignment: { horizontal: 'center' } } }]);
+      excelData.push([""]);
+      
+      // Address block (right aligned)
+      excelData.push([{ v: `Кому: ${headerData.company_name}`, s: { alignment: { horizontal: 'right' } } }]);
+      excelData.push([{ v: headerData.company_address, s: { alignment: { horizontal: 'right' } } }]);
+      excelData.push([{ v: headerData.company_phone, s: { alignment: { horizontal: 'right' } } }]);
+      excelData.push([""]);
+      
+      // Report title (centered)
+      excelData.push([{ v: "Отчет агента", s: { alignment: { horizontal: 'center' }, font: { bold: true } } }]);
+      excelData.push([{ v: `по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`, s: { alignment: { horizontal: 'center' } } }]);
+      excelData.push([{ v: `За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`, s: { alignment: { horizontal: 'center' } } }]);
+      excelData.push([""]);
 
-      // Table headers
-      excelData.push(["№", "ТМЦ", "Контрагент", "№ Счета", "Сумма закупа"]);
+      // Table headers (centered)
+      excelData.push([
+        { v: "№", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
+        { v: "ТМЦ", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
+        { v: "Контрагент", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
+        { v: "№ Счета", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
+        { v: "Сумма закупа", s: { alignment: { horizontal: 'center' }, font: { bold: true } } }
+      ]);
 
       // Table rows
       rows.forEach(row => {
         excelData.push([
-          row.row_number,
-          row.tmc,
-          row.contractor,
-          row.invoice_number,
-          row.amount
+          { v: row.row_number, s: { alignment: { horizontal: 'center' } } },
+          { v: row.tmc, s: { alignment: { horizontal: 'left' } } },
+          { v: row.contractor, s: { alignment: { horizontal: 'left' } } },
+          { v: row.invoice_number, s: { alignment: { horizontal: 'center' } } },
+          { v: row.amount, s: { alignment: { horizontal: 'right' }, numFmt: '0.00' } }
         ]);
       });
 
@@ -72,7 +82,12 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         const amount = typeof row.amount === 'number' ? row.amount : parseFloat(String(row.amount)) || 0;
         return sum + amount;
       }, 0);
-      excelData.push(["ИТОГО:", "", "", "", total]);
+      
+      excelData.push([
+        "", "", "",
+        { v: "ИТОГО", s: { alignment: { horizontal: 'left' }, font: { bold: true } } },
+        { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00' } }
+      ]);
 
       // Commission row
       let commission = 0;
@@ -83,58 +98,79 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       } else {
         commission = total * 0.02;
       }
+      
       const displayMonthNames = [
         "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
         "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
       ];
-      excelData.push([`Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)} г. за ${displayMonthNames[month - 1]} ${year} г.:`, "", "", "", commission]);
+      
+      excelData.push([
+        { v: `Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)} г. за ${displayMonthNames[month - 1]} ${year} г.:`, s: { alignment: { horizontal: 'left' }, font: { bold: true } } },
+        "", "",
+        "",
+        { v: commission, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00' } }
+      ]);
 
-      excelData.push([]);
-      excelData.push(["Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора."]);
-      excelData.push([]);
-      excelData.push([]);
-      excelData.push(["Отчет сдал: _____________________", "", "", "Отчет принял: _____________________"]);
-      excelData.push(["ИП Никулин Егор Викторович", "", "", headerData.recipient_position]);
-      excelData.push(["", "", "", headerData.recipient_name]);
+      excelData.push([""]);
+      excelData.push([{ v: "Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора.", s: { alignment: { horizontal: 'left' } } }]);
+      excelData.push([""]);
+      excelData.push([""]);
+      
+      // Signature block
+      excelData.push([
+        { v: "Отчет сдал: _____________________", s: { alignment: { horizontal: 'left' } } },
+        "", "",
+        { v: "Отчет принял: _____________________", s: { alignment: { horizontal: 'left' } } }
+      ]);
+      excelData.push([
+        { v: "ИП Никулин Егор Викторович", s: { alignment: { horizontal: 'left' } } },
+        "", "",
+        { v: headerData.recipient_position, s: { alignment: { horizontal: 'left' } } }
+      ]);
+      excelData.push([
+        "", "", "",
+        { v: headerData.recipient_name, s: { alignment: { horizontal: 'left' } } }
+      ]);
 
-      // Create worksheet
+      // Create worksheet from array of arrays
       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
-      // Merge cells and set alignment for header rows
-      worksheet['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Row 1: A-E (ПРИЛОЖЕНИЕ №1)
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, // Row 2: A-E (К агентскому договору)
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Row 3: A-E (empty / Кому)
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }, // Row 4: A-E (Address)
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }, // Row 5: A-E (Phone)
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } }, // Row 6: A-E (empty)
-        { s: { r: 6, c: 0 }, e: { r: 6, c: 4 } }, // Row 7: A-E (Отчет агента)
-        { s: { r: 7, c: 0 }, e: { r: 7, c: 4 } }, // Row 8: A-E (по агентскому договору)
-        { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } }, // Row 9: A-E (За период)
-        { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } }, // Row 10: A-E (empty after периода)
+      // Merge cells for header rows
+      const merges = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },  // ПРИЛОЖЕНИЕ №1
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },  // К агентскому договору
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } },  // Кому
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } },  // Address
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } },  // Phone
+        { s: { r: 7, c: 0 }, e: { r: 7, c: 4 } },  // Отчет агента
+        { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } },  // по договору
+        { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } },  // За период
       ];
-
-      // Set alignment for merged cells
-      // Row 1 & 2: center
-      worksheet['A1'] = { v: excelData[0][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      worksheet['A2'] = { v: excelData[1][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      // Row 3-6: right align (Кому и адресные строки)
-      worksheet['A3'] = { v: excelData[2][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
-      worksheet['A4'] = { v: excelData[3][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
-      worksheet['A5'] = { v: excelData[4][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
-      worksheet['A6'] = { v: excelData[5][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
-      // Row 7-9: center (Отчет, по договору, За период)
-      worksheet['A7'] = { v: excelData[6][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      worksheet['A8'] = { v: excelData[7][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      worksheet['A9'] = { v: excelData[8][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      worksheet['A10'] = { v: excelData[9][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
+      
+      // Merge commission row text
+      const commissionRowIndex = 11 + rows.length + 1; // After header (11) + rows + ИТОГО (1)
+      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 3 } });
+      
+      // Merge bottom text
+      const bottomTextRow = commissionRowIndex + 2;
+      merges.push({ s: { r: bottomTextRow, c: 0 }, e: { r: bottomTextRow, c: 4 } });
+      
+      // Merge signature blocks
+      const signatureRow = bottomTextRow + 3;
+      merges.push({ s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 2 } });
+      merges.push({ s: { r: signatureRow, c: 3 }, e: { r: signatureRow, c: 4 } });
+      merges.push({ s: { r: signatureRow + 1, c: 0 }, e: { r: signatureRow + 1, c: 2 } });
+      merges.push({ s: { r: signatureRow + 1, c: 3 }, e: { r: signatureRow + 1, c: 4 } });
+      merges.push({ s: { r: signatureRow + 2, c: 3 }, e: { r: signatureRow + 2, c: 4 } });
+      
+      worksheet['!merges'] = merges;
 
       // Set column widths
       worksheet['!cols'] = [
         { wch: 5 },   // №
         { wch: 40 },  // ТМЦ
         { wch: 30 },  // Контрагент
-        { wch: 15 },  // № Счета
+        { wch: 20 },  // № Счета
         { wch: 15 }   // Сумма закупа
       ];
 
