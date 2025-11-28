@@ -52,6 +52,17 @@ export const ReportTable = ({ rows, onChange }: ReportTableProps) => {
     }, 0);
   };
 
+  const calculateCommission = () => {
+    const total = calculateTotal();
+    if (total >= 10000000) {
+      return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+    } else if (total >= 5000000) {
+      return 5000000 * 0.02 + (total - 5000000) * 0.01;
+    } else {
+      return total * 0.02;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
@@ -115,6 +126,11 @@ export const ReportTable = ({ rows, onChange }: ReportTableProps) => {
             <tr className="bg-muted font-bold">
               <td colSpan={4} className="border border-border p-2 text-right">ИТОГО:</td>
               <td className="border border-border p-2 text-right">{calculateTotal().toFixed(2)}</td>
+              <td className="border border-border p-2"></td>
+            </tr>
+            <tr className="bg-muted font-bold">
+              <td colSpan={4} className="border border-border p-2 text-right">Сумма вознаграждения:</td>
+              <td className="border border-border p-2 text-right">{calculateCommission().toFixed(2)}</td>
               <td className="border border-border p-2"></td>
             </tr>
           </tbody>

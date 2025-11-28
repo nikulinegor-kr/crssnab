@@ -41,8 +41,8 @@ export const ReportHeader = ({ data, onChange }: ReportHeaderProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="flex justify-end">
+        <div className="space-y-2 w-1/2">
           <Label>Кому:</Label>
           <Input
             value={data.company_name}

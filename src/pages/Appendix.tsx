@@ -263,9 +263,34 @@ const Appendix = () => {
         />
 
         <div className="space-y-2 pt-4 border-t">
-          <p className="text-sm">
-            Сумма вознаграждения согласно п. 4.2. агентского договора № {headerData.contract_number} от {headerData.contract_date} г. за ДЕКАБРЬ 2024г.
-          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <span>Сумма вознаграждения согласно п. 4.2. агентского договора № {headerData.contract_number} от {headerData.contract_date} г. за</span>
+            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+              <SelectTrigger className="w-[150px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month.value} value={month.value.toString()}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+              <SelectTrigger className="w-[100px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span>г.</span>
+          </div>
           <p className="text-sm">
             Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора.
           </p>
