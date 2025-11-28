@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      appendix_data: {
+        Row: {
+          amount: number | null
+          comments: string | null
+          contractor: string | null
+          created_at: string
+          created_by: string | null
+          delivery_date: string | null
+          description: string | null
+          id: string
+          month: number
+          organization_id: string
+          request_number: string | null
+          row_number: number
+          sheet_type: string
+          status: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number | null
+          comments?: string | null
+          contractor?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          description?: string | null
+          id?: string
+          month: number
+          organization_id: string
+          request_number?: string | null
+          row_number: number
+          sheet_type: string
+          status?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number | null
+          comments?: string | null
+          contractor?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          description?: string | null
+          id?: string
+          month?: number
+          organization_id?: string
+          request_number?: string | null
+          row_number?: number
+          sheet_type?: string
+          status?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
