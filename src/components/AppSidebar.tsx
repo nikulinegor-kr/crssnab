@@ -51,7 +51,7 @@ const secondaryMenuItems = [
 const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
   { title: "Отчет агента - УУ", url: "/agent-report-uu", icon: FileBarChart },
-  { title: "Приложение", url: "/appendix", icon: FileSpreadsheet },
+  { title: "Редактируемый УУ", url: "/appendix", icon: FileSpreadsheet },
 ];
 
 const settingsMenuItems = [
