@@ -128,16 +128,16 @@ export const ReportTable = ({ rows, onChange, contractNumber, contractDate, sele
                 </td>
               </tr>
             ))}
-            <tr className="bg-muted font-bold">
-              <td colSpan={4} className="border border-border p-2 text-right">ИТОГО:</td>
-              <td className="border border-border p-2 text-right">{calculateTotal().toFixed(2)}</td>
+            <tr className="bg-muted">
+              <td colSpan={4} className="border border-border p-2 text-left font-bold">ИТОГО:</td>
+              <td className="border border-border p-2 text-right font-bold">{calculateTotal().toFixed(2)}</td>
               <td className="border border-border p-2"></td>
             </tr>
-            <tr className="bg-muted font-bold">
-              <td colSpan={4} className="border border-border p-2 text-left">
+            <tr className="bg-muted">
+              <td colSpan={4} className="border border-border p-2 text-left font-bold">
                 Сумма вознаграждения согласно п. 4.2. агентского договора № {contractNumber || '1-21'} от {contractDate || '2021-05-28'} г. за {months?.find(m => m.value === selectedMonth)?.label || 'месяц'} {selectedYear || '2025'} г.:
               </td>
-              <td className="border border-border p-2 text-right">{calculateCommission().toFixed(2)}</td>
+              <td className="border border-border p-2 text-right font-bold">{calculateCommission().toFixed(2)}</td>
               <td className="border border-border p-2"></td>
             </tr>
           </tbody>
