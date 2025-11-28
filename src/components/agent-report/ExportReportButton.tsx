@@ -104,29 +104,27 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       worksheet['!merges'] = [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Row 1: A-E (ПРИЛОЖЕНИЕ №1)
         { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, // Row 2: A-E (К агентскому договору)
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Row 3: A-E (empty)
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }, // Row 4: A-E (Кому)
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }, // Row 5: A-E (Address)
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } }, // Row 6: A-E (Phone)
-        { s: { r: 6, c: 0 }, e: { r: 6, c: 4 } }, // Row 7: A-E (empty)
-        { s: { r: 7, c: 0 }, e: { r: 7, c: 4 } }, // Row 8: A-E (Отчет агента)
-        { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } }, // Row 9: A-E (по агентскому договору)
-        { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } }, // Row 10: A-E (За период)
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Row 3: A-E (empty / Кому)
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } }, // Row 4: A-E (Address)
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }, // Row 5: A-E (Phone)
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } }, // Row 6: A-E (empty)
+        { s: { r: 6, c: 0 }, e: { r: 6, c: 4 } }, // Row 7: A-E (Отчет агента)
+        { s: { r: 7, c: 0 }, e: { r: 7, c: 4 } }, // Row 8: A-E (по агентскому договору)
+        { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } }, // Row 9: A-E (За период)
+        { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } }, // Row 10: A-E (empty after периода)
       ];
 
       // Set alignment for merged cells
       // Row 1 & 2: center
       worksheet['A1'] = { v: excelData[0][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
       worksheet['A2'] = { v: excelData[1][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      // Row 3: empty (center)
-      worksheet['A3'] = { v: '', t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      // Row 4-6: right align
+      // Row 3-6: right align (Кому и адресные строки)
+      worksheet['A3'] = { v: excelData[2][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
       worksheet['A4'] = { v: excelData[3][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
       worksheet['A5'] = { v: excelData[4][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
       worksheet['A6'] = { v: excelData[5][0], t: 's', s: { alignment: { horizontal: 'right', vertical: 'center' } } };
-      // Row 7: empty (center)
-      worksheet['A7'] = { v: '', t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
-      // Row 8-10: center
+      // Row 7-9: center (Отчет, по договору, За период)
+      worksheet['A7'] = { v: excelData[6][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
       worksheet['A8'] = { v: excelData[7][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
       worksheet['A9'] = { v: excelData[8][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
       worksheet['A10'] = { v: excelData[9][0], t: 's', s: { alignment: { horizontal: 'center', vertical: 'center' } } };
