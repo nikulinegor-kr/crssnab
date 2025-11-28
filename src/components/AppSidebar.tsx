@@ -11,7 +11,8 @@ import {
   LogOut,
   FileBarChart,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  FileSpreadsheet
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -50,6 +51,7 @@ const secondaryMenuItems = [
 const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
   { title: "Отчет агента - УУ", url: "/agent-report-uu", icon: FileBarChart },
+  { title: "Приложение", url: "/appendix", icon: FileSpreadsheet },
 ];
 
 const settingsMenuItems = [
