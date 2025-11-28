@@ -38,8 +38,8 @@ export default function AgentReportUU() {
 
   // Filter requests by selected month/year based on delivery/shipment date
   const filteredRequests = (requests || []).filter((request) => {
-    // Check status - must be "В пути" or "Доставлено"
-    const validStatuses = ["В пути", "Доставлено"];
+    // Check status - must be "В пути", "Доставлено" or "Доставлено в ТК"
+    const validStatuses = ["В пути", "Доставлено", "Доставлено в ТК"];
     if (!validStatuses.includes(request.status)) {
       return false;
     }
