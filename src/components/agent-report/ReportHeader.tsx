@@ -15,9 +15,10 @@ interface ReportHeaderProps {
     recipient_position: string;
   };
   onChange: (field: string, value: string) => void;
+  title?: string;
 }
 
-export const ReportHeader = ({ data, onChange }: ReportHeaderProps) => {
+export const ReportHeader = ({ data, onChange, title = "Отчет агента - УУ" }: ReportHeaderProps) => {
   return (
     <div className="space-y-6 bg-background p-6 rounded-lg border">
       <div className="text-center space-y-2">
@@ -63,7 +64,7 @@ export const ReportHeader = ({ data, onChange }: ReportHeaderProps) => {
       </div>
 
       <div className="text-center space-y-2">
-        <h3 className="font-bold">Отчет агента - УУ</h3>
+        <h3 className="font-bold">{title}</h3>
         <div className="flex items-center justify-center gap-2">
           <span>по агентскому договору №</span>
           <span className="font-semibold">{data.contract_number}</span>
