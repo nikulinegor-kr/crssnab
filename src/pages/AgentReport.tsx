@@ -297,7 +297,7 @@ const AgentReport = () => {
         </div>
       </div>
 
-      <Card className="p-6 space-y-6">
+      <Card className="p-6 space-y-6 bg-background">
         <ReportHeader 
           data={headerData}
           onChange={(field, value) => setHeaderData(prev => ({ ...prev, [field]: value }))}
@@ -309,35 +309,10 @@ const AgentReport = () => {
           onChange={setRows}
         />
 
-        <div className="space-y-2 pt-4 border-t">
-          <div className="flex items-center gap-2 text-sm">
-            <span>Сумма вознаграждения согласно п. 4.2. агентского договора № {headerData.contract_number} от {headerData.contract_date} г. за</span>
-            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[150px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value.toString()}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span>г.</span>
-          </div>
+        <div className="space-y-2 pt-4 border-t border-border">
+          <p className="text-sm">
+            Сумма вознаграждения согласно п. 4.2. агентского договора № {headerData.contract_number} от {headerData.contract_date} г. за {months.find(m => m.value === selectedMonth)?.label} {selectedYear} г.
+          </p>
           <p className="text-sm">
             Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора.
           </p>
