@@ -48,7 +48,7 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       excelData.push([headerData.company_address]);
       excelData.push([headerData.company_phone]);
       excelData.push([]);
-      excelData.push(["Отчет агента - УУ"]);
+      excelData.push(["Отчет агента"]);
       excelData.push([`по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`]);
       excelData.push([`За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`]);
       excelData.push([]);
@@ -72,7 +72,7 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         const amount = typeof row.amount === 'number' ? row.amount : parseFloat(String(row.amount)) || 0;
         return sum + amount;
       }, 0);
-      excelData.push(["", "", "", "ИТОГО:", total]);
+      excelData.push(["ИТОГО:", "", "", "", total]);
 
       // Commission row
       let commission = 0;
@@ -83,15 +83,15 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       } else {
         commission = total * 0.02;
       }
-      excelData.push(["", "", "", "Сумма вознаграждения:", commission]);
+      const displayMonthNames = [
+        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+      ];
+      excelData.push([`Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)} г. за ${displayMonthNames[month - 1]} ${year} г.:`, "", "", "", commission]);
 
       excelData.push([]);
-      const displayMonthNames = [
-        "ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ",
-        "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ"
-      ];
-      excelData.push([`Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)}г. за ${displayMonthNames[month - 1]} ${year}г.`]);
       excelData.push(["Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора."]);
+      excelData.push([]);
       excelData.push([]);
       excelData.push(["Отчет сдал: _____________________", "", "", "Отчет принял: _____________________"]);
       excelData.push(["ИП Никулин Егор Викторович", "", "", headerData.recipient_position]);
@@ -142,7 +142,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       XLSX.utils.book_append_sheet(workbook, worksheet, "Отчет");
 
       // Generate file name
-      const fileName = `Отчет_агента_${displayMonthNames[month - 1]}_${year}г.xlsx`;
+      const fileMonthNames = [
+        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+      ];
+      const fileName = `Отчет_агента_${fileMonthNames[month - 1]}_${year}.xlsx`;
 
       // Download file
       XLSX.writeFile(workbook, fileName);
