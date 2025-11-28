@@ -307,12 +307,14 @@ const AgentReport = () => {
         <ReportTable 
           rows={rows}
           onChange={setRows}
+          contractNumber={headerData.contract_number}
+          contractDate={headerData.contract_date}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          months={months}
         />
 
         <div className="space-y-2 pt-4 border-t border-border">
-          <p className="text-sm">
-            Сумма вознаграждения согласно п. 4.2. агентского договора № {headerData.contract_number} от {headerData.contract_date} г. за {months.find(m => m.value === selectedMonth)?.label} {selectedYear} г.
-          </p>
           <p className="text-sm">
             Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора.
           </p>

@@ -17,9 +17,14 @@ interface TableRow {
 interface ReportTableProps {
   rows: TableRow[];
   onChange: (rows: TableRow[]) => void;
+  contractNumber?: string;
+  contractDate?: string;
+  selectedMonth?: number;
+  selectedYear?: number;
+  months?: { value: number; label: string }[];
 }
 
-export const ReportTable = ({ rows, onChange }: ReportTableProps) => {
+export const ReportTable = ({ rows, onChange, contractNumber, contractDate, selectedMonth, selectedYear, months }: ReportTableProps) => {
   const updateCell = (rowNumber: number, field: keyof TableRow, value: any) => {
     const updatedRows = rows.map(r => {
       if (r.row_number === rowNumber) {
@@ -129,7 +134,9 @@ export const ReportTable = ({ rows, onChange }: ReportTableProps) => {
               <td className="border border-border p-2"></td>
             </tr>
             <tr className="bg-muted font-bold">
-              <td colSpan={4} className="border border-border p-2 text-right">Сумма вознаграждения:</td>
+              <td colSpan={4} className="border border-border p-2 text-right">
+                Сумма вознаграждения согласно п. 4.2. агентского договора № {contractNumber || '1-21'} от {contractDate || '2021-05-28'} г. за {months?.find(m => m.value === selectedMonth)?.label || 'месяц'} {selectedYear || '2025'} г.:
+              </td>
               <td className="border border-border p-2 text-right">{calculateCommission().toFixed(2)}</td>
               <td className="border border-border p-2"></td>
             </tr>
