@@ -121,6 +121,113 @@ export type Database = {
           },
         ]
       }
+      agent_report_uu_data: {
+        Row: {
+          company_address: string | null
+          company_name: string
+          company_phone: string | null
+          contract_date: string
+          contract_number: string
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          organization_id: string
+          period_end: string
+          period_start: string
+          recipient_name: string | null
+          recipient_position: string | null
+          report_number: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          company_address?: string | null
+          company_name: string
+          company_phone?: string | null
+          contract_date: string
+          contract_number: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          organization_id: string
+          period_end: string
+          period_start: string
+          recipient_name?: string | null
+          recipient_position?: string | null
+          report_number: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          company_address?: string | null
+          company_name?: string
+          company_phone?: string | null
+          contract_date?: string
+          contract_number?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          recipient_name?: string | null
+          recipient_position?: string | null
+          report_number?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      agent_report_uu_rows: {
+        Row: {
+          amount: number | null
+          contractor: string | null
+          created_at: string
+          formula: string | null
+          id: string
+          invoice_number: string | null
+          report_id: string
+          row_number: number
+          tmc: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          contractor?: string | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          invoice_number?: string | null
+          report_id: string
+          row_number: number
+          tmc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          contractor?: string | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          invoice_number?: string | null
+          report_id?: string
+          row_number?: number
+          tmc?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_report_uu_rows_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "agent_report_uu_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

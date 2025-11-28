@@ -64,7 +64,7 @@ const Appendix = () => {
     setLoading(true);
     try {
       const { data: reportData, error: reportError } = await supabase
-        .from("agent_report_data")
+        .from("agent_report_uu_data")
         .select("*")
         .eq("organization_id", currentOrgId)
         .eq("month", selectedMonth)
@@ -89,7 +89,7 @@ const Appendix = () => {
         });
 
         const { data: rowsData, error: rowsError } = await supabase
-          .from("agent_report_rows")
+          .from("agent_report_uu_rows")
           .select("*")
           .eq("report_id", reportData.id)
           .order("row_number");
@@ -136,7 +136,7 @@ const Appendix = () => {
       // Save or update header data
       if (reportId) {
         const { error } = await supabase
-          .from("agent_report_data")
+          .from("agent_report_uu_data")
           .update({
             ...headerData,
             month: selectedMonth,
@@ -146,7 +146,7 @@ const Appendix = () => {
         if (error) throw error;
       } else {
         const { data, error } = await supabase
-          .from("agent_report_data")
+          .from("agent_report_uu_data")
           .insert({
             organization_id: currentOrgId,
             ...headerData,
@@ -164,7 +164,7 @@ const Appendix = () => {
       // Delete existing rows
       if (currentReportId) {
         await supabase
-          .from("agent_report_rows")
+          .from("agent_report_uu_rows")
           .delete()
           .eq("report_id", currentReportId);
 
@@ -180,7 +180,7 @@ const Appendix = () => {
         }));
 
         const { error } = await supabase
-          .from("agent_report_rows")
+          .from("agent_report_uu_rows")
           .insert(rowsToInsert);
         if (error) throw error;
       }
