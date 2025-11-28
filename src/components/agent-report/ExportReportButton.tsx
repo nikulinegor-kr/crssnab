@@ -17,20 +17,40 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
     try {
       const workbook = XLSX.utils.book_new();
 
+      // Format dates for display
+      const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+      };
+
+      const monthNames = [
+        "января", "февраля", "марта", "апреля", "мая", "июня",
+        "июля", "августа", "сентября", "октября", "ноября", "декабря"
+      ];
+      
+      const contractDate = new Date(headerData.contract_date);
+      const contractDay = contractDate.getDate();
+      const contractMonth = monthNames[contractDate.getMonth()];
+      const contractYear = contractDate.getFullYear();
+      const formattedContractDate = `«${contractDay}» ${contractMonth} ${contractYear} г.`;
+
       // Prepare data for Excel
       const excelData: any[] = [];
       
       // Header
       excelData.push(["ПРИЛОЖЕНИЕ №1"]);
-      excelData.push([`К агентскому договору № ${headerData.contract_number} от ${headerData.contract_date}`]);
+      excelData.push([`К агентскому договору № ${headerData.contract_number} от ${formattedContractDate}`]);
       excelData.push([]);
       excelData.push([`Кому: ${headerData.company_name}`]);
       excelData.push([headerData.company_address]);
       excelData.push([headerData.company_phone]);
       excelData.push([]);
       excelData.push(["Отчет агента - УУ"]);
-      excelData.push([`по агентскому договору №${headerData.contract_number}`]);
-      excelData.push([`За период с ${headerData.period_start} г. по ${headerData.period_end} г. произведен закуп ТМЦ:`]);
+      excelData.push([`по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`]);
+      excelData.push([`За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`]);
       excelData.push([]);
 
       // Table headers
@@ -66,11 +86,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       excelData.push(["", "", "", "Сумма вознаграждения:", commission]);
 
       excelData.push([]);
-      const monthNames = [
-        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+      const displayMonthNames = [
+        "ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ",
+        "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ"
       ];
-      excelData.push([`Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${headerData.contract_date} г. за ${monthNames[month - 1]} ${year}г.`]);
+      excelData.push([`Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)}г. за ${displayMonthNames[month - 1]} ${year}г.`]);
       excelData.push(["Прошу предоставить возражения, при их наличии, в 5-дневный срок, в соответствии с условиями агентского договора."]);
       excelData.push([]);
       excelData.push(["Отчет сдал: _____________________", "", "", "Отчет принял: _____________________"]);
@@ -80,22 +100,20 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       // Create worksheet
       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
-      // Center align header cells
-      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-      for (let R = 0; R <= 9; R++) {
-        for (let C = range.s.c; C <= range.e.c; C++) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!worksheet[cellAddress]) continue;
-          if (!worksheet[cellAddress].s) worksheet[cellAddress].s = {};
-          worksheet[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
-        }
-      }
+      // Set column widths
+      worksheet['!cols'] = [
+        { wch: 5 },   // №
+        { wch: 40 },  // ТМЦ
+        { wch: 30 },  // Контрагент
+        { wch: 15 },  // № Счета
+        { wch: 15 }   // Сумма закупа
+      ];
 
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, "Отчет");
 
       // Generate file name
-      const fileName = `Отчет_агента_${monthNames[month - 1]}_${year}.xlsx`;
+      const fileName = `Отчет_агента_${displayMonthNames[month - 1]}_${year}г.xlsx`;
 
       // Download file
       XLSX.writeFile(workbook, fileName);
