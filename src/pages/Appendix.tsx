@@ -2,7 +2,8 @@ import { FileSpreadsheet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const Appendix = () => {
-  const spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1nh4uDGOEhbmxXdtFJZ4WOTLWgrepKqPtCqa9G6ATNho/edit?rm=minimal&gid=1654334907";
+  // Using the proper embed URL format for public viewing
+  const spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1nh4uDGOEhbmxXdtFJZ4WOTLWgrepKqPtCqa9G6ATNho/edit?usp=sharing&rm=minimal&gid=1654334907&single=true&widget=true&headers=false";
 
   return (
     <div className="space-y-6 p-6">
