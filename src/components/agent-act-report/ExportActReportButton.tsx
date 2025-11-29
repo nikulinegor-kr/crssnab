@@ -114,7 +114,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: "Остаток после удержания налога 7%",
+          v: "ЗП+Чеки",
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
