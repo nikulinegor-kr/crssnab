@@ -192,6 +192,12 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       const totalRowIndex = 11 + rows.length; // After header (11) + rows
       const commissionRowIndex = totalRowIndex + 2; // After empty row and ИТОГО
       
+      // Merge ИТОГО text (A-C)
+      merges.push({ s: { r: totalRowIndex + 1, c: 0 }, e: { r: totalRowIndex + 1, c: 2 } });
+      
+      // Merge commission text (A-C)
+      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 2 } });
+      
       // Merge bottom text
       const bottomTextRow = commissionRowIndex + 2;
       merges.push({ s: { r: bottomTextRow, c: 0 }, e: { r: bottomTextRow, c: 4 } });
