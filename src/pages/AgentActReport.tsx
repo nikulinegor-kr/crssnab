@@ -331,11 +331,15 @@ export default function AgentActReport() {
             updatedRow.salary_with_commission = 30000 + agentCommission;
           }
           
-          // Если изменилась зарплата, пересчитываем остаток = зарплата + сумма по чекам
+          // Если изменилась зарплата, пересчитываем все зависимые поля
           if (field === "salary_with_commission" && value !== null) {
+            // Налог 7%
+            updatedRow.tax_7_percent = parseFloat((value * 0.07).toFixed(2));
+            
+            // Остаток = зарплата + сумма по чекам
             updatedRow.remainder_after_tax = parseFloat((value + checkAmountTotal).toFixed(2));
             
-            // Пересчитываем сумму акта
+            // Сумма акта
             const actAmount = (updatedRow.remainder_after_tax / 93) * 100;
             updatedRow.act_amount = parseFloat(actAmount.toFixed(2));
           }
