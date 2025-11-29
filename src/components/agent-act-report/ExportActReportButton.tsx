@@ -247,7 +247,18 @@ export const ExportActReportButton = ({
       excelData.push([""]);
       excelData.push([""]);
 
-      // Additional table headers
+      // Чеки
+      excelData.push([
+        {
+          v: "Чеки",
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true, sz: 12 },
+          },
+        },
+      ]);
+
+      // Чеки table headers
       excelData.push([
         {
           v: "№",
@@ -326,10 +337,14 @@ export const ExportActReportButton = ({
 
       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
+      // Calculate row count for merge
+      const calcRowCount = calculationRows.length + 4; // 4 = title + empty + subtitle + header
+
       // Merge cells
       const merges = [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Title
         { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Subtitle
+        { s: { r: calcRowCount + 5, c: 0 }, e: { r: calcRowCount + 5, c: 2 } }, // Чеки header
       ];
       worksheet["!merges"] = merges;
 

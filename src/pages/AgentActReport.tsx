@@ -459,7 +459,7 @@ export default function AgentActReport() {
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Дополнительные позиции</h2>
+            <h2 className="text-xl font-semibold">Чеки</h2>
             <div className="flex gap-2">
               <Button onClick={addAdditionalRow} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
