@@ -145,33 +145,21 @@ export default function AgentActReport() {
     if (calcError) throw calcError;
     if (addError) throw addError;
 
+    // Сумма по чекам из дополнительных позиций
+    const checkAmountTotal = (addData || []).reduce((sum, row) => sum + (row.amount || 0), 0);
+
     // Применяем автоматические расчеты к загруженным данным
     const processedCalcData = (calcData || []).map(row => {
       const processed = { ...row };
       
-      // Если есть перечисленная сумма, пересчитываем зависимые поля
-      if (row.transferred_amount) {
-        // Налог 7%
-        if (!row.tax_7_percent || row.tax_7_percent === 0) {
-          processed.tax_7_percent = parseFloat((row.transferred_amount * 0.07).toFixed(2));
-        }
-        
-        // Остаток после налога
-        const tax = processed.tax_7_percent || 0;
-        if (!row.remainder_after_tax || row.remainder_after_tax === 0) {
-          processed.remainder_after_tax = parseFloat((row.transferred_amount - tax).toFixed(2));
-        }
-        
-        // Зарплата с комиссией
-        if (!row.salary_with_commission || row.salary_with_commission === 0) {
-          processed.salary_with_commission = 30000 + agentCommission;
-        }
+      // Если есть зарплата с комиссией, пересчитываем остаток и сумму акта
+      if (row.salary_with_commission) {
+        // Остаток = зарплата + сумма по чекам
+        processed.remainder_after_tax = parseFloat((row.salary_with_commission + checkAmountTotal).toFixed(2));
         
         // Сумма акта
-        const remainder = processed.remainder_after_tax || 0;
-        if ((!row.act_amount || row.act_amount === 0) && remainder > 0) {
-          processed.act_amount = parseFloat(((remainder / 93) * 100).toFixed(2));
-        }
+        const actAmount = (processed.remainder_after_tax / 93) * 100;
+        processed.act_amount = parseFloat(actAmount.toFixed(2));
       }
       
       return processed;
@@ -264,16 +252,20 @@ export default function AgentActReport() {
 
   const addCalculationRow = () => {
     const baseSalary = 30000 + agentCommission;
+    const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+    const remainder = baseSalary + checkAmountTotal;
+    const actAmount = (remainder / 93) * 100;
+    
     const newRow: CalculationRow = {
       id: `new-${Date.now()}`,
       row_number: calculationRows.length + 1,
       transfer_date: null,
       transferred_amount: null,
       tax_7_percent: parseFloat((baseSalary * 0.07).toFixed(2)),
-      remainder_after_tax: null,
+      remainder_after_tax: parseFloat(remainder.toFixed(2)),
       salary_with_commission: baseSalary,
       check_amount: null,
-      act_amount: null,
+      act_amount: parseFloat(actAmount.toFixed(2)),
       formula: null,
     };
     setCalculationRows([...calculationRows, newRow]);
@@ -300,10 +292,35 @@ export default function AgentActReport() {
     if (!id.startsWith("new-")) {
       await supabase.from("agent_act_additional_rows").delete().eq("id", id);
     }
-    setAdditionalRows(additionalRows.filter((row) => row.id !== id));
+    const updatedAdditionalRows = additionalRows.filter((row) => row.id !== id);
+    setAdditionalRows(updatedAdditionalRows);
+    
+    // Пересчитываем сумму по чекам после удаления
+    const checkAmountTotal = updatedAdditionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+    
+    // Обновляем все строки расчета с новой суммой по чекам
+    setCalculationRows(
+      calculationRows.map((row) => {
+        const updatedRow = { ...row };
+        
+        // Пересчитываем остаток = зарплата + сумма по чекам
+        if (row.salary_with_commission) {
+          updatedRow.remainder_after_tax = parseFloat((row.salary_with_commission + checkAmountTotal).toFixed(2));
+          
+          // Пересчитываем сумму акта
+          const actAmount = (updatedRow.remainder_after_tax / 93) * 100;
+          updatedRow.act_amount = parseFloat(actAmount.toFixed(2));
+        }
+        
+        return updatedRow;
+      })
+    );
   };
 
   const updateCalculationRow = (id: string, field: keyof CalculationRow, value: any) => {
+    // Сумма по чекам из дополнительных позиций
+    const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+
     setCalculationRows(
       calculationRows.map((row) => {
         if (row.id === id) {
@@ -314,6 +331,15 @@ export default function AgentActReport() {
             updatedRow.salary_with_commission = 30000 + agentCommission;
           }
           
+          // Если изменилась зарплата, пересчитываем остаток = зарплата + сумма по чекам
+          if (field === "salary_with_commission" && value !== null) {
+            updatedRow.remainder_after_tax = parseFloat((value + checkAmountTotal).toFixed(2));
+            
+            // Пересчитываем сумму акта
+            const actAmount = (updatedRow.remainder_after_tax / 93) * 100;
+            updatedRow.act_amount = parseFloat(actAmount.toFixed(2));
+          }
+          
           return updatedRow;
         }
         return row;
@@ -322,8 +348,28 @@ export default function AgentActReport() {
   };
 
   const updateAdditionalRow = (id: string, field: keyof AdditionalRow, value: any) => {
-    setAdditionalRows(
-      additionalRows.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    const updatedAdditionalRows = additionalRows.map((row) => (row.id === id ? { ...row, [field]: value } : row));
+    setAdditionalRows(updatedAdditionalRows);
+    
+    // Пересчитываем сумму по чекам
+    const checkAmountTotal = updatedAdditionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+    
+    // Обновляем все строки расчета с новой суммой по чекам
+    setCalculationRows(
+      calculationRows.map((row) => {
+        const updatedRow = { ...row };
+        
+        // Пересчитываем остаток = зарплата + сумма по чекам
+        if (row.salary_with_commission) {
+          updatedRow.remainder_after_tax = parseFloat((row.salary_with_commission + checkAmountTotal).toFixed(2));
+          
+          // Пересчитываем сумму акта
+          const actAmount = (updatedRow.remainder_after_tax / 93) * 100;
+          updatedRow.act_amount = parseFloat(actAmount.toFixed(2));
+        }
+        
+        return updatedRow;
+      })
     );
   };
 
