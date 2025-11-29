@@ -72,7 +72,6 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
       <Table>
         <TableHeader>
           <TableRow className="bg-muted">
-            <TableHead className="text-center w-[150px]">Дата перечисления</TableHead>
             <TableHead className="text-center">Заработная плата 30 000 +% вознаграждение агента</TableHead>
             <TableHead className="text-center">Сумма по чекам</TableHead>
             <TableHead className="text-center">ЗП+Чеки</TableHead>
@@ -84,15 +83,6 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell>
-                <Input
-                  type="text"
-                  value={row.transfer_date || ""}
-                  onChange={(e) => onUpdate(row.id, "transfer_date", e.target.value)}
-                  className="text-center"
-                  placeholder="ДД.ММ.ГГГГ"
-                />
-              </TableCell>
               <TableCell>
                 <Input
                   type="number"

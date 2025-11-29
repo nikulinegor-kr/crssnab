@@ -87,15 +87,6 @@ export const ExportActReportButton = ({
       // Calculation table headers
       excelData.push([
         {
-          v: "Дата перечисления",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
           v: "Заработная плата 30 000 +% вознаграждение агента",
           s: {
             alignment: { horizontal: "center" },
@@ -145,10 +136,6 @@ export const ExportActReportButton = ({
       // Calculation table data
       calculationRows.forEach((row) => {
         excelData.push([
-          {
-            v: row.transfer_date || "",
-            s: { alignment: { horizontal: "center" }, border: borderStyle },
-          },
           {
             v: row.salary_with_commission || 0,
             s: {
@@ -350,18 +337,17 @@ export const ExportActReportButton = ({
 
       // Merge cells
       const merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Title
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }, // Subtitle
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Title
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Subtitle
       ];
       worksheet["!merges"] = merges;
 
       // Column widths
       worksheet["!cols"] = [
-        { wch: 18 }, // Дата
         { wch: 25 }, // Зарплата
-        { wch: 12 }, // Налог
-        { wch: 20 }, // Остаток
         { wch: 15 }, // Чеки
+        { wch: 15 }, // ЗП+Чеки
+        { wch: 12 }, // Налог
         { wch: 15 }, // Акта
       ];
 
