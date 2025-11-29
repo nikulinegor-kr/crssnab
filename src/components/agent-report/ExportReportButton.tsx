@@ -188,17 +188,18 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } },  // За период
       ];
       
-      // Calculate row indices for merging
-      const totalRowIndex = 11 + rows.length; // After header (11) + rows
-      const commissionRowIndex = totalRowIndex + 2; // After empty row and ИТОГО
+      // Calculate row indices for merging (0-based)
+      const emptyAfterDataRowIndex = headerRowIndex + rows.length + 1; // строка сразу после последней строки таблицы
+      const totalRowIndex = emptyAfterDataRowIndex + 1; // строка с "ИТОГО"
+      const commissionRowIndex = totalRowIndex + 1; // строка с "Сумма вознаграждения"
       
-      // Merge ИТОГО text (A-C)
-      merges.push({ s: { r: totalRowIndex + 1, c: 0 }, e: { r: totalRowIndex + 1, c: 2 } });
+      // Merge "ИТОГО" text (A-C)
+      merges.push({ s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 2 } });
       
       // Merge commission text (A-C)
       merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 2 } });
       
-      // Merge bottom text
+      // Merge bottom text (row with disclaimer)
       const bottomTextRow = commissionRowIndex + 2;
       merges.push({ s: { r: bottomTextRow, c: 0 }, e: { r: bottomTextRow, c: 4 } });
       
