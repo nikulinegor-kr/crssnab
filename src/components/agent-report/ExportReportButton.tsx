@@ -92,10 +92,10 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       }, 0);
       
       excelData.push([
-        { v: "", s: { border: borderStyle } },
-        { v: "", s: { border: borderStyle } },
-        { v: "", s: { border: borderStyle } },
         { v: "ИТОГО", s: { alignment: { horizontal: 'left' }, font: { bold: true }, border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
         { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00', border: borderStyle } }
       ]);
 
@@ -182,7 +182,8 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       
       // Merge commission row text
       const commissionRowIndex = 11 + rows.length + 1; // After header (11) + rows + ИТОГО (1)
-      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 3 } });
+      merges.push({ s: { r: commissionRowIndex - 1, c: 0 }, e: { r: commissionRowIndex - 1, c: 3 } }); // ИТОГО row
+      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 3 } }); // Commission row
       
       // Merge bottom text
       const bottomTextRow = commissionRowIndex + 2;
