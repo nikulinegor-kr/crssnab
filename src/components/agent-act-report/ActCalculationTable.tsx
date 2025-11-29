@@ -16,14 +16,19 @@ interface CalculationRow {
   formula: string | null;
 }
 
+interface AdditionalRow {
+  amount: number | null;
+}
+
 interface ActCalculationTableProps {
   rows: CalculationRow[];
   onUpdate: (id: string, field: keyof CalculationRow, value: any) => void;
   onDelete: (id: string) => void;
   agentCommission?: number;
+  additionalRows?: AdditionalRow[];
 }
 
-export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission = 0 }: ActCalculationTableProps) => {
+export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission = 0, additionalRows = [] }: ActCalculationTableProps) => {
   const handleSalaryChange = (id: string, value: number | null) => {
     onUpdate(id, "salary_with_commission", value);
     
@@ -45,6 +50,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
   };
 
   const calculateTotals = () => {
+    // Сумма по чекам берется из ИТОГО дополнительных позиций
+    const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+
     // Если строк нет, сразу показываем базовую зарплату + процент вознаграждения
     if (rows.length === 0) {
       const baseSalary = 30000 + agentCommission;
@@ -52,7 +60,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
         tax_7_percent: baseSalary * 0.07,
         remainder_after_tax: 0,
         salary_with_commission: baseSalary,
-        check_amount: 0,
+        check_amount: checkAmountTotal,
         act_amount: 0,
       };
     }
@@ -67,7 +75,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
             : 30000 + agentCommission;
         return sum + value;
       }, 0),
-      check_amount: rows.reduce((sum, row) => sum + (row.check_amount || 0), 0),
+      check_amount: checkAmountTotal,
       act_amount: rows.reduce((sum, row) => sum + (row.act_amount || 0), 0),
     };
   };

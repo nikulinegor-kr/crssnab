@@ -193,6 +193,9 @@ export const ExportActReportButton = ({
       });
 
       // Calculation totals
+      // Сумма по чекам берется из ИТОГО дополнительных позиций
+      const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+      
       const calcTotals = {
         salary_with_commission: calculationRows.reduce(
           (sum, row) => sum + (row.salary_with_commission || 0),
@@ -203,7 +206,7 @@ export const ExportActReportButton = ({
           (sum, row) => sum + (row.remainder_after_tax || 0),
           0
         ),
-        check_amount: calculationRows.reduce((sum, row) => sum + (row.check_amount || 0), 0),
+        check_amount: checkAmountTotal,
         act_amount: calculationRows.reduce((sum, row) => sum + (row.act_amount || 0), 0),
       };
 
