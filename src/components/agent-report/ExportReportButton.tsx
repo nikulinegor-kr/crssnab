@@ -65,13 +65,13 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         right: { style: 'thin', color: { rgb: '000000' } }
       };
 
-      // Table headers (centered)
+      // Table headers (centered with gray background)
       excelData.push([
-        { v: "№", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
-        { v: "ТМЦ", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
-        { v: "Контрагент", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
-        { v: "№ Счета", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
-        { v: "Сумма закупа", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } }
+        { v: "№", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle, fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } } } },
+        { v: "ТМЦ", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle, fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } } } },
+        { v: "Контрагент", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle, fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } } } },
+        { v: "№ Счета", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle, fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } } } },
+        { v: "Сумма закупа", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle, fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } } } }
       ]);
 
       // Table rows
