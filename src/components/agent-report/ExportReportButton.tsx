@@ -202,11 +202,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       
       // Merge signature blocks
       const signatureRow = bottomTextRow + 3;
-      merges.push({ s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 2 } });
-      merges.push({ s: { r: signatureRow, c: 3 }, e: { r: signatureRow, c: 4 } });
-      merges.push({ s: { r: signatureRow + 1, c: 0 }, e: { r: signatureRow + 1, c: 2 } });
-      merges.push({ s: { r: signatureRow + 1, c: 3 }, e: { r: signatureRow + 1, c: 4 } });
-      merges.push({ s: { r: signatureRow + 2, c: 3 }, e: { r: signatureRow + 2, c: 4 } });
+      merges.push({ s: { r: signatureRow, c: 0 }, e: { r: signatureRow, c: 1 } }); // Отчет сдал (A-B)
+      merges.push({ s: { r: signatureRow, c: 3 }, e: { r: signatureRow, c: 4 } }); // Отчет принял (D-E)
+      merges.push({ s: { r: signatureRow + 1, c: 0 }, e: { r: signatureRow + 1, c: 1 } }); // ИП Никулин (A-B)
+      merges.push({ s: { r: signatureRow + 1, c: 3 }, e: { r: signatureRow + 1, c: 4 } }); // Position (D-E)
+      merges.push({ s: { r: signatureRow + 2, c: 3 }, e: { r: signatureRow + 2, c: 4 } }); // Name (D-E)
       
       worksheet['!merges'] = merges;
 
