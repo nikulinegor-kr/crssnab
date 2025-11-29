@@ -24,24 +24,13 @@ interface ActCalculationTableProps {
 }
 
 export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission = 0 }: ActCalculationTableProps) => {
-  const handleTransferredAmountChange = (id: string, value: number | null) => {
-    onUpdate(id, "transferred_amount", value);
+  const handleSalaryChange = (id: string, value: number | null) => {
+    onUpdate(id, "salary_with_commission", value);
     
-    // Автоматически рассчитываем налог 7%
+    // Автоматически рассчитываем налог 7% от зарплаты
     if (value !== null) {
       const tax = value * 0.07;
       onUpdate(id, "tax_7_percent", parseFloat(tax.toFixed(2)));
-      
-      // Автоматически рассчитываем остаток после налога
-      const remainder = value - tax;
-      onUpdate(id, "remainder_after_tax", parseFloat(remainder.toFixed(2)));
-      
-      // Автоматически рассчитываем сумму акта = remainder / 93 * 100
-      const actAmount = (remainder / 93) * 100;
-      onUpdate(id, "act_amount", parseFloat(actAmount.toFixed(2)));
-      
-      // Автоматически устанавливаем зарплату с комиссией
-      onUpdate(id, "salary_with_commission", 30000 + agentCommission);
     }
   };
 
@@ -58,18 +47,17 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
   const calculateTotals = () => {
     // Если строк нет, сразу показываем базовую зарплату + процент вознаграждения
     if (rows.length === 0) {
+      const baseSalary = 30000 + agentCommission;
       return {
-        transferred_amount: 0,
-        tax_7_percent: 0,
+        tax_7_percent: baseSalary * 0.07,
         remainder_after_tax: 0,
-        salary_with_commission: 30000 + agentCommission,
+        salary_with_commission: baseSalary,
         check_amount: 0,
         act_amount: 0,
       };
     }
 
     return {
-      transferred_amount: rows.reduce((sum, row) => sum + (row.transferred_amount || 0), 0),
       tax_7_percent: rows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
       remainder_after_tax: rows.reduce((sum, row) => sum + (row.remainder_after_tax || 0), 0),
       salary_with_commission: rows.reduce((sum, row) => {
@@ -92,10 +80,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
         <TableHeader>
           <TableRow className="bg-muted">
             <TableHead className="text-center w-[150px]">Дата перечисления</TableHead>
-            <TableHead className="text-center">Перечислено на р/счет, касса в том числе вознаграждение</TableHead>
+            <TableHead className="text-center">Заработная плата 30 000 +% вознаграждение агента</TableHead>
             <TableHead className="text-center">Налог 7%</TableHead>
             <TableHead className="text-center">Остаток после удержания налога 7%</TableHead>
-            <TableHead className="text-center">Заработная плата 30 000 +% вознаграждение агента</TableHead>
             <TableHead className="text-center">Сумма по чекам</TableHead>
             <TableHead className="text-center">Сумма Акта</TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -116,8 +103,8 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               <TableCell>
                 <Input
                   type="number"
-                  value={row.transferred_amount || ""}
-                  onChange={(e) => handleTransferredAmountChange(row.id, parseFloat(e.target.value) || null)}
+                  value={row.salary_with_commission !== null && row.salary_with_commission !== 0 ? row.salary_with_commission : (30000 + (agentCommission || 0))}
+                  onChange={(e) => handleSalaryChange(row.id, parseFloat(e.target.value) || null)}
                   className="text-center"
                   step="0.01"
                 />
@@ -137,15 +124,6 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
                   type="number"
                   value={row.remainder_after_tax || ""}
                   onChange={(e) => handleRemainderChange(row.id, parseFloat(e.target.value) || null)}
-                  className="text-center"
-                  step="0.01"
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  type="number"
-                  value={row.salary_with_commission !== null && row.salary_with_commission !== 0 ? row.salary_with_commission : (30000 + (agentCommission || 0))}
-                  onChange={(e) => onUpdate(row.id, "salary_with_commission", parseFloat(e.target.value) || null)}
                   className="text-center"
                   step="0.01"
                 />
@@ -183,10 +161,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
           ))}
           <TableRow className="font-bold bg-muted/50">
             <TableCell className="text-center">ИТОГО:</TableCell>
-            <TableCell className="text-center">{totals.transferred_amount.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.salary_with_commission.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.tax_7_percent.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.remainder_after_tax.toFixed(2)}</TableCell>
-            <TableCell className="text-center">{totals.salary_with_commission.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.check_amount.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.act_amount.toFixed(2)}</TableCell>
             <TableCell></TableCell>

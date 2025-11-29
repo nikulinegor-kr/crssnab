@@ -263,14 +263,15 @@ export default function AgentActReport() {
   };
 
   const addCalculationRow = () => {
+    const baseSalary = 30000 + agentCommission;
     const newRow: CalculationRow = {
       id: `new-${Date.now()}`,
       row_number: calculationRows.length + 1,
       transfer_date: null,
       transferred_amount: null,
-      tax_7_percent: null,
+      tax_7_percent: parseFloat((baseSalary * 0.07).toFixed(2)),
       remainder_after_tax: null,
-      salary_with_commission: 30000 + agentCommission,
+      salary_with_commission: baseSalary,
       check_amount: null,
       act_amount: null,
       formula: null,

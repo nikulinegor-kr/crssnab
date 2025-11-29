@@ -96,7 +96,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: "Перечислено на р/счет, касса в том числе вознаграждение",
+          v: "Заработная плата 30 000 +% вознаграждение агента",
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -115,15 +115,6 @@ export const ExportActReportButton = ({
         },
         {
           v: "Остаток после удержания налога 7%",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Заработная плата 30 000 +% вознаграждение агента",
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -159,7 +150,7 @@ export const ExportActReportButton = ({
             s: { alignment: { horizontal: "center" }, border: borderStyle },
           },
           {
-            v: row.transferred_amount || 0,
+            v: row.salary_with_commission || 0,
             s: {
               alignment: { horizontal: "center" },
               numFmt: "#,##0.00",
@@ -176,14 +167,6 @@ export const ExportActReportButton = ({
           },
           {
             v: row.remainder_after_tax || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-          {
-            v: row.salary_with_commission || 0,
             s: {
               alignment: { horizontal: "center" },
               numFmt: "#,##0.00",
@@ -211,17 +194,13 @@ export const ExportActReportButton = ({
 
       // Calculation totals
       const calcTotals = {
-        transferred_amount: calculationRows.reduce(
-          (sum, row) => sum + (row.transferred_amount || 0),
+        salary_with_commission: calculationRows.reduce(
+          (sum, row) => sum + (row.salary_with_commission || 0),
           0
         ),
         tax_7_percent: calculationRows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
         remainder_after_tax: calculationRows.reduce(
           (sum, row) => sum + (row.remainder_after_tax || 0),
-          0
-        ),
-        salary_with_commission: calculationRows.reduce(
-          (sum, row) => sum + (row.salary_with_commission || 0),
           0
         ),
         check_amount: calculationRows.reduce((sum, row) => sum + (row.check_amount || 0), 0),
@@ -238,7 +217,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: calcTotals.transferred_amount,
+          v: calcTotals.salary_with_commission,
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -257,15 +236,6 @@ export const ExportActReportButton = ({
         },
         {
           v: calcTotals.remainder_after_tax,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-        {
-          v: calcTotals.salary_with_commission,
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -377,18 +347,17 @@ export const ExportActReportButton = ({
 
       // Merge cells
       const merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Title
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } }, // Subtitle
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Title
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }, // Subtitle
       ];
       worksheet["!merges"] = merges;
 
       // Column widths
       worksheet["!cols"] = [
         { wch: 18 }, // Дата
-        { wch: 25 }, // Перечислено
+        { wch: 25 }, // Зарплата
         { wch: 12 }, // Налог
         { wch: 20 }, // Остаток
-        { wch: 25 }, // Зарплата
         { wch: 15 }, // Чеки
         { wch: 15 }, // Акта
       ];
