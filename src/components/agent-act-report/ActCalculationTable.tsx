@@ -56,15 +56,27 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
   };
 
   const calculateTotals = () => {
+    // Если строк нет, сразу показываем базовую зарплату + процент вознаграждения
+    if (rows.length === 0) {
+      return {
+        transferred_amount: 0,
+        tax_7_percent: 0,
+        remainder_after_tax: 0,
+        salary_with_commission: 30000 + agentCommission,
+        check_amount: 0,
+        act_amount: 0,
+      };
+    }
+
     return {
       transferred_amount: rows.reduce((sum, row) => sum + (row.transferred_amount || 0), 0),
       tax_7_percent: rows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
       remainder_after_tax: rows.reduce((sum, row) => sum + (row.remainder_after_tax || 0), 0),
       salary_with_commission: rows.reduce((sum, row) => {
-        // Используем значение по умолчанию, если поле пустое или 0
-        const value = (row.salary_with_commission !== null && row.salary_with_commission !== 0) 
-          ? row.salary_with_commission 
-          : (30000 + agentCommission);
+        const value =
+          row.salary_with_commission !== null && row.salary_with_commission !== 0
+            ? row.salary_with_commission
+            : 30000 + agentCommission;
         return sum + value;
       }, 0),
       check_amount: rows.reduce((sum, row) => sum + (row.check_amount || 0), 0),
