@@ -39,12 +39,60 @@ export default function AgentActReport() {
   const [calculationRows, setCalculationRows] = useState<CalculationRow[]>([]);
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [agentCommission, setAgentCommission] = useState<number>(0);
 
   useEffect(() => {
     if (currentOrgId) {
       loadReport();
+      loadAgentCommission();
     }
   }, [month, year, currentOrgId]);
+
+  const calculateCommission = (total: number): number => {
+    let commission = 0;
+    if (total >= 10000000) {
+      commission = 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+    } else if (total >= 5000000) {
+      commission = 5000000 * 0.02 + (total - 5000000) * 0.01;
+    } else {
+      commission = total * 0.02;
+    }
+    return commission;
+  };
+
+  const loadAgentCommission = async () => {
+    if (!currentOrgId) return;
+
+    try {
+      const { data: reportData, error: reportError } = await supabase
+        .from("agent_report_data")
+        .select("id")
+        .eq("organization_id", currentOrgId)
+        .eq("month", month)
+        .eq("year", year)
+        .maybeSingle();
+
+      if (reportError) throw reportError;
+
+      if (reportData) {
+        const { data: rowsData, error: rowsError } = await supabase
+          .from("agent_report_rows")
+          .select("amount")
+          .eq("report_id", reportData.id);
+
+        if (rowsError) throw rowsError;
+
+        const total = rowsData?.reduce((sum, row) => sum + (row.amount || 0), 0) || 0;
+        const commission = calculateCommission(total);
+        setAgentCommission(commission);
+      } else {
+        setAgentCommission(0);
+      }
+    } catch (error) {
+      console.error("Error loading agent commission:", error);
+      setAgentCommission(0);
+    }
+  };
 
   const loadReport = async () => {
     if (!currentOrgId) return;
@@ -224,7 +272,19 @@ export default function AgentActReport() {
 
   const updateCalculationRow = (id: string, field: keyof CalculationRow, value: any) => {
     setCalculationRows(
-      calculationRows.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+      calculationRows.map((row) => {
+        if (row.id === id) {
+          const updatedRow = { ...row, [field]: value };
+          
+          // Если изменилась перечисленная сумма, обновляем зарплату с комиссией
+          if (field === "transferred_amount" && value !== null) {
+            updatedRow.salary_with_commission = 30000 + agentCommission;
+          }
+          
+          return updatedRow;
+        }
+        return row;
+      })
     );
   };
 
@@ -237,7 +297,14 @@ export default function AgentActReport() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Отчет агента по акту</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Отчет агента по акту</h1>
+          {agentCommission > 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Вознаграждение агента за период: {agentCommission.toFixed(2)} ₽
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
           <Select value={month.toString()} onValueChange={(v) => setMonth(parseInt(v))}>
             <SelectTrigger className="w-[140px]">
@@ -297,6 +364,7 @@ export default function AgentActReport() {
             rows={calculationRows}
             onUpdate={updateCalculationRow}
             onDelete={deleteCalculationRow}
+            agentCommission={agentCommission}
           />
         </div>
       </Card>

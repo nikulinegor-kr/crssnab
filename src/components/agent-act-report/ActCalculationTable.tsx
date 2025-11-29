@@ -20,9 +20,10 @@ interface ActCalculationTableProps {
   rows: CalculationRow[];
   onUpdate: (id: string, field: keyof CalculationRow, value: any) => void;
   onDelete: (id: string) => void;
+  agentCommission?: number;
 }
 
-export const ActCalculationTable = ({ rows, onUpdate, onDelete }: ActCalculationTableProps) => {
+export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission = 0 }: ActCalculationTableProps) => {
   const handleTransferredAmountChange = (id: string, value: number | null) => {
     onUpdate(id, "transferred_amount", value);
     
@@ -38,6 +39,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete }: ActCalculation
       // Автоматически рассчитываем сумму акта = remainder / 93 * 100
       const actAmount = (remainder / 93) * 100;
       onUpdate(id, "act_amount", parseFloat(actAmount.toFixed(2)));
+      
+      // Автоматически устанавливаем зарплату с комиссией
+      onUpdate(id, "salary_with_commission", 30000 + agentCommission);
     }
   };
 
