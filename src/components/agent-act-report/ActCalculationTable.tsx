@@ -60,7 +60,13 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
       transferred_amount: rows.reduce((sum, row) => sum + (row.transferred_amount || 0), 0),
       tax_7_percent: rows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
       remainder_after_tax: rows.reduce((sum, row) => sum + (row.remainder_after_tax || 0), 0),
-      salary_with_commission: rows.reduce((sum, row) => sum + (row.salary_with_commission || 0), 0),
+      salary_with_commission: rows.reduce((sum, row) => {
+        // Используем значение по умолчанию, если поле пустое или 0
+        const value = (row.salary_with_commission !== null && row.salary_with_commission !== 0) 
+          ? row.salary_with_commission 
+          : (30000 + agentCommission);
+        return sum + value;
+      }, 0),
       check_amount: rows.reduce((sum, row) => sum + (row.check_amount || 0), 0),
       act_amount: rows.reduce((sum, row) => sum + (row.act_amount || 0), 0),
     };
