@@ -152,8 +152,11 @@ export default function AgentActReport() {
     const processedCalcData = (calcData || []).map(row => {
       const processed = { ...row };
       
-      // Если есть зарплата с комиссией, пересчитываем остаток и сумму акта
+      // Если есть зарплата с комиссией, пересчитываем все зависимые поля
       if (row.salary_with_commission) {
+        // Налог 7%
+        processed.tax_7_percent = parseFloat((row.salary_with_commission * 0.07).toFixed(2));
+        
         // Остаток = зарплата + сумма по чекам
         processed.remainder_after_tax = parseFloat((row.salary_with_commission + checkAmountTotal).toFixed(2));
         
