@@ -104,7 +104,7 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         { v: "", s: { border: borderStyle } },
         { v: "", s: { border: borderStyle } },
         { v: "", s: { border: borderStyle } },
-        { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00', border: borderStyle } }
+        { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '#,##0.00', border: borderStyle } }
       ]);
 
       // Commission row
@@ -127,7 +127,7 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         { v: "", s: { border: borderStyle } },
         { v: "", s: { border: borderStyle } },
         { v: "", s: { border: borderStyle } },
-        { v: commission, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00', border: borderStyle } }
+        { v: commission, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '#,##0.00', border: borderStyle } }
       ]);
 
       excelData.push([""]);
@@ -188,13 +188,9 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
         { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } },  // За период
       ];
       
-      // Merge ИТОГО row (merge first 4 columns)
+      // Calculate row indices for merging
       const totalRowIndex = 11 + rows.length; // After header (11) + rows
-      merges.push({ s: { r: totalRowIndex + 1, c: 0 }, e: { r: totalRowIndex + 1, c: 3 } }); // ИТОГО row
-      
-      // Merge commission row text (merge first 4 columns)
-      const commissionRowIndex = totalRowIndex + 2;
-      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 3 } }); // Commission row
+      const commissionRowIndex = totalRowIndex + 2; // After empty row and ИТОГО
       
       // Merge bottom text
       const bottomTextRow = commissionRowIndex + 2;
