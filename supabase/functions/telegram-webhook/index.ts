@@ -150,13 +150,17 @@ async function handleCallbackQuery(callbackQuery: any) {
   let newStatus = requests.status;
   let removeKeyboard = false;
   let alertText = "Отмечено";
+  let isFinalStatus = false;
+  let shouldDeletePreviousMessage = false;
 
   if (data === "received") {
-    // ТМЦ ПОЛУЧЕНО
+    // ТМЦ ПОЛУЧЕНО - ФИНАЛЬНЫЙ СТАТУС
     newStatus = "Доставлено";
     newText += `\n\n✅ ТМЦ получено — отметил: @${username || fullName}`;
     removeKeyboard = true;
     alertText = "✅ Успешно отмечено как получено!";
+    isFinalStatus = true;
+    shouldDeletePreviousMessage = true;
     console.log("Processing 'received' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "approve") {
     // В РАБОТУ
@@ -165,11 +169,13 @@ async function handleCallbackQuery(callbackQuery: any) {
     removeKeyboard = true;
     alertText = "✅ Успешно взято в работу!";
   } else if (data === "reject") {
-    // ОТКЛОНЕНО
+    // ОТКЛОНЕНО - ФИНАЛЬНЫЙ СТАТУС
     newStatus = "ОТКЛОНЕНО";
     newText += `\n\n❌ ОТКЛОНЕНО — отметил: @${username || fullName}`;
     removeKeyboard = true;
     alertText = "❌ Заявка отклонена";
+    isFinalStatus = true;
+    shouldDeletePreviousMessage = true;
   } else if (data === "rework") {
     // НА ДОРАБОТКУ
     newText += `\n\n🔧 НА ДОРАБОТКУ — ждём комментарий от: @${username || fullName}`;
@@ -188,11 +194,13 @@ async function handleCallbackQuery(callbackQuery: any) {
       console.error("Error updating awaiting_comment_from:", updateError);
     }
   } else if (data === "paid") {
-    // ОТПИСАНО В ОПЛАТУ
+    // ОТПИСАНО В ОПЛАТУ - ФИНАЛЬНЫЙ СТАТУС
     newStatus = "Оплачено";
     newText += `\n\n✅ Отписано в оплату — отметил: @${username || fullName}`;
     removeKeyboard = true;
     alertText = "✅ Успешно отмечено как оплачено!";
+    isFinalStatus = true;
+    shouldDeletePreviousMessage = true;
     console.log("Processing 'paid' action:", { requestId: requests.id, newStatus, username });
   } else if (data === "exclude") {
     // Показываем подтверждение удаления
@@ -265,13 +273,44 @@ async function handleCallbackQuery(callbackQuery: any) {
     await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
   }
 
-  // Update message
-  await sendTelegramRequest("editMessageText", {
-    chat_id: chatId,
-    message_id: messageId,
-    text: newText,
-    reply_markup: removeKeyboard ? undefined : callbackQuery.message.reply_markup,
-  });
+  // Handle final status: delete previous message and send new one
+  if (shouldDeletePreviousMessage && isFinalStatus) {
+    console.log("Final status reached, deleting previous message and sending new one");
+    
+    // Delete the current message
+    try {
+      await sendTelegramRequest("deleteMessage", {
+        chat_id: chatId,
+        message_id: messageId,
+      });
+      console.log("Previous message deleted:", messageId);
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
+
+    // Send new final message without buttons
+    const finalResult = await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: newText,
+    });
+
+    // Clear telegram_message_id in database (no more updates needed)
+    if (finalResult.ok) {
+      await supabase
+        .from("requests")
+        .update({ telegram_message_id: null })
+        .eq("id", requests.id);
+      console.log("Cleared telegram_message_id for request:", requests.id);
+    }
+  } else {
+    // Update existing message (non-final status)
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: newText,
+      reply_markup: removeKeyboard ? undefined : callbackQuery.message.reply_markup,
+    });
+  }
 
   // Answer callback query
   await sendTelegramRequest("answerCallbackQuery", {
