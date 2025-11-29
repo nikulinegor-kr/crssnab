@@ -105,7 +105,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: "Налог 7%",
+          v: "Сумма по чекам",
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -123,7 +123,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: "Сумма по чекам",
+          v: "Налог 7%",
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -158,7 +158,7 @@ export const ExportActReportButton = ({
             },
           },
           {
-            v: row.tax_7_percent || 0,
+            v: row.check_amount || 0,
             s: {
               alignment: { horizontal: "center" },
               numFmt: "#,##0.00",
@@ -174,7 +174,7 @@ export const ExportActReportButton = ({
             },
           },
           {
-            v: row.check_amount || 0,
+            v: row.tax_7_percent || 0,
             s: {
               alignment: { horizontal: "center" },
               numFmt: "#,##0.00",
@@ -229,7 +229,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: calcTotals.tax_7_percent,
+          v: calcTotals.check_amount,
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },
@@ -247,7 +247,7 @@ export const ExportActReportButton = ({
           },
         },
         {
-          v: calcTotals.check_amount,
+          v: calcTotals.tax_7_percent,
           s: {
             alignment: { horizontal: "center" },
             font: { bold: true },

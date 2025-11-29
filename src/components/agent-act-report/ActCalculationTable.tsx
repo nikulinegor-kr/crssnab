@@ -73,9 +73,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
           <TableRow className="bg-muted">
             <TableHead className="text-center w-[150px]">Дата перечисления</TableHead>
             <TableHead className="text-center">Заработная плата 30 000 +% вознаграждение агента</TableHead>
-            <TableHead className="text-center">Налог 7%</TableHead>
-            <TableHead className="text-center">ЗП+Чеки</TableHead>
             <TableHead className="text-center">Сумма по чекам</TableHead>
+            <TableHead className="text-center">ЗП+Чеки</TableHead>
+            <TableHead className="text-center">Налог 7%</TableHead>
             <TableHead className="text-center">Сумма Акта</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
@@ -104,11 +104,10 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               <TableCell>
                 <Input
                   type="number"
-                  value={row.tax_7_percent !== null && row.tax_7_percent !== undefined ? row.tax_7_percent : ""}
-                  onChange={(e) => onUpdate(row.id, "tax_7_percent", parseFloat(e.target.value) || null)}
-                  className="text-center bg-muted/50"
+                  value={row.check_amount || ""}
+                  onChange={(e) => onUpdate(row.id, "check_amount", parseFloat(e.target.value) || null)}
+                  className="text-center"
                   step="0.01"
-                  disabled
                 />
               </TableCell>
               <TableCell>
@@ -124,10 +123,11 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               <TableCell>
                 <Input
                   type="number"
-                  value={row.check_amount || ""}
-                  onChange={(e) => onUpdate(row.id, "check_amount", parseFloat(e.target.value) || null)}
-                  className="text-center"
+                  value={row.tax_7_percent !== null && row.tax_7_percent !== undefined ? row.tax_7_percent : ""}
+                  onChange={(e) => onUpdate(row.id, "tax_7_percent", parseFloat(e.target.value) || null)}
+                  className="text-center bg-muted/50"
                   step="0.01"
+                  disabled
                 />
               </TableCell>
               <TableCell>
@@ -155,9 +155,9 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
           <TableRow className="font-bold bg-muted/50">
             <TableCell className="text-center">ИТОГО:</TableCell>
             <TableCell className="text-center">{totals.salary_with_commission.toFixed(2)}</TableCell>
-            <TableCell className="text-center">{totals.tax_7_percent.toFixed(2)}</TableCell>
-            <TableCell className="text-center">{totals.remainder_after_tax.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.check_amount.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.remainder_after_tax.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.tax_7_percent.toFixed(2)}</TableCell>
             <TableCell className="text-center">{totals.act_amount.toFixed(2)}</TableCell>
             <TableCell></TableCell>
           </TableRow>
