@@ -40,12 +40,13 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
     if (rows.length === 0) {
       const baseSalary = 30000 + agentCommission;
       const remainderAfterTax = baseSalary + checkAmountTotal;
+      const actAmount = (remainderAfterTax / 93) * 100;
       return {
         tax_7_percent: baseSalary * 0.07,
         remainder_after_tax: remainderAfterTax,
         salary_with_commission: baseSalary,
         check_amount: checkAmountTotal,
-        act_amount: 0,
+        act_amount: actAmount,
       };
     }
 
