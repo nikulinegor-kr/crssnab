@@ -126,7 +126,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               <TableCell>
                 <Input
                   type="number"
-                  value={row.salary_with_commission !== null ? row.salary_with_commission : 30000}
+                  value={row.salary_with_commission !== null && row.salary_with_commission !== 0 ? row.salary_with_commission : (30000 + (agentCommission || 0))}
                   onChange={(e) => onUpdate(row.id, "salary_with_commission", parseFloat(e.target.value) || null)}
                   className="text-center"
                   step="0.01"

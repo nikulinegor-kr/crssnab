@@ -145,7 +145,39 @@ export default function AgentActReport() {
     if (calcError) throw calcError;
     if (addError) throw addError;
 
-    setCalculationRows(calcData || []);
+    // Применяем автоматические расчеты к загруженным данным
+    const processedCalcData = (calcData || []).map(row => {
+      const processed = { ...row };
+      
+      // Если есть перечисленная сумма, пересчитываем зависимые поля
+      if (row.transferred_amount) {
+        // Налог 7%
+        if (!row.tax_7_percent || row.tax_7_percent === 0) {
+          processed.tax_7_percent = parseFloat((row.transferred_amount * 0.07).toFixed(2));
+        }
+        
+        // Остаток после налога
+        const tax = processed.tax_7_percent || 0;
+        if (!row.remainder_after_tax || row.remainder_after_tax === 0) {
+          processed.remainder_after_tax = parseFloat((row.transferred_amount - tax).toFixed(2));
+        }
+        
+        // Зарплата с комиссией
+        if (!row.salary_with_commission || row.salary_with_commission === 0) {
+          processed.salary_with_commission = 30000 + agentCommission;
+        }
+        
+        // Сумма акта
+        const remainder = processed.remainder_after_tax || 0;
+        if ((!row.act_amount || row.act_amount === 0) && remainder > 0) {
+          processed.act_amount = parseFloat(((remainder / 93) * 100).toFixed(2));
+        }
+      }
+      
+      return processed;
+    });
+
+    setCalculationRows(processedCalcData);
     setAdditionalRows(addData || []);
   };
 
@@ -238,7 +270,7 @@ export default function AgentActReport() {
       transferred_amount: null,
       tax_7_percent: null,
       remainder_after_tax: null,
-      salary_with_commission: 30000,
+      salary_with_commission: 30000 + agentCommission,
       check_amount: null,
       act_amount: null,
       formula: null,
