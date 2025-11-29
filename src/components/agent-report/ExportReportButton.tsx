@@ -40,21 +40,21 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       // Prepare data for Excel
       const excelData: any[] = [];
       
-      // Header rows (all centered)
-      excelData.push([{ v: "ПРИЛОЖЕНИЕ №1", s: { alignment: { horizontal: 'center' } } }]);
-      excelData.push([{ v: `К агентскому договору № ${headerData.contract_number} от ${formattedContractDate}`, s: { alignment: { horizontal: 'center' } } }]);
+      // Header rows (centered, spanning all columns)
+      excelData.push(["ПРИЛОЖЕНИЕ №1"]);
+      excelData.push([`К агентскому договору № ${headerData.contract_number} от ${formattedContractDate}`]);
       excelData.push([""]);
       
-      // Address block (right aligned)
-      excelData.push([{ v: `Кому: ${headerData.company_name}`, s: { alignment: { horizontal: 'right' } } }]);
-      excelData.push([{ v: headerData.company_address, s: { alignment: { horizontal: 'right' } } }]);
-      excelData.push([{ v: headerData.company_phone, s: { alignment: { horizontal: 'right' } } }]);
+      // Address block (right aligned, spanning all columns)
+      excelData.push([`Кому: ${headerData.company_name}`]);
+      excelData.push([headerData.company_address]);
+      excelData.push([headerData.company_phone]);
       excelData.push([""]);
       
-      // Report title (centered)
-      excelData.push([{ v: "Отчет агента", s: { alignment: { horizontal: 'center' }, font: { bold: true } } }]);
-      excelData.push([{ v: `по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`, s: { alignment: { horizontal: 'center' } } }]);
-      excelData.push([{ v: `За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`, s: { alignment: { horizontal: 'center' } } }]);
+      // Report title (centered, spanning all columns)
+      excelData.push(["Отчет агента"]);
+      excelData.push([`по агентскому договору №${headerData.contract_number} от ${formatDate(headerData.contract_date)}г.`]);
+      excelData.push([`За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`]);
       excelData.push([""]);
 
       // Table headers (centered)
@@ -118,22 +118,44 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       
       // Signature block
       excelData.push([
-        { v: "Отчет сдал: _____________________", s: { alignment: { horizontal: 'left' } } },
+        "Отчет сдал: _____________________",
         "", "",
-        { v: "Отчет принял: _____________________", s: { alignment: { horizontal: 'left' } } }
+        "Отчет принял: _____________________"
       ]);
       excelData.push([
-        { v: "ИП Никулин Егор Викторович", s: { alignment: { horizontal: 'left' } } },
+        "ИП Никулин Егор Викторович",
         "", "",
-        { v: headerData.recipient_position, s: { alignment: { horizontal: 'left' } } }
+        headerData.recipient_position
       ]);
       excelData.push([
         "", "", "",
-        { v: headerData.recipient_name, s: { alignment: { horizontal: 'left' } } }
+        headerData.recipient_name
       ]);
 
       // Create worksheet from array of arrays
       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+      
+      // Apply cell styles
+      const headerRowIndex = 11;
+      
+      // Style header rows (centered)
+      ['A1', 'A2'].forEach(cell => {
+        if (!worksheet[cell]) worksheet[cell] = { t: 's', v: '' };
+        worksheet[cell].s = { alignment: { horizontal: 'center' } };
+      });
+      
+      // Style address block (right aligned)
+      ['A4', 'A5', 'A6'].forEach(cell => {
+        if (!worksheet[cell]) worksheet[cell] = { t: 's', v: '' };
+        worksheet[cell].s = { alignment: { horizontal: 'right' } };
+      });
+      
+      // Style report title (centered)
+      ['A8', 'A9', 'A10'].forEach(cell => {
+        if (!worksheet[cell]) worksheet[cell] = { t: 's', v: '' };
+        worksheet[cell].s = { alignment: { horizontal: 'center' } };
+      });
+      if (worksheet['A8']) worksheet['A8'].s = { alignment: { horizontal: 'center' }, font: { bold: true } };
 
       // Merge cells for header rows
       const merges = [
