@@ -193,11 +193,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       const totalRowIndex = emptyAfterDataRowIndex + 1; // строка с "ИТОГО"
       const commissionRowIndex = totalRowIndex + 1; // строка с "Сумма вознаграждения"
       
-      // Merge "ИТОГО" text (A-C)
-      merges.push({ s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 2 } });
+      // Merge "ИТОГО" text (A-D)
+      merges.push({ s: { r: totalRowIndex, c: 0 }, e: { r: totalRowIndex, c: 3 } });
       
-      // Merge commission text (A-C)
-      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 2 } });
+      // Merge commission text (A-D)
+      merges.push({ s: { r: commissionRowIndex, c: 0 }, e: { r: commissionRowIndex, c: 3 } });
       
       // Merge bottom text (row with disclaimer)
       const bottomTextRow = commissionRowIndex + 2;
