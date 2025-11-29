@@ -1,0 +1,338 @@
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
+import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
+import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
+
+interface CalculationRow {
+  id: string;
+  row_number: number;
+  transfer_date: string | null;
+  transferred_amount: number | null;
+  tax_7_percent: number | null;
+  remainder_after_tax: number | null;
+  salary_with_commission: number | null;
+  check_amount: number | null;
+  act_amount: number | null;
+  formula: string | null;
+}
+
+interface AdditionalRow {
+  id: string;
+  row_number: number;
+  description: string | null;
+  amount: number | null;
+}
+
+export default function AgentActReport() {
+  const { toast } = useToast();
+  const { currentOrgId } = useCurrentOrganization();
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [calculationRows, setCalculationRows] = useState<CalculationRow[]>([]);
+  const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentOrgId) {
+      loadReport();
+    }
+  }, [month, year, currentOrgId]);
+
+  const loadReport = async () => {
+    if (!currentOrgId) return;
+
+    setLoading(true);
+    try {
+      const { data: reportData, error: reportError } = await supabase
+        .from("agent_act_report_data")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .eq("month", month)
+        .eq("year", year)
+        .maybeSingle();
+
+      if (reportError) throw reportError;
+
+      if (reportData) {
+        setReportId(reportData.id);
+        await loadRows(reportData.id);
+      } else {
+        setReportId(null);
+        setCalculationRows([]);
+        setAdditionalRows([]);
+      }
+    } catch (error) {
+      console.error("Error loading report:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить отчет",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRows = async (id: string) => {
+    const { data: calcData, error: calcError } = await supabase
+      .from("agent_act_calculation_rows")
+      .select("*")
+      .eq("report_id", id)
+      .order("row_number");
+
+    const { data: addData, error: addError } = await supabase
+      .from("agent_act_additional_rows")
+      .select("*")
+      .eq("report_id", id)
+      .order("row_number");
+
+    if (calcError) throw calcError;
+    if (addError) throw addError;
+
+    setCalculationRows(calcData || []);
+    setAdditionalRows(addData || []);
+  };
+
+  const createReport = async () => {
+    if (!currentOrgId) return null;
+
+    const { data, error } = await supabase
+      .from("agent_act_report_data")
+      .insert({
+        organization_id: currentOrgId,
+        month,
+        year,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data.id;
+  };
+
+  const handleSave = async () => {
+    if (!currentOrgId) return;
+
+    setLoading(true);
+    try {
+      let currentReportId = reportId;
+
+      if (!currentReportId) {
+        currentReportId = await createReport();
+        setReportId(currentReportId);
+      }
+
+      // Save calculation rows
+      for (const row of calculationRows) {
+        if (row.id.startsWith("new-")) {
+          const { id, ...rowData } = row;
+          await supabase.from("agent_act_calculation_rows").insert({
+            ...rowData,
+            report_id: currentReportId,
+          });
+        } else {
+          const { id, ...rowData } = row;
+          await supabase
+            .from("agent_act_calculation_rows")
+            .update(rowData)
+            .eq("id", id);
+        }
+      }
+
+      // Save additional rows
+      for (const row of additionalRows) {
+        if (row.id.startsWith("new-")) {
+          const { id, ...rowData } = row;
+          await supabase.from("agent_act_additional_rows").insert({
+            ...rowData,
+            report_id: currentReportId,
+          });
+        } else {
+          const { id, ...rowData } = row;
+          await supabase
+            .from("agent_act_additional_rows")
+            .update(rowData)
+            .eq("id", id);
+        }
+      }
+
+      await loadReport();
+
+      toast({
+        title: "Успешно",
+        description: "Отчет сохранен",
+      });
+    } catch (error) {
+      console.error("Error saving report:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить отчет",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addCalculationRow = () => {
+    const newRow: CalculationRow = {
+      id: `new-${Date.now()}`,
+      row_number: calculationRows.length + 1,
+      transfer_date: null,
+      transferred_amount: null,
+      tax_7_percent: null,
+      remainder_after_tax: null,
+      salary_with_commission: null,
+      check_amount: null,
+      act_amount: null,
+      formula: null,
+    };
+    setCalculationRows([...calculationRows, newRow]);
+  };
+
+  const addAdditionalRow = () => {
+    const newRow: AdditionalRow = {
+      id: `new-${Date.now()}`,
+      row_number: additionalRows.length + 1,
+      description: null,
+      amount: null,
+    };
+    setAdditionalRows([...additionalRows, newRow]);
+  };
+
+  const deleteCalculationRow = async (id: string) => {
+    if (!id.startsWith("new-")) {
+      await supabase.from("agent_act_calculation_rows").delete().eq("id", id);
+    }
+    setCalculationRows(calculationRows.filter((row) => row.id !== id));
+  };
+
+  const deleteAdditionalRow = async (id: string) => {
+    if (!id.startsWith("new-")) {
+      await supabase.from("agent_act_additional_rows").delete().eq("id", id);
+    }
+    setAdditionalRows(additionalRows.filter((row) => row.id !== id));
+  };
+
+  const updateCalculationRow = (id: string, field: keyof CalculationRow, value: any) => {
+    setCalculationRows(
+      calculationRows.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
+  };
+
+  const updateAdditionalRow = (id: string, field: keyof AdditionalRow, value: any) => {
+    setAdditionalRows(
+      additionalRows.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
+  };
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Отчет агента по акту</h1>
+        <div className="flex gap-2">
+          <Select value={month.toString()} onValueChange={(v) => setMonth(parseInt(v))}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                "Январь",
+                "Февраль",
+                "Март",
+                "Апрель",
+                "Май",
+                "Июнь",
+                "Июль",
+                "Август",
+                "Сентябрь",
+                "Октябрь",
+                "Ноябрь",
+                "Декабрь",
+              ].map((name, idx) => (
+                <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={year.toString()} onValueChange={(v) => setYear(parseInt(v))}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(
+                (y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
+                  </SelectItem>
+                )
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Расчет суммы вознаграждения</h2>
+            <div className="flex gap-2">
+              <Button onClick={addCalculationRow} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить строку
+              </Button>
+            </div>
+          </div>
+
+          <ActCalculationTable
+            rows={calculationRows}
+            onUpdate={updateCalculationRow}
+            onDelete={deleteCalculationRow}
+          />
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Дополнительные позиции</h2>
+            <div className="flex gap-2">
+              <Button onClick={addAdditionalRow} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить строку
+              </Button>
+            </div>
+          </div>
+
+          <ActAdditionalTable
+            rows={additionalRows}
+            onUpdate={updateAdditionalRow}
+            onDelete={deleteAdditionalRow}
+          />
+        </div>
+      </Card>
+
+      <div className="flex justify-end gap-2">
+        <ExportActReportButton
+          calculationRows={calculationRows}
+          additionalRows={additionalRows}
+          month={month}
+          year={year}
+        />
+        <Button onClick={handleSave} disabled={loading}>
+          <Save className="h-4 w-4 mr-2" />
+          Сохранить
+        </Button>
+      </div>
+    </div>
+  );
+}
