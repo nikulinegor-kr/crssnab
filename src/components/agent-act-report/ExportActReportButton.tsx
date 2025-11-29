@@ -179,6 +179,71 @@ export const ExportActReportButton = ({
         ]);
       });
 
+      // Calculation totals
+      const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+      
+      const calcTotals = {
+        salary_with_commission: calculationRows.reduce(
+          (sum, row) => sum + (row.salary_with_commission || 0),
+          0
+        ),
+        tax_7_percent: calculationRows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
+        remainder_after_tax: calculationRows.reduce(
+          (sum, row) => sum + (row.remainder_after_tax || 0),
+          0
+        ),
+        check_amount: checkAmountTotal,
+        act_amount: calculationRows.reduce((sum, row) => sum + (row.act_amount || 0), 0),
+      };
+
+      excelData.push([
+        {
+          v: calcTotals.salary_with_commission,
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true },
+            numFmt: "#,##0.00",
+            border: borderStyle,
+          },
+        },
+        {
+          v: calcTotals.check_amount,
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true },
+            numFmt: "#,##0.00",
+            border: borderStyle,
+          },
+        },
+        {
+          v: calcTotals.remainder_after_tax,
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true },
+            numFmt: "#,##0.00",
+            border: borderStyle,
+          },
+        },
+        {
+          v: calcTotals.tax_7_percent,
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true },
+            numFmt: "#,##0.00",
+            border: borderStyle,
+          },
+        },
+        {
+          v: calcTotals.act_amount,
+          s: {
+            alignment: { horizontal: "center" },
+            font: { bold: true },
+            numFmt: "#,##0.00",
+            border: borderStyle,
+          },
+        },
+      ]);
+
       excelData.push([""]);
       excelData.push([""]);
 

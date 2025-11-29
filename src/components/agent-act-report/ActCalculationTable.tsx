@@ -143,6 +143,14 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               </TableCell>
             </TableRow>
           ))}
+          <TableRow className="font-bold bg-muted/50">
+            <TableCell className="text-center">{totals.salary_with_commission.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.check_amount.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.remainder_after_tax.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.tax_7_percent.toFixed(2)}</TableCell>
+            <TableCell className="text-center">{totals.act_amount.toFixed(2)}</TableCell>
+            <TableCell></TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </div>
