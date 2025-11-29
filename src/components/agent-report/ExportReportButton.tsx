@@ -78,10 +78,10 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       rows.forEach(row => {
         excelData.push([
           { v: row.row_number, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
-          { v: row.tmc, s: { alignment: { horizontal: 'left' }, border: borderStyle } },
-          { v: row.contractor, s: { alignment: { horizontal: 'left' }, border: borderStyle } },
+          { v: row.tmc, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
+          { v: row.contractor, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
           { v: row.invoice_number, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
-          { v: row.amount, s: { alignment: { horizontal: 'right' }, numFmt: '0.00', border: borderStyle } }
+          { v: row.amount, s: { alignment: { horizontal: 'center' }, numFmt: '0.00', border: borderStyle } }
         ]);
       });
 
