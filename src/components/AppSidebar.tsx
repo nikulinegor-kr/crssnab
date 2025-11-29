@@ -49,6 +49,7 @@ const secondaryMenuItems = [
 
 const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
+  { title: "Отчет агента по акту", url: "/agent-act-report", icon: FileBarChart },
 ];
 
 const settingsMenuItems = [

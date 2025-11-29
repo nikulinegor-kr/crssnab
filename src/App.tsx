@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import AgentReport from "./pages/AgentReport";
+import AgentActReport from "./pages/AgentActReport";
 import Pricing from "./pages/Pricing";
 import Features from "./pages/Features";
 import Demo from "./pages/Demo";
@@ -155,6 +156,16 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <AgentReport />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agent-act-report"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentActReport />
                 </AppLayout>
               </ProtectedRoute>
             }

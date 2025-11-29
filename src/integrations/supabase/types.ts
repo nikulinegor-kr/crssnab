@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_act_additional_rows: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          id: string
+          report_id: string
+          row_number: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          report_id: string
+          row_number: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          report_id?: string
+          row_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_act_additional_rows_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "agent_act_report_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_act_calculation_rows: {
+        Row: {
+          act_amount: number | null
+          check_amount: number | null
+          created_at: string
+          formula: string | null
+          id: string
+          remainder_after_tax: number | null
+          report_id: string
+          row_number: number
+          salary_with_commission: number | null
+          tax_7_percent: number | null
+          transfer_date: string | null
+          transferred_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          act_amount?: number | null
+          check_amount?: number | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          remainder_after_tax?: number | null
+          report_id: string
+          row_number: number
+          salary_with_commission?: number | null
+          tax_7_percent?: number | null
+          transfer_date?: string | null
+          transferred_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          act_amount?: number | null
+          check_amount?: number | null
+          created_at?: string
+          formula?: string | null
+          id?: string
+          remainder_after_tax?: number | null
+          report_id?: string
+          row_number?: number
+          salary_with_commission?: number | null
+          tax_7_percent?: number | null
+          transfer_date?: string | null
+          transferred_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_act_calculation_rows_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "agent_act_report_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_act_report_data: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          organization_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          organization_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          organization_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       agent_report_data: {
         Row: {
           company_address: string | null
