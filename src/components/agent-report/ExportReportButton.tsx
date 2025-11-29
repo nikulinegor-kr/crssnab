@@ -57,23 +57,31 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       excelData.push([`За период с ${formatDate(headerData.period_start)} г. по ${formatDate(headerData.period_end)} г. произведен закуп ТМЦ:`]);
       excelData.push([""]);
 
+      // Border style definition
+      const borderStyle = {
+        top: { style: 'thin', color: { rgb: '000000' } },
+        bottom: { style: 'thin', color: { rgb: '000000' } },
+        left: { style: 'thin', color: { rgb: '000000' } },
+        right: { style: 'thin', color: { rgb: '000000' } }
+      };
+
       // Table headers (centered)
       excelData.push([
-        { v: "№", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
-        { v: "ТМЦ", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
-        { v: "Контрагент", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
-        { v: "№ Счета", s: { alignment: { horizontal: 'center' }, font: { bold: true } } },
-        { v: "Сумма закупа", s: { alignment: { horizontal: 'center' }, font: { bold: true } } }
+        { v: "№", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
+        { v: "ТМЦ", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
+        { v: "Контрагент", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
+        { v: "№ Счета", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } },
+        { v: "Сумма закупа", s: { alignment: { horizontal: 'center' }, font: { bold: true }, border: borderStyle } }
       ]);
 
       // Table rows
       rows.forEach(row => {
         excelData.push([
-          { v: row.row_number, s: { alignment: { horizontal: 'center' } } },
-          { v: row.tmc, s: { alignment: { horizontal: 'left' } } },
-          { v: row.contractor, s: { alignment: { horizontal: 'left' } } },
-          { v: row.invoice_number, s: { alignment: { horizontal: 'center' } } },
-          { v: row.amount, s: { alignment: { horizontal: 'right' }, numFmt: '0.00' } }
+          { v: row.row_number, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
+          { v: row.tmc, s: { alignment: { horizontal: 'left' }, border: borderStyle } },
+          { v: row.contractor, s: { alignment: { horizontal: 'left' }, border: borderStyle } },
+          { v: row.invoice_number, s: { alignment: { horizontal: 'center' }, border: borderStyle } },
+          { v: row.amount, s: { alignment: { horizontal: 'right' }, numFmt: '0.00', border: borderStyle } }
         ]);
       });
 
@@ -84,9 +92,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       }, 0);
       
       excelData.push([
-        "", "", "",
-        { v: "ИТОГО", s: { alignment: { horizontal: 'left' }, font: { bold: true } } },
-        { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00' } }
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "ИТОГО", s: { alignment: { horizontal: 'left' }, font: { bold: true }, border: borderStyle } },
+        { v: total, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00', border: borderStyle } }
       ]);
 
       // Commission row
@@ -105,10 +115,11 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
       ];
       
       excelData.push([
-        { v: `Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)} г. за ${displayMonthNames[month - 1]} ${year} г.:`, s: { alignment: { horizontal: 'left' }, font: { bold: true } } },
-        "", "",
-        "",
-        { v: commission, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00' } }
+        { v: `Сумма вознаграждения согласно п. 4.2. агентского договора № ${headerData.contract_number} от ${formatDate(headerData.contract_date)} г. за ${displayMonthNames[month - 1]} ${year} г.:`, s: { alignment: { horizontal: 'left' }, font: { bold: true }, border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: "", s: { border: borderStyle } },
+        { v: commission, s: { alignment: { horizontal: 'right' }, font: { bold: true }, numFmt: '0.00', border: borderStyle } }
       ]);
 
       excelData.push([""]);
