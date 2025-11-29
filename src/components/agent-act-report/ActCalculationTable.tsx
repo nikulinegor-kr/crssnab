@@ -29,6 +29,9 @@ interface ActCalculationTableProps {
 }
 
 export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission = 0, additionalRows = [] }: ActCalculationTableProps) => {
+  // Сумма по чекам берется из ИТОГО дополнительных позиций
+  const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+
   const handleSalaryChange = (id: string, value: number | null) => {
     onUpdate(id, "salary_with_commission", value);
     
@@ -36,15 +39,13 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
     if (value !== null) {
       const tax = value * 0.07;
       onUpdate(id, "tax_7_percent", parseFloat(tax.toFixed(2)));
-    }
-  };
-
-  const handleRemainderChange = (id: string, value: number | null) => {
-    onUpdate(id, "remainder_after_tax", value);
-    
-    // Автоматически рассчитываем сумму акта = remainder / 93 * 100
-    if (value !== null) {
-      const actAmount = (value / 93) * 100;
+      
+      // Автоматически рассчитываем остаток = зарплата + сумма по чекам
+      const remainder = value + checkAmountTotal;
+      onUpdate(id, "remainder_after_tax", parseFloat(remainder.toFixed(2)));
+      
+      // Автоматически рассчитываем сумму акта = remainder / 93 * 100
+      const actAmount = (remainder / 93) * 100;
       onUpdate(id, "act_amount", parseFloat(actAmount.toFixed(2)));
     }
   };
@@ -131,9 +132,10 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
                 <Input
                   type="number"
                   value={row.remainder_after_tax || ""}
-                  onChange={(e) => handleRemainderChange(row.id, parseFloat(e.target.value) || null)}
-                  className="text-center"
+                  onChange={(e) => onUpdate(row.id, "remainder_after_tax", parseFloat(e.target.value) || null)}
+                  className="text-center bg-muted/50"
                   step="0.01"
+                  disabled
                 />
               </TableCell>
               <TableCell>
