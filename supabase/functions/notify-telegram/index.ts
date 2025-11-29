@@ -129,8 +129,8 @@ async function createKeyboard(request: any, supabaseClient: any) {
     keyboard.push([{ text: "✅ Отписано в оплату", callback_data: "paid" }]);
   }
 
-  // Кнопка открыть счёт - используем document_url с signed URL
-  if (documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
+  // Кнопка открыть счёт - показываем ТОЛЬКО для статуса "Счёт в Бухгалтерии"
+  if (status.includes("счёт в бухгалтерии") && documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
     try {
       // Extract file path from URL
       const url = new URL(documentUrl);
