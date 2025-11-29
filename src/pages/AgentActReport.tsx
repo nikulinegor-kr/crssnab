@@ -398,6 +398,7 @@ export default function AgentActReport() {
             onUpdate={updateCalculationRow}
             onDelete={deleteCalculationRow}
             agentCommission={agentCommission}
+            additionalRows={additionalRows}
           />
         </div>
       </Card>
