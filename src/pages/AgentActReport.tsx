@@ -190,7 +190,7 @@ export default function AgentActReport() {
       transferred_amount: null,
       tax_7_percent: null,
       remainder_after_tax: null,
-      salary_with_commission: null,
+      salary_with_commission: 30000,
       check_amount: null,
       act_amount: null,
       formula: null,
