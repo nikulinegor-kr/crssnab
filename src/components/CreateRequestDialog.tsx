@@ -139,6 +139,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [isAddingSupplier, setIsAddingSupplier] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
+  const [isAddingApplicant, setIsAddingApplicant] = useState(false);
+  const [newApplicantName, setNewApplicantName] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -589,20 +591,115 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите заявителя" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {applicants.map((applicant) => (
-                          <SelectItem key={applicant.id} value={applicant.name}>
-                            {applicant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите заявителя" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {applicants.map((applicant) => (
+                            <SelectItem key={applicant.id} value={applicant.name}>
+                              {applicant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      <Dialog open={isAddingApplicant} onOpenChange={setIsAddingApplicant}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            className="shrink-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Добавить заявителя</DialogTitle>
+                            <DialogDescription>
+                              Создайте нового заявителя для быстрого выбора
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="applicant-name">ФИО заявителя</Label>
+                              <Input
+                                id="applicant-name"
+                                value={newApplicantName}
+                                onChange={(e) => setNewApplicantName(e.target.value)}
+                                placeholder="Введите ФИО"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setIsAddingApplicant(false);
+                                setNewApplicantName("");
+                              }}
+                            >
+                              Отмена
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={async () => {
+                                if (!newApplicantName.trim()) {
+                                  toast({
+                                    title: "Ошибка",
+                                    description: "Введите ФИО заявителя",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+
+                                try {
+                                  const { error } = await supabase
+                                    .from("request_participants")
+                                    .insert({
+                                      name: newApplicantName.trim(),
+                                      organization_id: currentOrgId || "",
+                                      participant_type: "applicant",
+                                      is_active: true,
+                                    });
+
+                                  if (error) throw error;
+
+                                  toast({
+                                    title: "Успешно",
+                                    description: "Заявитель добавлен",
+                                  });
+
+                                  // Обновляем список участников
+                                  queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                                  
+                                  // Выбираем нового заявителя
+                                  field.onChange(newApplicantName.trim());
+                                  
+                                  setIsAddingApplicant(false);
+                                  setNewApplicantName("");
+                                } catch (error) {
+                                  console.error("Error adding applicant:", error);
+                                  toast({
+                                    title: "Ошибка",
+                                    description: "Не удалось добавить заявителя",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                            >
+                              Добавить
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
