@@ -269,8 +269,10 @@ async function handleCallbackQuery(callbackQuery: any) {
   // Update status in database (except for rework, which happens after comment and exclude which deletes)
   if (data !== "rework" && data !== "confirm_exclude") {
     await updateRequestStatus(requests.id, newStatus, username, fullName);
-    // Notify group about status change
-    await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
+    // Notify group about status change (only for non-final statuses, final statuses send their own message)
+    if (!isFinalStatus) {
+      await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
+    }
   }
 
   // Handle final status: delete previous message and send new one
