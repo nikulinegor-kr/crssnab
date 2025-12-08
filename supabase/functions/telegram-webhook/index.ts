@@ -154,9 +154,9 @@ async function handleCallbackQuery(callbackQuery: any) {
   let shouldDeletePreviousMessage = false;
 
   if (data === "received") {
-    // ТМЦ ПОЛУЧЕНО - ФИНАЛЬНЫЙ СТАТУС
+    // Получение подтверждено - ФИНАЛЬНЫЙ СТАТУС
     newStatus = "Доставлено";
-    newText += `\n\n✅ ТМЦ получено — отметил: @${username || fullName}`;
+    newText += `\n\n✅ Получение подтверждено — отметил: @${username || fullName}`;
     removeKeyboard = true;
     alertText = "✅ Успешно отмечено как получено!";
     isFinalStatus = true;
