@@ -39,6 +39,7 @@ function getStatusEmoji(status: string): string {
 
 function formatRequestMessage(request: any, participants: any[] = []): string {
   const lines: string[] = [];
+  const status = request.status?.toLowerCase() || "";
   
   // Helper to find participant username
   const getParticipantMention = (name: string, type: "applicant" | "executor"): string => {
@@ -52,7 +53,37 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     return name;
   };
   
-  // Обязательные поля
+  // Специальный формат для статуса "В пути"
+  if (status.includes("в пути")) {
+    lines.push(`🧾 Заявка — ${request.description}`);
+    
+    if (request.priority) {
+      lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
+    }
+    
+    lines.push(`🚚 Статус — ${request.status}`);
+    
+    if (request.applicant) {
+      const mention = getParticipantMention(request.applicant, "applicant");
+      lines.push(`👤 Заявитель — ${mention}`);
+    }
+    
+    if (request.transport_company) {
+      lines.push(`🚛 ТК — ${request.transport_company}`);
+    }
+    
+    if (request.shipment_date) {
+      lines.push(`📅 Дата отгрузки — ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    if (request.delivery_date) {
+      lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    return lines.join('\n');
+  }
+  
+  // Стандартный формат для остальных статусов
   lines.push(`🧾 Заявка — ${request.description}`);
   
   if (request.priority) {
