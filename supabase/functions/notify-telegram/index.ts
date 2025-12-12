@@ -109,6 +109,32 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     return lines.join('\n');
   }
   
+  // Специальный формат для статуса "Доставлено в ТК"
+  if (status.includes("доставлено в тк")) {
+    lines.push(`🧾 Заявка — ${request.description}`);
+    
+    if (request.priority) {
+      lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
+    }
+    
+    lines.push(`📦 Статус — ${request.status}`);
+    
+    if (request.applicant) {
+      const mention = getParticipantMention(request.applicant, "applicant");
+      lines.push(`👤 Заявитель — ${mention}`);
+    }
+    
+    if (request.transport_company) {
+      lines.push(`🚛 ТК — ${request.transport_company}`);
+    }
+    
+    if (request.delivery_date) {
+      lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    return lines.join('\n');
+  }
+  
   // Стандартный формат для остальных статусов
   lines.push(`🧾 Заявка — ${request.description}`);
   
