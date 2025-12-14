@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter, Plus, AlertTriangle, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, isPast, isToday, differenceInDays } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +25,8 @@ interface Request {
   applicant: string | null;
   contractor: string | null;
   request_date: string;
+  delivery_date: string | null;
+  executor: string | null;
 }
 
 interface Status {
@@ -41,6 +44,9 @@ export default function KanbanBoard() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [applicantFilter, setApplicantFilter] = useState<string>("all");
   const [contractorFilter, setContractorFilter] = useState<string>("all");
+  const [executorFilter, setExecutorFilter] = useState<string>("all");
+  const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const { currentOrgId } = useCurrentOrganization();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,7 +76,7 @@ export default function KanbanBoard() {
       if (!currentOrgId) return [];
       const { data, error } = await supabase
         .from("requests")
-        .select("id, request_number, description, status, priority, applicant, contractor, request_date")
+        .select("id, request_number, description, status, priority, applicant, contractor, request_date, delivery_date, executor")
         .eq("organization_id", currentOrgId)
         .eq("archived", false)
         .order("request_date", { ascending: false });
@@ -102,6 +108,30 @@ export default function KanbanBoard() {
     },
   });
 
+  // Bulk update status mutation
+  const bulkUpdateStatusMutation = useMutation({
+    mutationFn: async ({ requestIds, newStatus }: { requestIds: string[]; newStatus: string }) => {
+      const { error } = await supabase
+        .from("requests")
+        .update({ status: newStatus })
+        .in("id", requestIds);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["requests-kanban", currentOrgId] });
+      toast({ title: `Обновлено ${variables.requestIds.length} заявок` });
+      setSelectedRequests(new Set());
+      setIsSelectionMode(false);
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить статусы",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get unique values for filters
   const uniquePriorities = useMemo(() => {
     if (!requests) return [];
@@ -118,12 +148,18 @@ export default function KanbanBoard() {
     return [...new Set(requests.map(r => r.contractor).filter(Boolean))] as string[];
   }, [requests]);
 
-  const hasActiveFilters = priorityFilter !== "all" || applicantFilter !== "all" || contractorFilter !== "all";
+  const uniqueExecutors = useMemo(() => {
+    if (!requests) return [];
+    return [...new Set(requests.map(r => r.executor).filter(Boolean))] as string[];
+  }, [requests]);
+
+  const hasActiveFilters = priorityFilter !== "all" || applicantFilter !== "all" || contractorFilter !== "all" || executorFilter !== "all";
 
   const clearFilters = () => {
     setPriorityFilter("all");
     setApplicantFilter("all");
     setContractorFilter("all");
+    setExecutorFilter("all");
   };
 
   // Filter requests by search and filters
@@ -151,9 +187,12 @@ export default function KanbanBoard() {
       // Contractor filter
       if (contractorFilter !== "all" && r.contractor !== contractorFilter) return false;
       
+      // Executor filter
+      if (executorFilter !== "all" && r.executor !== executorFilter) return false;
+      
       return true;
     });
-  }, [requests, searchQuery, priorityFilter, applicantFilter, contractorFilter]);
+  }, [requests, searchQuery, priorityFilter, applicantFilter, contractorFilter, executorFilter]);
 
   // Group requests by status
   const requestsByStatus = useMemo(() => {
@@ -180,6 +219,52 @@ export default function KanbanBoard() {
       "Планово": "bg-slate-500/20 text-slate-400 border-slate-500/30",
     };
     return colors[priority] || "bg-muted text-muted-foreground";
+  };
+
+  // Check if request is overdue
+  const getDeadlineStatus = (deliveryDate: string | null) => {
+    if (!deliveryDate) return null;
+    const date = new Date(deliveryDate);
+    if (isPast(date) && !isToday(date)) {
+      const daysOverdue = differenceInDays(new Date(), date);
+      return { isOverdue: true, daysOverdue, label: `Просрочено на ${daysOverdue} дн.` };
+    }
+    if (isToday(date)) {
+      return { isOverdue: false, daysOverdue: 0, label: "Сегодня" };
+    }
+    const daysLeft = differenceInDays(date, new Date());
+    if (daysLeft <= 3) {
+      return { isOverdue: false, daysOverdue: 0, label: `Осталось ${daysLeft} дн.` };
+    }
+    return null;
+  };
+
+  const toggleRequestSelection = (requestId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedRequests(prev => {
+      const next = new Set(prev);
+      if (next.has(requestId)) {
+        next.delete(requestId);
+      } else {
+        next.add(requestId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkStatusChange = (newStatus: string) => {
+    if (selectedRequests.size === 0) return;
+    bulkUpdateStatusMutation.mutate({
+      requestIds: Array.from(selectedRequests),
+      newStatus,
+    });
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(prev => !prev);
+    if (isSelectionMode) {
+      setSelectedRequests(new Set());
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, requestId: string) => {
@@ -318,6 +403,20 @@ export default function KanbanBoard() {
             </SelectContent>
           </Select>
           
+          <Select value={executorFilter} onValueChange={setExecutorFilter}>
+            <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[150px] text-xs">
+              <SelectValue placeholder="Исполнитель" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все исполнители</SelectItem>
+              {uniqueExecutors.map(executor => (
+                <SelectItem key={executor} value={executor}>
+                  <span className="truncate">{executor}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -330,10 +429,56 @@ export default function KanbanBoard() {
             </Button>
           )}
           
-          <Badge variant="secondary" className="text-[10px] ml-auto">
-            {filteredRequests.length} заявок
-          </Badge>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              variant={isSelectionMode ? "secondary" : "ghost"}
+              size="sm"
+              onClick={toggleSelectionMode}
+              className="h-7 px-2 text-xs"
+            >
+              <CheckSquare className="h-3.5 w-3.5 mr-1" />
+              {isSelectionMode ? `Выбрано: ${selectedRequests.size}` : "Выбрать"}
+            </Button>
+            
+            <Badge variant="secondary" className="text-[10px]">
+              {filteredRequests.length} заявок
+            </Badge>
+          </div>
         </div>
+        
+        {/* Bulk Actions Bar */}
+        {isSelectionMode && selectedRequests.size > 0 && (
+          <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/20 rounded-lg">
+            <span className="text-xs text-muted-foreground">Изменить статус:</span>
+            {statuses?.map(status => (
+              <Button
+                key={status.id}
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkStatusChange(status.name)}
+                className="h-6 px-2 text-xs"
+                disabled={bulkUpdateStatusMutation.isPending}
+              >
+                <div 
+                  className="w-2 h-2 rounded-full mr-1"
+                  style={{ backgroundColor: status.color }}
+                />
+                {status.name}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedRequests(new Set());
+                setIsSelectionMode(false);
+              }}
+              className="h-6 px-2 text-xs ml-auto"
+            >
+              Отмена
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Kanban Board */}
@@ -428,49 +573,77 @@ export default function KanbanBoard() {
                 {/* Cards Container - only show when not collapsed */}
                 {!isCollapsed && (
                   <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
-                    {requestsByStatus[status.name]?.map((request) => (
-                      <div
-                        key={request.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, request.id)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => navigate(`/requests/${request.id}`)}
-                        className={cn(
-                          "p-3 rounded-lg bg-background border border-border/40 cursor-pointer",
-                          "hover:border-primary/40 hover:shadow-md transition-all",
-                          "active:scale-[0.98]",
-                          draggingRequest === request.id && "opacity-50 scale-95"
-                        )}
-                      >
-                        <div className="flex items-start gap-2">
-                          <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <p className="text-sm font-medium line-clamp-2 leading-snug">
-                              {request.description}
-                            </p>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs text-muted-foreground font-mono">
-                                #{request.request_number.slice(-6)}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
-                              >
-                                {request.priority}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
-                              {request.applicant && (
-                                <span className="truncate max-w-[100px]" title={request.applicant}>
-                                  {request.applicant}
+                    {requestsByStatus[status.name]?.map((request) => {
+                      const deadlineStatus = getDeadlineStatus(request.delivery_date);
+                      const isSelected = selectedRequests.has(request.id);
+                      
+                      return (
+                        <div
+                          key={request.id}
+                          draggable={!isSelectionMode}
+                          onDragStart={(e) => !isSelectionMode && handleDragStart(e, request.id)}
+                          onDragEnd={handleDragEnd}
+                          onClick={(e) => isSelectionMode ? toggleRequestSelection(request.id, e) : navigate(`/requests/${request.id}`)}
+                          className={cn(
+                            "p-3 rounded-lg bg-background border cursor-pointer",
+                            "hover:shadow-md transition-all",
+                            "active:scale-[0.98]",
+                            draggingRequest === request.id && "opacity-50 scale-95",
+                            deadlineStatus?.isOverdue && "border-destructive/50 bg-destructive/5",
+                            !deadlineStatus?.isOverdue && "border-border/40 hover:border-primary/40",
+                            isSelected && "ring-2 ring-primary border-primary"
+                          )}
+                        >
+                          <div className="flex items-start gap-2">
+                            {isSelectionMode ? (
+                              <Checkbox 
+                                checked={isSelected} 
+                                className="mt-0.5 shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
+                            )}
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <p className="text-sm font-medium line-clamp-2 leading-snug">
+                                {request.description}
+                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs text-muted-foreground font-mono">
+                                  #{request.request_number.slice(-6)}
                                 </span>
+                                <Badge
+                                  variant="outline"
+                                  className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
+                                >
+                                  {request.priority}
+                                </Badge>
+                              </div>
+                              
+                              {/* Deadline indicator */}
+                              {deadlineStatus && (
+                                <div className={cn(
+                                  "flex items-center gap-1 text-xs",
+                                  deadlineStatus.isOverdue ? "text-destructive" : "text-warning"
+                                )}>
+                                  <AlertTriangle className="h-3 w-3" />
+                                  <span>{deadlineStatus.label}</span>
+                                </div>
                               )}
+                              
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
+                                {request.executor && (
+                                  <span className="truncate max-w-[100px] text-primary/70" title={request.executor}>
+                                    {request.executor}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     {count === 0 && (
                       <div className="text-center py-8 text-sm text-muted-foreground">
