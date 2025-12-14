@@ -175,7 +175,7 @@ const App = () => (
         path="/kanban"
         element={
           <ProtectedRoute>
-            <AppLayout>
+            <AppLayout fullBleed hideSubscriptionBanner>
               <KanbanBoard />
             </AppLayout>
           </ProtectedRoute>

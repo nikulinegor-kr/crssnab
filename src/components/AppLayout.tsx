@@ -3,12 +3,15 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ReactNode } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: ReactNode;
+  fullBleed?: boolean;
+  hideSubscriptionBanner?: boolean;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLayoutProps) {
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-background/95">
@@ -20,11 +23,22 @@ export function AppLayout({ children }: AppLayoutProps) {
             <NotificationBell />
           </header>
 
-          <main className="flex-1 overflow-auto">
-            <div className="w-full p-2 sm:p-3 md:p-6">
-              <SubscriptionBanner />
-              {children}
-            </div>
+          <main className={cn("flex-1", fullBleed ? "overflow-hidden" : "overflow-auto")}>
+            {fullBleed ? (
+              <div className="flex flex-col h-full w-full">
+                {!hideSubscriptionBanner && (
+                  <div className="w-full p-2 sm:p-3 md:p-6">
+                    <SubscriptionBanner />
+                  </div>
+                )}
+                {children}
+              </div>
+            ) : (
+              <div className="w-full p-2 sm:p-3 md:p-6">
+                <SubscriptionBanner />
+                {children}
+              </div>
+            )}
           </main>
         </div>
       </div>

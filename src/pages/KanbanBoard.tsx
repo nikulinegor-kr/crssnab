@@ -207,7 +207,7 @@ export default function KanbanBoard() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden -m-4 sm:-m-6">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between py-2 px-4 sm:px-6 shrink-0 bg-background border-b border-border/30">
         <div>
