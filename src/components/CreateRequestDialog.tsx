@@ -5,6 +5,7 @@ import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { ComboboxInput } from "@/components/ui/combobox-input";
+import { FileDropZone } from "@/components/FileDropZone";
 import {
   Dialog,
   DialogContent,
@@ -139,8 +140,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   } | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
@@ -854,91 +853,25 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Фото заявки</Label>
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => photoInputRef.current?.click()}
-                    className="gap-2"
-                  >
-                    <Image className="h-4 w-4" />
-                    Выбрать фото
-                  </Button>
-                  {photoFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="truncate max-w-[150px]">{photoFile.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          if (photoInputRef.current) photoInputRef.current.value = "";
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, WEBP до 5 МБ
-                </p>
-              </div>
+              <FileDropZone
+                accept="image/*"
+                file={photoFile}
+                onFileChange={setPhotoFile}
+                label="Фото заявки"
+                hint="JPG, PNG, WEBP до 5 МБ"
+                icon="image"
+                maxSizeMB={5}
+              />
 
-              <div className="space-y-2">
-                <Label>Документ (Счёт/КП)</Label>
-                <input
-                  ref={documentInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
-                  onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => documentInputRef.current?.click()}
-                    className="gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Выбрать файл
-                  </Button>
-                  {documentFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="truncate max-w-[150px]">{documentFile.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          setDocumentFile(null);
-                          if (documentInputRef.current) documentInputRef.current.value = "";
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  PDF, DOC, DOCX, XLS, XLSX до 10 МБ
-                </p>
-              </div>
+              <FileDropZone
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                file={documentFile}
+                onFileChange={setDocumentFile}
+                label="Документ (Счёт/КП)"
+                hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ"
+                icon="document"
+                maxSizeMB={10}
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
