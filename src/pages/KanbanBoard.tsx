@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -157,12 +157,12 @@ export default function KanbanBoard() {
 
   const hasActiveFilters = priorityFilter !== "all" || applicantFilter !== "all" || contractorFilter !== "all" || executorFilter !== "all";
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setPriorityFilter("all");
     setApplicantFilter("all");
     setContractorFilter("all");
     setExecutorFilter("all");
-  };
+  }, []);
 
   // Filter requests by search and filters
   const filteredRequests = useMemo(() => {
@@ -211,7 +211,7 @@ export default function KanbanBoard() {
     return grouped;
   }, [filteredRequests, statuses]);
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = useCallback((priority: string) => {
     const colors: Record<string, string> = {
       "Аварийно": "bg-red-500/20 text-red-400 border-red-500/30",
       "Срочно": "bg-orange-500/20 text-orange-400 border-orange-500/30",
@@ -221,10 +221,10 @@ export default function KanbanBoard() {
       "Планово": "bg-slate-500/20 text-slate-400 border-slate-500/30",
     };
     return colors[priority] || "bg-muted text-muted-foreground";
-  };
+  }, []);
 
   // Check if request is overdue (completed requests are never overdue)
-  const getDeadlineStatus = (deliveryDate: string | null, status: string) => {
+  const getDeadlineStatus = useCallback((deliveryDate: string | null, status: string) => {
     if (!deliveryDate) return null;
     // Completed requests are not overdue
     if (status === "Доставлено") return null;
@@ -242,9 +242,9 @@ export default function KanbanBoard() {
       return { isOverdue: false, daysOverdue: 0, label: `Осталось ${daysLeft} дн.` };
     }
     return null;
-  };
+  }, []);
 
-  const toggleRequestSelection = (requestId: string, e: React.MouseEvent) => {
+  const toggleRequestSelection = useCallback((requestId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedRequests(prev => {
       const next = new Set(prev);
@@ -255,39 +255,39 @@ export default function KanbanBoard() {
       }
       return next;
     });
-  };
+  }, []);
 
-  const handleBulkStatusChange = (newStatus: string) => {
+  const handleBulkStatusChange = useCallback((newStatus: string) => {
     if (selectedRequests.size === 0) return;
     bulkUpdateStatusMutation.mutate({
       requestIds: Array.from(selectedRequests),
       newStatus,
     });
-  };
+  }, [selectedRequests, bulkUpdateStatusMutation]);
 
-  const toggleSelectionMode = () => {
+  const toggleSelectionMode = useCallback(() => {
     setIsSelectionMode(prev => !prev);
     if (isSelectionMode) {
       setSelectedRequests(new Set());
     }
-  };
+  }, [isSelectionMode]);
 
-  const handleDragStart = (e: React.DragEvent, requestId: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, requestId: string) => {
     setDraggingRequest(requestId);
     e.dataTransfer.effectAllowed = "move";
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, statusName: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, statusName: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOverStatus(statusName);
-  };
+  }, []);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOverStatus(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent, statusName: string) => {
+  const handleDrop = useCallback((e: React.DragEvent, statusName: string) => {
     e.preventDefault();
     if (draggingRequest) {
       const request = requests?.find(r => r.id === draggingRequest);
@@ -300,14 +300,14 @@ export default function KanbanBoard() {
     }
     setDraggingRequest(null);
     setDragOverStatus(null);
-  };
+  }, [draggingRequest, requests, updateStatusMutation]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggingRequest(null);
     setDragOverStatus(null);
-  };
+  }, []);
 
-  const toggleColumnCollapse = (statusName: string) => {
+  const toggleColumnCollapse = useCallback((statusName: string) => {
     setCollapsedColumns(prev => {
       const next = new Set(prev);
       if (next.has(statusName)) {
@@ -317,7 +317,7 @@ export default function KanbanBoard() {
       }
       return next;
     });
-  };
+  }, []);
 
   if (loadingStatuses || loadingRequests) {
     return (
