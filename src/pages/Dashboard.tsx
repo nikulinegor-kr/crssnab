@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
@@ -76,15 +76,8 @@ const Dashboard = () => {
     return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
   }, [requests]);
 
-  const isLoading = requestsLoading;
-
-  useEffect(() => {
-    if (!currentOrgId) {
-      navigate("/select-organization");
-    }
-  }, [currentOrgId, navigate]);
-
-  const statsCards = [
+  // Мемоизация карточек статистики
+  const statsCards = useMemo(() => [
     {
       title: "Всего заявок",
       value: stats.total.toString(),
@@ -117,22 +110,58 @@ const Dashboard = () => {
       bgColor: "bg-success/10",
       link: "/requests?status=Доставлено"
     },
-  ];
+  ], [stats]);
 
-  const recentRequests = filteredRequests.slice(0, 3);
+  // Мемоизация последних заявок
+  const recentRequests = useMemo(() => filteredRequests.slice(0, 3), [filteredRequests]);
 
-  const handleRequestClick = (request: Request) => {
+  // Мемоизация заявок с датой доставки для календаря
+  const calendarRequests = useMemo(() => 
+    filteredRequests.filter(r => r.delivery_date), 
+    [filteredRequests]
+  );
+
+  const isLoading = requestsLoading;
+
+  useEffect(() => {
+    if (!currentOrgId) {
+      navigate("/select-organization");
+    }
+  }, [currentOrgId, navigate]);
+
+  // Обработчики с useCallback
+  const handleRequestClick = useCallback((request: Request) => {
     setSelectedRequest(request);
     setEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditDialogClose = () => {
+  const handleEditDialogClose = useCallback(() => {
     setEditDialogOpen(false);
     setSelectedRequest(null);
     refetch();
-  };
+  }, [refetch]);
 
-  const getStatusColor = (status: string) => {
+  const handleNavigateToRequests = useCallback(() => {
+    navigate("/requests");
+  }, [navigate]);
+
+  const handleNavigateToImport = useCallback(() => {
+    navigate("/import");
+  }, [navigate]);
+
+  const handleNavigateToChat = useCallback(() => {
+    navigate("/chat");
+  }, [navigate]);
+
+  const handleNavigateToEmergency = useCallback(() => {
+    navigate("/requests?priority=Аварийно&status=!Доставлено");
+  }, [navigate]);
+
+  const handleStatsCardClick = useCallback((link: string) => {
+    navigate(link);
+  }, [navigate]);
+
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "Доставлено": return "text-success";
       case "Доставлено в ТК": return "text-success";
@@ -145,7 +174,7 @@ const Dashboard = () => {
       case "Счёт": return "text-orange-500";
       default: return "text-foreground";
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -194,7 +223,7 @@ const Dashboard = () => {
                   <Card 
                     key={stat.title} 
                     className="bg-card border-border/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/50"
-                    onClick={() => navigate(stat.link)}
+                    onClick={() => handleStatsCardClick(stat.link)}
                   >
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -227,7 +256,7 @@ const Dashboard = () => {
             <TabsContent value="overview">
               <RequestsAnalytics 
                 requests={filteredRequests} 
-                onEmergencyClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")}
+                onEmergencyClick={handleNavigateToEmergency}
               />
             </TabsContent>
             <TabsContent value="performance">
@@ -241,7 +270,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {settings.dashboard.showCalendarWidget && (
               <CalendarWidget 
-                requests={filteredRequests.filter(r => r.delivery_date)} 
+                requests={calendarRequests} 
               />
             )}
             {settings.dashboard.showEmergencyWidget && (
@@ -259,7 +288,7 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border/40">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
-              <Button onClick={() => navigate("/requests")} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button onClick={handleNavigateToRequests} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 Все заявки
               </Button>
             </div>
@@ -284,7 +313,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">У вас пока нет заявок</h3>
                 <p className="text-sm text-muted-foreground mb-4">Начните с импорта данных из Google Sheets</p>
-                <Button onClick={() => navigate("/import")} className="gap-2" size="sm">
+                <Button onClick={handleNavigateToImport} className="gap-2" size="sm">
                   <Plus className="h-4 w-4" />
                   Импортировать данные
                 </Button>
@@ -344,7 +373,7 @@ const Dashboard = () => {
         </Button>
       </CreateRequestDialog>
       <Button 
-        onClick={() => navigate("/chat")}
+        onClick={handleNavigateToChat}
         className="fixed bottom-6 right-24 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" 
         size="icon"
         variant="secondary"
