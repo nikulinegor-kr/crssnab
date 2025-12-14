@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Plus } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { ComboboxInput } from "@/components/ui/combobox-input";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Drawer,
   DrawerContent,
@@ -43,7 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, X, Image, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Label } from "@/components/ui/label";
+
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
 
@@ -137,10 +139,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   } | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [isAddingSupplier, setIsAddingSupplier] = useState(false);
-  const [newSupplierName, setNewSupplierName] = useState("");
-  const [isAddingApplicant, setIsAddingApplicant] = useState(false);
-  const [newApplicantName, setNewApplicantName] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -591,115 +589,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
-                    <div className="flex gap-2">
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите заявителя" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {applicants.map((applicant) => (
-                            <SelectItem key={applicant.id} value={applicant.name}>
-                              {applicant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      <Dialog open={isAddingApplicant} onOpenChange={setIsAddingApplicant}>
-                        <DialogTrigger asChild>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon"
-                            className="shrink-0"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Добавить заявителя</DialogTitle>
-                            <DialogDescription>
-                              Создайте нового заявителя для быстрого выбора
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                              <Label htmlFor="applicant-name">ФИО заявителя</Label>
-                              <Input
-                                id="applicant-name"
-                                value={newApplicantName}
-                                onChange={(e) => setNewApplicantName(e.target.value)}
-                                placeholder="Введите ФИО"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                setIsAddingApplicant(false);
-                                setNewApplicantName("");
-                              }}
-                            >
-                              Отмена
-                            </Button>
-                            <Button
-                              type="button"
-                              onClick={async () => {
-                                if (!newApplicantName.trim()) {
-                                  toast({
-                                    title: "Ошибка",
-                                    description: "Введите ФИО заявителя",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-
-                                try {
-                                  const { error } = await supabase
-                                    .from("request_participants")
-                                    .insert({
-                                      name: newApplicantName.trim(),
-                                      organization_id: currentOrgId || "",
-                                      participant_type: "applicant",
-                                      is_active: true,
-                                    });
-
-                                  if (error) throw error;
-
-                                  toast({
-                                    title: "Успешно",
-                                    description: "Заявитель добавлен",
-                                  });
-
-                                  // Обновляем список участников
-                                  queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                                  
-                                  // Выбираем нового заявителя
-                                  field.onChange(newApplicantName.trim());
-                                  
-                                  setIsAddingApplicant(false);
-                                  setNewApplicantName("");
-                                } catch (error) {
-                                  console.error("Error adding applicant:", error);
-                                  toast({
-                                    title: "Ошибка",
-                                    description: "Не удалось добавить заявителя",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              Добавить
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+                    <FormControl>
+                      <ComboboxInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={applicants.map(a => ({ value: a.id, label: a.name }))}
+                        placeholder="Введите или выберите..."
+                        searchPlaceholder="Поиск заявителя..."
+                        emptyMessage="Введите имя вручную"
+                        allowCustomValue={true}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -711,20 +611,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Исполнитель</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите исполнителя" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {executors.map((executor) => (
-                          <SelectItem key={executor.id} value={executor.name}>
-                            {executor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <ComboboxInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        options={executors.map(e => ({ value: e.id, label: e.name }))}
+                        placeholder="Введите или выберите..."
+                        searchPlaceholder="Поиск исполнителя..."
+                        emptyMessage="Введите имя вручную"
+                        allowCustomValue={true}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -738,130 +635,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Контрагент</FormLabel>
-                    <div className="flex gap-2">
-                      <Select 
-                        onValueChange={field.onChange} 
+                    <FormControl>
+                      <ComboboxInput
                         value={field.value || ""}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-[160px]">
-                            <SelectValue placeholder="Выбрать" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {suppliers?.map((supplier) => (
-                            <SelectItem key={supplier.id} value={supplier.name}>
-                              {supplier.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
-                        <DialogTrigger asChild>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon"
-                            className="shrink-0"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Добавить контрагента</DialogTitle>
-                            <DialogDescription>
-                              Создайте нового контрагента для быстрого выбора
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                              <Label htmlFor="supplier-name">Название</Label>
-                              <Input
-                                id="supplier-name"
-                                value={newSupplierName}
-                                onChange={(e) => setNewSupplierName(e.target.value)}
-                                placeholder="Название контрагента"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                setIsAddingSupplier(false);
-                                setNewSupplierName("");
-                              }}
-                            >
-                              Отмена
-                            </Button>
-                            <Button
-                              type="button"
-                              onClick={async () => {
-                                if (!newSupplierName.trim()) {
-                                  toast({
-                                    title: "Ошибка",
-                                    description: "Введите название контрагента",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-
-                                try {
-                                  const { data: userData } = await supabase.auth.getUser();
-                                  
-                                  const { error } = await supabase
-                                    .from("suppliers")
-                                    .insert({
-                                      name: newSupplierName.trim(),
-                                      organization_id: currentOrgId || "",
-                                      created_by: userData.user?.id,
-                                      status: "Активный",
-                                      category: "Другое",
-                                    });
-
-                                  if (error) throw error;
-
-                                  toast({
-                                    title: "Успешно",
-                                    description: "Контрагент добавлен",
-                                  });
-
-                                  // Обновляем список контрагентов
-                                  queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                                  
-                                  // Выбираем нового контрагента
-                                  field.onChange(newSupplierName.trim());
-                                  
-                                  setIsAddingSupplier(false);
-                                  setNewSupplierName("");
-                                } catch (error) {
-                                  console.error("Error adding supplier:", error);
-                                  toast({
-                                    title: "Ошибка",
-                                    description: "Не удалось добавить контрагента",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              Добавить
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      <FormControl>
-                        <Input 
-                          placeholder="или введите название" 
-                          className="flex-1"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                    </div>
+                        onChange={field.onChange}
+                        options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
+                        placeholder="Введите или выберите..."
+                        searchPlaceholder="Поиск контрагента..."
+                        emptyMessage="Введите название вручную"
+                        allowCustomValue={true}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
