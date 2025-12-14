@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, AlertCircle, Plus, Trash2, GripVertical, Loader2 } from "lucide-react";
+import { FileText, AlertCircle, Plus, Trash2, GripVertical, Loader2, ArrowUp, ArrowDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -46,6 +46,8 @@ export const RequestSettings = ({ organizationId }: RequestSettingsProps) => {
   const [newStatusColor, setNewStatusColor] = useState("#6366f1");
   const [newPriorityName, setNewPriorityName] = useState("");
   const [newPriorityColor, setNewPriorityColor] = useState("#6366f1");
+  const [draggingStatusId, setDraggingStatusId] = useState<string | null>(null);
+  const [draggingPriorityId, setDraggingPriorityId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -216,6 +218,171 @@ export const RequestSettings = ({ organizationId }: RequestSettingsProps) => {
     }
   };
 
+  const moveStatus = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= statuses.length) return;
+
+    const newStatuses = [...statuses];
+    const temp = newStatuses[index];
+    newStatuses[index] = newStatuses[newIndex];
+    newStatuses[newIndex] = temp;
+
+    // Update order values
+    const updates = newStatuses.map((s, i) => ({
+      id: s.id,
+      order: i,
+    }));
+
+    setStatuses(newStatuses.map((s, i) => ({ ...s, order: i })));
+
+    try {
+      for (const update of updates) {
+        await supabase
+          .from("request_statuses")
+          .update({ order: update.order })
+          .eq("id", update.id);
+      }
+      toast({
+        title: "Порядок сохранён",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+      loadSettings();
+    }
+  };
+
+  const movePriority = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= priorities.length) return;
+
+    const newPriorities = [...priorities];
+    const temp = newPriorities[index];
+    newPriorities[index] = newPriorities[newIndex];
+    newPriorities[newIndex] = temp;
+
+    const updates = newPriorities.map((p, i) => ({
+      id: p.id,
+      order: i,
+    }));
+
+    setPriorities(newPriorities.map((p, i) => ({ ...p, order: i })));
+
+    try {
+      for (const update of updates) {
+        await supabase
+          .from("request_priorities")
+          .update({ order: update.order })
+          .eq("id", update.id);
+      }
+      toast({
+        title: "Порядок сохранён",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+      loadSettings();
+    }
+  };
+
+  const handleStatusDragStart = (e: React.DragEvent, id: string) => {
+    setDraggingStatusId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleStatusDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggingStatusId || draggingStatusId === targetId) return;
+
+    const dragIndex = statuses.findIndex((s) => s.id === draggingStatusId);
+    const targetIndex = statuses.findIndex((s) => s.id === targetId);
+
+    if (dragIndex === -1 || targetIndex === -1) return;
+
+    const newStatuses = [...statuses];
+    const [dragged] = newStatuses.splice(dragIndex, 1);
+    newStatuses.splice(targetIndex, 0, dragged);
+
+    setStatuses(newStatuses.map((s, i) => ({ ...s, order: i })));
+  };
+
+  const handleStatusDragEnd = async () => {
+    if (!draggingStatusId) return;
+
+    try {
+      for (let i = 0; i < statuses.length; i++) {
+        await supabase
+          .from("request_statuses")
+          .update({ order: i })
+          .eq("id", statuses[i].id);
+      }
+      toast({
+        title: "Порядок сохранён",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+      loadSettings();
+    }
+
+    setDraggingStatusId(null);
+  };
+
+  const handlePriorityDragStart = (e: React.DragEvent, id: string) => {
+    setDraggingPriorityId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handlePriorityDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggingPriorityId || draggingPriorityId === targetId) return;
+
+    const dragIndex = priorities.findIndex((p) => p.id === draggingPriorityId);
+    const targetIndex = priorities.findIndex((p) => p.id === targetId);
+
+    if (dragIndex === -1 || targetIndex === -1) return;
+
+    const newPriorities = [...priorities];
+    const [dragged] = newPriorities.splice(dragIndex, 1);
+    newPriorities.splice(targetIndex, 0, dragged);
+
+    setPriorities(newPriorities.map((p, i) => ({ ...p, order: i })));
+  };
+
+  const handlePriorityDragEnd = async () => {
+    if (!draggingPriorityId) return;
+
+    try {
+      for (let i = 0; i < priorities.length; i++) {
+        await supabase
+          .from("request_priorities")
+          .update({ order: i })
+          .eq("id", priorities[i].id);
+      }
+      toast({
+        title: "Порядок сохранён",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+      loadSettings();
+    }
+
+    setDraggingPriorityId(null);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -282,26 +449,53 @@ export const RequestSettings = ({ organizationId }: RequestSettingsProps) => {
               </DialogContent>
             </Dialog>
           </div>
-          <CardDescription>Управление статусами заявок в системе</CardDescription>
+          <CardDescription>
+            Управление статусами заявок. Перетаскивайте или используйте стрелки для изменения порядка.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {statuses.map((status) => (
+            {statuses.map((status, index) => (
               <div
                 key={status.id}
-                className="flex items-center justify-between p-2 rounded-md border border-border hover:bg-muted/50"
+                draggable
+                onDragStart={(e) => handleStatusDragStart(e, status.id)}
+                onDragOver={(e) => handleStatusDragOver(e, status.id)}
+                onDragEnd={handleStatusDragEnd}
+                className={`flex items-center justify-between p-2 rounded-md border border-border hover:bg-muted/50 transition-all ${
+                  draggingStatusId === status.id ? "opacity-50 scale-95" : ""
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <Badge style={{ backgroundColor: status.color }}>{status.name}</Badge>
+                  <span className="text-xs text-muted-foreground">#{index + 1}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteStatus(status.id, status.name)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveStatus(index, "up")}
+                    disabled={index === 0}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveStatus(index, "down")}
+                    disabled={index === statuses.length - 1}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteStatus(status.id, status.name)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
             ))}
             {statuses.length === 0 && (
@@ -369,26 +563,53 @@ export const RequestSettings = ({ organizationId }: RequestSettingsProps) => {
               </DialogContent>
             </Dialog>
           </div>
-          <CardDescription>Управление приоритетами заявок в системе</CardDescription>
+          <CardDescription>
+            Управление приоритетами заявок. Перетаскивайте или используйте стрелки для изменения порядка.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {priorities.map((priority) => (
+            {priorities.map((priority, index) => (
               <div
                 key={priority.id}
-                className="flex items-center justify-between p-2 rounded-md border border-border hover:bg-muted/50"
+                draggable
+                onDragStart={(e) => handlePriorityDragStart(e, priority.id)}
+                onDragOver={(e) => handlePriorityDragOver(e, priority.id)}
+                onDragEnd={handlePriorityDragEnd}
+                className={`flex items-center justify-between p-2 rounded-md border border-border hover:bg-muted/50 transition-all ${
+                  draggingPriorityId === priority.id ? "opacity-50 scale-95" : ""
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <Badge style={{ backgroundColor: priority.color }}>{priority.name}</Badge>
+                  <span className="text-xs text-muted-foreground">#{index + 1}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deletePriority(priority.id, priority.name)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => movePriority(index, "up")}
+                    disabled={index === 0}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => movePriority(index, "down")}
+                    disabled={index === priorities.length - 1}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deletePriority(priority.id, priority.name)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
             ))}
             {priorities.length === 0 && (
