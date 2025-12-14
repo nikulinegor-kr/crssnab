@@ -7,6 +7,7 @@ export interface DashboardSettings {
   showCalendarWidget: boolean;
   showEmergencyWidget: boolean;
   showRecentRequests: boolean;
+  showExpenseChart: boolean;
 }
 
 export interface KanbanSettings {
@@ -30,6 +31,7 @@ const defaultSettings: ViewSettings = {
     showCalendarWidget: true,
     showEmergencyWidget: true,
     showRecentRequests: true,
+    showExpenseChart: true,
   },
   kanban: {
     showPriority: true,

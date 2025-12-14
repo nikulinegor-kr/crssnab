@@ -13,9 +13,12 @@ import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
+import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
+import { DashboardWidgetSettings } from "@/components/dashboard/DashboardWidgetSettings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,6 +28,7 @@ const Dashboard = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const { settings } = useViewSettings();
+  const { isAdmin } = useUserRole();
   
   // Фильтрация заявок по выбранному году
   const filteredRequests = useMemo(() => {
@@ -149,18 +153,21 @@ const Dashboard = () => {
         {/* Header with Year Selector */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Выберите год" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableYears.map(year => (
-                <SelectItem key={year} value={year}>
-                  {year} год
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            <DashboardWidgetSettings />
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Выберите год" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>
+                    {year} год
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -203,6 +210,11 @@ const Dashboard = () => {
               })
             )}
           </div>
+        )}
+
+        {/* График расходов для руководства */}
+        {isAdmin && settings.dashboard.showExpenseChart && !isLoading && requests && requests.length > 0 && (
+          <ExpenseChart requests={requests} selectedYear={selectedYear} />
         )}
 
         {/* Аналитика с вкладками */}
