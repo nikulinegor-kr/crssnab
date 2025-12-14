@@ -20,6 +20,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
 import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
 import { ViewSettings } from "@/components/settings/ViewSettings";
+import { SettingsSection } from "@/components/settings/SettingsSection";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -174,52 +175,120 @@ const OrganizationSettings = () => {
         </div>
 
         <TabsContent value="profile" className="space-y-4">
-          <ProfileSettings />
+          <SettingsSection 
+            title="Ваш профиль" 
+            description="Управление личными данными и уведомлениями"
+            icon={User}
+          >
+            <ProfileSettings />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="general">
-          <GeneralSettings organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="Общие настройки" 
+            description="Основная информация об организации"
+            icon={Settings}
+          >
+            <GeneralSettings organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="users">
-          <UsersManagement 
-            organizationId={currentOrgId!} 
-            isAdmin={isAdmin}
-          />
+          <SettingsSection 
+            title="Управление пользователями" 
+            description="Добавление и управление доступом пользователей"
+            icon={Users}
+          >
+            <UsersManagement 
+              organizationId={currentOrgId!} 
+              isAdmin={isAdmin}
+            />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="participants">
-          <ParticipantsManagement />
+          <SettingsSection 
+            title="Участники заявок" 
+            description="Заявители, исполнители и подрядчики"
+            icon={UserCheck}
+          >
+            <ParticipantsManagement />
+          </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
-          <PushNotificationSettings />
-          <TelegramSettings organizationId={currentOrgId!} />
-          <DeadlineReminderSettings />
+        <TabsContent value="notifications" className="space-y-8">
+          <SettingsSection 
+            title="Настройки уведомлений" 
+            description="Push-уведомления, Telegram и автонапоминания"
+            icon={Bell}
+          >
+            <div className="space-y-6">
+              <PushNotificationSettings />
+              <TelegramSettings organizationId={currentOrgId!} />
+              <DeadlineReminderSettings />
+            </div>
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="requests">
-          <RequestSettings organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="Настройки заявок" 
+            description="Статусы, приоритеты и поля заявок"
+            icon={FileText}
+          >
+            <RequestSettings organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="branding">
-          <BrandingSettings organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="Брендинг" 
+            description="Логотип и цветовая схема организации"
+            icon={Palette}
+          >
+            <BrandingSettings organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="subscription">
-          <SubscriptionSettings organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="Подписка" 
+            description="Управление тарифным планом"
+            icon={CreditCard}
+          >
+            <SubscriptionSettings organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="integrations">
-          <IntegrationsSettings organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="Интеграции" 
+            description="Подключение внешних сервисов"
+            icon={Plug}
+          >
+            <IntegrationsSettings organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="view">
-          <ViewSettings />
+          <SettingsSection 
+            title="Настройки отображения" 
+            description="Выбор виджетов и полей для дашборда и канбан"
+            icon={Eye}
+          >
+            <ViewSettings />
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="audit">
-          <AuditLog organizationId={currentOrgId!} />
+          <SettingsSection 
+            title="История изменений" 
+            description="Журнал действий пользователей"
+            icon={History}
+          >
+            <AuditLog organizationId={currentOrgId!} />
+          </SettingsSection>
         </TabsContent>
       </Tabs>
     </div>
