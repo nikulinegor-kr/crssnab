@@ -4,13 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface Request {
   id: string;
@@ -35,6 +37,9 @@ export default function KanbanBoard() {
   const [draggingRequest, setDraggingRequest] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [applicantFilter, setApplicantFilter] = useState<string>("all");
+  const [contractorFilter, setContractorFilter] = useState<string>("all");
   const { currentOrgId } = useCurrentOrganization();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,19 +101,58 @@ export default function KanbanBoard() {
     },
   });
 
-  // Filter requests by search
+  // Get unique values for filters
+  const uniquePriorities = useMemo(() => {
+    if (!requests) return [];
+    return [...new Set(requests.map(r => r.priority).filter(Boolean))];
+  }, [requests]);
+
+  const uniqueApplicants = useMemo(() => {
+    if (!requests) return [];
+    return [...new Set(requests.map(r => r.applicant).filter(Boolean))] as string[];
+  }, [requests]);
+
+  const uniqueContractors = useMemo(() => {
+    if (!requests) return [];
+    return [...new Set(requests.map(r => r.contractor).filter(Boolean))] as string[];
+  }, [requests]);
+
+  const hasActiveFilters = priorityFilter !== "all" || applicantFilter !== "all" || contractorFilter !== "all";
+
+  const clearFilters = () => {
+    setPriorityFilter("all");
+    setApplicantFilter("all");
+    setContractorFilter("all");
+  };
+
+  // Filter requests by search and filters
   const filteredRequests = useMemo(() => {
     if (!requests) return [];
-    if (!searchQuery.trim()) return requests;
     
-    const query = searchQuery.toLowerCase();
-    return requests.filter(r =>
-      r.description.toLowerCase().includes(query) ||
-      r.request_number.toLowerCase().includes(query) ||
-      r.applicant?.toLowerCase().includes(query) ||
-      r.contractor?.toLowerCase().includes(query)
-    );
-  }, [requests, searchQuery]);
+    return requests.filter(r => {
+      // Search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          r.description.toLowerCase().includes(query) ||
+          r.request_number.toLowerCase().includes(query) ||
+          r.applicant?.toLowerCase().includes(query) ||
+          r.contractor?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
+      // Priority filter
+      if (priorityFilter !== "all" && r.priority !== priorityFilter) return false;
+      
+      // Applicant filter
+      if (applicantFilter !== "all" && r.applicant !== applicantFilter) return false;
+      
+      // Contractor filter
+      if (contractorFilter !== "all" && r.contractor !== contractorFilter) return false;
+      
+      return true;
+    });
+  }, [requests, searchQuery, priorityFilter, applicantFilter, contractorFilter]);
 
   // Group requests by status
   const requestsByStatus = useMemo(() => {
@@ -209,19 +253,85 @@ export default function KanbanBoard() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between py-2 px-4 sm:px-6 shrink-0 bg-background border-b border-border/30">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold">Канбан-доска</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">Перетаскивайте заявки между колонками</p>
+      <div className="flex flex-col gap-2 py-2 px-4 sm:px-6 shrink-0 bg-background border-b border-border/30">
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold">Канбан-доска</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Перетаскивайте заявки между колонками</p>
+          </div>
+          <div className="relative w-full sm:w-48">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Поиск..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
         </div>
-        <div className="relative w-full sm:w-48">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Поиск..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-8 text-sm"
-          />
+        
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Filter className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Фильтры:</span>
+          </div>
+          
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
+              <SelectValue placeholder="Приоритет" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все приоритеты</SelectItem>
+              {uniquePriorities.map(priority => (
+                <SelectItem key={priority} value={priority}>{priority}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={applicantFilter} onValueChange={setApplicantFilter}>
+            <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[150px] text-xs">
+              <SelectValue placeholder="Заявитель" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все заявители</SelectItem>
+              {uniqueApplicants.map(applicant => (
+                <SelectItem key={applicant} value={applicant}>
+                  <span className="truncate">{applicant}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={contractorFilter} onValueChange={setContractorFilter}>
+            <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[150px] text-xs">
+              <SelectValue placeholder="Контрагент" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все контрагенты</SelectItem>
+              {uniqueContractors.map(contractor => (
+                <SelectItem key={contractor} value={contractor}>
+                  <span className="truncate">{contractor}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Сбросить
+            </Button>
+          )}
+          
+          <Badge variant="secondary" className="text-[10px] ml-auto">
+            {filteredRequests.length} заявок
+          </Badge>
         </div>
       </div>
 
