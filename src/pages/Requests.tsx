@@ -41,6 +41,7 @@ import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 import { LabelExportButton } from "@/components/dashboard/LabelExportButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -890,9 +891,15 @@ const Requests = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-center border-r p-2 max-w-[150px]">
-                        <div className="line-clamp-2">
-                          {request.description}
-                        </div>
+                        <RequestQuickPreview
+                          request={request}
+                          getStatusColor={getStatusColor}
+                          getPriorityColor={getPriorityColor}
+                        >
+                          <div className="line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+                            {request.description}
+                          </div>
+                        </RequestQuickPreview>
                       </TableCell>
                       <TableCell className="text-sm text-center border-r p-2">
                         <Badge 
