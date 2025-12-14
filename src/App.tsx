@@ -32,6 +32,8 @@ const Demo = lazy(() => import("./pages/Demo"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const SystemDemo = lazy(() => import("./pages/SystemDemo"));
+const ClientPortal = lazy(() => import("./pages/ClientPortal"));
+const ClientAuth = lazy(() => import("./pages/ClientAuth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -216,6 +218,9 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Client Portal Routes */}
+            <Route path="/client" element={<ClientPortal />} />
+            <Route path="/client/auth" element={<ClientAuth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

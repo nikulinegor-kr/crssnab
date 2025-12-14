@@ -471,6 +471,100 @@ export type Database = {
           },
         ]
       }
+      client_invitations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          id: string
+          name: string
+          organization_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -1088,6 +1182,7 @@ export type Database = {
           archived: boolean
           availability_delivery_time: string | null
           awaiting_comment_from: string | null
+          client_id: string | null
           comments: string | null
           contractor: string | null
           created_at: string | null
@@ -1117,6 +1212,7 @@ export type Database = {
           archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
+          client_id?: string | null
           comments?: string | null
           contractor?: string | null
           created_at?: string | null
@@ -1146,6 +1242,7 @@ export type Database = {
           archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
+          client_id?: string | null
           comments?: string | null
           contractor?: string | null
           created_at?: string | null
@@ -1170,6 +1267,13 @@ export type Database = {
           waybill_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "requests_organization_id_fkey"
             columns: ["organization_id"]
@@ -1530,6 +1634,7 @@ export type Database = {
         Args: { _org_name?: string }
         Returns: undefined
       }
+      get_client_org_id: { Args: { _user_id: string }; Returns: string }
       get_org_subscription_limits: {
         Args: { _org_id: string }
         Returns: {
@@ -1556,6 +1661,7 @@ export type Database = {
         }[]
       }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
+      is_client: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           _action: string

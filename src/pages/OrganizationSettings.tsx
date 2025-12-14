@@ -4,11 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History } from "lucide-react";
+import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { UsersManagement } from "@/components/settings/UsersManagement";
+import { ClientsManagement } from "@/components/settings/ClientsManagement";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
@@ -123,6 +124,13 @@ const OrganizationSettings = () => {
               <span className="hidden sm:inline">Участники</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="clients"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
+            >
+              <UserCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Клиенты</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="notifications"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
@@ -214,6 +222,19 @@ const OrganizationSettings = () => {
             icon={UserCheck}
           >
             <ParticipantsManagement />
+          </SettingsSection>
+        </TabsContent>
+
+        <TabsContent value="clients">
+          <SettingsSection 
+            title="Клиенты" 
+            description="Управление клиентами личного кабинета"
+            icon={UserCircle}
+          >
+            <ClientsManagement 
+              organizationId={currentOrgId!} 
+              isAdmin={isAdmin}
+            />
           </SettingsSection>
         </TabsContent>
 
