@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
+import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 
 interface Request {
   id: string;
@@ -245,9 +246,9 @@ export default function KanbanBoard() {
   const columnCount = allStatuses.length;
   const getColumnWidth = () => {
     if (isMobile) return "w-[85vw]";
-    if (columnCount <= 3) return "flex-1 min-w-[200px]";
-    if (columnCount <= 5) return "w-[220px] shrink-0";
-    return "w-[180px] shrink-0";
+    if (columnCount <= 3) return "flex-1 min-w-[280px]";
+    if (columnCount <= 5) return "w-[280px] shrink-0";
+    return "w-[240px] shrink-0";
   };
 
   return (
@@ -362,7 +363,7 @@ export default function KanbanBoard() {
                 {/* Column Header */}
                 <div className={cn(
                   "border-b border-border/30 bg-background/60 backdrop-blur-sm rounded-t-lg shrink-0",
-                  isCollapsed ? "px-1 py-2" : "px-2 py-2"
+                  isCollapsed ? "px-1 py-2" : "px-3 py-2.5"
                 )}>
                   <div className={cn(
                     "flex items-center gap-1",
@@ -374,9 +375,9 @@ export default function KanbanBoard() {
                       title={isCollapsed ? "Развернуть" : "Свернуть"}
                     >
                       {isCollapsed ? (
-                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                       ) : (
-                        <ChevronLeft className="h-3 w-3 text-muted-foreground" />
+                        <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
                       )}
                     </button>
                     
@@ -397,16 +398,28 @@ export default function KanbanBoard() {
                       <>
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            className="w-3 h-3 rounded-full shrink-0"
                             style={{ backgroundColor: status.color }}
                           />
                           <span className="font-semibold text-sm truncate">
                             {status.name}
                           </span>
+                          <Badge variant="secondary" className="text-xs h-5 px-1.5 shrink-0">
+                            {count}
+                          </Badge>
                         </div>
-                        <Badge variant="secondary" className="text-xs h-5 px-1.5 shrink-0">
-                          {count}
-                        </Badge>
+                        {status.id !== "other" && (
+                          <CreateRequestDialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0 hover:bg-primary/10"
+                              title="Создать заявку"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </CreateRequestDialog>
+                        )}
                       </>
                     )}
                   </div>
@@ -414,7 +427,7 @@ export default function KanbanBoard() {
 
                 {/* Cards Container - only show when not collapsed */}
                 {!isCollapsed && (
-                  <div className="p-2 space-y-2 flex-1 overflow-y-auto min-h-0">
+                  <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
                     {requestsByStatus[status.name]?.map((request) => (
                       <div
                         key={request.id}
@@ -431,17 +444,17 @@ export default function KanbanBoard() {
                       >
                         <div className="flex items-start gap-2">
                           <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
-                          <div className="flex-1 min-w-0 space-y-1.5">
+                          <div className="flex-1 min-w-0 space-y-2">
                             <p className="text-sm font-medium line-clamp-2 leading-snug">
                               {request.description}
                             </p>
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs text-muted-foreground font-mono">
                                 #{request.request_number.slice(-6)}
                               </span>
                               <Badge
                                 variant="outline"
-                                className={cn("text-xs px-1.5 py-0.5 h-5", getPriorityColor(request.priority))}
+                                className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
                               >
                                 {request.priority}
                               </Badge>
@@ -449,7 +462,7 @@ export default function KanbanBoard() {
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
                               {request.applicant && (
-                                <span className="truncate max-w-[80px]" title={request.applicant}>
+                                <span className="truncate max-w-[100px]" title={request.applicant}>
                                   {request.applicant}
                                 </span>
                               )}
@@ -460,7 +473,7 @@ export default function KanbanBoard() {
                     ))}
                     
                     {count === 0 && (
-                      <div className="text-center py-6 text-sm text-muted-foreground">
+                      <div className="text-center py-8 text-sm text-muted-foreground">
                         Нет заявок
                       </div>
                     )}
