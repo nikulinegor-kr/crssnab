@@ -1,21 +1,20 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight, X, Filter, Plus, AlertTriangle, CheckSquare } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, X, Filter, Plus, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { format, isPast, isToday, differenceInDays } from "date-fns";
-import { ru } from "date-fns/locale";
+import { isPast, isToday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { useViewSettings } from "@/hooks/useViewSettings";
+import { VirtualizedColumn } from "@/components/kanban/VirtualizedColumn";
 
 interface Request {
   id: string;
@@ -577,105 +576,26 @@ export default function KanbanBoard() {
 
                 {/* Cards Container - only show when not collapsed */}
                 {!isCollapsed && (
-                  <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
-                    {requestsByStatus[status.name]?.map((request) => {
-                      const deadlineStatus = getDeadlineStatus(request.delivery_date, request.status);
-                      const isSelected = selectedRequests.has(request.id);
-                      
-                      return (
-                        <div
-                          key={request.id}
-                          draggable={!isSelectionMode}
-                          onDragStart={(e) => !isSelectionMode && handleDragStart(e, request.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={(e) => isSelectionMode ? toggleRequestSelection(request.id, e) : navigate(`/requests/${request.id}`)}
-                          className={cn(
-                            "p-3 rounded-lg bg-background border cursor-pointer",
-                            "hover:shadow-md transition-all",
-                            "active:scale-[0.98]",
-                            draggingRequest === request.id && "opacity-50 scale-95",
-                            deadlineStatus?.isOverdue && "border-destructive/50 bg-destructive/5",
-                            !deadlineStatus?.isOverdue && "border-border/40 hover:border-primary/40",
-                            isSelected && "ring-2 ring-primary border-primary"
-                          )}
-                        >
-                          <div className="flex items-start gap-2">
-                            {isSelectionMode ? (
-                              <Checkbox 
-                                checked={isSelected} 
-                                className="mt-0.5 shrink-0"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
-                            )}
-                            <div className="flex-1 min-w-0 space-y-2">
-                              <p className="text-sm font-medium line-clamp-2 leading-snug">
-                                {request.description}
-                              </p>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {settings.kanban.showRequestNumber && (
-                                  <span className="text-xs text-muted-foreground font-mono">
-                                    #{request.request_number.slice(-6)}
-                                  </span>
-                                )}
-                                {settings.kanban.showPriority && (
-                                  <Badge
-                                    variant="outline"
-                                    className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
-                                  >
-                                    {request.priority}
-                                  </Badge>
-                                )}
-                              </div>
-                              
-                              {/* Deadline indicator */}
-                              {settings.kanban.showDeadline && deadlineStatus && (
-                                <div className={cn(
-                                  "flex items-center gap-1 text-xs",
-                                  deadlineStatus.isOverdue ? "text-destructive" : "text-warning"
-                                )}>
-                                  <AlertTriangle className="h-3 w-3" />
-                                  <span>{deadlineStatus.label}</span>
-                                </div>
-                              )}
-                              
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
-                                {settings.kanban.showExecutor && request.executor && (
-                                  <span className="truncate max-w-[100px] text-primary/70" title={request.executor}>
-                                    {request.executor}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {/* Additional fields based on settings */}
-                              {(settings.kanban.showApplicant && request.applicant) || (settings.kanban.showContractor && request.contractor) ? (
-                                <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-                                  {settings.kanban.showApplicant && request.applicant && (
-                                    <span className="truncate" title={request.applicant}>
-                                      Заявитель: {request.applicant}
-                                    </span>
-                                  )}
-                                  {settings.kanban.showContractor && request.contractor && (
-                                    <span className="truncate" title={request.contractor}>
-                                      Подрядчик: {request.contractor}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {count === 0 && (
-                      <div className="text-center py-8 text-sm text-muted-foreground">
-                        Нет заявок
-                      </div>
-                    )}
-                  </div>
+                  <VirtualizedColumn
+                    requests={requestsByStatus[status.name] || []}
+                    height={400}
+                    isSelectionMode={isSelectionMode}
+                    selectedRequests={selectedRequests}
+                    draggingRequest={draggingRequest}
+                    settings={{
+                      showRequestNumber: settings.kanban.showRequestNumber,
+                      showPriority: settings.kanban.showPriority,
+                      showDeadline: settings.kanban.showDeadline,
+                      showExecutor: settings.kanban.showExecutor,
+                      showApplicant: settings.kanban.showApplicant,
+                      showContractor: settings.kanban.showContractor,
+                    }}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    toggleRequestSelection={toggleRequestSelection}
+                    getDeadlineStatus={getDeadlineStatus}
+                    getPriorityColor={getPriorityColor}
+                  />
                 )}
               </div>
             );
