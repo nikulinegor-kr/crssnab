@@ -578,7 +578,6 @@ export default function KanbanBoard() {
                 {!isCollapsed && (
                   <VirtualizedColumn
                     requests={requestsByStatus[status.name] || []}
-                    height={400}
                     isSelectionMode={isSelectionMode}
                     selectedRequests={selectedRequests}
                     draggingRequest={draggingRequest}

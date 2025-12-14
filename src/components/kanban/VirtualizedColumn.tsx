@@ -1,4 +1,4 @@
-import React, { memo, ReactElement, CSSProperties } from "react";
+import React, { memo, ReactElement, CSSProperties, useRef, useState, useEffect } from "react";
 import { List } from "react-window";
 import { KanbanCard } from "./KanbanCard";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,6 @@ interface Request {
 
 interface VirtualizedColumnProps {
   requests: Request[];
-  height: number;
   isSelectionMode: boolean;
   selectedRequests: Set<string>;
   draggingRequest: string | null;
@@ -116,7 +115,6 @@ function RowComponent({
 
 export const VirtualizedColumn = memo(function VirtualizedColumn({
   requests,
-  height,
   isSelectionMode,
   selectedRequests,
   draggingRequest,
@@ -128,11 +126,42 @@ export const VirtualizedColumn = memo(function VirtualizedColumn({
   getPriorityColor,
 }: VirtualizedColumnProps) {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(400);
+
+  // Use ResizeObserver to track container height
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const height = entry.contentRect.height;
+        if (height > 0) {
+          setContainerHeight(height);
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+    
+    // Set initial height
+    const initialHeight = container.getBoundingClientRect().height;
+    if (initialHeight > 0) {
+      setContainerHeight(initialHeight);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   if (requests.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-muted-foreground">
-        Нет заявок
+      <div ref={containerRef} className="flex-1 min-h-0">
+        <div className="text-center py-8 text-sm text-muted-foreground">
+          Нет заявок
+        </div>
       </div>
     );
   }
@@ -140,7 +169,7 @@ export const VirtualizedColumn = memo(function VirtualizedColumn({
   // For small lists, use regular rendering to avoid virtualization overhead
   if (requests.length <= 10) {
     return (
-      <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
+      <div ref={containerRef} className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
         {requests.map((request) => {
           const deadlineStatus = getDeadlineStatus(request.delivery_date, request.status);
           const isSelected = selectedRequests.has(request.id);
@@ -175,25 +204,27 @@ export const VirtualizedColumn = memo(function VirtualizedColumn({
   }
 
   return (
-    <List
-      style={{ height }}
-      rowCount={requests.length}
-      rowHeight={CARD_HEIGHT + CARD_GAP}
-      rowComponent={RowComponent}
-      rowProps={{
-        requests,
-        isSelectionMode,
-        selectedRequests,
-        draggingRequest,
-        settings,
-        onDragStart,
-        onDragEnd,
-        toggleRequestSelection,
-        getDeadlineStatus,
-        getPriorityColor,
-        navigate,
-      }}
-      className="scrollbar-thin"
-    />
+    <div ref={containerRef} className="flex-1 min-h-0">
+      <List
+        style={{ height: containerHeight }}
+        rowCount={requests.length}
+        rowHeight={CARD_HEIGHT + CARD_GAP}
+        rowComponent={RowComponent}
+        rowProps={{
+          requests,
+          isSelectionMode,
+          selectedRequests,
+          draggingRequest,
+          settings,
+          onDragStart,
+          onDragEnd,
+          toggleRequestSelection,
+          getDeadlineStatus,
+          getPriorityColor,
+          navigate,
+        }}
+        className="scrollbar-thin"
+      />
+    </div>
   );
 });
