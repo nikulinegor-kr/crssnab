@@ -383,28 +383,28 @@ export default function KanbanBoard() {
                     {isCollapsed ? (
                       <>
                         <div
-                          className="w-2 h-2 rounded-full shrink-0"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: status.color }}
                         />
-                        <span className="font-medium text-[10px] writing-mode-vertical rotate-180" style={{ writingMode: 'vertical-rl' }}>
+                        <span className="font-medium text-xs writing-mode-vertical rotate-180" style={{ writingMode: 'vertical-rl' }}>
                           {status.name}
                         </span>
-                        <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0">
+                        <Badge variant="secondary" className="text-xs h-5 px-1.5 shrink-0">
                           {count}
                         </Badge>
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
-                            className="w-2 h-2 rounded-full shrink-0"
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{ backgroundColor: status.color }}
                           />
-                          <span className="font-medium text-xs truncate">
+                          <span className="font-semibold text-sm truncate">
                             {status.name}
                           </span>
                         </div>
-                        <Badge variant="secondary" className="text-[10px] h-4 px-1 shrink-0">
+                        <Badge variant="secondary" className="text-xs h-5 px-1.5 shrink-0">
                           {count}
                         </Badge>
                       </>
@@ -414,7 +414,7 @@ export default function KanbanBoard() {
 
                 {/* Cards Container - only show when not collapsed */}
                 {!isCollapsed && (
-                  <div className="p-1.5 space-y-1.5 flex-1 overflow-y-auto min-h-0">
+                  <div className="p-2 space-y-2 flex-1 overflow-y-auto min-h-0">
                     {requestsByStatus[status.name]?.map((request) => (
                       <div
                         key={request.id}
@@ -423,33 +423,33 @@ export default function KanbanBoard() {
                         onDragEnd={handleDragEnd}
                         onClick={() => navigate(`/requests/${request.id}`)}
                         className={cn(
-                          "p-2 rounded bg-background border border-border/40 cursor-pointer",
-                          "hover:border-primary/40 hover:shadow-sm transition-all",
+                          "p-3 rounded-lg bg-background border border-border/40 cursor-pointer",
+                          "hover:border-primary/40 hover:shadow-md transition-all",
                           "active:scale-[0.98]",
                           draggingRequest === request.id && "opacity-50 scale-95"
                         )}
                       >
-                        <div className="flex items-start gap-1.5">
-                          <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <p className="text-[11px] font-medium line-clamp-2 leading-tight">
+                        <div className="flex items-start gap-2">
+                          <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <p className="text-sm font-medium line-clamp-2 leading-snug">
                               {request.description}
                             </p>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <span className="text-[9px] text-muted-foreground font-mono">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs text-muted-foreground font-mono">
                                 #{request.request_number.slice(-6)}
                               </span>
                               <Badge
                                 variant="outline"
-                                className={cn("text-[9px] px-1 py-0 h-3.5", getPriorityColor(request.priority))}
+                                className={cn("text-xs px-1.5 py-0.5 h-5", getPriorityColor(request.priority))}
                               >
                                 {request.priority}
                               </Badge>
                             </div>
-                            <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                              <span>{format(new Date(request.request_date), "dd.MM", { locale: ru })}</span>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
                               {request.applicant && (
-                                <span className="truncate max-w-[60px]" title={request.applicant}>
+                                <span className="truncate max-w-[80px]" title={request.applicant}>
                                   {request.applicant}
                                 </span>
                               )}
@@ -460,7 +460,7 @@ export default function KanbanBoard() {
                     ))}
                     
                     {count === 0 && (
-                      <div className="text-center py-4 text-[10px] text-muted-foreground">
+                      <div className="text-center py-6 text-sm text-muted-foreground">
                         Нет заявок
                       </div>
                     )}
