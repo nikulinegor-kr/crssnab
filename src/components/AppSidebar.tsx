@@ -11,7 +11,8 @@ import {
   LogOut,
   FileBarChart,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Kanban
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -38,6 +39,7 @@ import {
 const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
+  { title: "Канбан", url: "/kanban", icon: Kanban },
   { title: "Поставщики", url: "/suppliers", icon: Users },
 ];
 

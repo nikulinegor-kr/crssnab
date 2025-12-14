@@ -18,6 +18,7 @@ import SelectOrganization from "./pages/SelectOrganization";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import AgentReport from "./pages/AgentReport";
 import AgentActReport from "./pages/AgentActReport";
+import KanbanBoard from "./pages/KanbanBoard";
 import Pricing from "./pages/Pricing";
 import Features from "./pages/Features";
 import Demo from "./pages/Demo";
@@ -166,21 +167,31 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <AgentActReport />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/features" element={<Features />} />
-          <Route
-            path="/system-demo"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <SystemDemo />
-                </AppLayout>
-              </ProtectedRoute>
-            }
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/kanban"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <KanbanBoard />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/features" element={<Features />} />
+      <Route
+        path="/system-demo"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SystemDemo />
+            </AppLayout>
+          </ProtectedRoute>
+        }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

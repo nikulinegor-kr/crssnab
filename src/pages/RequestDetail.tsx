@@ -37,6 +37,9 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
+import { RequestComments } from "@/components/request/RequestComments";
+import { LinkedRequests } from "@/components/request/LinkedRequests";
+import { RequestReminders } from "@/components/request/RequestReminders";
 
 interface Activity {
   id: string;
@@ -920,6 +923,9 @@ export default function RequestDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Comments Section */}
+            <RequestComments requestId={id!} />
           </div>
 
           {/* Right Column - Sidebar */}
@@ -1047,6 +1053,12 @@ export default function RequestDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Linked Requests */}
+            <LinkedRequests requestId={id!} canEdit={canEdit} />
+
+            {/* Reminders */}
+            <RequestReminders requestId={id!} />
 
             {/* Archive Request */}
             {canEdit && (
