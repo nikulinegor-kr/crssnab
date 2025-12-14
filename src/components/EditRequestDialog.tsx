@@ -108,6 +108,7 @@ const requestSchema = z.object({
     .trim()
     .max(1000, "Комментарий не должен превышать 1000 символов")
     .optional(),
+  client_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -161,6 +162,23 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const applicants = participants?.filter((p) => p.participant_type === "applicant") || [];
   const executors = participants?.filter((p) => p.participant_type === "executor") || [];
 
+  // Fetch clients
+  const { data: clients } = useQuery({
+    queryKey: ["clients", request?.organization_id],
+    queryFn: async () => {
+      if (!request?.organization_id) return [];
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name, company_name")
+        .eq("organization_id", request.organization_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.organization_id && open,
+  });
   // Fetch suppliers
   const { data: suppliers } = useQuery({
     queryKey: ["suppliers", request?.organization_id],
@@ -235,6 +253,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       transport_company: "",
       waybill_number: "",
       comments: "",
+      client_id: "",
     },
   });
 
@@ -257,6 +276,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: request.transport_company || "",
         waybill_number: request.waybill_number || "",
         comments: request.comments || "",
+        client_id: request.client_id || "",
       });
     }
   }, [request, open, form]);
@@ -403,6 +423,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: data.comments || null,
         photo_url: photoUrl,
         document_url: documentUrl,
+        client_id: data.client_id || null,
       };
 
       const { error } = await supabase
@@ -711,6 +732,32 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Клиент</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите клиента (опционально)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Без клиента</SelectItem>
+                      {clients?.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}{client.company_name ? ` (${client.company_name})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
