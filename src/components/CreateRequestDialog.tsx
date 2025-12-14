@@ -1,11 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Save } from "lucide-react";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { FileDropZone } from "@/components/FileDropZone";
+import { useRequestDraft } from "@/hooks/useRequestDraft";
+import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
 import {
   Dialog,
   DialogContent,
@@ -143,8 +145,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
+  const { recentContractors, recentTransportCompanies } = useContractorSuggestions();
 
-  // Fetch participants
   const { data: participants } = useQuery({
     queryKey: ["request-participants", currentOrgId],
     queryFn: async () => {
@@ -241,6 +243,19 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       comments: "",
     },
   });
+
+  const formValues = form.watch();
+  
+  // Auto-save draft
+  const { clearDraft, hasDraft } = useRequestDraft(
+    formValues as Record<string, unknown>,
+    (values) => {
+      Object.entries(values).forEach(([key, value]) => {
+        form.setValue(key as keyof RequestFormData, value as never);
+      });
+    },
+    open
+  );
 
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);
@@ -384,6 +399,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       form.reset();
       setPhotoFile(null);
       setDocumentFile(null);
+      clearDraft();
       handleOpenChange(false);
     } catch (error: any) {
       toast({
@@ -638,7 +654,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                       <ComboboxInput
                         value={field.value || ""}
                         onChange={field.onChange}
-                        options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
+                        options={[
+                          ...(suppliers?.map(s => ({ value: s.name, label: s.name })) || []),
+                          ...recentContractors
+                            .filter(c => !suppliers?.some(s => s.name === c))
+                            .map(c => ({ value: c, label: c }))
+                        ]}
                         placeholder="Введите или выберите..."
                         searchPlaceholder="Поиск контрагента..."
                         emptyMessage="Введите название вручную"
@@ -812,7 +833,15 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                   <FormItem>
                     <FormLabel>Транспортная компания</FormLabel>
                     <FormControl>
-                      <Input placeholder="ТК Компания" {...field} />
+                      <ComboboxInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        options={recentTransportCompanies.map(c => ({ value: c, label: c }))}
+                        placeholder="Введите или выберите..."
+                        searchPlaceholder="Поиск ТК..."
+                        emptyMessage="Введите название вручную"
+                        allowCustomValue={true}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

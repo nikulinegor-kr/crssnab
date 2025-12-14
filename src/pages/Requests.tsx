@@ -42,6 +42,7 @@ import { LabelExportButton } from "@/components/dashboard/LabelExportButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { RequestQuickPreview } from "@/components/RequestQuickPreview";
+import { SavedFiltersDropdown } from "@/components/SavedFiltersDropdown";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -595,6 +596,27 @@ const Requests = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center">
+            <SavedFiltersDropdown
+              currentFilters={{
+                searchQuery,
+                statusFilter,
+                priorityFilter,
+                yearFilter,
+                applicantFilter,
+                hideDelivered,
+              }}
+              onApplyFilter={(filters) => {
+                setSearchQuery(filters.searchQuery || "");
+                setStatusFilter(filters.statusFilter || []);
+                setPriorityFilter(filters.priorityFilter || "all");
+                setYearFilter(filters.yearFilter || "all");
+                setApplicantFilter(filters.applicantFilter || "all");
+                setHideDelivered(filters.hideDelivered ?? true);
+              }}
             />
           </div>
           
