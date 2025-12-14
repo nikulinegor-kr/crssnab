@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, GripVertical } from "lucide-react";
+import { Loader2, Search, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -34,6 +34,7 @@ export default function KanbanBoard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [draggingRequest, setDraggingRequest] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const { currentOrgId } = useCurrentOrganization();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -171,6 +172,18 @@ export default function KanbanBoard() {
     setDragOverStatus(null);
   };
 
+  const toggleColumnCollapse = (statusName: string) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(statusName)) {
+        next.delete(statusName);
+      } else {
+        next.add(statusName);
+      }
+      return next;
+    });
+  };
+
   if (loadingStatuses || loadingRequests) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
@@ -221,14 +234,15 @@ export default function KanbanBoard() {
           {allStatuses.map((status) => {
             const isOver = dragOverStatus === status.name;
             const count = requestsByStatus[status.name]?.length || 0;
+            const isCollapsed = collapsedColumns.has(status.name);
             
             return (
               <div
                 key={status.id}
                 className={cn(
                   "rounded-lg border border-border/50 bg-muted/20 transition-all flex flex-col",
-                  getColumnWidth(),
-                  isMobile && "snap-center",
+                  isCollapsed ? "w-10 shrink-0" : getColumnWidth(),
+                  isMobile && !isCollapsed && "snap-center",
                   isOver && "border-primary/50 bg-primary/5"
                 )}
                 onDragOver={(e) => handleDragOver(e, status.name)}
@@ -236,75 +250,112 @@ export default function KanbanBoard() {
                 onDrop={(e) => handleDrop(e, status.name)}
               >
                 {/* Column Header */}
-                <div className="px-2 py-2 border-b border-border/30 bg-background/60 backdrop-blur-sm rounded-t-lg shrink-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: status.color }}
-                      />
-                      <span className="font-medium text-xs truncate">
-                        {status.name}
-                      </span>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1 shrink-0">
-                      {count}
-                    </Badge>
+                <div className={cn(
+                  "border-b border-border/30 bg-background/60 backdrop-blur-sm rounded-t-lg shrink-0",
+                  isCollapsed ? "px-1 py-2" : "px-2 py-2"
+                )}>
+                  <div className={cn(
+                    "flex items-center gap-1",
+                    isCollapsed ? "flex-col" : "justify-between"
+                  )}>
+                    <button
+                      onClick={() => toggleColumnCollapse(status.name)}
+                      className="p-0.5 hover:bg-muted rounded transition-colors shrink-0"
+                      title={isCollapsed ? "Развернуть" : "Свернуть"}
+                    >
+                      {isCollapsed ? (
+                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      ) : (
+                        <ChevronLeft className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </button>
+                    
+                    {isCollapsed ? (
+                      <>
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <span className="font-medium text-[10px] writing-mode-vertical rotate-180" style={{ writingMode: 'vertical-rl' }}>
+                          {status.name}
+                        </span>
+                        <Badge variant="secondary" className="text-[9px] h-4 px-1 shrink-0">
+                          {count}
+                        </Badge>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <span className="font-medium text-xs truncate">
+                            {status.name}
+                          </span>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] h-4 px-1 shrink-0">
+                          {count}
+                        </Badge>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Cards Container */}
-                <div className="p-1.5 space-y-1.5 flex-1 overflow-y-auto min-h-0">
-                  {requestsByStatus[status.name]?.map((request) => (
-                    <div
-                      key={request.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, request.id)}
-                      onDragEnd={handleDragEnd}
-                      onClick={() => navigate(`/requests/${request.id}`)}
-                      className={cn(
-                        "p-2 rounded bg-background border border-border/40 cursor-pointer",
-                        "hover:border-primary/40 hover:shadow-sm transition-all",
-                        "active:scale-[0.98]",
-                        draggingRequest === request.id && "opacity-50 scale-95"
-                      )}
-                    >
-                      <div className="flex items-start gap-1.5">
-                        <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <p className="text-[11px] font-medium line-clamp-2 leading-tight">
-                            {request.description}
-                          </p>
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-[9px] text-muted-foreground font-mono">
-                              #{request.request_number.slice(-6)}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={cn("text-[9px] px-1 py-0 h-3.5", getPriorityColor(request.priority))}
-                            >
-                              {request.priority}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                            <span>{format(new Date(request.request_date), "dd.MM", { locale: ru })}</span>
-                            {request.applicant && (
-                              <span className="truncate max-w-[60px]" title={request.applicant}>
-                                {request.applicant}
+                {/* Cards Container - only show when not collapsed */}
+                {!isCollapsed && (
+                  <div className="p-1.5 space-y-1.5 flex-1 overflow-y-auto min-h-0">
+                    {requestsByStatus[status.name]?.map((request) => (
+                      <div
+                        key={request.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, request.id)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => navigate(`/requests/${request.id}`)}
+                        className={cn(
+                          "p-2 rounded bg-background border border-border/40 cursor-pointer",
+                          "hover:border-primary/40 hover:shadow-sm transition-all",
+                          "active:scale-[0.98]",
+                          draggingRequest === request.id && "opacity-50 scale-95"
+                        )}
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0 mt-0.5 cursor-grab" />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <p className="text-[11px] font-medium line-clamp-2 leading-tight">
+                              {request.description}
+                            </p>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <span className="text-[9px] text-muted-foreground font-mono">
+                                #{request.request_number.slice(-6)}
                               </span>
-                            )}
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[9px] px-1 py-0 h-3.5", getPriorityColor(request.priority))}
+                              >
+                                {request.priority}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                              <span>{format(new Date(request.request_date), "dd.MM", { locale: ru })}</span>
+                              {request.applicant && (
+                                <span className="truncate max-w-[60px]" title={request.applicant}>
+                                  {request.applicant}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  
-                  {count === 0 && (
-                    <div className="text-center py-4 text-[10px] text-muted-foreground">
-                      Нет заявок
-                    </div>
-                  )}
-                </div>
+                    ))}
+                    
+                    {count === 0 && (
+                      <div className="text-center py-4 text-[10px] text-muted-foreground">
+                        Нет заявок
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
