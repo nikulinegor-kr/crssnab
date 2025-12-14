@@ -10,9 +10,11 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useEffect, useState, useMemo } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
+import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -199,12 +201,23 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Аналитика */}
+        {/* Аналитика с вкладками */}
         {!isLoading && filteredRequests.length > 0 && (
-          <RequestsAnalytics 
-            requests={filteredRequests} 
-            onEmergencyClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")}
-          />
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Обзор</TabsTrigger>
+              <TabsTrigger value="performance">Производительность</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              <RequestsAnalytics 
+                requests={filteredRequests} 
+                onEmergencyClick={() => navigate("/requests?priority=Аварийно&status=!Доставлено")}
+              />
+            </TabsContent>
+            <TabsContent value="performance">
+              <ClosureTimeAnalytics requests={filteredRequests as any} />
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* Дополнительные виджеты - вторая линия */}
