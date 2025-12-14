@@ -739,14 +739,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Клиент</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)} 
+                    value={field.value || "__none__"} 
+                    disabled={isViewer}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Выберите клиента (опционально)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Без клиента</SelectItem>
+                      <SelectItem value="__none__">Без клиента</SelectItem>
                       {clients?.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}{client.company_name ? ` (${client.company_name})` : ''}
