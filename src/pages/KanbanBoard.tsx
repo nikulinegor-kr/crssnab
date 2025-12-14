@@ -194,9 +194,9 @@ export default function KanbanBoard() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden -m-4 sm:-m-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between mb-3 shrink-0 px-1">
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between py-2 px-4 sm:px-6 shrink-0 bg-background border-b border-border/30">
         <div>
           <h1 className="text-lg sm:text-xl font-bold">Канбан-доска</h1>
           <p className="text-xs text-muted-foreground hidden sm:block">Перетаскивайте заявки между колонками</p>
@@ -213,9 +213,9 @@ export default function KanbanBoard() {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto px-4 sm:px-6 py-3">
         <div className={cn(
-          "flex gap-2 pb-4 h-full",
+          "flex gap-2 h-full",
           isMobile ? "overflow-x-auto snap-x snap-mandatory" : columnCount <= 3 ? "" : "overflow-x-auto"
         )}>
           {allStatuses.map((status) => {
