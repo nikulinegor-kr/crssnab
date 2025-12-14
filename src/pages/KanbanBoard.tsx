@@ -221,9 +221,12 @@ export default function KanbanBoard() {
     return colors[priority] || "bg-muted text-muted-foreground";
   };
 
-  // Check if request is overdue
-  const getDeadlineStatus = (deliveryDate: string | null) => {
+  // Check if request is overdue (completed requests are never overdue)
+  const getDeadlineStatus = (deliveryDate: string | null, status: string) => {
     if (!deliveryDate) return null;
+    // Completed requests are not overdue
+    if (status === "Доставлено") return null;
+    
     const date = new Date(deliveryDate);
     if (isPast(date) && !isToday(date)) {
       const daysOverdue = differenceInDays(new Date(), date);
@@ -574,7 +577,7 @@ export default function KanbanBoard() {
                 {!isCollapsed && (
                   <div className="p-2.5 space-y-2.5 flex-1 overflow-y-auto min-h-0 scrollbar-thin">
                     {requestsByStatus[status.name]?.map((request) => {
-                      const deadlineStatus = getDeadlineStatus(request.delivery_date);
+                      const deadlineStatus = getDeadlineStatus(request.delivery_date, request.status);
                       const isSelected = selectedRequests.has(request.id);
                       
                       return (
