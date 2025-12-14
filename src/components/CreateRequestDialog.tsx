@@ -110,6 +110,7 @@ const requestSchema = z.object({
     .trim()
     .max(1000, "Комментарий не должен превышать 1000 символов")
     .optional(),
+  client_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -154,6 +155,24 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       const { data, error } = await supabase
         .from("request_participants")
         .select("*")
+        .eq("organization_id", currentOrgId)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Fetch clients
+  const { data: clients } = useQuery({
+    queryKey: ["clients", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name, company_name")
         .eq("organization_id", currentOrgId)
         .eq("is_active", true)
         .order("name");
@@ -241,6 +260,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       transport_company: "",
       waybill_number: "",
       comments: "",
+      client_id: "",
     },
   });
 
@@ -364,6 +384,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         document_url: documentUrl,
         organization_id: currentOrgId,
         created_by: user.id,
+        client_id: data.client_id || null,
       };
 
       const { data: newRequest, error } = await supabase
@@ -642,6 +663,32 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Клиент</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите клиента (опционально)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Без клиента</SelectItem>
+                      {clients?.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}{client.company_name ? ` (${client.company_name})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField

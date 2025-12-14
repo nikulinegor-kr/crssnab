@@ -34,6 +34,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(5),
       updated_at: getDate(1),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-2",
@@ -60,6 +61,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(3),
       updated_at: getDate(0),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-3",
@@ -86,6 +88,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(0),
       updated_at: getDate(0),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-4",
@@ -112,6 +115,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(7),
       updated_at: getDate(1),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-5",
@@ -138,6 +142,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(10),
       updated_at: getDate(2),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-6",
@@ -164,6 +169,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(15),
       updated_at: getDate(14),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-7",
@@ -190,6 +196,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(2),
       updated_at: getDate(1),
       archived: false,
+      client_id: null,
     },
     {
       id: "demo-8",
@@ -216,6 +223,7 @@ const generateDemoRequests = (): Request[] => {
       created_at: getDate(20),
       updated_at: getDate(17),
       archived: false,
+      client_id: null,
     },
   ];
 };
