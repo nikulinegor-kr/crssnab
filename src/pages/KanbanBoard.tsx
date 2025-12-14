@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
+import { useViewSettings } from "@/hooks/useViewSettings";
 
 interface Request {
   id: string;
@@ -52,6 +53,7 @@ export default function KanbanBoard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { settings } = useViewSettings();
 
   // Fetch statuses
   const { data: statuses, isLoading: loadingStatuses } = useQuery({
@@ -612,19 +614,23 @@ export default function KanbanBoard() {
                                 {request.description}
                               </p>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs text-muted-foreground font-mono">
-                                  #{request.request_number.slice(-6)}
-                                </span>
-                                <Badge
-                                  variant="outline"
-                                  className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
-                                >
-                                  {request.priority}
-                                </Badge>
+                                {settings.kanban.showRequestNumber && (
+                                  <span className="text-xs text-muted-foreground font-mono">
+                                    #{request.request_number.slice(-6)}
+                                  </span>
+                                )}
+                                {settings.kanban.showPriority && (
+                                  <Badge
+                                    variant="outline"
+                                    className={cn("text-xs px-2 py-0.5 h-5", getPriorityColor(request.priority))}
+                                  >
+                                    {request.priority}
+                                  </Badge>
+                                )}
                               </div>
                               
                               {/* Deadline indicator */}
-                              {deadlineStatus && (
+                              {settings.kanban.showDeadline && deadlineStatus && (
                                 <div className={cn(
                                   "flex items-center gap-1 text-xs",
                                   deadlineStatus.isOverdue ? "text-destructive" : "text-warning"
@@ -636,12 +642,28 @@ export default function KanbanBoard() {
                               
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
-                                {request.executor && (
+                                {settings.kanban.showExecutor && request.executor && (
                                   <span className="truncate max-w-[100px] text-primary/70" title={request.executor}>
                                     {request.executor}
                                   </span>
                                 )}
                               </div>
+                              
+                              {/* Additional fields based on settings */}
+                              {(settings.kanban.showApplicant && request.applicant) || (settings.kanban.showContractor && request.contractor) ? (
+                                <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                                  {settings.kanban.showApplicant && request.applicant && (
+                                    <span className="truncate" title={request.applicant}>
+                                      Заявитель: {request.applicant}
+                                    </span>
+                                  )}
+                                  {settings.kanban.showContractor && request.contractor && (
+                                    <span className="truncate" title={request.contractor}>
+                                      Подрядчик: {request.contractor}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : null}
                             </div>
                           </div>
                         </div>

@@ -15,6 +15,7 @@ import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequest
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useViewSettings } from "@/hooks/useViewSettings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const { settings } = useViewSettings();
   
   // Фильтрация заявок по выбранному году
   const filteredRequests = useMemo(() => {
@@ -162,47 +164,49 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {isLoading ? (
-            <>
-              {[...Array(4)].map((_, i) => (
-                <Card key={i} className="bg-card border-border/40 shadow-sm">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-5 w-5 rounded" />
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <Skeleton className="h-8 w-20" />
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : (
-            statsCards.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <Card 
-                  key={stat.title} 
-                  className="bg-card border-border/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/50"
-                  onClick={() => navigate(stat.link)}
-                >
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </CardTitle>
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
+        {settings.dashboard.showStatsCards && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {isLoading ? (
+              <>
+                {[...Array(4)].map((_, i) => (
+                  <Card key={i} className="bg-card border-border/40 shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-5 w-5 rounded" />
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <Skeleton className="h-8 w-20" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              statsCards.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <Card 
+                    key={stat.title} 
+                    className="bg-card border-border/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/50"
+                    onClick={() => navigate(stat.link)}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        {stat.title}
+                      </CardTitle>
+                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        )}
 
         {/* Аналитика с вкладками */}
-        {!isLoading && filteredRequests.length > 0 && (
+        {settings.dashboard.showAnalyticsTabs && !isLoading && filteredRequests.length > 0 && (
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList>
               <TabsTrigger value="overview">Обзор</TabsTrigger>
@@ -221,20 +225,25 @@ const Dashboard = () => {
         )}
 
         {/* Дополнительные виджеты - вторая линия */}
-        {!isLoading && filteredRequests.length > 0 && (
+        {!isLoading && filteredRequests.length > 0 && (settings.dashboard.showCalendarWidget || settings.dashboard.showEmergencyWidget) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CalendarWidget 
-              requests={filteredRequests.filter(r => r.delivery_date)} 
-            />
-            <EmergencyRequestsWidget 
-              requests={filteredRequests} 
-              onRequestClick={handleRequestClick}
-            />
+            {settings.dashboard.showCalendarWidget && (
+              <CalendarWidget 
+                requests={filteredRequests.filter(r => r.delivery_date)} 
+              />
+            )}
+            {settings.dashboard.showEmergencyWidget && (
+              <EmergencyRequestsWidget 
+                requests={filteredRequests} 
+                onRequestClick={handleRequestClick}
+              />
+            )}
           </div>
         )}
 
         {/* Recent Requests */}
-        <Card className="bg-card border-border/40 shadow-sm">
+        {settings.dashboard.showRecentRequests && (
+          <Card className="bg-card border-border/40 shadow-sm">
           <CardHeader className="border-b border-border/40">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">Последние заявки</CardTitle>
@@ -315,6 +324,7 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
       <CreateRequestDialog>
         <Button className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" size="icon">

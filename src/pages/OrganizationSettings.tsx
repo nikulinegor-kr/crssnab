@@ -18,6 +18,7 @@ import { ParticipantsManagement } from "@/components/settings/ParticipantsManage
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
 import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
+import { ViewSettings } from "@/components/settings/ViewSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -146,8 +147,14 @@ const OrganizationSettings = () => {
               Интеграции
             </TabsTrigger>
             <TabsTrigger 
+              value="view"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+            >
+              Отображение
+            </TabsTrigger>
+            <TabsTrigger 
               value="audit"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
             >
               История
             </TabsTrigger>
@@ -193,6 +200,10 @@ const OrganizationSettings = () => {
 
         <TabsContent value="integrations">
           <IntegrationsSettings organizationId={currentOrgId!} />
+        </TabsContent>
+
+        <TabsContent value="view">
+          <ViewSettings />
         </TabsContent>
 
         <TabsContent value="audit">
