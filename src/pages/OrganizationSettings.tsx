@@ -17,6 +17,7 @@ import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
+import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -173,6 +174,7 @@ const OrganizationSettings = () => {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
+          <PushNotificationSettings />
           <TelegramSettings organizationId={currentOrgId!} />
           <DeadlineReminderSettings />
         </TabsContent>
