@@ -26,7 +26,7 @@ export const RequestQuickPreview = ({
   return (
     <HoverCard openDelay={300} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent className="w-80 p-0" side="right" align="start">
+      <HoverCardContent className="w-80 p-0" side="top" align="start">
         <Card className="border-0 shadow-none">
           <CardContent className="p-4 space-y-3">
             {/* Header */}
