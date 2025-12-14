@@ -204,7 +204,7 @@ export default function KanbanBoard() {
 
       {/* Kanban Board */}
       <ScrollArea className="flex-1 w-full">
-        <div className="flex gap-3 pb-4 min-w-max">
+        <div className="flex gap-3 pb-4 pr-4 min-w-max h-[calc(100vh-200px)]">
           {allStatuses.map((status) => {
             const isOver = dragOverStatus === status.name;
             const count = requestsByStatus[status.name]?.length || 0;
@@ -213,7 +213,7 @@ export default function KanbanBoard() {
               <div
                 key={status.id}
                 className={cn(
-                  "w-64 lg:w-72 shrink-0 rounded-lg border border-border/50 bg-muted/30 transition-all",
+                  "w-64 lg:w-72 shrink-0 rounded-lg border border-border/50 bg-muted/30 transition-all flex flex-col h-full",
                   isOver && "border-primary/50 bg-primary/5"
                 )}
                 onDragOver={(e) => handleDragOver(e, status.name)}
@@ -239,7 +239,7 @@ export default function KanbanBoard() {
                 </div>
 
                 {/* Cards Container */}
-                <div className="p-2 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                <div className="p-2 space-y-2 flex-1 overflow-y-auto">
                   {requestsByStatus[status.name]?.map((request) => (
                     <div
                       key={request.id}
