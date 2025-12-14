@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 interface Notification {
   id: string;
@@ -13,6 +13,30 @@ interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+// Helper function to show browser notification
+const showBrowserNotification = async (title: string, body: string, link?: string | null) => {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          body,
+          icon: '/favicon.png',
+          badge: '/favicon.png',
+          data: { url: link || '/dashboard' }
+        });
+      } else {
+        new Notification(title, {
+          body,
+          icon: '/favicon.png'
+        });
+      }
+    } catch (error) {
+      console.error('Error showing browser notification:', error);
+    }
+  }
+};
 
 export const useNotifications = () => {
   const { currentOrgId } = useCurrentOrganization();
@@ -65,6 +89,9 @@ export const useNotifications = () => {
               title: notification.title,
               description: notification.message,
             });
+
+            // Показываем браузерное push-уведомление
+            showBrowserNotification(notification.title, notification.message, notification.link);
           }
         )
         .subscribe();
