@@ -70,6 +70,21 @@ async function updateRequestStatus(requestId: string, status: string, username: 
   return { username, fullName };
 }
 
+// Get available statuses for inline keyboard
+async function getOrganizationStatuses(orgId: string) {
+  const { data, error } = await supabase
+    .from("request_statuses")
+    .select("name, color")
+    .eq("organization_id", orgId)
+    .order("order", { ascending: true });
+  
+  if (error) {
+    console.error("Error fetching statuses:", error);
+    return [];
+  }
+  return data || [];
+}
+
 async function notifyGroupAboutStatusChange(request: any, status: string, username: string, fullName: string) {
   console.log("Notifying group about status change:", { requestId: request.id, status });
   
@@ -123,6 +138,161 @@ async function handleCallbackQuery(callbackQuery: any) {
   console.log("Message ID:", messageId);
   console.log("Chat ID:", chatId);
   console.log("User:", username || fullName);
+
+  // Handle summary callbacks (from daily summary)
+  if (data.startsWith("summary_received_")) {
+    const requestId = data.replace("summary_received_", "");
+    console.log("Processing summary received for request:", requestId);
+    
+    // Find request by partial ID
+    const { data: requests, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestId}%`)
+      .single();
+    
+    if (error || !requests) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    await updateRequestStatus(requests.id, "Доставлено", username, fullName);
+    await notifyGroupAboutStatusChange(requests, "Доставлено", username, fullName);
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "✅ Отмечено как полученное!",
+    });
+    return;
+  }
+
+  // Handle status change from inline keyboard
+  if (data.startsWith("status_")) {
+    const parts = data.split("_");
+    const statusIndex = parseInt(parts[1]);
+    const requestIdPart = parts.slice(2).join("_");
+    
+    console.log("Processing status change:", { statusIndex, requestIdPart });
+    
+    // Find request
+    const { data: requests, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !requests) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Get statuses
+    const statuses = await getOrganizationStatuses(requests.organization_id);
+    const newStatus = statuses[statusIndex]?.name;
+    
+    if (!newStatus) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Статус не найден",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    await updateRequestStatus(requests.id, newStatus, username, fullName);
+    await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
+    
+    // Update the message to show new status
+    const newText = callbackQuery.message.text + `\n\n✅ Статус изменён на "${newStatus}" — @${username || fullName}`;
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: newText,
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: `✅ Статус изменён на "${newStatus}"`,
+    });
+    return;
+  }
+
+  // Handle show_statuses callback
+  if (data.startsWith("show_statuses_")) {
+    const requestIdPart = data.replace("show_statuses_", "");
+    
+    // Find request
+    const { data: requests, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !requests) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Get statuses
+    const statuses = await getOrganizationStatuses(requests.organization_id);
+    
+    // Build keyboard with all statuses (max 8 to fit telegram limits)
+    const keyboard: any[][] = [];
+    const displayStatuses = statuses.slice(0, 8);
+    
+    for (let i = 0; i < displayStatuses.length; i += 2) {
+      const row = [];
+      row.push({
+        text: displayStatuses[i].name,
+        callback_data: `status_${i}_${requests.id.substring(0, 20)}`
+      });
+      if (displayStatuses[i + 1]) {
+        row.push({
+          text: displayStatuses[i + 1].name,
+          callback_data: `status_${i + 1}_${requests.id.substring(0, 20)}`
+        });
+      }
+      keyboard.push(row);
+    }
+    
+    keyboard.push([{ text: "↩️ Назад", callback_data: `back_${requests.id.substring(0, 25)}` }]);
+    
+    await sendTelegramRequest("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: keyboard }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Выберите новый статус",
+    });
+    return;
+  }
+
+  // Handle back callback
+  if (data.startsWith("back_")) {
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Возврат",
+    });
+    return;
+  }
 
   // Find request by telegram_message_id
   const { data: requests, error: findError } = await supabase
@@ -202,6 +372,41 @@ async function handleCallbackQuery(callbackQuery: any) {
     isFinalStatus = true;
     shouldDeletePreviousMessage = true;
     console.log("Processing 'paid' action:", { requestId: requests.id, newStatus, username });
+  } else if (data === "change_status") {
+    // Show status selection keyboard
+    const statuses = await getOrganizationStatuses(requests.organization_id);
+    
+    const keyboard: any[][] = [];
+    const displayStatuses = statuses.slice(0, 8);
+    
+    for (let i = 0; i < displayStatuses.length; i += 2) {
+      const row = [];
+      row.push({
+        text: displayStatuses[i].name,
+        callback_data: `status_${i}_${requests.id.substring(0, 20)}`
+      });
+      if (displayStatuses[i + 1]) {
+        row.push({
+          text: displayStatuses[i + 1].name,
+          callback_data: `status_${i + 1}_${requests.id.substring(0, 20)}`
+        });
+      }
+      keyboard.push(row);
+    }
+    
+    keyboard.push([{ text: "↩️ Назад", callback_data: `back_${requests.id.substring(0, 25)}` }]);
+    
+    await sendTelegramRequest("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: keyboard }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Выберите новый статус",
+    });
+    return;
   } else if (data === "exclude") {
     // Показываем подтверждение удаления
     await sendTelegramRequest("editMessageReplyMarkup", {
