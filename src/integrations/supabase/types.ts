@@ -544,6 +544,47 @@ export type Database = {
           },
         ]
       }
+      deadline_reminder_settings: {
+        Row: {
+          created_at: string
+          days_before: number
+          id: string
+          is_enabled: boolean
+          notify_applicant: boolean
+          notify_executor: boolean
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          days_before?: number
+          id?: string
+          is_enabled?: boolean
+          notify_applicant?: boolean
+          notify_executor?: boolean
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          days_before?: number
+          id?: string
+          is_enabled?: boolean
+          notify_applicant?: boolean
+          notify_executor?: boolean
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadline_reminder_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linked_requests: {
         Row: {
           created_at: string
@@ -1442,6 +1483,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
       ensure_user_initialized: {
         Args: { _org_name?: string }

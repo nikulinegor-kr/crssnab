@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.daily-summary]
 verify_jwt = false
+
+[functions.check-deadline-reminders]
+verify_jwt = false

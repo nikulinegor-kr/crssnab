@@ -16,6 +16,7 @@ import { AuditLog } from "@/components/settings/AuditLog";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
+import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -171,8 +172,9 @@ const OrganizationSettings = () => {
           <ParticipantsManagement />
         </TabsContent>
 
-        <TabsContent value="notifications">
+        <TabsContent value="notifications" className="space-y-6">
           <TelegramSettings organizationId={currentOrgId!} />
+          <DeadlineReminderSettings />
         </TabsContent>
 
         <TabsContent value="requests">
