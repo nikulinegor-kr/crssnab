@@ -4,7 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { UsersManagement } from "@/components/settings/UsersManagement";
@@ -94,69 +95,80 @@ const OrganizationSettings = () => {
           <TabsList className="inline-flex h-auto w-auto min-w-full sm:min-w-0 rounded-none bg-transparent p-0">
             <TabsTrigger 
               value="profile"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Профиль
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Профиль</span>
             </TabsTrigger>
             <TabsTrigger 
               value="general"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Общие
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Общие</span>
             </TabsTrigger>
             <TabsTrigger 
               value="users"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Пользователи
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Пользователи</span>
             </TabsTrigger>
             <TabsTrigger 
               value="participants"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Участники
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Участники</span>
             </TabsTrigger>
             <TabsTrigger 
               value="notifications"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Уведомления
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Уведомления</span>
             </TabsTrigger>
             <TabsTrigger 
               value="requests"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Заявки
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Заявки</span>
             </TabsTrigger>
             <TabsTrigger 
               value="branding"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Брендинг
+              <Palette className="h-4 w-4" />
+              <span className="hidden sm:inline">Брендинг</span>
             </TabsTrigger>
             <TabsTrigger 
               value="subscription"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Подписка
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Подписка</span>
             </TabsTrigger>
             <TabsTrigger 
               value="integrations"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Интеграции
+              <Plug className="h-4 w-4" />
+              <span className="hidden sm:inline">Интеграции</span>
             </TabsTrigger>
             <TabsTrigger 
               value="view"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              Отображение
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Отображение</span>
             </TabsTrigger>
             <TabsTrigger 
               value="audit"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
             >
-              История
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">История</span>
             </TabsTrigger>
           </TabsList>
         </div>
