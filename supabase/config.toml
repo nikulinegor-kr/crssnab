@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.analyze-request]
 verify_jwt = true
+
+[functions.daily-summary]
+verify_jwt = false
