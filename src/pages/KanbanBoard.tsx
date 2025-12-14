@@ -2,16 +2,15 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Loader2, Search, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Request {
   id: string;
@@ -34,6 +33,7 @@ interface Status {
 export default function KanbanBoard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [draggingRequest, setDraggingRequest] = useState<string | null>(null);
+  const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const { currentOrgId } = useCurrentOrganization();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -125,12 +125,12 @@ export default function KanbanBoard() {
 
   const getPriorityColor = (priority: string) => {
     const colors: Record<string, string> = {
-      "Аварийно": "bg-red-500/20 text-red-500 border-red-500/30",
-      "Срочно": "bg-orange-500/20 text-orange-500 border-orange-500/30",
-      "Высокий": "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
-      "Средний": "bg-blue-500/20 text-blue-500 border-blue-500/30",
-      "Низкий": "bg-green-500/20 text-green-500 border-green-500/30",
-      "Планово": "bg-slate-500/20 text-slate-500 border-slate-500/30",
+      "Аварийно": "bg-red-500/20 text-red-400 border-red-500/30",
+      "Срочно": "bg-orange-500/20 text-orange-400 border-orange-500/30",
+      "Высокий": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      "Средний": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      "Низкий": "bg-green-500/20 text-green-400 border-green-500/30",
+      "Планово": "bg-slate-500/20 text-slate-400 border-slate-500/30",
     };
     return colors[priority] || "bg-muted text-muted-foreground";
   };
@@ -140,9 +140,14 @@ export default function KanbanBoard() {
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, statusName: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    setDragOverStatus(statusName);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverStatus(null);
   };
 
   const handleDrop = (e: React.DragEvent, statusName: string) => {
@@ -157,10 +162,12 @@ export default function KanbanBoard() {
       }
     }
     setDraggingRequest(null);
+    setDragOverStatus(null);
   };
 
   const handleDragEnd = () => {
     setDraggingRequest(null);
+    setDragOverStatus(null);
   };
 
   if (loadingStatuses || loadingRequests) {
@@ -177,105 +184,118 @@ export default function KanbanBoard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold">Канбан-доска</h1>
-          <p className="text-muted-foreground">Визуализация заявок по статусам</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Канбан-доска</h1>
+          <p className="text-sm text-muted-foreground">Перетаскивайте заявки между колонками</p>
         </div>
-        <div className="relative w-full sm:w-80">
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск заявок..."
+            placeholder="Поиск..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9"
           />
         </div>
       </div>
 
       {/* Kanban Board */}
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {allStatuses.map((status) => (
-          <div
-            key={status.id}
-            className="flex-shrink-0 w-80"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, status.name)}
-          >
-            <Card className="glassmorphism border-border/40 h-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    {status.name}
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {requestsByStatus[status.name]?.length || 0}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  <div className="space-y-3 pr-4">
-                    {requestsByStatus[status.name]?.map((request) => (
+      <ScrollArea className="flex-1 w-full">
+        <div className="flex gap-3 pb-4 min-w-max">
+          {allStatuses.map((status) => {
+            const isOver = dragOverStatus === status.name;
+            const count = requestsByStatus[status.name]?.length || 0;
+            
+            return (
+              <div
+                key={status.id}
+                className={cn(
+                  "w-64 lg:w-72 shrink-0 rounded-lg border border-border/50 bg-muted/30 transition-all",
+                  isOver && "border-primary/50 bg-primary/5"
+                )}
+                onDragOver={(e) => handleDragOver(e, status.name)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, status.name)}
+              >
+                {/* Column Header */}
+                <div className="p-3 border-b border-border/30 sticky top-0 bg-background/80 backdrop-blur-sm rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <div
-                        key={request.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, request.id)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => navigate(`/requests/${request.id}`)}
-                        className={`p-3 rounded-lg bg-background/80 border border-border/40 cursor-pointer
-                          hover:border-primary/40 hover:shadow-md transition-all
-                          ${draggingRequest === request.id ? "opacity-50 scale-95" : ""}
-                        `}
-                      >
-                        <div className="flex items-start gap-2">
-                          <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5 cursor-grab" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {request.description}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {request.request_number}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                              <Badge
-                                variant="outline"
-                                className={`text-xs ${getPriorityColor(request.priority)}`}
-                              >
-                                {request.priority}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: status.color }}
+                      />
+                      <span className="font-medium text-sm truncate max-w-[140px]">
+                        {status.name}
+                      </span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs h-5 px-1.5 shrink-0">
+                      {count}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Cards Container */}
+                <div className="p-2 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                  {requestsByStatus[status.name]?.map((request) => (
+                    <div
+                      key={request.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, request.id)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => navigate(`/requests/${request.id}`)}
+                      className={cn(
+                        "p-2.5 rounded-md bg-background border border-border/40 cursor-pointer",
+                        "hover:border-primary/40 hover:shadow-sm transition-all",
+                        "active:scale-[0.98]",
+                        draggingRequest === request.id && "opacity-50 scale-95 rotate-1"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 mt-0.5 cursor-grab" />
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <p className="text-xs font-medium line-clamp-2 leading-snug">
+                            {request.description}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              #{request.request_number}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={cn("text-[10px] px-1 py-0 h-4", getPriorityColor(request.priority))}
+                            >
+                              {request.priority}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>{format(new Date(request.request_date), "dd.MM.yy", { locale: ru })}</span>
+                            {request.applicant && (
+                              <span className="truncate max-w-[80px]" title={request.applicant}>
+                                {request.applicant}
                               </span>
-                            </div>
-                            {(request.applicant || request.contractor) && (
-                              <div className="mt-2 text-xs text-muted-foreground truncate">
-                                {request.applicant && <span>👤 {request.applicant}</span>}
-                                {request.contractor && <span className="ml-2">🏢 {request.contractor}</span>}
-                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                    ))}
-                    {(!requestsByStatus[status.name] || requestsByStatus[status.name].length === 0) && (
-                      <div className="text-center py-8 text-sm text-muted-foreground">
-                        Нет заявок
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        ))}
-      </div>
+                    </div>
+                  ))}
+                  
+                  {count === 0 && (
+                    <div className="text-center py-6 text-xs text-muted-foreground">
+                      Нет заявок
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 }
