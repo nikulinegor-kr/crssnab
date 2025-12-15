@@ -480,19 +480,38 @@ async function handleCallbackQuery(callbackQuery: any) {
     }
   }
 
-  // Handle final status: delete previous message and send new one
+  // Handle final status: delete ALL previous messages and send new one
   if (shouldDeletePreviousMessage && isFinalStatus) {
-    console.log("Final status reached, deleting previous message and sending new one");
+    console.log("Final status reached, deleting all previous messages and sending final one");
     
-    // Delete the current message
-    try {
-      await sendTelegramRequest("deleteMessage", {
-        chat_id: chatId,
-        message_id: messageId,
-      });
-      console.log("Previous message deleted:", messageId);
-    } catch (error) {
-      console.error("Error deleting message:", error);
+    // Get all message IDs for this request
+    const allMessageIds = requests.telegram_message_ids || [];
+    console.log("Message IDs to delete:", allMessageIds);
+    
+    // Delete all previous messages for this request
+    for (const msgId of allMessageIds) {
+      try {
+        await sendTelegramRequest("deleteMessage", {
+          chat_id: chatId,
+          message_id: msgId,
+        });
+        console.log("Deleted message:", msgId);
+      } catch (error) {
+        console.error("Error deleting message:", msgId, error);
+      }
+    }
+    
+    // Also try to delete the current message if it's not in the array
+    if (!allMessageIds.includes(messageId)) {
+      try {
+        await sendTelegramRequest("deleteMessage", {
+          chat_id: chatId,
+          message_id: messageId,
+        });
+        console.log("Deleted current message:", messageId);
+      } catch (error) {
+        console.error("Error deleting current message:", error);
+      }
     }
 
     // Send new final message without buttons
@@ -501,13 +520,16 @@ async function handleCallbackQuery(callbackQuery: any) {
       text: newText,
     });
 
-    // Clear telegram_message_id in database (no more updates needed)
+    // Clear telegram_message_id and telegram_message_ids in database (no more updates needed)
     if (finalResult.ok) {
       await supabase
         .from("requests")
-        .update({ telegram_message_id: null })
+        .update({ 
+          telegram_message_id: null,
+          telegram_message_ids: []
+        })
         .eq("id", requests.id);
-      console.log("Cleared telegram_message_id for request:", requests.id);
+      console.log("Cleared all telegram message IDs for request:", requests.id);
     }
   } else {
     // Update existing message (non-final status)
