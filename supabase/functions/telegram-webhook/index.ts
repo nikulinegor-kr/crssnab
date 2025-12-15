@@ -461,19 +461,18 @@ async function handleCallbackQuery(callbackQuery: any) {
   if (data.startsWith("status_")) {
     const parts = data.split("_");
     const statusIndex = parseInt(parts[1]);
-    const requestIdPart = parts.slice(2).join("_");
     
-    console.log("Processing status change:", { statusIndex, requestIdPart });
+    console.log("Processing status change:", { statusIndex, messageId });
     
-    // Find request
+    // Find request by telegram_message_id (reliable method)
     const { data: requests, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
-      .single();
+      .eq("telegram_message_id", messageId)
+      .maybeSingle();
     
     if (error || !requests) {
-      console.error("Request not found:", error);
+      console.error("Request not found by message_id:", messageId, error);
       await sendTelegramRequest("answerCallbackQuery", {
         callback_query_id: callbackQuery.id,
         text: "Заявка не найдена",
@@ -516,17 +515,15 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   // Handle show_statuses callback
   if (data.startsWith("show_statuses_")) {
-    const requestIdPart = data.replace("show_statuses_", "");
-    
-    // Find request
+    // Find request by telegram_message_id (reliable method)
     const { data: requests, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
-      .single();
+      .eq("telegram_message_id", messageId)
+      .maybeSingle();
     
     if (error || !requests) {
-      console.error("Request not found:", error);
+      console.error("Request not found by message_id:", messageId, error);
       await sendTelegramRequest("answerCallbackQuery", {
         callback_query_id: callbackQuery.id,
         text: "Заявка не найдена",
