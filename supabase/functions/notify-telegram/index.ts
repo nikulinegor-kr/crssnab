@@ -398,11 +398,18 @@ serve(async (req) => {
         reply_markup: keyboard,
       });
 
-      // Save message_id to database (track the latest message)
+      // Save message_id to database (track the latest message and add to array)
       if (result.ok && result.result) {
+        const newMessageId = result.result.message_id;
+        const existingIds = request.telegram_message_ids || [];
+        const updatedIds = [...existingIds, newMessageId];
+        
         await supabase
           .from("requests")
-          .update({ telegram_message_id: result.result.message_id })
+          .update({ 
+            telegram_message_id: newMessageId,
+            telegram_message_ids: updatedIds
+          })
           .eq("id", requestId);
       }
     }

@@ -1202,6 +1202,7 @@ export type Database = {
           shipment_date: string | null
           status: string
           telegram_message_id: number | null
+          telegram_message_ids: number[] | null
           transport_company: string | null
           updated_at: string | null
           waybill_number: string | null
@@ -1232,6 +1233,7 @@ export type Database = {
           shipment_date?: string | null
           status?: string
           telegram_message_id?: number | null
+          telegram_message_ids?: number[] | null
           transport_company?: string | null
           updated_at?: string | null
           waybill_number?: string | null
@@ -1262,6 +1264,7 @@ export type Database = {
           shipment_date?: string | null
           status?: string
           telegram_message_id?: number | null
+          telegram_message_ids?: number[] | null
           transport_company?: string | null
           updated_at?: string | null
           waybill_number?: string | null
