@@ -574,17 +574,15 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   // Handle back callback - restore original keyboard
   if (data.startsWith("back_")) {
-    const requestIdPart = data.replace("back_", "");
-    
-    // Find request
+    // Find request by telegram_message_id (more reliable than partial UUID)
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
-      .single();
+      .eq("telegram_message_id", messageId)
+      .maybeSingle();
     
     if (error || !request) {
-      console.error("Request not found for back:", error);
+      console.error("Request not found for back by message_id:", messageId, error);
       await sendTelegramRequest("answerCallbackQuery", {
         callback_query_id: callbackQuery.id,
         text: "Заявка не найдена",
