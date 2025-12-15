@@ -150,6 +150,68 @@ async function findOrganizationByChatId(chatId: number) {
   return data;
 }
 
+// Build original keyboard for a request (same logic as notify-telegram)
+async function buildOriginalKeyboard(request: any, supabaseClient: any) {
+  const status = request.status?.toLowerCase() || "";
+  const comments = request.comments?.toLowerCase() || "";
+  const documentUrl = request.document_url || "";
+  
+  const keyboard: any[][] = [];
+
+  // Кнопка Получение подтверждено - показываем только если статус "Доставлено в ТК"
+  if (status.includes("доставлено в тк")) {
+    keyboard.push([{ text: "📦 Получение подтверждено", callback_data: "received" }]);
+  }
+
+  // Кнопки согласования
+  if (comments.includes("требуется согласование")) {
+    keyboard.push([{ text: "✅ В РАБОТУ", callback_data: "approve" }]);
+    keyboard.push([{ text: "🔧 НА ДОРАБОТКУ", callback_data: "rework" }]);
+    keyboard.push([{ text: "❌ ОТКЛОНЕНО", callback_data: "reject" }]);
+  }
+
+  // Кнопка "Отписано в оплату" для статуса "Счёт в Бухгалтерии"
+  if (status.includes("счёт в бухгалтерии")) {
+    keyboard.push([{ text: "✅ Отписано в оплату", callback_data: "paid" }]);
+  }
+
+  // Кнопка открыть счёт
+  if (status.includes("счёт в бухгалтерии") && documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
+    try {
+      const url = new URL(documentUrl);
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+      if (bucketIndex !== -1) {
+        const filePath = pathParts.slice(bucketIndex + 1).join('/');
+        const { data, error } = await supabaseClient.storage
+          .from('request-documents')
+          .createSignedUrl(filePath, 86400);
+        
+        if (!error && data?.signedUrl) {
+          keyboard.push([{ text: "📄 Открыть счёт", url: data.signedUrl }]);
+        } else {
+          keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+        }
+      } else {
+        keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+      }
+    } catch (error) {
+      console.error('Error processing document URL:', error);
+      keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+    }
+  }
+
+  // Универсальная кнопка "Изменить статус"
+  if (request.id) {
+    keyboard.push([{ 
+      text: "🔄 Изменить статус", 
+      callback_data: "change_status" 
+    }]);
+  }
+
+  return keyboard;
+}
+
 // Handle /archive command
 async function handleArchiveCommand(chatId: number, page: number = 0) {
   const org = await findOrganizationByChatId(chatId);
@@ -510,11 +572,38 @@ async function handleCallbackQuery(callbackQuery: any) {
     return;
   }
 
-  // Handle back callback
+  // Handle back callback - restore original keyboard
   if (data.startsWith("back_")) {
+    const requestIdPart = data.replace("back_", "");
+    
+    // Find request
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !request) {
+      console.error("Request not found for back:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Rebuild original keyboard based on request status
+    const keyboard = await buildOriginalKeyboard(request, supabase);
+    
+    await sendTelegramRequest("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: keyboard }
+    });
+    
     await sendTelegramRequest("answerCallbackQuery", {
       callback_query_id: callbackQuery.id,
-      text: "Возврат",
     });
     return;
   }
