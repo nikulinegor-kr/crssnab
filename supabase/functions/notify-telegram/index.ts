@@ -365,6 +365,23 @@ serve(async (req) => {
     const message = formatRequestMessage(request, participants || []);
     const keyboard = await createKeyboard(request, supabase);
 
+    // Delete all previous messages for this request before sending new one
+    const existingMessageIds = request.telegram_message_ids || [];
+    if (existingMessageIds.length > 0 && mode === "send") {
+      console.log("Deleting previous messages:", existingMessageIds);
+      for (const msgId of existingMessageIds) {
+        try {
+          await sendTelegramRequest(org.telegram_bot_token, "deleteMessage", {
+            chat_id: org.telegram_chat_id,
+            message_id: msgId,
+          });
+          console.log("Deleted message:", msgId);
+        } catch (error) {
+          console.error("Error deleting message:", msgId, error);
+        }
+      }
+    }
+
     // Send or update message based on mode
     let result;
     const shouldEdit = request.telegram_message_id && mode !== "send";
@@ -398,17 +415,15 @@ serve(async (req) => {
         reply_markup: keyboard,
       });
 
-      // Save message_id to database (track the latest message and add to array)
+      // Save message_id to database (replace array with just the new message)
       if (result.ok && result.result) {
         const newMessageId = result.result.message_id;
-        const existingIds = request.telegram_message_ids || [];
-        const updatedIds = [...existingIds, newMessageId];
         
         await supabase
           .from("requests")
           .update({ 
             telegram_message_id: newMessageId,
-            telegram_message_ids: updatedIds
+            telegram_message_ids: [newMessageId]
           })
           .eq("id", requestId);
       }
