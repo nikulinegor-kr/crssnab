@@ -31,6 +31,7 @@ const callbackQuerySchema = z.object({
   message: z.object({
     message_id: z.number(),
     chat: z.object({ id: z.number() }),
+    text: z.string().optional(),
   }),
 });
 
@@ -124,6 +125,145 @@ async function notifyGroupAboutStatusChange(request: any, status: string, userna
   }
 }
 
+// Get status emoji helper
+function getStatusEmoji(status: string): string {
+  const s = status?.toLowerCase() || "";
+  if (s.includes("доставлено")) return "✅";
+  if (s.includes("оплачено")) return "💰";
+  if (s.includes("отклонено")) return "❌";
+  if (s.includes("закрыто") || s.includes("выполнено")) return "🏁";
+  return "📋";
+}
+
+// Find organization by chat_id
+async function findOrganizationByChatId(chatId: number) {
+  const { data, error } = await supabase
+    .from("organizations")
+    .select("id, name")
+    .eq("telegram_chat_id", chatId.toString())
+    .single();
+  
+  if (error) {
+    console.error("Error finding organization by chat_id:", error);
+    return null;
+  }
+  return data;
+}
+
+// Handle /archive command
+async function handleArchiveCommand(chatId: number, page: number = 0) {
+  const org = await findOrganizationByChatId(chatId);
+  if (!org) {
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: "❌ Организация не найдена для этого чата",
+    });
+    return;
+  }
+
+  const pageSize = 10;
+  const offset = page * pageSize;
+
+  // Get archived/completed requests
+  const { data: requests, error, count } = await supabase
+    .from("requests")
+    .select("id, request_number, description, status, updated_at", { count: "exact" })
+    .eq("organization_id", org.id)
+    .or("archived.eq.true,status.in.(Доставлено,Отклонено,Оплачено,Выполнено,Закрыто)")
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (error) {
+    console.error("Error fetching archive:", error);
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: "❌ Ошибка загрузки архива",
+    });
+    return;
+  }
+
+  if (!requests || requests.length === 0) {
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: "📦 Архив пуст\n\nЗавершённые заявки появятся здесь после получения статусов: Доставлено, Оплачено, Отклонено и т.д.",
+    });
+    return;
+  }
+
+  const totalPages = Math.ceil((count || 0) / pageSize);
+  
+  let messageText = `📦 *Архив заявок* (стр. ${page + 1}/${totalPages})\n\n`;
+  
+  requests.forEach((req: any, index: number) => {
+    const statusEmoji = getStatusEmoji(req.status);
+    const date = new Date(req.updated_at).toLocaleDateString("ru-RU");
+    const shortDesc = req.description.length > 30 
+      ? req.description.substring(0, 30) + "..." 
+      : req.description;
+    messageText += `${offset + index + 1}. ${statusEmoji} *${req.request_number}*\n`;
+    messageText += `   ${shortDesc}\n`;
+    messageText += `   📅 ${date} | ${req.status}\n\n`;
+  });
+
+  // Build pagination keyboard
+  const keyboard: any[][] = [];
+  
+  // Detail buttons for each request (2 per row)
+  for (let i = 0; i < requests.length; i += 2) {
+    const row = [];
+    row.push({
+      text: `📋 ${requests[i].request_number}`,
+      callback_data: `archive_detail_${requests[i].id.substring(0, 20)}`
+    });
+    if (requests[i + 1]) {
+      row.push({
+        text: `📋 ${requests[i + 1].request_number}`,
+        callback_data: `archive_detail_${requests[i + 1].id.substring(0, 20)}`
+      });
+    }
+    keyboard.push(row);
+  }
+
+  // Pagination buttons
+  const navRow: any[] = [];
+  if (page > 0) {
+    navRow.push({ text: "⬅️ Назад", callback_data: `archive_page_${page - 1}` });
+  }
+  if (page < totalPages - 1) {
+    navRow.push({ text: "Вперёд ➡️", callback_data: `archive_page_${page + 1}` });
+  }
+  if (navRow.length > 0) {
+    keyboard.push(navRow);
+  }
+
+  await sendTelegramRequest("sendMessage", {
+    chat_id: chatId,
+    text: messageText,
+    parse_mode: "Markdown",
+    reply_markup: keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined,
+  });
+}
+
+// Handle /help command
+async function handleHelpCommand(chatId: number) {
+  const helpText = `🤖 *Команды бота*\n\n` +
+    `/archive — 📦 Архив завершённых заявок\n` +
+    `/help — ❓ Справка по командам\n\n` +
+    `*Кнопки в сообщениях:*\n` +
+    `• ✅ Получение подтверждено — отметить доставку\n` +
+    `• ✅ В РАБОТУ — согласовать заявку\n` +
+    `• 🔧 НА ДОРАБОТКУ — запросить правки\n` +
+    `• ❌ ОТКЛОНЕНО — отклонить заявку\n` +
+    `• 🔄 Изменить статус — выбрать другой статус\n\n` +
+    `💡 При финальном статусе все предыдущие сообщения по заявке удаляются автоматически.`;
+
+  await sendTelegramRequest("sendMessage", {
+    chat_id: chatId,
+    text: helpText,
+    parse_mode: "Markdown",
+  });
+}
+
 async function handleCallbackQuery(callbackQuery: any) {
   // Validate input
   const validated = callbackQuerySchema.parse(callbackQuery);
@@ -138,6 +278,90 @@ async function handleCallbackQuery(callbackQuery: any) {
   console.log("Message ID:", messageId);
   console.log("Chat ID:", chatId);
   console.log("User:", username || fullName);
+
+  // Handle archive pagination
+  if (data.startsWith("archive_page_")) {
+    const page = parseInt(data.replace("archive_page_", ""));
+    
+    // Delete current message and send new one with updated page
+    await sendTelegramRequest("deleteMessage", {
+      chat_id: chatId,
+      message_id: messageId,
+    });
+    
+    await handleArchiveCommand(chatId, page);
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+    });
+    return;
+  }
+
+  // Handle archive detail view
+  if (data.startsWith("archive_detail_")) {
+    const requestIdPart = data.replace("archive_detail_", "");
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !request) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+
+    // Build detailed message
+    let detailText = `📋 *Заявка ${request.request_number}*\n\n`;
+    detailText += `📝 ${request.description}\n`;
+    detailText += `📊 Статус: ${request.status}\n`;
+    
+    if (request.priority) detailText += `⭐ Приоритет: ${request.priority}\n`;
+    if (request.applicant) detailText += `👤 Заявитель: ${request.applicant}\n`;
+    if (request.executor) detailText += `🔧 Исполнитель: ${request.executor}\n`;
+    if (request.contractor) detailText += `🏢 Контрагент: ${request.contractor}\n`;
+    if (request.amount) detailText += `💰 Сумма: ${request.amount.toLocaleString("ru-RU")} ₽\n`;
+    if (request.invoice_number) detailText += `💳 Счёт: ${request.invoice_number}\n`;
+    if (request.transport_company) detailText += `🚛 ТК: ${request.transport_company}\n`;
+    if (request.delivery_date) {
+      detailText += `📅 Дата доставки: ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}\n`;
+    }
+    if (request.comments) detailText += `\n💬 Комментарий: ${request.comments}\n`;
+    
+    detailText += `\n📅 Создано: ${new Date(request.created_at).toLocaleDateString("ru-RU")}`;
+    detailText += `\n📅 Обновлено: ${new Date(request.updated_at).toLocaleDateString("ru-RU")}`;
+
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: detailText,
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "↩️ Назад к архиву", callback_data: "archive_back" }
+        ]]
+      }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+    });
+    return;
+  }
+
+  // Handle back to archive
+  if (data === "archive_back") {
+    await handleArchiveCommand(chatId, 0);
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+    });
+    return;
+  }
 
   // Handle summary callbacks (from daily summary)
   if (data.startsWith("summary_received_")) {
@@ -213,7 +437,8 @@ async function handleCallbackQuery(callbackQuery: any) {
     await notifyGroupAboutStatusChange(requests, newStatus, username, fullName);
     
     // Update the message to show new status
-    const newText = callbackQuery.message.text + `\n\n✅ Статус изменён на "${newStatus}" — @${username || fullName}`;
+    const originalText = validated.message.text || "";
+    const newText = originalText + `\n\n✅ Статус изменён на "${newStatus}" — @${username || fullName}`;
     await sendTelegramRequest("editMessageText", {
       chat_id: chatId,
       message_id: messageId,
@@ -316,7 +541,8 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   console.log("Request found:", requests.id, "Current status:", requests.status);
 
-  let newText = callbackQuery.message.text;
+  const originalText = validated.message.text || "";
+  let newText = originalText;
   let newStatus = requests.status;
   let removeKeyboard = false;
   let alertText = "Отмечено";
@@ -558,6 +784,21 @@ async function handleMessage(message: any) {
   const fullName = `${validated.from.first_name || ""} ${validated.from.last_name || ""}`.trim();
 
   console.log("Message from:", username || fullName, "Text:", text);
+
+  // Handle bot commands
+  if (text.startsWith("/")) {
+    const command = text.split(" ")[0].toLowerCase();
+    
+    if (command === "/archive" || command.startsWith("/archive@")) {
+      await handleArchiveCommand(chatId);
+      return;
+    }
+    
+    if (command === "/help" || command.startsWith("/help@") || command === "/start" || command.startsWith("/start@")) {
+      await handleHelpCommand(chatId);
+      return;
+    }
+  }
 
   // Check if we're waiting for a comment from this user
   const { data: requests, error } = await supabase
