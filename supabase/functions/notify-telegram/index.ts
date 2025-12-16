@@ -242,13 +242,6 @@ async function createKeyboard(request: any, supabaseClient: any) {
     }
   }
 
-  // Универсальная кнопка "Изменить статус" - показываем всегда, если есть id заявки
-  if (request.id) {
-    keyboard.push([{ 
-      text: "🔄 Изменить статус", 
-      callback_data: `change_status` 
-    }]);
-  }
 
   return keyboard.length > 0 ? { inline_keyboard: keyboard } : undefined;
 }
