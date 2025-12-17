@@ -13,6 +13,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -120,6 +128,7 @@ interface EditRequestDialogProps {
 }
 
 export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDialogProps) => {
+  const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -500,65 +509,58 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</DialogTitle>
-              <DialogDescription>
-                {isViewer 
-                  ? `Просмотр заявки ${request?.request_number}` 
-                  : `Внесите изменения в заявку ${request?.request_number}`
-                }
-              </DialogDescription>
-            </div>
-            {request?.document_url && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    // Extract bucket and path from document_url
-                    const url = new URL(request.document_url!);
-                    const pathParts = url.pathname.split('/');
-                    const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-                    if (bucketIndex === -1) {
-                      window.open(request.document_url!, '_blank');
-                      return;
-                    }
-                    const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                    
-                    // Generate signed URL
-                    const { data, error } = await supabase.storage
-                      .from('request-documents')
-                      .createSignedUrl(filePath, 3600); // 1 hour expiry
-                    
-                    if (error || !data) {
-                      console.error('Error creating signed URL:', error);
-                      window.open(request.document_url!, '_blank');
-                      return;
-                    }
-                    
-                    window.open(data.signedUrl, '_blank');
-                  } catch (error) {
-                    console.error('Error opening document:', error);
-                    window.open(request.document_url!, '_blank');
-                  }
-                }}
-                className="gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Открыть счёт
-              </Button>
-            )}
-          </div>
-        </DialogHeader>
+  const headerContent = (
+    <div className="flex items-center justify-between flex-wrap gap-2">
+      <div>
+        <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
+        <p className="text-sm text-muted-foreground">
+          {isViewer 
+            ? `Просмотр заявки ${request?.request_number}` 
+            : `Внесите изменения в заявку ${request?.request_number}`
+          }
+        </p>
+      </div>
+      {request?.document_url && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            try {
+              const url = new URL(request.document_url!);
+              const pathParts = url.pathname.split('/');
+              const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+              if (bucketIndex === -1) {
+                window.open(request.document_url!, '_blank');
+                return;
+              }
+              const filePath = pathParts.slice(bucketIndex + 1).join('/');
+              const { data, error } = await supabase.storage
+                .from('request-documents')
+                .createSignedUrl(filePath, 3600);
+              if (error || !data) {
+                console.error('Error creating signed URL:', error);
+                window.open(request.document_url!, '_blank');
+                return;
+              }
+              window.open(data.signedUrl, '_blank');
+            } catch (error) {
+              console.error('Error opening document:', error);
+              window.open(request.document_url!, '_blank');
+            }
+          }}
+          className="gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          Открыть счёт
+        </Button>
+      )}
+    </div>
+  );
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+  const formContent = (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -1287,29 +1289,61 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             </div>
           </form>
         </Form>
-      </DialogContent>
+  );
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить заявку?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить. Заявка {request?.request_number} будет удалена навсегда.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Dialog>
+  const alertDialogContent = (
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Удалить заявку?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Это действие нельзя отменить. Заявка {request?.request_number} будет удалена навсегда.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Удалить
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader className="text-left border-b pb-4">
+              {headerContent}
+            </DrawerHeader>
+            <div className="overflow-y-auto p-4 pb-8">
+              {formContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+        {alertDialogContent}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            {headerContent}
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
+      {alertDialogContent}
+    </>
   );
 };
