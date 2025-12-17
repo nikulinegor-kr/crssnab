@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon, Trash2, Pin, Search, Forward } from "lucide-react";
+import { Send, Users, MessageCircle, Paperclip, X, Download, FileIcon, Trash2, Pin, Search, Forward, ArrowLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -81,6 +82,7 @@ export default function ChatPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const totalUnread = useUnreadMessages();
+  const isMobile = useIsMobile();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
@@ -97,6 +99,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
   const [forwardToConversation, setForwardToConversation] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -744,36 +747,55 @@ export default function ChatPage() {
     // Затем по дате обновления
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+  // Handle selecting conversation on mobile
+  const handleSelectConversation = (convId: string) => {
+    setSelectedConversation(convId);
+    if (isMobile) {
+      setMobileView('chat');
+    }
+  };
+
+  // Handle back button on mobile
+  const handleBackToList = () => {
+    setMobileView('list');
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="w-full max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Чат</h1>
+      <div className="w-full max-w-[1400px] mx-auto p-2 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
+          {isMobile && mobileView === 'chat' ? (
+            <Button variant="ghost" size="sm" onClick={handleBackToList} className="gap-1">
+              <ArrowLeft className="h-4 w-4" />
+              Назад
+            </Button>
+          ) : (
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Чат</h1>
+          )}
           <div className="flex gap-2">
             <Button 
               onClick={() => setIsNewChatOpen(true)} 
               variant="outline"
               size="icon"
-              className="h-10 w-10 relative"
+              className="h-9 w-9 sm:h-10 sm:w-10 relative"
             >
               <MessageCircle className="h-4 w-4" />
               {totalUnread > 0 && (
-                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-semibold text-[10px] sm:text-xs">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </div>
               )}
             </Button>
-            <Button onClick={() => setIsNewChatOpen(true)} className="gap-2 h-10">
+            <Button onClick={() => setIsNewChatOpen(true)} className="gap-2 h-9 sm:h-10 hidden sm:flex">
               <MessageCircle className="h-4 w-4" />
               Новая беседа
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 h-[calc(100vh-160px)] sm:h-[calc(100vh-200px)]">
           {/* Список бесед */}
-          <Card className="md:col-span-1">
+          <Card className={`md:col-span-1 ${isMobile && mobileView === 'chat' ? 'hidden' : ''}`}>
             <CardHeader className="pb-3">
               <h3 className="font-semibold">Беседы</h3>
               <div className="relative mt-2">
@@ -801,8 +823,8 @@ export default function ChatPage() {
                         }`}
                       >
                         <button
-                          onClick={() => setSelectedConversation(conv.id)}
-                          className="w-full text-left p-3 pr-20"
+                          onClick={() => handleSelectConversation(conv.id)}
+                          className="w-full text-left p-3 pr-16 sm:pr-20"
                         >
                           <div className="flex items-center gap-3">
                             <div className="relative">
@@ -865,17 +887,17 @@ export default function ChatPage() {
           </Card>
 
           {/* Область сообщений */}
-          <Card className="md:col-span-3 flex flex-col">
+          <Card className={`md:col-span-3 flex flex-col ${isMobile && mobileView === 'list' ? 'hidden' : ''}`}>
             {selectedConversation ? (
               <>
-                <CardHeader className="pb-3 border-b">
+                <CardHeader className="pb-2 sm:pb-3 border-b">
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">
                         {getConversationName(conversations?.find(c => c.id === selectedConversation))}
                       </h3>
                       {typingUsers[selectedConversation]?.size > 0 && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {Array.from(typingUsers[selectedConversation])
                             .map(userId => {
                               const user = orgUsers?.find(u => u.id === userId);
@@ -888,8 +910,8 @@ export default function ChatPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 p-4 overflow-hidden">
-                  <ScrollArea className="h-[calc(100vh-400px)]">
+                <CardContent className="flex-1 p-2 sm:p-4 overflow-hidden">
+                  <ScrollArea className="h-[calc(100vh-280px)] sm:h-[calc(100vh-400px)]">
                     <div className="space-y-4 pr-4">
                       {messages?.filter(message => {
                         if (!searchQuery) return true;
