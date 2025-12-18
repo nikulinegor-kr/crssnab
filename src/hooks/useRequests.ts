@@ -9,6 +9,7 @@ export interface Request {
   status: string;
   priority: string;
   applicant: string | null;
+  applicant_user_id: string | null;
   executor: string | null;
   availability_delivery_time: string | null;
   contractor: string | null;

@@ -362,6 +362,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         documentUrl = documentData.publicUrl;
       }
 
+      // Get current user's profile to check if they are the applicant
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      
+      // Set applicant_user_id if the applicant matches the current user's name
+      const isCurrentUserApplicant = profile?.full_name && 
+        data.applicant.toLowerCase().includes(profile.full_name.toLowerCase());
+      
       const requestData = {
         request_number: requestNumber,
         request_date: data.request_date,
@@ -369,6 +380,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         status: data.status,
         priority: data.priority,
         applicant: data.applicant,
+        applicant_user_id: isCurrentUserApplicant ? user.id : null,
         executor: data.executor || null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,

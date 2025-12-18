@@ -1179,6 +1179,7 @@ export type Database = {
         Row: {
           amount: number | null
           applicant: string | null
+          applicant_user_id: string | null
           archived: boolean
           availability_delivery_time: string | null
           awaiting_comment_from: string | null
@@ -1210,6 +1211,7 @@ export type Database = {
         Insert: {
           amount?: number | null
           applicant?: string | null
+          applicant_user_id?: string | null
           archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
@@ -1241,6 +1243,7 @@ export type Database = {
         Update: {
           amount?: number | null
           applicant?: string | null
+          applicant_user_id?: string | null
           archived?: boolean
           availability_delivery_time?: string | null
           awaiting_comment_from?: string | null
@@ -1682,6 +1685,10 @@ export type Database = {
       }
       user_can_edit_requests: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_view_request: {
+        Args: { _applicant_user_id: string; _org_id: string; _user_id: string }
         Returns: boolean
       }
       user_has_org_access: {
