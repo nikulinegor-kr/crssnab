@@ -250,52 +250,53 @@ const AgentReport = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileSpreadsheet className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Отчет агента</h1>
-            <p className="text-muted-foreground">Редактирование отчета с данными из заявок</p>
+    <div className="min-h-screen overflow-x-auto">
+      <div className="space-y-6 p-4 sm:p-6 min-w-[600px]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <FileSpreadsheet className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+            <div>
+              <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Отчет агента</h1>
+              <p className="text-xs sm:text-base text-muted-foreground">Редактирование отчета с данными из заявок</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+              <SelectTrigger className="w-[120px] sm:w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month.value} value={month.value.toString()}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+              <SelectTrigger className="w-[100px] sm:w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button onClick={saveReport} size="sm" className="sm:size-default">Сохранить</Button>
+            <ExportReportButton 
+              headerData={headerData}
+              rows={rows}
+              month={selectedMonth} 
+              year={selectedYear} 
+            />
           </div>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value.toString()}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button onClick={saveReport}>Сохранить</Button>
-          <ExportReportButton 
-            headerData={headerData}
-            rows={rows}
-            month={selectedMonth} 
-            year={selectedYear} 
-          />
-        </div>
-      </div>
 
       <Card className="p-6 space-y-6 bg-background">
         <ReportHeader 
@@ -331,7 +332,8 @@ const AgentReport = () => {
             <p className="text-sm">{headerData.recipient_name}</p>
           </div>
         </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
