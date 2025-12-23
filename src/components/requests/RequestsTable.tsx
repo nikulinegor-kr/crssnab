@@ -418,7 +418,7 @@ export const RequestsTable = ({
               <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
               <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
               <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
-              <TableHead className="min-w-[120px] p-2 font-semibold border-r hidden xl:table-cell">Комментарий</TableHead>
+              <TableHead className="w-40 p-2 font-semibold border-r hidden xl:table-cell text-center">Комментарий</TableHead>
               <TableHead className="w-12 text-center p-2 font-semibold hidden xl:table-cell">КП</TableHead>
             </TableRow>
           </TableHeader>
@@ -506,8 +506,8 @@ export const RequestsTable = ({
                     <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-2 border-r hidden xl:table-cell">
-                  <div className="line-clamp-2 text-muted-foreground italic leading-tight">
+                <TableCell className="p-2 border-r hidden xl:table-cell text-center">
+                  <div className="line-clamp-2 text-muted-foreground italic leading-tight text-left">
                     <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
