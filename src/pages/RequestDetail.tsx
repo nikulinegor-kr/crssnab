@@ -469,7 +469,7 @@ export default function RequestDetail() {
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Request Details */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Детали заявки</CardTitle>
               </CardHeader>
@@ -556,7 +556,7 @@ export default function RequestDetail() {
             </Card>
 
             {/* Financial Information */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Финансовая информация</CardTitle>
               </CardHeader>
@@ -583,7 +583,7 @@ export default function RequestDetail() {
             </Card>
 
             {/* Delivery Information */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Информация о доставке</CardTitle>
               </CardHeader>
@@ -712,7 +712,7 @@ export default function RequestDetail() {
             </Card>
 
             {/* Attached Files */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">
                   Прикреплённые файлы ({(request.photo_url ? 1 : 0) + (request.document_url ? 1 : 0)})
@@ -896,7 +896,7 @@ export default function RequestDetail() {
             </Card>
 
             {/* Activity Feed */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Лента активности</CardTitle>
               </CardHeader>
@@ -931,7 +931,7 @@ export default function RequestDetail() {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Status and Priority */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Статус и Приоритет</CardTitle>
               </CardHeader>
@@ -990,7 +990,7 @@ export default function RequestDetail() {
 
             {/* Executor */}
             {request.executor && (
-              <Card className="glassmorphism border-border/40">
+              <Card className="glassmorphism">
                 <CardHeader>
                   <CardTitle className="text-lg">Исполнитель</CardTitle>
                 </CardHeader>
@@ -1011,7 +1011,7 @@ export default function RequestDetail() {
             )}
 
             {/* Key Dates */}
-            <Card className="glassmorphism border-border/40">
+            <Card className="glassmorphism">
               <CardHeader>
                 <CardTitle className="text-lg">Ключевые даты</CardTitle>
               </CardHeader>
@@ -1062,7 +1062,7 @@ export default function RequestDetail() {
 
             {/* Archive Request */}
             {canEdit && (
-              <Card className="glassmorphism border-border/40 border-primary/20">
+              <Card className="glassmorphism">
                 <CardHeader>
                   <CardTitle className="text-lg">Архивация</CardTitle>
                 </CardHeader>
