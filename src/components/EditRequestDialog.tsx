@@ -838,7 +838,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             {/* Блок 5: Финансы */}
             <div className="space-y-4 p-4 rounded-lg border bg-card">
               <h3 className="font-medium text-sm text-muted-foreground">Финансы</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="invoice_number"
@@ -882,13 +882,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     <FormItem>
                       <FormLabel>Оплата (%)</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Select
                             value={field.value?.toString() || ""}
                             onValueChange={(value) => field.onChange(value)}
                             disabled={isViewer}
                           >
-                            <SelectTrigger className="w-24 shrink-0">
+                            <SelectTrigger className="w-full sm:w-24 shrink-0">
                               <SelectValue placeholder="%" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1032,7 +1032,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
               {/* ЗРС - автоматически заполняемое поле */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <Label>ЗРС (сводка заявки)</Label>
                   <Button
                     type="button"
@@ -1224,7 +1224,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               </div>
             </div>
 
-            <div className="flex justify-between gap-2 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4">
               {canEdit && (
                 <Button
                   type="button"
@@ -1237,7 +1237,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   Удалить
                 </Button>
               )}
-              <div className="flex gap-2 ml-auto">
+              <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
