@@ -569,7 +569,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="request_date"
@@ -625,6 +625,31 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                         {priorities.map((priority) => (
                           <SelectItem key={priority} value={priority}>
                             {priority}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="object_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Объект</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите объект" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {objectsData?.map((obj) => (
+                          <SelectItem key={obj.id} value={obj.id}>
+                            {obj.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -743,53 +768,27 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="object_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Объект</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите объект" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {objectsData?.map((obj) => (
-                          <SelectItem key={obj.id} value={obj.id}>
-                            {obj.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="estimated_delivery_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        placeholder="Введите кол-во дней"
-                        disabled={isViewer}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="estimated_delivery_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="Введите кол-во дней"
+                      disabled={isViewer}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      className="max-w-[200px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
