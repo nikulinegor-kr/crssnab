@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, Check, X, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Check, X, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,61 @@ import { HighlightText } from "@/components/HighlightText";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
+const SORT_STORAGE_KEY = "requests-sort";
+
+type SortField = 
+  | "request_date" 
+  | "description" 
+  | "priority" 
+  | "status" 
+  | "contractor" 
+  | "payment_percentage" 
+  | "applicant" 
+  | "executor"
+  | "shipment_date"
+  | "delivery_date"
+  | "invoice_number"
+  | "transport_company"
+  | "waybill_number";
+
+type SortDirection = "asc" | "desc";
+
+interface SortConfig {
+  field: SortField;
+  direction: SortDirection;
+}
+
+// Sortable header component
+const SortableHeader = ({
+  field,
+  label,
+  currentSort,
+  onSort,
+  className = "",
+}: {
+  field: SortField;
+  label: string;
+  currentSort: SortConfig | null;
+  onSort: (field: SortField) => void;
+  className?: string;
+}) => {
+  const isActive = currentSort?.field === field;
+  const Icon = isActive 
+    ? (currentSort.direction === "asc" ? ArrowUp : ArrowDown)
+    : ArrowUpDown;
+  
+  return (
+    <TableHead 
+      className={`cursor-pointer hover:bg-muted/60 transition-colors select-none ${className}`}
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-0.5 justify-center">
+        <span>{label}</span>
+        <Icon className={`h-3 w-3 ${isActive ? "text-primary" : "text-muted-foreground/50"}`} />
+      </div>
+    </TableHead>
+  );
+};
 
 interface RequestsTableProps {
   requests: Request[] | undefined;
@@ -151,6 +206,60 @@ export const RequestsTable = ({
     return saved ? parseInt(saved, 10) : 25;
   });
 
+  // Sort state
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
+    const saved = localStorage.getItem(SORT_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return { field: "request_date", direction: "desc" };
+  });
+
+  const handleSort = useCallback((field: SortField) => {
+    setSortConfig((prev) => {
+      let newConfig: SortConfig;
+      if (prev?.field === field) {
+        newConfig = { field, direction: prev.direction === "asc" ? "desc" : "asc" };
+      } else {
+        newConfig = { field, direction: "desc" };
+      }
+      localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(newConfig));
+      return newConfig;
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Sort requests
+  const sortedRequests = useMemo(() => {
+    if (!requests || !sortConfig) return requests;
+
+    return [...requests].sort((a, b) => {
+      const { field, direction } = sortConfig;
+      let aVal = a[field];
+      let bVal = b[field];
+
+      // Handle null/undefined
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return direction === "asc" ? 1 : -1;
+      if (bVal == null) return direction === "asc" ? -1 : 1;
+
+      // Compare based on type
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return direction === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      // String comparison
+      const aStr = String(aVal).toLowerCase();
+      const bStr = String(bVal).toLowerCase();
+      const comparison = aStr.localeCompare(bStr, "ru");
+      return direction === "asc" ? comparison : -comparison;
+    });
+  }, [requests, sortConfig]);
+
   // Reset to page 1 when requests change
   useEffect(() => {
     setCurrentPage(1);
@@ -192,11 +301,11 @@ export const RequestsTable = ({
   }
 
   // Pagination calculations
-  const totalItems = requests?.length || 0;
+  const totalItems = sortedRequests?.length || 0;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedRequests = requests?.slice(startIndex, endIndex) || [];
+  const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
@@ -298,21 +407,21 @@ export const RequestsTable = ({
                   className="h-3.5 w-3.5"
                 />
               </TableHead>
-              <TableHead className="w-16 text-center p-1 font-semibold">Дата</TableHead>
-              <TableHead className="min-w-[120px] p-1 font-semibold">Заявка</TableHead>
-              <TableHead className="w-20 text-center p-1 font-semibold">Приоритет</TableHead>
-              <TableHead className="w-24 text-center p-1 font-semibold">Статус</TableHead>
+              <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold" />
+              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[120px] p-1 font-semibold" />
+              <SortableHeader field="priority" label="Приор." currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold" />
+              <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold" />
               <TableHead className="w-20 text-center p-1 font-semibold hidden xl:table-cell">Наличие</TableHead>
-              <TableHead className="w-28 p-1 font-semibold">Контрагент</TableHead>
-              <TableHead className="w-20 text-center p-1 font-semibold hidden xl:table-cell">Счёт</TableHead>
-              <TableHead className="w-14 text-center p-1 font-semibold">%</TableHead>
-              <TableHead className="w-16 text-center p-1 font-semibold hidden xl:table-cell">Отгр.</TableHead>
-              <TableHead className="w-16 text-center p-1 font-semibold hidden xl:table-cell">Дост.</TableHead>
-              <TableHead className="w-20 p-1 font-semibold hidden xl:table-cell">ТК</TableHead>
-              <TableHead className="w-20 p-1 font-semibold hidden xl:table-cell">ТТН</TableHead>
-              <TableHead className="w-24 p-1 font-semibold">Заявитель</TableHead>
+              <SortableHeader field="contractor" label="Контраг." currentSort={sortConfig} onSort={handleSort} className="w-28 p-1 font-semibold" />
+              <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
+              <SortableHeader field="payment_percentage" label="%" currentSort={sortConfig} onSort={handleSort} className="w-14 p-1 font-semibold" />
+              <SortableHeader field="shipment_date" label="Отгр." currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold hidden xl:table-cell" />
+              <SortableHeader field="delivery_date" label="Дост." currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold hidden xl:table-cell" />
+              <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
+              <SortableHeader field="waybill_number" label="ТТН" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
+              <SortableHeader field="applicant" label="Заявит." currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold" />
               <TableHead className="min-w-[100px] p-1 font-semibold hidden xl:table-cell">Комм.</TableHead>
-              <TableHead className="w-24 p-1 font-semibold hidden xl:table-cell">Исполн.</TableHead>
+              <SortableHeader field="executor" label="Исполн." currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold hidden xl:table-cell" />
               <TableHead className="w-10 text-center p-1 font-semibold hidden xl:table-cell">КП</TableHead>
             </TableRow>
           </TableHeader>
