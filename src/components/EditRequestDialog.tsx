@@ -1140,13 +1140,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
                 <div className="space-y-2">
                   <Label>Документ (Счёт/КП)</Label>
-                  {request?.document_url && (
-                    <div className="mb-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {request?.document_url && (
                       <Button 
                         type="button"
                         variant="link"
                         size="sm"
-                        className="inline-flex items-center gap-2 px-0 h-auto"
+                        className="inline-flex items-center gap-2 px-0 h-auto text-primary"
                         onClick={async () => {
                           try {
                             const url = new URL(request.document_url!);
@@ -1173,20 +1173,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                         }}
                       >
                         <FileText className="h-4 w-4" />
-                        Открыть документ
+                        Открыть
                       </Button>
-                    </div>
-                  )}
-                  {!isViewer && (
-                    <>
-                      <input
-                        ref={documentInputRef}
-                        type="file"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx"
-                        onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                      <div className="flex items-center gap-2">
+                    )}
+                    {!isViewer && (
+                      <>
+                        <input
+                          ref={documentInputRef}
+                          type="file"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx"
+                          onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
                         <Button
                           type="button"
                           variant="outline"
@@ -1195,7 +1193,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           className="gap-2"
                         >
                           <FileText className="h-4 w-4" />
-                          Выбрать файл
+                          {request?.document_url ? 'Заменить' : 'Выбрать'}
                         </Button>
                         {documentFile && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1214,11 +1212,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                             </Button>
                           </div>
                         )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        PDF, DOC, DOCX, XLS, XLSX до 10 МБ
-                      </p>
-                    </>
+                      </>
+                    )}
+                  </div>
+                  {!isViewer && (
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, XLS, XLSX до 10 МБ
+                    </p>
                   )}
                 </div>
               </div>
