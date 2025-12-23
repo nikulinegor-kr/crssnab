@@ -25,6 +25,7 @@ const SelectOrganization = lazy(() => import("./pages/SelectOrganization"));
 const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings"));
 const AgentReport = lazy(() => import("./pages/AgentReport"));
 const AgentActReport = lazy(() => import("./pages/AgentActReport"));
+const PercentCalculator = lazy(() => import("./pages/PercentCalculator"));
 const KanbanBoard = lazy(() => import("./pages/KanbanBoard"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Features = lazy(() => import("./pages/Features"));
@@ -194,6 +195,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <AgentActReport />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/percent-calculator"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PercentCalculator />
                   </AppLayout>
                 </ProtectedRoute>
               }
