@@ -1145,24 +1145,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={async () => {
                     const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
-
 Заявка: ${form.watch("description") || "-"}
-
 Заявитель: ${form.watch("applicant") || "-"}
-
 Приоритет: ${form.watch("priority") || "-"}
-
 Наличие: ${form.watch("availability_delivery_time") || "-"}
-
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-
 Оплата: ${form.watch("payment_percentage")}%
-
 Исполнил: ${form.watch("executor") || "-"}`;
-                    navigator.clipboard.writeText(zrsText);
-                    toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                    try {
+                      await navigator.clipboard.writeText(zrsText);
+                      toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                    } catch {
+                      toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
+                    }
                   }}
                 >
                   <Copy className="h-4 w-4 mr-1" />
@@ -1171,21 +1168,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               </div>
               <Textarea
                 readOnly
-                className="min-h-[140px] bg-muted/50 font-mono text-sm"
+                className="min-h-[120px] bg-muted/50 font-mono text-sm"
                 value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
-
 Заявка: ${form.watch("description") || "-"}
-
 Заявитель: ${form.watch("applicant") || "-"}
-
 Приоритет: ${form.watch("priority") || "-"}
-
 Наличие: ${form.watch("availability_delivery_time") || "-"}
-
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-
 Оплата: ${form.watch("payment_percentage")}%
-
 Исполнил: ${form.watch("executor") || "-"}`}
               />
             </div>
