@@ -493,19 +493,19 @@ export default function CalendarPage() {
                         setView("day");
                       }}
                       className={`
-                        min-h-[120px] p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
+                        min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 sm:p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
                         ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
                         ${isToday ? "ring-2 ring-primary ring-inset" : ""}
                       `}
                     >
-                      <div className={`text-sm font-medium mb-1 ${isToday ? "text-primary" : ""}`}>
+                      <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${isToday ? "text-primary" : ""}`}>
                         {format(day, "d")}
                       </div>
                       <div className="space-y-1">
-                        {dayEvents.slice(0, 3).map((event) => (
+                        {dayEvents.slice(0, 2).map((event) => (
                           <div
                             key={event.id}
-                            className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border ${getPriorityColor(event.priority)}`}
+                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border ${getPriorityColor(event.priority)}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOpenDialog(undefined, event);
@@ -514,9 +514,9 @@ export default function CalendarPage() {
                             {event.title}
                           </div>
                         ))}
-                        {dayEvents.length > 3 && (
-                          <div className="text-xs text-muted-foreground">
-                            +{dayEvents.length - 3} еще
+                        {dayEvents.length > 2 && (
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">
+                            +{dayEvents.length - 2}
                           </div>
                         )}
                       </div>

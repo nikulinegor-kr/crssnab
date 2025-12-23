@@ -388,7 +388,7 @@ export default function TasksPage() {
 
         {/* Таблица задач */}
         <Card className="bg-card border-border/40">
-          <CardHeader className="border-b border-border/40">
+          <CardHeader className="border-b border-border/40 hidden md:block">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
               <div className="col-span-4">Название задачи</div>
               <div className="col-span-2">Ответственный</div>
@@ -406,66 +406,106 @@ export default function TasksPage() {
             ) : filteredTasks && filteredTasks.length > 0 ? (
               <div className="divide-y divide-border/40">
                 {filteredTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
-                  >
-                    <div className="col-span-4">
-                      <div className="font-medium text-foreground">{task.title}</div>
-                      <div className="text-xs text-muted-foreground">{task.task_number}</div>
-                    </div>
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-xs">
-                            {getAssigneeName(task.assignee_id).charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-muted-foreground">
-                          {getAssigneeName(task.assignee_id)}
+                  <>
+                    {/* Desktop view */}
+                    <div
+                      key={`desktop-${task.id}`}
+                      className="hidden md:grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                    >
+                      <div className="col-span-4">
+                        <div className="font-medium text-foreground">{task.title}</div>
+                        <div className="text-xs text-muted-foreground">{task.task_number}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">
+                              {getAssigneeName(task.assignee_id).charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-muted-foreground">
+                            {getAssigneeName(task.assignee_id)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="col-span-2">
+                        <Badge className={getStatusColor(task.status)}>
+                          {task.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">
+                        <span className={`text-sm font-medium ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
                         </span>
                       </div>
+                      <div className="col-span-1 text-sm text-muted-foreground">
+                        {task.due_date ? new Date(task.due_date).toLocaleDateString("ru-RU") : "—"}
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <div className="flex gap-1 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenDialog(task)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenCompletionDialog(task)}
+                          >
+                            {task.completion_status === "completed" ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Clock className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => deleteMutation.mutate(task.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Удалить
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-span-2">
-                      <Badge className={getStatusColor(task.status)}>
-                        {task.status}
-                      </Badge>
-                    </div>
-                    <div className="col-span-2">
-                      <span className={`text-sm font-medium ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    <div className="col-span-1 text-sm text-muted-foreground">
-                      {task.due_date ? new Date(task.due_date).toLocaleDateString("ru-RU") : "—"}
-                    </div>
-                    <div className="col-span-1 text-right">
-                      <div className="flex gap-1 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(task)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenCompletionDialog(task)}
-                        >
-                          {task.completion_status === "completed" ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <Clock className="h-4 w-4" />
-                          )}
-                        </Button>
+                    
+                    {/* Mobile view - card layout */}
+                    <div
+                      key={`mobile-${task.id}`}
+                      className="md:hidden p-4 hover:bg-muted/30 transition-colors space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground truncate">{task.title}</div>
+                          <div className="text-xs text-muted-foreground">{task.task_number}</div>
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="shrink-0">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenDialog(task)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Редактировать
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleOpenCompletionDialog(task)}>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Статус выполнения
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => deleteMutation.mutate(task.id)}
                               className="text-destructive"
@@ -476,8 +516,33 @@ export default function TasksPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className={getStatusColor(task.status)}>
+                          {task.status}
+                        </Badge>
+                        <span className={`text-sm font-medium ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-xs">
+                              {getAssigneeName(task.assignee_id).charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate max-w-[120px]">
+                            {getAssigneeName(task.assignee_id)}
+                          </span>
+                        </div>
+                        <span>
+                          {task.due_date ? new Date(task.due_date).toLocaleDateString("ru-RU") : "—"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 ))}
               </div>
             ) : (
