@@ -13,8 +13,11 @@ import {
   MessageCircle,
   Sparkles,
   Kanban,
-  Percent
+  Percent,
+  Sun,
+  Moon
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +63,23 @@ const settingsMenuItems = [
   { title: "Профиль", url: "/profile", icon: UserCircle },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
 ];
+
+function ThemeToggle({ showText }: { showText: boolean }) {
+  const { theme, setTheme } = useTheme();
+  
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton onClick={toggleTheme} className="hover:bg-accent/50">
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        {showText && <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -192,6 +212,7 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <SidebarMenu>
+          <ThemeToggle showText={showText} />
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="h-4 w-4" />
