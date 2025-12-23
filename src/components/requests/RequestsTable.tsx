@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -418,7 +418,13 @@ export const RequestsTable = ({
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-center p-2 hidden xl:table-cell">
-                  <div className="line-clamp-2">{request.document_url ? "Есть" : "-"}</div>
+                  <div className="flex items-center justify-center">
+                    {request.document_url ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-muted-foreground/50" />
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
