@@ -50,7 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, X, Image, FileText, Trash2 } from "lucide-react";
+import { Loader2, X, Image, FileText, Trash2, Copy } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
@@ -1139,7 +1139,36 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
             {/* ЗРС - автоматически заполняемое поле */}
             <div className="space-y-2">
-              <Label>ЗРС (сводка заявки)</Label>
+              <div className="flex items-center justify-between">
+                <Label>ЗРС (сводка заявки)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+
+Заявка: ${form.watch("description") || "-"}
+
+Заявитель: ${form.watch("applicant") || "-"}
+
+Приоритет: ${form.watch("priority") || "-"}
+
+Наличие: ${form.watch("availability_delivery_time") || "-"}
+
+Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
+
+Оплата: ${form.watch("payment_percentage")}%
+
+Исполнил: ${form.watch("executor") || "-"}`;
+                    navigator.clipboard.writeText(zrsText);
+                    toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Копировать
+                </Button>
+              </div>
               <Textarea
                 readOnly
                 className="min-h-[140px] bg-muted/50 font-mono text-sm"
