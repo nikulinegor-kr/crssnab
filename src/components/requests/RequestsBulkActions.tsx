@@ -130,7 +130,7 @@ export const RequestsBulkActions = ({
     .filter(Boolean);
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+    <div className="flex flex-wrap gap-1.5 sm:gap-2">
       {requests && requests.length > 0 && (
         <>
           <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
@@ -143,29 +143,30 @@ export const RequestsBulkActions = ({
           <Button
             onClick={handleSendToTelegram}
             disabled={isSending}
-            className="gap-2 w-full sm:w-auto"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             size="sm"
           >
-            <Send className="h-4 w-4" />
-            <span>Отправить в Telegram</span>
+            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Telegram</span>
           </Button>
           <Button
             onClick={onBulkDelete}
             variant="destructive"
-            className="gap-2 w-full sm:w-auto"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             size="sm"
           >
-            <Trash2 className="h-4 w-4" />
-            <span>Удалить выбранные ({selectedRequestIds.size})</span>
+            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Удалить</span>
+            <span>({selectedRequestIds.size})</span>
           </Button>
         </>
       )}
       
       {canCreate && (
         <CreateRequestDialog>
-          <Button className="gap-2 w-full sm:w-auto" size="sm">
-            <Plus className="h-4 w-4" />
-            <span>Создать заявку</span>
+          <Button className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3" size="sm">
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Создать</span>
           </Button>
         </CreateRequestDialog>
       )}

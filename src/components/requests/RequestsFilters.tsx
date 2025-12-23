@@ -99,24 +99,25 @@ export const RequestsFilters = ({
     !hideDelivered;
 
   return (
-    <div className="flex flex-col gap-3 mb-4 sm:mb-6">
+    <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+      {/* Search row */}
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по всем полям..."
+            placeholder="Поиск..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-8 sm:pl-10 h-9 sm:h-10 text-sm"
           />
           {searchQuery && (
             <Button
               variant="ghost"
               size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 p-0"
               onClick={() => setSearchQuery("")}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           )}
         </div>
@@ -126,13 +127,14 @@ export const RequestsFilters = ({
             size="icon"
             onClick={resetFilters}
             title="Сбросить все фильтры"
-            className="shrink-0"
+            className="shrink-0 h-9 w-9 sm:h-10 sm:w-10"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
         )}
       </div>
 
+      {/* Saved filters */}
       <div className="flex flex-wrap gap-2 items-center">
         <SavedFiltersDropdown
           currentFilters={currentFilters}
@@ -149,17 +151,20 @@ export const RequestsFilters = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+      {/* Filters grid - more compact on mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2">
         {/* Status Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between text-sm">
-              {statusFilter.length === 0
-                ? "Статус"
-                : `Статус (${statusFilter.length})`}
+            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full">
+              <span className="truncate">
+                {statusFilter.length === 0
+                  ? "Статус"
+                  : `Статус (${statusFilter.length})`}
+              </span>
               {statusFilter.length > 0 && (
                 <X
-                  className="h-4 w-4 ml-2"
+                  className="h-3 w-3 sm:h-4 sm:w-4 ml-1 shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     setStatusFilter([]);
@@ -168,18 +173,18 @@ export const RequestsFilters = ({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Выберите статусы</Label>
+          <PopoverContent className="w-[220px] sm:w-[250px] p-3 sm:p-4 bg-background z-50" align="start">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-xs sm:text-sm font-semibold">Выберите статусы</Label>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={selectAllStatuses}
-                className="w-full"
+                className="w-full text-xs sm:text-sm h-8"
               >
                 {statusFilter.length === STATUSES.length ? "Снять всё" : "Выбрать всё"}
               </Button>
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2 max-h-[200px] overflow-y-auto">
                 {STATUSES.map((status) => (
                   <div key={status} className="flex items-center space-x-2">
                     <Checkbox
@@ -192,8 +197,9 @@ export const RequestsFilters = ({
                           setStatusFilter(statusFilter.filter((s) => s !== status));
                         }
                       }}
+                      className="h-4 w-4"
                     />
-                    <label htmlFor={`status-${status}`} className="text-sm cursor-pointer">
+                    <label htmlFor={`status-${status}`} className="text-xs sm:text-sm cursor-pointer">
                       {status}
                     </label>
                   </div>
@@ -205,13 +211,13 @@ export const RequestsFilters = ({
 
         {/* Priority Filter */}
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="text-sm">
+          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
             <SelectValue placeholder="Приоритет" />
           </SelectTrigger>
           <SelectContent className="z-50 bg-background">
-            <SelectItem value="all">Все приоритеты</SelectItem>
+            <SelectItem value="all" className="text-xs sm:text-sm">Все</SelectItem>
             {PRIORITIES.map((priority) => (
-              <SelectItem key={priority} value={priority}>
+              <SelectItem key={priority} value={priority} className="text-xs sm:text-sm">
                 {priority}
               </SelectItem>
             ))}
@@ -220,13 +226,13 @@ export const RequestsFilters = ({
 
         {/* Applicant Filter */}
         <Select value={applicantFilter} onValueChange={setApplicantFilter}>
-          <SelectTrigger className="text-sm">
+          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
             <SelectValue placeholder="Заявитель" />
           </SelectTrigger>
-          <SelectContent className="z-50 bg-background">
-            <SelectItem value="all">Все заявители</SelectItem>
+          <SelectContent className="z-50 bg-background max-h-[200px]">
+            <SelectItem value="all" className="text-xs sm:text-sm">Все</SelectItem>
             {uniqueApplicants.map((applicant) => (
-              <SelectItem key={applicant} value={applicant}>
+              <SelectItem key={applicant} value={applicant} className="text-xs sm:text-sm">
                 {applicant}
               </SelectItem>
             ))}
@@ -236,28 +242,28 @@ export const RequestsFilters = ({
         {/* Year Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="text-sm">
-              {yearFilter === "all" ? "Год" : yearFilter}
+            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full">
+              <span className="truncate">{yearFilter === "all" ? "Год" : yearFilter}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[250px] p-4 bg-background z-50" align="start">
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Выберите год</Label>
+          <PopoverContent className="w-[200px] sm:w-[250px] p-3 sm:p-4 bg-background z-50" align="start">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-xs sm:text-sm font-semibold">Выберите год</Label>
               <Select value={yearFilter} onValueChange={setYearFilter}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9">
                   <SelectValue placeholder="Год" />
                 </SelectTrigger>
                 <SelectContent className="z-50 bg-background">
-                  <SelectItem value="all">Все годы</SelectItem>
+                  <SelectItem value="all" className="text-xs sm:text-sm">Все годы</SelectItem>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year}>
+                    <SelectItem key={year} value={year} className="text-xs sm:text-sm">
                       {year}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <div className="space-y-2 border-t pt-3">
-                <Label className="text-sm font-semibold">Добавить новый год</Label>
+              <div className="space-y-2 border-t pt-2 sm:pt-3">
+                <Label className="text-xs sm:text-sm font-semibold">Добавить год</Label>
                 <div className="flex gap-2">
                   <Input
                     type="text"
@@ -269,10 +275,10 @@ export const RequestsFilters = ({
                         handleAddYear();
                       }
                     }}
-                    className="text-sm"
+                    className="text-xs sm:text-sm h-8"
                   />
-                  <Button onClick={handleAddYear} size="sm">
-                    Добавить
+                  <Button onClick={handleAddYear} size="sm" className="h-8 text-xs sm:text-sm px-2 sm:px-3">
+                    +
                   </Button>
                 </div>
               </div>
@@ -281,13 +287,14 @@ export const RequestsFilters = ({
         </Popover>
 
         {/* Hide Delivered */}
-        <div className="flex items-center space-x-2 bg-muted/30 px-3 py-2 rounded-md">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1">
           <Checkbox
             id="hideDelivered"
             checked={hideDelivered}
             onCheckedChange={(checked) => setHideDelivered(checked as boolean)}
+            className="h-4 w-4"
           />
-          <Label htmlFor="hideDelivered" className="cursor-pointer text-xs sm:text-sm whitespace-nowrap">
+          <Label htmlFor="hideDelivered" className="cursor-pointer text-xs sm:text-sm whitespace-nowrap truncate">
             Скрыть доставленные
           </Label>
         </div>

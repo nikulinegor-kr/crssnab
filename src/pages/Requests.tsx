@@ -203,7 +203,7 @@ const Requests = () => {
   };
 
   return (
-    <div className="w-full overflow-hidden p-2 sm:p-3 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
+    <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -228,21 +228,21 @@ const Requests = () => {
         onValueChange={(v) => setActiveTab(v as "active" | "archived")}
         className="space-y-4"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Все заявки</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {filters.filteredRequests?.length || 0} заявок найдено
+        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate">Все заявки</h1>
+            <p className="text-xs text-muted-foreground">
+              {filters.filteredRequests?.length || 0} найдено
               {selectedRequestIds.size > 0 && (
-                <span className="ml-2 text-primary font-medium">
-                  • Выбрано: {selectedRequestIds.size}
+                <span className="ml-1 sm:ml-2 text-primary font-medium">
+                  • {selectedRequestIds.size} выбр.
                 </span>
               )}
             </p>
           </div>
-          <TabsList>
-            <TabsTrigger value="active">Активные</TabsTrigger>
-            <TabsTrigger value="archived">Архив</TabsTrigger>
+          <TabsList className="h-8 sm:h-9">
+            <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
+            <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
           </TabsList>
         </div>
 
@@ -258,7 +258,7 @@ const Requests = () => {
             onBulkDelete={handleBulkDelete}
           />
 
-          <Card className="p-3 sm:p-4 md:p-6">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
             <RequestsFilters
               searchQuery={filters.searchQuery}
               setSearchQuery={filters.setSearchQuery}
@@ -302,19 +302,19 @@ const Requests = () => {
 
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
             size="icon"
           >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
 
           <Button
             onClick={() => navigate("/chat")}
-            className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+            className="fixed bottom-4 right-[4.5rem] sm:bottom-6 sm:right-24 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
             size="icon"
             variant="secondary"
           >
-            <MessageCircle className="h-6 w-6" />
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </>
       )}
