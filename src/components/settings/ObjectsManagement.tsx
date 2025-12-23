@@ -12,7 +12,6 @@ import { Plus, Trash2, Building2 } from "lucide-react";
 interface RequestObject {
   id: string;
   name: string;
-  address: string | null;
   is_active: boolean;
   organization_id: string;
 }
@@ -21,7 +20,6 @@ export const ObjectsManagement = () => {
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const [newObjectName, setNewObjectName] = useState("");
-  const [newObjectAddress, setNewObjectAddress] = useState("");
 
   const { data: objects, isLoading } = useQuery({
     queryKey: ["request-objects", currentOrgId],
@@ -44,14 +42,12 @@ export const ObjectsManagement = () => {
       const { error } = await supabase.from("request_objects").insert({
         organization_id: currentOrgId,
         name: newObjectName.trim(),
-        address: newObjectAddress.trim() || null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["request-objects"] });
       setNewObjectName("");
-      setNewObjectAddress("");
       toast.success("Объект добавлен");
     },
     onError: () => {
@@ -106,17 +102,11 @@ export const ObjectsManagement = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-2">
           <Input
             placeholder="Название объекта"
             value={newObjectName}
             onChange={(e) => setNewObjectName(e.target.value)}
-            className="flex-1"
-          />
-          <Input
-            placeholder="Адрес (необязательно)"
-            value={newObjectAddress}
-            onChange={(e) => setNewObjectAddress(e.target.value)}
             className="flex-1"
           />
           <Button
@@ -134,47 +124,32 @@ export const ObjectsManagement = () => {
               key={obj.id}
               className="flex items-center gap-3 p-3 border rounded-lg"
             >
-              <div className="flex-1">
-                <Input
-                  value={obj.name}
-                  onChange={(e) =>
-                    updateMutation.mutate({
-                      id: obj.id,
-                      updates: { name: e.target.value },
-                    })
-                  }
-                  className="mb-1"
-                />
-                <Input
-                  placeholder="Адрес"
-                  value={obj.address || ""}
-                  onChange={(e) =>
-                    updateMutation.mutate({
-                      id: obj.id,
-                      updates: { address: e.target.value || null },
-                    })
-                  }
-                  className="text-sm"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={obj.is_active}
-                  onCheckedChange={(checked) =>
-                    updateMutation.mutate({
-                      id: obj.id,
-                      updates: { is_active: checked },
-                    })
-                  }
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMutation.mutate(obj.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
+              <Input
+                value={obj.name}
+                onChange={(e) =>
+                  updateMutation.mutate({
+                    id: obj.id,
+                    updates: { name: e.target.value },
+                  })
+                }
+                className="flex-1"
+              />
+              <Switch
+                checked={obj.is_active}
+                onCheckedChange={(checked) =>
+                  updateMutation.mutate({
+                    id: obj.id,
+                    updates: { is_active: checked },
+                  })
+                }
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => deleteMutation.mutate(obj.id)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
             </div>
           ))}
           {objects?.length === 0 && (
