@@ -278,6 +278,7 @@ const Requests = () => {
               selectAllStatuses={filters.selectAllStatuses}
               addYear={filters.addYear}
               applyFilters={filters.applyFilters}
+              resetFilters={filters.clearFilters}
             />
 
             <RequestsTable
@@ -287,6 +288,7 @@ const Requests = () => {
               toggleRequestSelection={toggleRequestSelection}
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
+              searchQuery={filters.searchQuery}
             />
           </Card>
         </TabsContent>

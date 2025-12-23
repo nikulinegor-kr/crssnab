@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ interface RequestsFiltersProps {
   selectAllStatuses: () => void;
   addYear: (year: string) => boolean;
   applyFilters: (filters: Partial<RequestFilters>) => void;
+  resetFilters: () => void;
 }
 
 export const RequestsFilters = ({
@@ -64,6 +65,7 @@ export const RequestsFilters = ({
   selectAllStatuses,
   addYear,
   applyFilters,
+  resetFilters,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
@@ -88,16 +90,47 @@ export const RequestsFilters = ({
     }
   };
 
+  const hasActiveFilters = 
+    searchQuery !== "" ||
+    statusFilter.length > 0 ||
+    priorityFilter !== "all" ||
+    yearFilter !== "all" ||
+    applicantFilter !== "all" ||
+    !hideDelivered;
+
   return (
     <div className="flex flex-col gap-3 mb-4 sm:mb-6">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Поиск..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Поиск по всем полям..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={resetFilters}
+            title="Сбросить все фильтры"
+            className="shrink-0"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
