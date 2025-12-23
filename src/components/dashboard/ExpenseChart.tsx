@@ -133,14 +133,14 @@ export const ExpenseChart = ({ requests, selectedYear }: ExpenseChartProps) => {
     <>
       <Card className="bg-card border-border/40">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-lg font-semibold">Расходы по месяцам</CardTitle>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="text-right">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <div className="text-left sm:text-right">
                 <p className="text-muted-foreground">Всего за год</p>
                 <p className="font-bold text-foreground">{formatCurrency(totalAmount)}</p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-muted-foreground">Средняя/мес</p>
                 <p className="font-bold text-foreground">{formatCurrency(avgMonthly)}</p>
               </div>

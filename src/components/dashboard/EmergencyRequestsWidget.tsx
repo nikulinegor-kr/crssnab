@@ -46,7 +46,7 @@ export function EmergencyRequestsWidget({ requests, onRequestClick }: EmergencyR
                     <p className="text-sm font-medium text-foreground truncate">
                       {request.request_number}
                     </p>
-                    <Badge variant="destructive" className="text-xs whitespace-nowrap">
+                    <Badge variant="destructive" className="text-xs max-w-[120px] truncate shrink-0">
                       {request.status}
                     </Badge>
                   </div>

@@ -17,24 +17,27 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-background/95">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex min-w-0 flex-col">
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <SidebarTrigger className="hover:bg-white/10 transition-colors rounded-md" />
             <NotificationBell />
           </header>
 
-          <main className={cn("flex-1", fullBleed ? "overflow-hidden" : "overflow-auto")}>
+          <main className={cn(
+            "flex-1 min-w-0 overflow-x-hidden",
+            fullBleed ? "overflow-y-hidden" : "overflow-y-auto"
+          )}>
             {fullBleed ? (
-              <div className="flex flex-col h-full w-full">
+              <div className="flex flex-col h-full w-full min-w-0">
                 {!hideSubscriptionBanner && (
-                  <div className="w-full p-2 sm:p-3 md:p-6">
+                  <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
                     <SubscriptionBanner />
                   </div>
                 )}
                 {children}
               </div>
             ) : (
-              <div className="w-full p-2 sm:p-3 md:p-6">
+              <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
                 <SubscriptionBanner />
                 {children}
               </div>
