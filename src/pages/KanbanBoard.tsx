@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { useViewSettings } from "@/hooks/useViewSettings";
 import { VirtualizedColumn } from "@/components/kanban/VirtualizedColumn";
+import { useSwipe } from "@/hooks/useSwipe";
 
 interface Request {
   id: string;
@@ -47,6 +48,8 @@ export default function KanbanBoard() {
   const [executorFilter, setExecutorFilter] = useState<string>("all");
   const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [activeColumnIndex, setActiveColumnIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { currentOrgId } = useCurrentOrganization();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -340,6 +343,42 @@ export default function KanbanBoard() {
     return "w-[240px] shrink-0";
   };
 
+  // Scroll to specific column
+  const scrollToColumn = useCallback((index: number) => {
+    if (!scrollContainerRef.current || !isMobile) return;
+    const columnWidth = window.innerWidth * 0.85 + 8; // 85vw + gap
+    scrollContainerRef.current.scrollTo({
+      left: index * columnWidth,
+      behavior: 'smooth'
+    });
+    setActiveColumnIndex(index);
+  }, [isMobile]);
+
+  // Handle scroll to track active column
+  const handleScroll = useCallback(() => {
+    if (!scrollContainerRef.current || !isMobile) return;
+    const columnWidth = window.innerWidth * 0.85 + 8;
+    const scrollLeft = scrollContainerRef.current.scrollLeft;
+    const newIndex = Math.round(scrollLeft / columnWidth);
+    if (newIndex !== activeColumnIndex && newIndex >= 0 && newIndex < columnCount) {
+      setActiveColumnIndex(newIndex);
+    }
+  }, [isMobile, activeColumnIndex, columnCount]);
+
+  // Swipe handlers
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (activeColumnIndex < columnCount - 1) {
+        scrollToColumn(activeColumnIndex + 1);
+      }
+    },
+    onSwipeRight: () => {
+      if (activeColumnIndex > 0) {
+        scrollToColumn(activeColumnIndex - 1);
+      }
+    },
+  });
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -485,8 +524,32 @@ export default function KanbanBoard() {
         )}
       </div>
 
+      {/* Mobile Column Indicator */}
+      {isMobile && columnCount > 1 && (
+        <div className="flex items-center justify-center gap-1.5 py-2 bg-background/80 backdrop-blur-sm">
+          {allStatuses.map((status, index) => (
+            <button
+              key={status.id}
+              onClick={() => scrollToColumn(index)}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all duration-200",
+                index === activeColumnIndex 
+                  ? "w-6 bg-primary" 
+                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              )}
+              style={index === activeColumnIndex ? { backgroundColor: status.color } : undefined}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 sm:px-6 py-3 -mx-4 sm:mx-0">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-x-auto overflow-y-hidden px-4 sm:px-6 py-3 -mx-4 sm:mx-0"
+        onScroll={handleScroll}
+        {...(isMobile ? swipeHandlers : {})}
+      >
         <div className={cn(
           "flex gap-2 h-full min-w-max",
           isMobile && "snap-x snap-mandatory pb-4"
