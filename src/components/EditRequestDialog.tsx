@@ -502,7 +502,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             {/* Блок 1: Основная информация */}
             <div className="space-y-4 p-4 rounded-lg border bg-card">
               <h3 className="font-medium text-sm text-muted-foreground">Основная информация</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="request_date"
@@ -543,7 +543,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="priority"
