@@ -126,4 +126,12 @@ All colors MUST be HSL.
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
   }
+
+  .light-card-shadow {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+  }
+  
+  .dark .light-card-shadow {
+    box-shadow: none;
+  }
 }
