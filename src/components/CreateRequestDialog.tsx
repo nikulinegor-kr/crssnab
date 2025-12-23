@@ -967,6 +967,30 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
               )}
             />
 
+            {/* ЗРС - автоматически заполняемое поле */}
+            <div className="space-y-2">
+              <Label>ЗРС (сводка заявки)</Label>
+              <Textarea
+                readOnly
+                className="min-h-[140px] bg-muted/50 font-mono text-sm"
+                value={`Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
+
+Заявка: ${formValues.description || "-"}
+
+Заявитель: ${formValues.applicant || "-"}
+
+Приоритет: ${formValues.priority || "-"}
+
+Наличие: ${formValues.availability_delivery_time || "-"}
+
+Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
+
+Оплата: ${formValues.payment_percentage}%
+
+Исполнил: ${formValues.executor || "-"}`}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FileDropZone
                 accept="image/*"

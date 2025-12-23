@@ -1137,6 +1137,30 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               )}
             />
 
+            {/* ЗРС - автоматически заполняемое поле */}
+            <div className="space-y-2">
+              <Label>ЗРС (сводка заявки)</Label>
+              <Textarea
+                readOnly
+                className="min-h-[140px] bg-muted/50 font-mono text-sm"
+                value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+
+Заявка: ${form.watch("description") || "-"}
+
+Заявитель: ${form.watch("applicant") || "-"}
+
+Приоритет: ${form.watch("priority") || "-"}
+
+Наличие: ${form.watch("availability_delivery_time") || "-"}
+
+Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
+
+Оплата: ${form.watch("payment_percentage")}%
+
+Исполнил: ${form.watch("executor") || "-"}`}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Фото заявки</Label>
