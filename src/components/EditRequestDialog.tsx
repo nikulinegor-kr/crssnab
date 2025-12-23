@@ -881,32 +881,30 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Оплата (%)</FormLabel>
-                      <div className="flex gap-2">
-                        <Select
-                          value={field.value?.toString() || ""}
-                          onValueChange={(value) => field.onChange(value)}
-                          disabled={isViewer}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-24">
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Select
+                            value={field.value?.toString() || ""}
+                            onValueChange={(value) => field.onChange(value)}
+                            disabled={isViewer}
+                          >
+                            <SelectTrigger className="w-24 shrink-0">
                               <SelectValue placeholder="%" />
                             </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="0%">0%</SelectItem>
-                            <SelectItem value="10%">10%</SelectItem>
-                            <SelectItem value="20%">20%</SelectItem>
-                            <SelectItem value="30%">30%</SelectItem>
-                            <SelectItem value="40%">40%</SelectItem>
-                            <SelectItem value="50%">50%</SelectItem>
-                            <SelectItem value="60%">60%</SelectItem>
-                            <SelectItem value="70%">70%</SelectItem>
-                            <SelectItem value="80%">80%</SelectItem>
-                            <SelectItem value="90%">90%</SelectItem>
-                            <SelectItem value="100%">100%</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormControl>
+                            <SelectContent>
+                              <SelectItem value="0%">0%</SelectItem>
+                              <SelectItem value="10%">10%</SelectItem>
+                              <SelectItem value="20%">20%</SelectItem>
+                              <SelectItem value="30%">30%</SelectItem>
+                              <SelectItem value="40%">40%</SelectItem>
+                              <SelectItem value="50%">50%</SelectItem>
+                              <SelectItem value="60%">60%</SelectItem>
+                              <SelectItem value="70%">70%</SelectItem>
+                              <SelectItem value="80%">80%</SelectItem>
+                              <SelectItem value="90%">90%</SelectItem>
+                              <SelectItem value="100%">100%</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <Input
                             placeholder="Или вручную"
                             disabled={isViewer}
@@ -914,8 +912,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                             onChange={(e) => field.onChange(e.target.value)}
                             className="flex-1"
                           />
-                        </FormControl>
-                      </div>
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
