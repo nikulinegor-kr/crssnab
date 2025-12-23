@@ -12,7 +12,8 @@ import {
   FileBarChart,
   MessageCircle,
   Sparkles,
-  Kanban
+  Kanban,
+  Percent
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -52,6 +53,7 @@ const secondaryMenuItems = [
 const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
   { title: "Отчет агента по акту", url: "/agent-act-report", icon: FileBarChart },
+  { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
 ];
 
 const settingsMenuItems = [
