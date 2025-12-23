@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -132,79 +132,9 @@ export function LinkedRequests({ requestId, canEdit }: LinkedRequestsProps) {
   return (
     <Card className="glassmorphism">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <CardTitle className="text-base">
-              Связанные заявки ({linkedRequests?.length || 0})
-            </CardTitle>
-          </div>
-          {canEdit && (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="shrink-0">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Связать
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Связать с другой заявкой</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Поиск по номеру или описанию..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {searchResults?.map((request) => (
-                      <div
-                        key={request.id}
-                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {request.description}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {request.request_number}
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => linkMutation.mutate(request.id)}
-                          disabled={linkMutation.isPending}
-                        >
-                          {linkMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Связать"
-                          )}
-                        </Button>
-                      </div>
-                    ))}
-                    {searchQuery.length >= 2 && searchResults?.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Заявки не найдены
-                      </p>
-                    )}
-                    {searchQuery.length < 2 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Введите минимум 2 символа для поиска
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+        <CardTitle className="text-base">
+          Связанные заявки ({linkedRequests?.length || 0})
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -254,6 +184,73 @@ export function LinkedRequests({ requestId, canEdit }: LinkedRequestsProps) {
           </div>
         )}
       </CardContent>
+      {canEdit && (
+        <CardFooter className="pt-0">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Связать
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Связать с другой заявкой</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Поиск по номеру или описанию..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {searchResults?.map((request) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {request.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {request.request_number}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => linkMutation.mutate(request.id)}
+                        disabled={linkMutation.isPending}
+                      >
+                        {linkMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Связать"
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                  {searchQuery.length >= 2 && searchResults?.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Заявки не найдены
+                    </p>
+                  )}
+                  {searchQuery.length < 2 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Введите минимум 2 символа для поиска
+                    </p>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardFooter>
+      )}
     </Card>
   );
 }

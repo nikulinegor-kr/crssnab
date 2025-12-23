@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,58 +107,9 @@ export function RequestReminders({ requestId }: RequestRemindersProps) {
   return (
     <Card className="glassmorphism">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Bell className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <CardTitle className="text-base">
-              Напоминания ({reminders?.filter(r => !r.is_sent).length || 0})
-            </CardTitle>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="shrink-0">
-                <Plus className="h-4 w-4 mr-1" />
-                Добавить
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Создать напоминание</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Дата и время напоминания</Label>
-                  <Input
-                    type="datetime-local"
-                    value={remindAt}
-                    onChange={(e) => setRemindAt(e.target.value)}
-                    min={new Date().toISOString().slice(0, 16)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Сообщение (опционально)</Label>
-                  <Textarea
-                    placeholder="О чём напомнить..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={!remindAt || addReminderMutation.isPending}
-                >
-                  {addReminderMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Создать напоминание
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <CardTitle className="text-base">
+          Напоминания ({reminders?.filter(r => !r.is_sent).length || 0})
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -211,6 +162,52 @@ export function RequestReminders({ requestId }: RequestRemindersProps) {
           </div>
         )}
       </CardContent>
+      <CardFooter className="pt-0">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Добавить
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Создать напоминание</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Дата и время напоминания</Label>
+                <Input
+                  type="datetime-local"
+                  value={remindAt}
+                  onChange={(e) => setRemindAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Сообщение (опционально)</Label>
+                <Textarea
+                  placeholder="О чём напомнить..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!remindAt || addReminderMutation.isPending}
+              >
+                {addReminderMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Создать напоминание
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </CardFooter>
     </Card>
   );
 }
