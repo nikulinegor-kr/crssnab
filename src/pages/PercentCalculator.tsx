@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
-import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Trash2, Plus, Calculator, Sun, Moon } from "lucide-react";
+import { RotateCcw, Trash2, Plus, Calculator } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CalculationRow {
@@ -12,17 +11,12 @@ interface CalculationRow {
 }
 
 const PercentCalculator = () => {
-  const { theme, setTheme } = useTheme();
   const [rows7, setRows7] = useState<CalculationRow[]>([
     { id: crypto.randomUUID(), amount: null }
   ]);
   const [rows8, setRows8] = useState<CalculationRow[]>([
     { id: crypto.randomUUID(), amount: null }
   ]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   const addRow = (type: "7" | "8") => {
     const newRow = { id: crypto.randomUUID(), amount: null };
@@ -166,15 +160,10 @@ const PercentCalculator = () => {
           <Calculator className="h-8 w-8 text-primary" />
           <h1 className="text-2xl font-bold">Калькулятор процентов</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={toggleTheme}>
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <Button variant="outline" onClick={resetAll} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Обнулить
-          </Button>
-        </div>
+        <Button variant="outline" onClick={resetAll} className="gap-2">
+          <RotateCcw className="h-4 w-4" />
+          Обнулить
+        </Button>
       </div>
 
       <Tabs defaultValue="7" className="w-full">
