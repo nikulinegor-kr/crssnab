@@ -408,7 +408,7 @@ export const RequestsTable = ({
                 />
               </TableHead>
               <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r text-center" />
-              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[200px] p-2 font-semibold border-r text-center" />
+              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[200px] p-2 font-semibold border-r text-left" />
               <SortableHeader field="priority" label="Приоритет" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r text-center" />
               <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r text-center" />
               <TableHead className="w-28 text-center p-2 font-semibold border-r hidden xl:table-cell">Наличие</TableHead>
