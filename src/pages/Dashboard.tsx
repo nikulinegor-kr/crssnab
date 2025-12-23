@@ -178,7 +178,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 overflow-x-hidden">
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden min-w-0">
         {/* Header with Year Selector */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
@@ -339,7 +339,7 @@ const Dashboard = () => {
                       {new Date(request.request_date).toLocaleDateString("ru-RU")}
                     </p>
                   </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap ${getStatusColor(request.status)} bg-opacity-10`}>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-md max-w-[120px] truncate shrink-0 ${getStatusColor(request.status)} bg-opacity-10`}>
                           {request.status}
                         </span>
                       </div>
