@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
 
@@ -26,6 +26,8 @@ export const STATUSES = [
 export const PRIORITIES = ["Аварийно", "Планово", "Приоритетно"];
 
 export const DEFAULT_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
+
+const FILTERS_STORAGE_KEY = "requests_filters";
 
 export const getStatusColor = (status: string) => {
   switch (status) {
@@ -61,20 +63,84 @@ export const getPriorityColor = (priority: string) => {
   }
 };
 
+const loadFiltersFromStorage = (): Partial<RequestFilters> | null => {
+  try {
+    const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to load filters from storage:", e);
+  }
+  return null;
+};
+
+const saveFiltersToStorage = (filters: RequestFilters) => {
+  try {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  } catch (e) {
+    console.error("Failed to save filters to storage:", e);
+  }
+};
+
+// Full-text search across all request fields
+const matchesFullTextSearch = (request: Request, query: string): boolean => {
+  if (!query.trim()) return true;
+  
+  const searchLower = query.toLowerCase();
+  
+  // Search across all text fields
+  const searchableFields = [
+    request.description,
+    request.request_number,
+    request.applicant,
+    request.executor,
+    request.contractor,
+    request.invoice_number,
+    request.transport_company,
+    request.waybill_number,
+    request.comments,
+    request.status,
+    request.priority,
+    request.availability_delivery_time,
+  ];
+  
+  return searchableFields.some(field => 
+    field?.toLowerCase().includes(searchLower)
+  );
+};
+
 export const useRequestsFilters = (
   requests: Request[] | undefined,
   activeTab: "active" | "archived"
 ) => {
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [yearFilter, setYearFilter] = useState("all");
-  const [applicantFilter, setApplicantFilter] = useState("all");
-  const [hideDelivered, setHideDelivered] = useState(true);
+  
+  // Load saved filters from localStorage on init
+  const savedFilters = useMemo(() => loadFiltersFromStorage(), []);
+  
+  const [searchQuery, setSearchQuery] = useState(savedFilters?.searchQuery || "");
+  const [statusFilter, setStatusFilter] = useState<string[]>(savedFilters?.statusFilter || []);
+  const [priorityFilter, setPriorityFilter] = useState(savedFilters?.priorityFilter || "all");
+  const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
+  const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
+  const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
-  // Apply filters from URL params on mount
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    const currentFilters: RequestFilters = {
+      searchQuery,
+      statusFilter,
+      priorityFilter,
+      yearFilter,
+      applicantFilter,
+      hideDelivered,
+    };
+    saveFiltersToStorage(currentFilters);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered]);
+
+  // Apply filters from URL params on mount (overrides saved filters if present)
   useEffect(() => {
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
@@ -100,9 +166,8 @@ export const useRequestsFilters = (
 
   const filteredRequests = useMemo(() => {
     return requests?.filter((request) => {
-      const matchesSearch = request.description
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      // Full-text search across all fields
+      const matchesSearch = matchesFullTextSearch(request, searchQuery);
       const matchesStatus =
         statusFilter.length === 0 || statusFilter.includes(request.status);
       const matchesPriority =
@@ -141,31 +206,40 @@ export const useRequestsFilters = (
     ).sort() as string[];
   }, [requests]);
 
-  const selectAllStatuses = () => {
+  const selectAllStatuses = useCallback(() => {
     if (statusFilter.length === STATUSES.length) {
       setStatusFilter([]);
     } else {
       setStatusFilter([...STATUSES]);
     }
-  };
+  }, [statusFilter.length]);
 
-  const addYear = (newYear: string) => {
+  const addYear = useCallback((newYear: string) => {
     const trimmedYear = newYear.trim();
     if (trimmedYear && !years.includes(trimmedYear)) {
-      setYears([...years, trimmedYear].sort());
+      setYears(prev => [...prev, trimmedYear].sort());
       return true;
     }
     return false;
-  };
+  }, [years]);
 
-  const applyFilters = (filters: Partial<RequestFilters>) => {
+  const applyFilters = useCallback((filters: Partial<RequestFilters>) => {
     if (filters.searchQuery !== undefined) setSearchQuery(filters.searchQuery);
     if (filters.statusFilter !== undefined) setStatusFilter(filters.statusFilter);
     if (filters.priorityFilter !== undefined) setPriorityFilter(filters.priorityFilter);
     if (filters.yearFilter !== undefined) setYearFilter(filters.yearFilter);
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
-  };
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery("");
+    setStatusFilter([]);
+    setPriorityFilter("all");
+    setYearFilter("all");
+    setApplicantFilter("all");
+    setHideDelivered(true);
+  }, []);
 
   const currentFilters: RequestFilters = {
     searchQuery,
@@ -201,5 +275,6 @@ export const useRequestsFilters = (
     selectAllStatuses,
     addYear,
     applyFilters,
+    clearFilters,
   };
 };
