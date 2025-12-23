@@ -71,40 +71,40 @@ export const RequestsTable = ({
   return (
     <>
       {/* Mobile and Tablet Card View */}
-      <div className="lg:hidden space-y-3">
+      <div className="lg:hidden space-y-2 sm:space-y-3">
         {requests.map((request) => (
           <Card
             key={request.id}
-            className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+            className="p-2.5 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors"
             onClick={(e) => {
               if (!(e.target as HTMLElement).closest('input[type="checkbox"]')) {
                 handleRowClick(request, e);
               }
             }}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <Checkbox
                 checked={selectedRequestIds.has(request.id)}
                 onCheckedChange={() => toggleRequestSelection(request.id)}
                 onClick={(e) => e.stopPropagation()}
-                className="mt-1 h-7 w-7 lg:h-4 lg:w-4"
+                className="mt-0.5 h-5 w-5 sm:h-6 sm:w-6"
               />
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="text-xs text-muted-foreground mb-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </div>
-                    <div className="font-medium text-sm line-clamp-2">
+                    <div className="font-medium text-xs sm:text-sm line-clamp-2">
                       <HighlightText text={request.description} searchQuery={searchQuery} />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   <Badge
                     variant="outline"
-                    className="text-xs"
+                    className="text-[10px] sm:text-xs px-1.5 py-0 sm:px-2 sm:py-0.5"
                     style={{
                       borderColor: getPriorityColor(request.priority || "Планово"),
                       color: getPriorityColor(request.priority || "Планово"),
@@ -113,7 +113,7 @@ export const RequestsTable = ({
                     {request.priority || "Планово"}
                   </Badge>
                   <Badge
-                    className="text-xs"
+                    className="text-[10px] sm:text-xs px-1.5 py-0 sm:px-2 sm:py-0.5"
                     style={{
                       backgroundColor: getStatusColor(request.status),
                       color: "white",
@@ -124,34 +124,34 @@ export const RequestsTable = ({
                 </div>
 
                 {(request.contractor || request.applicant || request.executor) && (
-                  <div className="text-xs text-muted-foreground space-y-1">
+                  <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5">
                     {request.contractor && (
-                      <div className="truncate">Контрагент: <HighlightText text={request.contractor} searchQuery={searchQuery} /></div>
+                      <div className="truncate">К: <HighlightText text={request.contractor} searchQuery={searchQuery} /></div>
                     )}
                     {request.applicant && (
-                      <div className="truncate">Заявитель: <HighlightText text={request.applicant} searchQuery={searchQuery} /></div>
+                      <div className="truncate">З: <HighlightText text={request.applicant} searchQuery={searchQuery} /></div>
                     )}
                     {request.executor && (
-                      <div className="truncate">Исполнитель: <HighlightText text={request.executor} searchQuery={searchQuery} /></div>
+                      <div className="truncate">И: <HighlightText text={request.executor} searchQuery={searchQuery} /></div>
                     )}
                   </div>
                 )}
 
                 {request.comments && (
-                  <div className="text-xs text-muted-foreground line-clamp-2 bg-muted/30 p-2 rounded">
+                  <div className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 bg-muted/30 p-1.5 sm:p-2 rounded">
                     <HighlightText text={request.comments} searchQuery={searchQuery} />
                   </div>
                 )}
 
-                <div className="pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+                <div className="pt-1.5 sm:pt-2 border-t" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 h-7 sm:h-8 text-xs"
                     onClick={(e) => onDeleteClick(request, e)}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Исключить заявку
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    В архив
                   </Button>
                 </div>
               </div>
