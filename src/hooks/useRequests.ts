@@ -27,7 +27,6 @@ export interface Request {
   created_at: string;
   updated_at: string;
   archived: boolean;
-  client_id: string | null;
 }
 
 export const useRequests = (showArchived: boolean = false) => {
