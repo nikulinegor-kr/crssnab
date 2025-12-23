@@ -46,7 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, X, Image, FileText } from "lucide-react";
+import { Loader2, Upload, X, Image, FileText, Copy } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -969,7 +969,36 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
             {/* ЗРС - автоматически заполняемое поле */}
             <div className="space-y-2">
-              <Label>ЗРС (сводка заявки)</Label>
+              <div className="flex items-center justify-between">
+                <Label>ЗРС (сводка заявки)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
+
+Заявка: ${formValues.description || "-"}
+
+Заявитель: ${formValues.applicant || "-"}
+
+Приоритет: ${formValues.priority || "-"}
+
+Наличие: ${formValues.availability_delivery_time || "-"}
+
+Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
+
+Оплата: ${formValues.payment_percentage}%
+
+Исполнил: ${formValues.executor || "-"}`;
+                    navigator.clipboard.writeText(zrsText);
+                    toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Копировать
+                </Button>
+              </div>
               <Textarea
                 readOnly
                 className="min-h-[140px] bg-muted/50 font-mono text-sm"
