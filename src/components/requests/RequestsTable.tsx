@@ -395,65 +395,65 @@ export const RequestsTable = ({
         <PaginationControls />
       </div>
 
-      {/* Desktop Table View - Compact */}
+      {/* Desktop Table View */}
       <div className="hidden lg:block rounded-md border overflow-x-auto">
-        <Table className="w-full table-fixed text-xs">
+        <Table className="w-full table-fixed text-sm">
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
             <TableRow className="border-b hover:bg-transparent">
-              <TableHead className="w-8 text-center p-1">
+              <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
-                  className="h-3.5 w-3.5"
+                  className="h-4 w-4"
                 />
               </TableHead>
-              <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold" />
-              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[120px] p-1 font-semibold" />
-              <SortableHeader field="priority" label="Приор." currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold" />
-              <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold" />
-              <TableHead className="w-20 text-center p-1 font-semibold hidden xl:table-cell">Наличие</TableHead>
-              <SortableHeader field="contractor" label="Контраг." currentSort={sortConfig} onSort={handleSort} className="w-28 p-1 font-semibold" />
-              <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
-              <SortableHeader field="payment_percentage" label="%" currentSort={sortConfig} onSort={handleSort} className="w-14 p-1 font-semibold" />
-              <SortableHeader field="delivery_date" label="Дост." currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold hidden xl:table-cell" />
-              <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
-              <SortableHeader field="applicant" label="Заявит." currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold" />
-              <TableHead className="min-w-[100px] p-1 font-semibold hidden xl:table-cell">Комм.</TableHead>
-              <TableHead className="w-10 text-center p-1 font-semibold hidden xl:table-cell">КП</TableHead>
+              <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r" />
+              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[150px] p-2 font-semibold border-r" />
+              <SortableHeader field="priority" label="Приоритет" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r" />
+              <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
+              <TableHead className="w-24 text-center p-2 font-semibold border-r hidden xl:table-cell">Наличие</TableHead>
+              <SortableHeader field="contractor" label="Контрагент" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r" />
+              <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
+              <SortableHeader field="payment_percentage" label="Оплата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r" />
+              <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
+              <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
+              <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
+              <TableHead className="min-w-[120px] p-2 font-semibold border-r hidden xl:table-cell">Комментарий</TableHead>
+              <TableHead className="w-12 text-center p-2 font-semibold hidden xl:table-cell">КП</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedRequests.map((request) => (
               <TableRow
                 key={request.id}
-                className="hover:bg-muted/40 cursor-pointer h-8 transition-colors"
+                className="hover:bg-muted/40 cursor-pointer transition-colors"
                 onClick={(e) => handleRowClick(request, e)}
               >
-                <TableCell className="text-center p-1" onClick={(e) => e.stopPropagation()}>
+                <TableCell className="text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selectedRequestIds.has(request.id)}
                     onCheckedChange={() => toggleRequestSelection(request.id)}
-                    className="h-3.5 w-3.5"
+                    className="h-4 w-4"
                   />
                 </TableCell>
-                <TableCell className="text-center p-1 text-muted-foreground">
+                <TableCell className="text-center p-2 border-r text-muted-foreground">
                   {format(new Date(request.request_date), "dd.MM.yy")}
                 </TableCell>
-                <TableCell className="p-1">
+                <TableCell className="p-2 border-r">
                   <RequestQuickPreview
                     request={request}
                     getStatusColor={getStatusColor}
                     getPriorityColor={getPriorityColor}
                   >
-                    <div className="line-clamp-1 hover:text-primary transition-colors font-medium">
+                    <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
                       <HighlightText text={request.description} searchQuery={searchQuery} />
                     </div>
                   </RequestQuickPreview>
                 </TableCell>
-                <TableCell className="text-center p-1">
+                <TableCell className="text-center p-2 border-r">
                   <Badge
                     variant="outline"
-                    className="text-[10px] px-1.5 py-0 h-5"
+                    className="text-xs px-2 py-0.5"
                     style={{
                       borderColor: getPriorityColor(request.priority || "Планово"),
                       color: getPriorityColor(request.priority || "Планово"),
@@ -462,9 +462,9 @@ export const RequestsTable = ({
                     {request.priority || "Планово"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-center p-1">
+                <TableCell className="text-center p-2 border-r">
                   <Badge
-                    className="text-[10px] px-1.5 py-0 h-5"
+                    className="text-xs px-2 py-0.5"
                     style={{
                       backgroundColor: getStatusColor(request.status),
                       color: "white",
@@ -473,49 +473,49 @@ export const RequestsTable = ({
                     {request.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground">
+                <TableCell className="p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-1">
-                  <div className="truncate">
+                <TableCell className="p-2 border-r">
+                  <div className="line-clamp-2 leading-tight">
                     <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground">
+                <TableCell className="p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="text-center p-1 font-semibold">
+                <TableCell className="text-center p-2 border-r font-semibold">
                   {request.payment_percentage !== null && request.payment_percentage !== undefined
                     ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
                     : <span className="text-muted-foreground">-</span>}
                 </TableCell>
-                <TableCell className="text-center p-1 hidden xl:table-cell text-muted-foreground">
+                <TableCell className="text-center p-2 border-r hidden xl:table-cell text-muted-foreground">
                   {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM") : "-"}
                 </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground">
+                <TableCell className="p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-1">
-                  <div className="truncate">
+                <TableCell className="p-2 border-r">
+                  <div className="line-clamp-2 leading-tight">
                     <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground italic">
+                <TableCell className="p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground italic leading-tight">
                     <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="text-center p-1 hidden xl:table-cell">
+                <TableCell className="text-center p-2 hidden xl:table-cell">
                   {request.document_url ? (
-                    <Check className="h-3.5 w-3.5 text-green-600 mx-auto" />
+                    <Check className="h-4 w-4 text-green-600 mx-auto" />
                   ) : (
-                    <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
+                    <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />
                   )}
                 </TableCell>
               </TableRow>
