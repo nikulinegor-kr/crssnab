@@ -4,6 +4,7 @@ import { Request } from "@/hooks/useRequests";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { ru } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarWidgetProps {
   requests: Request[];
@@ -11,6 +12,7 @@ interface CalendarWidgetProps {
 
 export function CalendarWidget({ requests }: CalendarWidgetProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const isMobile = useIsMobile();
 
   // Получаем все даты доставки из заявок
   const deliveryDates = requests
@@ -48,15 +50,15 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
           Календарь доставок
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex justify-center">
+      <CardContent className="p-2 sm:p-4">
+        <div className="flex justify-center overflow-x-auto">
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
             locale={ru}
-            numberOfMonths={2}
-            className="rounded-md border border-border/40 pointer-events-auto [&_.rdp-months]:flex [&_.rdp-months]:flex-row [&_.rdp-months]:gap-4"
+            numberOfMonths={isMobile ? 1 : 2}
+            className="rounded-md border border-border/40 pointer-events-auto [&_.rdp-months]:flex [&_.rdp-months]:flex-col [&_.rdp-months]:sm:flex-row [&_.rdp-months]:gap-2 [&_.rdp-months]:sm:gap-4"
             modifiers={{
               delivery: deliveryDates,
             }}

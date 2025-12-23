@@ -180,13 +180,13 @@ const Dashboard = () => {
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {/* Header with Year Selector */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <DashboardWidgetSettings />
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Выберите год" />
+              <SelectTrigger className="w-full sm:w-[140px] md:w-[180px]">
+                <SelectValue placeholder="Год" />
               </SelectTrigger>
               <SelectContent>
                 {availableYears.map(year => (
@@ -225,14 +225,14 @@ const Dashboard = () => {
                     className="bg-card border-border/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:border-primary/50"
                     onClick={() => handleStatsCardClick(stat.link)}
                   >
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-4">
+                      <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                         {stat.title}
                       </CardTitle>
-                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
                     </CardHeader>
-                    <CardContent className="pt-2">
-                      <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                    <CardContent className="pt-1 sm:pt-2 p-3 sm:p-4">
+                      <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
                     </CardContent>
                   </Card>
                 );
@@ -249,9 +249,9 @@ const Dashboard = () => {
         {/* Аналитика с вкладками */}
         {settings.dashboard.showAnalyticsTabs && !isLoading && filteredRequests.length > 0 && (
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Обзор</TabsTrigger>
-              <TabsTrigger value="performance">Производительность</TabsTrigger>
+            <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Обзор</TabsTrigger>
+              <TabsTrigger value="performance" className="text-xs sm:text-sm">Производительность</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
               <RequestsAnalytics 
@@ -368,13 +368,13 @@ const Dashboard = () => {
         )}
       </div>
       <CreateRequestDialog>
-        <Button className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" size="icon">
+        <Button className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all z-50" size="icon">
           <Plus className="h-5 w-5" />
         </Button>
       </CreateRequestDialog>
       <Button 
         onClick={handleNavigateToChat}
-        className="fixed bottom-6 right-24 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all" 
+        className="fixed bottom-4 sm:bottom-6 right-20 sm:right-24 h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all z-50" 
         size="icon"
         variant="secondary"
       >
