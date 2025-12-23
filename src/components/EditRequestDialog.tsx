@@ -881,15 +881,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Оплата (%)</FormLabel>
-                      <div className="space-y-2">
+                      <div className="flex gap-2">
                         <Select
                           value={field.value?.toString() || ""}
                           onValueChange={(value) => field.onChange(value)}
                           disabled={isViewer}
                         >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Выбрать" />
+                            <SelectTrigger className="w-24">
+                              <SelectValue placeholder="%" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -908,10 +908,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                         </Select>
                         <FormControl>
                           <Input
-                            placeholder="Или введите вручную"
+                            placeholder="Или вручную"
                             disabled={isViewer}
                             value={field.value?.toString() || ""}
                             onChange={(e) => field.onChange(e.target.value)}
+                            className="flex-1"
                           />
                         </FormControl>
                       </div>
