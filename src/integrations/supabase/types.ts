@@ -1014,6 +1014,44 @@ export type Database = {
           },
         ]
       }
+      request_objects: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_objects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_participants: {
         Row: {
           created_at: string
@@ -1191,9 +1229,11 @@ export type Database = {
           delivery_date: string | null
           description: string
           document_url: string | null
+          estimated_delivery_days: number | null
           executor: string | null
           id: string
           invoice_number: string | null
+          object_id: string | null
           organization_id: string | null
           payment_percentage: number | null
           photo_url: string | null
@@ -1223,9 +1263,11 @@ export type Database = {
           delivery_date?: string | null
           description: string
           document_url?: string | null
+          estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
           invoice_number?: string | null
+          object_id?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
@@ -1255,9 +1297,11 @@ export type Database = {
           delivery_date?: string | null
           description?: string
           document_url?: string | null
+          estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
           invoice_number?: string | null
+          object_id?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
@@ -1278,6 +1322,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
             referencedColumns: ["id"]
           },
           {

@@ -11,6 +11,8 @@ export interface Request {
   applicant: string | null;
   applicant_user_id: string | null;
   executor: string | null;
+  object_id: string | null;
+  estimated_delivery_days: number | null;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
