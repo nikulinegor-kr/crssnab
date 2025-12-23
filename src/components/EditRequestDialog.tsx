@@ -78,6 +78,11 @@ const requestSchema = z.object({
     .trim()
     .max(200, "Максимум 200 символов")
     .optional(),
+  object_id: z.string().optional(),
+  estimated_delivery_days: z.number()
+    .min(0, "Не может быть отрицательным")
+    .optional()
+    .nullable(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -222,6 +227,24 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     enabled: !!request?.organization_id && open,
   });
 
+  // Fetch objects
+  const { data: objectsData } = useQuery({
+    queryKey: ["request-objects", request?.organization_id],
+    queryFn: async () => {
+      if (!request?.organization_id) return [];
+      const { data, error } = await supabase
+        .from("request_objects")
+        .select("*")
+        .eq("organization_id", request.organization_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.organization_id && open,
+  });
+
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
@@ -234,6 +257,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       priority: "Планово",
       applicant: "",
       executor: "",
+      object_id: "",
+      estimated_delivery_days: null,
       availability_delivery_time: "",
       contractor: "",
       invoice_number: "",
@@ -256,6 +281,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         priority: request.priority,
         applicant: request.applicant || "",
         executor: request.executor || "",
+        object_id: request.object_id || "",
+        estimated_delivery_days: request.estimated_delivery_days,
         availability_delivery_time: request.availability_delivery_time || "",
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
@@ -400,6 +427,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         priority: data.priority,
         applicant: data.applicant,
         executor: data.executor || null,
+        object_id: data.object_id || null,
+        estimated_delivery_days: data.estimated_delivery_days || null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
@@ -713,6 +742,55 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 )}
               />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="object_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Объект</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите объект" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {objectsData?.map((obj) => (
+                          <SelectItem key={obj.id} value={obj.id}>
+                            {obj.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="estimated_delivery_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="Введите кол-во дней"
+                        disabled={isViewer}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History } from "lucide-react";
+import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
@@ -21,6 +21,7 @@ import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminder
 import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
 import { ViewSettings } from "@/components/settings/ViewSettings";
 import { SettingsSection } from "@/components/settings/SettingsSection";
+import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -231,13 +232,20 @@ const OrganizationSettings = () => {
           </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="requests">
+        <TabsContent value="requests" className="space-y-6">
           <SettingsSection 
             title="Настройки заявок" 
             description="Статусы, приоритеты и поля заявок"
             icon={FileText}
           >
             <RequestSettings organizationId={currentOrgId!} />
+          </SettingsSection>
+          <SettingsSection 
+            title="Объекты" 
+            description="Управление объектами для заявок"
+            icon={Building2}
+          >
+            <ObjectsManagement />
           </SettingsSection>
         </TabsContent>
 

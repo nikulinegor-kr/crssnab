@@ -72,6 +72,11 @@ const requestSchema = z.object({
     .trim()
     .max(200, "Максимум 200 символов")
     .optional(),
+  object_id: z.string().optional(),
+  estimated_delivery_days: z.number()
+    .min(0, "Не может быть отрицательным")
+    .optional()
+    .nullable(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -219,6 +224,24 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     enabled: !!currentOrgId,
   });
 
+  // Fetch objects
+  const { data: objectsData } = useQuery({
+    queryKey: ["request-objects", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("request_objects")
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
@@ -231,11 +254,13 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       priority: "Планово",
       applicant: "",
       executor: "",
-    availability_delivery_time: "",
-    contractor: "",
-    invoice_number: "",
-    amount: 0,
-    payment_percentage: 0,
+      object_id: "",
+      estimated_delivery_days: null,
+      availability_delivery_time: "",
+      contractor: "",
+      invoice_number: "",
+      amount: 0,
+      payment_percentage: 0,
       shipment_date: "",
       delivery_date: "",
       transport_company: "",
@@ -362,6 +387,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         applicant: data.applicant,
         applicant_user_id: isCurrentUserApplicant ? user.id : null,
         executor: data.executor || null,
+        object_id: data.object_id || null,
+        estimated_delivery_days: data.estimated_delivery_days || null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
@@ -647,6 +674,53 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                         searchPlaceholder="Поиск исполнителя..."
                         emptyMessage="Введите имя вручную"
                         allowCustomValue={true}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="object_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Объект</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите объект" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {objectsData?.map((obj) => (
+                          <SelectItem key={obj.id} value={obj.id}>
+                            {obj.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="estimated_delivery_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="Введите кол-во дней"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                       />
                     </FormControl>
                     <FormMessage />
