@@ -486,10 +486,10 @@ export default function KanbanBoard() {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-3">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 sm:px-6 py-3 -mx-4 sm:mx-0">
         <div className={cn(
-          "flex gap-2 h-full",
-          isMobile ? "overflow-x-auto snap-x snap-mandatory" : columnCount <= 3 ? "" : "overflow-x-auto"
+          "flex gap-2 h-full min-w-max",
+          isMobile && "snap-x snap-mandatory pb-4"
         )}>
           {allStatuses.map((status) => {
             const isOver = dragOverStatus === status.name;
