@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { Trash2, Plus, Calculator } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -25,6 +26,11 @@ const PercentCalculator = () => {
     } else {
       setRows8([...rows8, newRow]);
     }
+  };
+
+  const resetAll = () => {
+    setRows7([{ id: crypto.randomUUID(), amount: null }]);
+    setRows8([{ id: crypto.randomUUID(), amount: null }]);
   };
 
   const deleteRow = (type: "7" | "8", id: string) => {
@@ -150,9 +156,15 @@ const PercentCalculator = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Calculator className="h-8 w-8 text-primary" />
-        <h1 className="text-2xl font-bold">Калькулятор процентов</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Calculator className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold">Калькулятор процентов</h1>
+        </div>
+        <Button variant="outline" onClick={resetAll} className="gap-2">
+          <RotateCcw className="h-4 w-4" />
+          Обнулить
+        </Button>
       </div>
 
       <Tabs defaultValue="7" className="w-full">
