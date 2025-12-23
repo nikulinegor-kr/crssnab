@@ -110,26 +110,27 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glassmorphism {
-    background: transparent;
-    border-color: hsl(var(--border) / 0.4);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
   }
   
   .dark .glassmorphism {
-    background: rgba(30, 30, 30, 0.5);
+    background: hsl(var(--card));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-color: hsl(var(--border) / 0.4);
+    border: 1px solid hsl(var(--border));
   }
   
   .glassmorphism-light {
-    background: rgba(255, 255, 255, 0.8);
+    background: hsl(var(--card));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border));
   }
   
   .dark .glassmorphism-light {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: hsl(var(--border) / 0.4);
+    background: hsl(var(--card) / 0.8);
+    border: 1px solid hsl(var(--border));
   }
 
   .hover-scale {
