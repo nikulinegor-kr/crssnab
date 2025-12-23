@@ -713,68 +713,70 @@ export default function RequestDetail() {
 
             {/* Attached Files */}
             <Card className="glassmorphism">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">
-                  Прикреплённые файлы ({(request.photo_url ? 1 : 0) + (request.document_url ? 1 : 0)})
-                </CardTitle>
-                {canEdit && (
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2" disabled={isUploadingPhoto} asChild>
-                      <label>
-                        <Upload className="h-4 w-4" />
-                        {isUploadingPhoto ? "Загрузка..." : "Фото"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                          disabled={isUploadingPhoto}
-                        />
-                      </label>
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2" disabled={isUploadingDoc} asChild>
-                      <label>
-                        <Upload className="h-4 w-4" />
-                        {isUploadingDoc ? "Загрузка..." : "Документ"}
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx"
-                          onChange={handleDocumentUpload}
-                          className="hidden"
-                          disabled={isUploadingDoc}
-                        />
-                      </label>
-                    </Button>
-                  </div>
-                )}
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-base">
+                    Прикреплённые файлы ({(request.photo_url ? 1 : 0) + (request.document_url ? 1 : 0)})
+                  </CardTitle>
+                  {canEdit && (
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="outline" size="sm" className="gap-1" disabled={isUploadingPhoto} asChild>
+                        <label>
+                          <Upload className="h-4 w-4" />
+                          <span className="hidden sm:inline">{isUploadingPhoto ? "..." : "Фото"}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                            disabled={isUploadingPhoto}
+                          />
+                        </label>
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-1" disabled={isUploadingDoc} asChild>
+                        <label>
+                          <Upload className="h-4 w-4" />
+                          <span className="hidden sm:inline">{isUploadingDoc ? "..." : "Документ"}</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx"
+                            onChange={handleDocumentUpload}
+                            className="hidden"
+                            disabled={isUploadingDoc}
+                          />
+                        </label>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {request.photo_url && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
-                      <div className="p-2 rounded bg-primary/10">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                         <FileImage className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Фото заявки</p>
-                        <div className="flex gap-2 mt-1">
+                        <p className="text-sm font-medium">Фото заявки</p>
+                        <div className="flex gap-1 mt-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-3"
+                            className="h-7 px-2 text-xs"
                             onClick={() => handleImageClick(request.photo_url!)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="h-3 w-3 mr-1" />
                             Просмотр
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-3"
+                            className="h-7 px-2 text-xs"
                             asChild
                           >
                             <a href={request.photo_url} download target="_blank" rel="noopener noreferrer">
-                              <Download className="h-4 w-4 mr-1" />
+                              <Download className="h-3 w-3 mr-1" />
                               Скачать
                             </a>
                           </Button>
@@ -783,19 +785,18 @@ export default function RequestDetail() {
                     </div>
                   )}
                   {request.document_url && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-muted/20">
-                      <div className="p-2 rounded bg-primary/10">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                         <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Документ (Счёт/КП)</p>
-                        <div className="flex gap-2 mt-1">
+                        <p className="text-sm font-medium">Документ (Счёт/КП)</p>
+                        <div className="flex gap-1 mt-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-3"
+                            className="h-7 px-2 text-xs"
                             onClick={async () => {
-                              // Открываем окно СРАЗУ (синхронно) чтобы избежать блокировки на мобильных
                               const newWindow = window.open('', '_blank');
                               
                               try {
@@ -820,7 +821,6 @@ export default function RequestDetail() {
                                   return;
                                 }
                                 
-                                // Обновляем URL открытого окна
                                 newWindow.location.href = data.signedUrl;
                               } catch (error) {
                                 console.error('Error opening document:', error);
@@ -830,13 +830,13 @@ export default function RequestDetail() {
                               }
                             }}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="h-3 w-3 mr-1" />
                             Просмотр
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-3"
+                            className="h-7 px-2 text-xs"
                             onClick={async () => {
                               try {
                                 const url = new URL(request.document_url!);
@@ -844,7 +844,6 @@ export default function RequestDetail() {
                                 const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
                                 
                                 if (bucketIndex === -1) {
-                                  // Для не-Supabase URL просто открываем в новой вкладке
                                   window.open(request.document_url!, '_blank');
                                   return;
                                 }
@@ -852,7 +851,6 @@ export default function RequestDetail() {
                                 const filePath = pathParts.slice(bucketIndex + 1).join('/');
                                 const fileName = filePath.split('/').pop() || 'document.pdf';
                                 
-                                // Получаем signed URL
                                 const { data, error } = await supabase.storage
                                   .from('request-documents')
                                   .createSignedUrl(filePath, 60);
@@ -863,7 +861,6 @@ export default function RequestDetail() {
                                   return;
                                 }
                                 
-                                // Используем простой подход с ссылкой и download атрибутом
                                 const link = document.createElement('a');
                                 link.href = data.signedUrl;
                                 link.download = fileName;
@@ -871,7 +868,6 @@ export default function RequestDetail() {
                                 document.body.appendChild(link);
                                 link.click();
                                 
-                                // Удаляем ссылку через небольшую задержку
                                 setTimeout(() => {
                                   document.body.removeChild(link);
                                 }, 100);
@@ -881,7 +877,7 @@ export default function RequestDetail() {
                               }
                             }}
                           >
-                            <Download className="h-4 w-4 mr-1" />
+                            <Download className="h-3 w-3 mr-1" />
                             Скачать
                           </Button>
                         </div>

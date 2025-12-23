@@ -107,14 +107,16 @@ export function RequestReminders({ requestId }: RequestRemindersProps) {
   return (
     <Card className="glassmorphism">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Напоминания ({reminders?.filter(r => !r.is_sent).length || 0})
-          </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Bell className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <CardTitle className="text-base">
+              Напоминания ({reminders?.filter(r => !r.is_sent).length || 0})
+            </CardTitle>
+          </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="shrink-0">
                 <Plus className="h-4 w-4 mr-1" />
                 Добавить
               </Button>
