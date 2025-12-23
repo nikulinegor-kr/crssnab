@@ -415,13 +415,10 @@ export const RequestsTable = ({
               <SortableHeader field="contractor" label="Контраг." currentSort={sortConfig} onSort={handleSort} className="w-28 p-1 font-semibold" />
               <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
               <SortableHeader field="payment_percentage" label="%" currentSort={sortConfig} onSort={handleSort} className="w-14 p-1 font-semibold" />
-              <SortableHeader field="shipment_date" label="Отгр." currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold hidden xl:table-cell" />
               <SortableHeader field="delivery_date" label="Дост." currentSort={sortConfig} onSort={handleSort} className="w-16 p-1 font-semibold hidden xl:table-cell" />
               <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
-              <SortableHeader field="waybill_number" label="ТТН" currentSort={sortConfig} onSort={handleSort} className="w-20 p-1 font-semibold hidden xl:table-cell" />
               <SortableHeader field="applicant" label="Заявит." currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold" />
               <TableHead className="min-w-[100px] p-1 font-semibold hidden xl:table-cell">Комм.</TableHead>
-              <SortableHeader field="executor" label="Исполн." currentSort={sortConfig} onSort={handleSort} className="w-24 p-1 font-semibold hidden xl:table-cell" />
               <TableHead className="w-10 text-center p-1 font-semibold hidden xl:table-cell">КП</TableHead>
             </TableRow>
           </TableHeader>
@@ -497,19 +494,11 @@ export const RequestsTable = ({
                     : <span className="text-muted-foreground">-</span>}
                 </TableCell>
                 <TableCell className="text-center p-1 hidden xl:table-cell text-muted-foreground">
-                  {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM") : "-"}
-                </TableCell>
-                <TableCell className="text-center p-1 hidden xl:table-cell text-muted-foreground">
                   {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM") : "-"}
                 </TableCell>
                 <TableCell className="p-1 hidden xl:table-cell">
                   <div className="truncate text-muted-foreground">
                     <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
-                  </div>
-                </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground">
-                    <HighlightText text={request.waybill_number || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
                 <TableCell className="p-1">
@@ -520,11 +509,6 @@ export const RequestsTable = ({
                 <TableCell className="p-1 hidden xl:table-cell">
                   <div className="truncate text-muted-foreground italic">
                     <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
-                  </div>
-                </TableCell>
-                <TableCell className="p-1 hidden xl:table-cell">
-                  <div className="truncate text-muted-foreground">
-                    <HighlightText text={request.executor || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
                 <TableCell className="text-center p-1 hidden xl:table-cell">
