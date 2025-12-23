@@ -568,440 +568,137 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="request_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дата заявки *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} disabled={isViewer} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Статус *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Блок 1: Основная информация */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Основная информация</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="request_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Дата заявки *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите статус" />
-                        </SelectTrigger>
+                        <Input type="date" {...field} disabled={isViewer} />
                       </FormControl>
-                      <SelectContent>
-                        {statuses.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Приоритет *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите приоритет" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {priorities.map((priority) => (
-                          <SelectItem key={priority} value={priority}>
-                            {priority}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="object_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Объект</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите объект" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {objectsData?.map((obj) => (
-                          <SelectItem key={obj.id} value={obj.id}>
-                            {obj.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Описание заявки *</FormLabel>
-                    {!isViewer && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAiAnalysis}
-                        disabled={isAnalyzing || !field.value || field.value.trim().length < 10}
-                        className="gap-2"
-                      >
-                        {isAnalyzing ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-4 w-4" />
-                        )}
-                        AI Помощник
-                      </Button>
-                    )}
-                  </div>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Опишите заявку..."
-                      className="min-h-[80px]"
-                      disabled={isViewer}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {aiSuggestion && (
-              <div className="p-4 rounded-lg border bg-muted/50 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Рекомендации AI
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Категория:</span> {aiSuggestion.category}</p>
-                  <p><span className="font-medium">Статус:</span> {aiSuggestion.status}</p>
-                  <p><span className="font-medium">Приоритет:</span> {aiSuggestion.priority}</p>
-                  {aiSuggestion.executor && (
-                    <p><span className="font-medium">Исполнитель:</span> {aiSuggestion.executor}</p>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <p className="text-muted-foreground italic mt-2">{aiSuggestion.reasoning}</p>
-                </div>
-              </div>
-            )}
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="applicant"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Заявитель *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите заявителя" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {applicants.map((applicant) => (
-                          <SelectItem key={applicant.id} value={applicant.name}>
-                            {applicant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="executor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Исполнитель</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите исполнителя" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {executors.map((executor) => (
-                          <SelectItem key={executor.id} value={executor.name}>
-                            {executor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="estimated_delivery_days"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="Введите кол-во дней"
-                      disabled={isViewer}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                      className="max-w-[200px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contractor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Контрагент</FormLabel>
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Select 
-                          onValueChange={(value) => field.onChange(value)} 
-                          disabled={isViewer}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Выбрать из списка" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {suppliers?.map((supplier) => (
-                              <SelectItem key={supplier.id} value={supplier.name}>
-                                {supplier.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        
-                        <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="icon"
-                              className="shrink-0"
-                              disabled={isViewer}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Добавить контрагента</DialogTitle>
-                              <DialogDescription>
-                                Создайте нового контрагента для быстрого выбора
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid gap-2">
-                                <Label htmlFor="supplier-name-edit">Название</Label>
-                                <Input
-                                  id="supplier-name-edit"
-                                  value={newSupplierName}
-                                  onChange={(e) => setNewSupplierName(e.target.value)}
-                                  placeholder="Название контрагента"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  setIsAddingSupplier(false);
-                                  setNewSupplierName("");
-                                }}
-                              >
-                                Отмена
-                              </Button>
-                              <Button
-                                type="button"
-                                onClick={async () => {
-                                  if (!newSupplierName.trim()) {
-                                    toast({
-                                      title: "Ошибка",
-                                      description: "Введите название контрагента",
-                                      variant: "destructive",
-                                    });
-                                    return;
-                                  }
-
-                                  try {
-                                    const { data: userData } = await supabase.auth.getUser();
-                                    
-                                    const { error } = await supabase
-                                      .from("suppliers")
-                                      .insert({
-                                        name: newSupplierName.trim(),
-                                        organization_id: request?.organization_id || "",
-                                        created_by: userData.user?.id,
-                                        status: "Активный",
-                                        category: "Другое",
-                                      });
-
-                                    if (error) throw error;
-
-                                    toast({
-                                      title: "Успешно",
-                                      description: "Контрагент добавлен",
-                                    });
-
-                                    // Обновляем список контрагентов
-                                    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                                    
-                                    // Выбираем нового контрагента
-                                    field.onChange(newSupplierName.trim());
-                                    
-                                    setIsAddingSupplier(false);
-                                    setNewSupplierName("");
-                                  } catch (error) {
-                                    console.error("Error adding supplier:", error);
-                                    toast({
-                                      title: "Ошибка",
-                                      description: "Не удалось добавить контрагента",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }}
-                              >
-                                Добавить
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                      
-                      <FormControl>
-                        <Input 
-                          placeholder="Или введите название вручную" 
-                          disabled={isViewer} 
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="availability_delivery_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Наличие / Сроки поставки</FormLabel>
-                    <div className="flex gap-2">
-                      <Select 
-                        onValueChange={(value) => field.onChange(value)} 
-                        disabled={isViewer}
-                      >
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Статус *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
                         <FormControl>
-                          <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Выбрать" />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите статус" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="В наличии">В наличии</SelectItem>
-                          <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                          <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                          <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                          <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                          <SelectItem value="Под заказ">Под заказ</SelectItem>
+                          {statuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      <FormControl>
-                        <Input 
-                          placeholder="или введите сроки" 
-                          disabled={isViewer} 
-                          className="flex-1"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Приоритет *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите приоритет" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {priorities.map((priority) => (
+                            <SelectItem key={priority} value={priority}>
+                              {priority}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="object_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Объект</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите объект" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {objectsData?.map((obj) => (
+                            <SelectItem key={obj.id} value={obj.id}>
+                              {obj.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Блок 2: Описание */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
               <FormField
                 control={form.control}
-                name="invoice_number"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Номер счета</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Описание заявки *</FormLabel>
+                      {!isViewer && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAiAnalysis}
+                          disabled={isAnalyzing || !field.value || field.value.trim().length < 10}
+                          className="gap-2"
+                        >
+                          {isAnalyzing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          AI Помощник
+                        </Button>
+                      )}
+                    </div>
                     <FormControl>
-                      <Input placeholder="№ 123" disabled={isViewer} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Сумма (₽)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
+                      <Textarea
+                        placeholder="Опишите заявку..."
+                        className="min-h-[80px]"
                         disabled={isViewer}
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -1009,146 +706,476 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="payment_percentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Оплата (%)</FormLabel>
-                    <div className="flex gap-2">
-                      <Select
-                        value={field.value?.toString() || "0"}
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        disabled={isViewer}
-                      >
+              {aiSuggestion && (
+                <div className="p-4 rounded-lg border bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Рекомендации AI
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="font-medium">Категория:</span> {aiSuggestion.category}</p>
+                    <p><span className="font-medium">Статус:</span> {aiSuggestion.status}</p>
+                    <p><span className="font-medium">Приоритет:</span> {aiSuggestion.priority}</p>
+                    {aiSuggestion.executor && (
+                      <p><span className="font-medium">Исполнитель:</span> {aiSuggestion.executor}</p>
+                    )}
+                    <p className="text-muted-foreground italic mt-2">{aiSuggestion.reasoning}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Блок 3: Участники */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Участники</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="applicant"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Заявитель *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
                         <FormControl>
-                          <SelectTrigger className="w-[100px]">
-                            <SelectValue />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите заявителя" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="0">0%</SelectItem>
-                          <SelectItem value="10">10%</SelectItem>
-                          <SelectItem value="20">20%</SelectItem>
-                          <SelectItem value="30">30%</SelectItem>
-                          <SelectItem value="40">40%</SelectItem>
-                          <SelectItem value="50">50%</SelectItem>
-                          <SelectItem value="60">60%</SelectItem>
-                          <SelectItem value="70">70%</SelectItem>
-                          <SelectItem value="80">80%</SelectItem>
-                          <SelectItem value="90">90%</SelectItem>
-                          <SelectItem value="100">100%</SelectItem>
+                          {applicants.map((applicant) => (
+                            <SelectItem key={applicant.id} value={applicant.name}>
+                              {applicant.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="executor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Исполнитель</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите исполнителя" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {executors.map((executor) => (
+                            <SelectItem key={executor.id} value={executor.name}>
+                              {executor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Блок 4: Поставка и контрагент */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Поставка</h3>
+              
+              <FormField
+                control={form.control}
+                name="estimated_delivery_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="Введите кол-во дней"
+                        disabled={isViewer}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        className="max-w-[200px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="contractor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Контрагент</FormLabel>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Select 
+                            onValueChange={(value) => field.onChange(value)} 
+                            disabled={isViewer}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Выбрать из списка" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {suppliers?.map((supplier) => (
+                                <SelectItem key={supplier.id} value={supplier.name}>
+                                  {supplier.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
+                            <DialogTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="icon"
+                                className="shrink-0"
+                                disabled={isViewer}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                              <DialogHeader>
+                                <DialogTitle>Добавить контрагента</DialogTitle>
+                                <DialogDescription>
+                                  Создайте нового контрагента для быстрого выбора
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                  <Label htmlFor="supplier-name-edit">Название</Label>
+                                  <Input
+                                    id="supplier-name-edit"
+                                    value={newSupplierName}
+                                    onChange={(e) => setNewSupplierName(e.target.value)}
+                                    placeholder="Название контрагента"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setIsAddingSupplier(false);
+                                    setNewSupplierName("");
+                                  }}
+                                >
+                                  Отмена
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!newSupplierName.trim()) {
+                                      toast({
+                                        title: "Ошибка",
+                                        description: "Введите название контрагента",
+                                        variant: "destructive",
+                                      });
+                                      return;
+                                    }
+
+                                    try {
+                                      const { data: userData } = await supabase.auth.getUser();
+                                      
+                                      const { error } = await supabase
+                                        .from("suppliers")
+                                        .insert({
+                                          name: newSupplierName.trim(),
+                                          organization_id: request?.organization_id || "",
+                                          created_by: userData.user?.id,
+                                          status: "Активный",
+                                          category: "Другое",
+                                        });
+
+                                      if (error) throw error;
+
+                                      toast({
+                                        title: "Успешно",
+                                        description: "Контрагент добавлен",
+                                      });
+
+                                      // Обновляем список контрагентов
+                                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                                      
+                                      // Выбираем нового контрагента
+                                      field.onChange(newSupplierName.trim());
+                                      
+                                      setIsAddingSupplier(false);
+                                      setNewSupplierName("");
+                                    } catch (error) {
+                                      console.error("Error adding supplier:", error);
+                                      toast({
+                                        title: "Ошибка",
+                                        description: "Не удалось добавить контрагента",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Добавить
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        
+                        <FormControl>
+                          <Input 
+                            placeholder="Или введите название вручную" 
+                            disabled={isViewer} 
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="availability_delivery_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Наличие / Сроки поставки</FormLabel>
+                      <div className="flex gap-2">
+                        <Select 
+                          onValueChange={(value) => field.onChange(value)} 
+                          disabled={isViewer}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Выбрать" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="В наличии">В наличии</SelectItem>
+                            <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                            <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                            <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                            <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                            <SelectItem value="Под заказ">Под заказ</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormControl>
+                          <Input 
+                            placeholder="или введите сроки" 
+                            disabled={isViewer} 
+                            className="flex-1"
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Блок 5: Финансы */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Финансы</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="invoice_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Номер счета</FormLabel>
+                      <FormControl>
+                        <Input placeholder="№ 123" disabled={isViewer} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Сумма (₽)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
-                          max="100"
-                          step="1"
-                          placeholder="введите"
-                          className="flex-1"
+                          step="0.01"
+                          placeholder="0.00"
                           disabled={isViewer}
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
                       </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_percentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Оплата (%)</FormLabel>
+                      <div className="flex gap-2">
+                        <Select
+                          value={field.value?.toString() || "0"}
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          disabled={isViewer}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-[100px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="0">0%</SelectItem>
+                            <SelectItem value="10">10%</SelectItem>
+                            <SelectItem value="20">20%</SelectItem>
+                            <SelectItem value="30">30%</SelectItem>
+                            <SelectItem value="40">40%</SelectItem>
+                            <SelectItem value="50">50%</SelectItem>
+                            <SelectItem value="60">60%</SelectItem>
+                            <SelectItem value="70">70%</SelectItem>
+                            <SelectItem value="80">80%</SelectItem>
+                            <SelectItem value="90">90%</SelectItem>
+                            <SelectItem value="100">100%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            placeholder="введите"
+                            className="flex-1"
+                            disabled={isViewer}
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="shipment_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дата отгрузки</FormLabel>
-                    <FormControl>
-                      <Input type="date" disabled={isViewer} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Блок 6: Доставка */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Доставка</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="shipment_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Дата отгрузки</FormLabel>
+                      <FormControl>
+                        <Input type="date" disabled={isViewer} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="delivery_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дата доставки</FormLabel>
-                    <FormControl>
-                      <Input type="date" disabled={isViewer} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="delivery_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Дата доставки</FormLabel>
+                      <FormControl>
+                        <Input type="date" disabled={isViewer} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="transport_company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Транспортная компания</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="waybill_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Номер ТТН</FormLabel>
+                      <FormControl>
+                        <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Блок 7: Дополнительно */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Дополнительно</h3>
               <FormField
                 control={form.control}
-                name="transport_company"
+                name="comments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Транспортная компания</FormLabel>
+                    <FormLabel>Комментарий</FormLabel>
                     <FormControl>
-                      <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
+                      <Textarea
+                        placeholder="Дополнительная информация..."
+                        className="min-h-[60px]"
+                        disabled={isViewer}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="waybill_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Номер ТТН</FormLabel>
-                    <FormControl>
-                      <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="comments"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Комментарий</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Дополнительная информация..."
-                      className="min-h-[60px]"
-                      disabled={isViewer}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* ЗРС - автоматически заполняемое поле */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>ЗРС (сводка заявки)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+              {/* ЗРС - автоматически заполняемое поле */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>ЗРС (сводка заявки)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
 Заявка: ${form.watch("description") || "-"}
 Заявитель: ${form.watch("applicant") || "-"}
 Приоритет: ${form.watch("priority") || "-"}
@@ -1156,22 +1183,22 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
 Оплата: ${form.watch("payment_percentage")}%
 Исполнил: ${form.watch("executor") || "-"}`;
-                    try {
-                      await navigator.clipboard.writeText(zrsText);
-                      toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
-                    } catch {
-                      toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
-                    }
-                  }}
-                >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Копировать
-                </Button>
-              </div>
-              <Textarea
-                readOnly
-                className="min-h-[120px] bg-muted/50 font-mono text-sm"
-                value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+                      try {
+                        await navigator.clipboard.writeText(zrsText);
+                        toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                      } catch {
+                        toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Копировать
+                  </Button>
+                </div>
+                <Textarea
+                  readOnly
+                  className="min-h-[120px] bg-muted/50 font-mono text-sm"
+                  value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
 Заявка: ${form.watch("description") || "-"}
 Заявитель: ${form.watch("applicant") || "-"}
 Приоритет: ${form.watch("priority") || "-"}
@@ -1179,152 +1206,157 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
 Оплата: ${form.watch("payment_percentage")}%
 Исполнил: ${form.watch("executor") || "-"}`}
-              />
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Фото заявки</Label>
-                {request?.photo_url && (
-                  <div className="mb-2">
-                    <a 
-                      href={request.photo_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <Image className="h-4 w-4" />
-                      Открыть фото
-                    </a>
-                  </div>
-                )}
-                {!isViewer && (
-                  <>
-                    <input
-                      ref={photoInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                      className="hidden"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => photoInputRef.current?.click()}
-                        className="gap-2"
+            {/* Блок 8: Вложения */}
+            <div className="space-y-4 p-4 rounded-lg border bg-card">
+              <h3 className="font-medium text-sm text-muted-foreground">Вложения</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Фото заявки</Label>
+                  {request?.photo_url && (
+                    <div className="mb-2">
+                      <a 
+                        href={request.photo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                       >
                         <Image className="h-4 w-4" />
-                        Выбрать фото
-                      </Button>
-                      {photoFile && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="truncate max-w-[150px]">{photoFile.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => {
-                              setPhotoFile(null);
-                              if (photoInputRef.current) photoInputRef.current.value = "";
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                        Открыть фото
+                      </a>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      JPG, PNG, WEBP до 5 МБ
-                    </p>
-                  </>
-                )}
-              </div>
+                  )}
+                  {!isViewer && (
+                    <>
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="gap-2"
+                        >
+                          <Image className="h-4 w-4" />
+                          Выбрать фото
+                        </Button>
+                        {photoFile && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="truncate max-w-[150px]">{photoFile.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setPhotoFile(null);
+                                if (photoInputRef.current) photoInputRef.current.value = "";
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG, WEBP до 5 МБ
+                      </p>
+                    </>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label>Документ (Счёт/КП)</Label>
-                {request?.document_url && (
-                  <div className="mb-2">
-                    <Button 
-                      type="button"
-                      variant="link"
-                      size="sm"
-                      className="inline-flex items-center gap-2 px-0 h-auto"
-                      onClick={async () => {
-                        try {
-                          const url = new URL(request.document_url!);
-                          const pathParts = url.pathname.split('/');
-                          const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-                          if (bucketIndex === -1) {
-                            window.open(request.document_url!, '_blank');
-                            return;
-                          }
-                          const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                          const { data, error } = await supabase.storage
-                            .from('request-documents')
-                            .createSignedUrl(filePath, 3600);
-                          if (error || !data) {
-                            console.error('Error creating signed URL:', error);
-                            window.open(request.document_url!, '_blank');
-                            return;
-                          }
-                          window.open(data.signedUrl, '_blank');
-                        } catch (error) {
-                          console.error('Error opening document:', error);
-                          window.open(request.document_url!, '_blank');
-                        }
-                      }}
-                    >
-                      <FileText className="h-4 w-4" />
-                      Открыть документ
-                    </Button>
-                  </div>
-                )}
-                {!isViewer && (
-                  <>
-                    <input
-                      ref={documentInputRef}
-                      type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                      className="hidden"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Button
+                <div className="space-y-2">
+                  <Label>Документ (Счёт/КП)</Label>
+                  {request?.document_url && (
+                    <div className="mb-2">
+                      <Button 
                         type="button"
-                        variant="outline"
+                        variant="link"
                         size="sm"
-                        onClick={() => documentInputRef.current?.click()}
-                        className="gap-2"
+                        className="inline-flex items-center gap-2 px-0 h-auto"
+                        onClick={async () => {
+                          try {
+                            const url = new URL(request.document_url!);
+                            const pathParts = url.pathname.split('/');
+                            const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                            if (bucketIndex === -1) {
+                              window.open(request.document_url!, '_blank');
+                              return;
+                            }
+                            const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                            const { data, error } = await supabase.storage
+                              .from('request-documents')
+                              .createSignedUrl(filePath, 3600);
+                            if (error || !data) {
+                              console.error('Error creating signed URL:', error);
+                              window.open(request.document_url!, '_blank');
+                              return;
+                            }
+                            window.open(data.signedUrl, '_blank');
+                          } catch (error) {
+                            console.error('Error opening document:', error);
+                            window.open(request.document_url!, '_blank');
+                          }
+                        }}
                       >
                         <FileText className="h-4 w-4" />
-                        Выбрать файл
+                        Открыть документ
                       </Button>
-                      {documentFile && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="truncate max-w-[150px]">{documentFile.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => {
-                              setDocumentFile(null);
-                              if (documentInputRef.current) documentInputRef.current.value = "";
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      PDF, DOC, DOCX, XLS, XLSX до 10 МБ
-                    </p>
-                  </>
-                )}
+                  )}
+                  {!isViewer && (
+                    <>
+                      <input
+                        ref={documentInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                        onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => documentInputRef.current?.click()}
+                          className="gap-2"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Выбрать файл
+                        </Button>
+                        {documentFile && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="truncate max-w-[150px]">{documentFile.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setDocumentFile(null);
+                                if (documentInputRef.current) documentInputRef.current.value = "";
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOC, DOCX, XLS, XLSX до 10 МБ
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
