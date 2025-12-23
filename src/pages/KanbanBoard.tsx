@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { useViewSettings } from "@/hooks/useViewSettings";
 import { VirtualizedColumn } from "@/components/kanban/VirtualizedColumn";
-import { useSwipe } from "@/hooks/useSwipe";
+// useSwipe removed - using native CSS scroll-snap for iOS Safari compatibility
 
 interface Request {
   id: string;
@@ -365,19 +365,8 @@ export default function KanbanBoard() {
     }
   }, [isMobile, activeColumnIndex, columnCount]);
 
-  // Swipe handlers
-  const swipeHandlers = useSwipe({
-    onSwipeLeft: () => {
-      if (activeColumnIndex < columnCount - 1) {
-        scrollToColumn(activeColumnIndex + 1);
-      }
-    },
-    onSwipeRight: () => {
-      if (activeColumnIndex > 0) {
-        scrollToColumn(activeColumnIndex - 1);
-      }
-    },
-  });
+  // Note: On mobile, we rely on native CSS scroll-snap for smooth swiping
+  // The scrollToColumn function is used for dot indicator clicks
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -546,14 +535,14 @@ export default function KanbanBoard() {
       {/* Kanban Board */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-x-auto overflow-y-hidden px-4 sm:px-6 py-3 -mx-4 sm:mx-0"
+        className={cn(
+          "flex-1 overflow-x-auto overflow-y-hidden px-4 sm:px-6 py-3 -mx-4 sm:mx-0",
+          isMobile && "snap-x snap-mandatory scroll-smooth"
+        )}
         onScroll={handleScroll}
-        {...(isMobile ? swipeHandlers : {})}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className={cn(
-          "flex gap-2 h-full min-w-max",
-          isMobile && "snap-x snap-mandatory pb-4"
-        )}>
+        <div className="flex gap-2 h-full min-w-max pb-4">
           {allStatuses.map((status) => {
             const isOver = dragOverStatus === status.name;
             const count = requestsByStatus[status.name]?.length || 0;
