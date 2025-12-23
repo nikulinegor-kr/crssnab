@@ -132,15 +132,17 @@ export function LinkedRequests({ requestId, canEdit }: LinkedRequestsProps) {
   return (
     <Card className="glassmorphism">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            Связанные заявки ({linkedRequests?.length || 0})
-          </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <CardTitle className="text-base">
+              Связанные заявки ({linkedRequests?.length || 0})
+            </CardTitle>
+          </div>
           {canEdit && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="shrink-0">
                   <Plus className="h-4 w-4 mr-1" />
                   Связать
                 </Button>
