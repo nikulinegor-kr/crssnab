@@ -781,31 +781,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               </div>
             </div>
 
-            {/* Блок 4: Поставка и контрагент */}
+            {/* Блок 4: Поставщик */}
             <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Поставка</h3>
-              
-              <FormField
-                control={form.control}
-                name="estimated_delivery_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        placeholder="Введите кол-во дней"
-                        disabled={isViewer}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                        className="max-w-[200px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <h3 className="font-medium text-sm text-muted-foreground">Поставщик</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -1083,6 +1061,29 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             {/* Блок 6: Доставка */}
             <div className="space-y-4 p-4 rounded-lg border bg-card">
               <h3 className="font-medium text-sm text-muted-foreground">Доставка</h3>
+              
+              <FormField
+                control={form.control}
+                name="estimated_delivery_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ориентировочный срок (дней)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="Кол-во дней"
+                        disabled={isViewer}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        className="max-w-[150px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
