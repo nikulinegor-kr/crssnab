@@ -111,13 +111,14 @@ All colors MUST be HSL.
 @layer utilities {
   .glassmorphism {
     background: transparent;
+    border-color: hsl(var(--border) / 0.4);
   }
   
   .dark .glassmorphism {
     background: rgba(30, 30, 30, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-color: hsl(var(--border) / 0.4);
   }
   
   .glassmorphism-light {
@@ -128,7 +129,7 @@ All colors MUST be HSL.
   
   .dark .glassmorphism-light {
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-color: hsl(var(--border) / 0.4);
   }
 
   .hover-scale {
