@@ -110,6 +110,10 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glassmorphism {
+    background: transparent;
+  }
+  
+  .dark .glassmorphism {
     background: rgba(30, 30, 30, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -117,9 +121,13 @@ All colors MUST be HSL.
   }
   
   .glassmorphism-light {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .dark .glassmorphism-light {
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
