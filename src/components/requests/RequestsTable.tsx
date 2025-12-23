@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { HighlightText } from "@/components/HighlightText";
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const STORAGE_KEY = "requests-page-size";
 
 interface RequestsTableProps {
   requests: Request[] | undefined;
@@ -39,6 +50,25 @@ export const RequestsTable = ({
   searchQuery = "",
 }: RequestsTableProps) => {
   const navigate = useNavigate();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? parseInt(saved, 10) : 25;
+  });
+
+  // Reset to page 1 when requests change (e.g., filters applied)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [requests?.length]);
+
+  const handlePageSizeChange = (value: string) => {
+    const newSize = parseInt(value, 10);
+    setPageSize(newSize);
+    localStorage.setItem(STORAGE_KEY, value);
+    setCurrentPage(1);
+  };
 
   const handleRowClick = (request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
@@ -68,11 +98,95 @@ export const RequestsTable = ({
     );
   }
 
+  // Pagination calculations
+  const totalItems = requests?.length || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedRequests = requests?.slice(startIndex, endIndex) || [];
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  // Pagination UI component
+  const PaginationControls = () => (
+    <div className="flex flex-col xs:flex-row items-center justify-between gap-2 py-2 sm:py-3 border-t mt-2 sm:mt-4">
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+        <span>Показывать:</span>
+        <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+          <SelectTrigger className="w-16 sm:w-20 h-7 sm:h-8 text-xs sm:text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="hidden xs:inline">
+          из {totalItems}
+        </span>
+      </div>
+      
+      <div className="flex items-center gap-1 sm:gap-2">
+        <span className="text-xs sm:text-sm text-muted-foreground">
+          {startIndex + 1}-{Math.min(endIndex, totalItems)} из {totalItems}
+        </span>
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 sm:h-8 sm:w-8"
+            onClick={() => goToPage(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 -ml-2" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 sm:h-8 sm:w-8"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+          <span className="px-2 text-xs sm:text-sm font-medium min-w-[3rem] text-center">
+            {currentPage} / {totalPages || 1}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 sm:h-8 sm:w-8"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7 sm:h-8 sm:w-8"
+            onClick={() => goToPage(totalPages)}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 -ml-2" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       {/* Mobile and Tablet Card View */}
       <div className="lg:hidden space-y-2 sm:space-y-3">
-        {requests.map((request) => (
+        {paginatedRequests.map((request) => (
           <Card
             key={request.id}
             className="p-2.5 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors"
@@ -158,6 +272,7 @@ export const RequestsTable = ({
             </div>
           </Card>
         ))}
+        <PaginationControls />
       </div>
 
       {/* Desktop Table View */}
@@ -192,7 +307,7 @@ export const RequestsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.map((request) => (
+            {paginatedRequests.map((request) => (
               <TableRow
                 key={request.id}
                 className="hover:bg-muted/30 cursor-pointer border-b"
@@ -309,6 +424,7 @@ export const RequestsTable = ({
             ))}
           </TableBody>
         </Table>
+        <PaginationControls />
       </div>
     </>
   );
