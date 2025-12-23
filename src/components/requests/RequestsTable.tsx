@@ -407,18 +407,18 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
-              <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r" />
-              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="w-36 p-2 font-semibold border-r" />
-              <SortableHeader field="priority" label="Приоритет" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
-              <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
+              <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r text-center" />
+              <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="min-w-[200px] p-2 font-semibold border-r text-center" />
+              <SortableHeader field="priority" label="Приоритет" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r text-center" />
+              <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r text-center" />
               <TableHead className="w-28 text-center p-2 font-semibold border-r hidden xl:table-cell">Наличие</TableHead>
-              <SortableHeader field="contractor" label="Контрагент" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r" />
-              <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r hidden xl:table-cell" />
-              <SortableHeader field="payment_percentage" label="Оплата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r" />
-              <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
-              <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell" />
-              <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r" />
-              <TableHead className="w-40 p-2 font-semibold border-r hidden xl:table-cell text-center">Комментарий</TableHead>
+              <SortableHeader field="contractor" label="Контрагент" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r text-center" />
+              <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r hidden xl:table-cell text-center" />
+              <SortableHeader field="payment_percentage" label="Оплата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r text-center" />
+              <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell text-center" />
+              <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r hidden xl:table-cell text-center" />
+              <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r text-center" />
+              <TableHead className="w-36 p-2 font-semibold border-r hidden xl:table-cell text-center">Комментарий</TableHead>
               <TableHead className="w-12 text-center p-2 font-semibold hidden xl:table-cell">КП</TableHead>
             </TableRow>
           </TableHeader>
@@ -473,18 +473,18 @@ export const RequestsTable = ({
                     {request.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="p-2 border-r hidden xl:table-cell">
+                <TableCell className="text-center p-2 border-r hidden xl:table-cell">
                   <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-2 border-r">
+                <TableCell className="text-center p-2 border-r">
                   <div className="line-clamp-2 leading-tight">
                     <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-2 border-r hidden xl:table-cell text-center">
-                  <div className="line-clamp-2 text-muted-foreground leading-tight text-left">
+                <TableCell className="text-center p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
@@ -496,18 +496,18 @@ export const RequestsTable = ({
                 <TableCell className="text-center p-2 border-r hidden xl:table-cell text-muted-foreground">
                   {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM") : "-"}
                 </TableCell>
-                <TableCell className="p-2 border-r hidden xl:table-cell">
+                <TableCell className="text-center p-2 border-r hidden xl:table-cell">
                   <div className="line-clamp-2 text-muted-foreground leading-tight">
                     <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-2 border-r">
+                <TableCell className="text-center p-2 border-r">
                   <div className="line-clamp-2 leading-tight">
                     <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
-                <TableCell className="p-2 border-r hidden xl:table-cell text-center">
-                  <div className="line-clamp-2 text-muted-foreground italic leading-tight text-left">
+                <TableCell className="text-center p-2 border-r hidden xl:table-cell">
+                  <div className="line-clamp-2 text-muted-foreground italic leading-tight">
                     <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
                   </div>
                 </TableCell>
