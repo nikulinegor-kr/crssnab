@@ -439,7 +439,7 @@ export const RequestsTable = ({
                 <TableCell className="text-center p-2 border-r text-muted-foreground">
                   {format(new Date(request.request_date), "dd.MM.yy")}
                 </TableCell>
-                <TableCell className="text-center p-2 border-r">
+                <TableCell className="text-left p-2 border-r">
                   <RequestQuickPreview
                     request={request}
                     getStatusColor={getStatusColor}
