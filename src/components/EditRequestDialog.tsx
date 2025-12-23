@@ -792,132 +792,118 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Контрагент</FormLabel>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Select 
-                            onValueChange={(value) => field.onChange(value)} 
-                            disabled={isViewer}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="flex-1">
-                                <SelectValue placeholder="Выбрать из списка" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {suppliers?.map((supplier) => (
-                                <SelectItem key={supplier.id} value={supplier.name}>
-                                  {supplier.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
-                            <DialogTrigger asChild>
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="icon"
-                                className="shrink-0"
-                                disabled={isViewer}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                              <DialogHeader>
-                                <DialogTitle>Добавить контрагента</DialogTitle>
-                                <DialogDescription>
-                                  Создайте нового контрагента для быстрого выбора
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                  <Label htmlFor="supplier-name-edit">Название</Label>
-                                  <Input
-                                    id="supplier-name-edit"
-                                    value={newSupplierName}
-                                    onChange={(e) => setNewSupplierName(e.target.value)}
-                                    placeholder="Название контрагента"
-                                  />
-                                </div>
+                      <div className="flex gap-2">
+                        <Select 
+                          value={field.value || ""}
+                          onValueChange={(value) => field.onChange(value)} 
+                          disabled={isViewer}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Выбрать из списка" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {suppliers?.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.name}>
+                                {supplier.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        <Dialog open={isAddingSupplier} onOpenChange={setIsAddingSupplier}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon"
+                              className="shrink-0"
+                              disabled={isViewer}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Добавить контрагента</DialogTitle>
+                              <DialogDescription>
+                                Создайте нового контрагента для быстрого выбора
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="supplier-name-edit">Название</Label>
+                                <Input
+                                  id="supplier-name-edit"
+                                  value={newSupplierName}
+                                  onChange={(e) => setNewSupplierName(e.target.value)}
+                                  placeholder="Название контрагента"
+                                />
                               </div>
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setIsAddingSupplier(false);
+                                  setNewSupplierName("");
+                                }}
+                              >
+                                Отмена
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={async () => {
+                                  if (!newSupplierName.trim()) {
+                                    toast({
+                                      title: "Ошибка",
+                                      description: "Введите название контрагента",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+
+                                  try {
+                                    const { data: userData } = await supabase.auth.getUser();
+                                    
+                                    const { error } = await supabase
+                                      .from("suppliers")
+                                      .insert({
+                                        name: newSupplierName.trim(),
+                                        organization_id: request?.organization_id || "",
+                                        created_by: userData.user?.id,
+                                        status: "Активный",
+                                        category: "Другое",
+                                      });
+
+                                    if (error) throw error;
+
+                                    toast({
+                                      title: "Успешно",
+                                      description: "Контрагент добавлен",
+                                    });
+
+                                    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                                    field.onChange(newSupplierName.trim());
                                     setIsAddingSupplier(false);
                                     setNewSupplierName("");
-                                  }}
-                                >
-                                  Отмена
-                                </Button>
-                                <Button
-                                  type="button"
-                                  onClick={async () => {
-                                    if (!newSupplierName.trim()) {
-                                      toast({
-                                        title: "Ошибка",
-                                        description: "Введите название контрагента",
-                                        variant: "destructive",
-                                      });
-                                      return;
-                                    }
-
-                                    try {
-                                      const { data: userData } = await supabase.auth.getUser();
-                                      
-                                      const { error } = await supabase
-                                        .from("suppliers")
-                                        .insert({
-                                          name: newSupplierName.trim(),
-                                          organization_id: request?.organization_id || "",
-                                          created_by: userData.user?.id,
-                                          status: "Активный",
-                                          category: "Другое",
-                                        });
-
-                                      if (error) throw error;
-
-                                      toast({
-                                        title: "Успешно",
-                                        description: "Контрагент добавлен",
-                                      });
-
-                                      // Обновляем список контрагентов
-                                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                                      
-                                      // Выбираем нового контрагента
-                                      field.onChange(newSupplierName.trim());
-                                      
-                                      setIsAddingSupplier(false);
-                                      setNewSupplierName("");
-                                    } catch (error) {
-                                      console.error("Error adding supplier:", error);
-                                      toast({
-                                        title: "Ошибка",
-                                        description: "Не удалось добавить контрагента",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Добавить
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                        
-                        <FormControl>
-                          <Input 
-                            placeholder="Или введите название вручную" 
-                            disabled={isViewer} 
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
+                                  } catch (error) {
+                                    console.error("Error adding supplier:", error);
+                                    toast({
+                                      title: "Ошибка",
+                                      description: "Не удалось добавить контрагента",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                              >
+                                Добавить
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -930,35 +916,25 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Наличие / Сроки поставки</FormLabel>
-                      <div className="flex gap-2">
-                        <Select 
-                          onValueChange={(value) => field.onChange(value)} 
-                          disabled={isViewer}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder="Выбрать" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="В наличии">В наличии</SelectItem>
-                            <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                            <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                            <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                            <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                            <SelectItem value="Под заказ">Под заказ</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <Select 
+                        value={field.value || ""}
+                        onValueChange={(value) => field.onChange(value)} 
+                        disabled={isViewer}
+                      >
                         <FormControl>
-                          <Input 
-                            placeholder="или введите сроки" 
-                            disabled={isViewer} 
-                            className="flex-1"
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                          />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
                         </FormControl>
-                      </div>
+                        <SelectContent>
+                          <SelectItem value="В наличии">В наличии</SelectItem>
+                          <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                          <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                          <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                          <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                          <SelectItem value="Под заказ">Под заказ</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
