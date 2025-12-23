@@ -17,6 +17,7 @@ import {
 import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
+import { HighlightText } from "@/components/HighlightText";
 
 interface RequestsTableProps {
   requests: Request[] | undefined;
@@ -25,6 +26,7 @@ interface RequestsTableProps {
   toggleRequestSelection: (id: string) => void;
   toggleAllRequests: () => void;
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
+  searchQuery?: string;
 }
 
 export const RequestsTable = ({
@@ -34,6 +36,7 @@ export const RequestsTable = ({
   toggleRequestSelection,
   toggleAllRequests,
   onDeleteClick,
+  searchQuery = "",
 }: RequestsTableProps) => {
   const navigate = useNavigate();
 
@@ -93,7 +96,7 @@ export const RequestsTable = ({
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </div>
                     <div className="font-medium text-sm line-clamp-2">
-                      {request.description}
+                      <HighlightText text={request.description} searchQuery={searchQuery} />
                     </div>
                   </div>
                 </div>
@@ -123,20 +126,20 @@ export const RequestsTable = ({
                 {(request.contractor || request.applicant || request.executor) && (
                   <div className="text-xs text-muted-foreground space-y-1">
                     {request.contractor && (
-                      <div className="truncate">Контрагент: {request.contractor}</div>
+                      <div className="truncate">Контрагент: <HighlightText text={request.contractor} searchQuery={searchQuery} /></div>
                     )}
                     {request.applicant && (
-                      <div className="truncate">Заявитель: {request.applicant}</div>
+                      <div className="truncate">Заявитель: <HighlightText text={request.applicant} searchQuery={searchQuery} /></div>
                     )}
                     {request.executor && (
-                      <div className="truncate">Исполнитель: {request.executor}</div>
+                      <div className="truncate">Исполнитель: <HighlightText text={request.executor} searchQuery={searchQuery} /></div>
                     )}
                   </div>
                 )}
 
                 {request.comments && (
                   <div className="text-xs text-muted-foreground line-clamp-2 bg-muted/30 p-2 rounded">
-                    {request.comments}
+                    <HighlightText text={request.comments} searchQuery={searchQuery} />
                   </div>
                 )}
 
@@ -215,7 +218,7 @@ export const RequestsTable = ({
                     getPriorityColor={getPriorityColor}
                   >
                     <div className="line-clamp-2 hover:text-primary transition-colors cursor-pointer">
-                      {request.description}
+                      <HighlightText text={request.description} searchQuery={searchQuery} />
                     </div>
                   </RequestQuickPreview>
                 </TableCell>
@@ -243,13 +246,19 @@ export const RequestsTable = ({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                  <div className="line-clamp-2">{request.availability_delivery_time || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 max-w-[120px]">
-                  <div className="line-clamp-2">{request.contractor || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                  <div className="line-clamp-2">{request.invoice_number || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2">
                   <div className="line-clamp-2">
@@ -269,19 +278,29 @@ export const RequestsTable = ({
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                  <div className="line-clamp-2">{request.transport_company || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell max-w-[100px]">
-                  <div className="truncate">{request.waybill_number || "-"}</div>
+                  <div className="truncate">
+                    <HighlightText text={request.waybill_number || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 max-w-[120px]">
-                  <div className="line-clamp-2">{request.applicant || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell max-w-[150px]">
-                  <div className="line-clamp-2">{request.comments || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center border-r p-2 hidden xl:table-cell">
-                  <div className="line-clamp-2">{request.executor || "-"}</div>
+                  <div className="line-clamp-2">
+                    <HighlightText text={request.executor || "-"} searchQuery={searchQuery} />
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-center p-2 hidden xl:table-cell">
                   <div className="line-clamp-2">{request.document_url ? "Есть" : "-"}</div>
