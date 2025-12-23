@@ -97,10 +97,10 @@ const requestSchema = z.object({
   amount: z.number()
     .min(0, "Сумма не может быть отрицательной")
     .default(0),
-  payment_percentage: z.number()
-    .min(0, "Процент не может быть отрицательным")
-    .max(100, "Процент не может превышать 100")
-    .default(0),
+  payment_percentage: z.string()
+    .max(100, "Максимум 100 символов")
+    .optional()
+    .default(""),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
@@ -263,7 +263,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       contractor: "",
       invoice_number: "",
       amount: 0,
-      payment_percentage: 0,
+      payment_percentage: "",
       shipment_date: "",
       delivery_date: "",
       transport_company: "",
@@ -287,7 +287,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
         amount: request.amount || 0,
-        payment_percentage: request.payment_percentage,
+        payment_percentage: request.payment_percentage?.toString() || "",
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
@@ -433,7 +433,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount || 0,
-        payment_percentage: data.payment_percentage,
+        payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -988,42 +988,37 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Оплата (%)</FormLabel>
-                      <div className="flex gap-2">
+                      <div className="space-y-2">
                         <Select
-                          value={field.value?.toString() || "0"}
-                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          value={field.value?.toString() || ""}
+                          onValueChange={(value) => field.onChange(value)}
                           disabled={isViewer}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-[100px]">
-                              <SelectValue />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выбрать" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">0%</SelectItem>
-                            <SelectItem value="10">10%</SelectItem>
-                            <SelectItem value="20">20%</SelectItem>
-                            <SelectItem value="30">30%</SelectItem>
-                            <SelectItem value="40">40%</SelectItem>
-                            <SelectItem value="50">50%</SelectItem>
-                            <SelectItem value="60">60%</SelectItem>
-                            <SelectItem value="70">70%</SelectItem>
-                            <SelectItem value="80">80%</SelectItem>
-                            <SelectItem value="90">90%</SelectItem>
-                            <SelectItem value="100">100%</SelectItem>
+                            <SelectItem value="0%">0%</SelectItem>
+                            <SelectItem value="10%">10%</SelectItem>
+                            <SelectItem value="20%">20%</SelectItem>
+                            <SelectItem value="30%">30%</SelectItem>
+                            <SelectItem value="40%">40%</SelectItem>
+                            <SelectItem value="50%">50%</SelectItem>
+                            <SelectItem value="60%">60%</SelectItem>
+                            <SelectItem value="70%">70%</SelectItem>
+                            <SelectItem value="80%">80%</SelectItem>
+                            <SelectItem value="90%">90%</SelectItem>
+                            <SelectItem value="100%">100%</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormControl>
                           <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="1"
-                            placeholder="введите"
-                            className="flex-1"
+                            placeholder="Или введите вручную"
                             disabled={isViewer}
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            value={field.value?.toString() || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                       </div>
@@ -1158,7 +1153,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Приоритет: ${form.watch("priority") || "-"}
 Наличие: ${form.watch("availability_delivery_time") || "-"}
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-Оплата: ${form.watch("payment_percentage")}%
+Оплата: ${form.watch("payment_percentage") || "-"}
 Исполнил: ${form.watch("executor") || "-"}`;
                       try {
                         await navigator.clipboard.writeText(zrsText);
@@ -1181,7 +1176,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Приоритет: ${form.watch("priority") || "-"}
 Наличие: ${form.watch("availability_delivery_time") || "-"}
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-Оплата: ${form.watch("payment_percentage")}%
+Оплата: ${form.watch("payment_percentage") || "-"}
 Исполнил: ${form.watch("executor") || "-"}`}
                 />
               </div>
