@@ -1191,11 +1191,17 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     return (
       <>
         <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent className="max-h-[90vh]">
-            <DrawerHeader className="text-left border-b pb-4">
+          <DrawerContent className="h-[100dvh] max-h-[100dvh]">
+            <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
               {headerContent}
             </DrawerHeader>
-            <div className="overflow-y-auto p-4 pb-8">
+            <div 
+              className="flex-1 overflow-y-auto p-4 pb-8"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain'
+              }}
+            >
               {formContent}
             </div>
           </DrawerContent>

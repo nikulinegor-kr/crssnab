@@ -444,9 +444,18 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   };
 
 
+  // Auto-scroll to focused input on mobile
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (isMobile) {
+      setTimeout(() => {
+        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  };
+
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onFocus={handleInputFocus as any}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -951,14 +960,20 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     return (
       <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
-        <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader className="text-left border-b pb-4">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh]">
+          <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
             <DrawerTitle>Создать новую заявку</DrawerTitle>
             <DrawerDescription>
               Заполните форму для создания новой заявки
             </DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto p-4">
+          <div 
+            className="flex-1 overflow-y-auto p-4 pb-8"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain'
+            }}
+          >
             {formContent}
           </div>
         </DrawerContent>
