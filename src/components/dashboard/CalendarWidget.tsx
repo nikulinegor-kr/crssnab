@@ -51,7 +51,7 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-2 sm:p-4">
-        <div className="flex justify-center overflow-x-auto">
+        <div className="flex justify-center">
           <Calendar
             mode="single"
             selected={selectedDate}
