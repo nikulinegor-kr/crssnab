@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import {
   Dialog,
   DialogContent,
@@ -136,12 +137,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
+  const [existingDocumentUrls, setExistingDocumentUrls] = useState<string[]>([]);
   const [isAddingSupplier, setIsAddingSupplier] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canEdit, isViewer } = useUserRole();
@@ -286,6 +287,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         waybill_number: request.waybill_number || "",
         comments: request.comments || "",
       });
+      // Load existing files
+      const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
+      const docUrlsArr = request.document_urls || (request.document_url ? [request.document_url] : []);
+      setExistingPhotoUrls(photoUrlsArr);
+      setExistingDocumentUrls(docUrlsArr);
+      setPhotoFiles([]);
+      setDocumentFiles([]);
     }
   }, [request, open, form]);
 
@@ -295,60 +303,50 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     
     setIsSubmitting(true);
     try {
-      let photoUrl = request.photo_url;
-      let documentUrl = request.document_url;
-
       // Helper function to sanitize filenames
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
-        // Remove all non-ASCII characters and special chars, keep only alphanumeric, dots, hyphens
         const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII (cyrillic, etc)
-          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-          .replace(/_{2,}/g, '_') // Replace multiple underscores with single
-          .replace(/^_+|_+$/g, ''); // Trim underscores from start/end
+          .replace(/[^\x00-\x7F]/g, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/_{2,}/g, '_')
+          .replace(/^_+|_+$/g, '');
         
-        // If sanitization removed everything, use timestamp
         if (!sanitized || sanitized === `.${extension}`) {
           return `file_${Date.now()}.${extension}`;
         }
-        
         return sanitized;
       };
 
-      // Upload photo if selected
-      if (photoFile) {
+      // Upload new photos
+      const newPhotoUrls: string[] = [];
+      for (const photoFile of photoFiles) {
         const sanitizedPhotoName = sanitizeFilename(photoFile.name);
         const photoPath = `${request.request_number}/${Date.now()}-${sanitizedPhotoName}`;
         const { error: photoError } = await supabase.storage
           .from("request-photos")
           .upload(photoPath, photoFile);
-
         if (photoError) throw photoError;
-
-        const { data: photoData } = supabase.storage
-          .from("request-photos")
-          .getPublicUrl(photoPath);
-        
-        photoUrl = photoData.publicUrl;
+        const { data: photoData } = supabase.storage.from("request-photos").getPublicUrl(photoPath);
+        newPhotoUrls.push(photoData.publicUrl);
       }
 
-      // Upload document if selected
-      if (documentFile) {
+      // Upload new documents
+      const newDocumentUrls: string[] = [];
+      for (const documentFile of documentFiles) {
         const sanitizedDocName = sanitizeFilename(documentFile.name);
         const documentPath = `${request.request_number}/${Date.now()}-${sanitizedDocName}`;
         const { error: documentError } = await supabase.storage
           .from("request-documents")
           .upload(documentPath, documentFile);
-
         if (documentError) throw documentError;
-
-        const { data: documentData } = supabase.storage
-          .from("request-documents")
-          .getPublicUrl(documentPath);
-        
-        documentUrl = documentData.publicUrl;
+        const { data: documentData } = supabase.storage.from("request-documents").getPublicUrl(documentPath);
+        newDocumentUrls.push(documentData.publicUrl);
       }
+
+      // Combine existing and new URLs
+      const finalPhotoUrls = [...existingPhotoUrls, ...newPhotoUrls];
+      const finalDocumentUrls = [...existingDocumentUrls, ...newDocumentUrls];
 
       const requestData = {
         request_date: data.request_date,
@@ -369,8 +367,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
-        photo_url: photoUrl,
-        document_url: documentUrl,
+        photo_url: finalPhotoUrls[0] || null,
+        document_url: finalDocumentUrls[0] || null,
+        photo_urls: finalPhotoUrls,
+        document_urls: finalDocumentUrls,
       };
 
       const { error } = await supabase
@@ -401,8 +401,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
-      setPhotoFile(null);
-      setDocumentFile(null);
+      setPhotoFiles([]);
+      setDocumentFiles([]);
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -1077,151 +1077,56 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             {/* Блок 8: Вложения */}
             <div className="space-y-4 p-4 rounded-lg border bg-card">
               <h3 className="font-medium text-sm text-muted-foreground">Вложения</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Фото заявки</Label>
-                  {request?.photo_url && (
-                    <div className="mb-2">
-                      <a 
-                        href={request.photo_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                      >
-                        <Image className="h-4 w-4" />
-                        Открыть фото
-                      </a>
-                    </div>
-                  )}
-                  {!isViewer && (
-                    <>
-                      <input
-                        ref={photoInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => photoInputRef.current?.click()}
-                          className="gap-2"
-                        >
-                          <Image className="h-4 w-4" />
-                          Выбрать фото
-                        </Button>
-                        {photoFile && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="truncate max-w-[150px]">{photoFile.name}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                setPhotoFile(null);
-                                if (photoInputRef.current) photoInputRef.current.value = "";
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        JPG, PNG, WEBP до 5 МБ
-                      </p>
-                    </>
-                  )}
-                </div>
+              {!isViewer ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <MultiFileDropZone
+                    accept="image/*"
+                    files={photoFiles}
+                    onFilesChange={setPhotoFiles}
+                    existingUrls={existingPhotoUrls}
+                    onRemoveExisting={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
+                    label="Фото заявки"
+                    hint="JPG, PNG, WEBP до 5 МБ, максимум 10 файлов"
+                    icon="image"
+                    maxSizeMB={5}
+                    maxFiles={10}
+                  />
 
-                <div className="space-y-2">
-                  <Label>Документ (Счёт/КП)</Label>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {request?.document_url && (
-                      <Button 
-                        type="button"
-                        variant="link"
-                        size="sm"
-                        className="inline-flex items-center gap-2 px-0 h-auto text-primary"
-                        onClick={async () => {
-                          try {
-                            const url = new URL(request.document_url!);
-                            const pathParts = url.pathname.split('/');
-                            const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-                            if (bucketIndex === -1) {
-                              window.open(request.document_url!, '_blank');
-                              return;
-                            }
-                            const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                            const { data, error } = await supabase.storage
-                              .from('request-documents')
-                              .createSignedUrl(filePath, 3600);
-                            if (error || !data) {
-                              console.error('Error creating signed URL:', error);
-                              window.open(request.document_url!, '_blank');
-                              return;
-                            }
-                            window.open(data.signedUrl, '_blank');
-                          } catch (error) {
-                            console.error('Error opening document:', error);
-                            window.open(request.document_url!, '_blank');
-                          }
-                        }}
-                      >
-                        <FileText className="h-4 w-4" />
-                        Открыть
-                      </Button>
-                    )}
-                    {!isViewer && (
-                      <>
-                        <input
-                          ref={documentInputRef}
-                          type="file"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx"
-                          onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => documentInputRef.current?.click()}
-                          className="gap-2"
-                        >
-                          <FileText className="h-4 w-4" />
-                          {request?.document_url ? 'Заменить' : 'Выбрать'}
-                        </Button>
-                        {documentFile && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="truncate max-w-[150px]">{documentFile.name}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                setDocumentFile(null);
-                                if (documentInputRef.current) documentInputRef.current.value = "";
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {!isViewer && (
-                    <p className="text-xs text-muted-foreground">
-                      PDF, DOC, DOCX, XLS, XLSX до 10 МБ
-                    </p>
-                  )}
+                  <MultiFileDropZone
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    files={documentFiles}
+                    onFilesChange={setDocumentFiles}
+                    existingUrls={existingDocumentUrls}
+                    onRemoveExisting={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
+                    label="Документы (Счёт/КП)"
+                    hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ, максимум 10 файлов"
+                    icon="document"
+                    maxSizeMB={10}
+                    maxFiles={10}
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Фото ({existingPhotoUrls.length})</Label>
+                    {existingPhotoUrls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                        Фото {i + 1}
+                      </a>
+                    ))}
+                    {existingPhotoUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет фото</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Документы ({existingDocumentUrls.length})</Label>
+                    {existingDocumentUrls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                        Документ {i + 1}
+                      </a>
+                    ))}
+                    {existingDocumentUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет документов</p>}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4">

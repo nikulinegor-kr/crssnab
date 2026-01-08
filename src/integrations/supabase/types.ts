@@ -1229,6 +1229,7 @@ export type Database = {
           delivery_date: string | null
           description: string
           document_url: string | null
+          document_urls: string[] | null
           estimated_delivery_days: number | null
           executor: string | null
           id: string
@@ -1237,6 +1238,7 @@ export type Database = {
           organization_id: string | null
           payment_percentage: number | null
           photo_url: string | null
+          photo_urls: string[] | null
           priority: string | null
           request_date: string
           request_number: string
@@ -1263,6 +1265,7 @@ export type Database = {
           delivery_date?: string | null
           description: string
           document_url?: string | null
+          document_urls?: string[] | null
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
@@ -1271,6 +1274,7 @@ export type Database = {
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
+          photo_urls?: string[] | null
           priority?: string | null
           request_date: string
           request_number: string
@@ -1297,6 +1301,7 @@ export type Database = {
           delivery_date?: string | null
           description?: string
           document_url?: string | null
+          document_urls?: string[] | null
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
@@ -1305,6 +1310,7 @@ export type Database = {
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
+          photo_urls?: string[] | null
           priority?: string | null
           request_date?: string
           request_number?: string

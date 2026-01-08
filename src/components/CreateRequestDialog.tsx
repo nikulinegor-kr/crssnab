@@ -5,7 +5,7 @@ import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { ComboboxInput } from "@/components/ui/combobox-input";
-import { FileDropZone } from "@/components/FileDropZone";
+import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useRequestDraft } from "@/hooks/useRequestDraft";
 import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
 import {
@@ -137,8 +137,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
@@ -304,20 +304,18 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       const date = new Date(data.request_date);
       const requestNumber = `REQ-${date.getFullYear()}-${Date.now()}`;
 
-      let photoUrl = null;
-      let documentUrl = null;
+      let photoUrls: string[] = [];
+      let documentUrls: string[] = [];
 
       // Helper function to sanitize filenames
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
-        // Remove all non-ASCII characters and special chars, keep only alphanumeric, dots, hyphens
         const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII (cyrillic, etc)
-          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-          .replace(/_{2,}/g, '_') // Replace multiple underscores with single
-          .replace(/^_+|_+$/g, ''); // Trim underscores from start/end
+          .replace(/[^\x00-\x7F]/g, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/_{2,}/g, '_')
+          .replace(/^_+|_+$/g, '');
         
-        // If sanitization removed everything, use timestamp
         if (!sanitized || sanitized === `.${extension}`) {
           return `file_${Date.now()}.${extension}`;
         }
@@ -325,8 +323,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         return sanitized;
       };
 
-      // Upload photo if selected
-      if (photoFile) {
+      // Upload photos
+      for (const photoFile of photoFiles) {
         const sanitizedPhotoName = sanitizeFilename(photoFile.name);
         const photoPath = `${requestNumber}/${Date.now()}-${sanitizedPhotoName}`;
         const { error: photoError } = await supabase.storage
@@ -339,11 +337,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           .from("request-photos")
           .getPublicUrl(photoPath);
         
-        photoUrl = photoData.publicUrl;
+        photoUrls.push(photoData.publicUrl);
       }
 
-      // Upload document if selected
-      if (documentFile) {
+      // Upload documents
+      for (const documentFile of documentFiles) {
         const sanitizedDocName = sanitizeFilename(documentFile.name);
         const documentPath = `${requestNumber}/${Date.now()}-${sanitizedDocName}`;
         const { error: documentError } = await supabase.storage
@@ -356,7 +354,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           .from("request-documents")
           .getPublicUrl(documentPath);
         
-        documentUrl = documentData.publicUrl;
+        documentUrls.push(documentData.publicUrl);
       }
 
       // Get current user's profile to check if they are the applicant
@@ -391,8 +389,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
-        photo_url: photoUrl,
-        document_url: documentUrl,
+        photo_url: photoUrls[0] || null,
+        document_url: documentUrls[0] || null,
+        photo_urls: photoUrls,
+        document_urls: documentUrls,
         organization_id: currentOrgId,
         created_by: user.id,
       };
@@ -428,8 +428,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
       form.reset();
-      setPhotoFile(null);
-      setDocumentFile(null);
+      setPhotoFiles([]);
+      setDocumentFiles([]);
       clearDraft();
       handleOpenChange(false);
     } catch (error: any) {
@@ -906,24 +906,26 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FileDropZone
+              <MultiFileDropZone
                 accept="image/*"
-                file={photoFile}
-                onFileChange={setPhotoFile}
+                files={photoFiles}
+                onFilesChange={setPhotoFiles}
                 label="Фото заявки"
-                hint="JPG, PNG, WEBP до 5 МБ"
+                hint="JPG, PNG, WEBP до 5 МБ, максимум 10 файлов"
                 icon="image"
                 maxSizeMB={5}
+                maxFiles={10}
               />
 
-              <FileDropZone
+              <MultiFileDropZone
                 accept=".pdf,.doc,.docx,.xls,.xlsx"
-                file={documentFile}
-                onFileChange={setDocumentFile}
-                label="Документ (Счёт/КП)"
-                hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ"
+                files={documentFiles}
+                onFilesChange={setDocumentFiles}
+                label="Документы (Счёт/КП)"
+                hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ, максимум 10 файлов"
                 icon="document"
                 maxSizeMB={10}
+                maxFiles={10}
               />
             </div>
 
