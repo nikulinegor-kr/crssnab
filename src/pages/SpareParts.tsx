@@ -111,8 +111,15 @@ export default function SpareParts() {
 
   // Filter options from ALL data (not filtered)
   const equipmentTypes = [...new Set(allParts?.map(p => p.equipment_type).filter(Boolean) || [])].sort() as string[];
-  const equipmentModels = [...new Set(allParts?.map(p => p.equipment_model).filter(Boolean) || [])].sort() as string[];
   const categories = [...new Set(allParts?.map(p => p.category).filter(Boolean) || [])].sort() as string[];
+  
+  // Models filtered by selected equipment type
+  const equipmentModels = [...new Set(
+    allParts
+      ?.filter(p => !filterEquipmentType || p.equipment_type === filterEquipmentType)
+      .map(p => p.equipment_model)
+      .filter(Boolean) || []
+  )].sort() as string[];
 
   // Combined lists for form dropdowns
   const allEquipmentTypes = [...new Set([...DEFAULT_EQUIPMENT_TYPES, ...equipmentTypes])].sort();
@@ -443,7 +450,10 @@ export default function SpareParts() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                <Select value={filterEquipmentType || "all"} onValueChange={(v) => setFilterEquipmentType(v === "all" ? "" : v)}>
+                <Select value={filterEquipmentType || "all"} onValueChange={(v) => {
+                  setFilterEquipmentType(v === "all" ? "" : v);
+                  setFilterModel(""); // Reset model when type changes
+                }}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Тип техники" />
                   </SelectTrigger>
