@@ -49,7 +49,7 @@ interface SparePart {
   organization_id: string;
 }
 
-const EQUIPMENT_TYPES = [
+const DEFAULT_EQUIPMENT_TYPES = [
   "БУЛЬДОЗЕР",
   "ЭКСКАВАТОР",
   "ПОГРУЗЧИК",
@@ -60,7 +60,7 @@ const EQUIPMENT_TYPES = [
   "ДРУГОЕ",
 ];
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Фильтры",
   "Ножи и режущие элементы",
   "Расходные материалы",
@@ -77,6 +77,7 @@ export default function SpareParts() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterEquipmentType, setFilterEquipmentType] = useState<string>("");
+  const [filterModel, setFilterModel] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<SparePart | null>(null);
@@ -94,7 +95,7 @@ export default function SpareParts() {
   });
 
   const { data: spareParts, isLoading } = useQuery({
-    queryKey: ["spare-parts", currentOrgId, searchQuery, filterEquipmentType, filterCategory],
+    queryKey: ["spare-parts", currentOrgId, searchQuery, filterEquipmentType, filterModel, filterCategory],
     queryFn: async () => {
       if (!currentOrgId) return [];
       
@@ -111,6 +112,9 @@ export default function SpareParts() {
       if (filterEquipmentType) {
         query = query.eq("equipment_type", filterEquipmentType);
       }
+      if (filterModel) {
+        query = query.eq("equipment_model", filterModel);
+      }
       if (filterCategory) {
         query = query.eq("category", filterCategory);
       }
@@ -121,6 +125,15 @@ export default function SpareParts() {
     },
     enabled: !!currentOrgId,
   });
+
+  // Dynamic filter options from data
+  const equipmentTypes = [...new Set(spareParts?.map(p => p.equipment_type).filter(Boolean) || [])].sort();
+  const equipmentModels = [...new Set(spareParts?.map(p => p.equipment_model).filter(Boolean) || [])].sort();
+  const categories = [...new Set(spareParts?.map(p => p.category).filter(Boolean) || [])].sort();
+
+  // Combined lists for form dropdowns
+  const allEquipmentTypes = [...new Set([...DEFAULT_EQUIPMENT_TYPES, ...equipmentTypes])].sort();
+  const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...categories])].sort();
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -248,7 +261,7 @@ export default function SpareParts() {
     return acc;
   }, {} as Record<string, SparePart[]>);
 
-  const hasActiveFilters = filterEquipmentType || filterCategory;
+  const hasActiveFilters = filterEquipmentType || filterModel || filterCategory;
 
   return (
     <AppLayout>
@@ -309,7 +322,7 @@ export default function SpareParts() {
                         <SelectValue placeholder="Выберите тип" />
                       </SelectTrigger>
                       <SelectContent>
-                        {EQUIPMENT_TYPES.map((type) => (
+                        {allEquipmentTypes.map((type) => (
                           <SelectItem key={type} value={type}>{type}</SelectItem>
                         ))}
                       </SelectContent>
@@ -325,7 +338,7 @@ export default function SpareParts() {
                         <SelectValue placeholder="Выберите категорию" />
                       </SelectTrigger>
                       <SelectContent>
-                        {CATEGORIES.map((cat) => (
+                        {allCategories.map((cat) => (
                           <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                         ))}
                       </SelectContent>
@@ -414,30 +427,43 @@ export default function SpareParts() {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Select value={filterEquipmentType} onValueChange={setFilterEquipmentType}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Тип техники" />
                   </SelectTrigger>
                   <SelectContent>
-                    {EQUIPMENT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    {equipmentTypes.map((type) => (
+                      <SelectItem key={type} value={type!}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterModel} onValueChange={setFilterModel}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Модель" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipmentModels.map((model) => (
+                      <SelectItem key={model} value={model!}>{model}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Категория" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
+                    {categories.length > 0 ? categories.map((cat) => (
+                      <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+                    )) : (
+                      <SelectItem value="none" disabled>Нет данных</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 {hasActiveFilters && (
                   <Button variant="ghost" size="icon" onClick={() => {
                     setFilterEquipmentType("");
+                    setFilterModel("");
                     setFilterCategory("");
                   }}>
                     <X className="h-4 w-4" />
