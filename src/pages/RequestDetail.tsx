@@ -236,7 +236,7 @@ export default function RequestDetail() {
         
         const { error: uploadError } = await supabase.storage
           .from("request-photos")
-          .upload(fileName, file, { upsert: true });
+          .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
@@ -291,7 +291,7 @@ export default function RequestDetail() {
         
         const { error: uploadError } = await supabase.storage
           .from("request-documents")
-          .upload(fileName, file, { upsert: true });
+          .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
