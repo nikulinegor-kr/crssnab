@@ -41,6 +41,14 @@ const SelectOrganization = () => {
         await supabase.rpc('ensure_user_initialized');
       } catch {}
 
+      // Получаем текущего пользователя
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      // Запрашиваем только записи текущего пользователя
       const { data, error } = await supabase
         .from("user_organizations")
         .select(`
@@ -52,6 +60,7 @@ const SelectOrganization = () => {
             name
           )
         `)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
