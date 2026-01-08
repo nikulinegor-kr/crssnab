@@ -46,7 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, X, Image, FileText, Copy } from "lucide-react";
+import { Loader2, Upload, X, Image, FileText, Copy, Sparkles } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -137,6 +137,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const { toast } = useToast();
@@ -443,6 +444,43 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
 
+  const handleImproveDescription = async () => {
+    const currentDescription = form.getValues("description");
+    if (!currentDescription || currentDescription.trim().length < 3) {
+      toast({
+        title: "Введите описание",
+        description: "Сначала введите описание заявки для улучшения",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImprovingDescription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-description", {
+        body: { description: currentDescription },
+      });
+
+      if (error) throw error;
+
+      if (data?.improved) {
+        form.setValue("description", data.improved);
+        toast({
+          title: "Описание улучшено",
+          description: "AI переформулировал описание заявки",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error improving description:", error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось улучшить описание",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImprovingDescription(false);
+    }
+  };
 
   // Auto-scroll to focused input on mobile
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -452,6 +490,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       }, 300);
     }
   };
+
 
   const formContent = (
     <Form {...form}>
@@ -527,7 +566,24 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Описание заявки *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Описание заявки *</FormLabel>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleImproveDescription}
+                      disabled={isImprovingDescription}
+                      className="h-7 px-2 text-xs text-primary hover:text-primary/80"
+                    >
+                      {isImprovingDescription ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3 w-3 mr-1" />
+                      )}
+                      Улучшить с AI
+                    </Button>
+                  </div>
                   <FormControl>
                     <Textarea
                       placeholder="Опишите заявку..."
