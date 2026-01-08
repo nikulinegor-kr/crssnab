@@ -30,6 +30,7 @@ const PercentCalculator = lazy(() => import("./pages/PercentCalculator"));
 const KanbanBoard = lazy(() => import("./pages/KanbanBoard"));
 const AIAnalytics = lazy(() => import("./pages/AIAnalytics"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
+const SpareParts = lazy(() => import("./pages/SpareParts"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Features = lazy(() => import("./pages/Features"));
 const Demo = lazy(() => import("./pages/Demo"));
@@ -238,6 +239,14 @@ const App = () => (
                   <AppLayout>
                     <AIAssistant />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/spare-parts"
+              element={
+                <ProtectedRoute>
+                  <SpareParts />
                 </ProtectedRoute>
               }
             />

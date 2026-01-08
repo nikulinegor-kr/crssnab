@@ -1387,6 +1387,68 @@ export type Database = {
           },
         ]
       }
+      spare_parts: {
+        Row: {
+          article: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          equipment_model: string | null
+          equipment_number: string | null
+          equipment_type: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          price: number | null
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          article: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_model?: string | null
+          equipment_number?: string | null
+          equipment_type?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          price?: number | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          article?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_model?: string | null
+          equipment_number?: string | null
+          equipment_type?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          price?: number | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_parts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           created_at: string | null

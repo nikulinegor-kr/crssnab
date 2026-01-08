@@ -15,7 +15,8 @@ import {
   Kanban,
   Percent,
   Sun,
-  Moon
+  Moon,
+  Package
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -45,6 +46,7 @@ const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Канбан", url: "/kanban", icon: Kanban },
+  { title: "Запчасти", url: "/spare-parts", icon: Package },
   { title: "Поставщики", url: "/suppliers", icon: Users },
 ];
 
