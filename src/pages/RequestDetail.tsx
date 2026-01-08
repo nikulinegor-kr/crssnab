@@ -31,7 +31,7 @@ import { ru } from "date-fns/locale";
 import { useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
-import { ImageViewer } from "@/components/ImageViewer";
+import { ImageGallery } from "@/components/ImageGallery";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -66,8 +66,8 @@ export default function RequestDetail() {
   const { currentOrgId } = useCurrentOrganization();
   
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -207,21 +207,20 @@ export default function RequestDetail() {
     },
   });
 
-  // File upload handlers
+  // File upload handlers - supports multiple files
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !id) return;
+    const files = event.target.files;
+    if (!files || files.length === 0 || !id || !request) return;
 
     setIsUploadingPhoto(true);
     try {
-      // Sanitize filename to prevent upload errors
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
         const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII
-          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars
-          .replace(/_{2,}/g, '_') // Replace multiple underscores
-          .replace(/^_+|_+$/g, ''); // Trim underscores
+          .replace(/[^\x00-\x7F]/g, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/_{2,}/g, '_')
+          .replace(/^_+|_+$/g, '');
         
         if (!sanitized || sanitized === `.${extension}`) {
           return `file_${Date.now()}.${extension}`;
@@ -229,21 +228,29 @@ export default function RequestDetail() {
         return sanitized;
       };
 
-      const sanitizedName = sanitizeFilename(file.name);
-      const fileName = `${id}-${Date.now()}-${sanitizedName}`;
-      const filePath = `${fileName}`;
+      const newUrls: string[] = [];
+      
+      for (const file of Array.from(files)) {
+        const sanitizedName = sanitizeFilename(file.name);
+        const fileName = `${id}-${Date.now()}-${sanitizedName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("request-photos")
+          .upload(fileName, file, { upsert: true });
 
-      const { error: uploadError } = await supabase.storage
-        .from("request-photos")
-        .upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
 
-      if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from("request-photos")
+          .getPublicUrl(fileName);
+          
+        newUrls.push(publicUrl);
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("request-photos")
-        .getPublicUrl(filePath);
-
-      await updateRequestMutation.mutateAsync({ photo_url: publicUrl });
+      const existingUrls = request.photo_urls || [];
+      await updateRequestMutation.mutateAsync({ 
+        photo_urls: [...existingUrls, ...newUrls]
+      });
     } catch (error) {
       console.error("Photo upload error:", error);
       toast({
@@ -257,19 +264,18 @@ export default function RequestDetail() {
   };
 
   const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !id) return;
+    const files = event.target.files;
+    if (!files || files.length === 0 || !id || !request) return;
 
     setIsUploadingDoc(true);
     try {
-      // Sanitize filename to prevent upload errors
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
         const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII
-          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars
-          .replace(/_{2,}/g, '_') // Replace multiple underscores
-          .replace(/^_+|_+$/g, ''); // Trim underscores
+          .replace(/[^\x00-\x7F]/g, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/_{2,}/g, '_')
+          .replace(/^_+|_+$/g, '');
         
         if (!sanitized || sanitized === `.${extension}`) {
           return `file_${Date.now()}.${extension}`;
@@ -277,21 +283,29 @@ export default function RequestDetail() {
         return sanitized;
       };
 
-      const sanitizedName = sanitizeFilename(file.name);
-      const fileName = `${id}-${Date.now()}-${sanitizedName}`;
-      const filePath = `${fileName}`;
+      const newUrls: string[] = [];
+      
+      for (const file of Array.from(files)) {
+        const sanitizedName = sanitizeFilename(file.name);
+        const fileName = `${id}-${Date.now()}-${sanitizedName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("request-documents")
+          .upload(fileName, file, { upsert: true });
 
-      const { error: uploadError } = await supabase.storage
-        .from("request-documents")
-        .upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
 
-      if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from("request-documents")
+          .getPublicUrl(fileName);
+          
+        newUrls.push(publicUrl);
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("request-documents")
-        .getPublicUrl(filePath);
-
-      await updateRequestMutation.mutateAsync({ document_url: publicUrl });
+      const existingUrls = request.document_urls || [];
+      await updateRequestMutation.mutateAsync({ 
+        document_urls: [...existingUrls, ...newUrls]
+      });
     } catch (error) {
       console.error("Document upload error:", error);
       toast({
@@ -327,9 +341,21 @@ export default function RequestDetail() {
     setEditDialogOpen(true);
   };
 
-  const handleImageClick = (url: string) => {
-    setSelectedImage(url);
-    setImageViewerOpen(true);
+  // Collect all photos from both old single field and new array field
+  const allPhotos: string[] = [
+    ...(request?.photo_urls || []),
+    ...(request?.photo_url && !request?.photo_urls?.includes(request.photo_url) ? [request.photo_url] : [])
+  ].filter(Boolean);
+
+  // Collect all documents from both old single field and new array field
+  const allDocuments: string[] = [
+    ...(request?.document_urls || []),
+    ...(request?.document_url && !request?.document_urls?.includes(request.document_url) ? [request.document_url] : [])
+  ].filter(Boolean);
+
+  const handleImageClick = (index: number) => {
+    setGalleryInitialIndex(index);
+    setGalleryOpen(true);
   };
 
   const handleBackClick = () => {
@@ -394,10 +420,11 @@ export default function RequestDetail() {
         onOpenChange={setEditDialogOpen}
       />
       
-      <ImageViewer
-        imageUrl={selectedImage}
-        open={imageViewerOpen}
-        onOpenChange={setImageViewerOpen}
+      <ImageGallery
+        images={allPhotos}
+        initialIndex={galleryInitialIndex}
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
       />
       
       <div className="max-w-7xl mx-auto space-y-6">
@@ -716,7 +743,7 @@ export default function RequestDetail() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base">
-                    Прикреплённые файлы ({(request.photo_url ? 1 : 0) + (request.document_url ? 1 : 0)})
+                    Прикреплённые файлы ({allPhotos.length + allDocuments.length})
                   </CardTitle>
                   {canEdit && (
                     <div className="flex gap-2 shrink-0">
@@ -727,6 +754,7 @@ export default function RequestDetail() {
                           <input
                             type="file"
                             accept="image/*"
+                            multiple
                             onChange={handlePhotoUpload}
                             className="hidden"
                             disabled={isUploadingPhoto}
@@ -740,6 +768,7 @@ export default function RequestDetail() {
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.xls,.xlsx"
+                            multiple
                             onChange={handleDocumentUpload}
                             className="hidden"
                             disabled={isUploadingDoc}
@@ -751,141 +780,104 @@ export default function RequestDetail() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {request.photo_url && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
-                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                        <FileImage className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Фото заявки</p>
-                        <div className="flex gap-1 mt-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => handleImageClick(request.photo_url!)}
+                <div className="space-y-4">
+                  {/* Photos Section */}
+                  {allPhotos.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Фото ({allPhotos.length})</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {allPhotos.map((url, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleImageClick(index)}
+                            className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group"
                           >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Просмотр
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            asChild
-                          >
-                            <a href={request.photo_url} download target="_blank" rel="noopener noreferrer">
-                              <Download className="h-3 w-3 mr-1" />
-                              Скачать
-                            </a>
-                          </Button>
-                        </div>
+                            <img
+                              src={url}
+                              alt={`Фото ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
-                  {request.document_url && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
-                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Документ (Счёт/КП)</p>
-                        <div className="flex gap-1 mt-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={async () => {
-                              const newWindow = window.open('', '_blank');
-                              
-                              try {
-                                const url = new URL(request.document_url!);
-                                const pathParts = url.pathname.split('/');
-                                const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-                                
-                                if (bucketIndex === -1 || !newWindow) {
-                                  if (newWindow) newWindow.close();
-                                  window.open(request.document_url!, '_blank');
-                                  return;
-                                }
-                                
-                                const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                                const { data, error } = await supabase.storage
-                                  .from('request-documents')
-                                  .createSignedUrl(filePath, 3600);
-                                
-                                if (error || !data?.signedUrl) {
-                                  console.error('Error creating signed URL:', error);
-                                  newWindow.location.href = request.document_url!;
-                                  return;
-                                }
-                                
-                                newWindow.location.href = data.signedUrl;
-                              } catch (error) {
-                                console.error('Error opening document:', error);
-                                if (newWindow) {
-                                  newWindow.location.href = request.document_url!;
-                                }
-                              }
-                            }}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Просмотр
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={async () => {
-                              try {
-                                const url = new URL(request.document_url!);
-                                const pathParts = url.pathname.split('/');
-                                const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-                                
-                                if (bucketIndex === -1) {
-                                  window.open(request.document_url!, '_blank');
-                                  return;
-                                }
-                                
-                                const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                                const fileName = filePath.split('/').pop() || 'document.pdf';
-                                
-                                const { data, error } = await supabase.storage
-                                  .from('request-documents')
-                                  .createSignedUrl(filePath, 60);
-                                
-                                if (error || !data?.signedUrl) {
-                                  console.error('Error creating signed URL:', error);
-                                  window.open(request.document_url!, '_blank');
-                                  return;
-                                }
-                                
-                                const link = document.createElement('a');
-                                link.href = data.signedUrl;
-                                link.download = fileName;
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                
-                                setTimeout(() => {
-                                  document.body.removeChild(link);
-                                }, 100);
-                              } catch (error) {
-                                console.error('Error downloading document:', error);
-                                window.open(request.document_url!, '_blank');
-                              }
-                            }}
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Скачать
-                          </Button>
-                        </div>
+                  
+                  {/* Documents Section */}
+                  {allDocuments.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Документы ({allDocuments.length})</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {allDocuments.map((url, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">Документ {index + 1}</p>
+                              <div className="flex gap-1 mt-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={async () => {
+                                    const newWindow = window.open('', '_blank');
+                                    try {
+                                      const docUrl = new URL(url);
+                                      const pathParts = docUrl.pathname.split('/');
+                                      const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+                                      
+                                      if (bucketIndex === -1 || !newWindow) {
+                                        if (newWindow) newWindow.close();
+                                        window.open(url, '_blank');
+                                        return;
+                                      }
+                                      
+                                      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                                      const { data, error } = await supabase.storage
+                                        .from('request-documents')
+                                        .createSignedUrl(filePath, 3600);
+                                      
+                                      if (error || !data?.signedUrl) {
+                                        console.error('Error creating signed URL:', error);
+                                        newWindow.location.href = url;
+                                        return;
+                                      }
+                                      
+                                      newWindow.location.href = data.signedUrl;
+                                    } catch (error) {
+                                      console.error('Error opening document:', error);
+                                      if (newWindow) newWindow.location.href = url;
+                                    }
+                                  }}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Просмотр
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  asChild
+                                >
+                                  <a href={url} download target="_blank" rel="noopener noreferrer">
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Скачать
+                                  </a>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
-                  {!request.photo_url && !request.document_url && (
-                    <p className="text-sm text-muted-foreground col-span-2">Файлы не прикреплены</p>
+                  
+                  {allPhotos.length === 0 && allDocuments.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Файлы не прикреплены</p>
                   )}
                 </div>
               </CardContent>
