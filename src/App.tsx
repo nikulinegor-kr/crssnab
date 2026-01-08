@@ -28,6 +28,7 @@ const AgentReport = lazy(() => import("./pages/AgentReport"));
 const AgentActReport = lazy(() => import("./pages/AgentActReport"));
 const PercentCalculator = lazy(() => import("./pages/PercentCalculator"));
 const KanbanBoard = lazy(() => import("./pages/KanbanBoard"));
+const AIAnalytics = lazy(() => import("./pages/AIAnalytics"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Features = lazy(() => import("./pages/Features"));
 const Demo = lazy(() => import("./pages/Demo"));
@@ -215,6 +216,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout fullBleed hideSubscriptionBanner>
                     <KanbanBoard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai-analytics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AIAnalytics />
                   </AppLayout>
                 </ProtectedRoute>
               }

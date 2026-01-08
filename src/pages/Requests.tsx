@@ -42,6 +42,9 @@ const Requests = () => {
   // Filters
   const filters = useRequestsFilters(requests, activeTab);
 
+  // Semantic search results
+  const [semanticSearchIds, setSemanticSearchIds] = useState<string[] | null>(null);
+
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
@@ -279,10 +282,15 @@ const Requests = () => {
               addYear={filters.addYear}
               applyFilters={filters.applyFilters}
               resetFilters={filters.clearFilters}
+              onSemanticSearch={setSemanticSearchIds}
+              organizationId={currentOrgId}
             />
 
             <RequestsTable
-              requests={filters.filteredRequests}
+              requests={semanticSearchIds 
+                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
+                : filters.filteredRequests
+              }
               isLoading={isLoading}
               selectedRequestIds={selectedRequestIds}
               toggleRequestSelection={toggleRequestSelection}

@@ -51,6 +51,7 @@ const secondaryMenuItems = [
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
   { title: "Чат", url: "/chat", icon: MessageCircle },
+  { title: "AI Аналитика", url: "/ai-analytics", icon: Sparkles },
 ];
 
 const reportMenuItems = [
