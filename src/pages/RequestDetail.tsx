@@ -358,6 +358,58 @@ export default function RequestDetail() {
     setGalleryOpen(true);
   };
 
+  const handleDeletePhoto = async (urlToDelete: string) => {
+    if (!request) return;
+    
+    try {
+      const updatedUrls = (request.photo_urls || []).filter(url => url !== urlToDelete);
+      const updatedPhotoUrl = request.photo_url === urlToDelete ? null : request.photo_url;
+      
+      await updateRequestMutation.mutateAsync({ 
+        photo_urls: updatedUrls,
+        photo_url: updatedPhotoUrl
+      });
+      
+      toast({
+        title: "Успешно",
+        description: "Фото удалено",
+      });
+    } catch (error) {
+      console.error("Delete photo error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить фото",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteDocument = async (urlToDelete: string) => {
+    if (!request) return;
+    
+    try {
+      const updatedUrls = (request.document_urls || []).filter(url => url !== urlToDelete);
+      const updatedDocUrl = request.document_url === urlToDelete ? null : request.document_url;
+      
+      await updateRequestMutation.mutateAsync({ 
+        document_urls: updatedUrls,
+        document_url: updatedDocUrl
+      });
+      
+      toast({
+        title: "Успешно",
+        description: "Документ удалён",
+      });
+    } catch (error) {
+      console.error("Delete document error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить документ",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleBackClick = () => {
     navigate("/requests");
   };
@@ -787,20 +839,35 @@ export default function RequestDetail() {
                       <p className="text-sm text-muted-foreground mb-2">Фото ({allPhotos.length})</p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                         {allPhotos.map((url, index) => (
-                          <button
+                          <div
                             key={index}
-                            onClick={() => handleImageClick(index)}
                             className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group"
                           >
-                            <img
-                              src={url}
-                              alt={`Фото ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </button>
+                            <button
+                              onClick={() => handleImageClick(index)}
+                              className="w-full h-full"
+                            >
+                              <img
+                                src={url}
+                                alt={`Фото ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeletePhoto(url);
+                                }}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -812,7 +879,7 @@ export default function RequestDetail() {
                       <p className="text-sm text-muted-foreground mb-2">Документы ({allDocuments.length})</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {allDocuments.map((url, index) => (
-                          <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                          <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card group">
                             <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                               <FileText className="h-5 w-5 text-primary" />
                             </div>
@@ -868,6 +935,17 @@ export default function RequestDetail() {
                                     Скачать
                                   </a>
                                 </Button>
+                                {canEdit && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteDocument(url)}
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Удалить
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
