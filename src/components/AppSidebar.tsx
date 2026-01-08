@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
+  { title: "AI Ассистент", url: "/ai-assistant", icon: Sparkles },
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Канбан", url: "/kanban", icon: Kanban },
@@ -51,7 +52,7 @@ const secondaryMenuItems = [
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
   { title: "Чат", url: "/chat", icon: MessageCircle },
-  { title: "AI Аналитика", url: "/ai-analytics", icon: Sparkles },
+  { title: "AI Аналитика", url: "/ai-analytics", icon: BarChart3 },
 ];
 
 const reportMenuItems = [
