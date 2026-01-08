@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, X, RotateCcw } from "lucide-react";
+import { Search, X, RotateCcw, Sparkles, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,8 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SavedFiltersDropdown } from "@/components/SavedFiltersDropdown";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   STATUSES, 
   PRIORITIES, 
@@ -44,6 +50,8 @@ interface RequestsFiltersProps {
   addYear: (year: string) => boolean;
   applyFilters: (filters: Partial<RequestFilters>) => void;
   resetFilters: () => void;
+  onSemanticSearch?: (resultIds: string[] | null) => void;
+  organizationId?: string | null;
 }
 
 export const RequestsFilters = ({
@@ -66,9 +74,13 @@ export const RequestsFilters = ({
   addYear,
   applyFilters,
   resetFilters,
+  onSemanticSearch,
+  organizationId,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
+  const [isSmartSearching, setIsSmartSearching] = useState(false);
+  const [isSmartSearchActive, setIsSmartSearchActive] = useState(false);
 
   const handleAddYear = () => {
     const trimmedYear = newYear.trim();
@@ -90,13 +102,60 @@ export const RequestsFilters = ({
     }
   };
 
+  const handleSmartSearch = async () => {
+    if (!searchQuery.trim() || !organizationId || !onSemanticSearch) return;
+    
+    setIsSmartSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("semantic-search", {
+        body: { query: searchQuery, organizationId },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast({
+          title: "Ошибка AI",
+          description: data.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      onSemanticSearch(data.results || []);
+      setIsSmartSearchActive(true);
+      
+      toast({
+        title: "Умный поиск",
+        description: `Найдено ${data.results?.length || 0} релевантных заявок`,
+      });
+    } catch (error) {
+      console.error("Semantic search error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось выполнить умный поиск",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSmartSearching(false);
+    }
+  };
+
+  const clearSmartSearch = () => {
+    setIsSmartSearchActive(false);
+    if (onSemanticSearch) {
+      onSemanticSearch(null);
+    }
+  };
+
   const hasActiveFilters = 
     searchQuery !== "" ||
     statusFilter.length > 0 ||
     priorityFilter !== "all" ||
     yearFilter !== "all" ||
     applicantFilter !== "all" ||
-    !hideDelivered;
+    !hideDelivered ||
+    isSmartSearchActive;
 
   return (
     <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
@@ -107,25 +166,65 @@ export const RequestsFilters = ({
           <Input
             placeholder="Поиск..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 sm:pl-10 h-9 sm:h-10 text-sm"
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (isSmartSearchActive) {
+                clearSmartSearch();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchQuery.trim() && organizationId && onSemanticSearch) {
+                handleSmartSearch();
+              }
+            }}
+            className="pl-8 sm:pl-10 pr-20 h-9 sm:h-10 text-sm"
           />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 p-0"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
-          )}
+          <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+                onClick={() => {
+                  setSearchQuery("");
+                  clearSmartSearch();
+                }}
+              >
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+            )}
+            {searchQuery && organizationId && onSemanticSearch && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isSmartSearchActive ? "default" : "ghost"}
+                    size="sm"
+                    className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+                    onClick={handleSmartSearch}
+                    disabled={isSmartSearching}
+                  >
+                    {isSmartSearching ? (
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Умный поиск (по смыслу)</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
         {hasActiveFilters && (
           <Button
             variant="outline"
             size="icon"
-            onClick={resetFilters}
+            onClick={() => {
+              resetFilters();
+              clearSmartSearch();
+            }}
             title="Сбросить все фильтры"
             className="shrink-0 h-9 w-9 sm:h-10 sm:w-10"
           >
@@ -133,6 +232,23 @@ export const RequestsFilters = ({
           </Button>
         )}
       </div>
+
+      {/* Smart search indicator */}
+      {isSmartSearchActive && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-md text-sm">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>Умный поиск активен</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 ml-auto"
+            onClick={clearSmartSearch}
+          >
+            <X className="h-3 w-3 mr-1" />
+            Сбросить
+          </Button>
+        </div>
+      )}
 
       {/* Saved filters */}
       <div className="flex flex-wrap gap-2 items-center">

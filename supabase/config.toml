@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.auto-archive-requests]
 verify_jwt = false
+
+[functions.semantic-search]
+verify_jwt = true
+
+[functions.ai-analytics]
+verify_jwt = true
