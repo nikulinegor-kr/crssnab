@@ -25,6 +25,8 @@ export interface Request {
   comments: string | null;
   photo_url: string | null;
   document_url: string | null;
+  photo_urls: string[] | null;
+  document_urls: string[] | null;
   organization_id: string | null;
   created_at: string;
   updated_at: string;
