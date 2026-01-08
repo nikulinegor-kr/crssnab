@@ -256,7 +256,7 @@ const Dashboard = () => {
             <TabsContent value="overview">
               <RequestsAnalytics 
                 requests={filteredRequests} 
-                onEmergencyClick={handleNavigateToEmergency}
+                onRequestClick={handleRequestClick}
               />
             </TabsContent>
             <TabsContent value="performance">

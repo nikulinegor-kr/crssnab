@@ -2,14 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Request } from "@/hooks/useRequests";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { FileText, CheckCircle2, TrendingUp, Package, Clock } from "lucide-react";
-import { EmergencyInProgressWidget } from "./dashboard/EmergencyInProgressWidget";
+import { UpcomingDeliveriesWidget } from "./dashboard/UpcomingDeliveriesWidget";
 
 interface RequestsAnalyticsProps {
   requests: Request[];
-  onEmergencyClick?: () => void;
+  onRequestClick?: (request: Request) => void;
 }
 
-export function RequestsAnalytics({ requests, onEmergencyClick }: RequestsAnalyticsProps) {
+export function RequestsAnalytics({ requests, onRequestClick }: RequestsAnalyticsProps) {
   // Фильтрация заявок по текущему году для графика
   const currentYear = new Date().getFullYear();
   const currentYearRequests = requests.filter(req => {
@@ -89,10 +89,10 @@ export function RequestsAnalytics({ requests, onEmergencyClick }: RequestsAnalyt
           </CardContent>
         </Card>
 
-        {/* Аварийные в работе */}
-        <EmergencyInProgressWidget 
+        {/* Ближайшие поставки ТМЦ */}
+        <UpcomingDeliveriesWidget 
           requests={requests} 
-          onClick={onEmergencyClick}
+          onRequestClick={onRequestClick}
         />
       </div>
 
