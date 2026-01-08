@@ -115,10 +115,10 @@ const Dashboard = () => {
   // Мемоизация последних заявок
   const recentRequests = useMemo(() => filteredRequests.slice(0, 3), [filteredRequests]);
 
-  // Мемоизация заявок с датой доставки для календаря
+  // Мемоизация заявок с датой доставки для календаря (без фильтра по году заявки)
   const calendarRequests = useMemo(() => 
-    filteredRequests.filter(r => r.delivery_date), 
-    [filteredRequests]
+    (requests || []).filter(r => r.delivery_date), 
+    [requests]
   );
 
   const isLoading = requestsLoading;
