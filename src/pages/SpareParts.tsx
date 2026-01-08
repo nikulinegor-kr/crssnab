@@ -94,6 +94,30 @@ export default function SpareParts() {
     notes: "",
   });
 
+  // Fetch ALL parts for filter options (without filters applied)
+  const { data: allParts } = useQuery({
+    queryKey: ["spare-parts-all", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("spare_parts")
+        .select("equipment_type, equipment_model, category")
+        .eq("organization_id", currentOrgId);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Filter options from ALL data (not filtered)
+  const equipmentTypes = [...new Set(allParts?.map(p => p.equipment_type).filter(Boolean) || [])].sort() as string[];
+  const equipmentModels = [...new Set(allParts?.map(p => p.equipment_model).filter(Boolean) || [])].sort() as string[];
+  const categories = [...new Set(allParts?.map(p => p.category).filter(Boolean) || [])].sort() as string[];
+
+  // Combined lists for form dropdowns
+  const allEquipmentTypes = [...new Set([...DEFAULT_EQUIPMENT_TYPES, ...equipmentTypes])].sort();
+  const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...categories])].sort();
+
   const { data: spareParts, isLoading } = useQuery({
     queryKey: ["spare-parts", currentOrgId, searchQuery, filterEquipmentType, filterModel, filterCategory],
     queryFn: async () => {
@@ -125,15 +149,6 @@ export default function SpareParts() {
     },
     enabled: !!currentOrgId,
   });
-
-  // Dynamic filter options from data
-  const equipmentTypes = [...new Set(spareParts?.map(p => p.equipment_type).filter(Boolean) || [])].sort();
-  const equipmentModels = [...new Set(spareParts?.map(p => p.equipment_model).filter(Boolean) || [])].sort();
-  const categories = [...new Set(spareParts?.map(p => p.category).filter(Boolean) || [])].sort();
-
-  // Combined lists for form dropdowns
-  const allEquipmentTypes = [...new Set([...DEFAULT_EQUIPMENT_TYPES, ...equipmentTypes])].sort();
-  const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...categories])].sort();
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -428,36 +443,37 @@ export default function SpareParts() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                <Select value={filterEquipmentType} onValueChange={setFilterEquipmentType}>
+                <Select value={filterEquipmentType || "all"} onValueChange={(v) => setFilterEquipmentType(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Тип техники" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">Все типы</SelectItem>
                     {equipmentTypes.map((type) => (
-                      <SelectItem key={type} value={type!}>{type}</SelectItem>
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={filterModel} onValueChange={setFilterModel}>
+                <Select value={filterModel || "all"} onValueChange={(v) => setFilterModel(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Модель" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">Все модели</SelectItem>
                     {equipmentModels.map((model) => (
-                      <SelectItem key={model} value={model!}>{model}</SelectItem>
+                      <SelectItem key={model} value={model}>{model}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Категория" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.length > 0 ? categories.map((cat) => (
-                      <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-                    )) : (
-                      <SelectItem value="none" disabled>Нет данных</SelectItem>
-                    )}
+                    <SelectItem value="all">Все категории</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {hasActiveFilters && (
