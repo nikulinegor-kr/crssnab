@@ -6,10 +6,11 @@ import { UpcomingDeliveriesWidget } from "./dashboard/UpcomingDeliveriesWidget";
 
 interface RequestsAnalyticsProps {
   requests: Request[];
+  allRequests?: Request[]; // Все заявки для виджета поставок (без фильтра по году)
   onRequestClick?: (request: Request) => void;
 }
 
-export function RequestsAnalytics({ requests, onRequestClick }: RequestsAnalyticsProps) {
+export function RequestsAnalytics({ requests, allRequests, onRequestClick }: RequestsAnalyticsProps) {
   // Фильтрация заявок по текущему году для графика
   const currentYear = new Date().getFullYear();
   const currentYearRequests = requests.filter(req => {
@@ -91,7 +92,7 @@ export function RequestsAnalytics({ requests, onRequestClick }: RequestsAnalytic
 
         {/* Ближайшие поставки ТМЦ */}
         <UpcomingDeliveriesWidget 
-          requests={requests} 
+          requests={allRequests || requests} 
           onRequestClick={onRequestClick}
         />
       </div>

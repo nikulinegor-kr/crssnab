@@ -256,6 +256,7 @@ const Dashboard = () => {
             <TabsContent value="overview">
               <RequestsAnalytics 
                 requests={filteredRequests} 
+                allRequests={requests || []}
                 onRequestClick={handleRequestClick}
               />
             </TabsContent>
