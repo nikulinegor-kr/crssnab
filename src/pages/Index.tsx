@@ -84,7 +84,7 @@ export default function Index() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Logo on dark background */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12" style={{ backgroundColor: '#121212' }}>
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-zinc-900 dark:bg-zinc-900">
         <div className="flex items-center gap-2">
           <img 
             src="/logo.png" 
