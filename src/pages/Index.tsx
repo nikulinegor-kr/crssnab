@@ -94,7 +94,7 @@ export default function Index() {
           <div className="flex flex-col gap-2">
             <h1 className="text-5xl font-bold text-white tracking-wide">CRSS</h1>
             <p className="text-xl text-gray-500 leading-tight">
-              Система<br />управления<br />заявками
+              Система управления<br />заявками
             </p>
           </div>
         </div>
