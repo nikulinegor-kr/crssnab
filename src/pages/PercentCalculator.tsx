@@ -2,12 +2,21 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Trash2, Plus, Calculator, Delete } from "lucide-react";
+import { RotateCcw, Trash2, Plus, Calculator, Delete, Copy, History, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CalculationRow {
   id: string;
   amount: number | null;
+}
+
+interface HistoryItem {
+  id: string;
+  expression: string;
+  result: string;
+  timestamp: Date;
 }
 
 const PercentCalculator = () => {
@@ -23,6 +32,8 @@ const PercentCalculator = () => {
   const [calcPrevValue, setCalcPrevValue] = useState<number | null>(null);
   const [calcOperation, setCalcOperation] = useState<string | null>(null);
   const [calcWaitingForOperand, setCalcWaitingForOperand] = useState(false);
+  const [calcHistory, setCalcHistory] = useState<HistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const addRow = (type: "7" | "8") => {
     const newRow = { id: crypto.randomUUID(), amount: null };
@@ -182,10 +193,44 @@ const PercentCalculator = () => {
         break;
     }
 
+    // Добавить в историю
+    const historyItem: HistoryItem = {
+      id: crypto.randomUUID(),
+      expression: `${calcPrevValue} ${calcOperation} ${inputValue}`,
+      result: String(result),
+      timestamp: new Date()
+    };
+    setCalcHistory(prev => [historyItem, ...prev].slice(0, 50)); // Хранить последние 50 записей
+
     setCalcDisplay(String(result));
     setCalcPrevValue(null);
     setCalcOperation(null);
     setCalcWaitingForOperand(true);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(calcDisplay);
+      toast({
+        title: "Скопировано",
+        description: `Значение ${calcDisplay} скопировано в буфер обмена`,
+      });
+    } catch {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось скопировать значение",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const useHistoryValue = (value: string) => {
+    setCalcDisplay(value);
+    setCalcWaitingForOperand(true);
+  };
+
+  const clearHistory = () => {
+    setCalcHistory([]);
   };
 
   const CalcButton = ({ 
@@ -315,54 +360,153 @@ const PercentCalculator = () => {
         </TabsList>
 
         <TabsContent value="calc" className="mt-6">
-          <Card className="max-w-sm mx-auto">
-            <CardHeader>
-              <CardTitle className="text-lg">Обычный калькулятор</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Display */}
-              <div className="bg-muted rounded-lg p-4">
-                <div className="text-right text-3xl font-mono font-semibold truncate">
-                  {calcDisplay}
-                </div>
-                {calcOperation && (
-                  <div className="text-right text-sm text-muted-foreground mt-1">
-                    {calcPrevValue} {calcOperation}
+          <div className="max-w-lg mx-auto space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Обычный калькулятор</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowHistory(!showHistory)}
+                      className="gap-1"
+                    >
+                      <History className="h-4 w-4" />
+                      История
+                    </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Display */}
+                <div className="bg-muted rounded-lg p-4 relative group">
+                  <div className="text-right text-3xl font-mono font-semibold truncate pr-8">
+                    {calcDisplay}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={copyToClipboard}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-50 hover:opacity-100"
+                    title="Копировать"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  {calcOperation && (
+                    <div className="text-right text-sm text-muted-foreground mt-1 pr-8">
+                      {calcPrevValue} {calcOperation}
+                    </div>
+                  )}
+                </div>
 
-              {/* Buttons */}
-              <div className="grid grid-cols-4 gap-2">
-                <CalcButton onClick={calcClear} variant="clear">C</CalcButton>
-                <CalcButton onClick={calcBackspace} variant="clear">
-                  <Delete className="h-5 w-5 mx-auto" />
-                </CalcButton>
-                <CalcButton onClick={() => calcPerformOperation("%")} variant="operation">%</CalcButton>
-                <CalcButton onClick={() => calcPerformOperation("÷")} variant="operation">÷</CalcButton>
+                {/* Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  <CalcButton onClick={calcClear} variant="clear">C</CalcButton>
+                  <CalcButton onClick={calcBackspace} variant="clear">
+                    <Delete className="h-5 w-5 mx-auto" />
+                  </CalcButton>
+                  <CalcButton onClick={() => calcPerformOperation("%")} variant="operation">%</CalcButton>
+                  <CalcButton onClick={() => calcPerformOperation("÷")} variant="operation">÷</CalcButton>
 
-                <CalcButton onClick={() => calcInputDigit("7")}>7</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("8")}>8</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("9")}>9</CalcButton>
-                <CalcButton onClick={() => calcPerformOperation("×")} variant="operation">×</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("7")}>7</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("8")}>8</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("9")}>9</CalcButton>
+                  <CalcButton onClick={() => calcPerformOperation("×")} variant="operation">×</CalcButton>
 
-                <CalcButton onClick={() => calcInputDigit("4")}>4</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("5")}>5</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("6")}>6</CalcButton>
-                <CalcButton onClick={() => calcPerformOperation("-")} variant="operation">−</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("4")}>4</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("5")}>5</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("6")}>6</CalcButton>
+                  <CalcButton onClick={() => calcPerformOperation("-")} variant="operation">−</CalcButton>
 
-                <CalcButton onClick={() => calcInputDigit("1")}>1</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("2")}>2</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("3")}>3</CalcButton>
-                <CalcButton onClick={() => calcPerformOperation("+")} variant="operation">+</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("1")}>1</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("2")}>2</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("3")}>3</CalcButton>
+                  <CalcButton onClick={() => calcPerformOperation("+")} variant="operation">+</CalcButton>
 
-                <CalcButton onClick={() => calcInputDigit("00")}>00</CalcButton>
-                <CalcButton onClick={() => calcInputDigit("0")}>0</CalcButton>
-                <CalcButton onClick={calcInputDot}>.</CalcButton>
-                <CalcButton onClick={calcEquals} variant="equals">=</CalcButton>
-              </div>
-            </CardContent>
-          </Card>
+                  <CalcButton onClick={() => calcInputDigit("00")}>00</CalcButton>
+                  <CalcButton onClick={() => calcInputDigit("0")}>0</CalcButton>
+                  <CalcButton onClick={calcInputDot}>.</CalcButton>
+                  <CalcButton onClick={calcEquals} variant="equals">=</CalcButton>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* История вычислений */}
+            {showHistory && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">История вычислений</CardTitle>
+                    <div className="flex gap-2">
+                      {calcHistory.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearHistory}
+                          className="text-destructive hover:text-destructive h-8"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Очистить
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowHistory(false)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {calcHistory.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-4">
+                      История пуста
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[200px]">
+                      <div className="space-y-2">
+                        {calcHistory.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer group"
+                            onClick={() => useHistoryValue(item.result)}
+                          >
+                            <div className="flex-1">
+                              <div className="text-sm text-muted-foreground font-mono">
+                                {item.expression}
+                              </div>
+                              <div className="font-mono font-semibold text-primary">
+                                = {item.result}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(item.result);
+                                toast({
+                                  title: "Скопировано",
+                                  description: `Значение ${item.result} скопировано`,
+                                });
+                              }}
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="7" className="mt-6">
