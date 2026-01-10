@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Trash2, Plus, Calculator } from "lucide-react";
+import { RotateCcw, Trash2, Plus, Calculator, Delete } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CalculationRow {
@@ -17,6 +17,12 @@ const PercentCalculator = () => {
   const [rows8, setRows8] = useState<CalculationRow[]>([
     { id: crypto.randomUUID(), amount: null }
   ]);
+
+  // Состояние для обычного калькулятора
+  const [calcDisplay, setCalcDisplay] = useState("0");
+  const [calcPrevValue, setCalcPrevValue] = useState<number | null>(null);
+  const [calcOperation, setCalcOperation] = useState<string | null>(null);
+  const [calcWaitingForOperand, setCalcWaitingForOperand] = useState(false);
 
   const addRow = (type: "7" | "8") => {
     const newRow = { id: crypto.randomUUID(), amount: null };
@@ -81,6 +87,132 @@ const PercentCalculator = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
+  };
+
+  // Функции обычного калькулятора
+  const calcClear = () => {
+    setCalcDisplay("0");
+    setCalcPrevValue(null);
+    setCalcOperation(null);
+    setCalcWaitingForOperand(false);
+  };
+
+  const calcInputDigit = (digit: string) => {
+    if (calcWaitingForOperand) {
+      setCalcDisplay(digit);
+      setCalcWaitingForOperand(false);
+    } else {
+      setCalcDisplay(calcDisplay === "0" ? digit : calcDisplay + digit);
+    }
+  };
+
+  const calcInputDot = () => {
+    if (calcWaitingForOperand) {
+      setCalcDisplay("0.");
+      setCalcWaitingForOperand(false);
+    } else if (!calcDisplay.includes(".")) {
+      setCalcDisplay(calcDisplay + ".");
+    }
+  };
+
+  const calcBackspace = () => {
+    if (calcDisplay.length > 1) {
+      setCalcDisplay(calcDisplay.slice(0, -1));
+    } else {
+      setCalcDisplay("0");
+    }
+  };
+
+  const calcPerformOperation = (nextOperation: string) => {
+    const inputValue = parseFloat(calcDisplay);
+
+    if (calcPrevValue === null) {
+      setCalcPrevValue(inputValue);
+    } else if (calcOperation) {
+      const currentValue = calcPrevValue || 0;
+      let result = 0;
+
+      switch (calcOperation) {
+        case "+":
+          result = currentValue + inputValue;
+          break;
+        case "-":
+          result = currentValue - inputValue;
+          break;
+        case "×":
+          result = currentValue * inputValue;
+          break;
+        case "÷":
+          result = inputValue !== 0 ? currentValue / inputValue : 0;
+          break;
+        case "%":
+          result = (currentValue * inputValue) / 100;
+          break;
+      }
+
+      setCalcDisplay(String(result));
+      setCalcPrevValue(result);
+    }
+
+    setCalcWaitingForOperand(true);
+    setCalcOperation(nextOperation);
+  };
+
+  const calcEquals = () => {
+    if (calcOperation === null || calcPrevValue === null) return;
+
+    const inputValue = parseFloat(calcDisplay);
+    let result = 0;
+
+    switch (calcOperation) {
+      case "+":
+        result = calcPrevValue + inputValue;
+        break;
+      case "-":
+        result = calcPrevValue - inputValue;
+        break;
+      case "×":
+        result = calcPrevValue * inputValue;
+        break;
+      case "÷":
+        result = inputValue !== 0 ? calcPrevValue / inputValue : 0;
+        break;
+      case "%":
+        result = (calcPrevValue * inputValue) / 100;
+        break;
+    }
+
+    setCalcDisplay(String(result));
+    setCalcPrevValue(null);
+    setCalcOperation(null);
+    setCalcWaitingForOperand(true);
+  };
+
+  const CalcButton = ({ 
+    onClick, 
+    children, 
+    variant = "default" 
+  }: { 
+    onClick: () => void; 
+    children: React.ReactNode; 
+    variant?: "default" | "operation" | "equals" | "clear";
+  }) => {
+    const baseClasses = "h-14 text-xl font-medium rounded-lg transition-all active:scale-95";
+    const variantClasses = {
+      default: "bg-muted hover:bg-muted/80 text-foreground",
+      operation: "bg-primary/20 hover:bg-primary/30 text-primary",
+      equals: "bg-primary hover:bg-primary/90 text-primary-foreground",
+      clear: "bg-destructive/20 hover:bg-destructive/30 text-destructive"
+    };
+
+    return (
+      <button 
+        onClick={onClick}
+        className={`${baseClasses} ${variantClasses[variant]}`}
+      >
+        {children}
+      </button>
+    );
   };
 
   const renderTable = (rows: CalculationRow[], type: "7" | "8", totals: { totalAmount: number; totalPercent: number }) => (
@@ -158,16 +290,20 @@ const PercentCalculator = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Calculator className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-bold">Калькулятор процентов</h1>
+          <h1 className="text-2xl font-bold">Калькулятор</h1>
         </div>
         <Button variant="outline" onClick={resetAll} className="gap-2">
           <RotateCcw className="h-4 w-4" />
-          Обнулить
+          Обнулить проценты
         </Button>
       </div>
 
-      <Tabs defaultValue="7" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+      <Tabs defaultValue="calc" className="w-full">
+        <TabsList className="grid w-full max-w-[500px] grid-cols-3">
+          <TabsTrigger value="calc" className="gap-2">
+            <Calculator className="h-4 w-4" />
+            <span>Калькулятор</span>
+          </TabsTrigger>
           <TabsTrigger value="7" className="gap-2">
             <span>7%</span>
             <span className="text-xs text-muted-foreground">(/93*100)</span>
@@ -177,6 +313,57 @@ const PercentCalculator = () => {
             <span className="text-xs text-muted-foreground">(/92*100)</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="calc" className="mt-6">
+          <Card className="max-w-sm mx-auto">
+            <CardHeader>
+              <CardTitle className="text-lg">Обычный калькулятор</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Display */}
+              <div className="bg-muted rounded-lg p-4">
+                <div className="text-right text-3xl font-mono font-semibold truncate">
+                  {calcDisplay}
+                </div>
+                {calcOperation && (
+                  <div className="text-right text-sm text-muted-foreground mt-1">
+                    {calcPrevValue} {calcOperation}
+                  </div>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div className="grid grid-cols-4 gap-2">
+                <CalcButton onClick={calcClear} variant="clear">C</CalcButton>
+                <CalcButton onClick={calcBackspace} variant="clear">
+                  <Delete className="h-5 w-5 mx-auto" />
+                </CalcButton>
+                <CalcButton onClick={() => calcPerformOperation("%")} variant="operation">%</CalcButton>
+                <CalcButton onClick={() => calcPerformOperation("÷")} variant="operation">÷</CalcButton>
+
+                <CalcButton onClick={() => calcInputDigit("7")}>7</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("8")}>8</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("9")}>9</CalcButton>
+                <CalcButton onClick={() => calcPerformOperation("×")} variant="operation">×</CalcButton>
+
+                <CalcButton onClick={() => calcInputDigit("4")}>4</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("5")}>5</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("6")}>6</CalcButton>
+                <CalcButton onClick={() => calcPerformOperation("-")} variant="operation">−</CalcButton>
+
+                <CalcButton onClick={() => calcInputDigit("1")}>1</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("2")}>2</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("3")}>3</CalcButton>
+                <CalcButton onClick={() => calcPerformOperation("+")} variant="operation">+</CalcButton>
+
+                <CalcButton onClick={() => calcInputDigit("00")}>00</CalcButton>
+                <CalcButton onClick={() => calcInputDigit("0")}>0</CalcButton>
+                <CalcButton onClick={calcInputDot}>.</CalcButton>
+                <CalcButton onClick={calcEquals} variant="equals">=</CalcButton>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="7" className="mt-6">
           <Card>
@@ -204,7 +391,7 @@ const PercentCalculator = () => {
       {/* Сводка по обоим разделам */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Общая сводка</CardTitle>
+          <CardTitle className="text-lg">Общая сводка по процентам</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
