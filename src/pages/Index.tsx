@@ -122,7 +122,7 @@ export default function Index() {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-foreground">Вход в систему</h2>
+            <h2 className="text-3xl font-extralight text-foreground">Вход в систему</h2>
             <p className="text-muted-foreground">
               Введите данные для доступа к панели управления
             </p>
