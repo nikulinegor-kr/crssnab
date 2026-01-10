@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -24,6 +25,11 @@ export default function Index() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -92,8 +98,17 @@ export default function Index() {
         </div>
       </div>
 
-      {/* Right Side - Login Form on white background */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background">
+      {/* Right Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background relative">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="flex lg:hidden items-center justify-center mb-8">
