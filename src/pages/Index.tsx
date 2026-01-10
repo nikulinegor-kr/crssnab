@@ -85,16 +85,16 @@ export default function Index() {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Logo on dark background */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12" style={{ backgroundColor: '#121212' }}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-16">
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
-            className="h-64 w-auto"
+            className="h-72 w-auto"
           />
-          <div className="flex flex-col gap-1">
-            <h1 className="text-5xl font-bold text-white tracking-wide">CRSS</h1>
-            <p className="text-lg text-gray-400 leading-tight">
-              Система управления<br />заявками
+          <div className="flex flex-col gap-2">
+            <h1 className="text-6xl font-bold text-white tracking-wide">CRSS</h1>
+            <p className="text-2xl text-gray-500 leading-tight">
+              Система<br />управления<br />заявками
             </p>
           </div>
         </div>
