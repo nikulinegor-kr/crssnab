@@ -26,9 +26,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, setMonth, setYear, getYear, getMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, setMonth, setYear, getYear, getMonth, isWeekend, getDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Российские праздничные дни (фиксированные)
+const HOLIDAYS_2025: { [key: string]: string } = {
+  "01-01": "Новый год",
+  "01-02": "Новогодние каникулы",
+  "01-03": "Новогодние каникулы",
+  "01-04": "Новогодние каникулы",
+  "01-05": "Новогодние каникулы",
+  "01-06": "Новогодние каникулы",
+  "01-07": "Рождество Христово",
+  "01-08": "Новогодние каникулы",
+  "02-23": "День защитника Отечества",
+  "03-08": "Международный женский день",
+  "05-01": "Праздник Весны и Труда",
+  "05-09": "День Победы",
+  "06-12": "День России",
+  "11-04": "День народного единства",
+};
+
+const HOLIDAYS_2026: { [key: string]: string } = {
+  "01-01": "Новый год",
+  "01-02": "Новогодние каникулы",
+  "01-03": "Новогодние каникулы",
+  "01-04": "Новогодние каникулы",
+  "01-05": "Новогодние каникулы",
+  "01-06": "Новогодние каникулы",
+  "01-07": "Рождество Христово",
+  "01-08": "Новогодние каникулы",
+  "02-23": "День защитника Отечества",
+  "03-08": "Международный женский день",
+  "05-01": "Праздник Весны и Труда",
+  "05-09": "День Победы",
+  "06-12": "День России",
+  "11-04": "День народного единства",
+};
+
+// Календарь бухгалтера ИП на УСН - сроки сдачи отчётности и уплаты налогов
+interface AccountantDeadline {
+  date: string; // MM-DD
+  title: string;
+  description: string;
+  type: "tax" | "report" | "insurance";
+}
+
+const ACCOUNTANT_DEADLINES_2026: AccountantDeadline[] = [
+  // 1 квартал
+  { date: "01-09", title: "Уплата страховых взносов за декабрь", description: "Страховые взносы за сотрудников за декабрь 2025", type: "insurance" },
+  { date: "01-25", title: "Уведомление по НДФЛ", description: "Уведомление об исчисленных суммах НДФЛ", type: "report" },
+  { date: "01-28", title: "Аванс УСН за 4 квартал", description: "Авансовый платёж по УСН за 4 квартал 2025", type: "tax" },
+  { date: "02-28", title: "Уплата страховых взносов за январь", description: "Страховые взносы за сотрудников за январь", type: "insurance" },
+  { date: "03-01", title: "6-НДФЛ за год", description: "Расчёт 6-НДФЛ за 2025 год", type: "report" },
+  { date: "03-28", title: "Страховые взносы за февраль", description: "Страховые взносы за сотрудников за февраль", type: "insurance" },
+  
+  // 2 квартал  
+  { date: "04-25", title: "Декларация УСН за год", description: "Декларация по УСН за 2025 год (для ИП)", type: "report" },
+  { date: "04-28", title: "Налог УСН за год", description: "Уплата налога по УСН за 2025 год", type: "tax" },
+  { date: "04-28", title: "Аванс УСН за 1 квартал", description: "Авансовый платёж по УСН за 1 квартал 2026", type: "tax" },
+  { date: "04-28", title: "Страховые взносы за март", description: "Страховые взносы за сотрудников за март", type: "insurance" },
+  { date: "05-28", title: "Страховые взносы за апрель", description: "Страховые взносы за сотрудников за апрель", type: "insurance" },
+  { date: "06-28", title: "Страховые взносы за май", description: "Страховые взносы за сотрудников за май", type: "insurance" },
+
+  // 3 квартал
+  { date: "07-25", title: "6-НДФЛ за полугодие", description: "Расчёт 6-НДФЛ за полугодие 2026", type: "report" },
+  { date: "07-28", title: "Аванс УСН за 2 квартал", description: "Авансовый платёж по УСН за 2 квартал (полугодие)", type: "tax" },
+  { date: "07-28", title: "Страховые взносы за июнь", description: "Страховые взносы за сотрудников за июнь", type: "insurance" },
+  { date: "08-28", title: "Страховые взносы за июль", description: "Страховые взносы за сотрудников за июль", type: "insurance" },
+  { date: "09-28", title: "Страховые взносы за август", description: "Страховые взносы за сотрудников за август", type: "insurance" },
+
+  // 4 квартал
+  { date: "10-25", title: "6-НДФЛ за 9 месяцев", description: "Расчёт 6-НДФЛ за 9 месяцев 2026", type: "report" },
+  { date: "10-28", title: "Аванс УСН за 3 квартал", description: "Авансовый платёж по УСН за 3 квартал (9 месяцев)", type: "tax" },
+  { date: "10-28", title: "Страховые взносы за сентябрь", description: "Страховые взносы за сотрудников за сентябрь", type: "insurance" },
+  { date: "11-28", title: "Страховые взносы за октябрь", description: "Страховые взносы за сотрудников за октябрь", type: "insurance" },
+  { date: "12-28", title: "Страховые взносы за ноябрь", description: "Страховые взносы за сотрудников за ноябрь", type: "insurance" },
+  { date: "12-31", title: "Фиксированные взносы ИП", description: "Уплата фиксированных страховых взносов ИП за себя", type: "insurance" },
+];
 
 interface CalendarEvent {
   id: string;
@@ -243,6 +322,32 @@ export default function CalendarPage() {
     });
   };
 
+  // Проверка праздничного дня
+  const getHoliday = (day: Date): string | null => {
+    const year = getYear(day);
+    const monthDay = format(day, "MM-dd");
+    const holidays = year === 2025 ? HOLIDAYS_2025 : HOLIDAYS_2026;
+    return holidays[monthDay] || null;
+  };
+
+  // Получение событий бухгалтера для дня
+  const getAccountantDeadlines = (day: Date): AccountantDeadline[] => {
+    const monthDay = format(day, "MM-dd");
+    return ACCOUNTANT_DEADLINES_2026.filter(d => d.date === monthDay);
+  };
+
+  // Проверка, является ли день выходным или праздничным
+  const isHolidayOrWeekend = (day: Date): { isWeekend: boolean; isHoliday: boolean; holidayName: string | null } => {
+    const dayOfWeek = getDay(day);
+    const isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6; // 0 = воскресенье, 6 = суббота
+    const holidayName = getHoliday(day);
+    return {
+      isWeekend: isWeekendDay,
+      isHoliday: !!holidayName,
+      holidayName
+    };
+  };
+
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const handleMonthChange = (month: number) => setCurrentDate(setMonth(currentDate, month));
@@ -331,6 +436,8 @@ export default function CalendarPage() {
   const renderDayView = () => {
     const dayToShow = selectedDate || new Date();
     const dayEvents = getEventsForDay(dayToShow);
+    const { isWeekend: isWeekendDay, isHoliday, holidayName } = isHolidayOrWeekend(dayToShow);
+    const accountantDeadlines = getAccountantDeadlines(dayToShow);
     
     return (
       <Card className="bg-card border-border/40">
@@ -344,9 +451,14 @@ export default function CalendarPage() {
             }}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h2 className="text-xl font-semibold">
-              {format(dayToShow, "d MMMM yyyy, EEEE", { locale: ru })}
-            </h2>
+            <div className="text-center">
+              <h2 className={`text-xl font-semibold ${isHoliday || isWeekendDay ? "text-red-500" : ""}`}>
+                {format(dayToShow, "d MMMM yyyy, EEEE", { locale: ru })}
+              </h2>
+              {holidayName && (
+                <div className="text-sm text-red-500">🎉 {holidayName}</div>
+              )}
+            </div>
             <Button variant="ghost" size="icon" onClick={() => {
               const nextDay = new Date(dayToShow);
               nextDay.setDate(nextDay.getDate() + 1);
@@ -355,6 +467,38 @@ export default function CalendarPage() {
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
+
+          {/* Сроки бухгалтера */}
+          {accountantDeadlines.length > 0 && (
+            <div className="mb-4 p-3 rounded-lg bg-muted/50 border">
+              <div className="text-sm font-medium mb-2">📋 Сроки бухгалтера ИП на УСН</div>
+              <div className="space-y-2">
+                {accountantDeadlines.map((deadline, idx) => (
+                  <div 
+                    key={idx}
+                    className={`p-2 rounded-md text-sm ${
+                      deadline.type === "tax" 
+                        ? "bg-orange-500/20 border border-orange-500/30" 
+                        : deadline.type === "report"
+                        ? "bg-blue-500/20 border border-blue-500/30"
+                        : "bg-green-500/20 border border-green-500/30"
+                    }`}
+                  >
+                    <div className={`font-medium ${
+                      deadline.type === "tax" 
+                        ? "text-orange-700 dark:text-orange-300" 
+                        : deadline.type === "report"
+                        ? "text-blue-700 dark:text-blue-300"
+                        : "text-green-700 dark:text-green-300"
+                    }`}>
+                      {deadline.title}
+                    </div>
+                    <div className="text-muted-foreground text-xs mt-1">{deadline.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1 max-h-[600px] overflow-y-auto">
             {timeSlots.map((time) => {
@@ -466,12 +610,34 @@ export default function CalendarPage() {
                 </Button>
               </div>
 
+              {/* Легенда */}
+              <div className="flex flex-wrap gap-4 mb-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300"></div>
+                  <span>Выходные/праздники</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-orange-500"></div>
+                  <span>Налоги</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-blue-500"></div>
+                  <span>Отчётность</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-green-500"></div>
+                  <span>Страховые взносы</span>
+                </div>
+              </div>
+
               {/* Дни недели */}
               <div className="grid grid-cols-7 gap-px mb-px">
-                {weekDays.map((day) => (
+                {weekDays.map((day, index) => (
                   <div
                     key={day}
-                    className="p-2 text-center text-sm font-medium text-muted-foreground bg-muted/50"
+                    className={`p-2 text-center text-sm font-medium bg-muted/50 ${
+                      index >= 5 ? "text-red-500" : "text-muted-foreground"
+                    }`}
                   >
                     {day}
                   </div>
@@ -479,51 +645,110 @@ export default function CalendarPage() {
               </div>
 
               {/* Календарная сетка */}
-              <div className="grid grid-cols-7 gap-px bg-border">
-                {days.map((day) => {
-                  const dayEvents = getEventsForDay(day);
-                  const isCurrentMonth = isSameMonth(day, currentDate);
-                  const isToday = isSameDay(day, new Date());
+              <TooltipProvider>
+                <div className="grid grid-cols-7 gap-px bg-border">
+                  {days.map((day) => {
+                    const dayEvents = getEventsForDay(day);
+                    const isCurrentMonth = isSameMonth(day, currentDate);
+                    const isToday = isSameDay(day, new Date());
+                    const { isWeekend: isWeekendDay, isHoliday, holidayName } = isHolidayOrWeekend(day);
+                    const accountantDeadlines = getAccountantDeadlines(day);
 
-                  return (
-                    <div
-                      key={day.toString()}
-                      onClick={() => {
-                        setSelectedDate(day);
-                        setView("day");
-                      }}
-                      className={`
-                        min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 sm:p-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors
-                        ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
-                        ${isToday ? "ring-2 ring-primary ring-inset" : ""}
-                      `}
-                    >
-                      <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${isToday ? "text-primary" : ""}`}>
-                        {format(day, "d")}
-                      </div>
-                      <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map((event) => (
+                    return (
+                      <Tooltip key={day.toString()}>
+                        <TooltipTrigger asChild>
                           <div
-                            key={event.id}
-                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border ${getPriorityColor(event.priority)}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenDialog(undefined, event);
+                            onClick={() => {
+                              setSelectedDate(day);
+                              setView("day");
                             }}
+                            className={`
+                              min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 sm:p-2 cursor-pointer hover:bg-accent/50 transition-colors
+                              ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
+                              ${isToday ? "ring-2 ring-primary ring-inset" : ""}
+                              ${isHoliday || isWeekendDay ? "bg-red-50 dark:bg-red-950/20" : "bg-card"}
+                            `}
                           >
-                            {event.title}
+                            <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 flex items-center gap-1 ${
+                              isToday ? "text-primary" : isHoliday || isWeekendDay ? "text-red-500" : ""
+                            }`}>
+                              {format(day, "d")}
+                              {isHoliday && <span className="text-[8px]">🎉</span>}
+                            </div>
+                            
+                            {/* События бухгалтера */}
+                            <div className="space-y-0.5">
+                              {accountantDeadlines.slice(0, 1).map((deadline, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`text-[8px] sm:text-[10px] p-0.5 rounded truncate ${
+                                    deadline.type === "tax" 
+                                      ? "bg-orange-500/20 text-orange-700 dark:text-orange-300" 
+                                      : deadline.type === "report"
+                                      ? "bg-blue-500/20 text-blue-700 dark:text-blue-300"
+                                      : "bg-green-500/20 text-green-700 dark:text-green-300"
+                                  }`}
+                                >
+                                  {deadline.title}
+                                </div>
+                              ))}
+                              {accountantDeadlines.length > 1 && (
+                                <div className="text-[8px] text-muted-foreground">
+                                  +{accountantDeadlines.length - 1} сроков
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Обычные события */}
+                            <div className="space-y-0.5 mt-0.5">
+                              {dayEvents.slice(0, accountantDeadlines.length > 0 ? 1 : 2).map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border ${getPriorityColor(event.priority)}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDialog(undefined, event);
+                                  }}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {dayEvents.length > (accountantDeadlines.length > 0 ? 1 : 2) && (
+                                <div className="text-[10px] sm:text-xs text-muted-foreground">
+                                  +{dayEvents.length - (accountantDeadlines.length > 0 ? 1 : 2)}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">
-                            +{dayEvents.length - 2}
-                          </div>
+                        </TooltipTrigger>
+                        {(isHoliday || accountantDeadlines.length > 0) && (
+                          <TooltipContent side="top" className="max-w-[250px]">
+                            <div className="space-y-1">
+                              {holidayName && (
+                                <div className="font-medium text-red-500">🎉 {holidayName}</div>
+                              )}
+                              {accountantDeadlines.map((deadline, idx) => (
+                                <div key={idx} className="text-xs">
+                                  <div className={`font-medium ${
+                                    deadline.type === "tax" 
+                                      ? "text-orange-500" 
+                                      : deadline.type === "report"
+                                      ? "text-blue-500"
+                                      : "text-green-500"
+                                  }`}>
+                                    {deadline.title}
+                                  </div>
+                                  <div className="text-muted-foreground">{deadline.description}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </TooltipContent>
                         )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
             </CardContent>
           </Card>
         )}
