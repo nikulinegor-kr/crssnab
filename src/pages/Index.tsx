@@ -111,7 +111,7 @@ export default function Index() {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
 
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-8 font-extralight">
           {/* Mobile Logo */}
           <div className="flex lg:hidden items-center justify-center mb-8">
             <img 
@@ -122,7 +122,7 @@ export default function Index() {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-3xl font-extralight text-foreground">Вход в систему</h2>
+            <h2 className="text-3xl text-foreground">Вход в систему</h2>
             <p className="text-muted-foreground">
               Введите данные для доступа к панели управления
             </p>
@@ -130,7 +130,7 @@ export default function Index() {
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground font-medium">
+              <Label htmlFor="email" className="text-foreground font-normal">
                 Email
               </Label>
               <Input
@@ -146,7 +146,7 @@ export default function Index() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground font-medium">
+              <Label htmlFor="password" className="text-foreground font-normal">
                 Пароль
               </Label>
               <div className="relative">
@@ -190,7 +190,7 @@ export default function Index() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
+              className="w-full h-12 text-base font-normal bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
