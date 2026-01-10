@@ -121,32 +121,32 @@ export default function Index() {
             />
           </div>
 
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold text-foreground">Вход в систему</h2>
-            <p className="text-sm text-muted-foreground">
+          <div className="space-y-0.5">
+            <h2 className="text-xl font-extralight text-foreground">Вход в систему</h2>
+            <p className="text-xs text-muted-foreground">
               Введите данные для доступа к панели управления
             </p>
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-foreground text-sm">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-foreground text-xs font-extralight">
                 Email
               </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                className="h-11 bg-background border-border focus:border-primary"
+                className="h-10 text-sm bg-background border-border focus:border-primary"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-foreground text-sm">
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-foreground text-xs font-extralight">
                 Пароль
               </Label>
               <div className="relative">
@@ -154,7 +154,7 @@ export default function Index() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="h-11 bg-background border-border focus:border-primary pr-12"
+                  className="h-10 text-sm bg-background border-border focus:border-primary pr-10"
                   {...form.register("password")}
                 />
                 <button
@@ -166,7 +166,7 @@ export default function Index() {
                 </button>
               </div>
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               )}
             </div>
 
@@ -174,15 +174,16 @@ export default function Index() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="rememberMe"
+                  className="h-4 w-4"
                   onCheckedChange={(checked) => form.setValue("rememberMe", !!checked)}
                 />
-                <Label htmlFor="rememberMe" className="text-sm text-muted-foreground cursor-pointer">
+                <Label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer font-extralight">
                   Запомнить меня
                 </Label>
               </div>
               <Link 
                 to="/auth" 
-                className="text-sm text-primary hover:text-primary/80 transition-colors"
+                className="text-xs text-primary hover:text-primary/80 transition-colors"
               >
                 Забыли пароль?
               </Link>
@@ -190,7 +191,7 @@ export default function Index() {
 
             <Button
               type="submit"
-              className="w-full h-11 text-sm font-medium bg-primary hover:bg-primary/90"
+              className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
