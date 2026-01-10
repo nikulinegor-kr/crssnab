@@ -83,7 +83,7 @@ export default function Index() {
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
-            className="h-48 w-auto"
+            className="h-64 w-auto"
           />
           <div className="flex flex-col gap-1">
             <h1 className="text-5xl font-bold text-white tracking-wide">CRSS</h1>
