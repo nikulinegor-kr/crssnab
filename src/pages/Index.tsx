@@ -76,23 +76,23 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Left Side - Logo */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Side - Logo on gray background */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-muted">
         <div className="flex flex-col items-center gap-6 text-center">
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
-            className="h-40 w-auto"
+            className="h-32 w-auto"
           />
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1">
             <h1 className="text-4xl font-bold text-foreground tracking-wide">CRSS</h1>
-            <p className="text-xl text-muted-foreground">Система управления заявками</p>
+            <p className="text-lg text-muted-foreground">Система управления заявками</p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Login Form on white background */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
