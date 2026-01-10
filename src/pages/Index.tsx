@@ -82,18 +82,18 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Side - Logo on dark background */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-zinc-900 dark:bg-zinc-900">
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
+      {/* Left Side - Logo */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
+        <div className="flex items-center gap-3">
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
-            className="h-72 w-auto"
+            className="h-24 w-auto"
           />
-          <div className="flex flex-col gap-2">
-            <h1 className="text-5xl font-bold text-white tracking-wide">CRSS</h1>
-            <p className="text-xl text-gray-500 leading-tight">
+          <div className="flex flex-col">
+            <h1 className="text-4xl font-bold text-foreground tracking-wide">CRSS</h1>
+            <p className="text-sm text-muted-foreground leading-tight">
               Система управления<br />заявками
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function Index() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-background relative">
+      <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-12 lg:pt-32 relative">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
@@ -111,7 +111,7 @@ export default function Index() {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
 
-        <div className="w-full max-w-md space-y-8 font-extralight">
+        <div className="w-full max-w-md space-y-6">
           {/* Mobile Logo */}
           <div className="flex lg:hidden items-center justify-center mb-8">
             <img 
@@ -121,23 +121,23 @@ export default function Index() {
             />
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-3xl text-foreground">Вход в систему</h2>
-            <p className="text-muted-foreground">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold text-foreground">Вход в систему</h2>
+            <p className="text-sm text-muted-foreground">
               Введите данные для доступа к панели управления
             </p>
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground font-normal">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-foreground text-sm">
                 Email
               </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                className="h-12 bg-background border-border focus:border-primary"
+                className="h-11 bg-background border-border focus:border-primary"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
@@ -145,8 +145,8 @@ export default function Index() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground font-normal">
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-foreground text-sm">
                 Пароль
               </Label>
               <div className="relative">
@@ -154,15 +154,15 @@ export default function Index() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="h-12 bg-background border-border focus:border-primary pr-12"
+                  className="h-11 bg-background border-border focus:border-primary pr-12"
                   {...form.register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {form.formState.errors.password && (
@@ -190,15 +190,15 @@ export default function Index() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-normal bg-primary hover:bg-primary/90"
+              className="w-full h-11 text-sm font-medium bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
-              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Войти
             </Button>
           </form>
 
-          <p className="text-center text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Нет аккаунта?{" "}
             <Link 
               to="/auth" 
@@ -207,15 +207,6 @@ export default function Index() {
               Зарегистрироваться
             </Link>
           </p>
-
-          <div className="pt-4 border-t border-border">
-            <Link 
-              to="/landing"
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 transition-colors"
-            >
-              Узнать больше о системе →
-            </Link>
-          </div>
         </div>
       </div>
     </div>
