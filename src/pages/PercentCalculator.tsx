@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,165 @@ const PercentCalculator = () => {
   const [calcWaitingForOperand, setCalcWaitingForOperand] = useState(false);
   const [calcHistory, setCalcHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState("calc");
+
+  // Функции калькулятора (определены до useEffect)
+  const calcClear = useCallback(() => {
+    setCalcDisplay("0");
+    setCalcPrevValue(null);
+    setCalcOperation(null);
+    setCalcWaitingForOperand(false);
+  }, []);
+
+  const calcInputDigit = useCallback((digit: string) => {
+    setCalcDisplay(prev => {
+      if (calcWaitingForOperand) {
+        setCalcWaitingForOperand(false);
+        return digit;
+      }
+      return prev === "0" ? digit : prev + digit;
+    });
+  }, [calcWaitingForOperand]);
+
+  const calcInputDot = useCallback(() => {
+    if (calcWaitingForOperand) {
+      setCalcDisplay("0.");
+      setCalcWaitingForOperand(false);
+    } else {
+      setCalcDisplay(prev => prev.includes(".") ? prev : prev + ".");
+    }
+  }, [calcWaitingForOperand]);
+
+  const calcBackspace = useCallback(() => {
+    setCalcDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : "0");
+  }, []);
+
+  const calcPerformOperation = useCallback((nextOperation: string) => {
+    const inputValue = parseFloat(calcDisplay);
+
+    if (calcPrevValue === null) {
+      setCalcPrevValue(inputValue);
+    } else if (calcOperation) {
+      const currentValue = calcPrevValue || 0;
+      let result = 0;
+
+      switch (calcOperation) {
+        case "+":
+          result = currentValue + inputValue;
+          break;
+        case "-":
+          result = currentValue - inputValue;
+          break;
+        case "×":
+          result = currentValue * inputValue;
+          break;
+        case "÷":
+          result = inputValue !== 0 ? currentValue / inputValue : 0;
+          break;
+        case "%":
+          result = (currentValue * inputValue) / 100;
+          break;
+      }
+
+      setCalcDisplay(String(result));
+      setCalcPrevValue(result);
+    }
+
+    setCalcWaitingForOperand(true);
+    setCalcOperation(nextOperation);
+  }, [calcDisplay, calcPrevValue, calcOperation]);
+
+  const calcEquals = useCallback(() => {
+    if (calcOperation === null || calcPrevValue === null) return;
+
+    const inputValue = parseFloat(calcDisplay);
+    let result = 0;
+
+    switch (calcOperation) {
+      case "+":
+        result = calcPrevValue + inputValue;
+        break;
+      case "-":
+        result = calcPrevValue - inputValue;
+        break;
+      case "×":
+        result = calcPrevValue * inputValue;
+        break;
+      case "÷":
+        result = inputValue !== 0 ? calcPrevValue / inputValue : 0;
+        break;
+      case "%":
+        result = (calcPrevValue * inputValue) / 100;
+        break;
+    }
+
+    // Добавить в историю
+    const historyItem: HistoryItem = {
+      id: crypto.randomUUID(),
+      expression: `${calcPrevValue} ${calcOperation} ${inputValue}`,
+      result: String(result),
+      timestamp: new Date()
+    };
+    setCalcHistory(prev => [historyItem, ...prev].slice(0, 50));
+
+    setCalcDisplay(String(result));
+    setCalcPrevValue(null);
+    setCalcOperation(null);
+    setCalcWaitingForOperand(true);
+  }, [calcDisplay, calcPrevValue, calcOperation]);
+
+  // Поддержка клавиатуры
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Только на вкладке калькулятора
+      if (activeTab !== "calc") return;
+      
+      // Игнорируем, если фокус в input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const key = e.key;
+
+      if (/^[0-9]$/.test(key)) {
+        e.preventDefault();
+        calcInputDigit(key);
+      } else if (key === ".") {
+        e.preventDefault();
+        calcInputDot();
+      } else if (key === "Backspace") {
+        e.preventDefault();
+        calcBackspace();
+      } else if (key === "Escape" || key === "c" || key === "C") {
+        e.preventDefault();
+        calcClear();
+      } else if (key === "+" || key === "=") {
+        if (e.shiftKey && key === "=") {
+          e.preventDefault();
+          calcPerformOperation("+");
+        } else if (key === "+") {
+          e.preventDefault();
+          calcPerformOperation("+");
+        }
+      } else if (key === "-") {
+        e.preventDefault();
+        calcPerformOperation("-");
+      } else if (key === "*") {
+        e.preventDefault();
+        calcPerformOperation("×");
+      } else if (key === "/") {
+        e.preventDefault();
+        calcPerformOperation("÷");
+      } else if (key === "%") {
+        e.preventDefault();
+        calcPerformOperation("%");
+      } else if (key === "Enter") {
+        e.preventDefault();
+        calcEquals();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTab, calcInputDigit, calcInputDot, calcBackspace, calcClear, calcPerformOperation, calcEquals]);
 
   const addRow = (type: "7" | "8") => {
     const newRow = { id: crypto.randomUUID(), amount: null };
@@ -98,114 +257,6 @@ const PercentCalculator = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
-  };
-
-  // Функции обычного калькулятора
-  const calcClear = () => {
-    setCalcDisplay("0");
-    setCalcPrevValue(null);
-    setCalcOperation(null);
-    setCalcWaitingForOperand(false);
-  };
-
-  const calcInputDigit = (digit: string) => {
-    if (calcWaitingForOperand) {
-      setCalcDisplay(digit);
-      setCalcWaitingForOperand(false);
-    } else {
-      setCalcDisplay(calcDisplay === "0" ? digit : calcDisplay + digit);
-    }
-  };
-
-  const calcInputDot = () => {
-    if (calcWaitingForOperand) {
-      setCalcDisplay("0.");
-      setCalcWaitingForOperand(false);
-    } else if (!calcDisplay.includes(".")) {
-      setCalcDisplay(calcDisplay + ".");
-    }
-  };
-
-  const calcBackspace = () => {
-    if (calcDisplay.length > 1) {
-      setCalcDisplay(calcDisplay.slice(0, -1));
-    } else {
-      setCalcDisplay("0");
-    }
-  };
-
-  const calcPerformOperation = (nextOperation: string) => {
-    const inputValue = parseFloat(calcDisplay);
-
-    if (calcPrevValue === null) {
-      setCalcPrevValue(inputValue);
-    } else if (calcOperation) {
-      const currentValue = calcPrevValue || 0;
-      let result = 0;
-
-      switch (calcOperation) {
-        case "+":
-          result = currentValue + inputValue;
-          break;
-        case "-":
-          result = currentValue - inputValue;
-          break;
-        case "×":
-          result = currentValue * inputValue;
-          break;
-        case "÷":
-          result = inputValue !== 0 ? currentValue / inputValue : 0;
-          break;
-        case "%":
-          result = (currentValue * inputValue) / 100;
-          break;
-      }
-
-      setCalcDisplay(String(result));
-      setCalcPrevValue(result);
-    }
-
-    setCalcWaitingForOperand(true);
-    setCalcOperation(nextOperation);
-  };
-
-  const calcEquals = () => {
-    if (calcOperation === null || calcPrevValue === null) return;
-
-    const inputValue = parseFloat(calcDisplay);
-    let result = 0;
-
-    switch (calcOperation) {
-      case "+":
-        result = calcPrevValue + inputValue;
-        break;
-      case "-":
-        result = calcPrevValue - inputValue;
-        break;
-      case "×":
-        result = calcPrevValue * inputValue;
-        break;
-      case "÷":
-        result = inputValue !== 0 ? calcPrevValue / inputValue : 0;
-        break;
-      case "%":
-        result = (calcPrevValue * inputValue) / 100;
-        break;
-    }
-
-    // Добавить в историю
-    const historyItem: HistoryItem = {
-      id: crypto.randomUUID(),
-      expression: `${calcPrevValue} ${calcOperation} ${inputValue}`,
-      result: String(result),
-      timestamp: new Date()
-    };
-    setCalcHistory(prev => [historyItem, ...prev].slice(0, 50)); // Хранить последние 50 записей
-
-    setCalcDisplay(String(result));
-    setCalcPrevValue(null);
-    setCalcOperation(null);
-    setCalcWaitingForOperand(true);
   };
 
   const copyToClipboard = async () => {
@@ -343,7 +394,7 @@ const PercentCalculator = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="calc" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-[500px] grid-cols-3">
           <TabsTrigger value="calc" className="gap-2">
             <Calculator className="h-4 w-4" />
