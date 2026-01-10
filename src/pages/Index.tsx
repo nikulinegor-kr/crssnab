@@ -85,7 +85,7 @@ export default function Index() {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Logo on dark background */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12" style={{ backgroundColor: '#121212' }}>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
