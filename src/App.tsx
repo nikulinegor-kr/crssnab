@@ -12,6 +12,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Lazy load all pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ImportData = lazy(() => import("./pages/ImportData"));
 const Requests = lazy(() => import("./pages/Requests"));
@@ -68,6 +69,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/about" element={<About />} />
