@@ -85,7 +85,7 @@ export default function Index() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-background">
       {/* Left Side - Logo */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col items-center text-center gap-4">
           <img 
             src="/logo.png" 
             alt="CRSS Logo" 
@@ -94,14 +94,14 @@ export default function Index() {
           <div className="flex flex-col gap-1">
             <h1 className="text-5xl font-bold text-foreground tracking-wide">CRSS</h1>
             <p className="text-lg text-muted-foreground leading-tight">
-              Система управления<br />заявками
+              Система управления заявками
             </p>
           </div>
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-12 lg:pt-32 relative">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
