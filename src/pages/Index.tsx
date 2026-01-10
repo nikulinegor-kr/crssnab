@@ -76,14 +76,14 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
       {/* Left Side - Logo */}
-      <div className="hidden lg:flex lg:w-1/2 bg-muted/30 items-center justify-center p-12">
-        <div className="flex items-center gap-4">
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
+        <div className="flex flex-col items-center gap-4 text-center">
           <img 
             src="/crss-logo.png" 
             alt="CRSS Logo" 
-            className="h-16 w-auto"
+            className="h-20 w-auto"
           />
           <div>
             <h1 className="text-4xl font-black text-foreground tracking-tight">CRSS</h1>
