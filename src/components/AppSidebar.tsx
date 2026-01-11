@@ -60,9 +60,6 @@ const mainMenuItems = [
 const moreMenuItems = [
   { title: "AI Ассистент", url: "/ai-assistant", icon: Sparkles },
   { title: "Календарь", url: "/calendar", icon: Calendar },
-  { title: "Задачи", url: "/tasks", icon: CheckSquare },
-  { title: "Чат", url: "/chat", icon: MessageCircle },
-  { title: "AI Аналитика", url: "/ai-analytics", icon: BarChart3 },
   { title: "Запчасти", url: "/spare-parts", icon: Package },
   { title: "Поставщики", url: "/suppliers", icon: Users },
 ];
