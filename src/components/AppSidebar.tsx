@@ -16,7 +16,9 @@ import {
   Percent,
   Sun,
   Moon,
-  Package
+  Package,
+  ChevronDown,
+  MoreHorizontal
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -32,6 +34,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -40,21 +43,28 @@ import {
   useSidebar,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
+// Основные пункты: Дашборд, Заявки, Канбан
 const mainMenuItems = [
-  { title: "AI Ассистент", url: "/ai-assistant", icon: Sparkles },
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
   { title: "Канбан", url: "/kanban", icon: Kanban },
-  { title: "Запчасти", url: "/spare-parts", icon: Package },
-  { title: "Поставщики", url: "/suppliers", icon: Users },
 ];
 
-const secondaryMenuItems = [
+// Всё остальное в "Ещё"
+const moreMenuItems = [
+  { title: "AI Ассистент", url: "/ai-assistant", icon: Sparkles },
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Задачи", url: "/tasks", icon: CheckSquare },
   { title: "Чат", url: "/chat", icon: MessageCircle },
   { title: "AI Аналитика", url: "/ai-analytics", icon: BarChart3 },
+  { title: "Запчасти", url: "/spare-parts", icon: Package },
+  { title: "Поставщики", url: "/suppliers", icon: Users },
 ];
 
 const reportMenuItems = [
@@ -168,7 +178,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Основное меню */}
+        {/* Основное меню: Дашборд, Заявки, Канбан */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -179,26 +189,56 @@ export function AppSidebar() {
 
         <SidebarSeparator />
 
-        {/* Календарь и задачи */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(secondaryMenuItems)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Ещё - сворачиваемая группа */}
+        <Collapsible defaultOpen={false} className="group/collapsible">
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
+                <div className="flex items-center gap-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                  {showText && <span>Ещё</span>}
+                </div>
+                {showText && (
+                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                )}
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu className="pl-2">
+                  {renderMenuItems(moreMenuItems)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
         {/* Отчеты агента - показываем только для администраторов */}
         {!isDemoMode && isAdmin && (
           <>
             <SidebarSeparator />
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {renderMenuItems(reportMenuItems)}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <Collapsible defaultOpen={false} className="group/collapsible-reports">
+              <SidebarGroup>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
+                    <div className="flex items-center gap-2">
+                      <FileBarChart className="h-4 w-4" />
+                      {showText && <span>Отчёты</span>}
+                    </div>
+                    {showText && (
+                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-reports:rotate-180" />
+                    )}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="pl-2">
+                      {renderMenuItems(reportMenuItems)}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
           </>
         )}
 
