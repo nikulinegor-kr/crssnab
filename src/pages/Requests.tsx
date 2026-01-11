@@ -59,22 +59,19 @@ const Requests = () => {
   // Telegram config state
   const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean | null>(null);
 
-  // Check Telegram configuration
+  // Check Telegram configuration using secure RPC (no credential exposure)
   useEffect(() => {
     const checkTelegramConfig = async () => {
       if (!currentOrgId) return;
 
       try {
-        const { data, error } = await supabase
-          .from("organizations")
-          .select("telegram_bot_token, telegram_chat_id")
-          .eq("id", currentOrgId)
-          .single();
+        const { data, error } = await supabase.rpc('is_telegram_configured', { 
+          _org_id: currentOrgId 
+        });
 
         if (error) throw error;
 
-        const isConfigured = !!(data?.telegram_bot_token && data?.telegram_chat_id);
-        setIsTelegramConfigured(isConfigured);
+        setIsTelegramConfigured(data === true);
       } catch (error) {
         console.error("Error checking Telegram config:", error);
         setIsTelegramConfigured(false);

@@ -1760,6 +1760,17 @@ export type Database = {
         Returns: undefined
       }
       get_client_org_id: { Args: { _user_id: string }; Returns: string }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          id: string
+          name: string
+          organization_id: string
+          used_at: string
+        }[]
+      }
       get_org_subscription_limits: {
         Args: { _org_id: string }
         Returns: {
@@ -1785,8 +1796,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_telegram_credentials: {
+        Args: { _org_id: string }
+        Returns: {
+          telegram_auto_send_on_create: boolean
+          telegram_auto_send_on_status_change: boolean
+          telegram_bot_token: string
+          telegram_chat_id: string
+        }[]
+      }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
       is_client: { Args: { _user_id: string }; Returns: boolean }
+      is_telegram_configured: { Args: { _org_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           _action: string
