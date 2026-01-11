@@ -28,24 +28,26 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("telegram_bot_token, telegram_chat_id, telegram_auto_send_on_create, telegram_auto_send_on_status_change")
-        .eq("id", organizationId)
-        .single();
+      // Use admin-only RPC to get Telegram credentials securely
+      const { data, error } = await supabase.rpc('get_telegram_credentials', {
+        _org_id: organizationId
+      });
 
       if (error) throw error;
 
-      if (data) {
-        setBotToken(data.telegram_bot_token || "");
-        setChatId(data.telegram_chat_id || "");
-        setAutoSendOnCreate(data.telegram_auto_send_on_create ?? true);
-        setAutoSendOnStatusChange(data.telegram_auto_send_on_status_change ?? true);
+      // RPC returns an array, get first row if exists
+      const settings = Array.isArray(data) ? data[0] : data;
+      
+      if (settings) {
+        setBotToken(settings.telegram_bot_token || "");
+        setChatId(settings.telegram_chat_id || "");
+        setAutoSendOnCreate(settings.telegram_auto_send_on_create ?? true);
+        setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
       }
     } catch (error: any) {
       toast({
         title: "Ошибка",
-        description: "Не удалось загрузить настройки",
+        description: "Не удалось загрузить настройки. Убедитесь, что у вас есть права администратора.",
         variant: "destructive",
       });
     } finally {
