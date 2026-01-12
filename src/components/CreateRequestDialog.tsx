@@ -119,13 +119,31 @@ const requestSchema = z.object({
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
+interface InitialRequestData {
+  description?: string;
+  status?: string;
+  priority?: string;
+  applicant?: string;
+  executor?: string;
+  object_id?: string;
+  estimated_delivery_days?: number | null;
+  availability_delivery_time?: string;
+  contractor?: string;
+  invoice_number?: string;
+  amount?: number;
+  payment_percentage?: number;
+  transport_company?: string;
+  comments?: string;
+}
+
 interface CreateRequestDialogProps {
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  initialData?: InitialRequestData;
 }
 
-export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange }: CreateRequestDialogProps) => {
+export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange, initialData }: CreateRequestDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const isMobile = useIsMobile();
@@ -242,23 +260,23 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     resolver: zodResolver(requestSchema),
     defaultValues: {
       request_date: new Date().toISOString().split("T")[0],
-      description: "",
-      status: "Новая заявка",
-      priority: "Планово",
-      applicant: "",
-      executor: "",
-      object_id: "",
-      estimated_delivery_days: null,
-      availability_delivery_time: "",
-      contractor: "",
+      description: initialData?.description || "",
+      status: initialData?.status || "Новая заявка",
+      priority: initialData?.priority || "Планово",
+      applicant: initialData?.applicant || "",
+      executor: initialData?.executor || "",
+      object_id: initialData?.object_id || "",
+      estimated_delivery_days: initialData?.estimated_delivery_days ?? null,
+      availability_delivery_time: initialData?.availability_delivery_time || "",
+      contractor: initialData?.contractor || "",
       invoice_number: "",
       amount: 0,
       payment_percentage: 0,
       shipment_date: "",
       delivery_date: "",
-      transport_company: "",
+      transport_company: initialData?.transport_company || "",
       waybill_number: "",
-      comments: "",
+      comments: initialData?.comments || "",
     },
   });
 
