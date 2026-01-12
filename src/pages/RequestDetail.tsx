@@ -24,13 +24,15 @@ import {
   X,
   Trash2,
   Send,
-  Loader2
+  Loader2,
+  Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
+import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ImageGallery } from "@/components/ImageGallery";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +74,7 @@ export default function RequestDetail() {
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -472,6 +475,26 @@ export default function RequestDetail() {
         onOpenChange={setEditDialogOpen}
       />
       
+      <CreateRequestDialog
+        open={copyDialogOpen}
+        onOpenChange={setCopyDialogOpen}
+        initialData={{
+          description: request.description,
+          status: request.status,
+          priority: request.priority || undefined,
+          applicant: request.applicant || undefined,
+          executor: request.executor || undefined,
+          object_id: request.object_id || undefined,
+          estimated_delivery_days: request.estimated_delivery_days,
+          availability_delivery_time: request.availability_delivery_time || undefined,
+          contractor: request.contractor || undefined,
+          transport_company: request.transport_company || undefined,
+          comments: request.comments || undefined,
+        }}
+      >
+        <span />
+      </CreateRequestDialog>
+      
       <ImageGallery
         images={allPhotos}
         initialIndex={galleryInitialIndex}
@@ -520,10 +543,14 @@ export default function RequestDetail() {
               </div>
             </div>
             {canEdit && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button onClick={handleEditClick} variant="outline" className="gap-2">
                   <Edit className="h-4 w-4" />
                   Редактировать
+                </Button>
+                <Button onClick={() => setCopyDialogOpen(true)} variant="outline" className="gap-2">
+                  <Copy className="h-4 w-4" />
+                  Копировать
                 </Button>
                 <Button 
                   onClick={handleSendTelegram} 
