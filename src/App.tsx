@@ -23,7 +23,10 @@ const TasksPage = lazy(() => import("./pages/TasksPage"));
 const ChatPage = lazy(() => import("./pages/ChatPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const Auth = lazy(() => import("./pages/Auth"));
-const SelectOrganization = lazy(() => import("./pages/SelectOrganization"));
+const SelectOrganization = lazy(() => import("./pages/SelectOrganization").catch(() => {
+  window.location.reload();
+  return { default: () => null };
+}));
 const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings"));
 const AgentReport = lazy(() => import("./pages/AgentReport"));
 const AgentActReport = lazy(() => import("./pages/AgentActReport"));
