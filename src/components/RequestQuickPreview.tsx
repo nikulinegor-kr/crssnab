@@ -7,7 +7,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Calendar, User, Truck, FileText, DollarSign, AlertCircle } from "lucide-react";
+import { Calendar, User, Truck, FileText, RussianRuble, AlertCircle } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 
 interface RequestQuickPreviewProps {
@@ -99,7 +99,7 @@ export const RequestQuickPreview = ({
 
               {request.amount && request.amount > 0 && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <DollarSign className="h-3.5 w-3.5 shrink-0" />
+                  <RussianRuble className="h-3.5 w-3.5 shrink-0" />
                   <span>
                     {new Intl.NumberFormat("ru-RU", {
                       style: "currency",
