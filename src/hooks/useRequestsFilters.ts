@@ -32,11 +32,13 @@ const FILTERS_STORAGE_KEY = "requests_filters";
 export const getStatusColor = (status: string) => {
   switch (status) {
     case "Доставлено":
-      return "#10b981"; // Зелёный
+      return "#10b981"; // Изумрудный
     case "Доставлено в ТК":
-      return "#14b8a6"; // Бирюзовый
-    case "Выполнено":
       return "#22c55e"; // Ярко-зелёный
+    case "Выполнено":
+      return "#15803d"; // Тёмно-зелёный
+    case "В пути":
+      return "#4ade80"; // Светло-зелёный
     case "Новая заявка":
       return "#3b82f6"; // Синий
     case "На согласовании":
@@ -47,8 +49,6 @@ export const getStatusColor = (status: string) => {
       return "#f97316"; // Оранжевый
     case "В работе":
       return "#eab308"; // Жёлтый
-    case "В пути":
-      return "#06b6d4"; // Голубой
     default:
       return "#6b7280";
   }
