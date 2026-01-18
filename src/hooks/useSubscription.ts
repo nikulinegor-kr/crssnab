@@ -43,7 +43,7 @@ export const useSubscription = () => {
           .from("subscriptions")
           .select("status, trial_ends_at, current_period_end")
           .eq("organization_id", currentOrgId)
-          .single();
+          .maybeSingle();
 
         if (subError && subError.code !== "PGRST116") {
           console.error("Error fetching subscription:", subError);
