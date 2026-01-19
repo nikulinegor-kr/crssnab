@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,39 +9,37 @@ import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { lazyWithRetry } from "./lib/lazyWithRetry";
 
-// Lazy load all pages for code splitting
-const Index = lazy(() => import("./pages/Index"));
-const Landing = lazy(() => import("./pages/Landing"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const ImportData = lazy(() => import("./pages/ImportData"));
-const Requests = lazy(() => import("./pages/Requests"));
-const RequestDetail = lazy(() => import("./pages/RequestDetail"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
-const CalendarPage = lazy(() => import("./pages/CalendarPage"));
-const TasksPage = lazy(() => import("./pages/TasksPage"));
-const ChatPage = lazy(() => import("./pages/ChatPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const Auth = lazy(() => import("./pages/Auth"));
-const SelectOrganization = lazy(() => import("./pages/SelectOrganization").catch(() => {
-  window.location.reload();
-  return { default: () => null };
-}));
-const OrganizationSettings = lazy(() => import("./pages/OrganizationSettings"));
-const AgentReport = lazy(() => import("./pages/AgentReport"));
-const AgentActReport = lazy(() => import("./pages/AgentActReport"));
-const PercentCalculator = lazy(() => import("./pages/PercentCalculator"));
-const KanbanBoard = lazy(() => import("./pages/KanbanBoard"));
-const AIAnalytics = lazy(() => import("./pages/AIAnalytics"));
-const AIAssistant = lazy(() => import("./pages/AIAssistant"));
-const SpareParts = lazy(() => import("./pages/SpareParts"));
-const Pricing = lazy(() => import("./pages/Pricing"));
-const Features = lazy(() => import("./pages/Features"));
-const Demo = lazy(() => import("./pages/Demo"));
-const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
-const SystemDemo = lazy(() => import("./pages/SystemDemo"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Lazy load all pages with retry mechanism for code splitting
+const Index = lazyWithRetry(() => import("./pages/Index"));
+const Landing = lazyWithRetry(() => import("./pages/Landing"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
+const Requests = lazyWithRetry(() => import("./pages/Requests"));
+const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
+const Suppliers = lazyWithRetry(() => import("./pages/Suppliers"));
+const CalendarPage = lazyWithRetry(() => import("./pages/CalendarPage"));
+const TasksPage = lazyWithRetry(() => import("./pages/TasksPage"));
+const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
+const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const SelectOrganization = lazyWithRetry(() => import("./pages/SelectOrganization"));
+const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSettings"));
+const AgentReport = lazyWithRetry(() => import("./pages/AgentReport"));
+const AgentActReport = lazyWithRetry(() => import("./pages/AgentActReport"));
+const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"));
+const KanbanBoard = lazyWithRetry(() => import("./pages/KanbanBoard"));
+const AIAnalytics = lazyWithRetry(() => import("./pages/AIAnalytics"));
+const AIAssistant = lazyWithRetry(() => import("./pages/AIAssistant"));
+const SpareParts = lazyWithRetry(() => import("./pages/SpareParts"));
+const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
+const Features = lazyWithRetry(() => import("./pages/Features"));
+const Demo = lazyWithRetry(() => import("./pages/Demo"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const Contact = lazyWithRetry(() => import("./pages/Contact"));
+const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 // Loading fallback component
 const PageLoader = () => (
