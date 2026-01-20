@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/command";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -82,10 +81,14 @@ export function ContractorSelect({
   // Проверка дубликата
   const checkDuplicate = (name: string, excludeId?: string): boolean => {
     const normalized = normalizeForComparison(name);
-    return options.some(opt => 
-      normalizeForComparison(opt.label) === normalized && opt.value !== excludeId
+    return options.some(
+      (opt) =>
+        normalizeForComparison(opt.label) === normalized && opt.value !== excludeId
     );
   };
+
+  const isUuid = (v: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
   const handleSelect = (selectedLabel: string) => {
     onChange(selectedLabel);
@@ -125,7 +128,7 @@ export function ContractorSelect({
 
   const handleDelete = async () => {
     if (!deleteConfirm || !onDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await onDelete(deleteConfirm.value);
@@ -133,6 +136,12 @@ export function ContractorSelect({
         onChange("");
       }
       setDeleteConfirm(null);
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error?.message || "Не удалось удалить контрагента",
+        variant: "destructive",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -140,9 +149,9 @@ export function ContractorSelect({
 
   const handleEdit = async () => {
     if (!editItem || !onEdit || !editName.trim()) return;
-    
+
     const formattedName = formatCompanyName(editName.trim());
-    
+
     // Проверка на дубликат (исключая текущий элемент)
     if (checkDuplicate(formattedName, editItem.value)) {
       toast({
@@ -152,7 +161,7 @@ export function ContractorSelect({
       });
       return;
     }
-    
+
     setIsEditing(true);
     try {
       await onEdit(editItem.value, formattedName);
@@ -161,6 +170,12 @@ export function ContractorSelect({
       }
       setEditItem(null);
       setEditName("");
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error?.message || "Не удалось обновить контрагента",
+        variant: "destructive",
+      });
     } finally {
       setIsEditing(false);
     }
@@ -216,56 +231,70 @@ export function ContractorSelect({
             <CommandList className="max-h-[300px]">
               <CommandEmpty>Ничего не найдено</CommandEmpty>
               <CommandGroup>
-                {filteredOptions.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    value={option.value}
-                    onSelect={() => handleSelect(option.label)}
-                    className="flex items-center justify-between group"
-                  >
-                    <div className="flex items-center">
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === option.label ? "opacity-100" : "opacity-0"
+                {filteredOptions.map((option) => {
+                  const canMutate = isUuid(option.value);
+
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleSelect(option.label)}
+                      className="flex items-center justify-between group"
+                    >
+                      <div className="flex items-center">
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === option.label ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {option.label}
+                      </div>
+                      <div className="flex gap-1">
+                        {onEdit && canMutate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsSearchOpen(false);
+                              openEditDialog(option);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
                         )}
-                      />
-                      {option.label}
-                    </div>
-                    <div className="flex gap-1">
-                      {onEdit && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSearchOpen(false);
-                            openEditDialog(option);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {onDelete && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSearchOpen(false);
-                            setDeleteConfirm(option);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  </CommandItem>
-                ))}
+                        {onDelete && canMutate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsSearchOpen(false);
+                              setDeleteConfirm(option);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
