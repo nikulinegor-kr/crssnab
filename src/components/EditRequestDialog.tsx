@@ -746,7 +746,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                           value={field.value || ""}
                           onChange={field.onChange}
                           disabled={isViewer}
-                          options={suppliers?.map(s => ({ value: s.name, label: s.name })) || []}
+                          options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
                           placeholder="Выбрать из списка"
                           onAddNew={async (name) => {
                             const { data: userData } = await supabase.auth.getUser();
@@ -764,6 +764,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                             toast({
                               title: "Успешно",
                               description: "Контрагент добавлен",
+                            });
+                          }}
+                          onDelete={async (supplierId) => {
+                            const { error } = await supabase
+                              .from("suppliers")
+                              .delete()
+                              .eq("id", supplierId);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                            toast({
+                              title: "Успешно",
+                              description: "Контрагент удалён",
                             });
                           }}
                         />
