@@ -5,6 +5,7 @@ import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { ComboboxInput } from "@/components/ui/combobox-input";
+import { ContractorSelect } from "@/components/ContractorSelect";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useRequestDraft } from "@/hooks/useRequestDraft";
 import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
@@ -715,7 +716,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                   <FormItem>
                     <FormLabel>Контрагент</FormLabel>
                     <FormControl>
-                      <ComboboxInput
+                      <ContractorSelect
                         value={field.value || ""}
                         onChange={field.onChange}
                         options={[
@@ -724,10 +725,25 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                             .filter(c => !suppliers?.some(s => s.name === c))
                             .map(c => ({ value: c, label: c }))
                         ]}
-                        placeholder="Введите или выберите..."
-                        searchPlaceholder="Поиск контрагента..."
-                        emptyMessage="Введите название вручную"
-                        allowCustomValue={true}
+                        placeholder="Выбрать из списка"
+                        onAddNew={async (name) => {
+                          const { data: userData } = await supabase.auth.getUser();
+                          const { error } = await supabase
+                            .from("suppliers")
+                            .insert({
+                              name: name,
+                              organization_id: currentOrgId || "",
+                              created_by: userData.user?.id,
+                              status: "Активный",
+                              category: "Другое",
+                            });
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                          toast({
+                            title: "Успешно",
+                            description: "Контрагент добавлен",
+                          });
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
