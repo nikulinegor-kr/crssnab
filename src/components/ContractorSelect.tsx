@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Search, X, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCompanyName, normalizeForComparison } from "@/lib/companyFormat";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContractorSelectProps {
   value: string;
@@ -52,6 +54,7 @@ export function ContractorSelect({
   disabled = false,
   placeholder = "Выбрать из списка",
 }: ContractorSelectProps) {
+  const { toast } = useToast();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -63,11 +66,26 @@ export function ContractorSelect({
   const [editName, setEditName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
-  const filteredOptions = searchQuery
-    ? options.filter((opt) =>
-        opt.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : options;
+  // Сортировка по алфавиту
+  const sortedOptions = useMemo(() => {
+    return [...options].sort((a, b) => a.label.localeCompare(b.label, 'ru'));
+  }, [options]);
+
+  const filteredOptions = useMemo(() => {
+    return searchQuery
+      ? sortedOptions.filter((opt) =>
+          opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : sortedOptions;
+  }, [sortedOptions, searchQuery]);
+
+  // Проверка дубликата
+  const checkDuplicate = (name: string, excludeId?: string): boolean => {
+    const normalized = normalizeForComparison(name);
+    return options.some(opt => 
+      normalizeForComparison(opt.label) === normalized && opt.value !== excludeId
+    );
+  };
 
   const handleSelect = (selectedLabel: string) => {
     onChange(selectedLabel);
@@ -82,10 +100,22 @@ export function ContractorSelect({
   const handleAddNew = async () => {
     if (!newName.trim() || !onAddNew) return;
     
+    const formattedName = formatCompanyName(newName.trim());
+    
+    // Проверка на дубликат
+    if (checkDuplicate(formattedName)) {
+      toast({
+        title: "Ошибка",
+        description: "Контрагент с таким названием уже существует",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsAdding(true);
     try {
-      await onAddNew(newName.trim());
-      onChange(newName.trim());
+      await onAddNew(formattedName);
+      onChange(formattedName);
       setIsAddOpen(false);
       setNewName("");
     } finally {
@@ -111,11 +141,23 @@ export function ContractorSelect({
   const handleEdit = async () => {
     if (!editItem || !onEdit || !editName.trim()) return;
     
+    const formattedName = formatCompanyName(editName.trim());
+    
+    // Проверка на дубликат (исключая текущий элемент)
+    if (checkDuplicate(formattedName, editItem.value)) {
+      toast({
+        title: "Ошибка",
+        description: "Контрагент с таким названием уже существует",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsEditing(true);
     try {
-      await onEdit(editItem.value, editName.trim());
+      await onEdit(editItem.value, formattedName);
       if (value === editItem.label) {
-        onChange(editName.trim());
+        onChange(formattedName);
       }
       setEditItem(null);
       setEditName("");
@@ -294,13 +336,13 @@ export function ContractorSelect({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
               {isDeleting ? "Удаление..." : "Удалить"}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
