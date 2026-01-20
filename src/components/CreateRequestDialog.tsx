@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { ContractorSelect } from "@/components/ContractorSelect";
+import { ParticipantSelect } from "@/components/ParticipantSelect";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useRequestDraft } from "@/hooks/useRequestDraft";
 import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
@@ -623,14 +624,49 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                   <FormItem>
                     <FormLabel>Заявитель *</FormLabel>
                     <FormControl>
-                      <ComboboxInput
+                      <ParticipantSelect
                         value={field.value}
                         onChange={field.onChange}
                         options={applicants.map(a => ({ value: a.id, label: a.name }))}
-                        placeholder="Введите или выберите..."
-                        searchPlaceholder="Поиск заявителя..."
-                        emptyMessage="Введите имя вручную"
-                        allowCustomValue={true}
+                        placeholder="Выбрать заявителя"
+                        searchTitle="Поиск заявителя"
+                        searchDescription="Найдите заявителя из списка"
+                        addTitle="Добавить заявителя"
+                        addDescription="Создайте нового заявителя"
+                        editTitle="Редактировать заявителя"
+                        editDescription="Измените имя заявителя"
+                        deleteTitle="Удалить заявителя?"
+                        entityName="заявителя"
+                        onAddNew={async (name) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .insert({
+                              name,
+                              organization_id: currentOrgId || "",
+                              participant_type: "applicant",
+                            });
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Заявитель добавлен" });
+                        }}
+                        onDelete={async (id) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .delete()
+                            .eq("id", id);
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Заявитель удалён" });
+                        }}
+                        onEdit={async (id, newName) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .update({ name: newName })
+                            .eq("id", id);
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Заявитель обновлён" });
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -645,14 +681,49 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                   <FormItem>
                     <FormLabel>Исполнитель</FormLabel>
                     <FormControl>
-                      <ComboboxInput
+                      <ParticipantSelect
                         value={field.value || ""}
                         onChange={field.onChange}
                         options={executors.map(e => ({ value: e.id, label: e.name }))}
-                        placeholder="Введите или выберите..."
-                        searchPlaceholder="Поиск исполнителя..."
-                        emptyMessage="Введите имя вручную"
-                        allowCustomValue={true}
+                        placeholder="Выбрать исполнителя"
+                        searchTitle="Поиск исполнителя"
+                        searchDescription="Найдите исполнителя из списка"
+                        addTitle="Добавить исполнителя"
+                        addDescription="Создайте нового исполнителя"
+                        editTitle="Редактировать исполнителя"
+                        editDescription="Измените имя исполнителя"
+                        deleteTitle="Удалить исполнителя?"
+                        entityName="исполнителя"
+                        onAddNew={async (name) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .insert({
+                              name,
+                              organization_id: currentOrgId || "",
+                              participant_type: "executor",
+                            });
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Исполнитель добавлен" });
+                        }}
+                        onDelete={async (id) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .delete()
+                            .eq("id", id);
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Исполнитель удалён" });
+                        }}
+                        onEdit={async (id, newName) => {
+                          const { error } = await supabase
+                            .from("request_participants")
+                            .update({ name: newName })
+                            .eq("id", id);
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          toast({ title: "Успешно", description: "Исполнитель обновлён" });
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

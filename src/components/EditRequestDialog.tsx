@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { ContractorSelect } from "@/components/ContractorSelect";
+import { ParticipantSelect } from "@/components/ParticipantSelect";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import {
   Dialog,
@@ -684,20 +685,53 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Заявитель *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите заявителя" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {applicants.map((applicant) => (
-                            <SelectItem key={applicant.id} value={applicant.name}>
-                              {applicant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <ParticipantSelect
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          disabled={isViewer}
+                          options={applicants.map(a => ({ value: a.id, label: a.name }))}
+                          placeholder="Выбрать заявителя"
+                          searchTitle="Поиск заявителя"
+                          searchDescription="Найдите заявителя из списка"
+                          addTitle="Добавить заявителя"
+                          addDescription="Создайте нового заявителя"
+                          editTitle="Редактировать заявителя"
+                          editDescription="Измените имя заявителя"
+                          deleteTitle="Удалить заявителя?"
+                          entityName="заявителя"
+                          onAddNew={async (name) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .insert({
+                                name,
+                                organization_id: request?.organization_id || "",
+                                participant_type: "applicant",
+                              });
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Заявитель добавлен" });
+                          }}
+                          onDelete={async (id) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .delete()
+                              .eq("id", id);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Заявитель удалён" });
+                          }}
+                          onEdit={async (id, newName) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .update({ name: newName })
+                              .eq("id", id);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Заявитель обновлён" });
+                          }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -709,20 +743,53 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Исполнитель</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите исполнителя" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {executors.map((executor) => (
-                            <SelectItem key={executor.id} value={executor.name}>
-                              {executor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <ParticipantSelect
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          disabled={isViewer}
+                          options={executors.map(e => ({ value: e.id, label: e.name }))}
+                          placeholder="Выбрать исполнителя"
+                          searchTitle="Поиск исполнителя"
+                          searchDescription="Найдите исполнителя из списка"
+                          addTitle="Добавить исполнителя"
+                          addDescription="Создайте нового исполнителя"
+                          editTitle="Редактировать исполнителя"
+                          editDescription="Измените имя исполнителя"
+                          deleteTitle="Удалить исполнителя?"
+                          entityName="исполнителя"
+                          onAddNew={async (name) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .insert({
+                                name,
+                                organization_id: request?.organization_id || "",
+                                participant_type: "executor",
+                              });
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Исполнитель добавлен" });
+                          }}
+                          onDelete={async (id) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .delete()
+                              .eq("id", id);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Исполнитель удалён" });
+                          }}
+                          onEdit={async (id, newName) => {
+                            const { error } = await supabase
+                              .from("request_participants")
+                              .update({ name: newName })
+                              .eq("id", id);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["participants"] });
+                            toast({ title: "Успешно", description: "Исполнитель обновлён" });
+                          }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
