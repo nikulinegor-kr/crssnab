@@ -241,6 +241,7 @@ export function ContractorSelect({
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setIsSearchOpen(false);
                             openEditDialog(option);
                           }}
                         >
@@ -255,6 +256,7 @@ export function ContractorSelect({
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setIsSearchOpen(false);
                             setDeleteConfirm(option);
                           }}
                         >
