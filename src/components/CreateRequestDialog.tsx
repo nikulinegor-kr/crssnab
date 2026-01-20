@@ -646,7 +646,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                               participant_type: "applicant",
                             });
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                           queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Заявитель добавлен" });
                         }}
                         onDelete={async (id) => {
@@ -655,7 +655,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                             .delete()
                             .eq("id", id);
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                           queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Заявитель удалён" });
                         }}
                         onEdit={async (id, newName) => {
@@ -664,7 +664,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                             .update({ name: newName })
                             .eq("id", id);
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                           queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Заявитель обновлён" });
                         }}
                       />
@@ -703,7 +703,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                               participant_type: "executor",
                             });
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                           queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Исполнитель добавлен" });
                         }}
                         onDelete={async (id) => {
@@ -712,7 +712,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                             .delete()
                             .eq("id", id);
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                           queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Исполнитель удалён" });
                         }}
                         onEdit={async (id, newName) => {
@@ -721,7 +721,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                             .update({ name: newName })
                             .eq("id", id);
                           if (error) throw error;
-                          queryClient.invalidateQueries({ queryKey: ["participants"] });
+                          queryClient.invalidateQueries({ queryKey: ["request-participants"] });
                           toast({ title: "Успешно", description: "Исполнитель обновлён" });
                         }}
                       />
