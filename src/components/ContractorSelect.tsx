@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, X, Trash2 } from "lucide-react";
+import { Plus, Search, X, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,6 +37,7 @@ interface ContractorSelectProps {
   options: { value: string; label: string }[];
   onAddNew?: (name: string) => Promise<void>;
   onDelete?: (value: string) => Promise<void>;
+  onEdit?: (id: string, newName: string) => Promise<void>;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -47,6 +48,7 @@ export function ContractorSelect({
   options,
   onAddNew,
   onDelete,
+  onEdit,
   disabled = false,
   placeholder = "Выбрать из списка",
 }: ContractorSelectProps) {
@@ -57,6 +59,9 @@ export function ContractorSelect({
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ value: string; label: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editItem, setEditItem] = useState<{ value: string; label: string } | null>(null);
+  const [editName, setEditName] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   const filteredOptions = searchQuery
     ? options.filter((opt) =>
@@ -101,6 +106,27 @@ export function ContractorSelect({
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleEdit = async () => {
+    if (!editItem || !onEdit || !editName.trim()) return;
+    
+    setIsEditing(true);
+    try {
+      await onEdit(editItem.value, editName.trim());
+      if (value === editItem.label) {
+        onChange(editName.trim());
+      }
+      setEditItem(null);
+      setEditName("");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const openEditDialog = (option: { value: string; label: string }) => {
+    setEditItem(option);
+    setEditName(option.label);
   };
 
   return (
@@ -172,25 +198,88 @@ export function ContractorSelect({
                       />
                       {option.label}
                     </div>
-                    {onDelete && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirm(option);
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <div className="flex gap-1">
+                      {onEdit && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(option);
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirm(option);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
             </CommandList>
           </Command>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог редактирования */}
+      <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Редактировать контрагента</DialogTitle>
+            <DialogDescription>
+              Измените название контрагента
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Название контрагента"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleEdit();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEditItem(null);
+                setEditName("");
+              }}
+              disabled={isEditing}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              onClick={handleEdit}
+              disabled={isEditing || !editName.trim() || editName === editItem?.label}
+            >
+              {isEditing ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

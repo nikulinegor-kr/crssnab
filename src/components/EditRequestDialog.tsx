@@ -778,6 +778,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                               description: "Контрагент удалён",
                             });
                           }}
+                          onEdit={async (supplierId, newName) => {
+                            const { error } = await supabase
+                              .from("suppliers")
+                              .update({ name: newName })
+                              .eq("id", supplierId);
+                            if (error) throw error;
+                            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                            toast({
+                              title: "Успешно",
+                              description: "Контрагент обновлён",
+                            });
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
