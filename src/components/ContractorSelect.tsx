@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +18,16 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +36,7 @@ interface ContractorSelectProps {
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   onAddNew?: (name: string) => Promise<void>;
+  onDelete?: (value: string) => Promise<void>;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -35,6 +46,7 @@ export function ContractorSelect({
   onChange,
   options,
   onAddNew,
+  onDelete,
   disabled = false,
   placeholder = "Выбрать из списка",
 }: ContractorSelectProps) {
@@ -43,6 +55,8 @@ export function ContractorSelect({
   const [newName, setNewName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ value: string; label: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredOptions = searchQuery
     ? options.filter((opt) =>
@@ -71,6 +85,21 @@ export function ContractorSelect({
       setNewName("");
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm || !onDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDelete(deleteConfirm.value);
+      if (value === deleteConfirm.label) {
+        onChange("");
+      }
+      setDeleteConfirm(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -132,14 +161,31 @@ export function ContractorSelect({
                     key={option.value}
                     value={option.value}
                     onSelect={() => handleSelect(option.label)}
+                    className="flex items-center justify-between group"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === option.label ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {option.label}
+                    <div className="flex items-center">
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === option.label ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {option.label}
+                    </div>
+                    {onDelete && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirm(option);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -147,6 +193,28 @@ export function ContractorSelect({
           </Command>
         </DialogContent>
       </Dialog>
+
+      {/* Диалог подтверждения удаления */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить контрагента?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить "{deleteConfirm?.label}"? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Удаление..." : "Удалить"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Кнопка добавления (+) */}
       {onAddNew && (

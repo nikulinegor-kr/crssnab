@@ -720,7 +720,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                         value={field.value || ""}
                         onChange={field.onChange}
                         options={[
-                          ...(suppliers?.map(s => ({ value: s.name, label: s.name })) || []),
+                          ...(suppliers?.map(s => ({ value: s.id, label: s.name })) || []),
                           ...recentContractors
                             .filter(c => !suppliers?.some(s => s.name === c))
                             .map(c => ({ value: c, label: c }))
@@ -742,6 +742,18 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
                           toast({
                             title: "Успешно",
                             description: "Контрагент добавлен",
+                          });
+                        }}
+                        onDelete={async (supplierId) => {
+                          const { error } = await supabase
+                            .from("suppliers")
+                            .delete()
+                            .eq("id", supplierId);
+                          if (error) throw error;
+                          queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                          toast({
+                            title: "Успешно",
+                            description: "Контрагент удалён",
                           });
                         }}
                       />
