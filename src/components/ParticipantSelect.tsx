@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, X, Trash2, Pencil } from "lucide-react";
+import { Plus, X, Trash2, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Check } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { formatPersonName, normalizeForComparison } from "@/lib/companyFormat";
 import { useToast } from "@/hooks/use-toast";
@@ -191,40 +191,32 @@ export function ParticipantSelect({
 
   return (
     <div className="flex gap-2">
-      {/* Основное поле с выбранным значением */}
-      <div className="relative flex-1">
-        <Input
-          value={value || ""}
-          readOnly
-          disabled={disabled}
-          placeholder={placeholder}
-          className="pr-8"
-        />
-        {value && !disabled && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-            onClick={handleClear}
-          >
-            <X className="h-3.5 w-3.5 text-muted-foreground" />
-          </Button>
-        )}
-      </div>
-
-      {/* Кнопка поиска (лупа) */}
+      {/* Основное поле с выбранным значением - клик открывает список */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            disabled={disabled}
-          >
-            <Search className="h-4 w-4" />
-          </Button>
+          <div className="relative flex-1">
+            <Input
+              value={value || ""}
+              readOnly
+              disabled={disabled}
+              placeholder={placeholder}
+              className="pr-8 cursor-pointer"
+            />
+            {value && !disabled && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
+          </div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
