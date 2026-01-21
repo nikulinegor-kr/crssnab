@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
+import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
 
 // Lazy load all pages with retry mechanism for code splitting
 const Index = lazyWithRetry(() => import("./pages/Index"));
@@ -69,6 +70,7 @@ const App = () => {
         <ErrorBoundary>
           <Toaster />
           <Sonner />
+          <NetworkStatusIndicator />
           <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
           <Routes>

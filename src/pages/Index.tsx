@@ -71,9 +71,10 @@ export default function Index() {
         description: "Вы вошли в систему",
       });
     } catch (error: any) {
+      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch");
       let errorMessage = error.message || "Не удалось войти";
-      if (error.message === "Failed to fetch" || error.message?.includes("fetch")) {
-        errorMessage = "Ошибка сети. Проверьте подключение к интернету и попробуйте снова.";
+      if (isNetworkError) {
+        errorMessage = "Ошибка сети. Проверьте подключение к интернету.";
       } else if (error.message?.includes("Invalid login")) {
         errorMessage = "Неверный email или пароль";
       }
@@ -81,6 +82,16 @@ export default function Index() {
         variant: "destructive",
         title: "Ошибка",
         description: errorMessage,
+        action: isNetworkError ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => form.handleSubmit(onSubmit)()}
+            className="shrink-0 border-destructive-foreground/30 text-destructive-foreground hover:bg-destructive-foreground/10"
+          >
+            Повторить
+          </Button>
+        ) : undefined,
       });
     } finally {
       setIsLoading(false);
