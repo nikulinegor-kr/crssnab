@@ -88,10 +88,16 @@ export default function Auth() {
         description: "Вы вошли в систему",
       });
     } catch (error: any) {
+      let errorMessage = error.message || "Не удалось войти";
+      if (error.message === "Failed to fetch" || error.message?.includes("fetch")) {
+        errorMessage = "Ошибка сети. Проверьте подключение к интернету и попробуйте снова.";
+      } else if (error.message?.includes("Invalid login")) {
+        errorMessage = "Неверный email или пароль";
+      }
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: error.message || "Не удалось войти",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -123,10 +129,16 @@ export default function Auth() {
         });
       }
     } catch (error: any) {
+      let errorMessage = error.message || "Не удалось зарегистрироваться";
+      if (error.message === "Failed to fetch" || error.message?.includes("fetch")) {
+        errorMessage = "Ошибка сети. Проверьте подключение к интернету и попробуйте снова.";
+      } else if (error.message?.includes("already registered")) {
+        errorMessage = "Пользователь с таким email уже зарегистрирован";
+      }
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: error.message || "Не удалось зарегистрироваться",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
