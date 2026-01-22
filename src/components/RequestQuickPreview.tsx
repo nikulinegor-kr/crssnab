@@ -1,13 +1,14 @@
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Calendar, User, Truck, FileText, RussianRuble, AlertCircle } from "lucide-react";
+import { Calendar, User, Truck, FileText, RussianRuble, AlertCircle, Pencil } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 
 interface RequestQuickPreviewProps {
@@ -15,6 +16,7 @@ interface RequestQuickPreviewProps {
   children: React.ReactNode;
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
+  onEdit?: (request: Request) => void;
 }
 
 export const RequestQuickPreview = ({
@@ -22,6 +24,7 @@ export const RequestQuickPreview = ({
   children,
   getStatusColor,
   getPriorityColor,
+  onEdit,
 }: RequestQuickPreviewProps) => {
   return (
     <HoverCard openDelay={300} closeDelay={100}>
@@ -35,16 +38,32 @@ export const RequestQuickPreview = ({
                 <span className="text-xs font-mono text-muted-foreground">
                   {request.request_number}
                 </span>
-                <Badge
-                  variant="secondary"
-                  style={{
-                    backgroundColor: `${getPriorityColor(request.priority || "")}20`,
-                    color: getPriorityColor(request.priority || ""),
-                  }}
-                  className="text-xs"
-                >
-                  {request.priority}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="secondary"
+                    style={{
+                      backgroundColor: `${getPriorityColor(request.priority || "")}20`,
+                      color: getPriorityColor(request.priority || ""),
+                    }}
+                    className="text-xs"
+                  >
+                    {request.priority}
+                  </Badge>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:text-primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEdit(request);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="font-medium text-sm line-clamp-2">
                 {request.description}
