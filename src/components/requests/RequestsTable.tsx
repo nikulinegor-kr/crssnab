@@ -409,6 +409,7 @@ export const RequestsTable = ({
         <Table className="w-full table-fixed text-sm">
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
             <TableRow className="border-b hover:bg-transparent">
+              <TableHead className="w-1 p-0"></TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -428,6 +429,9 @@ export const RequestsTable = ({
               {visibility.status && (
                 <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="w-36 p-2 font-semibold border-r text-center" />
               )}
+              {visibility.availability && (
+                <TableHead className="w-28 p-2 font-semibold border-r text-center">Наличие</TableHead>
+              )}
               {visibility.contractor && (
                 <SortableHeader field="contractor" label="Контрагент" currentSort={sortConfig} onSort={handleSort} className="w-32 p-2 font-semibold border-r text-center" />
               )}
@@ -436,6 +440,15 @@ export const RequestsTable = ({
               )}
               {visibility.payment_percentage && (
                 <SortableHeader field="payment_percentage" label="Оплата" currentSort={sortConfig} onSort={handleSort} className="w-20 p-2 font-semibold border-r text-center" />
+              )}
+              {visibility.shipment_date && (
+                <SortableHeader field="shipment_date" label="Отправка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r text-center" />
+              )}
+              {visibility.delivery_date && (
+                <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r text-center" />
+              )}
+              {visibility.transport_company && (
+                <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="w-24 p-2 font-semibold border-r text-center" />
               )}
               {visibility.applicant && (
                 <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="w-28 p-2 font-semibold border-r text-center" />
@@ -446,102 +459,135 @@ export const RequestsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRequests.map((request) => (
-              <TableRow
-                key={request.id}
-                className="hover:bg-muted/40 cursor-pointer transition-colors"
-                onClick={(e) => handleRowClick(request, e)}
-              >
-                <TableCell className="text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={selectedRequestIds.has(request.id)}
-                    onCheckedChange={() => toggleRequestSelection(request.id)}
-                    className="h-4 w-4"
-                  />
-                </TableCell>
-                {visibility.request_date && (
-                  <TableCell className="text-center p-2 border-r text-muted-foreground">
-                    {format(new Date(request.request_date), "dd.MM.yy")}
+            {paginatedRequests.map((request) => {
+              const priorityColor = request.priority === "Аварийно" 
+                ? "#ef4444" 
+                : request.priority === "Приоритетно" 
+                  ? "#f97316" 
+                  : "#d1d5db";
+              
+              return (
+                <TableRow
+                  key={request.id}
+                  className="hover:bg-muted/40 cursor-pointer transition-colors relative"
+                  onClick={(e) => handleRowClick(request, e)}
+                >
+                  <TableCell className="w-1 p-0 border-r-0" style={{ backgroundColor: priorityColor }} />
+                  <TableCell className="text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedRequestIds.has(request.id)}
+                      onCheckedChange={() => toggleRequestSelection(request.id)}
+                      className="h-4 w-4"
+                    />
                   </TableCell>
-                )}
-                {visibility.description && (
-                  <TableCell className="text-left p-2 border-r">
-                    <RequestQuickPreview
-                      request={request}
-                      getStatusColor={getStatusColor}
-                      getPriorityColor={getPriorityColor}
-                      onEdit={onEditClick}
-                    >
-                      <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
-                        <HighlightText text={request.description} searchQuery={searchQuery} />
+                  {visibility.request_date && (
+                    <TableCell className="text-center p-2 border-r text-muted-foreground">
+                      {format(new Date(request.request_date), "dd.MM.yy")}
+                    </TableCell>
+                  )}
+                  {visibility.description && (
+                    <TableCell className="text-left p-2 border-r">
+                      <RequestQuickPreview
+                        request={request}
+                        getStatusColor={getStatusColor}
+                        getPriorityColor={getPriorityColor}
+                        onEdit={onEditClick}
+                      >
+                        <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
+                          <HighlightText text={request.description} searchQuery={searchQuery} />
+                        </div>
+                      </RequestQuickPreview>
+                    </TableCell>
+                  )}
+                  {visibility.priority && (
+                    <TableCell className="text-center p-2 border-r">
+                      <Badge
+                        variant="outline"
+                        className="text-xs px-2 py-0.5"
+                        style={{
+                          borderColor: getPriorityColor(request.priority || "Планово"),
+                          color: getPriorityColor(request.priority || "Планово"),
+                        }}
+                      >
+                        {request.priority || "Планово"}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {visibility.status && (
+                    <TableCell className="text-center p-2 border-r">
+                      <Badge
+                        className="text-xs px-2 py-0.5"
+                        style={{
+                          backgroundColor: getStatusColor(request.status),
+                          color: "white",
+                        }}
+                      >
+                        {request.status}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {visibility.availability && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                        <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
                       </div>
-                    </RequestQuickPreview>
-                  </TableCell>
-                )}
-                {visibility.priority && (
-                  <TableCell className="text-center p-2 border-r">
-                    <Badge
-                      variant="outline"
-                      className="text-xs px-2 py-0.5"
-                      style={{
-                        borderColor: getPriorityColor(request.priority || "Планово"),
-                        color: getPriorityColor(request.priority || "Планово"),
-                      }}
-                    >
-                      {request.priority || "Планово"}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibility.status && (
-                  <TableCell className="text-center p-2 border-r">
-                    <Badge
-                      className="text-xs px-2 py-0.5"
-                      style={{
-                        backgroundColor: getStatusColor(request.status),
-                        color: "white",
-                      }}
-                    >
-                      {request.status}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibility.contractor && (
-                  <TableCell className="text-center p-2 border-r">
-                    <div className="line-clamp-2 leading-tight">
-                      <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
-                    </div>
-                  </TableCell>
-                )}
-                {visibility.invoice_number && (
-                  <TableCell className="text-center p-2 border-r">
-                    <div className="line-clamp-2 text-muted-foreground leading-tight">
-                      <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
-                    </div>
-                  </TableCell>
-                )}
-                {visibility.payment_percentage && (
-                  <TableCell className="text-center p-2 border-r font-semibold">
-                    {request.payment_percentage !== null && request.payment_percentage !== undefined
-                      ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                      : <span className="text-muted-foreground">-</span>}
-                  </TableCell>
-                )}
-                {visibility.applicant && (
-                  <TableCell className="text-center p-2 border-r">
-                    <div className="line-clamp-2 leading-tight">
-                      <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
-                    </div>
-                  </TableCell>
-                )}
-                {visibility.comments && (
-                  <TableCell className="text-center p-2 border-r">
-                    <div className="line-clamp-2 text-muted-foreground italic leading-tight">
-                      <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+                    </TableCell>
+                  )}
+                  {visibility.contractor && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 leading-tight">
+                        <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibility.invoice_number && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                        <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibility.payment_percentage && (
+                    <TableCell className="text-center p-2 border-r font-semibold">
+                      {request.payment_percentage !== null && request.payment_percentage !== undefined
+                        ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
+                        : <span className="text-muted-foreground">-</span>}
+                    </TableCell>
+                  )}
+                  {visibility.shipment_date && (
+                    <TableCell className="text-center p-2 border-r text-muted-foreground">
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : "-"}
+                    </TableCell>
+                  )}
+                  {visibility.delivery_date && (
+                    <TableCell className="text-center p-2 border-r text-muted-foreground">
+                      {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : "-"}
+                    </TableCell>
+                  )}
+                  {visibility.transport_company && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                        <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibility.applicant && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 leading-tight">
+                        <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibility.comments && (
+                    <TableCell className="text-center p-2 border-r">
+                      <div className="line-clamp-2 text-muted-foreground italic leading-tight">
+                        <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         <PaginationControls />
