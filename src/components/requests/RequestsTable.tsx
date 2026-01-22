@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, Check, X, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,10 @@ import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { HighlightText } from "@/components/HighlightText";
-import { TableColumnSettings, ColumnVisibility } from "./TableColumnSettings";
+import { TableColumnSettings } from "./TableColumnSettings";
 import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
+import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
+import { ResizableTableHeader } from "./ResizableTableHeader";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -54,38 +56,6 @@ interface SortConfig {
   field: SortField;
   direction: SortDirection;
 }
-
-// Sortable header component
-const SortableHeader = ({
-  field,
-  label,
-  currentSort,
-  onSort,
-  className = "",
-}: {
-  field: SortField;
-  label: string;
-  currentSort: SortConfig | null;
-  onSort: (field: SortField) => void;
-  className?: string;
-}) => {
-  const isActive = currentSort?.field === field;
-  const Icon = isActive 
-    ? (currentSort.direction === "asc" ? ArrowUp : ArrowDown)
-    : ArrowUpDown;
-  
-  return (
-    <TableHead 
-      className={`cursor-pointer hover:bg-muted/60 transition-colors select-none ${className}`}
-      onClick={() => onSort(field)}
-    >
-      <div className="flex items-center gap-0.5 justify-center">
-        <span>{label}</span>
-        <Icon className={`h-3 w-3 ${isActive ? "text-primary" : "text-muted-foreground/50"}`} />
-      </div>
-    </TableHead>
-  );
-};
 
 interface RequestsTableProps {
   requests: Request[] | undefined;
@@ -203,7 +173,11 @@ export const RequestsTable = ({
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { visibility, updateVisibility } = useTableColumnVisibility();
+  const { widths, updateWidth } = useTableColumnWidths();
   
+  const handleColumnResize = useCallback((column: string, width: number) => {
+    updateWidth(column as keyof ColumnWidths, width);
+  }, [updateWidth]);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
@@ -406,11 +380,11 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} />
         </div>
         <div className="rounded-md border overflow-x-auto">
-        <Table className="w-full text-sm">
+        <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
             <TableRow className="border-b hover:bg-transparent">
               <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="whitespace-nowrap text-center p-2 border-r">
+              <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
@@ -418,43 +392,43 @@ export const RequestsTable = ({
                 />
               </TableHead>
               {visibility.request_date && (
-                <SortableHeader field="request_date" label="Дата" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
-                <SortableHeader field="description" label="Заявка" currentSort={sortConfig} onSort={handleSort} className="p-2 font-semibold border-r text-left" />
+                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} className="text-left" />
               )}
               {visibility.priority && (
-                <SortableHeader field="priority" label="Приоритет" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
               )}
               {visibility.status && (
-                <SortableHeader field="status" label="Статус" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="status" label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
-                <TableHead className="whitespace-nowrap p-2 font-semibold border-r text-center">Наличие</TableHead>
+                <ResizableTableHeader column="availability" label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <SortableHeader field="contractor" label="Контрагент" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="contractor" label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
               )}
               {visibility.invoice_number && (
-                <SortableHeader field="invoice_number" label="Счёт" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="invoice_number" label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
               )}
               {visibility.payment_percentage && (
-                <SortableHeader field="payment_percentage" label="Оплата" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="payment_percentage" label="Оплата" width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.shipment_date && (
-                <SortableHeader field="shipment_date" label="Отправка" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="shipment_date" label="Отправка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
               )}
               {visibility.delivery_date && (
-                <SortableHeader field="delivery_date" label="Доставка" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="delivery_date" label="Доставка" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
               )}
               {visibility.transport_company && (
-                <SortableHeader field="transport_company" label="ТК" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="transport_company" label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
               )}
               {visibility.applicant && (
-                <SortableHeader field="applicant" label="Заявитель" currentSort={sortConfig} onSort={handleSort} className="whitespace-nowrap p-2 font-semibold border-r text-center" />
+                <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
               {visibility.comments && (
-                <TableHead className="whitespace-nowrap p-2 font-semibold border-r text-center">Комментарий</TableHead>
+                <ResizableTableHeader column="comments" label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
             </TableRow>
           </TableHeader>
@@ -473,7 +447,7 @@ export const RequestsTable = ({
                   onClick={(e) => handleRowClick(request, e)}
                 >
                   <TableCell className="w-1 p-0 border-r-0" style={{ backgroundColor: priorityColor }} />
-                  <TableCell className="whitespace-nowrap text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-10 text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRequestIds.has(request.id)}
                       onCheckedChange={() => toggleRequestSelection(request.id)}
@@ -481,12 +455,12 @@ export const RequestsTable = ({
                     />
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r text-muted-foreground">
+                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="p-2 border-r">
+                    <TableCell className="p-2 border-r overflow-hidden" style={{ width: widths.description }}>
                       <RequestQuickPreview
                         request={request}
                         getStatusColor={getStatusColor}
@@ -500,7 +474,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.priority && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.priority }}>
                       <Badge
                         variant="outline"
                         className="text-xs px-2 py-0.5"
@@ -514,7 +488,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.status }}>
                       <Badge
                         className="text-xs px-2 py-0.5"
                         style={{
@@ -527,60 +501,60 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
-                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.availability }}>
+                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
                         <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
-                      <div className="line-clamp-2 leading-tight">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.contractor }}>
+                      <div className="line-clamp-2 leading-tight truncate">
                         <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
-                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.invoice_number }}>
+                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
                         <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r font-semibold">
+                    <TableCell className="text-center p-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
                       {request.payment_percentage !== null && request.payment_percentage !== undefined
                         ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
                         : <span className="text-muted-foreground">-</span>}
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r text-muted-foreground">
+                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
                       {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : "-"}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r text-muted-foreground">
+                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
                       {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : "-"}
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
-                      <div className="line-clamp-2 text-muted-foreground leading-tight">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
+                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
                         <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="whitespace-nowrap text-center p-2 border-r">
-                      <div className="line-clamp-2 leading-tight">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
+                      <div className="line-clamp-2 leading-tight truncate">
                         <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center p-2 border-r">
-                      <div className="line-clamp-2 text-muted-foreground italic leading-tight max-w-[200px]">
+                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.comments }}>
+                      <div className="line-clamp-2 text-muted-foreground italic leading-tight truncate">
                         <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
                       </div>
                     </TableCell>
