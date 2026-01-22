@@ -8,7 +8,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Calendar, User, Truck, FileText, RussianRuble, AlertCircle, Pencil } from "lucide-react";
+import { Calendar, User, Truck, FileText, RussianRuble, AlertCircle, Pencil, Package, Send } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 
 interface RequestQuickPreviewProps {
@@ -105,14 +105,39 @@ export const RequestQuickPreview = ({
                 </div>
               )}
 
+              {request.availability_delivery_time && (
+                <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+                  <Package className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Наличие: {request.availability_delivery_time}</span>
+                </div>
+              )}
+
+              {request.shipment_date && (
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Send className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Отправка: {format(new Date(request.shipment_date), "d MMM", {
+                      locale: ru,
+                    })}
+                  </span>
+                </div>
+              )}
+
               {request.delivery_date && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
                   <span>
-                    {format(new Date(request.delivery_date), "d MMM yyyy", {
+                    Доставка: {format(new Date(request.delivery_date), "d MMM", {
                       locale: ru,
                     })}
                   </span>
+                </div>
+              )}
+
+              {request.transport_company && (
+                <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+                  <Truck className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">ТК: {request.transport_company}</span>
                 </div>
               )}
 
