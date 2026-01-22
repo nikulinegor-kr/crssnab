@@ -101,6 +101,11 @@ const Requests = () => {
     }
   };
 
+  const handleEditClick = (request: Request) => {
+    setSelectedRequest(request);
+    setEditDialogOpen(true);
+  };
+
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
     e.stopPropagation();
     setRequestToDelete(request);
@@ -293,6 +298,7 @@ const Requests = () => {
               toggleRequestSelection={toggleRequestSelection}
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
+              onEditClick={handleEditClick}
               searchQuery={filters.searchQuery}
             />
           </Card>

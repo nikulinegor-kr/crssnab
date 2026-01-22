@@ -92,6 +92,7 @@ interface RequestsTableProps {
   toggleRequestSelection: (id: string) => void;
   toggleAllRequests: () => void;
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
+  onEditClick?: (request: Request) => void;
   searchQuery?: string;
 }
 
@@ -195,6 +196,7 @@ export const RequestsTable = ({
   toggleRequestSelection,
   toggleAllRequests,
   onDeleteClick,
+  onEditClick,
   searchQuery = "",
 }: RequestsTableProps) => {
   const navigate = useNavigate();
@@ -444,6 +446,7 @@ export const RequestsTable = ({
                     request={request}
                     getStatusColor={getStatusColor}
                     getPriorityColor={getPriorityColor}
+                    onEdit={onEditClick}
                   >
                     <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
                       <HighlightText text={request.description} searchQuery={searchQuery} />
