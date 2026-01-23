@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -52,13 +52,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, X, Image, FileText, Trash2, Copy, Sparkles } from "lucide-react";
+import { Loader2, X, Image, FileText, Trash2, Copy, Sparkles, Save } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { createNotification } from "@/hooks/useNotifications";
+import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -265,6 +266,46 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     },
   });
 
+  // Original values for draft comparison
+  const originalValues = useMemo(() => {
+    if (!request) return null;
+    return {
+      request_date: request.request_date,
+      description: request.description,
+      status: request.status,
+      priority: request.priority,
+      applicant: request.applicant || "",
+      executor: request.executor || "",
+      object_id: request.object_id || "",
+      estimated_delivery_days: request.estimated_delivery_days,
+      availability_delivery_time: request.availability_delivery_time || "",
+      contractor: request.contractor || "",
+      invoice_number: request.invoice_number || "",
+      amount: request.amount || 0,
+      payment_percentage: request.payment_percentage?.toString() || "",
+      shipment_date: request.shipment_date || "",
+      delivery_date: request.delivery_date || "",
+      transport_company: request.transport_company || "",
+      waybill_number: request.waybill_number || "",
+      comments: request.comments || "",
+    };
+  }, [request]);
+
+  const formValues = form.watch();
+  
+  // Auto-save draft hook
+  const { clearDraft, hasDraft } = useEditRequestDraft(
+    request?.id,
+    formValues,
+    (values) => {
+      Object.entries(values).forEach(([key, value]) => {
+        form.setValue(key as keyof RequestFormData, value as any);
+      });
+    },
+    open,
+    originalValues
+  );
+
   useEffect(() => {
     if (request && open) {
       form.reset({
@@ -439,6 +480,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
+      clearDraft();
       setPhotoFiles([]);
       setDocumentFiles([]);
       onOpenChange(false);
@@ -489,12 +531,20 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     <div className="flex items-center justify-between flex-wrap gap-2">
       <div>
         <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
-        <p className="text-sm text-muted-foreground">
-          {isViewer 
-            ? `Просмотр заявки ${request?.request_number}` 
-            : `Внесите изменения в заявку ${request?.request_number}`
-          }
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            {isViewer 
+              ? `Просмотр заявки ${request?.request_number}` 
+              : `Внесите изменения в заявку ${request?.request_number}`
+            }
+          </p>
+          {!isViewer && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Save className="h-3 w-3" />
+              Автосохранение
+            </span>
+          )}
+        </div>
       </div>
       {request?.document_url && (
         <Button
