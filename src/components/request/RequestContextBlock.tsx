@@ -133,7 +133,7 @@ export const RequestContextBlock = ({
               onChange={(e) => setLocalDescription(e.target.value)}
               placeholder="Опишите заявку..."
               className={cn(
-                "min-h-[100px] resize-none border-0 p-0 text-base leading-relaxed",
+                "min-h-[120px] resize-none border-0 p-0 text-lg leading-relaxed font-medium",
                 "focus-visible:ring-0 focus-visible:ring-offset-0",
                 "bg-transparent placeholder:text-muted-foreground/50"
               )}
@@ -155,9 +155,9 @@ export const RequestContextBlock = ({
               onChange={(e) => setLocalComments(e.target.value)}
               placeholder="Добавить примечание..."
               className={cn(
-                "min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
+                "min-h-[60px] resize-none border-0 p-0 text-base leading-relaxed",
                 "focus-visible:ring-0 focus-visible:ring-offset-0",
-                "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
+                "bg-transparent text-muted-foreground placeholder:text-muted-foreground/50"
               )}
               disabled={!canEdit}
             />
@@ -208,8 +208,8 @@ export const RequestContextBlock = ({
         )}
 
         {/* Description - primary */}
-        <div className="p-4 pb-0">
-          <p className="text-sm font-medium leading-relaxed text-foreground whitespace-pre-wrap">
+        <div className="p-5 pb-0">
+          <p className="text-lg font-medium leading-relaxed text-foreground whitespace-pre-wrap">
             {description || <span className="text-muted-foreground italic">Нет описания</span>}
           </p>
         </div>
@@ -217,10 +217,10 @@ export const RequestContextBlock = ({
         {/* Comments - secondary (only show if exists) */}
         {comments && (
           <>
-            <div className="mx-4 my-3 border-t border-border/30" />
-            <div className="px-4 pb-4">
-              <p className="text-xs text-muted-foreground/80 mb-1">Комментарий</p>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            <div className="mx-5 my-3 border-t border-border/30" />
+            <div className="px-5 pb-5">
+              <p className="text-xs text-muted-foreground/70 mb-1.5">Комментарий</p>
+              <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {comments}
               </p>
             </div>
@@ -229,9 +229,9 @@ export const RequestContextBlock = ({
 
         {/* No comments - subtle hint */}
         {!comments && (
-          <div className="px-4 pb-4 pt-2">
-            <p className="text-xs text-muted-foreground/50 italic">
-              {canEdit ? "Нажмите для добавления комментария" : "Нет комментария"}
+          <div className="px-5 pb-5 pt-3">
+            <p className="text-sm text-muted-foreground/50 italic">
+              {canEdit ? "Нажмите для добавления комментария" : ""}
             </p>
           </div>
         )}
