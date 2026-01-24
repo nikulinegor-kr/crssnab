@@ -38,9 +38,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
-import { RequestComments } from "@/components/request/RequestComments";
-import { LinkedRequests } from "@/components/request/LinkedRequests";
-import { RequestReminders } from "@/components/request/RequestReminders";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
@@ -558,8 +555,6 @@ export default function RequestDetail() {
               onUpdate={handleUpdate}
             />
 
-            {/* 3. Comments Section - User content */}
-            <RequestComments requestId={id!} />
 
             {/* 4. Financial Information */}
             <Card className="glassmorphism border-border/40">
@@ -800,11 +795,6 @@ export default function RequestDetail() {
               </Card>
             )}
 
-            {/* Linked Requests */}
-            <LinkedRequests requestId={id!} canEdit={canEdit} />
-
-            {/* Reminders */}
-            <RequestReminders requestId={id!} />
 
             {/* Archive */}
             {canEdit && (
