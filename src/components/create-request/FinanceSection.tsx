@@ -109,7 +109,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs">Оплата (%)</FormLabel>
-                <Select
+          <Select
                   value={field.value?.toString() || "0"}
                   onValueChange={(value) => field.onChange(parseInt(value))}
                 >
@@ -118,7 +118,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="pointer-events-auto">
                     <SelectItem value="0">0%</SelectItem>
                     <SelectItem value="10">10%</SelectItem>
                     <SelectItem value="20">20%</SelectItem>
