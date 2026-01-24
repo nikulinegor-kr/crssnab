@@ -7,10 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, 
@@ -19,17 +15,20 @@ import {
   FileImage, 
   FileText,
   Eye,
-  CalendarIcon,
   Upload,
   X,
   Trash2,
   Send,
   Loader2,
-  Copy
+  Copy,
+  User,
+  Building2,
+  Receipt,
+  CreditCard
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -42,6 +41,10 @@ import { notifyTelegram } from "@/lib/telegram";
 import { RequestComments } from "@/components/request/RequestComments";
 import { LinkedRequests } from "@/components/request/LinkedRequests";
 import { RequestReminders } from "@/components/request/RequestReminders";
+import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
+import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
+import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
+import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
 
 interface Activity {
   id: string;
@@ -75,6 +78,8 @@ export default function RequestDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: request, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -91,7 +96,6 @@ export default function RequestDetail() {
     enabled: !!id,
   });
 
-  // Fetch statuses and priorities
   const { data: statuses } = useQuery({
     queryKey: ["request-statuses", currentOrgId],
     queryFn: async () => {
@@ -120,7 +124,6 @@ export default function RequestDetail() {
     enabled: !!currentOrgId,
   });
 
-  // Fetch activities
   const { data: activities } = useQuery({
     queryKey: ["request-activities", id],
     queryFn: async () => {
@@ -132,16 +135,13 @@ export default function RequestDetail() {
 
       if (error) throw error;
 
-      // Get unique user IDs
       const userIds = [...new Set(activitiesData?.map(a => a.user_id).filter(Boolean) || [])];
       
-      // Fetch profiles for these users
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name, email")
         .in("id", userIds);
 
-      // Map profiles to activities
       const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
       return activitiesData?.map(activity => ({
@@ -152,7 +152,15 @@ export default function RequestDetail() {
     enabled: !!id,
   });
 
-  // Mutation for updating request fields
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const updateRequestMutation = useMutation({
     mutationFn: async (updates: Partial<Request>) => {
       const { data, error } = await supabase
@@ -165,15 +173,23 @@ export default function RequestDetail() {
       if (error) throw error;
       return data;
     },
+    onMutate: () => {
+      setIsSaving(true);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["request", id] });
       queryClient.invalidateQueries({ queryKey: ["request-activities", id] });
-      toast({
-        title: "Успешно",
-        description: "Заявка обновлена",
-      });
+      
+      // Show "saved" state for 2 seconds after success
+      saveTimeoutRef.current = setTimeout(() => {
+        setIsSaving(false);
+      }, 1500);
     },
     onError: (error) => {
+      setIsSaving(false);
       toast({
         title: "Ошибка",
         description: "Не удалось обновить заявку",
@@ -183,7 +199,6 @@ export default function RequestDetail() {
     },
   });
 
-  // Mutation for archiving request
   const deleteRequestMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -210,27 +225,30 @@ export default function RequestDetail() {
     },
   });
 
-  // File upload handlers - supports multiple files
+  const handleUpdate = (updates: Partial<Request>) => {
+    updateRequestMutation.mutate(updates);
+  };
+
+  const sanitizeFilename = (filename: string): string => {
+    const extension = filename.split('.').pop() || '';
+    const sanitized = filename
+      .replace(/[^\x00-\x7F]/g, '')
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .replace(/_{2,}/g, '_')
+      .replace(/^_+|_+$/g, '');
+    
+    if (!sanitized || sanitized === `.${extension}`) {
+      return `file_${Date.now()}.${extension}`;
+    }
+    return sanitized;
+  };
+
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !id || !request) return;
 
     setIsUploadingPhoto(true);
     try {
-      const sanitizeFilename = (filename: string): string => {
-        const extension = filename.split('.').pop() || '';
-        const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '')
-          .replace(/[^a-zA-Z0-9.-]/g, '_')
-          .replace(/_{2,}/g, '_')
-          .replace(/^_+|_+$/g, '');
-        
-        if (!sanitized || sanitized === `.${extension}`) {
-          return `file_${Date.now()}.${extension}`;
-        }
-        return sanitized;
-      };
-
       const newUrls: string[] = [];
       
       for (const file of Array.from(files)) {
@@ -272,20 +290,6 @@ export default function RequestDetail() {
 
     setIsUploadingDoc(true);
     try {
-      const sanitizeFilename = (filename: string): string => {
-        const extension = filename.split('.').pop() || '';
-        const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '')
-          .replace(/[^a-zA-Z0-9.-]/g, '_')
-          .replace(/_{2,}/g, '_')
-          .replace(/^_+|_+$/g, '');
-        
-        if (!sanitized || sanitized === `.${extension}`) {
-          return `file_${Date.now()}.${extension}`;
-        }
-        return sanitized;
-      };
-
       const newUrls: string[] = [];
       
       for (const file of Array.from(files)) {
@@ -321,36 +325,11 @@ export default function RequestDetail() {
     }
   };
 
-  const getPriorityColor = (priority: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      "Аварийно": "destructive",
-      "Высокий": "default",
-      "Средний": "secondary",
-      "Низкий": "outline"
-    };
-    return colors[priority] || "default";
-  };
-
-  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      "Доставлено": "default",
-      "В работе": "secondary",
-      "Новая": "outline"
-    };
-    return colors[status] || "default";
-  };
-
-  const handleEditClick = () => {
-    setEditDialogOpen(true);
-  };
-
-  // Collect all photos from both old single field and new array field
   const allPhotos: string[] = [
     ...(request?.photo_urls || []),
     ...(request?.photo_url && !request?.photo_urls?.includes(request.photo_url) ? [request.photo_url] : [])
   ].filter(Boolean);
 
-  // Collect all documents from both old single field and new array field
   const allDocuments: string[] = [
     ...(request?.document_urls || []),
     ...(request?.document_url && !request?.document_urls?.includes(request.document_url) ? [request.document_url] : [])
@@ -411,10 +390,6 @@ export default function RequestDetail() {
         variant: "destructive",
       });
     }
-  };
-
-  const handleBackClick = () => {
-    navigate("/requests");
   };
 
   const handleSendTelegram = async () => {
@@ -502,334 +477,138 @@ export default function RequestDetail() {
         onOpenChange={setGalleryOpen}
       />
       
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Back button */}
         <Button 
-          onClick={handleBackClick} 
+          onClick={() => navigate("/requests")} 
           variant="ghost" 
-          className="gap-2 h-10"
+          className="gap-2 h-10 hover:bg-muted/50 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Назад к заявкам
         </Button>
 
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <button 
-            onClick={() => navigate("/requests")}
-            className="hover:text-foreground transition-colors"
-          >
-            Заявки
-          </button>
-          <span>/</span>
-          <span>Список</span>
-          <span>/</span>
-          <span className="text-foreground">#{request.description}</span>
-        </div>
+        {/* Sticky Header - Always visible */}
+        <RequestStickyHeader
+          requestNumber={request.request_number || request.description}
+          status={request.status}
+          priority={request.priority}
+          shipmentDate={request.shipment_date}
+          deliveryDate={request.delivery_date}
+          isSaving={isSaving || updateRequestMutation.isPending}
+        />
 
-        {/* Header */}
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                Заявка: {request.description}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span>Создано: {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}</span>
-                <span>•</span>
-                <span>Автор: {request.applicant || "—"}</span>
-                <span>•</span>
-                <span>Приоритет: <Badge variant={getPriorityColor(request.priority || "")} className="ml-1">{request.priority}</Badge></span>
-              </div>
-            </div>
-            {canEdit && (
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handleEditClick} variant="outline" className="gap-2">
-                  <Edit className="h-4 w-4" />
-                  Редактировать
-                </Button>
-                <Button onClick={() => setCopyDialogOpen(true)} variant="outline" className="gap-2">
-                  <Copy className="h-4 w-4" />
-                  Копировать
-                </Button>
-                <Button 
-                  onClick={handleSendTelegram} 
-                  variant="outline" 
-                  className="gap-2"
-                  disabled={isSendingTelegram}
-                >
-                  {isSendingTelegram ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  Отправить в Telegram
-                </Button>
-              </div>
-            )}
+        {/* Header with actions */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pt-2">
+          <div className="space-y-1">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">
+              {request.description}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Создано: {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}
+              {request.applicant && ` • ${request.applicant}`}
+            </p>
           </div>
+          {canEdit && (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setEditDialogOpen(true)} variant="outline" size="sm" className="gap-2">
+                <Edit className="h-4 w-4" />
+                Редактировать
+              </Button>
+              <Button onClick={() => setCopyDialogOpen(true)} variant="outline" size="sm" className="gap-2">
+                <Copy className="h-4 w-4" />
+                Копировать
+              </Button>
+              <Button 
+                onClick={handleSendTelegram} 
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingTelegram}
+              >
+                {isSendingTelegram ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Telegram
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Main Content */}
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Content */}
+          {/* Left Column - Frequently edited content at top */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Request Details */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Детали заявки</CardTitle>
+            
+            {/* 1. Logistics Block - Unified */}
+            <RequestLogisticsCard
+              request={request}
+              canEdit={canEdit}
+              onUpdate={handleUpdate}
+            />
+
+            {/* 2. Comments Section - User content first */}
+            <RequestComments requestId={id!} />
+
+            {/* 3. Description & Details - Less frequently changed */}
+            <Card className="glassmorphism border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Описание
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Дата заявки</p>
-                    <p className="text-sm font-medium">
-                      {format(new Date(request.request_date), "dd.MM.yyyy", { locale: ru })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Статус</p>
-                    {canEdit ? (
-                      <Select
-                        value={request.status}
-                        onValueChange={(value) => updateRequestMutation.mutate({ status: value })}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statuses?.map((status) => (
-                            <SelectItem key={status.id} value={status.name}>
-                              {status.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant={getStatusColor(request.status)}>{request.status}</Badge>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Приоритет</p>
-                    {canEdit ? (
-                      <Select
-                        value={request.priority || ""}
-                        onValueChange={(value) => updateRequestMutation.mutate({ priority: value })}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {priorities?.map((priority) => (
-                            <SelectItem key={priority.id} value={priority.name}>
-                              {priority.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant={getPriorityColor(request.priority || "")}>{request.priority}</Badge>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Заявитель</p>
-                    <p className="text-sm font-medium">{request.applicant || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Исполнитель</p>
-                    <p className="text-sm font-medium">{request.executor || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Наличие/срок поставки</p>
-                    <p className="text-sm font-medium">{request.availability_delivery_time || "—"}</p>
-                  </div>
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Описание</p>
-                  <p className="text-sm leading-relaxed">{request.description}</p>
-                </div>
-                {request.comments && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">Комментарий</p>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{request.comments}</p>
-                    </div>
-                  </>
-                )}
+              <CardContent>
+                <p className="text-sm leading-relaxed">{request.description}</p>
               </CardContent>
             </Card>
 
-            {/* Financial Information */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Финансовая информация</CardTitle>
+            {/* 4. Financial Information */}
+            <Card className="glassmorphism border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Финансы
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Контрагент</p>
-                    <p className="text-sm font-medium">{request.contractor || "—"}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground mb-1">Контрагент</p>
+                    <p className="text-sm font-medium truncate">{request.contractor || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Номер счета</p>
-                    <p className="text-sm font-medium">{request.invoice_number || "—"}</p>
+                  <div className="p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground mb-1">№ счета</p>
+                    <p className="text-sm font-medium truncate">{request.invoice_number || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Сумма</p>
+                  <div className="p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground mb-1">Сумма</p>
                     <p className="text-sm font-medium">{request.amount?.toLocaleString('ru-RU')} ₽</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">% оплаты</p>
+                  <div className="p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground mb-1">Оплата</p>
                     <p className="text-sm font-medium">{request.payment_percentage}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Delivery Information */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Информация о доставке</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Дата отгрузки</p>
-                    {canEdit ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-9",
-                              !request.shipment_date && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {request.shipment_date
-                              ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
-                              : "Выберите дату"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={request.shipment_date ? new Date(request.shipment_date) : undefined}
-                            onSelect={(date) => {
-                              if (date) {
-                                updateRequestMutation.mutate({ 
-                                  shipment_date: format(date, "yyyy-MM-dd") 
-                                });
-                              }
-                            }}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <p className="text-sm font-medium">
-                        {request.shipment_date 
-                          ? format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })
-                          : "—"
-                        }
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Дата доставки</p>
-                    {canEdit ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-9",
-                              !request.delivery_date && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {request.delivery_date
-                              ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
-                              : "Выберите дату"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={request.delivery_date ? new Date(request.delivery_date) : undefined}
-                            onSelect={(date) => {
-                              if (date) {
-                                updateRequestMutation.mutate({ 
-                                  delivery_date: format(date, "yyyy-MM-dd") 
-                                });
-                              }
-                            }}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <p className="text-sm font-medium">
-                        {request.delivery_date 
-                          ? format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })
-                          : "—"
-                        }
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Транспортная компания</p>
-                    {canEdit ? (
-                      <Input
-                        value={request.transport_company || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updateRequestMutation.mutate({ transport_company: value || null });
-                        }}
-                        placeholder="Введите название ТК"
-                        className="h-9"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium">{request.transport_company || "—"}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Номер ТТН</p>
-                    {canEdit ? (
-                      <Input
-                        value={request.waybill_number || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updateRequestMutation.mutate({ waybill_number: value || null });
-                        }}
-                        placeholder="Введите номер ТТН"
-                        className="h-9"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium">{request.waybill_number || "—"}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Attached Files */}
-            <Card className="glassmorphism">
+            {/* 5. Attached Files */}
+            <Card className="glassmorphism border-border/40">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">
-                    Прикреплённые файлы ({allPhotos.length + allDocuments.length})
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileImage className="h-4 w-4 text-primary" />
+                    Файлы ({allPhotos.length + allDocuments.length})
                   </CardTitle>
                   {canEdit && (
                     <div className="flex gap-2 shrink-0">
-                      <Button variant="outline" size="sm" className="gap-1" disabled={isUploadingPhoto} asChild>
-                        <label>
-                          <Upload className="h-4 w-4" />
-                          <span className="hidden sm:inline">{isUploadingPhoto ? "..." : "Фото"}</span>
+                      <Button variant="outline" size="sm" className="gap-1 h-8" disabled={isUploadingPhoto} asChild>
+                        <label className="cursor-pointer">
+                          <Upload className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">{isUploadingPhoto ? "..." : "Фото"}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -840,10 +619,10 @@ export default function RequestDetail() {
                           />
                         </label>
                       </Button>
-                      <Button variant="outline" size="sm" className="gap-1" disabled={isUploadingDoc} asChild>
-                        <label>
-                          <Upload className="h-4 w-4" />
-                          <span className="hidden sm:inline">{isUploadingDoc ? "..." : "Документ"}</span>
+                      <Button variant="outline" size="sm" className="gap-1 h-8" disabled={isUploadingDoc} asChild>
+                        <label className="cursor-pointer">
+                          <Upload className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline text-xs">{isUploadingDoc ? "..." : "Документ"}</span>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.xls,.xlsx"
@@ -860,19 +639,18 @@ export default function RequestDetail() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Photos Section */}
                   {allPhotos.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Фото ({allPhotos.length})</p>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                      <p className="text-xs text-muted-foreground mb-2">Фото ({allPhotos.length})</p>
+                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
                         {allPhotos.map((url, index) => (
                           <div
                             key={index}
-                            className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group"
+                            className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-all duration-150 group"
                           >
                             <button
                               onClick={() => handleImageClick(index)}
-                              className="w-full h-full"
+                              className="w-full h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                             >
                               <img
                                 src={url}
@@ -880,7 +658,7 @@ export default function RequestDetail() {
                                 className="w-full h-full object-cover"
                               />
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </button>
                             {canEdit && (
@@ -900,15 +678,14 @@ export default function RequestDetail() {
                     </div>
                   )}
                   
-                  {/* Documents Section */}
                   {allDocuments.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Документы ({allDocuments.length})</p>
+                      <p className="text-xs text-muted-foreground mb-2">Документы ({allDocuments.length})</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {allDocuments.map((url, index) => (
-                          <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card group">
+                          <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card group hover:bg-muted/30 transition-colors">
                             <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                              <FileText className="h-5 w-5 text-primary" />
+                              <FileText className="h-4 w-4 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">Документ {index + 1}</p>
@@ -916,7 +693,7 @@ export default function RequestDetail() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 px-2 text-xs"
+                                  className="h-6 px-2 text-xs"
                                   onClick={async () => {
                                     const newWindow = window.open('', '_blank');
                                     try {
@@ -954,7 +731,7 @@ export default function RequestDetail() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 px-2 text-xs"
+                                  className="h-6 px-2 text-xs"
                                   asChild
                                 >
                                   <a href={url} download target="_blank" rel="noopener noreferrer">
@@ -966,11 +743,10 @@ export default function RequestDetail() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                                     onClick={() => handleDeleteDocument(url)}
                                   >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Удалить
+                                    <Trash2 className="h-3 w-3" />
                                   </Button>
                                 )}
                               </div>
@@ -982,170 +758,51 @@ export default function RequestDetail() {
                   )}
                   
                   {allPhotos.length === 0 && allDocuments.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Файлы не прикреплены</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">Файлы не прикреплены</p>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Activity Feed */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Лента активности</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {activities && activities.length > 0 ? (
-                  activities.map((activity, index) => (
-                    <div key={activity.id} className="flex gap-4">
-                      <div className="relative">
-                        <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>
-                        {index < activities.length - 1 && (
-                          <div className="absolute left-1 top-4 bottom-0 w-[1px] bg-border"></div>
-                        )}
-                      </div>
-                      <div className="flex-1 pb-6">
-                        <p className="text-sm font-medium">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {activity.profiles?.full_name || activity.profiles?.email || "Система"} • {format(new Date(activity.created_at), "dd.MM.yyyy, HH:mm", { locale: ru })}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">История действий пока пуста</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Comments Section */}
-            <RequestComments requestId={id!} />
+            {/* 6. Activity Feed - System history separated */}
+            <RequestActivityFeed activities={activities} />
           </div>
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Status and Priority */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Статус и Приоритет</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2">Текущий статус</p>
-                  {canEdit ? (
-                    <Select
-                      value={request.status}
-                      onValueChange={(value) => updateRequestMutation.mutate({ status: value })}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem key={status.id} value={status.name}>
-                            {status.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Badge variant={getStatusColor(request.status)} className="w-full justify-center py-2">
-                      {request.status}
-                    </Badge>
-                  )}
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2">Приоритет</p>
-                  {canEdit ? (
-                    <Select
-                      value={request.priority || ""}
-                      onValueChange={(value) => updateRequestMutation.mutate({ priority: value })}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {priorities?.map((priority) => (
-                          <SelectItem key={priority.id} value={priority.name}>
-                            {priority.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Badge variant={getPriorityColor(request.priority || "")} className="w-full justify-center py-2">
-                      {request.priority}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Quick Actions - Status, Priority, Notes */}
+            <RequestQuickActionsCard
+              request={request}
+              statuses={statuses}
+              priorities={priorities}
+              canEdit={canEdit}
+              onUpdate={handleUpdate}
+            />
 
             {/* Executor */}
             {request.executor && (
-              <Card className="glassmorphism">
-                <CardHeader>
-                  <CardTitle className="text-lg">Исполнитель</CardTitle>
+              <Card className="glassmorphism border-border/40">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" />
+                    Исполнитель
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-primary/20 text-primary">
-                        {request.executor.split(' ').map(n => n[0]).join('')}
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/15 text-primary text-sm">
+                        {request.executor.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="text-sm font-medium">{request.executor}</p>
-                      <p className="text-xs text-muted-foreground">Исполнитель</p>
+                      <p className="text-xs text-muted-foreground">Ответственный</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            {/* Key Dates */}
-            <Card className="glassmorphism">
-              <CardHeader>
-                <CardTitle className="text-lg">Ключевые даты</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Дата заявки</span>
-                  <span className="text-sm font-medium">
-                    {format(new Date(request.request_date), "dd.MM.yyyy", { locale: ru })}
-                  </span>
-                </div>
-                {request.shipment_date && (
-                  <>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Дата отгрузки</span>
-                      <span className="text-sm font-medium">
-                        {format(new Date(request.shipment_date), "dd.MM.yyyy", { locale: ru })}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {request.delivery_date && (
-                  <>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Дата доставки</span>
-                      <span className="text-sm font-medium">
-                        {format(new Date(request.delivery_date), "dd.MM.yyyy", { locale: ru })}
-                      </span>
-                    </div>
-                  </>
-                )}
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Создано</span>
-                  <span className="text-sm font-medium">
-                    {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Linked Requests */}
             <LinkedRequests requestId={id!} canEdit={canEdit} />
@@ -1153,25 +810,22 @@ export default function RequestDetail() {
             {/* Reminders */}
             <RequestReminders requestId={id!} />
 
-            {/* Archive Request */}
+            {/* Archive */}
             {canEdit && (
-              <Card className="glassmorphism">
-                <CardHeader>
-                  <CardTitle className="text-lg">Архивация</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <Card className="glassmorphism border-border/40">
+                <CardContent className="pt-4">
                   <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" className="w-full gap-2">
+                      <Button variant="outline" className="w-full gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/50">
                         <Trash2 className="h-4 w-4" />
-                        Переместить в архив
+                        В архив
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Переместить в архив?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Заявка #{request.request_number} будет перемещена в архив и не будет отображаться в основном списке.
+                          Заявка #{request.request_number} будет перемещена в архив.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
