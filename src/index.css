@@ -178,4 +178,9 @@ All colors MUST be HSL.
     box-shadow: 0 0 20px rgba(0, 128, 255, 0.1);
     transform: translateY(-2px);
   }
+
+  /* Smooth table cell transitions */
+  .table-cell-animated {
+    transition: width 150ms ease-out;
+  }
 }
