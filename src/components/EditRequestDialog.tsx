@@ -1438,22 +1438,24 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Оплата (%)</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={field.value?.toString() || ""}
-                      onValueChange={(value) => field.onChange(value)}
-                      disabled={isViewer}
-                    >
+                  <Select
+                    value={field.value?.toString() || ""}
+                    onValueChange={(value) => field.onChange(value)}
+                    disabled={isViewer}
+                  >
+                    <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="%" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(p => (
-                          <SelectItem key={p} value={`${p}%`}>{p}%</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <SelectContent className="pointer-events-auto z-[60]">
+                      {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((p) => (
+                        <SelectItem key={p} value={`${p}%`}>
+                          {p}%
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
