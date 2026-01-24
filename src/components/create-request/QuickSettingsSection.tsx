@@ -58,7 +58,12 @@ export const QuickSettingsSection = ({
               <FormItem>
                 <FormLabel className="text-xs">Дата заявки *</FormLabel>
                 <FormControl>
-                  <Input type="date" className="h-9" {...field} />
+                  <Input 
+                    type="date" 
+                    className="h-9 min-w-0" 
+                    title="Дата создания заявки"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

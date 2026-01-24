@@ -29,7 +29,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
     <FormSectionCard 
       title="Финансы" 
       icon={<Banknote className="h-4 w-4 text-primary" />}
-      className="mt-6 border-primary/20"
+      className="border-primary/20"
       titleClassName="text-base font-semibold"
     >
       <div className="space-y-4">
@@ -68,8 +68,9 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                 <FormLabel className="text-xs">Номер счета</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="№ 123" 
-                    className="h-9 select-all" 
+                    placeholder="Сч. 123 от 24.01.26" 
+                    className="h-9 select-all min-w-0" 
+                    title="Номер счета для оплаты"
                     {...field} 
                   />
                 </FormControl>
@@ -89,8 +90,10 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                     type="number"
                     min="0"
                     step="0.01"
+                    inputMode="decimal"
                     placeholder="0.00"
-                    className="h-9 select-all"
+                    className="h-9 select-all min-w-0"
+                    title="Сумма счета в рублях"
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
