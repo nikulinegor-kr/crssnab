@@ -42,7 +42,7 @@ export const useRequests = (showArchived: boolean = false) => {
         .select("*")
         .eq("archived", showArchived);
       
-      const { data, error } = await query.order("request_date", { ascending: false });
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Request[];
