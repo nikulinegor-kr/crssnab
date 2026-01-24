@@ -3,12 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { ComboboxInput } from "@/components/ui/combobox-input";
-import { ContractorSelect } from "@/components/ContractorSelect";
-import { ParticipantSelect } from "@/components/ParticipantSelect";
-import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useRequestDraft } from "@/hooks/useRequestDraft";
-import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
 import {
   Drawer,
   DrawerContent,
@@ -37,32 +31,21 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Copy, Sparkles, Plus, Save, Check, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
+import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
+
+// Section components
+import { ContextSection } from "./create-request/ContextSection";
+import { QuickSettingsSection } from "./create-request/QuickSettingsSection";
+import { LogisticsSection } from "./create-request/LogisticsSection";
+import { AdditionalSection } from "./create-request/AdditionalSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -161,12 +144,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const isMobile = useIsMobile();
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [pendingClose, setPendingClose] = useState(false);
-  const [showCommentField, setShowCommentField] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasUnsavedChanges()) {
-      // Show warning before closing
       setShowExitWarning(true);
       setPendingClose(true);
       return;
@@ -177,11 +158,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     } else {
       setInternalOpen(newOpen);
     }
-    
-    // Reset comment field visibility when closing
-    if (!newOpen) {
-      setShowCommentField(false);
-    }
   };
   
   const confirmClose = () => {
@@ -191,7 +167,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     form.reset();
     setPhotoFiles([]);
     setDocumentFiles([]);
-    setShowCommentField(false);
     
     if (onOpenChange) {
       onOpenChange(false);
@@ -206,7 +181,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const { toast } = useToast();
@@ -214,6 +188,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const { currentOrgId } = useCurrentOrganization();
   const { recentContractors, recentTransportCompanies } = useContractorSuggestions();
 
+  // Fetch participants
   const { data: participants } = useQuery({
     queryKey: ["request-participants", currentOrgId],
     queryFn: async () => {
@@ -334,16 +309,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const formValues = form.watch();
   
   // Auto-save draft (localStorage only, NO server calls until submit)
-  const { clearDraft, draftSaveState, draftInfo, hasUnsavedChanges } = useRequestDraft(
+  const { clearDraft, draftSaveState, hasUnsavedChanges } = useRequestDraft(
     formValues as Record<string, unknown>,
     (values) => {
       Object.entries(values).forEach(([key, value]) => {
         form.setValue(key as keyof RequestFormData, value as never);
       });
-      // If draft has comments, show the comment field
-      if (values.comments && typeof values.comments === 'string' && values.comments.trim()) {
-        setShowCommentField(true);
-      }
     },
     open
   );
@@ -360,7 +331,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);
     try {
-      // Check if organization is selected
       if (!currentOrgId) {
         toast({
           title: "Ошибка",
@@ -371,7 +341,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         return;
       }
 
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -383,14 +352,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         return;
       }
 
-      // Generate request number based on date
       const date = new Date(data.request_date);
       const requestNumber = `REQ-${date.getFullYear()}-${Date.now()}`;
 
       let photoUrls: string[] = [];
       let documentUrls: string[] = [];
 
-      // Helper function to sanitize filenames
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
         const sanitized = filename
@@ -440,14 +407,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         documentUrls.push(documentData.publicUrl);
       }
 
-      // Get current user's profile to check if they are the applicant
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", user.id)
         .maybeSingle();
       
-      // Set applicant_user_id if the applicant matches the current user's name
       const isCurrentUserApplicant = profile?.full_name && 
         data.applicant.toLowerCase().includes(profile.full_name.toLowerCase());
       
@@ -506,14 +471,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         }
       }
 
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
       form.reset();
       setPhotoFiles([]);
       setDocumentFiles([]);
-      setShowCommentField(false);
       clearDraft();
       
       if (onOpenChange) {
@@ -532,44 +495,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
 
-  const handleImproveDescription = async () => {
-    const currentDescription = form.getValues("description");
-    if (!currentDescription || currentDescription.trim().length < 3) {
-      toast({
-        title: "Введите описание",
-        description: "Сначала введите описание заявки для улучшения",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsImprovingDescription(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("improve-description", {
-        body: { description: currentDescription },
-      });
-
-      if (error) throw error;
-
-      if (data?.improved) {
-        form.setValue("description", data.improved);
-        toast({
-          title: "Описание улучшено",
-          description: "AI переформулировал описание заявки",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error improving description:", error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось улучшить описание",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImprovingDescription(false);
-    }
-  };
-
   // Auto-scroll to focused input on mobile
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isMobile) {
@@ -579,686 +504,47 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
 
-  // Draft save indicator
-  const DraftIndicator = () => {
-    if (draftSaveState === 'idle') return null;
-    
-    return (
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {draftSaveState === 'saving' && (
-          <>
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Сохранение...</span>
-          </>
-        )}
-        {draftSaveState === 'saved' && (
-          <>
-            <Check className="h-3 w-3 text-green-500" />
-            <span>Черновик сохранён</span>
-          </>
-        )}
-      </div>
-    );
-  };
-
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onFocus={handleInputFocus as any}>
         
-        {/* Context Block: Description + Comment - FIRST */}
-        <div className="space-y-0 rounded-lg border bg-card/50 overflow-hidden">
-          {/* Description - Primary, Autofocus */}
-          <div className="p-4 pb-3">
-            <div className="flex items-center justify-between mb-2">
-              <FormLabel className="text-base font-medium">Описание заявки *</FormLabel>
-              <div className="flex items-center gap-2">
-                <DraftIndicator />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleImproveDescription}
-                  disabled={isImprovingDescription}
-                  className="h-7 px-2 text-xs text-primary hover:text-primary/80"
-                >
-                  {isImprovingDescription ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-3 w-3 mr-1" />
-                  )}
-                  Улучшить
-                </Button>
-              </div>
-            </div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      ref={descriptionRef}
-                      placeholder="Опишите заявку — это главное поле..."
-                      className={cn(
-                        "min-h-[100px] resize-none border-0 p-0 text-base leading-relaxed",
-                        "focus-visible:ring-0 focus-visible:ring-offset-0",
-                        "bg-transparent placeholder:text-muted-foreground/50"
-                      )}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        {/* 1. Context Block: Description + Comment */}
+        <ContextSection 
+          ref={descriptionRef}
+          form={form} 
+          draftSaveState={draftSaveState}
+          autoFocus={true}
+        />
 
-          {/* Comment - Collapsible, shown on demand */}
-          {showCommentField ? (
-            <>
-              <div className="mx-4 border-t border-border/30" />
-              <div className="p-4 pt-3">
-                <FormField
-                  control={form.control}
-                  name="comments"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs text-muted-foreground">Комментарий</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Дополнительная информация..."
-                          className={cn(
-                            "min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
-                            "focus-visible:ring-0 focus-visible:ring-offset-0",
-                            "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
-                          )}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="px-4 pb-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCommentField(true)}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Добавить комментарий
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* 2. Quick Settings: Status, Priority, Participants, Object */}
+        <QuickSettingsSection
+          form={form}
+          statuses={statuses}
+          priorities={priorities}
+          applicants={applicants}
+          executors={executors}
+          objectsData={objectsData}
+          currentOrgId={currentOrgId}
+        />
 
-        {/* Status & Priority row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="request_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Дата заявки *</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* 3. Logistics: Contractor, Availability, TK, Dates, TTN */}
+        <LogisticsSection
+          form={form}
+          suppliers={suppliers}
+          recentContractors={recentContractors}
+          recentTransportCompanies={recentTransportCompanies}
+        />
 
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Статус *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите статус" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {statuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="priority"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Приоритет *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите приоритет" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Participants */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="applicant"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Заявитель *</FormLabel>
-                <FormControl>
-                  <ParticipantSelect
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={applicants.map(a => ({ value: a.id, label: a.name }))}
-                    placeholder="Выбрать заявителя"
-                    searchTitle="Поиск заявителя"
-                    searchDescription="Найдите заявителя из списка"
-                    addTitle="Добавить заявителя"
-                    addDescription="Создайте нового заявителя"
-                    editTitle="Редактировать заявителя"
-                    editDescription="Измените имя заявителя"
-                    deleteTitle="Удалить заявителя?"
-                    entityName="заявителя"
-                    onAddNew={async (name) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .insert({
-                          name,
-                          organization_id: currentOrgId || "",
-                          participant_type: "applicant",
-                        });
-                      if (error) throw error;
-                       queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Заявитель добавлен" });
-                    }}
-                    onDelete={async (id) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .delete()
-                        .eq("id", id);
-                      if (error) throw error;
-                       queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Заявитель удалён" });
-                    }}
-                    onEdit={async (id, newName) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .update({ name: newName })
-                        .eq("id", id);
-                      if (error) throw error;
-                       queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Заявитель обновлён" });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="executor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Исполнитель</FormLabel>
-                <FormControl>
-                  <ParticipantSelect
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    options={executors.map(e => ({ value: e.id, label: e.name }))}
-                    placeholder="Выбрать исполнителя"
-                    searchTitle="Поиск исполнителя"
-                    searchDescription="Найдите исполнителя из списка"
-                    addTitle="Добавить исполнителя"
-                    addDescription="Создайте нового исполнителя"
-                    editTitle="Редактировать исполнителя"
-                    editDescription="Измените имя исполнителя"
-                    deleteTitle="Удалить исполнителя?"
-                    entityName="исполнителя"
-                    onAddNew={async (name) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .insert({
-                          name,
-                          organization_id: currentOrgId || "",
-                          participant_type: "executor",
-                        });
-                      if (error) throw error;
-                       queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Исполнитель добавлен" });
-                    }}
-                    onDelete={async (id) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .delete()
-                        .eq("id", id);
-                      if (error) throw error;
-                       queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Исполнитель удалён" });
-                    }}
-                    onEdit={async (id, newName) => {
-                      const { error } = await supabase
-                        .from("request_participants")
-                        .update({ name: newName })
-                        .eq("id", id);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                      toast({ title: "Успешно", description: "Исполнитель обновлён" });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Object & Delivery */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="object_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Объект</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите объект" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {objectsData?.map((obj) => (
-                      <SelectItem key={obj.id} value={obj.id}>
-                        {obj.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="estimated_delivery_days"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ориентировочный срок доставки (дней)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="Введите кол-во дней"
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Contractor & Availability */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="contractor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Контрагент</FormLabel>
-                <FormControl>
-                  <ContractorSelect
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    options={[
-                      ...(suppliers?.map(s => ({ value: s.id, label: s.name })) || []),
-                      ...recentContractors
-                        .filter(c => !suppliers?.some(s => s.name === c))
-                        .map(c => ({ value: c, label: c }))
-                    ]}
-                    placeholder="Выбрать из списка"
-                    onAddNew={async (name) => {
-                      const { data: userData } = await supabase.auth.getUser();
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .insert({
-                          name: name,
-                          organization_id: currentOrgId || "",
-                          created_by: userData.user?.id,
-                          status: "Активный",
-                          category: "Другое",
-                        });
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({
-                        title: "Успешно",
-                        description: "Контрагент добавлен",
-                      });
-                    }}
-                    onDelete={async (supplierId) => {
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .delete()
-                        .eq("id", supplierId);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({
-                        title: "Успешно",
-                        description: "Контрагент удалён",
-                      });
-                    }}
-                    onEdit={async (supplierId, newName) => {
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .update({ name: newName })
-                        .eq("id", supplierId);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({
-                        title: "Успешно",
-                        description: "Контрагент обновлён",
-                      });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="availability_delivery_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Наличие / Сроки поставки</FormLabel>
-                <div className="flex gap-2">
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Выбрать" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="В наличии">В наличии</SelectItem>
-                      <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                      <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                      <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                      <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                      <SelectItem value="Под заказ">Под заказ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormControl>
-                    <Input 
-                      placeholder="или введите сроки" 
-                      className="flex-1"
-                      {...field} 
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Financial */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="invoice_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Номер счета</FormLabel>
-                <FormControl>
-                  <Input placeholder="№ 123" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Сумма (₽)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="payment_percentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Оплата (%)</FormLabel>
-                <div className="flex gap-2">
-                  <Select
-                    value={field.value?.toString() || "0"}
-                    onValueChange={(value) => field.onChange(parseInt(value))}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="0">0%</SelectItem>
-                      <SelectItem value="10">10%</SelectItem>
-                      <SelectItem value="20">20%</SelectItem>
-                      <SelectItem value="30">30%</SelectItem>
-                      <SelectItem value="40">40%</SelectItem>
-                      <SelectItem value="50">50%</SelectItem>
-                      <SelectItem value="60">60%</SelectItem>
-                      <SelectItem value="70">70%</SelectItem>
-                      <SelectItem value="80">80%</SelectItem>
-                      <SelectItem value="90">90%</SelectItem>
-                      <SelectItem value="100">100%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="1"
-                      placeholder="введите"
-                      className="flex-1"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Dates */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="shipment_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Дата отгрузки</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="delivery_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Дата доставки</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Transport */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="transport_company"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Транспортная компания</FormLabel>
-                <FormControl>
-                  <ComboboxInput
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    options={recentTransportCompanies.map(c => ({ value: c, label: c }))}
-                    placeholder="Введите или выберите..."
-                    searchPlaceholder="Поиск ТК..."
-                    emptyMessage="Введите название вручную"
-                    allowCustomValue={true}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="waybill_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Номер ТТН</FormLabel>
-                <FormControl>
-                  <Input placeholder="№ ТТН" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* ZRS Summary */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>ЗРС (сводка заявки)</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
-Заявка: ${formValues.description || "-"}
-Заявитель: ${formValues.applicant || "-"}
-Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
-Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
-Оплата: ${formValues.payment_percentage}%
-Исполнил: ${formValues.executor || "-"}`;
-                try {
-                  await navigator.clipboard.writeText(zrsText);
-                  toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
-                } catch {
-                  toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
-                }
-              }}
-            >
-              <Copy className="h-4 w-4 mr-1" />
-              Копировать
-            </Button>
-          </div>
-          <Textarea
-            readOnly
-            className="min-h-[120px] bg-muted/50 font-mono text-sm"
-            value={`Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
-Заявка: ${formValues.description || "-"}
-Заявитель: ${formValues.applicant || "-"}
-Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
-Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
-Оплата: ${formValues.payment_percentage}%
-Исполнил: ${formValues.executor || "-"}`}
-          />
-        </div>
-
-        {/* Files */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MultiFileDropZone
-            accept="image/*"
-            files={photoFiles}
-            onFilesChange={setPhotoFiles}
-            label="Фото заявки"
-            hint="JPG, PNG, WEBP до 5 МБ, максимум 10 файлов"
-            icon="image"
-            maxSizeMB={5}
-            maxFiles={10}
-          />
-
-          <MultiFileDropZone
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
-            files={documentFiles}
-            onFilesChange={setDocumentFiles}
-            label="Документы (Счёт/КП)"
-            hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ, максимум 10 файлов"
-            icon="document"
-            maxSizeMB={10}
-            maxFiles={10}
-          />
-        </div>
+        {/* 4. Additional (Collapsed by default): Finance, Files, ZRS */}
+        <AdditionalSection
+          form={form}
+          formValues={formValues}
+          objectsData={objectsData}
+          photoFiles={photoFiles}
+          setPhotoFiles={setPhotoFiles}
+          documentFiles={documentFiles}
+          setDocumentFiles={setDocumentFiles}
+        />
 
         {/* Submit */}
         <div className="flex justify-end gap-2 pt-4">
@@ -1312,9 +598,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           <DrawerTrigger asChild>{children}</DrawerTrigger>
           <DrawerContent className="h-[100dvh] max-h-[100dvh]">
             <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
-              <DrawerTitle>Создать новую заявку</DrawerTitle>
+              <DrawerTitle>Новая заявка</DrawerTitle>
               <DrawerDescription>
-                Заполните форму для создания новой заявки
+                Заполните форму для создания заявки
               </DrawerDescription>
             </DrawerHeader>
             <div 
@@ -1339,9 +625,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Создать новую заявку</DialogTitle>
+            <DialogTitle>Новая заявка</DialogTitle>
             <DialogDescription>
-              Заполните форму для создания новой заявки в системе
+              Заполните форму для создания заявки
             </DialogDescription>
           </DialogHeader>
           {formContent}
