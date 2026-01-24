@@ -70,11 +70,11 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-bold border-r text-center select-none text-foreground/80 tracking-wide",
-        sortable && "cursor-pointer hover:bg-muted/60 transition-colors",
+        "relative p-2 font-bold border-r text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
+        sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
-      style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
+      style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px`, transition: isResizing ? 'none' : 'width 150ms ease-out, min-width 150ms ease-out, max-width 150ms ease-out' }}
       onClick={sortable ? onSort : undefined}
     >
       <div className="flex items-center gap-0.5 justify-center overflow-hidden">

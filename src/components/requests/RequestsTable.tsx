@@ -445,7 +445,7 @@ export const RequestsTable = ({
               return (
                 <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-colors relative group hover:bg-muted/50 ${isEvenRow ? 'bg-muted/20' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/50 hover:shadow-sm ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                 >
                   <TableCell 
