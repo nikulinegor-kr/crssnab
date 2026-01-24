@@ -1,18 +1,13 @@
 import { 
   LayoutGrid, 
   FileText, 
-  Truck, 
   Users, 
-  BarChart3, 
   Calendar, 
-  CheckSquare, 
   UserCircle, 
   Settings, 
   LogOut,
   FileBarChart,
-  MessageCircle,
   Sparkles,
-  Kanban,
   Percent,
   Sun,
   Moon,
@@ -49,11 +44,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// Основные пункты: Дашборд, Заявки, Канбан
+// Основные пункты: Дашборд, Заявки
 const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
-  { title: "Канбан", url: "/kanban", icon: Kanban },
 ];
 
 // Всё остальное в "Ещё"
