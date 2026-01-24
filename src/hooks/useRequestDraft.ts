@@ -1,12 +1,18 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
-const DRAFT_KEY_PREFIX = "request_draft_";
+const NEW_REQUEST_DRAFT_KEY_PREFIX = "draft:new-request:";
 const DRAFT_EXPIRY_HOURS = 24;
 
 interface DraftData {
   data: Record<string, unknown>;
   savedAt: number;
+}
+
+interface DraftInfo {
+  exists: boolean;
+  savedAt: Date | null;
+  formattedDate: string | null;
 }
 
 export const useRequestDraft = <T extends Record<string, unknown>>(
@@ -15,54 +21,92 @@ export const useRequestDraft = <T extends Record<string, unknown>>(
   isDialogOpen: boolean
 ) => {
   const { currentOrgId } = useCurrentOrganization();
-  const draftKey = `${DRAFT_KEY_PREFIX}${currentOrgId || "default"}`;
+  // Explicit key for NEW requests - never confused with edit drafts
+  const draftKey = `${NEW_REQUEST_DRAFT_KEY_PREFIX}${currentOrgId || "default"}`;
   const isInitialLoad = useRef(true);
   const lastSavedValues = useRef<string>("");
+  const [draftSaveState, setDraftSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [draftInfo, setDraftInfo] = useState<DraftInfo>({ exists: false, savedAt: null, formattedDate: null });
+
+  // Check for existing draft
+  const checkDraftExists = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(draftKey);
+      if (!stored) return { exists: false, savedAt: null, formattedDate: null };
+      
+      const draft: DraftData = JSON.parse(stored);
+      const hoursSinceSave = (Date.now() - draft.savedAt) / (1000 * 60 * 60);
+      
+      if (hoursSinceSave < DRAFT_EXPIRY_HOURS && Object.keys(draft.data).length > 0) {
+        // Check if draft has meaningful content
+        const hasContent = draft.data.description && 
+          typeof draft.data.description === "string" && 
+          draft.data.description.trim().length > 0;
+        
+        if (hasContent) {
+          const savedDate = new Date(draft.savedAt);
+          return {
+            exists: true,
+            savedAt: savedDate,
+            formattedDate: savedDate.toLocaleString("ru-RU"),
+          };
+        }
+      }
+      
+      // Draft expired or empty
+      localStorage.removeItem(draftKey);
+      return { exists: false, savedAt: null, formattedDate: null };
+    } catch {
+      return { exists: false, savedAt: null, formattedDate: null };
+    }
+  }, [draftKey]);
 
   // Load draft on mount
   useEffect(() => {
-    if (!isDialogOpen || !isInitialLoad.current) return;
+    if (!isDialogOpen) {
+      isInitialLoad.current = true;
+      setDraftSaveState('idle');
+      return;
+    }
+    
+    if (!isInitialLoad.current) return;
 
-    try {
-      const stored = localStorage.getItem(draftKey);
-      if (stored) {
-        const draft: DraftData = JSON.parse(stored);
-        const hoursSinceSave = (Date.now() - draft.savedAt) / (1000 * 60 * 60);
-        
-        if (hoursSinceSave < DRAFT_EXPIRY_HOURS && Object.keys(draft.data).length > 0) {
-          // Check if draft has meaningful content (not just default values)
-          const hasContent = draft.data.description && 
-            typeof draft.data.description === "string" && 
-            draft.data.description.trim().length > 0;
-          
-          if (hasContent) {
-            setFormValues(draft.data as Partial<T>);
-          }
-        } else {
-          // Draft expired, remove it
-          localStorage.removeItem(draftKey);
+    const info = checkDraftExists();
+    setDraftInfo(info);
+
+    if (info.exists) {
+      try {
+        const stored = localStorage.getItem(draftKey);
+        if (stored) {
+          const draft: DraftData = JSON.parse(stored);
+          setFormValues(draft.data as Partial<T>);
         }
+      } catch (error) {
+        console.error("Error loading draft:", error);
       }
-    } catch (error) {
-      console.error("Error loading draft:", error);
     }
     
     isInitialLoad.current = false;
-  }, [draftKey, isDialogOpen, setFormValues]);
+  }, [draftKey, isDialogOpen, setFormValues, checkDraftExists]);
 
-  // Save draft on change (debounced)
+  // Save draft on change (only to localStorage, NO server calls)
   const saveDraft = useCallback(() => {
     const serialized = JSON.stringify(formValues);
     
     // Prevent saving if nothing changed
     if (serialized === lastSavedValues.current) return;
     
-    // Only save if there's meaningful content
+    // Only save if there's meaningful content (description has text)
     const hasContent = formValues.description && 
       typeof formValues.description === "string" && 
       formValues.description.trim().length > 0;
     
-    if (!hasContent) return;
+    if (!hasContent) {
+      // No meaningful content, don't save draft
+      return;
+    }
+
+    setDraftSaveState('saving');
 
     try {
       const draft: DraftData = {
@@ -71,12 +115,17 @@ export const useRequestDraft = <T extends Record<string, unknown>>(
       };
       localStorage.setItem(draftKey, JSON.stringify(draft));
       lastSavedValues.current = serialized;
+      
+      setTimeout(() => {
+        setDraftSaveState('saved');
+      }, 300);
     } catch (error) {
       console.error("Error saving draft:", error);
+      setDraftSaveState('idle');
     }
   }, [draftKey, formValues]);
 
-  // Auto-save every 2 seconds when dialog is open
+  // Auto-save every 2 seconds when dialog is open (localStorage only!)
   useEffect(() => {
     if (!isDialogOpen) return;
 
@@ -88,25 +137,35 @@ export const useRequestDraft = <T extends Record<string, unknown>>(
   const clearDraft = useCallback(() => {
     localStorage.removeItem(draftKey);
     lastSavedValues.current = "";
+    setDraftInfo({ exists: false, savedAt: null, formattedDate: null });
+    setDraftSaveState('idle');
   }, [draftKey]);
 
   // Check if draft exists
   const hasDraft = useCallback(() => {
-    try {
-      const stored = localStorage.getItem(draftKey);
-      if (!stored) return false;
-      
-      const draft: DraftData = JSON.parse(stored);
-      const hoursSinceSave = (Date.now() - draft.savedAt) / (1000 * 60 * 60);
-      
-      return hoursSinceSave < DRAFT_EXPIRY_HOURS && 
-        draft.data.description && 
-        typeof draft.data.description === "string" && 
-        draft.data.description.trim().length > 0;
-    } catch {
-      return false;
-    }
-  }, [draftKey]);
+    return checkDraftExists().exists;
+  }, [checkDraftExists]);
 
-  return { clearDraft, hasDraft, saveDraft };
+  // Check if form has unsaved changes (for Safe Exit warning)
+  const hasUnsavedChanges = useCallback(() => {
+    const hasContent = formValues.description && 
+      typeof formValues.description === "string" && 
+      formValues.description.trim().length > 0;
+    return !!hasContent;
+  }, [formValues]);
+
+  // Dismiss draft
+  const dismissDraft = useCallback(() => {
+    clearDraft();
+  }, [clearDraft]);
+
+  return { 
+    clearDraft, 
+    hasDraft, 
+    saveDraft,
+    dismissDraft,
+    draftSaveState,
+    draftInfo,
+    hasUnsavedChanges,
+  };
 };
