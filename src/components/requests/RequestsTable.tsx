@@ -433,17 +433,19 @@ export const RequestsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRequests.map((request) => {
+            {paginatedRequests.map((request, index) => {
               const priorityColor = request.priority === "Аварийно" 
                 ? "#ef4444" 
                 : request.priority === "Приоритетно" 
                   ? "#f97316" 
                   : "#d1d5db";
               
+              const isEvenRow = index % 2 === 1;
+              
               return (
                 <TableRow
                   key={request.id}
-                  className="hover:bg-muted/40 cursor-pointer transition-colors relative"
+                  className={`cursor-pointer transition-colors relative hover:bg-muted/50 ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                 >
                   <TableCell className="w-1 p-0 border-r-0" style={{ backgroundColor: priorityColor }} />
