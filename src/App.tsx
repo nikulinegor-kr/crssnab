@@ -30,7 +30,7 @@ const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSet
 const AgentReport = lazyWithRetry(() => import("./pages/AgentReport"));
 const AgentActReport = lazyWithRetry(() => import("./pages/AgentActReport"));
 const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"));
-const KanbanBoard = lazyWithRetry(() => import("./pages/KanbanBoard"));
+
 const AIAnalytics = lazyWithRetry(() => import("./pages/AIAnalytics"));
 const AIAssistant = lazyWithRetry(() => import("./pages/AIAssistant"));
 const SpareParts = lazyWithRetry(() => import("./pages/SpareParts"));
@@ -216,16 +216,6 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <PercentCalculator />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/kanban"
-              element={
-                <ProtectedRoute>
-                  <AppLayout fullBleed hideSubscriptionBanner>
-                    <KanbanBoard />
                   </AppLayout>
                 </ProtectedRoute>
               }
