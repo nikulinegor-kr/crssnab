@@ -25,7 +25,9 @@ export const FinanceSection = ({ form }: FinanceSectionProps) => {
   return (
     <FormSectionCard 
       title="Финансы" 
-      icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
+      icon={<Banknote className="h-4 w-4 text-primary" />}
+      className="mt-6 border-primary/20"
+      titleClassName="text-base font-semibold"
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <FormField

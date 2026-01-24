@@ -11,6 +11,7 @@ interface FormSectionCardProps {
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   className?: string;
+  titleClassName?: string;
 }
 
 export const FormSectionCard = ({
@@ -20,6 +21,7 @@ export const FormSectionCard = ({
   collapsible = false,
   defaultCollapsed = false,
   className,
+  titleClassName,
 }: FormSectionCardProps) => {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -33,7 +35,7 @@ export const FormSectionCard = ({
         onClick={collapsible ? () => setIsCollapsed(!isCollapsed) : undefined}
       >
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
+          <CardTitle className={cn("text-sm font-medium flex items-center gap-2 text-foreground", titleClassName)}>
             {icon}
             {title}
           </CardTitle>
