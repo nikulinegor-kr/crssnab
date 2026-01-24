@@ -131,9 +131,9 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                     ref={descriptionRef}
                     placeholder="Опишите заявку — это главное поле..."
                     className={cn(
-                      "min-h-[100px] resize-none border-0 p-0 text-base leading-relaxed",
+                      "min-h-[100px] resize-none border-0 p-0 text-lg leading-normal",
                       "focus-visible:ring-0 focus-visible:ring-offset-0",
-                      "bg-transparent placeholder:text-muted-foreground/50"
+                      "bg-transparent placeholder:text-muted-foreground/50 font-normal"
                     )}
                     autoFocus={autoFocus}
                     {...field}
