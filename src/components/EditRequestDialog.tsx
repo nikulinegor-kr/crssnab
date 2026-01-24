@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,17 +9,12 @@ import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerHeader,
-  DrawerTitle,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -50,16 +45,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, X, Image, FileText, Trash2, Copy, Sparkles, Save } from "lucide-react";
+import { 
+  Loader2, 
+  FileText, 
+  Trash2, 
+  Copy, 
+  Sparkles, 
+  Save,
+  Check,
+  AlertTriangle,
+  RefreshCw,
+  X,
+  Clock
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
-import { createNotification } from "@/hooks/useNotifications";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
+import { cn } from "@/lib/utils";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -134,19 +142,29 @@ interface EditRequestDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDialogProps) => {
   const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isImprovingDescription, setIsImprovingDescription] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCloseConfirmDialog, setShowCloseConfirmDialog] = useState(false);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [existingDocumentUrls, setExistingDocumentUrls] = useState<string[]>([]);
+  const [serverSaveState, setServerSaveState] = useState<SaveState>('idle');
+  const [serverUpdatedAt, setServerUpdatedAt] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canEdit, isViewer } = useUserRole();
+  
+  const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const conflictCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastServerSaveRef = useRef<string>("");
 
   // Fetch participants
   const { data: participants } = useQuery({
@@ -159,7 +177,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .eq("organization_id", request.organization_id)
         .eq("is_active", true)
         .order("name");
-
       if (error) throw error;
       return data;
     },
@@ -180,7 +197,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .eq("organization_id", request.organization_id)
         .eq("status", "Активный")
         .order("name");
-
       if (error) throw error;
       return data;
     },
@@ -197,7 +213,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .select("*")
         .eq("organization_id", request.organization_id)
         .order("order");
-
       if (error) throw error;
       return data;
     },
@@ -214,7 +229,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .select("*")
         .eq("organization_id", request.organization_id)
         .order("order");
-
       if (error) throw error;
       return data;
     },
@@ -232,7 +246,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .eq("organization_id", request.organization_id)
         .eq("is_active", true)
         .order("name");
-
       if (error) throw error;
       return data;
     },
@@ -293,8 +306,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
   const formValues = form.watch();
   
-  // Auto-save draft hook
-  const { clearDraft, hasDraft } = useEditRequestDraft(
+  // Draft hook with enhanced features
+  const { 
+    clearDraft, 
+    restoreDraft, 
+    dismissDraft,
+    draftSaveState, 
+    draftInfo,
+    hasUnsavedChanges,
+  } = useEditRequestDraft(
     request?.id,
     formValues,
     (values) => {
@@ -306,6 +326,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     originalValues
   );
 
+  // Initialize form with request data
   useEffect(() => {
     if (request && open) {
       form.reset({
@@ -328,15 +349,220 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         waybill_number: request.waybill_number || "",
         comments: request.comments || "",
       });
-      // Load existing files
+      
       const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
       const docUrlsArr = request.document_urls || (request.document_url ? [request.document_url] : []);
       setExistingPhotoUrls(photoUrlsArr);
       setExistingDocumentUrls(docUrlsArr);
       setPhotoFiles([]);
       setDocumentFiles([]);
+      setServerUpdatedAt(request.updated_at || null);
+      setServerSaveState('idle');
     }
   }, [request, open, form]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (serverSaveTimeoutRef.current) clearTimeout(serverSaveTimeoutRef.current);
+      if (conflictCheckIntervalRef.current) clearInterval(conflictCheckIntervalRef.current);
+    };
+  }, []);
+
+  // Check for conflicts periodically
+  useEffect(() => {
+    if (!open || !request?.id) return;
+    
+    const checkConflict = async () => {
+      try {
+        const { data } = await supabase
+          .from("requests")
+          .select("updated_at")
+          .eq("id", request.id)
+          .single();
+        
+        if (data?.updated_at && serverUpdatedAt && data.updated_at !== serverUpdatedAt) {
+          // Only show conflict if we haven't just saved
+          const timeSinceLastSave = Date.now() - (lastServerSaveRef.current ? parseInt(lastServerSaveRef.current) : 0);
+          if (timeSinceLastSave > 5000) {
+            setShowConflictDialog(true);
+          }
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    
+    conflictCheckIntervalRef.current = setInterval(checkConflict, 15000);
+    return () => {
+      if (conflictCheckIntervalRef.current) clearInterval(conflictCheckIntervalRef.current);
+    };
+  }, [open, request?.id, serverUpdatedAt]);
+
+  // Auto-save to server with debounce
+  const saveToServer = useCallback(async (data: RequestFormData) => {
+    if (!request || !canEdit) return;
+    
+    // Validate form before saving
+    const result = requestSchema.safeParse(data);
+    if (!result.success) {
+      return; // Don't save if validation fails
+    }
+    
+    setServerSaveState('saving');
+    
+    try {
+      const requestData = {
+        request_date: data.request_date,
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        applicant: data.applicant,
+        executor: data.executor || null,
+        object_id: data.object_id || null,
+        estimated_delivery_days: data.estimated_delivery_days || null,
+        availability_delivery_time: data.availability_delivery_time || null,
+        contractor: data.contractor || null,
+        invoice_number: data.invoice_number || null,
+        amount: data.amount || 0,
+        payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
+        shipment_date: data.shipment_date || null,
+        delivery_date: data.delivery_date || null,
+        transport_company: data.transport_company || null,
+        waybill_number: data.waybill_number || null,
+        comments: data.comments || null,
+      };
+
+      const { data: updatedData, error } = await supabase
+        .from("requests")
+        .update(requestData)
+        .eq("id", request.id)
+        .select("updated_at")
+        .single();
+
+      if (error) throw error;
+
+      setServerUpdatedAt(updatedData.updated_at);
+      lastServerSaveRef.current = Date.now().toString();
+      setServerSaveState('saved');
+      
+      // Auto-send telegram if status changed
+      const statusChanged = data.status !== request.status;
+      if (statusChanged) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("telegram_auto_send_on_status_change")
+          .eq("id", request.organization_id)
+          .single();
+        
+        if (orgData?.telegram_auto_send_on_status_change) {
+          await notifyTelegram(request.id);
+        }
+      }
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+      
+    } catch (error) {
+      console.error("Auto-save error:", error);
+      setServerSaveState('error');
+    }
+  }, [request, canEdit, queryClient]);
+
+  // Debounced server save on form change
+  useEffect(() => {
+    if (!open || !canEdit || isViewer) return;
+    
+    const subscription = form.watch((value) => {
+      // Clear previous timeout
+      if (serverSaveTimeoutRef.current) {
+        clearTimeout(serverSaveTimeoutRef.current);
+      }
+      
+      // Set new timeout for debounced save
+      serverSaveTimeoutRef.current = setTimeout(() => {
+        saveToServer(value as RequestFormData);
+      }, 2000);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [open, canEdit, isViewer, form, saveToServer]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + Enter = Force save
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        form.handleSubmit(onSubmit)();
+      }
+      // Escape = Close (with confirmation if needed)
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, form]);
+
+  // Handle close with confirmation
+  const handleClose = useCallback(() => {
+    if (serverSaveState === 'saved' || !hasUnsavedChanges()) {
+      clearDraft();
+      onOpenChange(false);
+    } else {
+      setShowCloseConfirmDialog(true);
+    }
+  }, [serverSaveState, hasUnsavedChanges, clearDraft, onOpenChange]);
+
+  // Force close without saving
+  const forceClose = useCallback(() => {
+    clearDraft();
+    setShowCloseConfirmDialog(false);
+    onOpenChange(false);
+  }, [clearDraft, onOpenChange]);
+
+  // Refresh data from server (conflict resolution)
+  const refreshFromServer = useCallback(async () => {
+    if (!request?.id) return;
+    
+    const { data } = await supabase
+      .from("requests")
+      .select("*")
+      .eq("id", request.id)
+      .single();
+    
+    if (data) {
+      form.reset({
+        request_date: data.request_date,
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        applicant: data.applicant || "",
+        executor: data.executor || "",
+        object_id: data.object_id || "",
+        estimated_delivery_days: data.estimated_delivery_days,
+        availability_delivery_time: data.availability_delivery_time || "",
+        contractor: data.contractor || "",
+        invoice_number: data.invoice_number || "",
+        amount: data.amount || 0,
+        payment_percentage: data.payment_percentage?.toString() || "",
+        shipment_date: data.shipment_date || "",
+        delivery_date: data.delivery_date || "",
+        transport_company: data.transport_company || "",
+        waybill_number: data.waybill_number || "",
+        comments: data.comments || "",
+      });
+      setServerUpdatedAt(data.updated_at);
+      clearDraft();
+    }
+    setShowConflictDialog(false);
+  }, [request?.id, form, clearDraft]);
 
   const handleImproveDescription = async () => {
     const currentDescription = form.getValues("description");
@@ -376,13 +602,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
   };
 
-
   const onSubmit = async (data: RequestFormData) => {
     if (!request) return;
     
     setIsSubmitting(true);
+    setServerSaveState('saving');
+    
     try {
-      // Helper function to sanitize filenames
       const sanitizeFilename = (filename: string): string => {
         const extension = filename.split('.').pop() || '';
         const sanitized = filename
@@ -423,7 +649,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         newDocumentUrls.push(documentData.publicUrl);
       }
 
-      // Combine existing and new URLs
       const finalPhotoUrls = [...existingPhotoUrls, ...newPhotoUrls];
       const finalDocumentUrls = [...existingDocumentUrls, ...newDocumentUrls];
 
@@ -461,12 +686,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       toast({
         title: "Успешно",
-        description: "Заявка обновлена",
+        description: "Заявка сохранена",
       });
 
-      // Send Telegram notification if auto-send is enabled and status changed
       const statusChanged = data.status !== request.status;
-      
       const { data: orgData } = await supabase
         .from("organizations")
         .select("telegram_auto_send_on_status_change")
@@ -479,15 +702,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["request", request.id] });
 
       clearDraft();
+      setServerSaveState('saved');
       setPhotoFiles([]);
       setDocumentFiles([]);
       onOpenChange(false);
     } catch (error: any) {
+      setServerSaveState('error');
       toast({
         title: "Ошибка",
-        description: error.message || "Не удалось обновить заявку",
+        description: error.message || "Не удалось сохранить заявку",
         variant: "destructive",
       });
     } finally {
@@ -514,6 +740,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
+      clearDraft();
       setShowDeleteDialog(false);
       onOpenChange(false);
     } catch (error: any) {
@@ -527,24 +754,114 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
   };
 
+  // Save indicator component
+  const SaveIndicator = () => {
+    const getDraftIndicator = () => {
+      if (draftSaveState === 'saving') {
+        return (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Черновик...
+          </span>
+        );
+      }
+      if (draftSaveState === 'saved') {
+        return (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Save className="h-3 w-3" />
+            Черновик
+          </span>
+        );
+      }
+      return null;
+    };
+
+    const getServerIndicator = () => {
+      switch (serverSaveState) {
+        case 'saving':
+          return (
+            <Badge variant="outline" className="text-xs gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Сохраняется...
+            </Badge>
+          );
+        case 'saved':
+          return (
+            <Badge variant="outline" className="text-xs gap-1 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+              <Check className="h-3 w-3" />
+              Сохранено
+            </Badge>
+          );
+        case 'error':
+          return (
+            <Badge variant="outline" className="text-xs gap-1 bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30">
+              <AlertTriangle className="h-3 w-3" />
+              Ошибка
+            </Badge>
+          );
+        default:
+          return getDraftIndicator();
+      }
+    };
+
+    return getServerIndicator();
+  };
+
+  // Draft recovery banner
+  const DraftRecoveryBanner = () => {
+    if (!draftInfo.exists || isViewer) return null;
+    
+    return (
+      <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm">
+          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-amber-700 dark:text-amber-300">
+            Найден черновик от {draftInfo.formattedDate}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={restoreDraft}
+            className="h-7 text-xs"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Восстановить
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={dismissDraft}
+            className="h-7 text-xs"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   const headerContent = (
     <div className="flex items-center justify-between flex-wrap gap-2">
-      <div>
-        <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            {isViewer 
-              ? `Просмотр заявки ${request?.request_number}` 
-              : `Внесите изменения в заявку ${request?.request_number}`
-            }
-          </p>
+      <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
+          {!isViewer && <SaveIndicator />}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {isViewer 
+            ? `Просмотр заявки ${request?.request_number}` 
+            : `Заявка ${request?.request_number}`
+          }
           {!isViewer && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Save className="h-3 w-3" />
-              Автосохранение
+            <span className="ml-2 text-xs opacity-70">
+              Ctrl+Enter — сохранить, Esc — закрыть
             </span>
           )}
-        </div>
+        </p>
       </div>
       {request?.document_url && (
         <Button
@@ -565,13 +882,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 .from('request-documents')
                 .createSignedUrl(filePath, 3600);
               if (error || !data) {
-                console.error('Error creating signed URL:', error);
                 window.open(request.document_url!, '_blank');
                 return;
               }
               window.open(data.signedUrl, '_blank');
-            } catch (error) {
-              console.error('Error opening document:', error);
+            } catch {
               window.open(request.document_url!, '_blank');
             }
           }}
@@ -587,570 +902,559 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Блок 1: Основная информация */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Основная информация</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="request_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Дата заявки *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} disabled={isViewer} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Draft Recovery Banner */}
+        <DraftRecoveryBanner />
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Статус *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите статус" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {statuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+        {/* Блок 1: Быстрые действия (Статус / Приоритет / Комментарий) */}
+        <div className="space-y-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
+          <h3 className="font-medium text-sm text-primary">Быстрые действия</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Статус *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
+                    <FormControl>
+                      <SelectTrigger className={cn(
+                        "transition-colors",
+                        form.formState.errors.status && "border-destructive"
+                      )}>
+                        <SelectValue placeholder="Выберите статус" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Приоритет *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите приоритет" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {priorities.map((priority) => (
-                            <SelectItem key={priority} value={priority}>
-                              {priority}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Приоритет *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
+                    <FormControl>
+                      <SelectTrigger className={cn(
+                        "transition-colors",
+                        form.formState.errors.priority && "border-destructive"
+                      )}>
+                        <SelectValue placeholder="Выберите приоритет" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {priorities.map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          {priority}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name="object_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Объект</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите объект" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {objectsData?.map((obj) => (
-                            <SelectItem key={obj.id} value={obj.id}>
-                              {obj.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+          <FormField
+            control={form.control}
+            name="comments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Комментарий</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Добавить примечание..."
+                    className="min-h-[60px]"
+                    disabled={isViewer}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            {/* Блок 2: Описание */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel>Описание заявки *</FormLabel>
-                      {!isViewer && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleImproveDescription}
-                          disabled={isImprovingDescription}
-                          className="h-7 px-2 text-xs text-primary hover:text-primary/80"
-                        >
-                          {isImprovingDescription ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-3 w-3 mr-1" />
-                          )}
-                          Улучшить с AI
-                        </Button>
+        {/* Блок 2: Логистика */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Логистика</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="availability_delivery_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Наличие / Сроки</FormLabel>
+                  <Select 
+                    value={field.value || ""}
+                    onValueChange={(value) => field.onChange(value)} 
+                    disabled={isViewer}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выбрать" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="В наличии">В наличии</SelectItem>
+                      <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                      <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                      <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                      <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                      <SelectItem value="Под заказ">Под заказ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="transport_company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Транспортная компания</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="shipment_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Дата отгрузки</FormLabel>
+                  <FormControl>
+                    <Input type="date" disabled={isViewer} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="delivery_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Дата доставки</FormLabel>
+                  <FormControl>
+                    <Input type="date" disabled={isViewer} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="waybill_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Номер ТТН</FormLabel>
+                  <FormControl>
+                    <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Блок 3: Описание заявки */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Описание заявки *</FormLabel>
+                  {!isViewer && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleImproveDescription}
+                      disabled={isImprovingDescription}
+                      className="h-7 px-2 text-xs text-primary hover:text-primary/80"
+                    >
+                      {isImprovingDescription ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3 w-3 mr-1" />
                       )}
-                    </div>
+                      Улучшить с AI
+                    </Button>
+                  )}
+                </div>
+                <FormControl>
+                  <Textarea
+                    placeholder="Опишите заявку..."
+                    className={cn(
+                      "min-h-[80px]",
+                      form.formState.errors.description && "border-destructive"
+                    )}
+                    disabled={isViewer}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Блок 4: Основная информация */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Основная информация</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="request_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Дата заявки *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date" 
+                      {...field} 
+                      disabled={isViewer}
+                      className={cn(form.formState.errors.request_date && "border-destructive")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="object_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Объект</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
                     <FormControl>
-                      <Textarea
-                        placeholder="Опишите заявку..."
-                        className="min-h-[80px]"
-                        disabled={isViewer}
-                        {...field}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите объект" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      {objectsData?.map((obj) => (
+                        <SelectItem key={obj.id} value={obj.id}>
+                          {obj.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Блок 3: Участники */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Участники</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="applicant"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Заявитель *</FormLabel>
-                      <FormControl>
-                        <ParticipantSelect
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          disabled={isViewer}
-                          options={applicants.map(a => ({ value: a.id, label: a.name }))}
-                          placeholder="Выбрать заявителя"
-                          searchTitle="Поиск заявителя"
-                          searchDescription="Найдите заявителя из списка"
-                          addTitle="Добавить заявителя"
-                          addDescription="Создайте нового заявителя"
-                          editTitle="Редактировать заявителя"
-                          editDescription="Измените имя заявителя"
-                          deleteTitle="Удалить заявителя?"
-                          entityName="заявителя"
-                          onAddNew={async (name) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .insert({
-                                name,
-                                organization_id: request?.organization_id || "",
-                                participant_type: "applicant",
-                              });
-                            if (error) throw error;
-                             queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Заявитель добавлен" });
-                          }}
-                          onDelete={async (id) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .delete()
-                              .eq("id", id);
-                            if (error) throw error;
-                             queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Заявитель удалён" });
-                          }}
-                          onEdit={async (id, newName) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .update({ name: newName })
-                              .eq("id", id);
-                            if (error) throw error;
-                             queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Заявитель обновлён" });
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="estimated_delivery_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Срок (дней)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="Кол-во"
+                      disabled={isViewer}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
-                <FormField
-                  control={form.control}
-                  name="executor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Исполнитель</FormLabel>
-                      <FormControl>
-                        <ParticipantSelect
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          disabled={isViewer}
-                          options={executors.map(e => ({ value: e.id, label: e.name }))}
-                          placeholder="Выбрать исполнителя"
-                          searchTitle="Поиск исполнителя"
-                          searchDescription="Найдите исполнителя из списка"
-                          addTitle="Добавить исполнителя"
-                          addDescription="Создайте нового исполнителя"
-                          editTitle="Редактировать исполнителя"
-                          editDescription="Измените имя исполнителя"
-                          deleteTitle="Удалить исполнителя?"
-                          entityName="исполнителя"
-                          onAddNew={async (name) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .insert({
-                                name,
-                                organization_id: request?.organization_id || "",
-                                participant_type: "executor",
-                              });
-                            if (error) throw error;
-                             queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Исполнитель добавлен" });
-                          }}
-                          onDelete={async (id) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .delete()
-                              .eq("id", id);
-                            if (error) throw error;
-                             queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Исполнитель удалён" });
-                          }}
-                          onEdit={async (id, newName) => {
-                            const { error } = await supabase
-                              .from("request_participants")
-                              .update({ name: newName })
-                              .eq("id", id);
-                            if (error) throw error;
-                            queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                            toast({ title: "Успешно", description: "Исполнитель обновлён" });
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+        {/* Блок 5: Участники */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Участники</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="applicant"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Заявитель *</FormLabel>
+                  <FormControl>
+                    <ParticipantSelect
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      disabled={isViewer}
+                      options={applicants.map(a => ({ value: a.id, label: a.name }))}
+                      placeholder="Выбрать заявителя"
+                      searchTitle="Поиск заявителя"
+                      searchDescription="Найдите заявителя из списка"
+                      addTitle="Добавить заявителя"
+                      addDescription="Создайте нового заявителя"
+                      editTitle="Редактировать заявителя"
+                      editDescription="Измените имя заявителя"
+                      deleteTitle="Удалить заявителя?"
+                      entityName="заявителя"
+                      onAddNew={async (name) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .insert({
+                            name,
+                            organization_id: request?.organization_id || "",
+                            participant_type: "applicant",
+                          });
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Заявитель добавлен" });
+                      }}
+                      onDelete={async (id) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .delete()
+                          .eq("id", id);
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Заявитель удалён" });
+                      }}
+                      onEdit={async (id, newName) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .update({ name: newName })
+                          .eq("id", id);
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Заявитель обновлён" });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Блок 4: Поставщик */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Поставщик</h3>
+            <FormField
+              control={form.control}
+              name="executor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Исполнитель</FormLabel>
+                  <FormControl>
+                    <ParticipantSelect
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      disabled={isViewer}
+                      options={executors.map(e => ({ value: e.id, label: e.name }))}
+                      placeholder="Выбрать исполнителя"
+                      searchTitle="Поиск исполнителя"
+                      searchDescription="Найдите исполнителя из списка"
+                      addTitle="Добавить исполнителя"
+                      addDescription="Создайте нового исполнителя"
+                      editTitle="Редактировать исполнителя"
+                      editDescription="Измените имя исполнителя"
+                      deleteTitle="Удалить исполнителя?"
+                      entityName="исполнителя"
+                      onAddNew={async (name) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .insert({
+                            name,
+                            organization_id: request?.organization_id || "",
+                            participant_type: "executor",
+                          });
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Исполнитель добавлен" });
+                      }}
+                      onDelete={async (id) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .delete()
+                          .eq("id", id);
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Исполнитель удалён" });
+                      }}
+                      onEdit={async (id, newName) => {
+                        const { error } = await supabase
+                          .from("request_participants")
+                          .update({ name: newName })
+                          .eq("id", id);
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                        toast({ title: "Успешно", description: "Исполнитель обновлён" });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="contractor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Контрагент</FormLabel>
-                      <FormControl>
-                        <ContractorSelect
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          disabled={isViewer}
-                          options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
-                          placeholder="Выбрать из списка"
-                          onAddNew={async (name) => {
-                            const { data: userData } = await supabase.auth.getUser();
-                            const { error } = await supabase
-                              .from("suppliers")
-                              .insert({
-                                name: name,
-                                organization_id: request?.organization_id || "",
-                                created_by: userData.user?.id,
-                                status: "Активный",
-                                category: "Другое",
-                              });
-                            if (error) throw error;
-                            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                            toast({
-                              title: "Успешно",
-                              description: "Контрагент добавлен",
-                            });
-                          }}
-                          onDelete={async (supplierId) => {
-                            const { error } = await supabase
-                              .from("suppliers")
-                              .delete()
-                              .eq("id", supplierId);
-                            if (error) throw error;
-                            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                            toast({
-                              title: "Успешно",
-                              description: "Контрагент удалён",
-                            });
-                          }}
-                          onEdit={async (supplierId, newName) => {
-                            const { error } = await supabase
-                              .from("suppliers")
-                              .update({ name: newName })
-                              .eq("id", supplierId);
-                            if (error) throw error;
-                            queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                            toast({
-                              title: "Успешно",
-                              description: "Контрагент обновлён",
-                            });
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Блок 6: Поставщик */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Поставщик</h3>
+          <FormField
+            control={form.control}
+            name="contractor"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Контрагент</FormLabel>
+                <FormControl>
+                  <ContractorSelect
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    disabled={isViewer}
+                    options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
+                    placeholder="Выбрать из списка"
+                    onAddNew={async (name) => {
+                      const { data: userData } = await supabase.auth.getUser();
+                      const { error } = await supabase
+                        .from("suppliers")
+                        .insert({
+                          name: name,
+                          organization_id: request?.organization_id || "",
+                          created_by: userData.user?.id,
+                          status: "Активный",
+                          category: "Другое",
+                        });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                      toast({ title: "Успешно", description: "Контрагент добавлен" });
+                    }}
+                    onDelete={async (supplierId) => {
+                      const { error } = await supabase
+                        .from("suppliers")
+                        .update({ status: "Неактивный" })
+                        .eq("id", supplierId);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                      toast({ title: "Успешно", description: "Контрагент деактивирован" });
+                    }}
+                    onEdit={async (supplierId, newName) => {
+                      const { error } = await supabase
+                        .from("suppliers")
+                        .update({ name: newName })
+                        .eq("id", supplierId);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+                      toast({ title: "Успешно", description: "Контрагент обновлён" });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-                <FormField
-                  control={form.control}
-                  name="availability_delivery_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Наличие / Сроки поставки</FormLabel>
-                      <Select 
-                        value={field.value || ""}
-                        onValueChange={(value) => field.onChange(value)} 
-                        disabled={isViewer}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выбрать" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="В наличии">В наличии</SelectItem>
-                          <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                          <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                          <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                          <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                          <SelectItem value="Под заказ">Под заказ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+        {/* Блок 7: Финансы */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Финансы</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="invoice_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Номер счета</FormLabel>
+                  <FormControl>
+                    <Input placeholder="№ 123" disabled={isViewer} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Блок 5: Финансы */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Финансы</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="invoice_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Номер счета</FormLabel>
-                      <FormControl>
-                        <Input placeholder="№ 123" disabled={isViewer} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Сумма (₽)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      disabled={isViewer}
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Сумма (₽)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          disabled={isViewer}
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="payment_percentage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Оплата (%)</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => field.onChange(value)}
+                      disabled={isViewer}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="%" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(p => (
+                          <SelectItem key={p} value={`${p}%`}>{p}%</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
 
-                <FormField
-                  control={form.control}
-                  name="payment_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Оплата (%)</FormLabel>
-                      <FormControl>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Select
-                            value={field.value?.toString() || ""}
-                            onValueChange={(value) => field.onChange(value)}
-                            disabled={isViewer}
-                          >
-                            <SelectTrigger className="w-full sm:w-24 shrink-0">
-                              <SelectValue placeholder="%" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0%">0%</SelectItem>
-                              <SelectItem value="10%">10%</SelectItem>
-                              <SelectItem value="20%">20%</SelectItem>
-                              <SelectItem value="30%">30%</SelectItem>
-                              <SelectItem value="40%">40%</SelectItem>
-                              <SelectItem value="50%">50%</SelectItem>
-                              <SelectItem value="60%">60%</SelectItem>
-                              <SelectItem value="70%">70%</SelectItem>
-                              <SelectItem value="80%">80%</SelectItem>
-                              <SelectItem value="90%">90%</SelectItem>
-                              <SelectItem value="100%">100%</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            placeholder="Или вручную"
-                            disabled={isViewer}
-                            value={field.value?.toString() || ""}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            className="flex-1"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Блок 6: Доставка */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Доставка</h3>
-              
-              <FormField
-                control={form.control}
-                name="estimated_delivery_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ориентировочный срок (дней)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        placeholder="Кол-во дней"
-                        disabled={isViewer}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                        className="max-w-[150px]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="shipment_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Дата отгрузки</FormLabel>
-                      <FormControl>
-                        <Input type="date" disabled={isViewer} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="delivery_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Дата доставки</FormLabel>
-                      <FormControl>
-                        <Input type="date" disabled={isViewer} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="transport_company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Транспортная компания</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="waybill_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Номер ТТН</FormLabel>
-                      <FormControl>
-                        <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Блок 7: Дополнительно */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Дополнительно</h3>
-              <FormField
-                control={form.control}
-                name="comments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Комментарий</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Дополнительная информация..."
-                        className="min-h-[60px]"
-                        disabled={isViewer}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* ЗРС - автоматически заполняемое поле */}
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <Label>ЗРС (сводка заявки)</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+        {/* Блок 8: ЗРС */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <Label className="text-sm text-muted-foreground">ЗРС (сводка заявки)</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
 Заявка: ${form.watch("description") || "-"}
 Заявитель: ${form.watch("applicant") || "-"}
 Приоритет: ${form.watch("priority") || "-"}
@@ -1158,22 +1462,22 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
 Оплата: ${form.watch("payment_percentage") || "-"}
 Исполнил: ${form.watch("executor") || "-"}`;
-                      try {
-                        await navigator.clipboard.writeText(zrsText);
-                        toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
-                      } catch {
-                        toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
-                      }
-                    }}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Копировать
-                  </Button>
-                </div>
-                <Textarea
-                  readOnly
-                  className="min-h-[120px] bg-muted/50 font-mono text-sm"
-                  value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
+                try {
+                  await navigator.clipboard.writeText(zrsText);
+                  toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
+                } catch {
+                  toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
+                }
+              }}
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Копировать
+            </Button>
+          </div>
+          <Textarea
+            readOnly
+            className="min-h-[100px] bg-muted/50 font-mono text-xs"
+            value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
 Заявка: ${form.watch("description") || "-"}
 Заявитель: ${form.watch("applicant") || "-"}
 Приоритет: ${form.watch("priority") || "-"}
@@ -1181,100 +1485,102 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
 Оплата: ${form.watch("payment_percentage") || "-"}
 Исполнил: ${form.watch("executor") || "-"}`}
-                />
+          />
+        </div>
+
+        {/* Блок 9: Вложения */}
+        <div className="space-y-4 p-4 rounded-lg border bg-card">
+          <h3 className="font-medium text-sm text-muted-foreground">Вложения</h3>
+          {!isViewer ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <MultiFileDropZone
+                accept="image/*"
+                files={photoFiles}
+                onFilesChange={setPhotoFiles}
+                existingUrls={existingPhotoUrls}
+                onRemoveExisting={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
+                label="Фото заявки"
+                hint="JPG, PNG, WEBP до 5 МБ"
+                icon="image"
+                maxSizeMB={5}
+                maxFiles={10}
+              />
+
+              <MultiFileDropZone
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                files={documentFiles}
+                onFilesChange={setDocumentFiles}
+                existingUrls={existingDocumentUrls}
+                onRemoveExisting={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
+                label="Документы"
+                hint="PDF, DOC, XLS до 10 МБ"
+                icon="document"
+                maxSizeMB={10}
+                maxFiles={10}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Фото ({existingPhotoUrls.length})</Label>
+                {existingPhotoUrls.map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                    Фото {i + 1}
+                  </a>
+                ))}
+                {existingPhotoUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет фото</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Документы ({existingDocumentUrls.length})</Label>
+                {existingDocumentUrls.map((url, i) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                    Документ {i + 1}
+                  </a>
+                ))}
+                {existingDocumentUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет документов</p>}
               </div>
             </div>
+          )}
+        </div>
 
-            {/* Блок 8: Вложения */}
-            <div className="space-y-4 p-4 rounded-lg border bg-card">
-              <h3 className="font-medium text-sm text-muted-foreground">Вложения</h3>
-              {!isViewer ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <MultiFileDropZone
-                    accept="image/*"
-                    files={photoFiles}
-                    onFilesChange={setPhotoFiles}
-                    existingUrls={existingPhotoUrls}
-                    onRemoveExisting={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
-                    label="Фото заявки"
-                    hint="JPG, PNG, WEBP до 5 МБ, максимум 10 файлов"
-                    icon="image"
-                    maxSizeMB={5}
-                    maxFiles={10}
-                  />
-
-                  <MultiFileDropZone
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
-                    files={documentFiles}
-                    onFilesChange={setDocumentFiles}
-                    existingUrls={existingDocumentUrls}
-                    onRemoveExisting={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
-                    label="Документы (Счёт/КП)"
-                    hint="PDF, DOC, DOCX, XLS, XLSX до 10 МБ, максимум 10 файлов"
-                    icon="document"
-                    maxSizeMB={10}
-                    maxFiles={10}
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Фото ({existingPhotoUrls.length})</Label>
-                    {existingPhotoUrls.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
-                        Фото {i + 1}
-                      </a>
-                    ))}
-                    {existingPhotoUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет фото</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Документы ({existingDocumentUrls.length})</Label>
-                    {existingDocumentUrls.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
-                        Документ {i + 1}
-                      </a>
-                    ))}
-                    {existingDocumentUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет документов</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4">
-              {canEdit && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={isSubmitting || isDeleting}
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Удалить
-                </Button>
-              )}
-              <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting || isDeleting}
-                >
-                  {isViewer ? "Закрыть" : "Отмена"}
-                </Button>
-                {canEdit && (
-                  <Button type="submit" disabled={isSubmitting || isDeleting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Сохранить изменения
-                  </Button>
-                )}
-              </div>
-            </div>
-          </form>
-        </Form>
+        {/* Footer */}
+        <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t">
+          {canEdit && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={isSubmitting || isDeleting}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Удалить
+            </Button>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting || isDeleting}
+            >
+              {isViewer ? "Закрыть" : "Отмена"}
+            </Button>
+            {canEdit && (
+              <Button type="submit" disabled={isSubmitting || isDeleting} className="gap-2">
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                <Save className="h-4 w-4" />
+                Сохранить
+              </Button>
+            )}
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 
-  const alertDialogContent = (
+  // Delete confirmation dialog
+  const deleteDialogContent = (
     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -1298,10 +1604,56 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     </AlertDialog>
   );
 
+  // Close confirmation dialog
+  const closeConfirmDialogContent = (
+    <AlertDialog open={showCloseConfirmDialog} onOpenChange={setShowCloseConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Есть несохранённые изменения</AlertDialogTitle>
+          <AlertDialogDescription>
+            Изменения не были сохранены на сервер. Закрыть без сохранения?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Продолжить редактирование</AlertDialogCancel>
+          <AlertDialogAction onClick={forceClose}>
+            Закрыть без сохранения
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  // Conflict resolution dialog
+  const conflictDialogContent = (
+    <AlertDialog open={showConflictDialog} onOpenChange={setShowConflictDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-amber-500" />
+            Заявка обновилась
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Эта заявка была изменена другим пользователем. Выберите действие:
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowConflictDialog(false)}>
+            Оставить мои изменения
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={refreshFromServer}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Обновить данные
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   if (isMobile) {
     return (
       <>
-        <Drawer open={open} onOpenChange={onOpenChange}>
+        <Drawer open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
           <DrawerContent className="h-[100dvh] max-h-[100dvh]">
             <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
               {headerContent}
@@ -1317,14 +1669,16 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             </div>
           </DrawerContent>
         </Drawer>
-        {alertDialogContent}
+        {deleteDialogContent}
+        {closeConfirmDialogContent}
+        {conflictDialogContent}
       </>
     );
   }
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             {headerContent}
@@ -1332,7 +1686,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           {formContent}
         </DialogContent>
       </Dialog>
-      {alertDialogContent}
+      {deleteDialogContent}
+      {closeConfirmDialogContent}
+      {conflictDialogContent}
     </>
   );
 };
