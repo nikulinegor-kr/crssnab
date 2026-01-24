@@ -94,7 +94,12 @@ export const LogisticsSection = ({
               <FormItem>
                 <FormLabel className="text-xs">Номер ТТН</FormLabel>
                 <FormControl>
-                  <Input placeholder="№ ТТН" className="h-9" {...field} />
+                  <Input 
+                    placeholder="Трек-номер" 
+                    className="h-9 min-w-0" 
+                    title="Номер товарно-транспортной накладной"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -113,9 +118,11 @@ export const LogisticsSection = ({
                 <FormControl>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     min={0}
                     placeholder="0"
-                    className="h-9"
+                    className="h-9 min-w-0"
+                    title="Ориентировочный срок доставки в днях"
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                   />
@@ -132,7 +139,12 @@ export const LogisticsSection = ({
               <FormItem>
                 <FormLabel className="text-xs">Дата отгрузки</FormLabel>
                 <FormControl>
-                  <Input type="date" className="h-9" {...field} />
+                  <Input 
+                    type="date" 
+                    className="h-9 min-w-0" 
+                    title="Когда отправят товар"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -146,7 +158,12 @@ export const LogisticsSection = ({
               <FormItem>
                 <FormLabel className="text-xs">Дата доставки</FormLabel>
                 <FormControl>
-                  <Input type="date" className="h-9" {...field} />
+                  <Input 
+                    type="date" 
+                    className="h-9 min-w-0" 
+                    title="Ожидаемая дата получения"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
