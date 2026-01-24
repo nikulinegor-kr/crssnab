@@ -183,4 +183,10 @@ All colors MUST be HSL.
   .table-cell-animated {
     transition: width 150ms ease-out;
   }
+
+  /* Highlight row when preview is open */
+  tr:has([data-state="open"]) {
+    background-color: hsl(var(--muted) / 0.6) !important;
+    box-shadow: inset 3px 0 0 hsl(var(--primary));
+  }
 }
