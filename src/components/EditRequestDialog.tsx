@@ -905,9 +905,88 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         {/* Draft Recovery Banner */}
         <DraftRecoveryBanner />
 
-        {/* Блок 1: Быстрые действия (Статус / Приоритет / Комментарий) */}
+        {/* Блок 1: Описание и Комментарий (контекст заявки) */}
+        <div className="space-y-0 rounded-lg border bg-card overflow-hidden">
+          {/* Description - primary */}
+          <div className="p-4 pb-0">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-sm font-medium">Описание заявки *</FormLabel>
+                    {!isViewer && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleImproveDescription}
+                        disabled={isImprovingDescription}
+                        className="h-7 px-2 text-xs text-primary hover:text-primary/80"
+                      >
+                        {isImprovingDescription ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3 mr-1" />
+                        )}
+                        Улучшить с AI
+                      </Button>
+                    )}
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Опишите заявку..."
+                      className={cn(
+                        "min-h-[100px] resize-none border-0 p-0 text-base leading-relaxed",
+                        "focus-visible:ring-0 focus-visible:ring-offset-0",
+                        "bg-transparent placeholder:text-muted-foreground/50",
+                        form.formState.errors.description && "text-destructive"
+                      )}
+                      disabled={isViewer}
+                      autoFocus={!isViewer}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="mx-4 border-t border-border/30" />
+
+          {/* Comments - secondary */}
+          <div className="p-4 pt-3">
+            <FormField
+              control={form.control}
+              name="comments"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs text-muted-foreground">Комментарий</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Добавить примечание..."
+                      className={cn(
+                        "min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
+                        "focus-visible:ring-0 focus-visible:ring-offset-0",
+                        "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
+                      )}
+                      disabled={isViewer}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Блок 2: Быстрые действия (Статус / Приоритет) */}
         <div className="space-y-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
-          <h3 className="font-medium text-sm text-primary">Быстрые действия</h3>
+          <h3 className="font-medium text-sm text-primary">Статус и приоритет</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -966,25 +1045,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="comments"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Комментарий</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Добавить примечание..."
-                    className="min-h-[60px]"
-                    disabled={isViewer}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         {/* Блок 2: Логистика */}
@@ -1080,50 +1140,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               )}
             />
           </div>
-        </div>
-
-        {/* Блок 3: Описание заявки */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel>Описание заявки *</FormLabel>
-                  {!isViewer && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleImproveDescription}
-                      disabled={isImprovingDescription}
-                      className="h-7 px-2 text-xs text-primary hover:text-primary/80"
-                    >
-                      {isImprovingDescription ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-3 w-3 mr-1" />
-                      )}
-                      Улучшить с AI
-                    </Button>
-                  )}
-                </div>
-                <FormControl>
-                  <Textarea
-                    placeholder="Опишите заявку..."
-                    className={cn(
-                      "min-h-[80px]",
-                      form.formState.errors.description && "border-destructive"
-                    )}
-                    disabled={isViewer}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         {/* Блок 4: Основная информация */}

@@ -45,6 +45,7 @@ import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
+import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 
 interface Activity {
   id: string;
@@ -542,28 +543,23 @@ export default function RequestDetail() {
           {/* Left Column - Frequently edited content at top */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* 1. Logistics Block - Unified */}
+            {/* 1. Context Block (Description + Comment) - Primary info at top */}
+            <RequestContextBlock
+              description={request.description}
+              comments={request.comments}
+              canEdit={canEdit}
+              onUpdate={(updates) => handleUpdate(updates)}
+            />
+
+            {/* 2. Logistics Block - Unified */}
             <RequestLogisticsCard
               request={request}
               canEdit={canEdit}
               onUpdate={handleUpdate}
             />
 
-            {/* 2. Comments Section - User content first */}
+            {/* 3. Comments Section - User content */}
             <RequestComments requestId={id!} />
-
-            {/* 3. Description & Details - Less frequently changed */}
-            <Card className="glassmorphism border-border/40">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Описание
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed">{request.description}</p>
-              </CardContent>
-            </Card>
 
             {/* 4. Financial Information */}
             <Card className="glassmorphism border-border/40">
