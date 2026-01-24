@@ -445,10 +445,16 @@ export const RequestsTable = ({
               return (
                 <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-colors relative hover:bg-muted/50 ${isEvenRow ? 'bg-muted/20' : ''}`}
+                  className={`cursor-pointer transition-colors relative group hover:bg-muted/50 ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                 >
-                  <TableCell className="w-1 p-0 border-r-0" style={{ backgroundColor: priorityColor }} />
+                  <TableCell 
+                    className="w-[4px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[5px]" 
+                    style={{ 
+                      backgroundColor: priorityColor,
+                      borderRadius: '2px 0 0 2px',
+                    }} 
+                  />
                   <TableCell className="w-10 text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRequestIds.has(request.id)}
