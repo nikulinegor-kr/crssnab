@@ -70,7 +70,7 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-semibold border-r text-center select-none",
+        "relative p-2 font-bold border-r text-center select-none text-foreground/80 tracking-wide",
         sortable && "cursor-pointer hover:bg-muted/60 transition-colors",
         className
       )}
@@ -78,7 +78,7 @@ export const ResizableTableHeader = ({
       onClick={sortable ? onSort : undefined}
     >
       <div className="flex items-center gap-0.5 justify-center overflow-hidden">
-        <span className="truncate">{label}</span>
+        <span className="truncate text-xs uppercase">{label}</span>
         {sortable && (
           <Icon
             className={cn(
