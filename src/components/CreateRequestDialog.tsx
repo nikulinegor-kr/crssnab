@@ -45,6 +45,7 @@ import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
 import { ContextSection } from "./create-request/ContextSection";
 import { QuickSettingsSection } from "./create-request/QuickSettingsSection";
 import { LogisticsSection } from "./create-request/LogisticsSection";
+import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
 
 const requestSchema = z.object({
@@ -535,7 +536,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           recentTransportCompanies={recentTransportCompanies}
         />
 
-        {/* 4. Additional (Collapsed by default): Finance, Files, ZRS */}
+        {/* 4. Finance (Always visible): Invoice, Amount, Payment % */}
+        <FinanceSection form={form} />
+
+        {/* 5. Additional (Collapsed by default): ZRS, Files */}
         <AdditionalSection
           form={form}
           formValues={formValues}
