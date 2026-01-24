@@ -528,16 +528,16 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           currentOrgId={currentOrgId}
         />
 
-        {/* 3. Logistics: Contractor, Availability, TK, Dates, TTN */}
+        {/* 3. Finance (Always visible): Invoice, Amount, Payment % */}
+        <FinanceSection form={form} />
+
+        {/* 4. Logistics: Contractor, Availability, TK, Dates, TTN */}
         <LogisticsSection
           form={form}
           suppliers={suppliers}
           recentContractors={recentContractors}
           recentTransportCompanies={recentTransportCompanies}
         />
-
-        {/* 4. Finance (Always visible): Invoice, Amount, Payment % */}
-        <FinanceSection form={form} />
 
         {/* 5. Additional (Collapsed by default): ZRS, Files */}
         <AdditionalSection
