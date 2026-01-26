@@ -419,6 +419,72 @@ serve(async (req) => {
             telegram_message_ids: [newMessageId]
           })
           .eq("id", requestId);
+        
+        // Send documents as separate files if available
+        const documentUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+        
+        if (documentUrls.length > 0) {
+          console.log("Sending document files:", documentUrls.length);
+          
+          for (const docUrl of documentUrls) {
+            if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
+              try {
+                // Get file name from URL
+                const urlParts = docUrl.split('/');
+                let fileName = urlParts[urlParts.length - 1] || 'document';
+                // Decode URL-encoded filename
+                try {
+                  fileName = decodeURIComponent(fileName);
+                } catch (e) {
+                  // Keep original if decode fails
+                }
+                
+                // Send document via Telegram
+                const docResult = await sendTelegramRequest(org.telegram_bot_token, "sendDocument", {
+                  chat_id: org.telegram_chat_id,
+                  document: docUrl,
+                  caption: `📄 Документ к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
+                });
+                
+                if (docResult.ok) {
+                  console.log("Document sent successfully:", fileName);
+                } else {
+                  console.error("Error sending document:", docResult);
+                }
+              } catch (docError) {
+                console.error("Error processing document:", docError);
+              }
+            }
+          }
+        }
+        
+        // Send photo files if available
+        const photoUrls = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
+        
+        if (photoUrls.length > 0) {
+          console.log("Sending photo files:", photoUrls.length);
+          
+          for (const photoUrl of photoUrls) {
+            if (photoUrl && (photoUrl.startsWith("http://") || photoUrl.startsWith("https://"))) {
+              try {
+                // Send photo via Telegram
+                const photoResult = await sendTelegramRequest(org.telegram_bot_token, "sendPhoto", {
+                  chat_id: org.telegram_chat_id,
+                  photo: photoUrl,
+                  caption: `📷 Фото к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
+                });
+                
+                if (photoResult.ok) {
+                  console.log("Photo sent successfully");
+                } else {
+                  console.error("Error sending photo:", photoResult);
+                }
+              } catch (photoError) {
+                console.error("Error processing photo:", photoError);
+              }
+            }
+          }
+        }
       }
     }
 
