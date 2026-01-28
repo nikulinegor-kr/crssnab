@@ -212,8 +212,7 @@ export const RequestsBulkActions = ({
           <Button
             onClick={handleBulkStatusChange}
             disabled={isSending}
-            variant="secondary"
-            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
             size="sm"
             title="Изменить статус выбранных заявок со статусом 'В пути' на 'Доставлено в ТК'"
           >
