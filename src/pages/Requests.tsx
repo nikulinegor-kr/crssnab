@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -26,6 +26,7 @@ import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
+import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { AlertCircle, Plus, MessageCircle } from "lucide-react";
 
 const Requests = () => {
@@ -252,6 +253,20 @@ const Requests = () => {
         </div>
 
         <TabsContent value={activeTab} className="space-y-4 mt-0">
+          {/* Mini Dashboard */}
+          {activeTab === "active" && (
+            <RequestsMiniDashboard
+              requests={requests}
+              onFilterClick={(type, value) => {
+                if (type === "priority") {
+                  filters.setPriorityFilter(value);
+                } else {
+                  filters.setStatusFilter([value]);
+                }
+              }}
+            />
+          )}
+
           <RequestsBulkActions
             requests={requests}
             filteredRequests={filters.filteredRequests}
@@ -286,6 +301,7 @@ const Requests = () => {
               resetFilters={filters.clearFilters}
               onSemanticSearch={setSemanticSearchIds}
               organizationId={currentOrgId}
+              deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             />
 
             <RequestsTable

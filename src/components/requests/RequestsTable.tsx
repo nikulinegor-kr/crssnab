@@ -30,6 +30,7 @@ import { TableColumnSettings } from "./TableColumnSettings";
 import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
 import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
+import { InlineEditCell } from "./InlineEditCell";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -497,15 +498,22 @@ export const RequestsTable = ({
                   )}
                   {visibility.status && (
                     <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.status }}>
-                      <Badge
-                        className="text-xs px-2 py-0.5"
-                        style={{
-                          backgroundColor: getStatusColor(request.status),
-                          color: "white",
-                        }}
-                      >
-                        {request.status}
-                      </Badge>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="status"
+                        value={request.status}
+                        displayValue={
+                          <Badge
+                            className="text-xs px-2 py-0.5"
+                            style={{
+                              backgroundColor: getStatusColor(request.status),
+                              color: "white",
+                            }}
+                          >
+                            {request.status}
+                          </Badge>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.availability && (
@@ -543,14 +551,28 @@ export const RequestsTable = ({
                   )}
                   {visibility.delivery_date && (
                     <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
-                      {request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : "-"}
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="delivery_date"
+                        value={request.delivery_date || ""}
+                        displayValue={
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : "-"}</span>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.transport_company && (
                     <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
-                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
-                        <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
-                      </div>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="transport_company"
+                        value={request.transport_company || ""}
+                        displayValue={
+                          <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                            <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
+                          </div>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.applicant && (
@@ -562,9 +584,16 @@ export const RequestsTable = ({
                   )}
                   {visibility.comments && (
                     <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.comments }}>
-                      <div className="line-clamp-2 text-muted-foreground italic leading-tight truncate">
-                        <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
-                      </div>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="comments"
+                        value={request.comments || ""}
+                        displayValue={
+                          <div className="line-clamp-2 text-muted-foreground italic leading-tight truncate">
+                            <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
+                          </div>
+                        }
+                      />
                     </TableCell>
                   )}
                 </TableRow>
