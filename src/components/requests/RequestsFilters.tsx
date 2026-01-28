@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Search, X, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -22,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SavedFiltersDropdown } from "@/components/SavedFiltersDropdown";
+import { QuickFilters } from "./QuickFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -52,6 +55,7 @@ interface RequestsFiltersProps {
   resetFilters: () => void;
   onSemanticSearch?: (resultIds: string[] | null) => void;
   organizationId?: string | null;
+  deliveredCount?: number;
 }
 
 export const RequestsFilters = ({
@@ -76,6 +80,7 @@ export const RequestsFilters = ({
   resetFilters,
   onSemanticSearch,
   organizationId,
+  deliveredCount = 0,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
@@ -250,6 +255,14 @@ export const RequestsFilters = ({
         </div>
       )}
 
+      {/* Quick Filters */}
+      <QuickFilters
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        priorityFilter={priorityFilter}
+        setPriorityFilter={setPriorityFilter}
+      />
+
       {/* Saved filters */}
       <div className="flex flex-wrap gap-2 items-center">
         <SavedFiltersDropdown
@@ -402,16 +415,29 @@ export const RequestsFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Hide Delivered */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1">
-          <Checkbox
+        {/* Hide Delivered with Counter */}
+        <div className="flex items-center gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1">
+          <Switch
             id="hideDelivered"
             checked={hideDelivered}
-            onCheckedChange={(checked) => setHideDelivered(checked as boolean)}
-            className="h-4 w-4"
+            onCheckedChange={setHideDelivered}
+            className="scale-90"
           />
-          <Label htmlFor="hideDelivered" className="cursor-pointer text-xs sm:text-sm whitespace-nowrap truncate">
-            Скрыть доставленные
+          <Label 
+            htmlFor="hideDelivered" 
+            className="cursor-pointer text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5"
+          >
+            {hideDelivered ? (
+              <EyeOff className="h-3 w-3 text-muted-foreground" />
+            ) : (
+              <Eye className="h-3 w-3 text-muted-foreground" />
+            )}
+            <span className="hidden xs:inline">Скрыть доставл.</span>
+            {deliveredCount > 0 && hideDelivered && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5">
+                {deliveredCount}
+              </Badge>
+            )}
           </Label>
         </div>
       </div>
