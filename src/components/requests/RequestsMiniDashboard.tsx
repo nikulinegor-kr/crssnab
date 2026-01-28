@@ -25,11 +25,14 @@ export const RequestsMiniDashboard = ({
   const metrics = useMemo(() => {
     if (!requests) return { emergency: 0, new: 0, inTransit: 0, avgClosingTime: 0 };
     
-    const emergency = requests.filter(r => r.priority === "Аварийно").length;
-    const newRequests = requests.filter(r => r.status === "Новая заявка").length;
-    const inTransit = requests.filter(r => r.status === "В пути").length;
+    // Filter out delivered requests for active metrics
+    const activeRequests = requests.filter(r => r.status !== "Доставлено");
     
-    // Calculate average closing time for delivered requests
+    const emergency = activeRequests.filter(r => r.priority === "Аварийно").length;
+    const newRequests = activeRequests.filter(r => r.status === "Новая заявка").length;
+    const inTransit = activeRequests.filter(r => r.status === "В пути").length;
+    
+    // Calculate average closing time for delivered requests (this metric still uses delivered)
     const deliveredRequests = requests.filter(r => 
       r.status === "Доставлено" && r.delivery_date && r.request_date
     );
