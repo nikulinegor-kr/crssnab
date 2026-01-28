@@ -38,6 +38,7 @@ export const RequestQuickPreview = ({
         className="w-80 p-0 shadow-xl border border-border/50 bg-card/95 backdrop-blur-sm" 
         side="top" 
         align="start"
+        onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* Header Section */}
         <div className="p-3 pb-2">
@@ -59,7 +60,10 @@ export const RequestQuickPreview = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0"
+                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0 pointer-events-auto"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
