@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
 import { Banknote } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface FinanceSectionProps {
   form: UseFormReturn<any>;
@@ -25,6 +29,105 @@ interface FinanceSectionProps {
 }
 
 export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSectionProps) => {
+  const { currentOrgId } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Handler to add new contractor to suppliers table
+  const handleAddContractor = async (name: string) => {
+    if (!currentOrgId) {
+      toast({
+        title: "Ошибка",
+        description: "Организация не выбрана",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Ошибка",
+        description: "Пользователь не авторизован",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("suppliers")
+      .insert({
+        name,
+        organization_id: currentOrgId,
+        created_by: user.id,
+        category: "Другое",
+        status: "Активный",
+      });
+
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось добавить контрагента",
+        variant: "destructive",
+      });
+      throw error;
+    }
+
+    toast({
+      title: "Контрагент добавлен",
+      description: `"${name}" успешно добавлен в список`,
+    });
+
+    // Refresh suppliers list
+    queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
+  };
+
+  // Handler to delete contractor
+  const handleDeleteContractor = async (supplierId: string) => {
+    const { error } = await supabase
+      .from("suppliers")
+      .delete()
+      .eq("id", supplierId);
+
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось удалить контрагента",
+        variant: "destructive",
+      });
+      throw error;
+    }
+
+    toast({
+      title: "Контрагент удалён",
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
+  };
+
+  // Handler to edit contractor
+  const handleEditContractor = async (supplierId: string, newName: string) => {
+    const { error } = await supabase
+      .from("suppliers")
+      .update({ name: newName })
+      .eq("id", supplierId);
+
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось обновить контрагента",
+        variant: "destructive",
+      });
+      throw error;
+    }
+
+    toast({
+      title: "Контрагент обновлён",
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
+  };
+
   return (
     <FormSectionCard 
       title="Финансы" 
@@ -50,7 +153,10 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                       .filter(c => !suppliers?.some(s => s.name === c))
                       .map(c => ({ value: c, label: c })),
                   ]}
-                  placeholder="Выбрать или ввести..."
+                  onAddNew={handleAddContractor}
+                  onDelete={handleDeleteContractor}
+                  onEdit={handleEditContractor}
+                  placeholder="Выбрать или добавить..."
                 />
               </FormControl>
               <FormMessage />
