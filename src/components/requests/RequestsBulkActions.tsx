@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2 } from "lucide-react";
+import { Plus, Send, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
@@ -7,6 +7,7 @@ import { LabelExportButton } from "@/components/dashboard/LabelExportButton";
 import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RequestsBulkActionsProps {
   requests: Request[] | undefined;
@@ -31,6 +32,73 @@ export const RequestsBulkActions = ({
 }: RequestsBulkActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleBulkStatusChange = async () => {
+    if (selectedRequestIds.size === 0) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите хотя бы одну заявку",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Filter only requests with status "В пути"
+      const selectedRequests = Array.from(selectedRequestIds)
+        .map((id) => requests?.find((r) => r.id === id))
+        .filter(Boolean) as Request[];
+      
+      const eligibleRequests = selectedRequests.filter(r => r.status === "В пути");
+      const skippedCount = selectedRequests.length - eligibleRequests.length;
+      
+      if (eligibleRequests.length === 0) {
+        toast({
+          title: "Нет подходящих заявок",
+          description: `Все выбранные заявки (${skippedCount}) не в статусе "В пути"`,
+          variant: "destructive",
+        });
+        setIsSending(false);
+        return;
+      }
+
+      // Update status for eligible requests
+      const { error } = await supabase
+        .from("requests")
+        .update({ status: "Доставлено в ТК" })
+        .in("id", eligibleRequests.map(r => r.id));
+
+      if (error) throw error;
+
+      // Success notification with counts
+      if (skippedCount > 0) {
+        toast({
+          title: "Статус обновлён",
+          description: `Обновлено: ${eligibleRequests.length}, пропущено: ${skippedCount} (не в статусе "В пути")`,
+        });
+      } else {
+        toast({
+          title: "Статус обновлён",
+          description: `Обновлено заявок: ${eligibleRequests.length}`,
+        });
+      }
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request-stats"] });
+      setSelectedRequestIds(new Set());
+    } catch (error: any) {
+      toast({
+        title: "Ошибка обновления",
+        description: error.message || "Не удалось обновить статус заявок",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleSendToTelegram = async () => {
     if (selectedRequestIds.size === 0) {
@@ -140,6 +208,18 @@ export const RequestsBulkActions = ({
       
       {selectedRequestIds.size > 0 && (
         <>
+          {/* Bulk status change button */}
+          <Button
+            onClick={handleBulkStatusChange}
+            disabled={isSending}
+            variant="secondary"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+            size="sm"
+            title="Изменить статус выбранных заявок со статусом 'В пути' на 'Доставлено в ТК'"
+          >
+            <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Доставлено в ТК</span>
+          </Button>
           <Button
             onClick={handleSendToTelegram}
             disabled={isSending}
