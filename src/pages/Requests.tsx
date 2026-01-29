@@ -276,6 +276,7 @@ const Requests = () => {
             isSending={isSending}
             setIsSending={setIsSending}
             onBulkDelete={handleBulkDelete}
+            isArchiveTab={activeTab === "archived"}
           />
 
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">

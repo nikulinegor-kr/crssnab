@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
@@ -8,6 +8,7 @@ import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 interface RequestsBulkActionsProps {
   requests: Request[] | undefined;
@@ -18,6 +19,8 @@ interface RequestsBulkActionsProps {
   isSending: boolean;
   setIsSending: (value: boolean) => void;
   onBulkDelete: () => void;
+  isArchiveTab?: boolean;
+  onBulkRestore?: () => void;
 }
 
 export const RequestsBulkActions = ({
@@ -29,10 +32,13 @@ export const RequestsBulkActions = ({
   isSending,
   setIsSending,
   onBulkDelete,
+  isArchiveTab = false,
+  onBulkRestore,
 }: RequestsBulkActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrgId } = useCurrentOrganization();
 
   const handleBulkStatusChange = async () => {
     if (selectedRequestIds.size === 0) {
@@ -197,6 +203,73 @@ export const RequestsBulkActions = ({
     .map((id) => requests?.find((r) => r.id === id)!)
     .filter(Boolean);
 
+  const handleBulkRestore = async () => {
+    if (selectedRequestIds.size === 0) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите хотя бы одну заявку",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Пользователь не авторизован");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
+
+      for (const requestId of Array.from(selectedRequestIds)) {
+        const request = requests?.find((r) => r.id === requestId);
+        if (!request) continue;
+
+        if (currentOrgId) {
+          await supabase.rpc("log_audit_event", {
+            _organization_id: currentOrgId,
+            _action: "restore",
+            _entity_type: "request",
+            _entity_id: requestId,
+            _new_values: {
+              request_number: request.request_number,
+              description: request.description,
+              status: request.status,
+              restored_by: userName,
+              restore_reason: "Восстановлена из архива",
+            },
+          });
+        }
+
+        await supabase
+          .from("requests")
+          .update({ archived: false })
+          .eq("id", requestId);
+      }
+
+      toast({
+        title: "Заявки восстановлены",
+        description: `Восстановлено заявок: ${selectedRequestIds.size}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (error: any) {
+      toast({
+        title: "Ошибка восстановления",
+        description: error.message || "Не удалось восстановить заявки",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-1.5 sm:gap-2">
       {requests && requests.length > 0 && (
@@ -208,40 +281,57 @@ export const RequestsBulkActions = ({
       
       {selectedRequestIds.size > 0 && (
         <>
-          {/* Bulk status change button */}
-          <Button
-            onClick={handleBulkStatusChange}
-            disabled={isSending}
-            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
-            size="sm"
-            title="Изменить статус выбранных заявок со статусом 'В пути' на 'Доставлено в ТК'"
-          >
-            <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Доставлено в ТК</span>
-          </Button>
-          <Button
-            onClick={handleSendToTelegram}
-            disabled={isSending}
-            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
-            size="sm"
-          >
-            <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Telegram</span>
-          </Button>
-          <Button
-            onClick={onBulkDelete}
-            variant="destructive"
-            className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
-            size="sm"
-          >
-            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Удалить</span>
-            <span>({selectedRequestIds.size})</span>
-          </Button>
+          {isArchiveTab ? (
+            /* Restore from archive button */
+            <Button
+              onClick={handleBulkRestore}
+              disabled={isSending}
+              className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+              size="sm"
+              title="Восстановить выбранные заявки из архива"
+            >
+              <ArchiveRestore className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Восстановить</span>
+              <span>({selectedRequestIds.size})</span>
+            </Button>
+          ) : (
+            <>
+              {/* Bulk status change button */}
+              <Button
+                onClick={handleBulkStatusChange}
+                disabled={isSending}
+                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                size="sm"
+                title="Изменить статус выбранных заявок со статусом 'В пути' на 'Доставлено в ТК'"
+              >
+                <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Доставлено в ТК</span>
+              </Button>
+              <Button
+                onClick={handleSendToTelegram}
+                disabled={isSending}
+                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+                size="sm"
+              >
+                <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Telegram</span>
+              </Button>
+              <Button
+                onClick={onBulkDelete}
+                variant="destructive"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+                size="sm"
+              >
+                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">В архив</span>
+                <span>({selectedRequestIds.size})</span>
+              </Button>
+            </>
+          )}
         </>
       )}
       
-      {canCreate && (
+      {canCreate && !isArchiveTab && (
         <CreateRequestDialog>
           <Button className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3" size="sm">
             <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
