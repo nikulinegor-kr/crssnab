@@ -108,7 +108,7 @@ export const RequestQuickPreview = ({
         <Separator />
 
         {/* Key Info Badges */}
-        {(request.availability_delivery_time || request.shipment_date || request.delivery_date || request.transport_company) && (
+        {(request.availability_delivery_time || request.shipment_date || request.delivery_date || request.transport_company || request.waybill_number) && (
           <>
             <div className="p-3 py-2 flex flex-wrap gap-1.5">
               {request.availability_delivery_time && (
@@ -133,6 +133,12 @@ export const RequestQuickPreview = ({
                 <Badge variant="secondary" className="text-[10px] gap-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-0">
                   <Truck className="h-3 w-3" />
                   {request.transport_company}
+                </Badge>
+              )}
+              {request.waybill_number && (
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-0">
+                  <FileText className="h-3 w-3" />
+                  ТТН: {request.waybill_number}
                 </Badge>
               )}
             </div>

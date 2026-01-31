@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ParticipantSelect } from "@/components/ParticipantSelect";
+import { ObjectSelectWithAdd } from "@/components/ObjectSelectWithAdd";
 import { FormSectionCard } from "./FormSectionCard";
 import { Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -245,20 +246,14 @@ export const QuickSettingsSection = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs">Объект</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
-                <FormControl>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Выберите объект" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {objectsData?.map((obj) => (
-                    <SelectItem key={obj.id} value={obj.id}>
-                      {obj.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <ObjectSelectWithAdd
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  objects={objectsData}
+                  organizationId={currentOrgId}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
