@@ -5,6 +5,7 @@ import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { ContractorSelect } from "@/components/ContractorSelect";
 import { ParticipantSelect } from "@/components/ParticipantSelect";
+import { ObjectSelectWithAdd } from "@/components/ObjectSelectWithAdd";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import {
   Dialog,
@@ -1171,20 +1172,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Объект</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""} disabled={isViewer}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите объект" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {objectsData?.map((obj) => (
-                        <SelectItem key={obj.id} value={obj.id}>
-                          {obj.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ObjectSelectWithAdd
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      objects={objectsData}
+                      organizationId={request?.organization_id || null}
+                      disabled={isViewer}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
