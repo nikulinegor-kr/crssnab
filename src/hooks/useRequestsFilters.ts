@@ -31,24 +31,27 @@ const FILTERS_STORAGE_KEY = "requests_filters";
 
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case "Доставлено":
-      return "#10b981"; // Изумрудный
-    case "Доставлено в ТК":
-      return "#22c55e"; // Ярко-зелёный
-    case "Выполнено":
-      return "#15803d"; // Тёмно-зелёный
-    case "В пути":
-      return "#4ade80"; // Светло-зелёный
     case "Новая заявка":
-      return "#3b82f6"; // Синий
-    case "На согласовании":
-      return "#a855f7"; // Фиолетовый
-    case "КП":
-      return "#8b5cf6"; // Индиго
-    case "Счёт":
-      return "#f97316"; // Оранжевый
+      return "#6b7280"; // Серый (нейтральный)
     case "В работе":
       return "#eab308"; // Жёлтый
+    case "На согласовании":
+      return "#8b5cf6"; // Фиолетовый
+    case "КП":
+      return "#a855f7"; // Светло-фиолетовый
+    case "Счёт":
+    case "Счёт в бухгалтерии":
+      return "#9ca3af"; // Серо-фиолетовый/нейтральный
+    case "Оплачено":
+      return "#3b82f6"; // Сине-голубой
+    case "В пути":
+      return "#22c55e"; // Зелёный
+    case "Доставлено в ТК":
+      return "#16a34a"; // Тёмно-зелёный
+    case "Доставлено":
+      return "#10b981"; // Изумрудный
+    case "Выполнено":
+      return "#15803d"; // Очень тёмно-зелёный
     default:
       return "#6b7280";
   }
