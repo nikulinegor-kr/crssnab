@@ -86,7 +86,8 @@ const requestSchema = z.object({
     .optional(),
   amount: z.number()
     .min(0, "Сумма не может быть отрицательной")
-    .default(0),
+    .nullable()
+    .optional(),
   payment_percentage: z.number()
     .min(0, "Процент не может быть отрицательным")
     .max(100, "Процент не может превышать 100")
@@ -297,7 +298,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       availability_delivery_time: initialData?.availability_delivery_time || "",
       contractor: initialData?.contractor || "",
       invoice_number: "",
-      amount: 0,
+      amount: null,
       payment_percentage: 0,
       shipment_date: "",
       delivery_date: "",
