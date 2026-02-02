@@ -193,15 +193,16 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                 <FormLabel className="text-xs">Сумма (₽)</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
                     inputMode="decimal"
-                    placeholder="0.00"
+                    placeholder=""
                     className="h-9 select-all min-w-0"
                     title="Сумма счета в рублях"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^\d.]/g, "");
+                      field.onChange(val ? parseFloat(val) : null);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

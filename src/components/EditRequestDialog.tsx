@@ -60,7 +60,8 @@ import {
   AlertTriangle,
   RefreshCw,
   X,
-  Clock
+  Clock,
+  AtSign
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
@@ -279,6 +280,40 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       comments: "",
     },
   });
+
+  // Track telegram username for selected applicant
+  const selectedApplicantName = form.watch("applicant");
+  
+  const selectedApplicant = useMemo(() => {
+    if (!selectedApplicantName) return null;
+    return applicants.find(a => a.name === selectedApplicantName) || null;
+  }, [selectedApplicantName, applicants]);
+  
+  const [applicantTelegramUsername, setApplicantTelegramUsername] = useState("");
+  
+  // Sync telegram username when applicant changes
+  useEffect(() => {
+    setApplicantTelegramUsername(selectedApplicant?.telegram_username || "");
+  }, [selectedApplicant]);
+  
+  // Save telegram username
+  const handleSaveApplicantTelegram = async (username: string) => {
+    if (!selectedApplicant?.id) return;
+    
+    const cleanUsername = username.replace(/^@/, "").trim();
+    
+    const { error } = await supabase
+      .from("request_participants")
+      .update({ telegram_username: cleanUsername || null })
+      .eq("id", selectedApplicant.id);
+    
+    if (error) {
+      toast({ title: "Ошибка", description: "Не удалось сохранить Telegram", variant: "destructive" });
+      return;
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+  };
 
   // Original values for draft comparison
   const originalValues = useMemo(() => {
@@ -1267,6 +1302,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                     />
                   </FormControl>
                   <FormMessage />
+                  
+                  {/* Telegram username for applicant */}
+                  {selectedApplicant && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <Input
+                        value={applicantTelegramUsername}
+                        onChange={(e) => setApplicantTelegramUsername(e.target.value)}
+                        onBlur={(e) => handleSaveApplicantTelegram(e.target.value)}
+                        placeholder="Telegram (ник без @)"
+                        className="h-8 text-xs"
+                        disabled={isViewer}
+                      />
+                    </div>
+                  )}
                 </FormItem>
               )}
             />
