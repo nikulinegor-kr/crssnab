@@ -41,7 +41,8 @@ export const getStatusColor = (status: string) => {
       return "#a855f7"; // Светло-фиолетовый
     case "Счёт":
     case "Счёт в бухгалтерии":
-      return "#9ca3af"; // Серо-фиолетовый/нейтральный
+    case "Счёт в Бухгалтерии":
+      return "#a78bfa"; // Серо-фиолетовый
     case "Оплачено":
       return "#3b82f6"; // Сине-голубой
     case "В пути":
