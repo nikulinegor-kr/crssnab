@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,7 +110,8 @@ const requestSchema = z.object({
     .optional(),
   amount: z.number()
     .min(0, "Сумма не может быть отрицательной")
-    .default(0),
+    .nullable()
+    .optional(),
   payment_percentage: z.string()
     .max(100, "Максимум 100 символов")
     .optional()
@@ -271,7 +273,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       availability_delivery_time: "",
       contractor: "",
       invoice_number: "",
-      amount: 0,
+      amount: null,
       payment_percentage: "",
       shipment_date: "",
       delivery_date: "",
@@ -312,7 +314,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       return;
     }
     
-    queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+    queryClient.invalidateQueries({ queryKey: ["request-participants", request?.organization_id] });
   };
 
   // Original values for draft comparison
@@ -330,7 +332,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       availability_delivery_time: request.availability_delivery_time || "",
       contractor: request.contractor || "",
       invoice_number: request.invoice_number || "",
-      amount: request.amount || 0,
+      amount: request.amount ?? null,
       payment_percentage: request.payment_percentage != null ? `${request.payment_percentage}%` : "0%",
       shipment_date: request.shipment_date || "",
       delivery_date: request.delivery_date || "",
@@ -377,7 +379,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         availability_delivery_time: request.availability_delivery_time || "",
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
-        amount: request.amount || 0,
+        amount: request.amount ?? null,
         payment_percentage: request.payment_percentage != null ? `${request.payment_percentage}%` : "0%",
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
@@ -460,7 +462,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
-        amount: data.amount || 0,
+        amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
@@ -586,7 +588,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         availability_delivery_time: data.availability_delivery_time || "",
         contractor: data.contractor || "",
         invoice_number: data.invoice_number || "",
-        amount: data.amount || 0,
+        amount: data.amount ?? null,
         payment_percentage: data.payment_percentage?.toString() || "",
         shipment_date: data.shipment_date || "",
         delivery_date: data.delivery_date || "",
@@ -700,7 +702,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
-        amount: data.amount || 0,
+        amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
@@ -1304,19 +1306,17 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                   <FormMessage />
                   
                   {/* Telegram username for applicant */}
-                  {selectedApplicant && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <Input
-                        value={applicantTelegramUsername}
-                        onChange={(e) => setApplicantTelegramUsername(e.target.value)}
-                        onBlur={(e) => handleSaveApplicantTelegram(e.target.value)}
-                        placeholder="Telegram (ник без @)"
-                        className="h-8 text-xs"
-                        disabled={isViewer}
-                      />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <Input
+                      value={applicantTelegramUsername}
+                      onChange={(e) => setApplicantTelegramUsername(e.target.value)}
+                      onBlur={(e) => handleSaveApplicantTelegram(e.target.value)}
+                      placeholder={selectedApplicant ? "Telegram (ник без @)" : "Сначала выберите заявителя"}
+                      className="h-8 text-xs"
+                      disabled={isViewer || !selectedApplicant}
+                    />
+                  </div>
                 </FormItem>
               )}
             />
@@ -1463,14 +1463,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 <FormItem>
                   <FormLabel>Сумма (₽)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
+                    <DecimalInput
+                      placeholder=""
                       disabled={isViewer}
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={field.value ?? null}
+                      onValueChange={(v) => field.onChange(v)}
                     />
                   </FormControl>
                   <FormMessage />

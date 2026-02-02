@@ -432,7 +432,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
-        amount: data.amount || 0,
+        amount: data.amount ?? null,
         payment_percentage: data.payment_percentage,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
