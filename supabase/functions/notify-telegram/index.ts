@@ -151,54 +151,74 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   }
   
   // Стандартный формат для остальных статусов
-  lines.push(`🧾 Заявка — ${request.description}`);
+  // Блок 1: Описание
+  lines.push(`🧾 Заявка: ${request.description}`);
   
+  // Блок 2: Приоритет и Статус
+  const block2: string[] = [];
   if (request.priority) {
-    lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
+    block2.push(`${getPriorityEmoji(request.priority)} Приоритет: ${request.priority}`);
   }
-  
   if (request.status) {
-    lines.push(`${getStatusEmoji(request.status)} Статус — ${request.status}`);
+    block2.push(`${getStatusEmoji(request.status)} Статус: ${request.status}`);
+  }
+  if (block2.length > 0) {
+    lines.push("");
+    lines.push(...block2);
   }
   
-  // Опциональные поля - показываем только если заполнены
+  // Блок 3: Заявитель и Исполнитель
+  const block3: string[] = [];
   if (request.applicant) {
-    lines.push(`👤 Заявитель — ${request.applicant}`);
+    block3.push(`👤 Заявитель: ${request.applicant}`);
   }
-  
   if (request.executor) {
-    lines.push(`🔧 Исполнитель — ${request.executor}`);
+    block3.push(`🔧 Исполнитель: ${request.executor}`);
+  }
+  if (block3.length > 0) {
+    lines.push("");
+    lines.push(...block3);
   }
   
+  // Блок 4: Контрагент и Счёт
+  const block4: string[] = [];
   if (request.contractor) {
-    lines.push(`🏢 Контрагент — ${request.contractor}`);
+    block4.push(`🏢 Контрагент: ${request.contractor}`);
   }
-  
   if (request.invoice_number) {
-    lines.push(`💳 № Счета — ${request.invoice_number}`);
+    block4.push(`📄 № счёта: ${request.invoice_number}`);
+  }
+  if (block4.length > 0) {
+    lines.push("");
+    lines.push(...block4);
   }
   
+  // Блок 5: Логистика
+  const block5: string[] = [];
   if (request.transport_company) {
-    lines.push(`🚛 ТК — ${request.transport_company}`);
+    block5.push(`🚛 ТК: ${request.transport_company}`);
   }
-  
   if (request.waybill_number) {
-    lines.push(`📄 № ТТН — ${request.waybill_number}`);
+    block5.push(`📄 № ТТН: ${request.waybill_number}`);
   }
-  
   if (request.shipment_date) {
-    lines.push(`📅 Дата отгрузки — ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
+    block5.push(`📅 Дата отгрузки: ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
   }
-  
   if (request.delivery_date) {
-    lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    block5.push(`📅 Дата прибытия: ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+  }
+  if (block5.length > 0) {
+    lines.push("");
+    lines.push(...block5);
   }
   
+  // Блок 6: Комментарий
   if (request.comments) {
-    lines.push(`📝 Комментарий — ${request.comments}`);
+    lines.push("");
+    lines.push(`📝 Комментарий: ${request.comments}`);
   }
   
-  // Add telegram mention at the very end
+  // Телеграм-упоминание в самом конце
   const telegramMention = getApplicantTelegram(request.applicant);
   if (telegramMention) {
     lines.push("");
