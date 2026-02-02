@@ -41,16 +41,13 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   const lines: string[] = [];
   const status = request.status?.toLowerCase() || "";
   
-  // Helper to find participant username
-  const getParticipantMention = (name: string, type: "applicant" | "executor"): string => {
-    if (!name) return "";
+  // Helper to get telegram username for applicant
+  const getApplicantTelegram = (name: string): string | null => {
+    if (!name) return null;
     const participant = participants.find(
-      p => p.name === name && p.participant_type === type
+      p => p.name === name && p.participant_type === "applicant"
     );
-    if (participant?.telegram_username) {
-      return `@${participant.telegram_username}`;
-    }
-    return name;
+    return participant?.telegram_username ? `@${participant.telegram_username}` : null;
   };
   
   // Специальный формат для статуса "В пути"
@@ -64,8 +61,7 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     lines.push(`🚚 Статус — ${request.status}`);
     
     if (request.applicant) {
-      const mention = getParticipantMention(request.applicant, "applicant");
-      lines.push(`👤 Заявитель — ${mention}`);
+      lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
     if (request.transport_company) {
@@ -78,6 +74,13 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     
     if (request.delivery_date) {
       lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    // Add telegram mention at the end
+    const telegramMention = getApplicantTelegram(request.applicant);
+    if (telegramMention) {
+      lines.push("");
+      lines.push(telegramMention);
     }
     
     return lines.join('\n');
@@ -94,8 +97,7 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     lines.push(`✅ Статус — ${request.status}`);
     
     if (request.applicant) {
-      const mention = getParticipantMention(request.applicant, "applicant");
-      lines.push(`👤 Заявитель — ${mention}`);
+      lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
     if (request.transport_company) {
@@ -104,6 +106,13 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     
     if (request.delivery_date) {
       lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    // Add telegram mention at the end
+    const telegramMention = getApplicantTelegram(request.applicant);
+    if (telegramMention) {
+      lines.push("");
+      lines.push(telegramMention);
     }
     
     return lines.join('\n');
@@ -120,8 +129,7 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     lines.push(`📦 Статус — ${request.status}`);
     
     if (request.applicant) {
-      const mention = getParticipantMention(request.applicant, "applicant");
-      lines.push(`👤 Заявитель — ${mention}`);
+      lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
     if (request.transport_company) {
@@ -130,6 +138,13 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
     
     if (request.delivery_date) {
       lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    
+    // Add telegram mention at the end
+    const telegramMention = getApplicantTelegram(request.applicant);
+    if (telegramMention) {
+      lines.push("");
+      lines.push(telegramMention);
     }
     
     return lines.join('\n');
@@ -148,13 +163,11 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   
   // Опциональные поля - показываем только если заполнены
   if (request.applicant) {
-    const mention = getParticipantMention(request.applicant, "applicant");
-    lines.push(`👤 Заявитель — ${mention}`);
+    lines.push(`👤 Заявитель — ${request.applicant}`);
   }
   
   if (request.executor) {
-    const mention = getParticipantMention(request.executor, "executor");
-    lines.push(`🔧 Исполнитель — ${mention}`);
+    lines.push(`🔧 Исполнитель — ${request.executor}`);
   }
   
   if (request.contractor) {
@@ -183,6 +196,13 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   
   if (request.comments) {
     lines.push(`📝 Комментарий — ${request.comments}`);
+  }
+  
+  // Add telegram mention at the very end
+  const telegramMention = getApplicantTelegram(request.applicant);
+  if (telegramMention) {
+    lines.push("");
+    lines.push(telegramMention);
   }
   
   return lines.join('\n');
