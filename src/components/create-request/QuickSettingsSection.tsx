@@ -76,7 +76,7 @@ export const QuickSettingsSection = ({
       return;
     }
     
-    queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+    queryClient.invalidateQueries({ queryKey: ["request-participants", currentOrgId] });
   };
 
   return (
@@ -218,18 +218,17 @@ export const QuickSettingsSection = ({
             />
             
             {/* Telegram username for applicant */}
-            {selectedApplicant && (
-              <div className="flex items-center gap-2">
-                <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <Input
-                  value={telegramUsername}
-                  onChange={(e) => setTelegramUsername(e.target.value)}
-                  onBlur={(e) => handleSaveTelegram(e.target.value)}
-                  placeholder="Telegram (ник без @)"
-                  className="h-8 text-xs"
-                />
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <Input
+                value={telegramUsername}
+                onChange={(e) => setTelegramUsername(e.target.value)}
+                onBlur={(e) => handleSaveTelegram(e.target.value)}
+                placeholder={selectedApplicant ? "Telegram (ник без @)" : "Сначала выберите заявителя"}
+                className="h-8 text-xs"
+                disabled={!selectedApplicant}
+              />
+            </div>
           </div>
 
           <FormField

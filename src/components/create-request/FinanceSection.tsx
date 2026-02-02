@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
 import { Banknote } from "lucide-react";
@@ -192,17 +193,12 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
               <FormItem>
                 <FormLabel className="text-xs">Сумма (₽)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
+                  <DecimalInput
                     placeholder=""
                     className="h-9 select-all min-w-0"
                     title="Сумма счета в рублях"
-                    value={field.value || ""}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^\d.]/g, "");
-                      field.onChange(val ? parseFloat(val) : null);
-                    }}
+                    value={field.value ?? null}
+                    onValueChange={(v) => field.onChange(v)}
                   />
                 </FormControl>
                 <FormMessage />
