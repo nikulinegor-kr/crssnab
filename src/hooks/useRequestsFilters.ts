@@ -45,6 +45,8 @@ export const getStatusColor = (status: string) => {
       return "#a78bfa"; // Серо-фиолетовый
     case "Оплачено":
       return "#3b82f6"; // Сине-голубой
+    case "Готов к отгрузке":
+      return "#f59e0b"; // Оранжевый/янтарный
     case "В пути":
       return "#22c55e"; // Зелёный
     case "Доставлено в ТК":

@@ -32,6 +32,7 @@ export function RequestStickyHeader({
       "Счёт в бухгалтерии": "bg-violet-400/15 text-violet-500 dark:text-violet-400 border-violet-400/30",
       "Счёт в Бухгалтерии": "bg-violet-400/15 text-violet-500 dark:text-violet-400 border-violet-400/30",
       "Оплачено": "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+      "Готов к отгрузке": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
       "В пути": "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30",
       "Доставлено в ТК": "bg-green-600/15 text-green-700 dark:text-green-400 border-green-600/30",
       "Доставлено": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
