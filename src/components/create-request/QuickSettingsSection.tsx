@@ -85,7 +85,7 @@ export const QuickSettingsSection = ({
       icon={<Settings2 className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-4">
-        {/* Status & Priority & Date row */}
+        {/* Date, Object, Estimated days row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField
             control={form.control}
@@ -106,6 +106,50 @@ export const QuickSettingsSection = ({
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="object_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Объект</FormLabel>
+                <FormControl>
+                  <ObjectSelectWithAdd
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    objects={objectsData}
+                    organizationId={currentOrgId}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="estimated_delivery_days"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Срок (дней)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    className="h-9"
+                    placeholder=""
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Status & Priority row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="status"
@@ -159,77 +203,62 @@ export const QuickSettingsSection = ({
 
         {/* Participants row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="applicant"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Заявитель *</FormLabel>
-                  <FormControl>
-                    <ParticipantSelect
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={applicants.map(a => ({ value: a.id, label: a.name }))}
-                      placeholder="Выбрать заявителя"
-                      searchTitle="Поиск заявителя"
-                      searchDescription="Найдите заявителя из списка"
-                      addTitle="Добавить заявителя"
-                      addDescription="Создайте нового заявителя"
-                      editTitle="Редактировать заявителя"
-                      editDescription="Измените имя заявителя"
-                      deleteTitle="Удалить заявителя?"
-                      entityName="заявителя"
-                      onAddNew={async (name) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .insert({
-                            name,
-                            organization_id: currentOrgId || "",
-                            participant_type: "applicant",
-                          });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель добавлен" });
-                      }}
-                      onDelete={async (id) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .delete()
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель удалён" });
-                      }}
-                      onEdit={async (id, newName) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .update({ name: newName })
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель обновлён" });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* Telegram username for applicant */}
-            <div className="flex items-center gap-2">
-              <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <Input
-                value={telegramUsername}
-                onChange={(e) => setTelegramUsername(e.target.value)}
-                onBlur={(e) => handleSaveTelegram(e.target.value)}
-                placeholder={selectedApplicant ? "Telegram (ник без @)" : "Сначала выберите заявителя"}
-                className="h-8 text-xs"
-                disabled={!selectedApplicant}
-              />
-            </div>
-          </div>
+          <FormField
+            control={form.control}
+            name="applicant"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Заявитель *</FormLabel>
+                <FormControl>
+                  <ParticipantSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={applicants.map(a => ({ value: a.id, label: a.name }))}
+                    placeholder="Выбрать заявителя"
+                    searchTitle="Поиск заявителя"
+                    searchDescription="Найдите заявителя из списка"
+                    addTitle="Добавить заявителя"
+                    addDescription="Создайте нового заявителя"
+                    editTitle="Редактировать заявителя"
+                    editDescription="Измените имя заявителя"
+                    deleteTitle="Удалить заявителя?"
+                    entityName="заявителя"
+                    onAddNew={async (name) => {
+                      const { error } = await supabase
+                        .from("request_participants")
+                        .insert({
+                          name,
+                          organization_id: currentOrgId || "",
+                          participant_type: "applicant",
+                        });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                      toast({ title: "Успешно", description: "Заявитель добавлен" });
+                    }}
+                    onDelete={async (id) => {
+                      const { error } = await supabase
+                        .from("request_participants")
+                        .delete()
+                        .eq("id", id);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                      toast({ title: "Успешно", description: "Заявитель удалён" });
+                    }}
+                    onEdit={async (id, newName) => {
+                      const { error } = await supabase
+                        .from("request_participants")
+                        .update({ name: newName })
+                        .eq("id", id);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["request-participants"] });
+                      toast({ title: "Успешно", description: "Заявитель обновлён" });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -289,25 +318,18 @@ export const QuickSettingsSection = ({
           />
         </div>
 
-        {/* Object */}
-        <FormField
-          control={form.control}
-          name="object_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Объект</FormLabel>
-              <FormControl>
-                <ObjectSelectWithAdd
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  objects={objectsData}
-                  organizationId={currentOrgId}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Telegram username - at the very end */}
+        <div className="flex items-center gap-2">
+          <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <Input
+            value={telegramUsername}
+            onChange={(e) => setTelegramUsername(e.target.value)}
+            onBlur={(e) => handleSaveTelegram(e.target.value)}
+            placeholder={selectedApplicant ? "Telegram заявителя (ник без @)" : "Сначала выберите заявителя"}
+            className="h-8 text-xs"
+            disabled={!selectedApplicant}
+          />
+        </div>
       </div>
     </FormSectionCard>
   );
