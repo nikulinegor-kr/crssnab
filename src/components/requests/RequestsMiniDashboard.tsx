@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { AlertTriangle, FileText, Truck, CheckCircle2, Calendar } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { cn } from "@/lib/utils";
-import { startOfWeek, endOfWeek, isWithinInterval, addDays, startOfToday, isBefore, isAfter } from "date-fns";
+import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
 
 interface RequestsMiniDashboardProps {
   requests: Request[] | undefined;
@@ -27,9 +27,8 @@ export const RequestsMiniDashboard = ({
     if (!requests) return { emergency: 0, new: 0, inTransit: 0, deliveredThisWeek: 0, upcomingDeliveries: 0 };
     
     const today = startOfToday();
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-    const threeDaysFromNow = addDays(today, 3);
+    const sevenDaysAgo = addDays(today, -7);
+    const sevenDaysFromNow = addDays(today, 7);
     
     // Filter out delivered requests for active metrics
     const activeRequests = requests.filter(r => r.status !== "Доставлено");
@@ -38,18 +37,18 @@ export const RequestsMiniDashboard = ({
     const newRequests = activeRequests.filter(r => r.status === "Новая заявка").length;
     const inTransit = activeRequests.filter(r => r.status === "В пути").length;
     
-    // Delivered this week
+    // Delivered in last 7 days
     const deliveredThisWeek = requests.filter(r => {
       if (r.status !== "Доставлено" || !r.delivery_date) return false;
       const deliveryDate = new Date(r.delivery_date);
-      return isWithinInterval(deliveryDate, { start: weekStart, end: weekEnd });
+      return isAfter(deliveryDate, sevenDaysAgo) && isBefore(deliveryDate, addDays(today, 1));
     }).length;
     
-    // Upcoming deliveries (next 3 days)
+    // Upcoming deliveries (next 7 days)
     const upcomingDeliveries = requests.filter(r => {
       if (r.status === "Доставлено" || !r.delivery_date) return false;
       const deliveryDate = new Date(r.delivery_date);
-      return isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(threeDaysFromNow, 1));
+      return isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(sevenDaysFromNow, 1));
     }).length;
     
     return { emergency, new: newRequests, inTransit, deliveredThisWeek, upcomingDeliveries };
