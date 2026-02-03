@@ -57,6 +57,15 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     value: "В пути",
   },
   {
+    id: "delivered-tk",
+    label: "Доставлено в ТК",
+    icon: <Truck className="h-3.5 w-3.5" />,
+    color: "text-green-700 border-green-300 hover:bg-green-50 dark:border-green-700 dark:hover:bg-green-950",
+    activeColor: "bg-green-600 text-white border-green-600 hover:bg-green-700",
+    type: "status",
+    value: "Доставлено в ТК",
+  },
+  {
     id: "in-accounting",
     label: "В бухгалтерии",
     icon: <FileText className="h-3.5 w-3.5" />,
