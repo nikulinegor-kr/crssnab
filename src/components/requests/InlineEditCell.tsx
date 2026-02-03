@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage";
+  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description";
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
@@ -269,7 +269,15 @@ export const InlineEditCell = ({
     );
   }
 
-  // Text fields (transport_company, comments)
+  // Text fields (transport_company, comments, description)
+  const getPlaceholder = () => {
+    switch (field) {
+      case "transport_company": return "ТК";
+      case "description": return "Описание заявки";
+      default: return "Комментарий";
+    }
+  };
+
   return (
     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
       <Input
@@ -279,8 +287,8 @@ export const InlineEditCell = ({
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={isSaving}
-        className="h-7 text-xs min-w-[80px]"
-        placeholder={field === "transport_company" ? "ТК" : "Комментарий"}
+        className={`h-7 text-xs ${field === "description" ? "min-w-[200px]" : "min-w-[80px]"}`}
+        placeholder={getPlaceholder()}
       />
       <Button
         variant="ghost"

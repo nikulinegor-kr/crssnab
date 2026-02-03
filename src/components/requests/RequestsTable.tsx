@@ -470,16 +470,23 @@ export const RequestsTable = ({
                   )}
                   {visibility.description && (
                     <TableCell className="p-2 border-r overflow-hidden" style={{ width: widths.description }}>
-                      <RequestQuickPreview
-                        request={request}
-                        getStatusColor={getStatusColor}
-                        getPriorityColor={getPriorityColor}
-                        onEdit={onEditClick}
-                      >
-                        <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
-                          <HighlightText text={request.description} searchQuery={searchQuery} />
-                        </div>
-                      </RequestQuickPreview>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="description"
+                        value={request.description}
+                        displayValue={
+                          <RequestQuickPreview
+                            request={request}
+                            getStatusColor={getStatusColor}
+                            getPriorityColor={getPriorityColor}
+                            onEdit={onEditClick}
+                          >
+                            <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
+                              <HighlightText text={request.description} searchQuery={searchQuery} />
+                            </div>
+                          </RequestQuickPreview>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.priority && (
