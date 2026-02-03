@@ -52,31 +52,39 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   
   // Специальный формат для статуса "В пути"
   if (status.includes("в пути")) {
+    // Блок 1: Описание
     lines.push(`🧾 Заявка — ${request.description}`);
     
+    // Блок 2: Приоритет и Статус
+    lines.push("");
     if (request.priority) {
       lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
     }
-    
     lines.push(`🚚 Статус — ${request.status}`);
     
+    // Блок 3: Заявитель
     if (request.applicant) {
+      lines.push("");
       lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
+    // Блок 4: Логистика
+    const logisticsBlock: string[] = [];
     if (request.transport_company) {
-      lines.push(`🚛 ТК — ${request.transport_company}`);
+      logisticsBlock.push(`🚛 ТК — ${request.transport_company}`);
     }
-    
     if (request.shipment_date) {
-      lines.push(`📅 Дата отгрузки — ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
+      logisticsBlock.push(`📅 Дата отгрузки — ${new Date(request.shipment_date).toLocaleDateString("ru-RU")}`);
     }
-    
     if (request.delivery_date) {
-      lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+      logisticsBlock.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    if (logisticsBlock.length > 0) {
+      lines.push("");
+      lines.push(...logisticsBlock);
     }
     
-    // Add telegram mention at the end
+    // Телеграм-упоминание в самом конце
     const telegramMention = getApplicantTelegram(request.applicant);
     if (telegramMention) {
       lines.push("");
@@ -88,27 +96,36 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   
   // Специальный формат для статуса "Доставлено"
   if (status.includes("доставлено") && !status.includes("доставлено в тк")) {
+    // Блок 1: Описание
     lines.push(`🧾 Заявка — ${request.description}`);
     
+    // Блок 2: Приоритет и Статус
+    lines.push("");
     if (request.priority) {
       lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
     }
-    
     lines.push(`✅ Статус — ${request.status}`);
     
+    // Блок 3: Заявитель
     if (request.applicant) {
+      lines.push("");
       lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
+    // Блок 4: Логистика
+    const logisticsBlock: string[] = [];
     if (request.transport_company) {
-      lines.push(`🚛 ТК — ${request.transport_company}`);
+      logisticsBlock.push(`🚛 ТК — ${request.transport_company}`);
     }
-    
     if (request.delivery_date) {
-      lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+      logisticsBlock.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    if (logisticsBlock.length > 0) {
+      lines.push("");
+      lines.push(...logisticsBlock);
     }
     
-    // Add telegram mention at the end
+    // Телеграм-упоминание в самом конце
     const telegramMention = getApplicantTelegram(request.applicant);
     if (telegramMention) {
       lines.push("");
@@ -120,27 +137,36 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
   
   // Специальный формат для статуса "Доставлено в ТК"
   if (status.includes("доставлено в тк")) {
+    // Блок 1: Описание
     lines.push(`🧾 Заявка — ${request.description}`);
     
+    // Блок 2: Приоритет и Статус
+    lines.push("");
     if (request.priority) {
       lines.push(`${getPriorityEmoji(request.priority)} Приоритет — ${request.priority}`);
     }
-    
     lines.push(`📦 Статус — ${request.status}`);
     
+    // Блок 3: Заявитель
     if (request.applicant) {
+      lines.push("");
       lines.push(`👤 Заявитель — ${request.applicant}`);
     }
     
+    // Блок 4: Логистика
+    const logisticsBlock: string[] = [];
     if (request.transport_company) {
-      lines.push(`🚛 ТК — ${request.transport_company}`);
+      logisticsBlock.push(`🚛 ТК — ${request.transport_company}`);
     }
-    
     if (request.delivery_date) {
-      lines.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+      logisticsBlock.push(`📅 Дата прибытия — ${new Date(request.delivery_date).toLocaleDateString("ru-RU")}`);
+    }
+    if (logisticsBlock.length > 0) {
+      lines.push("");
+      lines.push(...logisticsBlock);
     }
     
-    // Add telegram mention at the end
+    // Телеграм-упоминание в самом конце
     const telegramMention = getApplicantTelegram(request.applicant);
     if (telegramMention) {
       lines.push("");
