@@ -15,8 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { STATUSES } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 
-const PAYMENT_OPTIONS = ["0%", "50%", "70%", "100%"];
-
 interface InlineEditCellProps {
   requestId: string;
   field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage";
@@ -191,66 +189,63 @@ export const InlineEditCell = ({
     );
   }
 
-  // Payment percentage field uses Select
+  // Payment percentage field - manual input
   if (field === "payment_percentage") {
+    const handlePaymentSave = async () => {
+      const numValue = parseInt(String(editValue).replace("%", ""), 10);
+      const finalValue = isNaN(numValue) ? 0 : Math.min(100, Math.max(0, numValue));
+      
+      if (finalValue === Number(value ?? 0)) {
+        setIsEditing(false);
+        return;
+      }
+
+      setIsSaving(true);
+      try {
+        const { error } = await supabase
+          .from("requests")
+          .update({ payment_percentage: finalValue })
+          .eq("id", requestId);
+
+        if (error) throw error;
+
+        queryClient.invalidateQueries({ queryKey: ["requests"] });
+        toast({
+          title: "Оплата изменена",
+          description: `Новое значение: ${finalValue}%`,
+        });
+        setIsEditing(false);
+      } catch (error) {
+        console.error("Error saving:", error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось изменить оплату",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
     return (
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <Select
-          value={editValue ? `${editValue}%` : "0%"}
-          onValueChange={(val) => {
-            setEditValue(val.replace("%", ""));
-            // Auto-save on payment change
-            setTimeout(async () => {
-              setIsSaving(true);
-              try {
-                const numValue = parseInt(val.replace("%", ""), 10);
-                const { error } = await supabase
-                  .from("requests")
-                  .update({ payment_percentage: isNaN(numValue) ? 0 : numValue })
-                  .eq("id", requestId);
-
-                if (error) throw error;
-
-                queryClient.invalidateQueries({ queryKey: ["requests"] });
-                toast({
-                  title: "Оплата изменена",
-                  description: `Новое значение: ${val}`,
-                });
-                setIsEditing(false);
-              } catch (error) {
-                console.error("Error saving:", error);
-                toast({
-                  title: "Ошибка",
-                  description: "Не удалось изменить оплату",
-                  variant: "destructive",
-                });
-              } finally {
-                setIsSaving(false);
-              }
-            }, 0);
+        <Input
+          ref={inputRef}
+          type="number"
+          min="0"
+          max="100"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handlePaymentSave();
+            else if (e.key === "Escape") handleCancel();
           }}
+          onBlur={handlePaymentSave}
           disabled={isSaving}
-        >
-          <SelectTrigger className="h-7 text-xs w-[80px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="z-[100]">
-            {PAYMENT_OPTIONS.map((option) => (
-              <SelectItem key={option} value={option} className="text-xs">
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          className="h-7 text-xs w-[60px] text-center"
+          placeholder="%"
+        />
         {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={handleCancel}
-        >
-          <X className="h-3 w-3" />
-        </Button>
       </div>
     );
   }
