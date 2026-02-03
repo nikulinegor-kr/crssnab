@@ -1753,6 +1753,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
       ensure_user_initialized: {
