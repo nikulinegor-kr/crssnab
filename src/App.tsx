@@ -32,7 +32,6 @@ const AgentActReport = lazyWithRetry(() => import("./pages/AgentActReport"));
 const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"));
 
 const AIAnalytics = lazyWithRetry(() => import("./pages/AIAnalytics"));
-const AIAssistant = lazyWithRetry(() => import("./pages/AIAssistant"));
 const SpareParts = lazyWithRetry(() => import("./pages/SpareParts"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
@@ -226,16 +225,6 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <AIAnalytics />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ai-assistant"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AIAssistant />
                   </AppLayout>
                 </ProtectedRoute>
               }
