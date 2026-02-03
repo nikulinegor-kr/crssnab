@@ -39,8 +39,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     value: "Приоритетно",
   },
   {
-    id: "awaiting-payment",
-    label: "Ждут оплаты",
+    id: "invoice",
+    label: "Счёт",
     icon: <CreditCard className="h-3.5 w-3.5" />,
     color: "text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950",
     activeColor: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600",
@@ -64,15 +64,6 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     activeColor: "bg-green-600 text-white border-green-600 hover:bg-green-700",
     type: "status",
     value: "Доставлено в ТК",
-  },
-  {
-    id: "in-accounting",
-    label: "В бухгалтерии",
-    icon: <FileText className="h-3.5 w-3.5" />,
-    color: "text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950",
-    activeColor: "bg-purple-500 text-white border-purple-500 hover:bg-purple-600",
-    type: "status",
-    value: "Счёт в Бухгалтерии",
   },
 ];
 
