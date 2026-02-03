@@ -591,9 +591,16 @@ export const RequestsTable = ({
                   )}
                   {visibility.applicant && (
                     <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
-                      <div className="line-clamp-2 leading-tight truncate">
-                        <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
-                      </div>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="applicant"
+                        value={request.applicant || ""}
+                        displayValue={
+                          <div className="line-clamp-2 leading-tight truncate">
+                            <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
+                          </div>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.comments && (
@@ -603,7 +610,7 @@ export const RequestsTable = ({
                         field="comments"
                         value={request.comments || ""}
                         displayValue={
-                          <div className="line-clamp-2 text-muted-foreground italic leading-tight truncate">
+                          <div className="line-clamp-3 text-muted-foreground italic leading-tight text-left">
                             <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
                           </div>
                         }
