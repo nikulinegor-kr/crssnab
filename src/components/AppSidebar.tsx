@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { 
   LayoutGrid, 
   FileText, 
@@ -8,13 +7,11 @@ import {
   Settings, 
   LogOut,
   FileBarChart,
-  Sparkles,
   Percent,
   Sun,
   Moon,
   Package,
   ChevronDown,
-  MoreHorizontal
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -25,7 +22,6 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { AIAssistantDialog } from "@/components/AIAssistantDialog";
 import {
   Sidebar,
   SidebarContent,
@@ -46,14 +42,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// Основные пункты: Дашборд, Заявки
+// Основные пункты меню
 const mainMenuItems = [
   { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
-];
-
-// Всё остальное в "Ещё"
-const moreMenuItems = [
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Запчасти", url: "/spare-parts", icon: Package },
   { title: "Поставщики", url: "/suppliers", icon: Users },
@@ -96,7 +88,6 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const { isAdmin } = useUserRole();
   const totalUnread = useUnreadMessages();
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -180,48 +171,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* AI Ассистент кнопка */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => setAiDialogOpen(true)}
-                  className="hover:bg-accent/50 transition-colors"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {showText && <span>AI Ассистент</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         <SidebarSeparator />
-
-        {/* Ещё - сворачиваемая группа */}
-        <Collapsible defaultOpen={false} className="group/collapsible">
-          <SidebarGroup>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
-                <div className="flex items-center gap-2">
-                  <MoreHorizontal className="h-4 w-4" />
-                  {showText && <span>Ещё</span>}
-                </div>
-                {showText && (
-                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                )}
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu className="pl-2">
-                  {renderMenuItems(moreMenuItems)}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
 
         {/* Отчеты агента - показываем только для администраторов */}
         {!isDemoMode && isAdmin && (
@@ -276,7 +226,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
 
-      <AIAssistantDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
     </Sidebar>
   );
 }
