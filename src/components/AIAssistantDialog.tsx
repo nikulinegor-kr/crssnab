@@ -1,10 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, User, Loader2, Trash2 } from "lucide-react";
+import { Bot, Send, User, Loader2, Trash2, X, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Message = {
   role: "user" | "assistant";
@@ -13,7 +18,12 @@ type Message = {
 
 const AI_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
-export default function AIAssistant() {
+interface AIAssistantDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function AIAssistantDialog({ open, onOpenChange }: AIAssistantDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -144,21 +154,25 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Bot className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">AI Ассистент</h1>
-        </div>
-        {messages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={clearChat}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Очистить
-          </Button>
-        )}
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b border-border/40 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              AI Ассистент
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearChat} className="h-8">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Очистить
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
 
-      <Card className="flex-1 flex flex-col overflow-hidden border-border/40">
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-12">
@@ -171,7 +185,7 @@ export default function AIAssistant() {
               <div className="mt-6 flex flex-wrap gap-2 justify-center">
                 {[
                   "Как создать заявку?",
-                  "Как работает Канбан?",
+                  "Как работает система?",
                   "Помоги с описанием заявки",
                 ].map((suggestion) => (
                   <Button
@@ -228,7 +242,7 @@ export default function AIAssistant() {
           )}
         </ScrollArea>
 
-        <div className="border-t border-border/40 p-4">
+        <div className="border-t border-border/40 p-4 flex-shrink-0">
           <div className="flex gap-2">
             <Textarea
               value={input}
@@ -247,7 +261,7 @@ export default function AIAssistant() {
             </Button>
           </div>
         </div>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

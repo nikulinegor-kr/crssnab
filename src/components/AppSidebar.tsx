@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   LayoutGrid, 
   FileText, 
@@ -24,6 +25,7 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { AIAssistantDialog } from "@/components/AIAssistantDialog";
 import {
   Sidebar,
   SidebarContent,
@@ -52,7 +54,6 @@ const mainMenuItems = [
 
 // Всё остальное в "Ещё"
 const moreMenuItems = [
-  { title: "AI Ассистент", url: "/ai-assistant", icon: Sparkles },
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Запчасти", url: "/spare-parts", icon: Package },
   { title: "Поставщики", url: "/suppliers", icon: Users },
@@ -95,6 +96,7 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const { isAdmin } = useUserRole();
   const totalUnread = useUnreadMessages();
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
@@ -178,6 +180,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* AI Ассистент кнопка */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => setAiDialogOpen(true)}
+                  className="hover:bg-accent/50 transition-colors"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {showText && <span>AI Ассистент</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarSeparator />
 
         {/* Ещё - сворачиваемая группа */}
@@ -256,6 +275,8 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <AIAssistantDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
     </Sidebar>
   );
 }
