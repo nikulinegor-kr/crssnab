@@ -258,12 +258,17 @@ const Requests = () => {
             <RequestsMiniDashboard
               requests={requests}
               onFilterClick={(type, value) => {
+                filters.setSpecialDateFilter(null);
                 if (type === "priority") {
                   filters.setPriorityFilter(value);
                 } else {
                   filters.setStatusFilter([value]);
                 }
               }}
+              onSpecialFilterClick={(filter) => {
+                filters.setSpecialDateFilter(filter);
+              }}
+              activeSpecialFilter={filters.specialDateFilter}
             />
           )}
 
