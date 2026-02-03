@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description";
+  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description" | "applicant";
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
@@ -269,11 +269,12 @@ export const InlineEditCell = ({
     );
   }
 
-  // Text fields (transport_company, comments, description)
+  // Text fields (transport_company, comments, description, applicant)
   const getPlaceholder = () => {
     switch (field) {
       case "transport_company": return "ТК";
       case "description": return "Описание заявки";
+      case "applicant": return "Заявитель";
       default: return "Комментарий";
     }
   };
