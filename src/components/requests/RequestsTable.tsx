@@ -539,9 +539,16 @@ export const RequestsTable = ({
                   )}
                   {visibility.payment_percentage && (
                     <TableCell className="text-center p-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
-                      {request.payment_percentage !== null && request.payment_percentage !== undefined
-                        ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                        : <span className="text-muted-foreground">-</span>}
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="payment_percentage"
+                        value={request.payment_percentage}
+                        displayValue={
+                          request.payment_percentage !== null && request.payment_percentage !== undefined
+                            ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
+                            : <span className="text-muted-foreground">0%</span>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (

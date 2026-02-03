@@ -15,10 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import { STATUSES } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 
+const PAYMENT_OPTIONS = ["0%", "50%", "70%", "100%"];
+
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "transport_company" | "delivery_date" | "comments";
-  value: string | null;
+  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage";
+  value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
 }
@@ -31,7 +33,7 @@ export const InlineEditCell = ({
   className,
 }: InlineEditCellProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value || "");
+  const [editValue, setEditValue] = useState(String(value ?? ""));
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -45,20 +47,26 @@ export const InlineEditCell = ({
   }, [isEditing]);
 
   useEffect(() => {
-    setEditValue(value || "");
+    setEditValue(String(value ?? ""));
   }, [value]);
 
   const handleSave = async () => {
-    if (editValue === value) {
+    if (editValue === String(value ?? "")) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      const updateData: Record<string, string | null> = {
-        [field]: editValue || null,
-      };
+      let updateData: Record<string, string | number | null>;
+
+      if (field === "payment_percentage") {
+        // Parse percentage value (remove % if present)
+        const numValue = parseInt(String(editValue).replace("%", ""), 10);
+        updateData = { [field]: isNaN(numValue) ? null : numValue };
+      } else {
+        updateData = { [field]: editValue || null };
+      }
 
       const { error } = await supabase
         .from("requests")
@@ -86,7 +94,7 @@ export const InlineEditCell = ({
   };
 
   const handleCancel = () => {
-    setEditValue(value || "");
+    setEditValue(String(value ?? ""));
     setIsEditing(false);
   };
 
@@ -166,6 +174,70 @@ export const InlineEditCell = ({
             {STATUSES.map((status) => (
               <SelectItem key={status} value={status} className="text-xs">
                 {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={handleCancel}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Payment percentage field uses Select
+  if (field === "payment_percentage") {
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <Select
+          value={editValue ? `${editValue}%` : "0%"}
+          onValueChange={(val) => {
+            setEditValue(val.replace("%", ""));
+            // Auto-save on payment change
+            setTimeout(async () => {
+              setIsSaving(true);
+              try {
+                const numValue = parseInt(val.replace("%", ""), 10);
+                const { error } = await supabase
+                  .from("requests")
+                  .update({ payment_percentage: isNaN(numValue) ? 0 : numValue })
+                  .eq("id", requestId);
+
+                if (error) throw error;
+
+                queryClient.invalidateQueries({ queryKey: ["requests"] });
+                toast({
+                  title: "Оплата изменена",
+                  description: `Новое значение: ${val}`,
+                });
+                setIsEditing(false);
+              } catch (error) {
+                console.error("Error saving:", error);
+                toast({
+                  title: "Ошибка",
+                  description: "Не удалось изменить оплату",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsSaving(false);
+              }
+            }, 0);
+          }}
+          disabled={isSaving}
+        >
+          <SelectTrigger className="h-7 text-xs w-[80px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-[100]">
+            {PAYMENT_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option} className="text-xs">
+                {option}
               </SelectItem>
             ))}
           </SelectContent>
