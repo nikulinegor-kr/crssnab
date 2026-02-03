@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
+import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
+
+export type SpecialDateFilter = "deliveredLast7Days" | "upcomingNext7Days" | null;
 
 export interface RequestFilters {
   searchQuery: string;
@@ -9,6 +12,7 @@ export interface RequestFilters {
   yearFilter: string;
   applicantFilter: string;
   hideDelivered: boolean;
+  specialDateFilter: SpecialDateFilter;
 }
 
 export const STATUSES = [
@@ -135,11 +139,12 @@ export const useRequestsFilters = (
   const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
+  const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
-  // Save filters to localStorage whenever they change
+  // Save filters to localStorage whenever they change (exclude specialDateFilter as it's temporary)
   useEffect(() => {
-    const currentFilters: RequestFilters = {
+    const currentFilters = {
       searchQuery,
       statusFilter,
       priorityFilter,
@@ -147,7 +152,7 @@ export const useRequestsFilters = (
       applicantFilter,
       hideDelivered,
     };
-    saveFiltersToStorage(currentFilters);
+    saveFiltersToStorage(currentFilters as RequestFilters);
   }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered]);
 
   // Apply filters from URL params on mount (overrides saved filters if present)
@@ -175,7 +180,24 @@ export const useRequestsFilters = (
   }, [searchParams]);
 
   const filteredRequests = useMemo(() => {
+    const today = startOfToday();
+    const sevenDaysAgo = addDays(today, -7);
+    const sevenDaysFromNow = addDays(today, 7);
+    
     return requests?.filter((request) => {
+      // Special date filter
+      if (specialDateFilter === "deliveredLast7Days") {
+        if (request.status !== "Доставлено" || !request.delivery_date) return false;
+        const deliveryDate = new Date(request.delivery_date);
+        if (!(isAfter(deliveryDate, sevenDaysAgo) && isBefore(deliveryDate, addDays(today, 1)))) return false;
+      }
+      
+      if (specialDateFilter === "upcomingNext7Days") {
+        if (request.status === "Доставлено" || !request.delivery_date) return false;
+        const deliveryDate = new Date(request.delivery_date);
+        if (!(isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(sevenDaysFromNow, 1)))) return false;
+      }
+      
       // Full-text search across all fields
       const matchesSearch = matchesFullTextSearch(request, searchQuery);
       const matchesStatus =
@@ -189,7 +211,9 @@ export const useRequestsFilters = (
       const matchesDelivered =
         activeTab === "archived"
           ? true
-          : !hideDelivered || request.status !== "Доставлено";
+          : specialDateFilter === "deliveredLast7Days" 
+            ? true 
+            : !hideDelivered || request.status !== "Доставлено";
       return (
         matchesSearch &&
         matchesStatus &&
@@ -208,6 +232,7 @@ export const useRequestsFilters = (
     applicantFilter,
     hideDelivered,
     activeTab,
+    specialDateFilter,
   ]);
 
   const uniqueApplicants = useMemo(() => {
@@ -249,6 +274,7 @@ export const useRequestsFilters = (
     setYearFilter("all");
     setApplicantFilter("all");
     setHideDelivered(true);
+    setSpecialDateFilter(null);
   }, []);
 
   const currentFilters: RequestFilters = {
@@ -258,6 +284,7 @@ export const useRequestsFilters = (
     yearFilter,
     applicantFilter,
     hideDelivered,
+    specialDateFilter,
   };
 
   return {
@@ -274,6 +301,8 @@ export const useRequestsFilters = (
     setApplicantFilter,
     hideDelivered,
     setHideDelivered,
+    specialDateFilter,
+    setSpecialDateFilter,
     years,
     
     // Computed
