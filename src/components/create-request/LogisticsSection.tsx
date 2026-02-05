@@ -64,7 +64,7 @@ export const LogisticsSection = ({
         />
 
         {/* Transport company & Waybill */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="transport_company"
@@ -108,12 +108,12 @@ export const LogisticsSection = ({
         </div>
 
         {/* Dates row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="estimated_delivery_days"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel className="text-xs">Срок доставки (дней)</FormLabel>
                 <FormControl>
                   <Input
@@ -121,7 +121,7 @@ export const LogisticsSection = ({
                     inputMode="numeric"
                     min={0}
                     placeholder="0"
-                    className="h-9 min-w-0"
+                    className="h-9 min-w-0 text-sm"
                     title="Ориентировочный срок доставки в днях"
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
@@ -141,7 +141,7 @@ export const LogisticsSection = ({
                 <FormControl>
                   <Input 
                     type="date" 
-                    className="h-9 min-w-0" 
+                    className="h-9 min-w-0 text-sm" 
                     title="Когда отправят товар"
                     {...field} 
                   />
@@ -160,7 +160,7 @@ export const LogisticsSection = ({
                 <FormControl>
                   <Input 
                     type="date" 
-                    className="h-9 min-w-0" 
+                    className="h-9 min-w-0 text-sm" 
                     title="Ожидаемая дата получения"
                     {...field} 
                   />

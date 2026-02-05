@@ -166,17 +166,17 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
         />
 
         {/* Invoice, Amount, Payment % */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="invoice_number"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel className="text-xs">Номер счета</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Сч. 123 от 24.01.26" 
-                    className="h-9 select-all min-w-0" 
+                    className="h-9 select-all min-w-0 text-sm" 
                     title="Номер счета для оплаты"
                     {...field} 
                   />
@@ -195,7 +195,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                 <FormControl>
                   <DecimalInput
                     placeholder=""
-                    className="h-9 select-all min-w-0"
+                    className="h-9 select-all min-w-0 text-sm"
                     title="Сумма счета в рублях"
                     value={field.value ?? null}
                     onValueChange={(v) => field.onChange(v)}

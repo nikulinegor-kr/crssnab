@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Zap, CreditCard, Truck, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface QuickFiltersProps {
   statusFilter: string[];
@@ -97,7 +98,8 @@ export const QuickFilters = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+    <ScrollArea className="w-full">
+      <div className="flex gap-1.5 sm:gap-2 pb-2">
       {QUICK_FILTERS.map((filter) => {
         const isActive = isFilterActive(filter);
         return (
@@ -107,15 +109,17 @@ export const QuickFilters = ({
             size="sm"
             onClick={() => toggleFilter(filter)}
             className={cn(
-              "h-7 sm:h-8 text-xs gap-1 sm:gap-1.5 px-2 sm:px-3 transition-all",
+              "h-7 sm:h-8 text-xs gap-1 sm:gap-1.5 px-2 sm:px-3 transition-all shrink-0 whitespace-nowrap",
               isActive ? filter.activeColor : filter.color
             )}
           >
             {filter.icon}
-            <span className="hidden xs:inline">{filter.label}</span>
+            <span>{filter.label}</span>
           </Button>
         );
       })}
-    </div>
+      </div>
+      <ScrollBar orientation="horizontal" className="h-1.5" />
+    </ScrollArea>
   );
 };

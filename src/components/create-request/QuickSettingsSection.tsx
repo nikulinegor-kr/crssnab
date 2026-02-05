@@ -86,7 +86,7 @@ export const QuickSettingsSection = ({
     >
       <div className="space-y-4">
         {/* Date, Object, Estimated days row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="request_date"
@@ -96,7 +96,7 @@ export const QuickSettingsSection = ({
                 <FormControl>
                   <Input 
                     type="date" 
-                    className="h-9 min-w-0" 
+                    className="h-9 min-w-0 text-sm" 
                     title="Дата создания заявки"
                     {...field} 
                   />
@@ -110,7 +110,7 @@ export const QuickSettingsSection = ({
             control={form.control}
             name="object_id"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel className="text-xs">Объект</FormLabel>
                 <FormControl>
                   <ObjectSelectWithAdd
@@ -135,7 +135,7 @@ export const QuickSettingsSection = ({
                   <Input
                     type="number"
                     min="0"
-                    className="h-9"
+                    className="h-9 text-sm"
                     placeholder=""
                     {...field}
                     value={field.value ?? ""}
@@ -149,7 +149,7 @@ export const QuickSettingsSection = ({
         </div>
 
         {/* Status & Priority row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="status"
@@ -202,7 +202,7 @@ export const QuickSettingsSection = ({
         </div>
 
         {/* Participants row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-2 sm:gap-3 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="applicant"
