@@ -281,11 +281,11 @@ export const RequestsFilters = ({
       </div>
 
       {/* Filters grid - more compact on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {/* Status Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full">
+            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full min-w-0">
               <span className="truncate">
                 {statusFilter.length === 0
                   ? "Статус"
@@ -340,7 +340,7 @@ export const RequestsFilters = ({
 
         {/* Priority Filter */}
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
+          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
             <SelectValue placeholder="Приоритет" />
           </SelectTrigger>
           <SelectContent className="z-50 bg-background">
@@ -355,7 +355,7 @@ export const RequestsFilters = ({
 
         {/* Applicant Filter */}
         <Select value={applicantFilter} onValueChange={setApplicantFilter}>
-          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
+          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
             <SelectValue placeholder="Заявитель" />
           </SelectTrigger>
           <SelectContent className="z-50 bg-background max-h-[200px]">
@@ -371,7 +371,7 @@ export const RequestsFilters = ({
         {/* Year Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full">
+            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full min-w-0">
               <span className="truncate">{yearFilter === "all" ? "Год" : yearFilter}</span>
             </Button>
           </PopoverTrigger>
@@ -416,25 +416,25 @@ export const RequestsFilters = ({
         </Popover>
 
         {/* Hide Delivered with Counter */}
-        <div className="flex items-center gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1 min-w-0">
           <Switch
             id="hideDelivered"
             checked={hideDelivered}
             onCheckedChange={setHideDelivered}
-            className="scale-90"
+            className="scale-75 sm:scale-90 shrink-0"
           />
           <Label 
             htmlFor="hideDelivered" 
-            className="cursor-pointer text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5"
+            className="cursor-pointer text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 truncate"
           >
             {hideDelivered ? (
-              <EyeOff className="h-3 w-3 text-muted-foreground" />
+              <EyeOff className="h-3 w-3 text-muted-foreground shrink-0" />
             ) : (
-              <Eye className="h-3 w-3 text-muted-foreground" />
+              <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
             )}
-            <span className="hidden xs:inline">Скрыть доставл.</span>
+            <span className="truncate">Скрыть доставл.</span>
             {deliveredCount > 0 && hideDelivered && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5">
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5 shrink-0">
                 {deliveredCount}
               </Badge>
             )}
