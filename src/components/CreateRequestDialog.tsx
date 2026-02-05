@@ -147,6 +147,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [pendingClose, setPendingClose] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const formId = "create-request-form";
   
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && hasUnsavedChanges()) {
@@ -509,7 +510,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onFocus={handleInputFocus as any}>
+      <form
+        id={formId}
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+        onFocus={handleInputFocus as any}
+      >
         
         {/* 1. Context Block: Description + Comment */}
         <ContextSection 
@@ -553,24 +559,43 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           documentFiles={documentFiles}
           setDocumentFiles={setDocumentFiles}
         />
-
-        {/* Submit */}
-        <div className="flex justify-end gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Отмена
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Создать заявку
-          </Button>
-        </div>
       </form>
     </Form>
+  );
+
+  const desktopActions = (
+    <div className="flex justify-end gap-2 pt-4">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => handleOpenChange(false)}
+        disabled={isSubmitting}
+      >
+        Отмена
+      </Button>
+      <Button type="submit" form={formId} disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Создать заявку
+      </Button>
+    </div>
+  );
+
+  const mobileActions = (
+    <div className="grid grid-cols-2 gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => handleOpenChange(false)}
+        disabled={isSubmitting}
+        className="w-full"
+      >
+        Отмена
+      </Button>
+      <Button type="submit" form={formId} disabled={isSubmitting} className="w-full">
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Создать
+      </Button>
+    </div>
   );
 
   // Exit warning dialog
@@ -604,12 +629,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         {exitWarningDialog}
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{children}</DrawerTrigger>
-          <DrawerContent className="h-[85dvh] max-h-[85dvh] w-screen max-w-[100vw] overflow-x-hidden flex flex-col">
+          <DrawerContent className="mt-0 h-[85dvh] max-h-[85dvh] w-full max-w-full overflow-hidden flex flex-col">
             <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0">
               <DrawerTitle>Новая заявка</DrawerTitle>
             </DrawerHeader>
             <div 
-              className="flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-safe min-h-0"
+              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain',
@@ -618,6 +643,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
               }}
             >
               {formContent}
+            </div>
+            <div className="shrink-0 border-t bg-background/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              {mobileActions}
             </div>
           </DrawerContent>
         </Drawer>
@@ -638,6 +666,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             </DialogDescription>
           </DialogHeader>
           {formContent}
+          {desktopActions}
         </DialogContent>
       </Dialog>
     </>
