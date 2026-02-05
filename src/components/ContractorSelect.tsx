@@ -187,17 +187,17 @@ export function ContractorSelect({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex w-full min-w-0 gap-2">
       {/* Основное поле с выбранным значением - клик открывает список */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogTrigger asChild>
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Input
               value={value || ""}
               readOnly
               disabled={disabled}
               placeholder={placeholder}
-              className="pr-8 cursor-pointer"
+              className="pr-8 cursor-pointer min-w-0"
             />
             {value && !disabled && (
               <Button

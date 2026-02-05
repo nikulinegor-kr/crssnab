@@ -43,6 +43,14 @@ All colors MUST be HSL.
     
     [data-vaul-drawer-content] {
       max-height: 85dvh !important;
+      overflow-x: hidden !important;
+      width: 100vw;
+      max-width: 100vw;
+    }
+
+    /* Hard-stop horizontal panning inside the drawer on mobile */
+    [data-vaul-drawer] {
+      overflow-x: hidden !important;
     }
   }
   

@@ -501,7 +501,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isMobile) {
       setTimeout(() => {
-        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Prevent unintended horizontal scrolling on mobile while keeping the field visible above the keyboard
+        e.target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
       }, 300);
     }
   };
@@ -603,15 +604,17 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         {exitWarningDialog}
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{children}</DrawerTrigger>
-          <DrawerContent className="h-[85dvh] max-h-[85dvh] flex flex-col">
+          <DrawerContent className="h-[85dvh] max-h-[85dvh] w-screen max-w-[100vw] overflow-x-hidden flex flex-col">
             <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0">
               <DrawerTitle>Новая заявка</DrawerTitle>
             </DrawerHeader>
             <div 
-              className="flex-1 overflow-y-auto p-3 pb-safe min-h-0"
+              className="flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-safe min-h-0"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain'
+                overscrollBehavior: 'contain',
+                overscrollBehaviorX: 'none',
+                touchAction: 'pan-y'
               }}
             >
               {formContent}

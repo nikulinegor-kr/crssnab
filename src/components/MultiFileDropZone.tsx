@@ -109,7 +109,7 @@ export const MultiFileDropZone = ({
   const canAddMore = totalCount < maxFiles;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full min-w-0">
       <span className="text-sm font-medium">{label} ({totalCount}/{maxFiles})</span>
       
       <input
@@ -125,13 +125,13 @@ export const MultiFileDropZone = ({
       {existingUrls.length > 0 && (
         <div className="space-y-2">
           {existingUrls.map((url, index) => (
-            <div key={`existing-${index}`} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+            <div key={`existing-${index}`} className="flex min-w-0 items-center gap-2 p-3 border rounded-lg bg-muted/30">
               <Icon className="h-5 w-5 text-primary shrink-0" />
               <a 
                 href={url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm truncate flex-1 text-primary hover:underline"
+                className="text-sm truncate flex-1 min-w-0 text-primary hover:underline"
               >
                 {getFileName(url)}
               </a>
@@ -155,10 +155,10 @@ export const MultiFileDropZone = ({
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((file, index) => (
-            <div key={`new-${index}`} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+            <div key={`new-${index}`} className="flex min-w-0 items-center gap-2 p-3 border rounded-lg bg-muted/50">
               <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate flex-1">{file.name}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-sm truncate flex-1 min-w-0">{file.name}</span>
+              <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
                 {(file.size / 1024).toFixed(0)} KB
               </span>
               <Button
