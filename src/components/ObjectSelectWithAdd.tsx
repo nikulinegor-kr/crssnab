@@ -20,6 +20,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface ObjectSelectWithAddProps {
   value: string;
@@ -83,9 +84,9 @@ export function ObjectSelectWithAdd({
 
   return (
     <>
-      <div className={`flex gap-1.5 ${className || ""}`}>
+      <div className={cn("flex w-full min-w-0 gap-1.5", className)}>
         <Select onValueChange={onChange} value={value || ""} disabled={disabled}>
-          <SelectTrigger className="h-9 flex-1">
+          <SelectTrigger className="h-9 flex-1 min-w-0">
             <SelectValue placeholder="Выберите объект" />
           </SelectTrigger>
           <SelectContent>

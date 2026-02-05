@@ -75,13 +75,13 @@ export function ComboboxInput({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className={cn("relative flex items-center", className)}>
+        <div className={cn("relative flex w-full min-w-0 items-center", className)}>
           <Input
             value={inputValue}
             onChange={handleInputChange}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
-            className="pr-16"
+            className="pr-16 min-w-0"
           />
           <div className="absolute right-1 flex items-center gap-0.5">
             {inputValue && (
@@ -110,7 +110,10 @@ export function ComboboxInput({
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1.5rem)] overflow-hidden p-0"
+        align="start"
+      >
         <Command shouldFilter={false}>
           <CommandInput 
             placeholder={searchPlaceholder} 
