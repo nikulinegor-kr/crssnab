@@ -32,7 +32,7 @@ export const LogisticsSection = ({
       title="Логистика" 
       icon={<Truck className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Availability row */}
         <FormField
           control={form.control}

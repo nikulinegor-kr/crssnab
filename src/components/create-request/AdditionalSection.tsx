@@ -53,7 +53,7 @@ export const AdditionalSection = ({
       collapsible
       defaultCollapsed
     >
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* ZRS Summary */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -71,7 +71,7 @@ export const AdditionalSection = ({
           </div>
           <Textarea
             readOnly
-            className="min-h-[100px] bg-muted/50 font-mono text-xs"
+            className="min-h-[80px] sm:min-h-[100px] bg-muted/50 font-mono text-xs"
             value={`Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}

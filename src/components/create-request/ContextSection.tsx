@@ -86,7 +86,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
           )}
           {draftSaveState === 'saved' && (
             <>
-              <Check className="h-3 w-3 text-green-500" />
+              <Check className="h-3 w-3 text-success" />
               <span>Черновик сохранён</span>
             </>
           )}
@@ -97,9 +97,9 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
     return (
       <div className="rounded-lg border border-border/40 bg-card/50 overflow-hidden">
         {/* Description - Primary, Autofocus */}
-        <div className="p-4 pb-3">
+        <div className="p-3 sm:p-4 pb-2 sm:pb-3">
           <div className="flex items-center justify-between mb-2">
-            <FormLabel className="text-base font-medium text-foreground">
+            <FormLabel className="text-sm sm:text-base font-medium text-foreground">
               Описание заявки *
             </FormLabel>
             <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                     ref={descriptionRef}
                     placeholder="Опишите заявку — это главное поле..."
                     className={cn(
-                      "min-h-[100px] resize-none border-0 p-0 text-lg leading-normal",
+                      "min-h-[80px] sm:min-h-[100px] resize-none border-0 p-0 text-base sm:text-lg leading-normal",
                       "focus-visible:ring-0 focus-visible:ring-offset-0",
                       "bg-transparent placeholder:text-muted-foreground/50 font-normal"
                     )}
@@ -148,8 +148,8 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
         {/* Comment - Collapsible, shown on demand */}
         {showCommentField ? (
           <>
-            <div className="mx-4 border-t border-border/30" />
-            <div className="p-4 pt-3">
+            <div className="mx-3 sm:mx-4 border-t border-border/30" />
+            <div className="p-3 sm:p-4 pt-2 sm:pt-3">
               <FormField
                 control={form.control}
                 name="comments"
@@ -160,7 +160,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                       <Textarea
                         placeholder="Дополнительная информация..."
                         className={cn(
-                          "min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
+                          "min-h-[50px] sm:min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
                           "focus-visible:ring-0 focus-visible:ring-offset-0",
                           "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
                         )}
@@ -174,7 +174,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
             </div>
           </>
         ) : (
-          <div className="px-4 pb-3">
+          <div className="px-3 sm:px-4 pb-2 sm:pb-3">
             <Button
               type="button"
               variant="ghost"

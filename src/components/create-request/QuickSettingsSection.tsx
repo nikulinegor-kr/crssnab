@@ -84,7 +84,7 @@ export const QuickSettingsSection = ({
       title="Быстрые настройки" 
       icon={<Settings2 className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Date, Object, Estimated days row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           <FormField
@@ -319,14 +319,14 @@ export const QuickSettingsSection = ({
         </div>
 
         {/* Telegram username - at the very end */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <Input
             value={telegramUsername}
             onChange={(e) => setTelegramUsername(e.target.value)}
             onBlur={(e) => handleSaveTelegram(e.target.value)}
             placeholder={selectedApplicant ? "Telegram заявителя (ник без @)" : "Сначала выберите заявителя"}
-            className="h-8 text-xs"
+            className="h-8 text-xs min-w-0"
             disabled={!selectedApplicant}
           />
         </div>
