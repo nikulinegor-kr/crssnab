@@ -603,15 +603,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         {exitWarningDialog}
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{children}</DrawerTrigger>
-          <DrawerContent className="h-[100dvh] max-h-[100dvh]">
-            <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
+          <DrawerContent className="h-[85dvh] max-h-[85dvh] flex flex-col">
+            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0">
               <DrawerTitle>Новая заявка</DrawerTitle>
-              <DrawerDescription>
-                Заполните форму для создания заявки
-              </DrawerDescription>
             </DrawerHeader>
             <div 
-              className="flex-1 overflow-y-auto p-4 pb-8"
+              className="flex-1 overflow-y-auto p-3 pb-safe min-h-0"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'

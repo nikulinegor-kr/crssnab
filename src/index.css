@@ -37,13 +37,18 @@ All colors MUST be HSL.
     
     /* Fix for iOS Safari virtual keyboard */
     [data-vaul-drawer] {
-      height: 100dvh !important;
-      max-height: 100dvh !important;
+      height: 85dvh !important;
+      max-height: 85dvh !important;
     }
     
     [data-vaul-drawer-content] {
-      max-height: 100dvh !important;
+      max-height: 85dvh !important;
     }
+  }
+  
+  /* Safe area padding for mobile */
+  .pb-safe {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
   }
   
   

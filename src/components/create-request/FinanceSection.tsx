@@ -136,7 +136,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
       className="border-primary/20"
       titleClassName="text-base font-semibold"
     >
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Contractor */}
         <FormField
           control={form.control}
