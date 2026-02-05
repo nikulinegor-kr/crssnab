@@ -25,6 +25,12 @@ All colors MUST be HSL.
     position: relative;
     min-height: 100dvh;
   }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   
   /* Mobile form improvements - auto-scroll to focused inputs */
   @media (max-width: 768px) {
@@ -44,13 +50,15 @@ All colors MUST be HSL.
     [data-vaul-drawer-content] {
       max-height: 85dvh !important;
       overflow-x: hidden !important;
-      width: 100vw;
-      max-width: 100vw;
+      width: 100% !important;
+      max-width: 100% !important;
+      overscroll-behavior-x: none;
     }
 
     /* Hard-stop horizontal panning inside the drawer on mobile */
     [data-vaul-drawer] {
       overflow-x: hidden !important;
+      overscroll-behavior-x: none;
     }
   }
   
