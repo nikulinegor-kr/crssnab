@@ -627,20 +627,18 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     return (
       <>
         {exitWarningDialog}
-        <Drawer open={open} onOpenChange={handleOpenChange}>
+        <Drawer open={open} onOpenChange={handleOpenChange} dismissible={false}>
           <DrawerTrigger asChild>{children}</DrawerTrigger>
-          <DrawerContent className="mt-0 h-[85dvh] max-h-[85dvh] w-full max-w-full overflow-hidden flex flex-col">
-            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0">
+          <DrawerContent className="mt-0 h-[90dvh] max-h-[90dvh] w-full max-w-full overflow-hidden flex flex-col">
+            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0 flex items-center justify-between">
               <DrawerTitle>Новая заявка</DrawerTitle>
+              <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0">
+                ✕
+              </Button>
             </DrawerHeader>
+            <DrawerDescription className="sr-only">Заполните форму для создания заявки</DrawerDescription>
             <div 
               className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
-              style={{ 
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain',
-                overscrollBehaviorX: 'none',
-                touchAction: 'pan-y'
-              }}
             >
               {formContent}
             </div>
