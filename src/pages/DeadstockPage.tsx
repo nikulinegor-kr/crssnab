@@ -108,7 +108,7 @@ export default function DeadstockPage() {
               <Table>
                 <TableHeader>
                   <tr>
-                    <ResizableTableHeader column="name" label="Наименование" width={activeWidths.widths.name} onResize={activeWidths.updateWidth} />
+                    <ResizableTableHeader column="name" label="Наименование" width={activeWidths.widths.name} onResize={activeWidths.updateWidth} align="left" />
                     <ResizableTableHeader column="qty" label="Кол-во" width={activeWidths.widths.qty} onResize={activeWidths.updateWidth} />
                     <ResizableTableHeader column="description" label="Описание" width={activeWidths.widths.description} onResize={activeWidths.updateWidth} />
                     <ResizableTableHeader column="part_number" label="Парт номер" width={activeWidths.widths.part_number} onResize={activeWidths.updateWidth} />
@@ -120,15 +120,15 @@ export default function DeadstockPage() {
                 <TableBody>
                   {active.items.map(item => (
                     <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(item)}>
-                      <TableCell className="font-medium" style={{ width: activeWidths.widths.name }}>{item.name}</TableCell>
-                      <TableCell style={{ width: activeWidths.widths.qty }}>{item.qty}</TableCell>
-                      <TableCell style={{ width: activeWidths.widths.description }}>
-                        <p className="line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">{item.description || "—"}</p>
+                      <TableCell className="font-medium text-left border-r border-border/40" style={{ width: activeWidths.widths.name }}>{item.name}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: activeWidths.widths.qty }}>{item.qty}</TableCell>
+                      <TableCell className="border-r border-border/40" style={{ width: activeWidths.widths.description }}>
+                        <p className="line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap text-center">{item.description || "—"}</p>
                       </TableCell>
-                      <TableCell style={{ width: activeWidths.widths.part_number }}>{item.part_number || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap" style={{ width: activeWidths.widths.price }}>{Number(item.price).toLocaleString("ru-RU")} ₽</TableCell>
-                      <TableCell style={{ width: activeWidths.widths.responsible }}>{getResponsibleName(item.responsible_user_id)}</TableCell>
-                      <TableCell style={{ width: activeWidths.widths.action }}>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: activeWidths.widths.part_number }}>{item.part_number || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-center border-r border-border/40" style={{ width: activeWidths.widths.price }}>{Number(item.price).toLocaleString("ru-RU")} ₽</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: activeWidths.widths.responsible }}>{getResponsibleName(item.responsible_user_id)}</TableCell>
+                      <TableCell className="text-center" style={{ width: activeWidths.widths.action }}>
                         <Button size="sm" variant="outline" onClick={e => handleSoldClick(item.id, e)}>Продано</Button>
                       </TableCell>
                     </TableRow>
@@ -150,7 +150,7 @@ export default function DeadstockPage() {
                 <TableHeader>
                   <tr>
                     <ResizableTableHeader column="sold_at" label="Дата продажи" width={archiveWidths.widths.sold_at} onResize={archiveWidths.updateWidth} />
-                    <ResizableTableHeader column="name" label="Наименование" width={archiveWidths.widths.name} onResize={archiveWidths.updateWidth} />
+                    <ResizableTableHeader column="name" label="Наименование" width={archiveWidths.widths.name} onResize={archiveWidths.updateWidth} align="left" />
                     <ResizableTableHeader column="qty" label="Кол-во" width={archiveWidths.widths.qty} onResize={archiveWidths.updateWidth} />
                     <ResizableTableHeader column="part_number" label="Парт номер" width={archiveWidths.widths.part_number} onResize={archiveWidths.updateWidth} />
                     <ResizableTableHeader column="price" label="Цена" width={archiveWidths.widths.price} onResize={archiveWidths.updateWidth} />
@@ -166,18 +166,18 @@ export default function DeadstockPage() {
                 <TableBody>
                   {archived.items.map(item => (
                     <TableRow key={item.id}>
-                      <TableCell className="whitespace-nowrap" style={{ width: archiveWidths.widths.sold_at }}>{fmt(item.sold_at)}</TableCell>
-                      <TableCell className="font-medium" style={{ width: archiveWidths.widths.name }}>{item.name}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.qty }}>{item.qty}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.part_number }}>{item.part_number || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap" style={{ width: archiveWidths.widths.price }}>{Number(item.price).toLocaleString("ru-RU")} ₽</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.buyer }}>{item.buyer || "—"}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.invoice_number }}>{item.invoice_number || "—"}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.tk }}>{item.tk || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap" style={{ width: archiveWidths.widths.shipped_at }}>{fmt(item.shipped_at)}</TableCell>
-                      <TableCell className="whitespace-nowrap" style={{ width: archiveWidths.widths.arrived_at }}>{fmt(item.arrived_at)}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.responsible }}>{getResponsibleName(item.responsible_user_id)}</TableCell>
-                      <TableCell style={{ width: archiveWidths.widths.action }}>
+                      <TableCell className="whitespace-nowrap text-center border-r border-border/40" style={{ width: archiveWidths.widths.sold_at }}>{fmt(item.sold_at)}</TableCell>
+                      <TableCell className="font-medium text-left border-r border-border/40" style={{ width: archiveWidths.widths.name }}>{item.name}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.qty }}>{item.qty}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.part_number }}>{item.part_number || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-center border-r border-border/40" style={{ width: archiveWidths.widths.price }}>{Number(item.price).toLocaleString("ru-RU")} ₽</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.buyer }}>{item.buyer || "—"}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.invoice_number }}>{item.invoice_number || "—"}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.tk }}>{item.tk || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-center border-r border-border/40" style={{ width: archiveWidths.widths.shipped_at }}>{fmt(item.shipped_at)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-center border-r border-border/40" style={{ width: archiveWidths.widths.arrived_at }}>{fmt(item.arrived_at)}</TableCell>
+                      <TableCell className="text-center border-r border-border/40" style={{ width: archiveWidths.widths.responsible }}>{getResponsibleName(item.responsible_user_id)}</TableCell>
+                      <TableCell className="text-center" style={{ width: archiveWidths.widths.action }}>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
                           <Eye className="h-4 w-4" />
                         </Button>
