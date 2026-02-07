@@ -78,6 +78,33 @@ export const RequestsBulkActions = ({
 
       if (error) throw error;
 
+      // Send Telegram notifications for each updated request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        let tgSuccess = 0;
+        let tgError = 0;
+        for (const req of eligibleRequests) {
+          try {
+            const { data, error: tgErr } = await supabase.functions.invoke('notify-telegram', {
+              body: { requestId: req.id, mode: 'send' },
+              headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            if (tgErr || data?.error) {
+              tgError++;
+              console.error("Telegram error for", req.id, tgErr || data?.error);
+            } else {
+              tgSuccess++;
+            }
+          } catch (e) {
+            tgError++;
+            console.error("Telegram send failed for", req.id, e);
+          }
+        }
+        if (tgSuccess > 0) {
+          console.log(`Telegram: sent ${tgSuccess}, errors ${tgError}`);
+        }
+      }
+
       // Success notification with counts
       if (skippedCount > 0) {
         toast({
