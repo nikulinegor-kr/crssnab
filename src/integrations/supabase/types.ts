@@ -679,6 +679,83 @@ export type Database = {
           },
         ]
       }
+      deadstock_items: {
+        Row: {
+          arrived_at: string | null
+          buyer: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_urls: string[] | null
+          id: string
+          invoice_number: string | null
+          name: string
+          organization_id: string
+          part_number: string | null
+          photo_urls: string[] | null
+          price: number
+          qty: number
+          responsible_user_id: string | null
+          shipped_at: string | null
+          sold_at: string | null
+          status: string
+          tk: string | null
+          updated_at: string
+        }
+        Insert: {
+          arrived_at?: string | null
+          buyer?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_urls?: string[] | null
+          id?: string
+          invoice_number?: string | null
+          name: string
+          organization_id: string
+          part_number?: string | null
+          photo_urls?: string[] | null
+          price?: number
+          qty?: number
+          responsible_user_id?: string | null
+          shipped_at?: string | null
+          sold_at?: string | null
+          status?: string
+          tk?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arrived_at?: string | null
+          buyer?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_urls?: string[] | null
+          id?: string
+          invoice_number?: string | null
+          name?: string
+          organization_id?: string
+          part_number?: string | null
+          photo_urls?: string[] | null
+          price?: number
+          qty?: number
+          responsible_user_id?: string | null
+          shipped_at?: string | null
+          sold_at?: string | null
+          status?: string
+          tk?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadstock_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linked_requests: {
         Row: {
           created_at: string

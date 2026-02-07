@@ -33,6 +33,7 @@ const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"
 
 const AIAnalytics = lazyWithRetry(() => import("./pages/AIAnalytics"));
 const SpareParts = lazyWithRetry(() => import("./pages/SpareParts"));
+const DeadstockPage = lazyWithRetry(() => import("./pages/DeadstockPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
@@ -234,6 +235,16 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <SpareParts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/deadstock"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <DeadstockPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />

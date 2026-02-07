@@ -12,6 +12,7 @@ import {
   Moon,
   Package,
   ChevronDown,
+  Archive,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -49,6 +50,7 @@ const mainMenuItems = [
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Запчасти", url: "/spare-parts", icon: Package },
   { title: "Поставщики", url: "/suppliers", icon: Users },
+  { title: "База неликвида", url: "/deadstock", icon: Archive },
 ];
 
 const reportMenuItems = [
