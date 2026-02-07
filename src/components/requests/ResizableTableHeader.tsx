@@ -13,6 +13,7 @@ interface ResizableTableHeaderProps {
   sortDirection?: "asc" | "desc";
   onSort?: () => void;
   className?: string;
+  align?: "left" | "center";
 }
 
 export const ResizableTableHeader = ({
@@ -25,6 +26,7 @@ export const ResizableTableHeader = ({
   sortDirection,
   onSort,
   className = "",
+  align = "center",
 }: ResizableTableHeaderProps) => {
   const headerRef = useRef<HTMLTableCellElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -77,7 +79,7 @@ export const ResizableTableHeader = ({
       style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px`, transition: isResizing ? 'none' : 'width 150ms ease-out, min-width 150ms ease-out, max-width 150ms ease-out' }}
       onClick={sortable ? onSort : undefined}
     >
-      <div className="flex items-center gap-0.5 justify-center overflow-hidden">
+      <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : "justify-center")}>
         <span className="truncate text-xs uppercase">{label}</span>
         {sortable && (
           <Icon
