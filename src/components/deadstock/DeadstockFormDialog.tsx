@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DeadstockItem, uploadDeadstockFiles } from "@/hooks/useDeadstock";
@@ -12,15 +13,22 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item?: DeadstockItem | null;
   onSave: (data: Record<string, unknown>) => Promise<void>;
   isPending: boolean;
+  profiles: Profile[];
 }
 
-export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPending }: Props) {
+export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPending, profiles }: Props) {
   const isMobile = useIsMobile();
   const { currentOrgId } = useCurrentOrganization();
 
@@ -29,6 +37,7 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
   const [qty, setQty] = useState("1");
   const [partNumber, setPartNumber] = useState("");
   const [price, setPrice] = useState("");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>("");
   const [soldAt, setSoldAt] = useState("");
   const [buyer, setBuyer] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -49,6 +58,7 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
         setQty(String(item.qty));
         setPartNumber(item.part_number || "");
         setPrice(String(item.price));
+        setResponsibleUserId(item.responsible_user_id || "");
         setSoldAt(item.sold_at || "");
         setBuyer(item.buyer || "");
         setInvoiceNumber(item.invoice_number || "");
@@ -62,6 +72,10 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
         setSoldAt(""); setBuyer(""); setInvoiceNumber(""); setTk("");
         setShippedAt(""); setArrivedAt("");
         setExistingPhotos([]); setExistingDocs([]);
+        // Default to current user
+        supabase.auth.getUser().then(({ data }) => {
+          setResponsibleUserId(data.user?.id || "");
+        });
       }
       setPhotoFiles([]); setDocFiles([]);
     }
@@ -85,15 +99,13 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
         docUrls = [...docUrls, ...newDocs];
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-
       const payload: Record<string, unknown> = {
         name: name.trim(),
         description: description.trim() || null,
         qty: Number(qty),
         part_number: partNumber.trim() || null,
         price: Number(price),
-        responsible_user_id: item?.responsible_user_id || user?.id || null,
+        responsible_user_id: responsibleUserId || null,
         sold_at: soldAt || null,
         buyer: buyer.trim() || null,
         invoice_number: invoiceNumber.trim() || null,
@@ -135,6 +147,21 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
       <div>
         <Label>Парт номер</Label>
         <Input value={partNumber} onChange={e => setPartNumber(e.target.value)} placeholder="Парт номер" />
+      </div>
+      <div>
+        <Label>Ответственный</Label>
+        <Select value={responsibleUserId} onValueChange={setResponsibleUserId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Выберите ответственного" />
+          </SelectTrigger>
+          <SelectContent>
+            {profiles.map(p => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.full_name || p.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {item?.status === "archived" && (
