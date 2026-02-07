@@ -36,12 +36,20 @@ const callbackQuerySchema = z.object({
 });
 
 const messageSchema = z.object({
-  text: z.string().max(1000),
+  text: z.string().max(4000).optional(),
+  caption: z.string().max(4000).optional(),
   from: telegramUserSchema,
   chat: z.object({ id: z.number() }),
   reply_to_message: z.object({
     message_id: z.number(),
   }).optional(),
+  photo: z.array(z.object({
+    file_id: z.string(),
+    file_unique_id: z.string(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    file_size: z.number().optional(),
+  })).optional(),
 });
 
 async function sendTelegramRequest(method: string, body: any) {
@@ -158,9 +166,23 @@ async function buildOriginalKeyboard(request: any, supabaseClient: any) {
   
   const keyboard: any[][] = [];
 
-  // Кнопка Получение подтверждено - показываем только если статус "Доставлено в ТК"
+  // Кнопка Получение подтверждено / Приёмка - показываем только если статус "Доставлено в ТК"
   if (status.includes("доставлено в тк")) {
-    keyboard.push([{ text: "📦 Получение подтверждено", callback_data: "received" }]);
+    // Check if already received confirmed
+    const { data: receivedActivity } = await supabaseClient
+      .from("request_activities")
+      .select("id")
+      .eq("request_id", request.id)
+      .eq("action", "received_confirmed")
+      .limit(1);
+    
+    if (receivedActivity && receivedActivity.length > 0) {
+      // Already received - show acceptance buttons
+      keyboard.push([{ text: "🟢 Принято без замечаний", callback_data: "accepted_ok" }]);
+      keyboard.push([{ text: "🔴 Обнаружено несоответствие", callback_data: "discrepancy" }]);
+    } else {
+      keyboard.push([{ text: "📦 Получение подтверждено", callback_data: "received" }]);
+    }
   }
 
   // Кнопки согласования
@@ -634,14 +656,136 @@ async function handleCallbackQuery(callbackQuery: any) {
   let shouldDeletePreviousMessage = false;
 
   if (data === "received") {
-    // Получение подтверждено - ФИНАЛЬНЫЙ СТАТУС
+    // Step 1: Получение подтверждено — промежуточный шаг (НЕ финальный)
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing 'received' action (intermediate):", { requestId: requests.id, username });
+    
+    // Log activity
+    await supabase.from("request_activities").insert({
+      request_id: requests.id,
+      organization_id: requests.organization_id,
+      action: "received_confirmed",
+      description: `✅ Получение подтверждено — отметил: @${username || fullName}, ${now}`,
+    });
+    
+    newText += `\n\n✅ Получение подтверждено — отметил: @${username || fullName}, ${now}`;
+    
+    // Show Step 2 buttons: acceptance or discrepancy
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: newText,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "🟢 Принято без замечаний", callback_data: "accepted_ok" }],
+          [{ text: "🔴 Обнаружено несоответствие", callback_data: "discrepancy" }],
+        ]
+      }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "✅ Получение подтверждено",
+    });
+    return;
+  } else if (data === "accepted_ok") {
+    // Step 2a: Принято без замечаний — ФИНАЛЬНЫЙ СТАТУС
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing 'accepted_ok' action:", { requestId: requests.id, username });
+    
+    await supabase.from("request_activities").insert({
+      request_id: requests.id,
+      organization_id: requests.organization_id,
+      action: "accepted_no_issues",
+      description: `🟢 Принято без замечаний — отметил: @${username || fullName}, ${now}`,
+    });
+    
     newStatus = "Доставлено";
-    newText += `\n\n✅ Получение подтверждено — отметил: @${username || fullName}`;
+    newText += `\n\n🟢 Принято без замечаний — отметил: @${username || fullName}, ${now}`;
     removeKeyboard = true;
-    alertText = "✅ Успешно отмечено как получено!";
+    alertText = "✅ Принято без замечаний!";
     isFinalStatus = true;
     shouldDeletePreviousMessage = true;
-    console.log("Processing 'received' action:", { requestId: requests.id, newStatus, username });
+  } else if (data === "discrepancy") {
+    // Step 2b: Обнаружено несоответствие — показать выбор типа
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing 'discrepancy' action:", { requestId: requests.id, username });
+    
+    await supabase.from("request_activities").insert({
+      request_id: requests.id,
+      organization_id: requests.organization_id,
+      action: "discrepancy_found",
+      description: `🔴 Обнаружено несоответствие — отметил: @${username || fullName}, ${now}`,
+    });
+    
+    // Update status to Несоответствие
+    await updateRequestStatus(requests.id, "Несоответствие", username, fullName);
+    
+    newText += `\n\n🔴 Обнаружено несоответствие — отметил: @${username || fullName}, ${now}`;
+    newText += `\n\nВыберите тип несоответствия:`;
+    
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: newText,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "🔢 Парт-номер", callback_data: "discrepancy_type_part" }],
+          [{ text: "📦 Количество", callback_data: "discrepancy_type_qty" }],
+          [{ text: "❌ Не та позиция", callback_data: "discrepancy_type_wrong" }],
+          [{ text: "💥 Повреждение", callback_data: "discrepancy_type_damage" }],
+        ]
+      }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Выберите тип несоответствия",
+    });
+    return;
+  } else if (data.startsWith("discrepancy_type_")) {
+    // Step 3: Тип несоответствия выбран — запросить описание
+    const typeMap: Record<string, string> = {
+      "discrepancy_type_part": "Парт-номер",
+      "discrepancy_type_qty": "Количество",
+      "discrepancy_type_wrong": "Не та позиция",
+      "discrepancy_type_damage": "Повреждение",
+    };
+    const discrepancyType = typeMap[data] || "Неизвестный тип";
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing discrepancy type:", { requestId: requests.id, type: discrepancyType, username });
+    
+    await supabase.from("request_activities").insert({
+      request_id: requests.id,
+      organization_id: requests.organization_id,
+      action: "discrepancy_type_selected",
+      field_name: "discrepancy_type",
+      new_value: discrepancyType,
+      description: `📋 Тип несоответствия: ${discrepancyType} — @${username || fullName}, ${now}`,
+    });
+    
+    // Save awaiting state with discrepancy context
+    await supabase
+      .from("requests")
+      .update({ 
+        awaiting_comment_from: `discrepancy:${username || fullName}:${discrepancyType}`,
+      })
+      .eq("id", requests.id);
+    
+    newText += `\n📋 Тип: ${discrepancyType}`;
+    newText += `\n\n📝 Опишите проблему и приложите фото следующим сообщением.`;
+    
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: newText,
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Отправьте описание проблемы",
+    });
+    return;
   } else if (data === "approve") {
     // В РАБОТУ
     newStatus = "В РАБОТУ: СОГЛАСОВАНО";
@@ -863,14 +1007,15 @@ async function handleMessage(message: any) {
   const validated = messageSchema.parse(message);
 
   const chatId = validated.chat.id;
-  const text = validated.text;
+  const text = validated.text || validated.caption || "";
   const username = validated.from.username || "";
   const fullName = `${validated.from.first_name || ""} ${validated.from.last_name || ""}`.trim();
+  const photos = validated.photo;
 
-  console.log("Message from:", username || fullName, "Text:", text);
+  console.log("Message from:", username || fullName, "Text:", text, "HasPhoto:", !!photos);
 
   // Handle bot commands
-  if (text.startsWith("/")) {
+  if (text && text.startsWith("/")) {
     const command = text.split(" ")[0].toLowerCase();
     
     if (command === "/archive" || command.startsWith("/archive@")) {
@@ -884,11 +1029,87 @@ async function handleMessage(message: any) {
     }
   }
 
-  // Check if we're waiting for a comment from this user
+  // Check for discrepancy description awaiting
+  const userIdentifier = username || fullName;
+  const { data: discrepancyRequests, error: discError } = await supabase
+    .from("requests")
+    .select("*")
+    .like("awaiting_comment_from", `discrepancy:${userIdentifier}:%`)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (!discError && discrepancyRequests && discrepancyRequests.length > 0) {
+    const request = discrepancyRequests[0];
+    const parts = request.awaiting_comment_from?.split(":") || [];
+    const discrepancyType = parts[2] || "Не указан";
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing discrepancy description for request:", request.id, "type:", discrepancyType);
+    
+    // Handle photo upload if present
+    let photoUrl: string | null = null;
+    if (photos && photos.length > 0) {
+      const largestPhoto = photos[photos.length - 1];
+      try {
+        const fileResult = await sendTelegramRequest("getFile", {
+          file_id: largestPhoto.file_id,
+        });
+        
+        if (fileResult.ok && fileResult.result?.file_path) {
+          photoUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${fileResult.result.file_path}`;
+          
+          // Add to request photo_urls
+          const existingPhotos = request.photo_urls || [];
+          await supabase
+            .from("requests")
+            .update({ photo_urls: [...existingPhotos, photoUrl] })
+            .eq("id", request.id);
+          console.log("Discrepancy photo saved:", photoUrl);
+        }
+      } catch (photoError) {
+        console.error("Error processing discrepancy photo:", photoError);
+      }
+    }
+    
+    // Update comments with discrepancy description
+    const existingComments = request.comments || "";
+    const discrepancyComment = `🔴 Несоответствие (${discrepancyType}): ${text || "(только фото)"}`;
+    const newComments = existingComments 
+      ? `${existingComments}\n\n${discrepancyComment}`
+      : discrepancyComment;
+    
+    await supabase
+      .from("requests")
+      .update({ 
+        comments: newComments,
+        awaiting_comment_from: null,
+      })
+      .eq("id", request.id);
+    
+    // Log activity
+    await supabase.from("request_activities").insert({
+      request_id: request.id,
+      organization_id: request.organization_id,
+      action: "discrepancy_description",
+      description: `📝 Описание несоответствия (${discrepancyType}): ${text || "(фото)"}${photoUrl ? " + 📷 фото" : ""} — @${userIdentifier}, ${now}`,
+    });
+    
+    // Confirm in chat
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: `✅ Несоответствие зафиксировано для заявки ${request.request_number}\n\n📋 Тип: ${discrepancyType}\n📝 Описание: ${text || "(только фото)"}${photoUrl ? "\n📷 Фото приложено" : ""}`,
+    });
+    
+    return;
+  }
+
+  // Skip if no text content (e.g. random photo without context)
+  if (!text) return;
+
+  // Check if we're waiting for a rework comment from this user
   const { data: requests, error } = await supabase
     .from("requests")
     .select("*")
-    .eq("awaiting_comment_from", username || fullName)
+    .eq("awaiting_comment_from", userIdentifier)
     .not("awaiting_comment_from", "is", null)
     .order("updated_at", { ascending: false })
     .limit(1);

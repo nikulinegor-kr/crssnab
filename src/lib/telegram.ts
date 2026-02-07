@@ -38,9 +38,6 @@ export async function notifyTelegram(requestId: string, mode: "auto" | "send" | 
     
     console.log("Telegram notification sent successfully");
     return true;
-
-    console.log("Telegram notification sent:", data);
-    return true;
   } catch (error) {
     console.error("Error calling notify-telegram:", error);
     return false;
