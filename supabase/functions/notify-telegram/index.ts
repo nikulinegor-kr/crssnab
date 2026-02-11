@@ -500,10 +500,29 @@ serve(async (req) => {
             for (const docUrl of documentUrls) {
               if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
                 try {
+                  // Try to generate a signed URL for the document
+                  let finalDocUrl = docUrl;
+                  try {
+                    const url = new URL(docUrl);
+                    const pathParts = url.pathname.split('/');
+                    const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+                    if (bucketIndex !== -1) {
+                      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                      const { data: signedData, error: signedError } = await supabase.storage
+                        .from('request-documents')
+                        .createSignedUrl(filePath, 86400);
+                      if (!signedError && signedData?.signedUrl) {
+                        finalDocUrl = signedData.signedUrl;
+                        console.log("Using signed URL for document");
+                      }
+                    }
+                  } catch (e) {
+                    console.log("Could not generate signed URL, using original:", e);
+                  }
+
                   // Get file name from URL
                   const urlParts = docUrl.split('/');
                   let fileName = urlParts[urlParts.length - 1] || 'document';
-                  // Decode URL-encoded filename
                   try {
                     fileName = decodeURIComponent(fileName);
                   } catch (e) {
@@ -513,7 +532,7 @@ serve(async (req) => {
                   // Send document via Telegram
                   const docResult = await sendTelegramRequest(org.telegram_bot_token, "sendDocument", {
                     chat_id: org.telegram_chat_id,
-                    document: docUrl,
+                    document: finalDocUrl,
                     caption: `📄 Счёт к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
                   });
                   
@@ -538,10 +557,29 @@ serve(async (req) => {
             for (const photoUrl of photoUrls) {
               if (photoUrl && (photoUrl.startsWith("http://") || photoUrl.startsWith("https://"))) {
                 try {
-                  // Send photo via Telegram
+                  // Try to generate a signed URL for the photo
+                  let finalPhotoUrl = photoUrl;
+                  try {
+                    const url = new URL(photoUrl);
+                    const pathParts = url.pathname.split('/');
+                    const bucketIndex = pathParts.findIndex((p: string) => p === 'request-photos');
+                    if (bucketIndex !== -1) {
+                      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                      const { data: signedData, error: signedError } = await supabase.storage
+                        .from('request-photos')
+                        .createSignedUrl(filePath, 86400);
+                      if (!signedError && signedData?.signedUrl) {
+                        finalPhotoUrl = signedData.signedUrl;
+                        console.log("Using signed URL for photo");
+                      }
+                    }
+                  } catch (e) {
+                    console.log("Could not generate signed URL for photo, using original:", e);
+                  }
+
                   const photoResult = await sendTelegramRequest(org.telegram_bot_token, "sendPhoto", {
                     chat_id: org.telegram_chat_id,
-                    photo: photoUrl,
+                    photo: finalPhotoUrl,
                     caption: `📷 Фото к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
                   });
                   
