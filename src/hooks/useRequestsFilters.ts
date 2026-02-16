@@ -29,7 +29,7 @@ export const STATUSES = [
 
 export const PRIORITIES = ["Аварийно", "Планово", "Приоритетно"];
 
-export const DEFAULT_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024", "2025"];
+export const DEFAULT_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"];
 
 const FILTERS_STORAGE_KEY = "requests_filters";
 
