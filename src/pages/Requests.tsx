@@ -239,6 +239,14 @@ const Requests = () => {
             <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate">Все заявки</h1>
             <p className="text-xs text-muted-foreground">
               {filters.filteredRequests?.length || 0} найдено
+              {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
+                <button
+                  onClick={filters.clearFilters}
+                  className="ml-2 text-primary underline hover:no-underline"
+                >
+                  Сбросить фильтры ({requests?.length} всего)
+                </button>
+              )}
               {selectedRequestIds.size > 0 && (
                 <span className="ml-1 sm:ml-2 text-primary font-medium">
                   • {selectedRequestIds.size} выбр.
