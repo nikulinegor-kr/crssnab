@@ -235,30 +235,45 @@ const Requests = () => {
         onValueChange={(v) => setActiveTab(v as "active" | "archived")}
         className="space-y-4"
       >
-        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 sm:gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate">Все заявки</h1>
-            <p className="text-xs text-muted-foreground">
-              {filters.filteredRequests?.length || 0} найдено
-              {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
-                <button
-                  onClick={filters.clearFilters}
-                  className="ml-2 text-primary underline hover:no-underline"
-                >
-                  Сбросить фильтры ({requests?.length} всего)
-                </button>
-              )}
-              {selectedRequestIds.size > 0 && (
-                <span className="ml-1 sm:ml-2 text-primary font-medium">
-                  • {selectedRequestIds.size} выбр.
-                </span>
-              )}
-            </p>
+        <div className="flex flex-col gap-2 sm:gap-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="min-w-0 flex-shrink">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate">Все заявки</h1>
+              <p className="text-xs text-muted-foreground">
+                {filters.filteredRequests?.length || 0} найдено
+                {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
+                  <button
+                    onClick={filters.clearFilters}
+                    className="ml-2 text-primary underline hover:no-underline"
+                  >
+                    Сбросить фильтры ({requests?.length} всего)
+                  </button>
+                )}
+                {selectedRequestIds.size > 0 && (
+                  <span className="ml-1 sm:ml-2 text-primary font-medium">
+                    • {selectedRequestIds.size} выбр.
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <RequestsBulkActions
+                requests={requests}
+                filteredRequests={filters.filteredRequests}
+                selectedRequestIds={selectedRequestIds}
+                setSelectedRequestIds={setSelectedRequestIds}
+                canCreate={canCreate}
+                isSending={isSending}
+                setIsSending={setIsSending}
+                onBulkDelete={handleBulkDelete}
+                isArchiveTab={activeTab === "archived"}
+              />
+              <TabsList className="h-8 sm:h-9">
+                <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
+                <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
+              </TabsList>
+            </div>
           </div>
-          <TabsList className="h-8 sm:h-9">
-            <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
-            <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
-          </TabsList>
         </div>
 
         <TabsContent value={activeTab} className="space-y-4 mt-0">
@@ -289,17 +304,7 @@ const Requests = () => {
             setObjectFilter={filters.setObjectFilter}
           />
 
-          <RequestsBulkActions
-            requests={requests}
-            filteredRequests={filters.filteredRequests}
-            selectedRequestIds={selectedRequestIds}
-            setSelectedRequestIds={setSelectedRequestIds}
-            canCreate={canCreate}
-            isSending={isSending}
-            setIsSending={setIsSending}
-            onBulkDelete={handleBulkDelete}
-            isArchiveTab={activeTab === "archived"}
-          />
+
 
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
             <RequestsFilters
