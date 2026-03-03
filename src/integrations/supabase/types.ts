@@ -969,6 +969,95 @@ export type Database = {
         }
         Relationships: []
       }
+      procurement_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          price: number
+          procurement_id: string
+          qty: number
+          request_id: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          price?: number
+          procurement_id: string
+          qty?: number
+          request_id: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          procurement_id?: string
+          qty?: number
+          request_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_items_procurement_id_fkey"
+            columns: ["procurement_id"]
+            isOneToOne: false
+            referencedRelation: "procurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string | null
+          organization_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+          organization_id: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+          organization_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

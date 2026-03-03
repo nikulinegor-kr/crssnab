@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useCreateProcurement } from "@/hooks/useProcurements";
 
 interface RequestsBulkActionsProps {
   requests: Request[] | undefined;
@@ -39,6 +40,7 @@ export const RequestsBulkActions = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
+  const createProcurement = useCreateProcurement();
 
   const handleBulkStatusChange = async () => {
     if (selectedRequestIds.size === 0) {
@@ -323,6 +325,46 @@ export const RequestsBulkActions = ({
             </Button>
           ) : (
             <>
+              {/* Create procurement button */}
+              <Button
+                onClick={async () => {
+                  const selectedReqs = Array.from(selectedRequestIds)
+                    .map((id) => requests?.find((r) => r.id === id))
+                    .filter(Boolean) as Request[];
+                  
+                  const hasZeroPrice = selectedReqs.some(r => !r.amount || r.amount === 0);
+                  
+                  const items = selectedReqs.map(r => ({
+                    request_id: r.id,
+                    name: r.description,
+                    qty: 1,
+                    price: r.amount || 0,
+                  }));
+
+                  try {
+                    await createProcurement.mutateAsync(items);
+                    toast({
+                      title: "Закуп сформирован",
+                      description: `Добавлено позиций: ${items.length}${hasZeroPrice ? " (есть позиции без цены!)" : ""}`,
+                    });
+                    setSelectedRequestIds(new Set());
+                  } catch (err: any) {
+                    toast({
+                      title: "Ошибка",
+                      description: err.message || "Не удалось сформировать закуп",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                disabled={isSending || createProcurement.isPending}
+                variant="secondary"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+                size="sm"
+              >
+                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Сформировать закуп</span>
+                <span className="sm:hidden">Закуп</span>
+              </Button>
               {/* Bulk status change button */}
               <Button
                 onClick={handleBulkStatusChange}

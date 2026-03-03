@@ -6,6 +6,7 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useRequestsFilters } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCreateProcurement } from "@/hooks/useProcurements";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,8 @@ import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ObjectQuickFilter } from "@/components/requests/ObjectQuickFilter";
-import { AlertCircle, Plus, MessageCircle } from "lucide-react";
+import { ProcurementList } from "@/components/procurement/ProcurementList";
+import { AlertCircle, Plus, MessageCircle, ShoppingCart } from "lucide-react";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -38,8 +40,9 @@ const Requests = () => {
   const { canCreate } = useUserRole();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement">("active");
   const { data: requests, isLoading } = useRequests(activeTab === "archived");
+  const createProcurement = useCreateProcurement();
 
   // Filters
   const filters = useRequestsFilters(requests, activeTab);
@@ -232,7 +235,7 @@ const Requests = () => {
 
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "active" | "archived")}
+        onValueChange={(v) => setActiveTab(v as "active" | "archived" | "procurement")}
         className="space-y-4"
       >
         <div className="flex flex-col gap-2 sm:gap-3">
@@ -281,30 +284,32 @@ const Requests = () => {
               <TabsList className="h-8 sm:h-9">
                 <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
                 <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
+                <TabsTrigger value="procurement" className="text-xs sm:text-sm px-2 sm:px-3 gap-1">
+                  <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  Закуп
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
         </div>
 
-        <TabsContent value={activeTab} className="space-y-4 mt-0">
+        <TabsContent value="active" className="space-y-4 mt-0">
           {/* Mini Dashboard */}
-          {activeTab === "active" && (
-            <RequestsMiniDashboard
-              requests={requests}
-              onFilterClick={(type, value) => {
-                filters.setSpecialDateFilter(null);
-                if (type === "priority") {
-                  filters.setPriorityFilter(value);
-                } else {
-                  filters.setStatusFilter([value]);
-                }
-              }}
-              onSpecialFilterClick={(filter) => {
-                filters.setSpecialDateFilter(filter);
-              }}
-              activeSpecialFilter={filters.specialDateFilter}
-            />
-           )}
+          <RequestsMiniDashboard
+            requests={requests}
+            onFilterClick={(type, value) => {
+              filters.setSpecialDateFilter(null);
+              if (type === "priority") {
+                filters.setPriorityFilter(value);
+              } else {
+                filters.setStatusFilter([value]);
+              }
+            }}
+            onSpecialFilterClick={(filter) => {
+              filters.setSpecialDateFilter(filter);
+            }}
+            activeSpecialFilter={filters.specialDateFilter}
+          />
 
           {/* Object Quick Filter */}
           <ObjectQuickFilter
@@ -313,8 +318,6 @@ const Requests = () => {
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
           />
-
-
 
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
             <RequestsFilters
@@ -356,6 +359,53 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
             />
           </Card>
+        </TabsContent>
+
+        <TabsContent value="archived" className="space-y-4 mt-0">
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+            <RequestsFilters
+              searchQuery={filters.searchQuery}
+              setSearchQuery={filters.setSearchQuery}
+              statusFilter={filters.statusFilter}
+              setStatusFilter={filters.setStatusFilter}
+              priorityFilter={filters.priorityFilter}
+              setPriorityFilter={filters.setPriorityFilter}
+              yearFilter={filters.yearFilter}
+              setYearFilter={filters.setYearFilter}
+              applicantFilter={filters.applicantFilter}
+              setApplicantFilter={filters.setApplicantFilter}
+              hideDelivered={filters.hideDelivered}
+              setHideDelivered={filters.setHideDelivered}
+              years={filters.years}
+              uniqueApplicants={filters.uniqueApplicants}
+              currentFilters={filters.currentFilters}
+              selectAllStatuses={filters.selectAllStatuses}
+              addYear={filters.addYear}
+              applyFilters={filters.applyFilters}
+              resetFilters={filters.clearFilters}
+              onSemanticSearch={setSemanticSearchIds}
+              organizationId={currentOrgId}
+              deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
+            />
+
+            <RequestsTable
+              requests={semanticSearchIds 
+                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
+                : filters.filteredRequests
+              }
+              isLoading={isLoading}
+              selectedRequestIds={selectedRequestIds}
+              toggleRequestSelection={toggleRequestSelection}
+              toggleAllRequests={toggleAllRequests}
+              onDeleteClick={handleDeleteClick}
+              onEditClick={handleEditClick}
+              searchQuery={filters.searchQuery}
+            />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="procurement" className="space-y-4 mt-0">
+          <ProcurementList />
         </TabsContent>
       </Tabs>
 

@@ -127,7 +127,7 @@ const matchesFullTextSearch = (request: Request, query: string): boolean => {
 
 export const useRequestsFilters = (
   requests: Request[] | undefined,
-  activeTab: "active" | "archived"
+  activeTab: string
 ) => {
   const [searchParams] = useSearchParams();
   
