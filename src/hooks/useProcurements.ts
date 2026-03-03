@@ -136,3 +136,20 @@ export const useCreateProcurement = () => {
     },
   });
 };
+
+export const useDeleteProcurement = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (procurementId: string) => {
+      const { error } = await supabase
+        .from("procurements")
+        .delete()
+        .eq("id", procurementId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["procurements"] });
+    },
+  });
+};
