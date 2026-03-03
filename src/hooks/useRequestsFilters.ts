@@ -13,6 +13,7 @@ export interface RequestFilters {
   applicantFilter: string;
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
+  objectFilter: string;
 }
 
 export const STATUSES = [
@@ -139,6 +140,7 @@ export const useRequestsFilters = (
   const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
+  const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
@@ -151,9 +153,10 @@ export const useRequestsFilters = (
       yearFilter,
       applicantFilter,
       hideDelivered,
+      objectFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered]);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
 
   // Apply filters from URL params on mount (overrides saved filters if present)
   useEffect(() => {
@@ -214,13 +217,16 @@ export const useRequestsFilters = (
           : specialDateFilter === "deliveredLast7Days" 
             ? true 
             : !hideDelivered || request.status !== "Доставлено";
+      const matchesObject =
+        objectFilter === "all" || request.object_id === objectFilter;
       return (
         matchesSearch &&
         matchesStatus &&
         matchesPriority &&
         matchesYear &&
         matchesApplicant &&
-        matchesDelivered
+        matchesDelivered &&
+        matchesObject
       );
     });
   }, [
@@ -233,6 +239,7 @@ export const useRequestsFilters = (
     hideDelivered,
     activeTab,
     specialDateFilter,
+    objectFilter,
   ]);
 
   const uniqueApplicants = useMemo(() => {
@@ -265,6 +272,7 @@ export const useRequestsFilters = (
     if (filters.yearFilter !== undefined) setYearFilter(filters.yearFilter);
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
+    if (filters.objectFilter !== undefined) setObjectFilter(filters.objectFilter);
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -275,6 +283,7 @@ export const useRequestsFilters = (
     setApplicantFilter("all");
     setHideDelivered(true);
     setSpecialDateFilter(null);
+    setObjectFilter("all");
   }, []);
 
   const currentFilters: RequestFilters = {
@@ -285,6 +294,7 @@ export const useRequestsFilters = (
     applicantFilter,
     hideDelivered,
     specialDateFilter,
+    objectFilter,
   };
 
   return {
@@ -303,6 +313,8 @@ export const useRequestsFilters = (
     setHideDelivered,
     specialDateFilter,
     setSpecialDateFilter,
+    objectFilter,
+    setObjectFilter,
     years,
     
     // Computed
