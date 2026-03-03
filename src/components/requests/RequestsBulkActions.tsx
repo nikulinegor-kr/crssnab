@@ -358,14 +358,6 @@ export const RequestsBulkActions = ({
         </>
       )}
       
-      {canCreate && !isArchiveTab && (
-        <CreateRequestDialog>
-          <Button className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3" size="sm">
-            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Создать</span>
-          </Button>
-        </CreateRequestDialog>
-      )}
     </div>
   );
 };

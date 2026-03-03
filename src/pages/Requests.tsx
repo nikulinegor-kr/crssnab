@@ -256,7 +256,7 @@ const Requests = () => {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <RequestsBulkActions
                 requests={requests}
                 filteredRequests={filters.filteredRequests}
@@ -268,6 +268,16 @@ const Requests = () => {
                 onBulkDelete={handleBulkDelete}
                 isArchiveTab={activeTab === "archived"}
               />
+              {canCreate && !activeTab.includes("archived") && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-sm sm:text-base font-semibold shadow-sm"
+                >
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden xs:inline">Новая заявка</span>
+                  <span className="xs:hidden">Новая</span>
+                </Button>
+              )}
               <TabsList className="h-8 sm:h-9">
                 <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
                 <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
@@ -350,29 +360,19 @@ const Requests = () => {
       </Tabs>
 
       {canCreate && (
-        <>
-          <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <span className="hidden" />
-          </CreateRequestDialog>
-
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
-            size="icon"
-          >
-            <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-
-          <Button
-            onClick={() => navigate("/chat")}
-            className="fixed bottom-4 right-[4.5rem] sm:bottom-6 sm:right-24 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
-            size="icon"
-            variant="secondary"
-          >
-            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-        </>
+        <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <span className="hidden" />
+        </CreateRequestDialog>
       )}
+
+      <Button
+        onClick={() => navigate("/chat")}
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+        size="icon"
+        variant="secondary"
+      >
+        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+      </Button>
 
       {selectedRequest && (
         <EditRequestDialog
