@@ -27,6 +27,7 @@ import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
+import { ObjectQuickFilter } from "@/components/requests/ObjectQuickFilter";
 import { AlertCircle, Plus, MessageCircle } from "lucide-react";
 
 const Requests = () => {
@@ -278,7 +279,15 @@ const Requests = () => {
               }}
               activeSpecialFilter={filters.specialDateFilter}
             />
-          )}
+           )}
+
+          {/* Object Quick Filter */}
+          <ObjectQuickFilter
+            requests={requests}
+            organizationId={currentOrgId}
+            objectFilter={filters.objectFilter}
+            setObjectFilter={filters.setObjectFilter}
+          />
 
           <RequestsBulkActions
             requests={requests}
