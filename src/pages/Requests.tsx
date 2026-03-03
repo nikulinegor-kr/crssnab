@@ -405,6 +405,11 @@ const Requests = () => {
         </TabsContent>
 
         <TabsContent value="procurement" className="space-y-4 mt-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Button variant="outline" size="sm" onClick={() => setActiveTab("active")} className="gap-1.5">
+              ← Назад к заявкам
+            </Button>
+          </div>
           <ProcurementList />
         </TabsContent>
       </Tabs>
