@@ -6,13 +6,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { FormSectionCard } from "./FormSectionCard";
@@ -33,36 +26,6 @@ export const LogisticsSection = ({
       icon={<Truck className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-3 sm:space-y-4">
-        {/* Availability - full width */}
-        <FormField
-          control={form.control}
-          name="availability_delivery_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Наличие / Сроки поставки</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                value={field.value || ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Выбрать наличие" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="В наличии">В наличии</SelectItem>
-                  <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                  <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                  <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                  <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                  <SelectItem value="Под заказ">Под заказ</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* Transport company & Waybill - 2 columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           <FormField
@@ -107,8 +70,32 @@ export const LogisticsSection = ({
           />
         </div>
 
-        {/* Dates - 2 columns */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        {/* Срок доставки (дней) & Dates - 3 columns */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <FormField
+            control={form.control}
+            name="estimated_delivery_days"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Срок (дней)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    className="h-9 text-sm"
+                    placeholder=""
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="shipment_date"

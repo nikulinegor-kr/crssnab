@@ -27,7 +27,7 @@ export const CoreParamsSection = ({
       title="Основные параметры"
       icon={<CalendarDays className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <FormField
           control={form.control}
           name="request_date"
@@ -51,7 +51,7 @@ export const CoreParamsSection = ({
           control={form.control}
           name="object_id"
           render={({ field }) => (
-            <FormItem className="col-span-2 sm:col-span-1">
+            <FormItem>
               <FormLabel className="text-xs">Объект</FormLabel>
               <FormControl>
                 <ObjectSelectWithAdd
@@ -59,32 +59,6 @@ export const CoreParamsSection = ({
                   onChange={field.onChange}
                   objects={objectsData}
                   organizationId={currentOrgId}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="estimated_delivery_days"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Срок (дней)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  className="h-9 text-sm"
-                  placeholder=""
-                  {...field}
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value ? parseInt(e.target.value) : null
-                    )
-                  }
                 />
               </FormControl>
               <FormMessage />

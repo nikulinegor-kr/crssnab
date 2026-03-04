@@ -240,6 +240,36 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
             )}
           />
         </div>
+
+        {/* Availability / Delivery time */}
+        <FormField
+          control={form.control}
+          name="availability_delivery_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Наличие / Сроки поставки</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                value={field.value || ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Выбрать наличие" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="В наличии">В наличии</SelectItem>
+                  <SelectItem value="1-2 дня">1-2 дня</SelectItem>
+                  <SelectItem value="3-5 дней">3-5 дней</SelectItem>
+                  <SelectItem value="1-2 недели">1-2 недели</SelectItem>
+                  <SelectItem value="2-4 недели">2-4 недели</SelectItem>
+                  <SelectItem value="Под заказ">Под заказ</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </FormSectionCard>
   );
