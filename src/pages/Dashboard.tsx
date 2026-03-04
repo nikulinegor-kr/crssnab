@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2 } from "lucide-react";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
@@ -24,6 +25,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { currentOrgId } = useCurrentOrganization();
+  const { logoUrl, orgName } = useOrgBranding();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -181,7 +183,19 @@ const Dashboard = () => {
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden min-w-0">
         {/* Header with Year Selector */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              <img src={logoUrl} alt={orgName} className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-lg border border-border/40 shrink-0" />
+            ) : (
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+              {orgName && <p className="text-xs sm:text-sm text-muted-foreground">{orgName}</p>}
+            </div>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <DashboardWidgetSettings />
             <Select value={selectedYear} onValueChange={setSelectedYear}>
