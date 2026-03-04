@@ -151,7 +151,6 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
               <TableRow>
                 <TableHead className="w-12">№</TableHead>
                 <TableHead>Наименование</TableHead>
-                <TableHead className="w-20 text-right">Кол-во</TableHead>
                 <TableHead className="w-32 text-right">Сумма</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -161,7 +160,6 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
                 <TableRow key={item.id}>
                   <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="text-right">{item.qty}</TableCell>
                   <TableCell className="text-right font-medium">
                     <span className={item.total === 0 ? "text-amber-500 flex items-center justify-end gap-1" : ""}>
                       {item.total === 0 && <AlertTriangle className="h-3 w-3" />}
@@ -192,14 +190,6 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
                       className="h-8"
                       autoFocus
                       onKeyDown={(e) => e.key === "Enter" && handleAddManual()}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={newQty}
-                      onChange={(e) => setNewQty(e.target.value)}
-                      type="number"
-                      className="h-8 w-16 text-right"
                     />
                   </TableCell>
                   <TableCell />
