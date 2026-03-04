@@ -29,13 +29,13 @@ export const FormSectionCard = ({
     <Card className={cn("border-border/40 bg-card/50 overflow-hidden", className)}>
       <CardHeader 
         className={cn(
-          "pb-2 sm:pb-3 pt-3 sm:pt-4 px-3 sm:px-4",
+          "pb-2 sm:pb-3 pt-3.5 sm:pt-5 px-3.5 sm:px-5",
           collapsible && "cursor-pointer select-none hover:bg-muted/30 transition-colors"
         )}
         onClick={collapsible ? () => setIsCollapsed(!isCollapsed) : undefined}
       >
         <div className="flex items-center justify-between">
-          <CardTitle className={cn("text-sm font-medium flex items-center gap-2 text-foreground", titleClassName)}>
+          <CardTitle className={cn("text-sm font-semibold flex items-center gap-2 text-foreground", titleClassName)}>
             {icon}
             {title}
           </CardTitle>
@@ -60,7 +60,7 @@ export const FormSectionCard = ({
         </div>
       </CardHeader>
       {!isCollapsed && (
-        <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
+        <CardContent className="px-3.5 sm:px-5 pb-3.5 sm:pb-5 pt-0">
           {children}
         </CardContent>
       )}

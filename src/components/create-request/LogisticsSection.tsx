@@ -33,7 +33,7 @@ export const LogisticsSection = ({
       icon={<Truck className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-3 sm:space-y-4">
-        {/* Availability row */}
+        {/* Availability - full width */}
         <FormField
           control={form.control}
           name="availability_delivery_time"
@@ -63,7 +63,7 @@ export const LogisticsSection = ({
           )}
         />
 
-        {/* Transport company & Waybill */}
+        {/* Transport company & Waybill - 2 columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
@@ -107,31 +107,8 @@ export const LogisticsSection = ({
           />
         </div>
 
-        {/* Dates row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-          <FormField
-            control={form.control}
-            name="estimated_delivery_days"
-            render={({ field }) => (
-              <FormItem className="col-span-2 sm:col-span-1">
-                <FormLabel className="text-xs">Срок доставки (дней)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    placeholder="0"
-                    className="h-9 min-w-0 text-sm"
-                    title="Ориентировочный срок доставки в днях"
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        {/* Dates - 2 columns */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="shipment_date"

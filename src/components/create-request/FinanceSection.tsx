@@ -165,13 +165,13 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
           )}
         />
 
-        {/* Invoice, Amount, Payment % */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+        {/* Invoice, Amount, Payment % - 3 columns */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="invoice_number"
             render={({ field }) => (
-              <FormItem className="col-span-2 sm:col-span-1">
+              <FormItem>
                 <FormLabel className="text-xs">Номер счета</FormLabel>
                 <FormControl>
                   <Input 

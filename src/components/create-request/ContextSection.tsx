@@ -97,7 +97,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
     return (
       <div className="rounded-lg border border-border/40 bg-card/50 overflow-hidden">
         {/* Description - Primary, Autofocus */}
-        <div className="p-3 sm:p-4 pb-2 sm:pb-3">
+        <div className="p-3.5 sm:p-5 pb-2 sm:pb-3">
           <div className="flex items-center justify-between mb-2">
             <FormLabel className="text-sm sm:text-base font-medium text-foreground">
               Описание заявки *
@@ -131,7 +131,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                     ref={descriptionRef}
                     placeholder="Опишите заявку — это главное поле..."
                     className={cn(
-                      "min-h-[80px] sm:min-h-[100px] resize-none border-0 p-0 text-base sm:text-lg leading-normal",
+                      "min-h-[60px] sm:min-h-[72px] resize-none border-0 p-0 text-base sm:text-lg leading-normal",
                       "focus-visible:ring-0 focus-visible:ring-offset-0",
                       "bg-transparent placeholder:text-muted-foreground/50 font-normal"
                     )}
