@@ -10,7 +10,6 @@ import { useCreateProcurement } from "@/hooks/useProcurements";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -28,9 +27,9 @@ import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
-import { ObjectQuickFilter } from "@/components/requests/ObjectQuickFilter";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
 import { AlertCircle, Plus, MessageCircle, ShoppingCart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -68,21 +67,17 @@ const Requests = () => {
   useEffect(() => {
     const checkTelegramConfig = async () => {
       if (!currentOrgId) return;
-
       try {
         const { data, error } = await supabase.rpc('is_telegram_configured', { 
           _org_id: currentOrgId 
         });
-
         if (error) throw error;
-
         setIsTelegramConfigured(data === true);
       } catch (error) {
         console.error("Error checking Telegram config:", error);
         setIsTelegramConfigured(false);
       }
     };
-
     checkTelegramConfig();
   }, [currentOrgId]);
 
@@ -139,7 +134,6 @@ const Requests = () => {
       const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
 
       if (requestToDelete) {
-        // Single delete
         await supabase.rpc("log_audit_event", {
           _organization_id: currentOrgId,
           _action: "archive",
@@ -166,7 +160,6 @@ const Requests = () => {
           description: `Заявка "${requestToDelete.description}" перемещена в архив.`,
         });
       } else {
-        // Bulk delete
         for (const requestId of Array.from(selectedRequestIds)) {
           const request = requests?.find((r) => r.id === requestId);
           if (!request) continue;
@@ -212,8 +205,14 @@ const Requests = () => {
     }
   };
 
+  const tabs = [
+    { value: "active", label: "Активные" },
+    { value: "archived", label: "Архив" },
+    { value: "procurement", label: "Свод", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
+  ] as const;
+
   return (
-    <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6">
+    <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-3 sm:space-y-4 md:space-y-5">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -221,80 +220,86 @@ const Requests = () => {
             <span className="text-sm text-blue-800 dark:text-blue-200">
               Telegram не настроен. Настройте его для отправки уведомлений о заявках.
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/settings")}
-              className="ml-4"
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate("/settings")} className="ml-4">
               Настроить
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "active" | "archived" | "procurement")}
-        className="space-y-4"
-      >
-        <div className="flex flex-col gap-2 sm:gap-3">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <div className="min-w-0 flex-shrink">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate">Все заявки</h1>
-              <p className="text-xs text-muted-foreground">
-                {filters.filteredRequests?.length || 0} найдено
-                {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
-                  <button
-                    onClick={filters.clearFilters}
-                    className="ml-2 text-primary underline hover:no-underline"
-                  >
-                    Сбросить фильтры ({requests?.length} всего)
-                  </button>
-                )}
-                {selectedRequestIds.size > 0 && (
-                  <span className="ml-1 sm:ml-2 text-primary font-medium">
-                    • {selectedRequestIds.size} выбр.
-                  </span>
-                )}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <RequestsBulkActions
-                requests={requests}
-                filteredRequests={filters.filteredRequests}
-                selectedRequestIds={selectedRequestIds}
-                setSelectedRequestIds={setSelectedRequestIds}
-                canCreate={canCreate}
-                isSending={isSending}
-                setIsSending={setIsSending}
-                onBulkDelete={handleBulkDelete}
-                isArchiveTab={activeTab === "archived"}
-              />
-              {canCreate && !activeTab.includes("archived") && (
-                <Button
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-sm sm:text-base font-semibold shadow-sm"
-                >
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className="hidden xs:inline">Новая заявка</span>
-                  <span className="xs:hidden">Новая</span>
-                </Button>
-              )}
-              <TabsList className="h-8 sm:h-9">
-                <TabsTrigger value="active" className="text-xs sm:text-sm px-2 sm:px-3">Активные</TabsTrigger>
-                <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
-                <TabsTrigger value="procurement" className="text-xs sm:text-sm px-2 sm:px-3 gap-1">
-                  <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  Свод
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
+      {/* === LEVEL 1: Page Header === */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Все заявки</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            {filters.filteredRequests?.length || 0} найдено
+            {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
+              <button
+                onClick={filters.clearFilters}
+                className="ml-2 text-primary underline hover:no-underline"
+              >
+                Сбросить фильтры ({requests?.length} всего)
+              </button>
+            )}
+            {selectedRequestIds.size > 0 && (
+              <span className="ml-2 text-primary font-medium">
+                • {selectedRequestIds.size} выбр.
+              </span>
+            )}
+          </p>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {canCreate && activeTab === "active" && (
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-sm sm:text-base font-semibold shadow-sm"
+            >
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden xs:inline">Новая заявка</span>
+              <span className="xs:hidden">Новая</span>
+            </Button>
+          )}
+          <RequestsBulkActions
+            requests={requests}
+            filteredRequests={filters.filteredRequests}
+            selectedRequestIds={selectedRequestIds}
+            setSelectedRequestIds={setSelectedRequestIds}
+            canCreate={canCreate}
+            isSending={isSending}
+            setIsSending={setIsSending}
+            onBulkDelete={handleBulkDelete}
+            isArchiveTab={activeTab === "archived"}
+          />
+        </div>
+      </div>
 
-        <TabsContent value="active" className="space-y-4 mt-0">
-          {/* Mini Dashboard */}
+      {/* === LEVEL 2: Tab Navigation === */}
+      <nav className="flex gap-1 border-b border-border">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={cn(
+              "relative px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5",
+              "hover:text-foreground",
+              activeTab === tab.value
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {"icon" in tab && tab.icon}
+            {tab.label}
+            {activeTab === tab.value && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+            )}
+          </button>
+        ))}
+      </nav>
+
+      {/* === Tab Content === */}
+      {activeTab === "active" && (
+        <div className="space-y-3 sm:space-y-4">
+          {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
             requests={requests}
             onFilterClick={(type, value) => {
@@ -311,40 +316,85 @@ const Requests = () => {
             activeSpecialFilter={filters.specialDateFilter}
           />
 
-          {/* Object Quick Filter */}
-          <ObjectQuickFilter
-            requests={requests}
+          {/* LEVEL 4-6: Filters (search, quick, advanced) */}
+          <RequestsFilters
+            searchQuery={filters.searchQuery}
+            setSearchQuery={filters.setSearchQuery}
+            statusFilter={filters.statusFilter}
+            setStatusFilter={filters.setStatusFilter}
+            priorityFilter={filters.priorityFilter}
+            setPriorityFilter={filters.setPriorityFilter}
+            yearFilter={filters.yearFilter}
+            setYearFilter={filters.setYearFilter}
+            applicantFilter={filters.applicantFilter}
+            setApplicantFilter={filters.setApplicantFilter}
+            hideDelivered={filters.hideDelivered}
+            setHideDelivered={filters.setHideDelivered}
+            years={filters.years}
+            uniqueApplicants={filters.uniqueApplicants}
+            currentFilters={filters.currentFilters}
+            selectAllStatuses={filters.selectAllStatuses}
+            addYear={filters.addYear}
+            applyFilters={filters.applyFilters}
+            resetFilters={filters.clearFilters}
+            onSemanticSearch={setSemanticSearchIds}
             organizationId={currentOrgId}
+            deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
+            requests={requests}
+          />
+
+          {/* LEVEL 7: Table */}
+          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+            <RequestsTable
+              requests={semanticSearchIds 
+                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
+                : filters.filteredRequests
+              }
+              isLoading={isLoading}
+              selectedRequestIds={selectedRequestIds}
+              toggleRequestSelection={toggleRequestSelection}
+              toggleAllRequests={toggleAllRequests}
+              onDeleteClick={handleDeleteClick}
+              onEditClick={handleEditClick}
+              searchQuery={filters.searchQuery}
+            />
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "archived" && (
+        <div className="space-y-3 sm:space-y-4">
+          <RequestsFilters
+            searchQuery={filters.searchQuery}
+            setSearchQuery={filters.setSearchQuery}
+            statusFilter={filters.statusFilter}
+            setStatusFilter={filters.setStatusFilter}
+            priorityFilter={filters.priorityFilter}
+            setPriorityFilter={filters.setPriorityFilter}
+            yearFilter={filters.yearFilter}
+            setYearFilter={filters.setYearFilter}
+            applicantFilter={filters.applicantFilter}
+            setApplicantFilter={filters.setApplicantFilter}
+            hideDelivered={filters.hideDelivered}
+            setHideDelivered={filters.setHideDelivered}
+            years={filters.years}
+            uniqueApplicants={filters.uniqueApplicants}
+            currentFilters={filters.currentFilters}
+            selectAllStatuses={filters.selectAllStatuses}
+            addYear={filters.addYear}
+            applyFilters={filters.applyFilters}
+            resetFilters={filters.clearFilters}
+            onSemanticSearch={setSemanticSearchIds}
+            organizationId={currentOrgId}
+            deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
+            objectFilter={filters.objectFilter}
+            setObjectFilter={filters.setObjectFilter}
+            requests={requests}
           />
 
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
-            <RequestsFilters
-              searchQuery={filters.searchQuery}
-              setSearchQuery={filters.setSearchQuery}
-              statusFilter={filters.statusFilter}
-              setStatusFilter={filters.setStatusFilter}
-              priorityFilter={filters.priorityFilter}
-              setPriorityFilter={filters.setPriorityFilter}
-              yearFilter={filters.yearFilter}
-              setYearFilter={filters.setYearFilter}
-              applicantFilter={filters.applicantFilter}
-              setApplicantFilter={filters.setApplicantFilter}
-              hideDelivered={filters.hideDelivered}
-              setHideDelivered={filters.setHideDelivered}
-              years={filters.years}
-              uniqueApplicants={filters.uniqueApplicants}
-              currentFilters={filters.currentFilters}
-              selectAllStatuses={filters.selectAllStatuses}
-              addYear={filters.addYear}
-              applyFilters={filters.applyFilters}
-              resetFilters={filters.clearFilters}
-              onSemanticSearch={setSemanticSearchIds}
-              organizationId={currentOrgId}
-              deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
-            />
-
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -359,60 +409,19 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
             />
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="archived" className="space-y-4 mt-0">
-          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
-            <RequestsFilters
-              searchQuery={filters.searchQuery}
-              setSearchQuery={filters.setSearchQuery}
-              statusFilter={filters.statusFilter}
-              setStatusFilter={filters.setStatusFilter}
-              priorityFilter={filters.priorityFilter}
-              setPriorityFilter={filters.setPriorityFilter}
-              yearFilter={filters.yearFilter}
-              setYearFilter={filters.setYearFilter}
-              applicantFilter={filters.applicantFilter}
-              setApplicantFilter={filters.setApplicantFilter}
-              hideDelivered={filters.hideDelivered}
-              setHideDelivered={filters.setHideDelivered}
-              years={filters.years}
-              uniqueApplicants={filters.uniqueApplicants}
-              currentFilters={filters.currentFilters}
-              selectAllStatuses={filters.selectAllStatuses}
-              addYear={filters.addYear}
-              applyFilters={filters.applyFilters}
-              resetFilters={filters.clearFilters}
-              onSemanticSearch={setSemanticSearchIds}
-              organizationId={currentOrgId}
-              deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
-            />
-
-            <RequestsTable
-              requests={semanticSearchIds 
-                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
-                : filters.filteredRequests
-              }
-              isLoading={isLoading}
-              selectedRequestIds={selectedRequestIds}
-              toggleRequestSelection={toggleRequestSelection}
-              toggleAllRequests={toggleAllRequests}
-              onDeleteClick={handleDeleteClick}
-              onEditClick={handleEditClick}
-              searchQuery={filters.searchQuery}
-            />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="procurement" className="space-y-4 mt-0">
+      {activeTab === "procurement" && (
+        <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <Button variant="outline" size="sm" onClick={() => setActiveTab("active")} className="gap-1.5">
               ← Назад к заявкам
             </Button>
           </div>
           <ProcurementList />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {canCreate && (
         <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
