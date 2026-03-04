@@ -183,19 +183,19 @@ const Dashboard = () => {
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden min-w-0">
         {/* Brand block */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             {logoUrl ? (
-              <div className="p-1.5 rounded-xl bg-muted/60 shrink-0">
-                <img src={logoUrl} alt={orgName} className="h-20 w-20 object-contain rounded-lg" style={{ imageRendering: 'auto' }} />
+              <div className="p-2.5 rounded-lg bg-muted/60 shrink-0">
+                <img src={logoUrl} alt={orgName} className="h-[88px] w-[88px] object-contain rounded-lg" style={{ imageRendering: 'auto' }} />
               </div>
             ) : (
-              <div className="h-20 w-20 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-10 w-10 text-muted-foreground" />
+              <div className="h-[88px] w-[88px] rounded-lg bg-muted flex items-center justify-center shrink-0 p-2.5">
+                <Building2 className="h-12 w-12 text-muted-foreground" />
               </div>
             )}
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {orgName && <p className="text-xl font-semibold text-foreground">{orgName}</p>}
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground/70">Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-muted-foreground">Dashboard</h1>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
