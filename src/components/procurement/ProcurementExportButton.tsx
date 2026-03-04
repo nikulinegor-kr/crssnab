@@ -15,15 +15,13 @@ export const ProcurementExportButton = ({ items, procurementName, totalAmount }:
       "№": index + 1,
       "Наименование": item.name,
       "Кол-во": item.qty,
-      "Цена": item.price,
       "Сумма": item.total,
     }));
 
     rows.push({
       "№": "" as any,
       "Наименование": "",
-      "Кол-во": "" as any,
-      "Цена": "ИТОГО:" as any,
+      "Кол-во": "ИТОГО:" as any,
       "Сумма": totalAmount,
     });
 
