@@ -14,14 +14,12 @@ export const ProcurementExportButton = ({ items, procurementName, totalAmount }:
     const rows = items.map((item, index) => ({
       "№": index + 1,
       "Наименование": item.name,
-      "Кол-во": item.qty,
       "Сумма": item.total,
     }));
 
     rows.push({
       "№": "" as any,
-      "Наименование": "",
-      "Кол-во": "ИТОГО:" as any,
+      "Наименование": "ИТОГО:",
       "Сумма": totalAmount,
     });
 
