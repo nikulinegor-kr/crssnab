@@ -153,3 +153,71 @@ export const useDeleteProcurement = () => {
     },
   });
 };
+
+export const useDeleteProcurementItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemId, procurementId }: { itemId: string; procurementId: string }) => {
+      const { error } = await supabase
+        .from("procurement_items")
+        .delete()
+        .eq("id", itemId);
+      if (error) throw error;
+
+      // Recalculate total
+      const { data: remaining } = await supabase
+        .from("procurement_items")
+        .select("total")
+        .eq("procurement_id", procurementId);
+
+      const newTotal = remaining?.reduce((sum, r) => sum + (r.total || 0), 0) || 0;
+      await supabase
+        .from("procurements")
+        .update({ total_amount: newTotal })
+        .eq("id", procurementId);
+    },
+    onSuccess: (_, { procurementId }) => {
+      queryClient.invalidateQueries({ queryKey: ["procurement-items", procurementId] });
+      queryClient.invalidateQueries({ queryKey: ["procurements"] });
+    },
+  });
+};
+
+export const useAddProcurementItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (item: { procurement_id: string; name: string; qty: number; price: number }) => {
+      const total = item.qty * item.price;
+
+      const { error } = await supabase
+        .from("procurement_items")
+        .insert({
+          procurement_id: item.procurement_id,
+          request_id: "00000000-0000-0000-0000-000000000000",
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          total,
+        });
+      if (error) throw error;
+
+      // Recalculate total
+      const { data: allItems } = await supabase
+        .from("procurement_items")
+        .select("total")
+        .eq("procurement_id", item.procurement_id);
+
+      const newTotal = allItems?.reduce((sum, r) => sum + (r.total || 0), 0) || 0;
+      await supabase
+        .from("procurements")
+        .update({ total_amount: newTotal })
+        .eq("id", item.procurement_id);
+    },
+    onSuccess: (_, item) => {
+      queryClient.invalidateQueries({ queryKey: ["procurement-items", item.procurement_id] });
+      queryClient.invalidateQueries({ queryKey: ["procurements"] });
+    },
+  });
+};
