@@ -88,10 +88,10 @@ export default function Auth() {
         description: "Вы вошли в систему",
       });
     } catch (error: any) {
-      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch");
+      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch") || error.message === "Load failed" || error.message?.includes("NetworkError") || error.message?.includes("network") || error.name === "TypeError";
       let errorMessage = error.message || "Не удалось войти";
       if (isNetworkError) {
-        errorMessage = "Ошибка сети. Проверьте подключение к интернету.";
+        errorMessage = "Ошибка сети. Проверьте подключение к интернету или попробуйте отключить VPN.";
       } else if (error.message?.includes("Invalid login")) {
         errorMessage = "Неверный email или пароль";
       }
@@ -140,10 +140,10 @@ export default function Auth() {
         });
       }
     } catch (error: any) {
-      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch");
+      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch") || error.message === "Load failed" || error.message?.includes("NetworkError") || error.message?.includes("network") || error.name === "TypeError";
       let errorMessage = error.message || "Не удалось зарегистрироваться";
       if (isNetworkError) {
-        errorMessage = "Ошибка сети. Проверьте подключение к интернету.";
+        errorMessage = "Ошибка сети. Проверьте подключение к интернету или попробуйте отключить VPN.";
       } else if (error.message?.includes("already registered")) {
         errorMessage = "Пользователь с таким email уже зарегистрирован";
       }
