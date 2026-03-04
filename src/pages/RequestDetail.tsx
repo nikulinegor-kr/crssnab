@@ -517,7 +517,9 @@ export default function RequestDetail() {
             </div>
           </div>
           {logoUrl && (
-            <img src={logoUrl} alt="" className="h-6 w-6 object-contain rounded opacity-60 shrink-0 hidden md:block" />
+            <div className="p-1 rounded-md bg-muted/60 shrink-0 hidden md:block">
+              <img src={logoUrl} alt="" className="h-8 w-8 object-contain rounded" style={{ imageRendering: 'auto' }} />
+            </div>
           )}
           {canEdit && (
             <div className="flex flex-wrap gap-3">

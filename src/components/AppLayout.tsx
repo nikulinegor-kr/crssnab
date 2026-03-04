@@ -23,16 +23,21 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
         
         <div className="flex-1 flex min-w-0 flex-col">
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <SidebarTrigger className="hover:bg-white/10 transition-colors rounded-md" />
               {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={orgName}
-                  className="h-7 w-7 object-contain rounded shrink-0"
-                />
+                <div className="p-1 rounded-md bg-muted/60 shrink-0">
+                  <img
+                    src={logoUrl}
+                    alt={orgName}
+                    className="h-9 w-9 object-contain rounded"
+                    style={{ imageRendering: 'auto' }}
+                  />
+                </div>
               ) : (
-                <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="p-1.5 rounded-md bg-muted/60 shrink-0">
+                  <Building2 className="h-6 w-6 text-muted-foreground" />
+                </div>
               )}
               <span className="text-sm font-semibold text-foreground truncate hidden sm:block max-w-[200px]">
                 {orgName || "CRSS CRM"}
