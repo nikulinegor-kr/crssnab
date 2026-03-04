@@ -50,12 +50,12 @@ const QUICK_FILTERS: QuickFilterButton[] = [
   },
   {
     id: "invoice-accounting",
-    label: "Счёт в бухгалтерии",
+    label: "Счёт в Бухгалтерии",
     icon: <FileText className="h-3.5 w-3.5" />,
     color: "text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950",
     activeColor: "bg-purple-500 text-white border-purple-500 hover:bg-purple-600",
     type: "status",
-    value: "Счёт в бухгалтерии",
+    value: "Счёт в Бухгалтерии",
   },
   {
     id: "in-transit",
