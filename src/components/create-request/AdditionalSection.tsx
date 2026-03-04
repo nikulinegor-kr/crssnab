@@ -15,6 +15,11 @@ interface AdditionalSectionProps {
   setPhotoFiles: (files: File[]) => void;
   documentFiles: File[];
   setDocumentFiles: (files: File[]) => void;
+  disabled?: boolean;
+  existingPhotoUrls?: string[];
+  onRemoveExistingPhoto?: (url: string) => void;
+  existingDocumentUrls?: string[];
+  onRemoveExistingDocument?: (url: string) => void;
 }
 
 export const AdditionalSection = ({
@@ -25,6 +30,11 @@ export const AdditionalSection = ({
   setPhotoFiles,
   documentFiles,
   setDocumentFiles,
+  disabled = false,
+  existingPhotoUrls,
+  onRemoveExistingPhoto,
+  existingDocumentUrls,
+  onRemoveExistingDocument,
 }: AdditionalSectionProps) => {
   const { toast } = useToast();
 
@@ -84,11 +94,14 @@ export const AdditionalSection = ({
         </div>
 
         {/* Files */}
+        {!disabled ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <MultiFileDropZone
             accept="image/*"
             files={photoFiles}
             onFilesChange={setPhotoFiles}
+            existingUrls={existingPhotoUrls}
+            onRemoveExisting={onRemoveExistingPhoto}
             label="Фото заявки"
             hint="JPG, PNG, WEBP до 5 МБ, макс. 10"
             icon="image"
@@ -100,6 +113,8 @@ export const AdditionalSection = ({
             accept=".pdf,.doc,.docx,.xls,.xlsx"
             files={documentFiles}
             onFilesChange={setDocumentFiles}
+            existingUrls={existingDocumentUrls}
+            onRemoveExisting={onRemoveExistingDocument}
             label="Документы (Счёт/КП)"
             hint="PDF, DOC, XLS до 10 МБ, макс. 10"
             icon="document"
@@ -107,6 +122,28 @@ export const AdditionalSection = ({
             maxFiles={10}
           />
         </div>
+        ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs">Фото ({existingPhotoUrls?.length || 0})</Label>
+            {existingPhotoUrls?.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                Фото {i + 1}
+              </a>
+            ))}
+            {(!existingPhotoUrls || existingPhotoUrls.length === 0) && <p className="text-sm text-muted-foreground">Нет фото</p>}
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Документы ({existingDocumentUrls?.length || 0})</Label>
+            {existingDocumentUrls?.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
+                Документ {i + 1}
+              </a>
+            ))}
+            {(!existingDocumentUrls || existingDocumentUrls.length === 0) && <p className="text-sm text-muted-foreground">Нет документов</p>}
+          </div>
+        </div>
+        )}
       </div>
     </FormSectionCard>
   );

@@ -15,12 +15,14 @@ interface CoreParamsSectionProps {
   form: UseFormReturn<any>;
   objectsData: Array<{ id: string; name: string }> | undefined;
   currentOrgId: string | null;
+  disabled?: boolean;
 }
 
 export const CoreParamsSection = ({
   form,
   objectsData,
   currentOrgId,
+  disabled = false,
 }: CoreParamsSectionProps) => {
   return (
     <FormSectionCard
@@ -39,6 +41,7 @@ export const CoreParamsSection = ({
                   type="date"
                   className="h-9 min-w-0 text-sm"
                   title="Дата создания заявки"
+                  disabled={disabled}
                   {...field}
                 />
               </FormControl>
@@ -59,6 +62,7 @@ export const CoreParamsSection = ({
                   onChange={field.onChange}
                   objects={objectsData}
                   organizationId={currentOrgId}
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />
