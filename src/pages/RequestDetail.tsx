@@ -516,12 +516,6 @@ export default function RequestDetail() {
               )}
             </div>
           </div>
-          {logoUrl && (
-            <div className="flex items-center gap-2 p-1.5 rounded-md bg-muted/60 shrink-0 hidden md:flex">
-              <img src={logoUrl} alt={orgName} className="h-10 w-10 object-contain rounded" style={{ imageRendering: 'auto' }} />
-              {orgName && <span className="text-xs text-muted-foreground font-medium max-w-[120px] truncate">{orgName}</span>}
-            </div>
-          )}
           {canEdit && (
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => setEditDialogOpen(true)} size="sm" className="gap-2 shadow-sm px-5">
