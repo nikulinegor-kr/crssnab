@@ -252,7 +252,7 @@ const Requests = () => {
           {canCreate && activeTab === "active" && (
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-sm sm:text-base font-semibold shadow-sm"
+              className="gap-2 h-9 sm:h-10 px-5 sm:px-7 text-sm sm:text-base font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
             >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="hidden xs:inline">Новая заявка</span>

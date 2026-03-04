@@ -136,7 +136,7 @@ export const RequestsMiniDashboard = ({
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
       {cards.map((card) => (
         <div
           key={card.id}
@@ -148,18 +148,19 @@ export const RequestsMiniDashboard = ({
             }
           }}
           className={cn(
-            "flex items-center gap-3 p-3 sm:p-4 rounded-xl border shadow-sm transition-all cursor-pointer active:scale-[0.97]",
+            "flex items-center gap-3 p-4 sm:p-5 rounded-xl border shadow-sm transition-all cursor-pointer active:scale-[0.97]",
+            "hover:shadow-md hover:-translate-y-0.5",
             isCardActive(card) ? card.activeColor : card.bgColor
           )}
         >
-          <div className={cn("p-2 rounded-lg shrink-0", card.iconBg, card.color)}>
+          <div className={cn("p-2.5 rounded-lg shrink-0", card.iconBg, card.color)}>
             {card.icon}
           </div>
           <div className="min-w-0 flex-1">
-            <div className={cn("text-xl sm:text-2xl font-semibold leading-none", card.color)}>
+            <div className={cn("text-2xl sm:text-3xl font-semibold leading-none tracking-tight", card.color)}>
               {getMetricValue(card.id)}
             </div>
-            <div className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-tight truncate">
+            <div className="text-[11px] sm:text-xs text-muted-foreground/70 mt-1.5 leading-tight truncate">
               {card.label}
             </div>
           </div>
