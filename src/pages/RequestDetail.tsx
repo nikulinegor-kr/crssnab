@@ -498,18 +498,25 @@ export default function RequestDetail() {
 
         {/* Header with actions */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pt-2">
-          <div className="space-y-1">
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
               {request.description}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Создано: {format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}
-              {request.applicant && ` • ${request.applicant}`}
-            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
+              <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{request.request_number}</span>
+              <span>•</span>
+              <span>{format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}</span>
+              {request.applicant && (
+                <>
+                  <span>•</span>
+                  <span>{request.applicant}</span>
+                </>
+              )}
+            </div>
           </div>
           {canEdit && (
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setEditDialogOpen(true)} variant="outline" size="sm" className="gap-2">
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => setEditDialogOpen(true)} size="sm" className="gap-2 shadow-sm px-5">
                 <Edit className="h-4 w-4" />
                 Редактировать
               </Button>
@@ -536,9 +543,9 @@ export default function RequestDetail() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
           {/* Left Column - Frequently edited content at top */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-7">
             
             {/* 1. Context Block (Description + Comment) - Primary info at top */}
             <RequestContextBlock
@@ -559,28 +566,32 @@ export default function RequestDetail() {
             {/* 4. Financial Information */}
             <Card className="glassmorphism border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary" />
                   Финансы
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-1">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground mb-1">Контрагент</p>
-                    <p className="text-sm font-medium truncate">{request.contractor || "—"}</p>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground/70 mb-1.5 font-medium">Контрагент</p>
+                    <p className="text-sm font-medium truncate">{request.contractor || <span className="text-muted-foreground/40">—</span>}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground mb-1">№ счета</p>
-                    <p className="text-sm font-medium truncate">{request.invoice_number || "—"}</p>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground/70 mb-1.5 font-medium">№ счета</p>
+                    <p className="text-sm font-medium truncate">{request.invoice_number || <span className="text-muted-foreground/40">—</span>}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground mb-1">Сумма</p>
-                    <p className="text-sm font-medium">{request.amount?.toLocaleString('ru-RU')} ₽</p>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground/70 mb-1.5 font-medium">Сумма</p>
+                    <p className="text-base font-semibold text-foreground">
+                      {request.amount ? `${request.amount.toLocaleString('ru-RU')} ₽` : <span className="text-muted-foreground/40 text-sm font-medium">—</span>}
+                    </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground mb-1">Оплата</p>
-                    <p className="text-sm font-medium">{request.payment_percentage}%</p>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground/70 mb-1.5 font-medium">Оплата</p>
+                    <p className="text-sm font-medium">
+                      {request.payment_percentage != null ? `${request.payment_percentage}%` : <span className="text-muted-foreground/40">—</span>}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -760,7 +771,7 @@ export default function RequestDetail() {
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-7">
             {/* Quick Actions - Status, Priority, Notes */}
             <RequestQuickActionsCard
               request={request}

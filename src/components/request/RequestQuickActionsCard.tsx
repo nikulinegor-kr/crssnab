@@ -63,12 +63,12 @@ export function RequestQuickActionsCard({
   return (
     <Card className="glassmorphism border-border/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
           Быстрые действия
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Status */}
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground font-medium">Статус</p>

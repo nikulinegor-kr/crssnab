@@ -45,13 +45,13 @@ export function RequestActivityFeed({ activities }: RequestActivityFeedProps) {
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'created':
-        return <div className="h-2 w-2 rounded-full bg-green-500" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-green-500 ring-4 ring-green-500/10" />;
       case 'updated':
-        return <div className="h-2 w-2 rounded-full bg-blue-500" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-500/10" />;
       case 'comment':
-        return <div className="h-2 w-2 rounded-full bg-purple-500" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-500/10" />;
       default:
-        return <div className="h-2 w-2 rounded-full bg-muted-foreground" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground ring-4 ring-muted/30" />;
     }
   };
 
@@ -75,14 +75,14 @@ export function RequestActivityFeed({ activities }: RequestActivityFeedProps) {
           <div className="absolute left-1.5 top-4 bottom-0 w-[1px] bg-border" />
         )}
       </div>
-      <div className="flex-1 pb-5">
+      <div className="flex-1 pb-6">
         <p className={cn(
           "text-sm",
           isSystem ? "text-muted-foreground" : "font-medium"
         )}>
           {activity.description}
         </p>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1.5">
           {!isSystem && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
               {activity.profiles?.full_name || activity.profiles?.email || "Пользователь"}
@@ -99,7 +99,7 @@ export function RequestActivityFeed({ activities }: RequestActivityFeedProps) {
   return (
     <Card className="glassmorphism border-border/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <History className="h-4 w-4 text-primary" />
           История изменений
         </CardTitle>
