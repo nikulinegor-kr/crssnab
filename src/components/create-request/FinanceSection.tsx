@@ -27,9 +27,10 @@ interface FinanceSectionProps {
   form: UseFormReturn<any>;
   suppliers?: Array<{ id: string; name: string }>;
   recentContractors?: string[];
+  disabled?: boolean;
 }
 
-export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSectionProps) => {
+export const FinanceSection = ({ form, suppliers, recentContractors, disabled = false }: FinanceSectionProps) => {
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -148,6 +149,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                 <ContractorSelect
                   value={field.value || ""}
                   onChange={field.onChange}
+                  disabled={disabled}
                   options={[
                     ...(suppliers?.map(s => ({ value: s.id, label: s.name })) || []),
                     ...(recentContractors || [])
@@ -178,6 +180,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                     placeholder="Сч. 123 от 24.01.26" 
                     className="h-9 select-all min-w-0 text-sm" 
                     title="Номер счета для оплаты"
+                    disabled={disabled}
                     {...field} 
                   />
                 </FormControl>
@@ -197,6 +200,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
                     placeholder=""
                     className="h-9 select-all min-w-0 text-sm"
                     title="Сумма счета в рублях"
+                    disabled={disabled}
                     value={field.value ?? null}
                     onValueChange={(v) => field.onChange(v)}
                   />
@@ -215,6 +219,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
           <Select
                   value={field.value?.toString() || "0"}
                   onValueChange={(value) => field.onChange(parseInt(value))}
+                  disabled={disabled}
                 >
                   <FormControl>
                     <SelectTrigger className="h-9">
@@ -251,6 +256,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors }: FinanceSe
               <Select 
                 onValueChange={field.onChange} 
                 value={field.value || ""}
+                disabled={disabled}
               >
                 <FormControl>
                   <SelectTrigger className="h-9">

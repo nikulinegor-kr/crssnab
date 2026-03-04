@@ -29,6 +29,7 @@ interface StatusResponsiblesSectionProps {
   applicants: Array<{ id: string; name: string; telegram_username?: string | null }>;
   executors: Array<{ id: string; name: string }>;
   currentOrgId: string | null;
+  disabled?: boolean;
 }
 
 export const StatusResponsiblesSection = ({
@@ -38,6 +39,7 @@ export const StatusResponsiblesSection = ({
   applicants,
   executors,
   currentOrgId,
+  disabled = false,
 }: StatusResponsiblesSectionProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,7 +85,7 @@ export const StatusResponsiblesSection = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs">Статус *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Выберите статус" />
@@ -105,7 +107,7 @@ export const StatusResponsiblesSection = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs">Приоритет *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Выберите приоритет" />
@@ -135,6 +137,7 @@ export const StatusResponsiblesSection = ({
                   <ParticipantSelect
                     value={field.value}
                     onChange={field.onChange}
+                    disabled={disabled}
                     options={applicants.map((a) => ({ value: a.id, label: a.name }))}
                     placeholder="Выбрать заявителя"
                     searchTitle="Поиск заявителя"
@@ -181,6 +184,7 @@ export const StatusResponsiblesSection = ({
                   <ParticipantSelect
                     value={field.value || ""}
                     onChange={field.onChange}
+                    disabled={disabled}
                     options={executors.map((e) => ({ value: e.id, label: e.name }))}
                     placeholder="Выбрать исполнителя"
                     searchTitle="Поиск исполнителя"
@@ -228,7 +232,7 @@ export const StatusResponsiblesSection = ({
             onBlur={(e) => handleSaveTelegram(e.target.value)}
             placeholder={selectedApplicant ? "Telegram заявителя (ник без @)" : "Сначала выберите заявителя"}
             className="h-8 text-xs min-w-0"
-            disabled={!selectedApplicant}
+            disabled={!selectedApplicant || disabled}
           />
         </div>
       </div>

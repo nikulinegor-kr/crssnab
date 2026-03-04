@@ -14,11 +14,13 @@ import { Truck } from "lucide-react";
 interface LogisticsSectionProps {
   form: UseFormReturn<any>;
   recentTransportCompanies: string[];
+  disabled?: boolean;
 }
 
 export const LogisticsSection = ({
   form,
   recentTransportCompanies,
+  disabled = false,
 }: LogisticsSectionProps) => {
   return (
     <FormSectionCard 
@@ -38,6 +40,7 @@ export const LogisticsSection = ({
                   <ComboboxInput
                     value={field.value || ""}
                     onChange={field.onChange}
+                    disabled={disabled}
                     options={recentTransportCompanies.map(c => ({ value: c, label: c }))}
                     placeholder="Введите или выберите..."
                     searchPlaceholder="Поиск ТК..."
@@ -61,6 +64,7 @@ export const LogisticsSection = ({
                     placeholder="Трек-номер" 
                     className="h-9 min-w-0" 
                     title="Номер товарно-транспортной накладной"
+                    disabled={disabled}
                     {...field} 
                   />
                 </FormControl>
@@ -84,6 +88,7 @@ export const LogisticsSection = ({
                     min="0"
                     className="h-9 text-sm"
                     placeholder=""
+                    disabled={disabled}
                     {...field}
                     value={field.value ?? ""}
                     onChange={(e) =>
@@ -107,6 +112,7 @@ export const LogisticsSection = ({
                     type="date" 
                     className="h-9 min-w-0 text-sm" 
                     title="Когда отправят товар"
+                    disabled={disabled}
                     {...field} 
                   />
                 </FormControl>
@@ -126,6 +132,7 @@ export const LogisticsSection = ({
                     type="date" 
                     className="h-9 min-w-0 text-sm" 
                     title="Ожидаемая дата получения"
+                    disabled={disabled}
                     {...field} 
                   />
                 </FormControl>

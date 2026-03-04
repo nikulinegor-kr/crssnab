@@ -26,6 +26,7 @@ interface ComboboxInputProps {
   emptyMessage?: string;
   allowCustomValue?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export function ComboboxInput({
@@ -37,6 +38,7 @@ export function ComboboxInput({
   emptyMessage = "Ничего не найдено",
   allowCustomValue = true,
   className,
+  disabled = false,
 }: ComboboxInputProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(value);

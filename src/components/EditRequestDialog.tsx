@@ -3,10 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { ContractorSelect } from "@/components/ContractorSelect";
-import { ParticipantSelect } from "@/components/ParticipantSelect";
-import { ObjectSelectWithAdd } from "@/components/ObjectSelectWithAdd";
-import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import {
   Dialog,
   DialogContent,
@@ -28,24 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { DecimalInput } from "@/components/ui/decimal-input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -54,23 +33,27 @@ import {
   Loader2, 
   FileText, 
   Trash2, 
-  Copy, 
-  Sparkles, 
   Save,
   Check,
   AlertTriangle,
   RefreshCw,
   X,
   Clock,
-  AtSign
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Label } from "@/components/ui/label";
 import { Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
-import { cn } from "@/lib/utils";
+import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
+
+// Section components (shared with CreateRequestDialog)
+import { ContextSection } from "./create-request/ContextSection";
+import { CoreParamsSection } from "./create-request/CoreParamsSection";
+import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSection";
+import { LogisticsSection } from "./create-request/LogisticsSection";
+import { FinanceSection } from "./create-request/FinanceSection";
+import { AdditionalSection } from "./create-request/AdditionalSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -112,10 +95,10 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
-  payment_percentage: z.string()
-    .max(100, "Максимум 100 символов")
-    .optional()
-    .default(""),
+  payment_percentage: z.number()
+    .min(0, "Процент не может быть отрицательным")
+    .max(100, "Процент не может превышать 100")
+    .default(0),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
@@ -152,7 +135,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCloseConfirmDialog, setShowCloseConfirmDialog] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
@@ -165,6 +147,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canEdit, isViewer } = useUserRole();
+  const { recentContractors, recentTransportCompanies } = useContractorSuggestions();
+  const formId = "edit-request-form";
   
   const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const conflictCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -274,7 +258,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       contractor: "",
       invoice_number: "",
       amount: null,
-      payment_percentage: "",
+      payment_percentage: 0,
       shipment_date: "",
       delivery_date: "",
       transport_company: "",
@@ -282,40 +266,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       comments: "",
     },
   });
-
-  // Track telegram username for selected applicant
-  const selectedApplicantName = form.watch("applicant");
-  
-  const selectedApplicant = useMemo(() => {
-    if (!selectedApplicantName) return null;
-    return applicants.find(a => a.name === selectedApplicantName) || null;
-  }, [selectedApplicantName, applicants]);
-  
-  const [applicantTelegramUsername, setApplicantTelegramUsername] = useState("");
-  
-  // Sync telegram username when applicant changes
-  useEffect(() => {
-    setApplicantTelegramUsername(selectedApplicant?.telegram_username || "");
-  }, [selectedApplicant]);
-  
-  // Save telegram username
-  const handleSaveApplicantTelegram = async (username: string) => {
-    if (!selectedApplicant?.id) return;
-    
-    const cleanUsername = username.replace(/^@/, "").trim();
-    
-    const { error } = await supabase
-      .from("request_participants")
-      .update({ telegram_username: cleanUsername || null })
-      .eq("id", selectedApplicant.id);
-    
-    if (error) {
-      toast({ title: "Ошибка", description: "Не удалось сохранить Telegram", variant: "destructive" });
-      return;
-    }
-    
-    queryClient.invalidateQueries({ queryKey: ["request-participants", request?.organization_id] });
-  };
 
   // Original values for draft comparison
   const originalValues = useMemo(() => {
@@ -333,7 +283,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       contractor: request.contractor || "",
       invoice_number: request.invoice_number || "",
       amount: request.amount ?? null,
-      payment_percentage: request.payment_percentage != null ? `${request.payment_percentage}%` : "0%",
+      payment_percentage: request.payment_percentage ?? 0,
       shipment_date: request.shipment_date || "",
       delivery_date: request.delivery_date || "",
       transport_company: request.transport_company || "",
@@ -380,7 +330,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
-        payment_percentage: request.payment_percentage != null ? `${request.payment_percentage}%` : "0%",
+        payment_percentage: request.payment_percentage ?? 0,
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
@@ -420,7 +370,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           .single();
         
         if (data?.updated_at && serverUpdatedAt && data.updated_at !== serverUpdatedAt) {
-          // Only show conflict if we haven't just saved
           const timeSinceLastSave = Date.now() - (lastServerSaveRef.current ? parseInt(lastServerSaveRef.current) : 0);
           if (timeSinceLastSave > 5000) {
             setShowConflictDialog(true);
@@ -441,11 +390,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const saveToServer = useCallback(async (data: RequestFormData) => {
     if (!request || !canEdit) return;
     
-    // Validate form before saving
     const result = requestSchema.safeParse(data);
-    if (!result.success) {
-      return; // Don't save if validation fails
-    }
+    if (!result.success) return;
     
     setServerSaveState('saving');
     
@@ -463,7 +409,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
+        payment_percentage: data.payment_percentage ?? 0,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -497,8 +443,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           await notifyTelegram(request.id);
         }
       }
-
-      // Invalidate queries
+      
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request", request.id] });
       
@@ -513,12 +458,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     if (!open || !canEdit || isViewer) return;
     
     const subscription = form.watch((value) => {
-      // Clear previous timeout
       if (serverSaveTimeoutRef.current) {
         clearTimeout(serverSaveTimeoutRef.current);
       }
       
-      // Set new timeout for debounced save
       serverSaveTimeoutRef.current = setTimeout(() => {
         saveToServer(value as RequestFormData);
       }, 2000);
@@ -532,12 +475,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     if (!open) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + Enter = Force save
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         form.handleSubmit(onSubmit)();
       }
-      // Escape = Close (with confirmation if needed)
       if (e.key === 'Escape') {
         e.preventDefault();
         handleClose();
@@ -589,7 +530,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || "",
         invoice_number: data.invoice_number || "",
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage?.toString() || "",
+        payment_percentage: data.payment_percentage ?? 0,
         shipment_date: data.shipment_date || "",
         delivery_date: data.delivery_date || "",
         transport_company: data.transport_company || "",
@@ -601,44 +542,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
     setShowConflictDialog(false);
   }, [request?.id, form, clearDraft]);
-
-  const handleImproveDescription = async () => {
-    const currentDescription = form.getValues("description");
-    if (!currentDescription || currentDescription.trim().length < 3) {
-      toast({
-        title: "Введите описание",
-        description: "Сначала введите описание заявки для улучшения",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsImprovingDescription(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("improve-description", {
-        body: { description: currentDescription },
-      });
-
-      if (error) throw error;
-
-      if (data?.improved) {
-        form.setValue("description", data.improved);
-        toast({
-          title: "Описание улучшено",
-          description: "AI переформулировал описание заявки",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error improving description:", error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось улучшить описание",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImprovingDescription(false);
-    }
-  };
 
   const onSubmit = async (data: RequestFormData) => {
     if (!request) return;
@@ -703,7 +606,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage ? parseInt(data.payment_percentage.replace('%', '')) || 0 : 0,
+        payment_percentage: data.payment_percentage ?? 0,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -882,6 +785,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     );
   };
 
+  // Auto-scroll to focused input on mobile
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (isMobile) {
+      setTimeout(() => {
+        e.target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      }, 300);
+    }
+  };
+
   const headerContent = (
     <div className="flex items-center justify-between flex-wrap gap-2">
       <div className="space-y-1">
@@ -939,670 +851,72 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        id={formId}
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-5 sm:space-y-6"
+        onFocus={handleInputFocus as any}
+      >
         {/* Draft Recovery Banner */}
         <DraftRecoveryBanner />
 
-        {/* Блок 1: Описание и Комментарий (контекст заявки) */}
-        <div className="space-y-0 rounded-lg border bg-card overflow-hidden">
-          {/* Description - primary */}
-          <div className="p-4 pb-0">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel className="text-sm font-medium">Описание заявки *</FormLabel>
-                    {!isViewer && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleImproveDescription}
-                        disabled={isImprovingDescription}
-                        className="h-7 px-2 text-xs text-primary hover:text-primary/80"
-                      >
-                        {isImprovingDescription ? (
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-3 w-3 mr-1" />
-                        )}
-                        Улучшить с AI
-                      </Button>
-                    )}
-                  </div>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Опишите заявку..."
-                      className={cn(
-                        "min-h-[100px] resize-none border-0 p-0 text-base leading-relaxed",
-                        "focus-visible:ring-0 focus-visible:ring-offset-0",
-                        "bg-transparent placeholder:text-muted-foreground/50",
-                        form.formState.errors.description && "text-destructive"
-                      )}
-                      disabled={isViewer}
-                      autoFocus={!isViewer}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        {/* 1. Context Block: Description + Comment */}
+        <ContextSection 
+          form={form} 
+          draftSaveState={draftSaveState}
+          autoFocus={!isViewer}
+          disabled={isViewer}
+        />
 
-          {/* Divider */}
-          <div className="mx-4 border-t border-border/30" />
+        {/* 2. Core Params: Date, Object */}
+        <CoreParamsSection
+          form={form}
+          objectsData={objectsData}
+          currentOrgId={request?.organization_id || null}
+          disabled={isViewer}
+        />
 
-          {/* Comments - secondary */}
-          <div className="p-4 pt-3">
-            <FormField
-              control={form.control}
-              name="comments"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs text-muted-foreground">Комментарий</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Добавить примечание..."
-                      className={cn(
-                        "min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
-                        "focus-visible:ring-0 focus-visible:ring-offset-0",
-                        "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
-                      )}
-                      disabled={isViewer}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        {/* 3. Status & Responsibles */}
+        <StatusResponsiblesSection
+          form={form}
+          statuses={statuses}
+          priorities={priorities}
+          applicants={applicants}
+          executors={executors}
+          currentOrgId={request?.organization_id || null}
+          disabled={isViewer}
+        />
 
-        {/* Блок 2: Быстрые действия (Статус / Приоритет) */}
-        <div className="space-y-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
-          <h3 className="font-medium text-sm text-primary">Статус и приоритет</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Статус *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
-                    <FormControl>
-                      <SelectTrigger className={cn(
-                        "transition-colors",
-                        form.formState.errors.status && "border-destructive"
-                      )}>
-                        <SelectValue placeholder="Выберите статус" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {statuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* 4. Finance: Contractor, Invoice, Amount, Payment % */}
+        <FinanceSection 
+          form={form} 
+          suppliers={suppliers}
+          recentContractors={recentContractors}
+          disabled={isViewer}
+        />
 
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Приоритет *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isViewer}>
-                    <FormControl>
-                      <SelectTrigger className={cn(
-                        "transition-colors",
-                        form.formState.errors.priority && "border-destructive"
-                      )}>
-                        <SelectValue placeholder="Выберите приоритет" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {priorities.map((priority) => (
-                        <SelectItem key={priority} value={priority}>
-                          {priority}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        {/* 5. Logistics: TK, TTN, Dates */}
+        <LogisticsSection
+          form={form}
+          recentTransportCompanies={recentTransportCompanies}
+          disabled={isViewer}
+        />
 
-        {/* Блок 2: Логистика */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Логистика</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="availability_delivery_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Наличие / Сроки</FormLabel>
-                  <Select 
-                    value={field.value || ""}
-                    onValueChange={(value) => field.onChange(value)} 
-                    disabled={isViewer}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выбрать" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="В наличии">В наличии</SelectItem>
-                      <SelectItem value="1-2 дня">1-2 дня</SelectItem>
-                      <SelectItem value="3-5 дней">3-5 дней</SelectItem>
-                      <SelectItem value="1-2 недели">1-2 недели</SelectItem>
-                      <SelectItem value="2-4 недели">2-4 недели</SelectItem>
-                      <SelectItem value="Под заказ">Под заказ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="transport_company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Транспортная компания</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ТК Компания" disabled={isViewer} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="shipment_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Дата отгрузки</FormLabel>
-                  <FormControl>
-                    <Input type="date" disabled={isViewer} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="delivery_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Дата доставки</FormLabel>
-                  <FormControl>
-                    <Input type="date" disabled={isViewer} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="waybill_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Номер ТТН</FormLabel>
-                  <FormControl>
-                    <Input placeholder="№ ТТН" disabled={isViewer} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Блок 4: Основная информация */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Основная информация</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="request_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Дата заявки *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field} 
-                      disabled={isViewer}
-                      className={cn(form.formState.errors.request_date && "border-destructive")}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="object_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Объект</FormLabel>
-                  <FormControl>
-                    <ObjectSelectWithAdd
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      objects={objectsData}
-                      organizationId={request?.organization_id || null}
-                      disabled={isViewer}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="estimated_delivery_days"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Срок (дней)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="Кол-во"
-                      disabled={isViewer}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Блок 5: Участники */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Участники</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="applicant"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Заявитель *</FormLabel>
-                  <FormControl>
-                    <ParticipantSelect
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      disabled={isViewer}
-                      options={applicants.map(a => ({ value: a.id, label: a.name }))}
-                      placeholder="Выбрать заявителя"
-                      searchTitle="Поиск заявителя"
-                      searchDescription="Найдите заявителя из списка"
-                      addTitle="Добавить заявителя"
-                      addDescription="Создайте нового заявителя"
-                      editTitle="Редактировать заявителя"
-                      editDescription="Измените имя заявителя"
-                      deleteTitle="Удалить заявителя?"
-                      entityName="заявителя"
-                      onAddNew={async (name) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .insert({
-                            name,
-                            organization_id: request?.organization_id || "",
-                            participant_type: "applicant",
-                          });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель добавлен" });
-                      }}
-                      onDelete={async (id) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .delete()
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель удалён" });
-                      }}
-                      onEdit={async (id, newName) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .update({ name: newName })
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Заявитель обновлён" });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  
-                  {/* Telegram username for applicant */}
-                  <div className="flex items-center gap-2 mt-2">
-                    <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <Input
-                      value={applicantTelegramUsername}
-                      onChange={(e) => setApplicantTelegramUsername(e.target.value)}
-                      onBlur={(e) => handleSaveApplicantTelegram(e.target.value)}
-                      placeholder={selectedApplicant ? "Telegram (ник без @)" : "Сначала выберите заявителя"}
-                      className="h-8 text-xs"
-                      disabled={isViewer || !selectedApplicant}
-                    />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="executor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Исполнитель</FormLabel>
-                  <FormControl>
-                    <ParticipantSelect
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      disabled={isViewer}
-                      options={executors.map(e => ({ value: e.id, label: e.name }))}
-                      placeholder="Выбрать исполнителя"
-                      searchTitle="Поиск исполнителя"
-                      searchDescription="Найдите исполнителя из списка"
-                      addTitle="Добавить исполнителя"
-                      addDescription="Создайте нового исполнителя"
-                      editTitle="Редактировать исполнителя"
-                      editDescription="Измените имя исполнителя"
-                      deleteTitle="Удалить исполнителя?"
-                      entityName="исполнителя"
-                      onAddNew={async (name) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .insert({
-                            name,
-                            organization_id: request?.organization_id || "",
-                            participant_type: "executor",
-                          });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Исполнитель добавлен" });
-                      }}
-                      onDelete={async (id) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .delete()
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Исполнитель удалён" });
-                      }}
-                      onEdit={async (id, newName) => {
-                        const { error } = await supabase
-                          .from("request_participants")
-                          .update({ name: newName })
-                          .eq("id", id);
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["request-participants"] });
-                        toast({ title: "Успешно", description: "Исполнитель обновлён" });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Блок 6: Поставщик */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Поставщик</h3>
-          <FormField
-            control={form.control}
-            name="contractor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Контрагент</FormLabel>
-                <FormControl>
-                  <ContractorSelect
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    disabled={isViewer}
-                    options={suppliers?.map(s => ({ value: s.id, label: s.name })) || []}
-                    placeholder="Выбрать из списка"
-                    onAddNew={async (name) => {
-                      const { data: userData } = await supabase.auth.getUser();
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .insert({
-                          name: name,
-                          organization_id: request?.organization_id || "",
-                          created_by: userData.user?.id,
-                          status: "Активный",
-                          category: "Другое",
-                        });
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({ title: "Успешно", description: "Контрагент добавлен" });
-                    }}
-                    onDelete={async (supplierId) => {
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .update({ status: "Неактивный" })
-                        .eq("id", supplierId);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({ title: "Успешно", description: "Контрагент деактивирован" });
-                    }}
-                    onEdit={async (supplierId, newName) => {
-                      const { error } = await supabase
-                        .from("suppliers")
-                        .update({ name: newName })
-                        .eq("id", supplierId);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-                      toast({ title: "Успешно", description: "Контрагент обновлён" });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Блок 7: Финансы */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Финансы</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="invoice_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Номер счета</FormLabel>
-                  <FormControl>
-                    <Input placeholder="№ 123" disabled={isViewer} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Сумма (₽)</FormLabel>
-                  <FormControl>
-                    <DecimalInput
-                      placeholder=""
-                      disabled={isViewer}
-                      value={field.value ?? null}
-                      onValueChange={(v) => field.onChange(v)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="payment_percentage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Оплата (%)</FormLabel>
-                  <Select
-                    value={field.value?.toString() || ""}
-                    onValueChange={(value) => field.onChange(value)}
-                    disabled={isViewer}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="%" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="pointer-events-auto z-[60]">
-                      {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((p) => (
-                        <SelectItem key={p} value={`${p}%`}>
-                          {p}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Блок 8: ЗРС */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <Label className="text-sm text-muted-foreground">ЗРС (сводка заявки)</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const zrsText = `Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
-Заявка: ${form.watch("description") || "-"}
-Заявитель: ${form.watch("applicant") || "-"}
-Приоритет: ${form.watch("priority") || "-"}
-Наличие: ${form.watch("availability_delivery_time") || "-"}
-Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-Оплата: ${form.watch("payment_percentage") || "-"}
-Исполнил: ${form.watch("executor") || "-"}`;
-                try {
-                  await navigator.clipboard.writeText(zrsText);
-                  toast({ title: "Скопировано", description: "Текст ЗРС скопирован в буфер обмена" });
-                } catch {
-                  toast({ title: "Ошибка", description: "Не удалось скопировать текст", variant: "destructive" });
-                }
-              }}
-            >
-              <Copy className="h-4 w-4 mr-1" />
-              Копировать
-            </Button>
-          </div>
-          <Textarea
-            readOnly
-            className="min-h-[100px] bg-muted/50 font-mono text-xs"
-            value={`Объект: ${objectsData?.find(o => o.id === form.watch("object_id"))?.name || "-"}
-Заявка: ${form.watch("description") || "-"}
-Заявитель: ${form.watch("applicant") || "-"}
-Приоритет: ${form.watch("priority") || "-"}
-Наличие: ${form.watch("availability_delivery_time") || "-"}
-Срок доставки: ${form.watch("estimated_delivery_days") ? `${form.watch("estimated_delivery_days")} дн.` : "-"}
-Оплата: ${form.watch("payment_percentage") || "-"}
-Исполнил: ${form.watch("executor") || "-"}`}
-          />
-        </div>
-
-        {/* Блок 9: Вложения */}
-        <div className="space-y-4 p-4 rounded-lg border bg-card">
-          <h3 className="font-medium text-sm text-muted-foreground">Вложения</h3>
-          {!isViewer ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <MultiFileDropZone
-                accept="image/*"
-                files={photoFiles}
-                onFilesChange={setPhotoFiles}
-                existingUrls={existingPhotoUrls}
-                onRemoveExisting={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
-                label="Фото заявки"
-                hint="JPG, PNG, WEBP до 5 МБ"
-                icon="image"
-                maxSizeMB={5}
-                maxFiles={10}
-              />
-
-              <MultiFileDropZone
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                files={documentFiles}
-                onFilesChange={setDocumentFiles}
-                existingUrls={existingDocumentUrls}
-                onRemoveExisting={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
-                label="Документы"
-                hint="PDF, DOC, XLS до 10 МБ"
-                icon="document"
-                maxSizeMB={10}
-                maxFiles={10}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Фото ({existingPhotoUrls.length})</Label>
-                {existingPhotoUrls.map((url, i) => (
-                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
-                    Фото {i + 1}
-                  </a>
-                ))}
-                {existingPhotoUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет фото</p>}
-              </div>
-              <div className="space-y-2">
-                <Label>Документы ({existingDocumentUrls.length})</Label>
-                {existingDocumentUrls.map((url, i) => (
-                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline truncate">
-                    Документ {i + 1}
-                  </a>
-                ))}
-                {existingDocumentUrls.length === 0 && <p className="text-sm text-muted-foreground">Нет документов</p>}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* 6. Additional: ZRS, Files */}
+        <AdditionalSection
+          form={form}
+          formValues={formValues}
+          objectsData={objectsData}
+          photoFiles={photoFiles}
+          setPhotoFiles={setPhotoFiles}
+          documentFiles={documentFiles}
+          setDocumentFiles={setDocumentFiles}
+          disabled={isViewer}
+          existingPhotoUrls={existingPhotoUrls}
+          onRemoveExistingPhoto={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
+          existingDocumentUrls={existingDocumentUrls}
+          onRemoveExistingDocument={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
+        />
 
         {/* Footer */}
         <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t">
@@ -1715,12 +1029,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     return (
       <>
         <Drawer open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
-          <DrawerContent className="h-[100dvh] max-h-[100dvh]">
-            <DrawerHeader className="text-left border-b pb-4 flex-shrink-0">
+          <DrawerContent className="mt-0 h-[90dvh] max-h-[90dvh] w-full max-w-full overflow-hidden flex flex-col">
+            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0 flex items-center justify-between">
               {headerContent}
             </DrawerHeader>
             <div 
-              className="flex-1 overflow-y-auto p-4 pb-8"
+              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
