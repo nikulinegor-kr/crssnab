@@ -14,23 +14,36 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const lastRefreshRef = useRef<number>(0);
   const refreshIntervalMs = 60000; // Minimum 1 minute between refreshes
 
-  const handleSessionCheck = useCallback(async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("[ProtectedRoute] Session error:", error.message);
-        setIsAuthenticated(false);
+  const handleSessionCheck = useCallback(async (retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          // Network-type errors should be retried
+          if (i < retries - 1 && (error.message?.includes("fetch") || error.message === "Load failed")) {
+            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+            continue;
+          }
+          console.error("[ProtectedRoute] Session error:", error.message);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAuthenticated(!!session);
         setIsLoading(false);
         return;
+      } catch (err: any) {
+        if (i < retries - 1) {
+          console.debug(`[ProtectedRoute] Retry ${i + 1}/${retries}:`, err.message);
+          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+          continue;
+        }
+        console.error("[ProtectedRoute] getSession error after retries", err);
+        setIsAuthenticated(false);
+        setIsLoading(false);
       }
-
-      setIsAuthenticated(!!session);
-    } catch (err) {
-      console.error("[ProtectedRoute] getSession error", err);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
