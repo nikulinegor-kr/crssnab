@@ -351,7 +351,7 @@ export const RequestsBulkActions = ({
                   } catch (err: any) {
                     toast({
                       title: "Ошибка",
-                      description: err.message || "Не удалось сформировать закуп",
+                      description: err.message || "Не удалось сформировать свод",
                       variant: "destructive",
                     });
                   }
@@ -362,8 +362,8 @@ export const RequestsBulkActions = ({
                 size="sm"
               >
                 <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Сформировать закуп</span>
-                <span className="sm:hidden">Закуп</span>
+                <span className="hidden sm:inline">Сформировать свод</span>
+                <span className="sm:hidden">Свод</span>
               </Button>
               {/* Bulk status change button */}
               <Button

@@ -29,7 +29,7 @@ export const ProcurementExportButton = ({ items, procurementName, totalAmount }:
 
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Закуп");
+    XLSX.utils.book_append_sheet(wb, ws, "Свод");
     XLSX.writeFile(wb, `${procurementName}.xlsx`);
   };
 
