@@ -107,7 +107,7 @@ export const useCreateProcurement = () => {
           created_by: user.id,
           total_amount: totalAmount,
           status: "draft",
-          name: `Закуп от ${new Date().toLocaleDateString("ru-RU")}`,
+          name: `Свод от ${new Date().toLocaleDateString("ru-RU")}`,
         })
         .select()
         .single();

@@ -286,7 +286,7 @@ const Requests = () => {
                 <TabsTrigger value="archived" className="text-xs sm:text-sm px-2 sm:px-3">Архив</TabsTrigger>
                 <TabsTrigger value="procurement" className="text-xs sm:text-sm px-2 sm:px-3 gap-1">
                   <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  Закуп
+                  Свод
                 </TabsTrigger>
               </TabsList>
             </div>
