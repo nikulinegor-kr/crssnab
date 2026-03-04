@@ -43,7 +43,8 @@ import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
 
 // Section components
 import { ContextSection } from "./create-request/ContextSection";
-import { QuickSettingsSection } from "./create-request/QuickSettingsSection";
+import { CoreParamsSection } from "./create-request/CoreParamsSection";
+import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSection";
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
@@ -513,7 +514,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       <form
         id={formId}
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
+        className="space-y-5 sm:space-y-6"
         onFocus={handleInputFocus as any}
       >
         
@@ -525,14 +526,20 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           autoFocus={true}
         />
 
-        {/* 2. Quick Settings: Status, Priority, Participants, Object */}
-        <QuickSettingsSection
+        {/* 2. Core Params: Date, Object, Deadline */}
+        <CoreParamsSection
+          form={form}
+          objectsData={objectsData}
+          currentOrgId={currentOrgId}
+        />
+
+        {/* 3. Status & Responsibles */}
+        <StatusResponsiblesSection
           form={form}
           statuses={statuses}
           priorities={priorities}
           applicants={applicants}
           executors={executors}
-          objectsData={objectsData}
           currentOrgId={currentOrgId}
         />
 
