@@ -127,12 +127,12 @@ export function RequestComments({ requestId }: RequestCommentsProps) {
   return (
     <Card className="glassmorphism border-border/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-primary" />
           Комментарии ({comments?.length || 0})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Comments list */}
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
           {isLoading ? (
@@ -185,25 +185,30 @@ export function RequestComments({ requestId }: RequestCommentsProps) {
         </div>
 
         {/* Add comment form */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <Textarea
-            placeholder="Написать комментарий..."
+            placeholder="Добавить комментарий…"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[80px] resize-none"
+            className="min-h-[48px] focus:min-h-[100px] transition-all duration-200 resize-none"
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!newComment.trim() || addCommentMutation.isPending}
-            className="shrink-0"
-          >
-            {addCommentMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
+          {newComment.trim() && (
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!newComment.trim() || addCommentMutation.isPending}
+                className="gap-2"
+              >
+                {addCommentMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                Отправить
+              </Button>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

@@ -53,18 +53,18 @@ export function RequestLogisticsCard({
   return (
     <Card className="glassmorphism border-border/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary" />
           Логистика
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Grid of logistics items */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {logisticsItems.map((item) => (
             <div 
               key={item.label}
-              className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              className="flex items-start gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
             >
               <div className="p-2 rounded-md bg-primary/10 shrink-0">
                 <item.icon className="h-4 w-4 text-primary" />
@@ -89,9 +89,9 @@ export function RequestLogisticsCard({
         </div>
 
         {/* Dates row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border/40">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-border/40">
           {/* Shipment date */}
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
             <div className="p-2 rounded-md bg-amber-500/10 shrink-0">
               <Truck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
@@ -139,7 +139,7 @@ export function RequestLogisticsCard({
           </div>
 
           {/* Delivery date */}
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
             <div className="p-2 rounded-md bg-green-500/10 shrink-0">
               <CalendarDays className="h-4 w-4 text-green-600 dark:text-green-400" />
             </div>
