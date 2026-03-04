@@ -19,6 +19,7 @@ interface MetricCard {
   color: string;
   bgColor: string;
   activeColor: string;
+  iconBg: string;
   type: "priority" | "status" | "special";
   value?: string;
   specialFilter?: SpecialDateFilter;
@@ -37,21 +38,18 @@ export const RequestsMiniDashboard = ({
     const sevenDaysAgo = addDays(today, -7);
     const sevenDaysFromNow = addDays(today, 7);
     
-    // Filter out delivered requests for active metrics
     const activeRequests = requests.filter(r => r.status !== "Доставлено");
     
     const emergency = activeRequests.filter(r => r.priority === "Аварийно").length;
     const newRequests = activeRequests.filter(r => r.status === "Новая заявка").length;
     const inTransit = activeRequests.filter(r => r.status === "В пути").length;
     
-    // Delivered in last 7 days
     const deliveredThisWeek = requests.filter(r => {
       if (r.status !== "Доставлено" || !r.delivery_date) return false;
       const deliveryDate = new Date(r.delivery_date);
       return isAfter(deliveryDate, sevenDaysAgo) && isBefore(deliveryDate, addDays(today, 1));
     }).length;
     
-    // Upcoming deliveries (next 7 days)
     const upcomingDeliveries = requests.filter(r => {
       if (r.status === "Доставлено" || !r.delivery_date) return false;
       const deliveryDate = new Date(r.delivery_date);
@@ -65,50 +63,55 @@ export const RequestsMiniDashboard = ({
     {
       id: "emergency",
       label: "Аварийных",
-      icon: <AlertTriangle className="h-3.5 w-3.5" />,
+      icon: <AlertTriangle className="h-4 w-4" />,
       color: "text-red-600 dark:text-red-400",
-      bgColor: "bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50",
-      activeColor: "bg-red-200 dark:bg-red-900 ring-2 ring-red-500",
+      bgColor: "bg-background border-border/60 hover:border-red-300 dark:hover:border-red-700 hover:shadow-md",
+      activeColor: "bg-red-50 dark:bg-red-950/60 border-red-400 dark:border-red-600 shadow-md ring-1 ring-red-200 dark:ring-red-800",
+      iconBg: "bg-red-100 dark:bg-red-900/50",
       type: "priority",
       value: "Аварийно",
     },
     {
       id: "new",
       label: "Новых",
-      icon: <FileText className="h-3.5 w-3.5" />,
+      icon: <FileText className="h-4 w-4" />,
       color: "text-amber-600 dark:text-amber-400",
-      bgColor: "bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/50",
-      activeColor: "bg-amber-200 dark:bg-amber-900 ring-2 ring-amber-500",
+      bgColor: "bg-background border-border/60 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md",
+      activeColor: "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600 shadow-md ring-1 ring-amber-200 dark:ring-amber-800",
+      iconBg: "bg-amber-100 dark:bg-amber-900/50",
       type: "status",
       value: "Новая заявка",
     },
     {
       id: "inTransit",
       label: "В пути",
-      icon: <Truck className="h-3.5 w-3.5" />,
+      icon: <Truck className="h-4 w-4" />,
       color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50",
-      activeColor: "bg-blue-200 dark:bg-blue-900 ring-2 ring-blue-500",
+      bgColor: "bg-background border-border/60 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md",
+      activeColor: "bg-blue-50 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 shadow-md ring-1 ring-blue-200 dark:ring-blue-800",
+      iconBg: "bg-blue-100 dark:bg-blue-900/50",
       type: "status",
       value: "В пути",
     },
     {
       id: "deliveredThisWeek",
       label: "Доставлено за неделю",
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+      icon: <CheckCircle2 className="h-4 w-4" />,
       color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-950/50 hover:bg-green-100 dark:hover:bg-green-900/50",
-      activeColor: "bg-green-200 dark:bg-green-900 ring-2 ring-green-500",
+      bgColor: "bg-background border-border/60 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md",
+      activeColor: "bg-green-50 dark:bg-green-950/60 border-green-400 dark:border-green-600 shadow-md ring-1 ring-green-200 dark:ring-green-800",
+      iconBg: "bg-green-100 dark:bg-green-900/50",
       type: "special",
       specialFilter: "deliveredLast7Days",
     },
     {
       id: "upcomingDeliveries",
       label: "Доставка скоро",
-      icon: <Calendar className="h-3.5 w-3.5" />,
+      icon: <Calendar className="h-4 w-4" />,
       color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50",
-      activeColor: "bg-purple-200 dark:bg-purple-900 ring-2 ring-purple-500",
+      bgColor: "bg-background border-border/60 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md",
+      activeColor: "bg-purple-50 dark:bg-purple-950/60 border-purple-400 dark:border-purple-600 shadow-md ring-1 ring-purple-200 dark:ring-purple-800",
+      iconBg: "bg-purple-100 dark:bg-purple-900/50",
       type: "special",
       specialFilter: "upcomingNext7Days",
     },
@@ -116,18 +119,12 @@ export const RequestsMiniDashboard = ({
 
   const getMetricValue = (id: string): number => {
     switch (id) {
-      case "emergency":
-        return metrics.emergency;
-      case "new":
-        return metrics.new;
-      case "inTransit":
-        return metrics.inTransit;
-      case "deliveredThisWeek":
-        return metrics.deliveredThisWeek;
-      case "upcomingDeliveries":
-        return metrics.upcomingDeliveries;
-      default:
-        return 0;
+      case "emergency": return metrics.emergency;
+      case "new": return metrics.new;
+      case "inTransit": return metrics.inTransit;
+      case "deliveredThisWeek": return metrics.deliveredThisWeek;
+      case "upcomingDeliveries": return metrics.upcomingDeliveries;
+      default: return 0;
     }
   };
 
@@ -139,7 +136,7 @@ export const RequestsMiniDashboard = ({
   };
 
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
       {cards.map((card) => (
         <div
           key={card.id}
@@ -151,20 +148,20 @@ export const RequestsMiniDashboard = ({
             }
           }}
           className={cn(
-            "flex items-center gap-2 py-1.5 px-2.5 rounded-md border border-border/50 transition-all cursor-pointer active:scale-[0.98]",
+            "flex items-center gap-3 p-3 sm:p-4 rounded-xl border shadow-sm transition-all cursor-pointer active:scale-[0.97]",
             isCardActive(card) ? card.activeColor : card.bgColor
           )}
         >
-          <div className={cn("p-1 rounded bg-background/80", card.color)}>
+          <div className={cn("p-2 rounded-lg shrink-0", card.iconBg, card.color)}>
             {card.icon}
           </div>
-          <div className="min-w-0 flex-1 flex items-center gap-1.5">
-            <span className={cn("text-base font-bold", card.color)}>
+          <div className="min-w-0 flex-1">
+            <div className={cn("text-xl sm:text-2xl font-semibold leading-none", card.color)}>
               {getMetricValue(card.id)}
-            </span>
-            <span className="text-xs text-muted-foreground truncate">
+            </div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-tight truncate">
               {card.label}
-            </span>
+            </div>
           </div>
         </div>
       ))}

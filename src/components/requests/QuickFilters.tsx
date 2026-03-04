@@ -25,8 +25,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "emergency",
     label: "Аварийные",
     icon: <AlertTriangle className="h-3.5 w-3.5" />,
-    color: "text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950",
-    activeColor: "bg-red-600 text-white border-red-600 hover:bg-red-700",
+    color: "text-red-600 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/50 hover:border-red-300",
+    activeColor: "bg-red-600 text-white border-red-600 hover:bg-red-700 shadow-sm",
     type: "priority",
     value: "Аварийно",
   },
@@ -34,8 +34,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "priority",
     label: "Приоритетные",
     icon: <Zap className="h-3.5 w-3.5" />,
-    color: "text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950",
-    activeColor: "bg-orange-500 text-white border-orange-500 hover:bg-orange-600",
+    color: "text-orange-600 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/50 hover:border-orange-300",
+    activeColor: "bg-orange-500 text-white border-orange-500 hover:bg-orange-600 shadow-sm",
     type: "priority",
     value: "Приоритетно",
   },
@@ -43,8 +43,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "invoice",
     label: "Счёт",
     icon: <CreditCard className="h-3.5 w-3.5" />,
-    color: "text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950",
-    activeColor: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600",
+    color: "text-amber-600 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:border-amber-300",
+    activeColor: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600 shadow-sm",
     type: "status",
     value: "Счёт",
   },
@@ -52,8 +52,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "invoice-accounting",
     label: "Счёт в Бухгалтерии",
     icon: <FileText className="h-3.5 w-3.5" />,
-    color: "text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950",
-    activeColor: "bg-purple-500 text-white border-purple-500 hover:bg-purple-600",
+    color: "text-purple-600 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:border-purple-300",
+    activeColor: "bg-purple-500 text-white border-purple-500 hover:bg-purple-600 shadow-sm",
     type: "status",
     value: "Счёт в Бухгалтерии",
   },
@@ -61,8 +61,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "in-transit",
     label: "В пути",
     icon: <Truck className="h-3.5 w-3.5" />,
-    color: "text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950",
-    activeColor: "bg-green-500 text-white border-green-500 hover:bg-green-600",
+    color: "text-green-600 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-300",
+    activeColor: "bg-green-500 text-white border-green-500 hover:bg-green-600 shadow-sm",
     type: "status",
     value: "В пути",
   },
@@ -70,8 +70,8 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "delivered-tk",
     label: "Доставлено в ТК",
     icon: <Truck className="h-3.5 w-3.5" />,
-    color: "text-green-700 border-green-300 hover:bg-green-50 dark:border-green-700 dark:hover:bg-green-950",
-    activeColor: "bg-green-600 text-white border-green-600 hover:bg-green-700",
+    color: "text-green-700 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-400",
+    activeColor: "bg-green-600 text-white border-green-600 hover:bg-green-700 shadow-sm",
     type: "status",
     value: "Доставлено в ТК",
   },
@@ -108,25 +108,25 @@ export const QuickFilters = ({
 
   return (
     <ScrollArea className="w-full">
-      <div className="flex gap-1.5 sm:gap-2 pb-2">
-      {QUICK_FILTERS.map((filter) => {
-        const isActive = isFilterActive(filter);
-        return (
-          <Button
-            key={filter.id}
-            variant="outline"
-            size="sm"
-            onClick={() => toggleFilter(filter)}
-            className={cn(
-              "h-7 sm:h-8 text-xs gap-1 sm:gap-1.5 px-2 sm:px-3 transition-all shrink-0 whitespace-nowrap",
-              isActive ? filter.activeColor : filter.color
-            )}
-          >
-            {filter.icon}
-            <span>{filter.label}</span>
-          </Button>
-        );
-      })}
+      <div className="flex gap-2 sm:gap-2.5 pb-2">
+        {QUICK_FILTERS.map((filter) => {
+          const isActive = isFilterActive(filter);
+          return (
+            <Button
+              key={filter.id}
+              variant="outline"
+              size="sm"
+              onClick={() => toggleFilter(filter)}
+              className={cn(
+                "h-8 sm:h-9 text-xs sm:text-sm gap-1.5 sm:gap-2 px-3 sm:px-4 transition-all shrink-0 whitespace-nowrap font-medium",
+                isActive ? filter.activeColor : filter.color
+              )}
+            >
+              {filter.icon}
+              <span>{filter.label}</span>
+            </Button>
+          );
+        })}
       </div>
       <ScrollBar orientation="horizontal" className="h-1.5" />
     </ScrollArea>

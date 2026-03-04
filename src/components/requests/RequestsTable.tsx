@@ -382,8 +382,8 @@ export const RequestsTable = ({
         </div>
         <div className="rounded-md border overflow-x-auto">
         <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
-          <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
-            <TableRow className="border-b hover:bg-transparent">
+          <TableHeader className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+            <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
@@ -446,8 +446,9 @@ export const RequestsTable = ({
               return (
                 <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/50 hover:shadow-sm active:scale-[0.995] active:bg-muted/70 ${isEvenRow ? 'bg-muted/20' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/50 hover:shadow-sm active:scale-[0.998] active:bg-muted/70 ${isEvenRow ? 'bg-muted/15' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
+                  style={{ height: '48px' }}
                 >
                   <TableCell 
                     className="w-[4px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[5px]" 
