@@ -3,7 +3,7 @@ import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart } from "lucide-
 import { Button } from "@/components/ui/button";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
-import { LabelExportButton } from "@/components/dashboard/LabelExportButton";
+
 import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -302,10 +302,7 @@ export const RequestsBulkActions = ({
   return (
     <div className="flex flex-wrap gap-1.5 sm:gap-2">
       {requests && requests.length > 0 && (
-        <>
           <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
-          <LabelExportButton selectedRequests={selectedRequests} />
-        </>
       )}
       
       {selectedRequestIds.size > 0 && (
