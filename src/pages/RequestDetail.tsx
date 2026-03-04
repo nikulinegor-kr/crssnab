@@ -37,6 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { notifyTelegram } from "@/lib/telegram";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
@@ -67,6 +68,7 @@ export default function RequestDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
+  const { logoUrl } = useOrgBranding();
   
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -498,7 +500,7 @@ export default function RequestDetail() {
 
         {/* Header with actions */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pt-2">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex-1 min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
               {request.description}
             </h1>
@@ -514,6 +516,9 @@ export default function RequestDetail() {
               )}
             </div>
           </div>
+          {logoUrl && (
+            <img src={logoUrl} alt="" className="h-6 w-6 object-contain rounded opacity-60 shrink-0 hidden md:block" />
+          )}
           {canEdit && (
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => setEditDialogOpen(true)} size="sm" className="gap-2 shadow-sm px-5">
