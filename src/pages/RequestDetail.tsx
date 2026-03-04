@@ -68,7 +68,7 @@ export default function RequestDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
-  const { logoUrl } = useOrgBranding();
+  const { logoUrl, orgName } = useOrgBranding();
   
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -517,8 +517,9 @@ export default function RequestDetail() {
             </div>
           </div>
           {logoUrl && (
-            <div className="p-1 rounded-md bg-muted/60 shrink-0 hidden md:block">
-              <img src={logoUrl} alt="" className="h-8 w-8 object-contain rounded" style={{ imageRendering: 'auto' }} />
+            <div className="flex items-center gap-2 p-1.5 rounded-md bg-muted/60 shrink-0 hidden md:flex">
+              <img src={logoUrl} alt={orgName} className="h-10 w-10 object-contain rounded" style={{ imageRendering: 'auto' }} />
+              {orgName && <span className="text-xs text-muted-foreground font-medium max-w-[120px] truncate">{orgName}</span>}
             </div>
           )}
           {canEdit && (

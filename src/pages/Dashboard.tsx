@@ -186,16 +186,16 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             {logoUrl ? (
               <div className="p-1.5 rounded-lg bg-muted/60 shrink-0">
-                <img src={logoUrl} alt={orgName} className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-md" style={{ imageRendering: 'auto' }} />
+                <img src={logoUrl} alt={orgName} className="h-[72px] w-[72px] object-contain rounded-md" style={{ imageRendering: 'auto' }} />
               </div>
             ) : (
-              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
+              <div className="h-[72px] w-[72px] rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Building2 className="h-9 w-9 text-muted-foreground" />
               </div>
             )}
             <div>
+              {orgName && <p className="text-lg font-semibold text-foreground">{orgName}</p>}
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-              {orgName && <p className="text-xs sm:text-sm text-muted-foreground">{orgName}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
