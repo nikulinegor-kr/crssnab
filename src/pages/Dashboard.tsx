@@ -181,21 +181,21 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden min-w-0">
-        {/* Header with Year Selector */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-4">
+        {/* Brand block */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-5">
             {logoUrl ? (
-              <div className="p-1.5 rounded-lg bg-muted/60 shrink-0">
-                <img src={logoUrl} alt={orgName} className="h-[72px] w-[72px] object-contain rounded-md" style={{ imageRendering: 'auto' }} />
+              <div className="p-1.5 rounded-xl bg-muted/60 shrink-0">
+                <img src={logoUrl} alt={orgName} className="h-20 w-20 object-contain rounded-lg" style={{ imageRendering: 'auto' }} />
               </div>
             ) : (
-              <div className="h-[72px] w-[72px] rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-9 w-9 text-muted-foreground" />
+              <div className="h-20 w-20 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                <Building2 className="h-10 w-10 text-muted-foreground" />
               </div>
             )}
-            <div>
-              {orgName && <p className="text-lg font-semibold text-foreground">{orgName}</p>}
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+            <div className="space-y-0.5">
+              {orgName && <p className="text-xl font-semibold text-foreground">{orgName}</p>}
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground/70">Dashboard</h1>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
