@@ -183,12 +183,14 @@ const Dashboard = () => {
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-4 sm:space-y-6 overflow-hidden min-w-0">
         {/* Header with Year Selector */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {logoUrl ? (
-              <img src={logoUrl} alt={orgName} className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-lg border border-border/40 shrink-0" />
+              <div className="p-1.5 rounded-lg bg-muted/60 shrink-0">
+                <img src={logoUrl} alt={orgName} className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-md" style={{ imageRendering: 'auto' }} />
+              </div>
             ) : (
-              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
               </div>
             )}
             <div>
