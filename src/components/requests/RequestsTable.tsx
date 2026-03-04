@@ -382,7 +382,7 @@ export const RequestsTable = ({
         </div>
         <div className="rounded-md border overflow-x-auto">
         <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
-          <TableHeader className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+          <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
@@ -446,18 +446,18 @@ export const RequestsTable = ({
               return (
                 <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/50 hover:shadow-sm active:scale-[0.998] active:bg-muted/70 ${isEvenRow ? 'bg-muted/15' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   style={{ height: '48px' }}
                 >
                   <TableCell 
-                    className="w-[4px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[5px]" 
+                    className="w-[5px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[6px]" 
                     style={{ 
                       backgroundColor: priorityColor,
-                      borderRadius: '2px 0 0 2px',
+                      borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-10 text-center p-2 border-r" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRequestIds.has(request.id)}
                       onCheckedChange={() => toggleRequestSelection(request.id)}
@@ -465,12 +465,12 @@ export const RequestsTable = ({
                     />
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="p-2 border-r overflow-hidden" style={{ width: widths.description }}>
+                    <TableCell className="px-3 py-2 border-r overflow-hidden" style={{ width: widths.description }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="description"
@@ -482,7 +482,7 @@ export const RequestsTable = ({
                             getPriorityColor={getPriorityColor}
                             onEdit={onEditClick}
                           >
-                            <div className="line-clamp-2 hover:text-primary transition-colors font-medium leading-tight">
+                            <div className="line-clamp-1 hover:text-primary transition-colors font-medium leading-tight truncate" title={request.description}>
                               <HighlightText text={request.description} searchQuery={searchQuery} />
                             </div>
                           </RequestQuickPreview>
@@ -491,7 +491,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.priority && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.priority }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.priority }}>
                       <Badge
                         variant="outline"
                         className="text-xs px-2 py-0.5"
@@ -505,7 +505,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.status }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.status }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="status"
@@ -525,28 +525,40 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.availability }}>
-                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
-                        <HighlightText text={request.availability_delivery_time || "-"} searchQuery={searchQuery} />
-                      </div>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.availability }}>
+                      {request.availability_delivery_time ? (
+                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                          <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.contractor }}>
-                      <div className="line-clamp-2 leading-tight truncate">
-                        <HighlightText text={request.contractor || "-"} searchQuery={searchQuery} />
-                      </div>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.contractor }}>
+                      {request.contractor ? (
+                        <div className="line-clamp-2 leading-tight truncate">
+                          <HighlightText text={request.contractor} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.invoice_number }}>
-                      <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
-                        <HighlightText text={request.invoice_number || "-"} searchQuery={searchQuery} />
-                      </div>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.invoice_number }}>
+                      {request.invoice_number ? (
+                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                          <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center p-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
+                    <TableCell className="text-center px-3 py-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -554,66 +566,78 @@ export const RequestsTable = ({
                         displayValue={
                           request.payment_percentage !== null && request.payment_percentage !== undefined
                             ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                            : <span className="text-muted-foreground">0%</span>
+                            : <span className="text-muted-foreground/40">—</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : "-"}
+                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center p-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : "-"}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
                         value={request.transport_company || ""}
                         displayValue={
-                          <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
-                            <HighlightText text={request.transport_company || "-"} searchQuery={searchQuery} />
-                          </div>
+                          request.transport_company ? (
+                            <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                              <HighlightText text={request.transport_company} searchQuery={searchQuery} />
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
                         value={request.applicant || ""}
                         displayValue={
-                          <div className="line-clamp-2 leading-tight truncate">
-                            <HighlightText text={request.applicant || "-"} searchQuery={searchQuery} />
-                          </div>
+                          request.applicant ? (
+                            <div className="line-clamp-2 leading-tight truncate">
+                              <HighlightText text={request.applicant} searchQuery={searchQuery} />
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center p-2 border-r overflow-hidden" style={{ width: widths.comments }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.comments }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
                         value={request.comments || ""}
                         displayValue={
-                          <div className="line-clamp-3 text-muted-foreground italic leading-tight text-left">
-                            <HighlightText text={request.comments || "-"} searchQuery={searchQuery} />
-                          </div>
+                          request.comments ? (
+                            <div className="line-clamp-3 text-muted-foreground italic leading-tight text-left">
+                              <HighlightText text={request.comments} searchQuery={searchQuery} />
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )
                         }
                       />
                     </TableCell>
