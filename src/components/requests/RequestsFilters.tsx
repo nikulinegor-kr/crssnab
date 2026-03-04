@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,8 @@ import { SavedFiltersDropdown } from "@/components/SavedFiltersDropdown";
 import { QuickFilters } from "./QuickFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Request } from "@/hooks/useRequests";
 import { 
   STATUSES, 
   PRIORITIES, 
@@ -56,6 +58,9 @@ interface RequestsFiltersProps {
   onSemanticSearch?: (resultIds: string[] | null) => void;
   organizationId?: string | null;
   deliveredCount?: number;
+  objectFilter: string;
+  setObjectFilter: (value: string) => void;
+  requests: Request[] | undefined;
 }
 
 export const RequestsFilters = ({
@@ -81,66 +86,73 @@ export const RequestsFilters = ({
   onSemanticSearch,
   organizationId,
   deliveredCount = 0,
+  objectFilter,
+  setObjectFilter,
+  requests,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
   const [isSmartSearching, setIsSmartSearching] = useState(false);
   const [isSmartSearchActive, setIsSmartSearchActive] = useState(false);
 
+  // Fetch request objects for dropdown
+  const { data: requestObjects } = useQuery({
+    queryKey: ["request_objects", organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organizationId,
+  });
+
+  // Filter to objects that have requests
+  const objectIdsWithRequests = useMemo(() => {
+    if (!requests) return new Set<string>();
+    return new Set(requests.map(r => r.object_id).filter(Boolean) as string[]);
+  }, [requests]);
+
+  const availableObjects = useMemo(() => {
+    if (!requestObjects) return [];
+    return requestObjects.filter(obj => objectIdsWithRequests.has(obj.id));
+  }, [requestObjects, objectIdsWithRequests]);
+
   const handleAddYear = () => {
     const trimmedYear = newYear.trim();
     if (!trimmedYear) return;
-    
     const success = addYear(trimmedYear);
     if (success) {
       setNewYear("");
-      toast({
-        title: "Год добавлен",
-        description: `Год ${trimmedYear} добавлен в список`,
-      });
+      toast({ title: "Год добавлен", description: `Год ${trimmedYear} добавлен в список` });
     } else {
-      toast({
-        title: "Год уже существует",
-        description: `Год ${trimmedYear} уже есть в списке`,
-        variant: "destructive",
-      });
+      toast({ title: "Год уже существует", description: `Год ${trimmedYear} уже есть в списке`, variant: "destructive" });
     }
   };
 
   const handleSmartSearch = async () => {
     if (!searchQuery.trim() || !organizationId || !onSemanticSearch) return;
-    
     setIsSmartSearching(true);
     try {
       const { data, error } = await supabase.functions.invoke("semantic-search", {
         body: { query: searchQuery, organizationId },
       });
-
       if (error) throw error;
-
       if (data.error) {
-        toast({
-          title: "Ошибка AI",
-          description: data.error,
-          variant: "destructive",
-        });
+        toast({ title: "Ошибка AI", description: data.error, variant: "destructive" });
         return;
       }
-
       onSemanticSearch(data.results || []);
       setIsSmartSearchActive(true);
-      
-      toast({
-        title: "Умный поиск",
-        description: `Найдено ${data.results?.length || 0} релевантных заявок`,
-      });
+      toast({ title: "Умный поиск", description: `Найдено ${data.results?.length || 0} релевантных заявок` });
     } catch (error) {
       console.error("Semantic search error:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось выполнить умный поиск",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: "Не удалось выполнить умный поиск", variant: "destructive" });
     } finally {
       setIsSmartSearching(false);
     }
@@ -148,9 +160,7 @@ export const RequestsFilters = ({
 
   const clearSmartSearch = () => {
     setIsSmartSearchActive(false);
-    if (onSemanticSearch) {
-      onSemanticSearch(null);
-    }
+    if (onSemanticSearch) onSemanticSearch(null);
   };
 
   const hasActiveFilters = 
@@ -159,23 +169,22 @@ export const RequestsFilters = ({
     priorityFilter !== "all" ||
     yearFilter !== "all" ||
     applicantFilter !== "all" ||
+    objectFilter !== "all" ||
     !hideDelivered ||
     isSmartSearchActive;
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
-      {/* Search row */}
+    <div className="flex flex-col gap-3 sm:gap-4">
+      {/* === LEVEL 4: Search === */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск..."
+            placeholder="Поиск по заявкам..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              if (isSmartSearchActive) {
-                clearSmartSearch();
-              }
+              if (isSmartSearchActive) clearSmartSearch();
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && searchQuery.trim() && organizationId && onSemanticSearch) {
@@ -190,10 +199,7 @@ export const RequestsFilters = ({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 sm:h-7 sm:w-7 p-0"
-                onClick={() => {
-                  setSearchQuery("");
-                  clearSmartSearch();
-                }}
+                onClick={() => { setSearchQuery(""); clearSmartSearch(); }}
               >
                 <X className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -215,9 +221,7 @@ export const RequestsFilters = ({
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Умный поиск (по смыслу)</p>
-                </TooltipContent>
+                <TooltipContent><p>Умный поиск (по смыслу)</p></TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -225,10 +229,7 @@ export const RequestsFilters = ({
         <Button
           variant={hasActiveFilters ? "destructive" : "outline"}
           size="sm"
-          onClick={() => {
-            resetFilters();
-            clearSmartSearch();
-          }}
+          onClick={() => { resetFilters(); clearSmartSearch(); }}
           disabled={!hasActiveFilters}
           title="Сбросить все фильтры"
           className="shrink-0 h-9 sm:h-10 px-2 sm:px-3 gap-1.5"
@@ -243,19 +244,14 @@ export const RequestsFilters = ({
         <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-md text-sm">
           <Sparkles className="h-4 w-4 text-primary" />
           <span>Умный поиск активен</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 ml-auto"
-            onClick={clearSmartSearch}
-          >
+          <Button variant="ghost" size="sm" className="h-6 px-2 ml-auto" onClick={clearSmartSearch}>
             <X className="h-3 w-3 mr-1" />
             Сбросить
           </Button>
         </div>
       )}
 
-      {/* Quick Filters */}
+      {/* === LEVEL 5: Quick Filters === */}
       <QuickFilters
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
@@ -263,8 +259,9 @@ export const RequestsFilters = ({
         setPriorityFilter={setPriorityFilter}
       />
 
-      {/* Saved filters */}
-      <div className="flex flex-wrap gap-2 items-center">
+      {/* === LEVEL 6: Advanced Filters === */}
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        {/* Saved filters */}
         <SavedFiltersDropdown
           currentFilters={currentFilters}
           onApplyFilter={(filters) => {
@@ -278,26 +275,18 @@ export const RequestsFilters = ({
             });
           }}
         />
-      </div>
 
-      {/* Filters grid - more compact on mobile */}
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {/* Status Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full min-w-0">
+            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
               <span className="truncate">
-                {statusFilter.length === 0
-                  ? "Статус"
-                  : `Статус (${statusFilter.length})`}
+                {statusFilter.length === 0 ? "Статус" : `Статус (${statusFilter.length})`}
               </span>
               {statusFilter.length > 0 && (
                 <X
                   className="h-3 w-3 sm:h-4 sm:w-4 ml-1 shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStatusFilter([]);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); setStatusFilter([]); }}
                 />
               )}
             </Button>
@@ -305,12 +294,7 @@ export const RequestsFilters = ({
           <PopoverContent className="w-[220px] sm:w-[250px] p-3 sm:p-4 bg-background z-50" align="start">
             <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs sm:text-sm font-semibold">Выберите статусы</Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={selectAllStatuses}
-                className="w-full text-xs sm:text-sm h-8"
-              >
+              <Button variant="outline" size="sm" onClick={selectAllStatuses} className="w-full text-xs sm:text-sm h-8">
                 {statusFilter.length === STATUSES.length ? "Снять всё" : "Выбрать всё"}
               </Button>
               <div className="space-y-1.5 sm:space-y-2 max-h-[200px] overflow-y-auto">
@@ -320,17 +304,12 @@ export const RequestsFilters = ({
                       id={`status-${status}`}
                       checked={statusFilter.includes(status)}
                       onCheckedChange={(checked) => {
-                        if (checked) {
-                          setStatusFilter([...statusFilter, status]);
-                        } else {
-                          setStatusFilter(statusFilter.filter((s) => s !== status));
-                        }
+                        if (checked) setStatusFilter([...statusFilter, status]);
+                        else setStatusFilter(statusFilter.filter((s) => s !== status));
                       }}
                       className="h-4 w-4"
                     />
-                    <label htmlFor={`status-${status}`} className="text-xs sm:text-sm cursor-pointer">
-                      {status}
-                    </label>
+                    <label htmlFor={`status-${status}`} className="text-xs sm:text-sm cursor-pointer">{status}</label>
                   </div>
                 ))}
               </div>
@@ -338,40 +317,41 @@ export const RequestsFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Priority Filter */}
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
-            <SelectValue placeholder="Приоритет" />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-background">
-            <SelectItem value="all" className="text-xs sm:text-sm">Все</SelectItem>
-            {PRIORITIES.map((priority) => (
-              <SelectItem key={priority} value={priority} className="text-xs sm:text-sm">
-                {priority}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Applicant Filter */}
         <Select value={applicantFilter} onValueChange={setApplicantFilter}>
-          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
-            <SelectValue placeholder="Заявитель" />
+          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0 w-auto max-w-[160px]">
+            <SelectValue placeholder="Контрагент" />
           </SelectTrigger>
           <SelectContent className="z-50 bg-background max-h-[200px]">
             <SelectItem value="all" className="text-xs sm:text-sm">Все</SelectItem>
             {uniqueApplicants.map((applicant) => (
-              <SelectItem key={applicant} value={applicant} className="text-xs sm:text-sm">
-                {applicant}
-              </SelectItem>
+              <SelectItem key={applicant} value={applicant} className="text-xs sm:text-sm">{applicant}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
+        {/* Object Filter (dropdown) */}
+        {availableObjects.length > 0 && (
+          <Select value={objectFilter} onValueChange={setObjectFilter}>
+            <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0 w-auto max-w-[180px]">
+              <div className="flex items-center gap-1 truncate">
+                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <SelectValue placeholder="Объект" />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="z-50 bg-background max-h-[200px]">
+              <SelectItem value="all" className="text-xs sm:text-sm">Все объекты</SelectItem>
+              {availableObjects.map((obj) => (
+                <SelectItem key={obj.id} value={obj.id} className="text-xs sm:text-sm">{obj.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {/* Year Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 w-full min-w-0">
+            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
               <span className="truncate">{yearFilter === "all" ? "Год" : yearFilter}</span>
             </Button>
           </PopoverTrigger>
@@ -385,9 +365,7 @@ export const RequestsFilters = ({
                 <SelectContent className="z-50 bg-background">
                   <SelectItem value="all" className="text-xs sm:text-sm">Все годы</SelectItem>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year} className="text-xs sm:text-sm">
-                      {year}
-                    </SelectItem>
+                    <SelectItem key={year} value={year} className="text-xs sm:text-sm">{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -399,24 +377,21 @@ export const RequestsFilters = ({
                     placeholder="2026"
                     value={newYear}
                     onChange={(e) => setNewYear(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleAddYear();
-                      }
-                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddYear(); }}
                     className="text-xs sm:text-sm h-8"
                   />
-                  <Button onClick={handleAddYear} size="sm" className="h-8 text-xs sm:text-sm px-2 sm:px-3">
-                    +
-                  </Button>
+                  <Button onClick={handleAddYear} size="sm" className="h-8 text-xs sm:text-sm px-2 sm:px-3">+</Button>
                 </div>
               </div>
             </div>
           </PopoverContent>
         </Popover>
 
-        {/* Hide Delivered with Counter */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md col-span-2 sm:col-span-1 min-w-0">
+        {/* Spacer to push right-side items */}
+        <div className="flex-1" />
+
+        {/* Hide Delivered */}
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 rounded-md min-w-0">
           <Switch
             id="hideDelivered"
             checked={hideDelivered}
@@ -432,11 +407,9 @@ export const RequestsFilters = ({
             ) : (
               <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
             )}
-            <span className="truncate">Скрыть доставл.</span>
+            <span className="truncate hidden sm:inline">Скрыть доставл.</span>
             {deliveredCount > 0 && hideDelivered && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5 shrink-0">
-                {deliveredCount}
-              </Badge>
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5 shrink-0">{deliveredCount}</Badge>
             )}
           </Label>
         </div>
