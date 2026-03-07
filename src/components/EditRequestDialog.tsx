@@ -623,6 +623,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        product_id: data.product_id || null,
+        warehouse_id: data.warehouse_id || null,
         photo_url: finalPhotoUrls[0] || null,
         document_url: finalDocumentUrls[0] || null,
         photo_urls: finalPhotoUrls,
