@@ -257,6 +257,38 @@ const App = () => {
               }
             />
             <Route
+              path="/shipments"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ShipmentsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/objects"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ObjectsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+              }
+            />
+            <Route
               path="/system-demo"
               element={
                 <ProtectedRoute>
