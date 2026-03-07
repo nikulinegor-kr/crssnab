@@ -16,6 +16,7 @@ interface DocEntry {
   type: "photo" | "document";
   requestId: string;
   requestNumber: string;
+  requestDescription: string;
   contractor: string | null;
   date: string;
 }
