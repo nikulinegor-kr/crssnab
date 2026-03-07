@@ -216,7 +216,7 @@ const Requests = () => {
     { value: "active", label: "Активные" },
     { value: "favorites", label: "Избранные", icon: <Star className="h-3.5 w-3.5" />, count: favoriteRequests.length },
     { value: "archived", label: "Архив" },
-    { value: "procurement", label: "Свод", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
+    { value: "procurement", label: "Стоимость закупок", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   ] as const;
 
   return (

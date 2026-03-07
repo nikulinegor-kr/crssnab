@@ -131,7 +131,7 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
           {items && items.length > 0 && (
             <ProcurementExportButton
               items={items}
-              procurementName={procurement?.name || "Свод"}
+              procurementName={procurement?.name || "Стоимость закупок"}
               totalAmount={totalAmount}
             />
           )}

@@ -443,7 +443,7 @@ export const RequestsBulkActions = ({
               size="sm"
             >
               <ShoppingCart className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Свод</span>
+              <span className="hidden sm:inline">Стоимость закупок</span>
             </Button>
 
             <Button
