@@ -310,6 +310,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       transport_company: initialData?.transport_company || "",
       waybill_number: "",
       comments: initialData?.comments || "",
+      product_id: "",
+      warehouse_id: "",
     },
   });
 
