@@ -7,7 +7,7 @@ import { Plus, Search, Filter, FileText, DollarSign } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useRequests } from "@/hooks/useRequests";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
