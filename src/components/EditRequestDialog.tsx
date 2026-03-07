@@ -54,6 +54,7 @@ import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSe
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
+import { ErpSection } from "./create-request/ErpSection";
 
 const requestSchema = z.object({
   request_date: z.string()
