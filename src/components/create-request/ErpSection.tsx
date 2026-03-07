@@ -300,7 +300,7 @@ export const ErpSection = ({
                 <FormLabel className="text-xs">Целевой склад</FormLabel>
                 <Select
                   value={field.value || ""}
-                  onValueChange={field.onChange}
+                  onValueChange={(val) => field.onChange(val === "__none__" ? "" : val)}
                   disabled={disabled}
                 >
                   <FormControl>
@@ -309,7 +309,7 @@ export const ErpSection = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">— Не выбран —</SelectItem>
+                    <SelectItem value="__none__">— Не выбран —</SelectItem>
                     {warehouses.map((w: any) => (
                       <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                     ))}
