@@ -277,6 +277,12 @@ export const RequestsTable = ({
     navigate(`/requests/${request.id}`);
   }, [navigate]);
 
+  const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
+    e.preventDefault();
+    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+    openQuickView(request);
+  }, [openQuickView]);
+
   if (isLoading) {
     return (
       <div className="space-y-1.5">
