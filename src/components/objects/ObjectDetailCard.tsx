@@ -47,17 +47,25 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
     enabled: !!currentOrgId,
   });
 
-  // Fetch responsible user profile
+  // Fetch responsible - could be a user or a participant
   const { data: responsibleProfile } = useQuery({
     queryKey: ["profile", objectData.responsible_user_id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try profiles first
+      const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, email")
         .eq("id", objectData.responsible_user_id)
-        .single();
-      if (error) throw error;
-      return data;
+        .maybeSingle();
+      if (profile) return { name: profile.full_name || profile.email };
+      // Try request_participants
+      const { data: participant } = await supabase
+        .from("request_participants")
+        .select("name")
+        .eq("id", objectData.responsible_user_id)
+        .maybeSingle();
+      if (participant) return { name: participant.name };
+      return null;
     },
     enabled: !!objectData.responsible_user_id,
   });
@@ -151,7 +159,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                 <div>
                   <span className="text-muted-foreground">Ответственный:</span>
                   <p className="font-medium">
-                    {responsibleProfile?.full_name || responsibleProfile?.email || "—"}
+                    {responsibleProfile?.name || "—"}
                   </p>
                 </div>
                 <div>
