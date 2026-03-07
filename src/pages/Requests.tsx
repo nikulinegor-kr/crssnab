@@ -425,6 +425,35 @@ const Requests = () => {
         </div>
       )}
 
+      {activeTab === "favorites" && (
+        <div className="space-y-3 sm:space-y-4">
+          {favoriteRequests.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-muted-foreground font-medium">Нет избранных заявок</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Нажмите ⭐ в таблице заявок, чтобы добавить в избранное
+              </p>
+            </Card>
+          ) : (
+            <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+              <RequestsTable
+                requests={favoriteRequests}
+                isLoading={isLoading}
+                selectedRequestIds={selectedRequestIds}
+                toggleRequestSelection={toggleRequestSelection}
+                toggleAllRequests={toggleAllRequests}
+                onDeleteClick={handleDeleteClick}
+                onEditClick={handleEditClick}
+                searchQuery=""
+                favoriteIds={favoriteIds}
+                onToggleFavorite={toggleFavorite}
+              />
+            </Card>
+          )}
+        </div>
+      )}
+
       {activeTab === "procurement" && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
