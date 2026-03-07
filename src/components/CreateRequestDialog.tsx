@@ -317,6 +317,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       comments: initialData?.comments || "",
       product_id: "",
       warehouse_id: "",
+      quantity: 1,
+      unit: "шт",
+      operation_type: "",
+      planned_delivery_date: "",
+      reserve_on_warehouse: false,
     },
   });
 
