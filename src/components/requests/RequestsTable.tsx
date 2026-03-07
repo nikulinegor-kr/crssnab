@@ -473,6 +473,22 @@ export const RequestsTable = ({
                       className="h-4 w-4"
                     />
                   </TableCell>
+                  {onToggleFavorite && (
+                    <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => onToggleFavorite(request.id)}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          className={`h-4 w-4 ${
+                            favoriteIds?.has(request.id)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground/30 hover:text-yellow-400"
+                          }`}
+                        />
+                      </button>
+                    </TableCell>
+                  )}
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
