@@ -917,6 +917,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
+        {/* 5.5. ERP: Product, Warehouse */}
+        <ErpSection
+          form={form}
+          currentOrgId={request?.organization_id || null}
+          disabled={isViewer}
+        />
+
         {/* 6. Additional: ZRS, Files */}
         <AdditionalSection
           form={form}
