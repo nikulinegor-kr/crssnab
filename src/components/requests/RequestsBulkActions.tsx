@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, Download, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useCreateProcurement } from "@/hooks/useProcurements";
 
@@ -42,19 +48,117 @@ export const RequestsBulkActions = ({
   const { currentOrgId } = useCurrentOrganization();
   const createProcurement = useCreateProcurement();
 
+  // Fetch statuses for the org
+  const { data: statuses } = useQuery({
+    queryKey: ["request-statuses", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("request_statuses")
+        .select("id, name, color")
+        .eq("organization_id", currentOrgId)
+        .order("order");
+      return data || [];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Fetch priorities for the org
+  const { data: priorities } = useQuery({
+    queryKey: ["request-priorities", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("request_priorities")
+        .select("id, name, color")
+        .eq("organization_id", currentOrgId)
+        .order("order");
+      return data || [];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  // Fetch participants (executors)
+  const { data: executors } = useQuery({
+    queryKey: ["request-participants-executors", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("request_participants")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .eq("is_active", true)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .update({ status: newStatus })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Статус обновлён", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleBulkPriorityUpdate = async (newPriority: string) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .update({ priority: newPriority })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Приоритет обновлён", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleBulkExecutorUpdate = async (executor: string) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .update({ executor })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Исполнитель назначен", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleBulkStatusChange = async () => {
     if (selectedRequestIds.size === 0) {
-      toast({
-        title: "Ошибка",
-        description: "Выберите хотя бы одну заявку",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: "Выберите хотя бы одну заявку", variant: "destructive" });
       return;
     }
 
     setIsSending(true);
     try {
-      // Filter only requests with status "В пути"
       const selectedRequests = Array.from(selectedRequestIds)
         .map((id) => requests?.find((r) => r.id === id))
         .filter(Boolean) as Request[];
@@ -72,7 +176,6 @@ export const RequestsBulkActions = ({
         return;
       }
 
-      // Update status for eligible requests
       const { error } = await supabase
         .from("requests")
         .update({ status: "Доставлено в ТК" })
@@ -80,56 +183,31 @@ export const RequestsBulkActions = ({
 
       if (error) throw error;
 
-      // Send Telegram notifications for each updated request
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        let tgSuccess = 0;
-        let tgError = 0;
         for (const req of eligibleRequests) {
           try {
-            const { data, error: tgErr } = await supabase.functions.invoke('notify-telegram', {
+            await supabase.functions.invoke('notify-telegram', {
               body: { requestId: req.id, mode: 'send' },
               headers: { Authorization: `Bearer ${session.access_token}` }
             });
-            if (tgErr || data?.error) {
-              tgError++;
-              console.error("Telegram error for", req.id, tgErr || data?.error);
-            } else {
-              tgSuccess++;
-            }
           } catch (e) {
-            tgError++;
             console.error("Telegram send failed for", req.id, e);
           }
         }
-        if (tgSuccess > 0) {
-          console.log(`Telegram: sent ${tgSuccess}, errors ${tgError}`);
-        }
       }
 
-      // Success notification with counts
       if (skippedCount > 0) {
-        toast({
-          title: "Статус обновлён",
-          description: `Обновлено: ${eligibleRequests.length}, пропущено: ${skippedCount} (не в статусе "В пути")`,
-        });
+        toast({ title: "Статус обновлён", description: `Обновлено: ${eligibleRequests.length}, пропущено: ${skippedCount}` });
       } else {
-        toast({
-          title: "Статус обновлён",
-          description: `Обновлено заявок: ${eligibleRequests.length}`,
-        });
+        toast({ title: "Статус обновлён", description: `Обновлено заявок: ${eligibleRequests.length}` });
       }
 
-      // Refresh data
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
       setSelectedRequestIds(new Set());
     } catch (error: any) {
-      toast({
-        title: "Ошибка обновления",
-        description: error.message || "Не удалось обновить статус заявок",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка обновления", description: error.message, variant: "destructive" });
     } finally {
       setIsSending(false);
     }
@@ -137,92 +215,75 @@ export const RequestsBulkActions = ({
 
   const handleSendToTelegram = async () => {
     if (selectedRequestIds.size === 0) {
-      toast({
-        title: "Ошибка",
-        description: "Выберите хотя бы одну заявку для отправки",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: "Выберите хотя бы одну заявку для отправки", variant: "destructive" });
       return;
     }
 
     setIsSending(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-
       if (!session) {
-        toast({
-          title: "Ошибка авторизации",
-          description: "Сессия истекла. Пожалуйста, войдите снова.",
-          variant: "destructive",
-        });
+        toast({ title: "Ошибка авторизации", description: "Сессия истекла.", variant: "destructive" });
         return;
       }
 
       let successCount = 0;
       let errorCount = 0;
-      let errorMessages: string[] = [];
 
       for (const requestId of Array.from(selectedRequestIds)) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.access_token) {
-            throw new Error("Токен авторизации недоступен");
-          }
-
+          const { data: { session: s } } = await supabase.auth.getSession();
           const { data, error } = await supabase.functions.invoke('notify-telegram', {
             body: { requestId, mode: 'send' },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
+            headers: { Authorization: `Bearer ${s?.access_token}` }
           });
-
-          if (error) {
-            errorMessages.push(error.message || 'Неизвестная ошибка');
-            errorCount++;
-          } else if (data?.error) {
-            errorMessages.push(data.error);
-            errorCount++;
-          } else {
-            successCount++;
-          }
-        } catch (err: any) {
-          errorMessages.push(err.message || 'Неизвестная ошибка');
+          if (error || data?.error) errorCount++;
+          else successCount++;
+        } catch {
           errorCount++;
         }
       }
 
       if (successCount > 0) {
-        toast({
-          title: "Успешно отправлено",
-          description: `Отправлено заявок: ${successCount}${errorCount > 0 ? `, ошибок: ${errorCount}` : ''}`,
-        });
+        toast({ title: "Успешно отправлено", description: `Отправлено: ${successCount}${errorCount > 0 ? `, ошибок: ${errorCount}` : ''}` });
         setSelectedRequestIds(new Set());
       } else {
-        const uniqueErrors = [...new Set(errorMessages)];
-        const errorDetail = uniqueErrors.length > 0 ? uniqueErrors[0] : "Проверьте настройки Telegram";
-        const isTelegramConfigError = errorDetail.includes("Telegram не настроен");
-
-        toast({
-          title: "Ошибка отправки",
-          description: errorDetail,
-          variant: "destructive",
-          action: isTelegramConfigError ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/settings?tab=integrations")}
-            >
-              Настроить Telegram
-            </Button>
-          ) : undefined,
-        });
+        toast({ title: "Ошибка отправки", description: "Проверьте настройки Telegram", variant: "destructive" });
       }
     } catch (error: any) {
-      toast({
-        title: "Ошибка отправки",
-        description: error.message || "Не удалось отправить заявки в Telegram.",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка отправки", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Пользователь не авторизован");
+      const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).single();
+      const userName = profile?.full_name || profile?.email || "Неизвестный";
+
+      for (const requestId of Array.from(selectedRequestIds)) {
+        const request = requests?.find((r) => r.id === requestId);
+        if (!request || !currentOrgId) continue;
+        await supabase.rpc("log_audit_event", {
+          _organization_id: currentOrgId,
+          _action: "restore",
+          _entity_type: "request",
+          _entity_id: requestId,
+          _new_values: { request_number: request.request_number, restored_by: userName },
+        });
+        await supabase.from("requests").update({ archived: false }).eq("id", requestId);
+      }
+
+      toast({ title: "Заявки восстановлены", description: `Восстановлено: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (error: any) {
+      toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     } finally {
       setIsSending(false);
     }
@@ -232,171 +293,204 @@ export const RequestsBulkActions = ({
     .map((id) => requests?.find((r) => r.id === id)!)
     .filter(Boolean);
 
-  const handleBulkRestore = async () => {
-    if (selectedRequestIds.size === 0) {
-      toast({
-        title: "Ошибка",
-        description: "Выберите хотя бы одну заявку",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Export button always visible
+  const exportButton = requests && requests.length > 0 && (
+    <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
+  );
 
-    setIsSending(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Пользователь не авторизован");
+  // If no selection, just show export
+  if (selectedRequestIds.size < 2) {
+    return <div className="flex flex-wrap gap-1.5 sm:gap-2">{exportButton}</div>;
+  }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
-
-      const userName = profile?.full_name || profile?.email || "Неизвестный пользователь";
-
-      for (const requestId of Array.from(selectedRequestIds)) {
-        const request = requests?.find((r) => r.id === requestId);
-        if (!request) continue;
-
-        if (currentOrgId) {
-          await supabase.rpc("log_audit_event", {
-            _organization_id: currentOrgId,
-            _action: "restore",
-            _entity_type: "request",
-            _entity_id: requestId,
-            _new_values: {
-              request_number: request.request_number,
-              description: request.description,
-              status: request.status,
-              restored_by: userName,
-              restore_reason: "Восстановлена из архива",
-            },
-          });
-        }
-
-        await supabase
-          .from("requests")
-          .update({ archived: false })
-          .eq("id", requestId);
-      }
-
-      toast({
-        title: "Заявки восстановлены",
-        description: `Восстановлено заявок: ${selectedRequestIds.size}`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      setSelectedRequestIds(new Set());
-    } catch (error: any) {
-      toast({
-        title: "Ошибка восстановления",
-        description: error.message || "Не удалось восстановить заявки",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
+  // Toolbar for 2+ selected
   return (
-    <div className="flex flex-wrap gap-1.5 sm:gap-2">
-      {requests && requests.length > 0 && (
-          <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
-      )}
-      
-      {selectedRequestIds.size > 0 && (
-        <>
-          {isArchiveTab ? (
-            /* Restore from archive button */
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex items-center gap-2 bg-muted/60 border border-border rounded-lg px-3 py-2 flex-wrap">
+        <span className="text-sm font-medium text-foreground whitespace-nowrap">
+          Выбрано: <span className="text-primary font-bold">{selectedRequestIds.size}</span>
+        </span>
+
+        <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+
+        {isArchiveTab ? (
+          <Button
+            onClick={handleBulkRestore}
+            disabled={isSending}
+            variant="outline"
+            className="gap-1.5 text-xs h-8 px-3"
+            size="sm"
+          >
+            <ArchiveRestore className="h-3.5 w-3.5" />
+            Восстановить
+          </Button>
+        ) : (
+          <>
+            {/* Change Status Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Изменить статус</span>
+                  <span className="sm:hidden">Статус</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {statuses && statuses.length > 0 ? (
+                  statuses.map((s) => (
+                    <DropdownMenuItem key={s.id} onClick={() => handleBulkStatusUpdate(s.name)}>
+                      <span
+                        className="w-2 h-2 rounded-full mr-2 shrink-0"
+                        style={{ backgroundColor: s.color || "hsl(var(--primary))" }}
+                      />
+                      {s.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <>
+                    {["Новая заявка", "В работе", "Заказано", "В пути", "Доставлено в ТК", "Доставлено"].map((s) => (
+                      <DropdownMenuItem key={s} onClick={() => handleBulkStatusUpdate(s)}>{s}</DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Change Priority Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <Flag className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Изменить приоритет</span>
+                  <span className="sm:hidden">Приоритет</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {priorities && priorities.length > 0 ? (
+                  priorities.map((p) => (
+                    <DropdownMenuItem key={p.id} onClick={() => handleBulkPriorityUpdate(p.name)}>
+                      <span
+                        className="w-2 h-2 rounded-full mr-2 shrink-0"
+                        style={{ backgroundColor: p.color || "hsl(var(--primary))" }}
+                      />
+                      {p.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <>
+                    {["Планово", "Срочно", "Аварийно"].map((p) => (
+                      <DropdownMenuItem key={p} onClick={() => handleBulkPriorityUpdate(p)}>{p}</DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Assign Executor Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Назначить исполнителя</span>
+                  <span className="sm:hidden">Исполнитель</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {executors && executors.length > 0 ? (
+                  executors.map((e) => (
+                    <DropdownMenuItem key={e.id} onClick={() => handleBulkExecutorUpdate(e.name)}>
+                      {e.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>Нет участников</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Export Selected */}
+            <ExcelExportButton
+              requests={requests || []}
+              filteredRequests={selectedRequests}
+              label="Экспорт выбранных"
+              icon={<Download className="h-3.5 w-3.5" />}
+            />
+
+            <div className="h-4 w-px bg-border mx-0.5 hidden sm:block" />
+
+            {/* Existing actions */}
             <Button
-              onClick={handleBulkRestore}
-              disabled={isSending}
-              className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={async () => {
+                const selectedReqs = selectedRequests as Request[];
+                const items = selectedReqs.map(r => ({
+                  request_id: r.id,
+                  name: r.description,
+                  qty: 1,
+                  price: r.amount || 0,
+                }));
+                try {
+                  await createProcurement.mutateAsync(items);
+                  toast({ title: "Закуп сформирован", description: `Позиций: ${items.length}` });
+                  setSelectedRequestIds(new Set());
+                } catch (err: any) {
+                  toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+                }
+              }}
+              disabled={isSending || createProcurement.isPending}
+              variant="outline"
+              className="gap-1.5 text-xs h-8 px-3"
               size="sm"
-              title="Восстановить выбранные заявки из архива"
             >
-              <ArchiveRestore className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Восстановить</span>
+              <ShoppingCart className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Свод</span>
+            </Button>
+
+            <Button
+              onClick={handleBulkStatusChange}
+              disabled={isSending}
+              className="gap-1.5 text-xs h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+              size="sm"
+            >
+              <Truck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Доставлено в ТК</span>
+            </Button>
+
+            <Button
+              onClick={handleSendToTelegram}
+              disabled={isSending}
+              variant="outline"
+              className="gap-1.5 text-xs h-8 px-3"
+              size="sm"
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Telegram</span>
+            </Button>
+
+            <Button
+              onClick={onBulkDelete}
+              variant="destructive"
+              className="gap-1.5 text-xs h-8 px-3"
+              size="sm"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">В архив</span>
               <span>({selectedRequestIds.size})</span>
             </Button>
-          ) : (
-            <>
-              {/* Create procurement button */}
-              <Button
-                onClick={async () => {
-                  const selectedReqs = Array.from(selectedRequestIds)
-                    .map((id) => requests?.find((r) => r.id === id))
-                    .filter(Boolean) as Request[];
-                  
-                  const hasZeroPrice = selectedReqs.some(r => !r.amount || r.amount === 0);
-                  
-                  const items = selectedReqs.map(r => ({
-                    request_id: r.id,
-                    name: r.description,
-                    qty: 1,
-                    price: r.amount || 0,
-                  }));
+          </>
+        )}
 
-                  try {
-                    await createProcurement.mutateAsync(items);
-                    toast({
-                      title: "Закуп сформирован",
-                      description: `Добавлено позиций: ${items.length}${hasZeroPrice ? " (есть позиции без цены!)" : ""}`,
-                    });
-                    setSelectedRequestIds(new Set());
-                  } catch (err: any) {
-                    toast({
-                      title: "Ошибка",
-                      description: err.message || "Не удалось сформировать свод",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                disabled={isSending || createProcurement.isPending}
-                variant="secondary"
-                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
-                size="sm"
-              >
-                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Сформировать свод</span>
-                <span className="sm:hidden">Свод</span>
-              </Button>
-              {/* Bulk status change button */}
-              <Button
-                onClick={handleBulkStatusChange}
-                disabled={isSending}
-                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
-                size="sm"
-                title="Изменить статус выбранных заявок со статусом 'В пути' на 'Доставлено в ТК'"
-              >
-                <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Доставлено в ТК</span>
-              </Button>
-              <Button
-                onClick={handleSendToTelegram}
-                disabled={isSending}
-                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
-                size="sm"
-              >
-                <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Telegram</span>
-              </Button>
-              <Button
-                onClick={onBulkDelete}
-                variant="destructive"
-                className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
-                size="sm"
-              >
-                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">В архив</span>
-                <span>({selectedRequestIds.size})</span>
-              </Button>
-            </>
-          )}
-        </>
-      )}
-      
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 ml-auto"
+          onClick={() => setSelectedRequestIds(new Set())}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </div>
   );
 };
