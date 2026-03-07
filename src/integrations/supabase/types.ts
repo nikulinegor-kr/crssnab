@@ -1430,19 +1430,24 @@ export type Database = {
           id: string
           invoice_number: string | null
           object_id: string | null
+          operation_type: string | null
           organization_id: string | null
           payment_percentage: number | null
           photo_url: string | null
           photo_urls: string[] | null
+          planned_delivery_date: string | null
           priority: string | null
           product_id: string | null
+          quantity: number | null
           request_date: string
           request_number: string
+          reserve_on_warehouse: boolean | null
           shipment_date: string | null
           status: string
           telegram_message_id: number | null
           telegram_message_ids: number[] | null
           transport_company: string | null
+          unit: string | null
           updated_at: string | null
           warehouse_id: string | null
           waybill_number: string | null
@@ -1468,19 +1473,24 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           object_id?: string | null
+          operation_type?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
           photo_urls?: string[] | null
+          planned_delivery_date?: string | null
           priority?: string | null
           product_id?: string | null
+          quantity?: number | null
           request_date: string
           request_number: string
+          reserve_on_warehouse?: boolean | null
           shipment_date?: string | null
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
           transport_company?: string | null
+          unit?: string | null
           updated_at?: string | null
           warehouse_id?: string | null
           waybill_number?: string | null
@@ -1506,19 +1516,24 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           object_id?: string | null
+          operation_type?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
           photo_url?: string | null
           photo_urls?: string[] | null
+          planned_delivery_date?: string | null
           priority?: string | null
           product_id?: string | null
+          quantity?: number | null
           request_date?: string
           request_number?: string
+          reserve_on_warehouse?: boolean | null
           shipment_date?: string | null
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
           transport_company?: string | null
+          unit?: string | null
           updated_at?: string | null
           warehouse_id?: string | null
           waybill_number?: string | null
