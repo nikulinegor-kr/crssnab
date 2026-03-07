@@ -39,13 +39,16 @@ export const useRequests = (showArchived: boolean = false) => {
     queryFn: async () => {
       const query = supabase
         .from("requests")
-        .select("*")
+        .select("*, request_objects(id, name)")
         .eq("archived", showArchived);
       
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Request[];
+      return (data || []).map((r: any) => ({
+        ...r,
+        object_name: r.request_objects?.name || null,
+      })) as (Request & { object_name: string | null })[];
     },
   });
 };
