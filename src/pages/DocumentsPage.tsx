@@ -57,6 +57,7 @@ const DocumentsPage = () => {
           type: "document",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
