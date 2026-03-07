@@ -708,6 +708,13 @@ export const RequestsTable = ({
         <PaginationControls />
         </div>
       </div>
+
+      <RequestQuickView
+        request={quickViewRequest}
+        open={quickViewOpen}
+        onClose={closeQuickView}
+        onEdit={onEditClick}
+      />
     </>
   );
 };
