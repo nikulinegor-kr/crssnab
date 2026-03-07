@@ -288,6 +288,16 @@ const App = () => {
               }
             />
             <Route
+              path="/documents"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <DocumentsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/system-demo"
               element={
                 <ProtectedRoute>
