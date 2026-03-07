@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ReactNode } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
+import { GlobalSearch } from "./GlobalSearch";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
@@ -42,6 +43,9 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
               <span className="text-sm font-semibold text-foreground truncate hidden sm:block max-w-[220px]">
                 {orgName || "CRSS CRM"}
               </span>
+            </div>
+            <div className="flex-1 flex justify-center px-2">
+              <GlobalSearch />
             </div>
             <NotificationBell />
           </header>

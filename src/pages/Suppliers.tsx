@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useRequests } from "@/hooks/useRequests";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -72,6 +73,24 @@ export default function Suppliers() {
     inn: "",
     notes: "",
   });
+
+  // Получаем заявки для статистики контрагентов
+  const { data: requests } = useRequests();
+
+  // Статистика по контрагентам
+  const contractorStats = useMemo(() => {
+    if (!requests) return new Map<string, { count: number; totalAmount: number }>();
+    const map = new Map<string, { count: number; totalAmount: number }>();
+    requests.forEach(r => {
+      if (!r.contractor) return;
+      const key = r.contractor.toLowerCase().trim();
+      const prev = map.get(key) || { count: 0, totalAmount: 0 };
+      prev.count++;
+      prev.totalAmount += r.amount || 0;
+      map.set(key, prev);
+    });
+    return map;
+  }, [requests]);
 
   // Получаем поставщиков
   const { data: suppliers, isLoading } = useQuery({
@@ -238,13 +257,14 @@ export default function Suppliers() {
         <Card className="bg-card border-border/40">
           <CardHeader className="border-b border-border/40">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
-              <div className="col-span-2">Название компании</div>
-              <div className="col-span-2">Контактное лицо</div>
-              <div className="col-span-2">Email</div>
-              <div className="col-span-2">Телефон</div>
-              <div className="col-span-2">Категория</div>
+              <div className="col-span-2">Название</div>
+              <div className="col-span-1">ИНН</div>
+              <div className="col-span-2">Телефон / Email</div>
+              <div className="col-span-1">Категория</div>
               <div className="col-span-1">Статус</div>
-              <div className="col-span-1 text-right">Действия</div>
+              <div className="col-span-1 text-center">Заявки</div>
+              <div className="col-span-2 text-right">Сумма закупок</div>
+              <div className="col-span-2 text-right">Действия</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -254,55 +274,78 @@ export default function Suppliers() {
               </div>
             ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
               <div className="divide-y divide-border/40">
-                {filteredSuppliers.map((supplier) => (
-                  <div
-                    key={supplier.id}
-                    className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
-                  >
-                    <div className="col-span-2 font-medium text-foreground">
-                      {supplier.name}
+                 {filteredSuppliers.map((supplier) => {
+                    const stats = contractorStats.get(supplier.name.toLowerCase().trim());
+                    return (
+                    <div
+                      key={supplier.id}
+                      className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                    >
+                      <div className="col-span-2">
+                        <div className="font-medium text-foreground">{supplier.name}</div>
+                        {supplier.contact_person && (
+                          <div className="text-xs text-muted-foreground mt-0.5">{supplier.contact_person}</div>
+                        )}
+                      </div>
+                      <div className="col-span-1 text-sm text-muted-foreground font-mono">
+                        {supplier.inn || "—"}
+                      </div>
+                      <div className="col-span-2 text-sm text-muted-foreground">
+                        <div>{supplier.phone || "—"}</div>
+                        {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
+                      </div>
+                      <div className="col-span-1">
+                        <Badge variant="outline" className="font-normal text-xs">
+                          {supplier.category}
+                        </Badge>
+                      </div>
+                      <div className="col-span-1">
+                        <Badge className={getStatusColor(supplier.status)}>
+                          {supplier.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-1 text-center">
+                        {stats?.count ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <FileText className="h-3 w-3" />
+                            {stats.count}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </div>
+                      <div className="col-span-2 text-right text-sm font-medium">
+                        {stats?.totalAmount ? (
+                          <span className="text-foreground">
+                            {stats.totalAmount.toLocaleString("ru-RU")} ₽
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </div>
+                      <div className="col-span-2 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
+                              Редактировать
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(supplier.id)}
+                              className="text-destructive"
+                            >
+                              Удалить
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                    <div className="col-span-2 text-sm text-muted-foreground">
-                      {supplier.contact_person || "—"}
-                    </div>
-                    <div className="col-span-2 text-sm text-muted-foreground">
-                      {supplier.email || "—"}
-                    </div>
-                    <div className="col-span-2 text-sm text-muted-foreground">
-                      {supplier.phone || "—"}
-                    </div>
-                    <div className="col-span-2">
-                      <Badge variant="outline" className="font-normal">
-                        {supplier.category}
-                      </Badge>
-                    </div>
-                    <div className="col-span-1">
-                      <Badge className={getStatusColor(supplier.status)}>
-                        {supplier.status}
-                      </Badge>
-                    </div>
-                    <div className="col-span-1 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
-                            Редактировать
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => deleteMutation.mutate(supplier.id)}
-                            className="text-destructive"
-                          >
-                            Удалить
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             ) : (
               <div className="p-8 text-center text-muted-foreground">

@@ -37,6 +37,7 @@ const DeadstockPage = lazyWithRetry(() => import("./pages/DeadstockPage"));
 const ShipmentsPage = lazyWithRetry(() => import("./pages/ShipmentsPage"));
 const ObjectsPage = lazyWithRetry(() => import("./pages/ObjectsPage"));
 const AnalyticsPage = lazyWithRetry(() => import("./pages/AnalyticsPage"));
+const DocumentsPage = lazyWithRetry(() => import("./pages/DocumentsPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
@@ -282,6 +283,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <AnalyticsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <DocumentsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

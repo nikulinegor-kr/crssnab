@@ -15,6 +15,7 @@ import {
   Archive,
   Building2,
   BarChart3,
+  FolderOpen,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -52,6 +53,7 @@ const mainMenuItems = [
   { title: "Поставки", url: "/shipments", icon: Package },
   { title: "Контрагенты", url: "/suppliers", icon: Users },
   { title: "Объекты", url: "/objects", icon: Building2 },
+  { title: "Документы", url: "/documents", icon: FolderOpen },
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Аналитика", url: "/analytics", icon: BarChart3 },
 ];
