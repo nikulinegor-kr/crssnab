@@ -563,6 +563,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           recentTransportCompanies={recentTransportCompanies}
         />
 
+        {/* 4.5. ERP: Product, Warehouse */}
+        <ErpSection
+          form={form}
+          currentOrgId={currentOrgId}
+        />
+
         {/* 5. Additional (Collapsed by default): ZRS, Files */}
         <AdditionalSection
           form={form}
