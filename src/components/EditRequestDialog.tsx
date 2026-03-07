@@ -306,6 +306,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       comments: request.comments || "",
       product_id: (request as any).product_id || "",
       warehouse_id: (request as any).warehouse_id || "",
+      quantity: (request as any).quantity ?? 1,
+      unit: (request as any).unit || "шт",
+      operation_type: (request as any).operation_type || "",
+      planned_delivery_date: (request as any).planned_delivery_date || "",
+      reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
     };
   }, [request]);
 
