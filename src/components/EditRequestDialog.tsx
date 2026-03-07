@@ -122,6 +122,11 @@ const requestSchema = z.object({
     .optional(),
   product_id: z.string().optional(),
   warehouse_id: z.string().optional(),
+  quantity: z.number().min(1, "Минимум 1").nullable().optional(),
+  unit: z.string().optional(),
+  operation_type: z.string().optional(),
+  planned_delivery_date: z.string().optional().or(z.literal("")),
+  reserve_on_warehouse: z.boolean().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -269,6 +274,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       comments: "",
       product_id: "",
       warehouse_id: "",
+      quantity: 1,
+      unit: "шт",
+      operation_type: "",
+      planned_delivery_date: "",
+      reserve_on_warehouse: false,
     },
   });
 
@@ -296,6 +306,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       comments: request.comments || "",
       product_id: (request as any).product_id || "",
       warehouse_id: (request as any).warehouse_id || "",
+      quantity: (request as any).quantity ?? 1,
+      unit: (request as any).unit || "шт",
+      operation_type: (request as any).operation_type || "",
+      planned_delivery_date: (request as any).planned_delivery_date || "",
+      reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
     };
   }, [request]);
 
@@ -345,6 +360,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: request.comments || "",
         product_id: (request as any).product_id || "",
         warehouse_id: (request as any).warehouse_id || "",
+        quantity: (request as any).quantity ?? 1,
+        unit: (request as any).unit || "шт",
+        operation_type: (request as any).operation_type || "",
+        planned_delivery_date: (request as any).planned_delivery_date || "",
+        reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
       });
       
       const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
@@ -426,6 +446,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: data.comments || null,
         product_id: data.product_id || null,
         warehouse_id: data.warehouse_id || null,
+        quantity: data.quantity || 1,
+        unit: data.unit || "шт",
+        operation_type: data.operation_type || null,
+        planned_delivery_date: data.planned_delivery_date || null,
+        reserve_on_warehouse: data.reserve_on_warehouse || false,
       };
 
       const { data: updatedData, error } = await supabase
@@ -549,6 +574,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: data.comments || "",
         product_id: data.product_id || "",
         warehouse_id: data.warehouse_id || "",
+        quantity: data.quantity ?? 1,
+        unit: data.unit || "шт",
+        operation_type: data.operation_type || "",
+        planned_delivery_date: data.planned_delivery_date || "",
+        reserve_on_warehouse: data.reserve_on_warehouse || false,
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
@@ -627,6 +657,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: data.comments || null,
         product_id: data.product_id || null,
         warehouse_id: data.warehouse_id || null,
+        quantity: data.quantity || 1,
+        unit: data.unit || "шт",
+        operation_type: data.operation_type || null,
+        planned_delivery_date: data.planned_delivery_date || null,
+        reserve_on_warehouse: data.reserve_on_warehouse || false,
         photo_url: finalPhotoUrls[0] || null,
         document_url: finalDocumentUrls[0] || null,
         photo_urls: finalPhotoUrls,

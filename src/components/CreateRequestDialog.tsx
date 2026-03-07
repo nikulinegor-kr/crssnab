@@ -116,6 +116,11 @@ const requestSchema = z.object({
     .optional(),
   product_id: z.string().optional(),
   warehouse_id: z.string().optional(),
+  quantity: z.number().min(1, "Минимум 1").nullable().optional(),
+  unit: z.string().optional(),
+  operation_type: z.string().optional(),
+  planned_delivery_date: z.string().optional().or(z.literal("")),
+  reserve_on_warehouse: z.boolean().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -312,6 +317,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       comments: initialData?.comments || "",
       product_id: "",
       warehouse_id: "",
+      quantity: 1,
+      unit: "шт",
+      operation_type: "",
+      planned_delivery_date: "",
+      reserve_on_warehouse: false,
     },
   });
 
@@ -448,6 +458,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         comments: data.comments || null,
         product_id: data.product_id || null,
         warehouse_id: data.warehouse_id || null,
+        quantity: data.quantity || 1,
+        unit: data.unit || "шт",
+        operation_type: data.operation_type || null,
+        planned_delivery_date: data.planned_delivery_date || null,
+        reserve_on_warehouse: data.reserve_on_warehouse || false,
         photo_url: photoUrls[0] || null,
         document_url: documentUrls[0] || null,
         photo_urls: photoUrls,
