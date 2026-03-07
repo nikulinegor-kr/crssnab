@@ -321,11 +321,12 @@ export default function WarehousePage() {
           </div>
 
           <div className="rounded-md border">
-            <Table>
+             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Товар</TableHead>
                   <TableHead>Артикул</TableHead>
+                  <TableHead>Объект</TableHead>
                   <TableHead>Склад</TableHead>
                   <TableHead className="text-right">Остаток</TableHead>
                   <TableHead className="text-right">В пути</TableHead>
@@ -336,17 +337,21 @@ export default function WarehousePage() {
               <TableBody>
                 {filteredStock.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Нет данных об остатках
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredStock.map((s, i) => {
                     const available = s.stock - s.reserve;
+                    // Find warehouse to get object name
+                    const wh = warehouses.find((w: any) => w.name === s.warehouse?.name);
+                    const objectName = (wh as any)?.request_objects?.name;
                     return (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{s.product?.name || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{s.product?.article || "—"}</TableCell>
+                        <TableCell className="text-sm">{objectName || "—"}</TableCell>
                         <TableCell>{s.warehouse?.name || "—"}</TableCell>
                         <TableCell className="text-right">{s.stock}</TableCell>
                         <TableCell className="text-right">
