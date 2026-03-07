@@ -270,18 +270,30 @@ export const RequestsTable = ({
     setCurrentPage(1);
   }, []);
 
+  const clickTimerRef = useCallback(() => {}, []);
+  const [clickTimer, setClickTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
       return;
     }
-    navigate(`/requests/${request.id}`);
+    // Delay navigation to distinguish from double-click
+    const timer = setTimeout(() => {
+      navigate(`/requests/${request.id}`);
+    }, 250);
+    setClickTimer(timer);
   }, [navigate]);
 
   const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
     e.preventDefault();
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+    // Cancel pending single-click navigation
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      setClickTimer(null);
+    }
     openQuickView(request);
-  }, [openQuickView]);
+  }, [openQuickView, clickTimer]);
 
   if (isLoading) {
     return (
