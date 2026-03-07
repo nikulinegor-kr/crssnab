@@ -54,6 +54,7 @@ import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSe
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
+import { ErpSection } from "./create-request/ErpSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -119,6 +120,8 @@ const requestSchema = z.object({
     .trim()
     .max(1000, "Комментарий не должен превышать 1000 символов")
     .optional(),
+  product_id: z.string().optional(),
+  warehouse_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -264,6 +267,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       transport_company: "",
       waybill_number: "",
       comments: "",
+      product_id: "",
+      warehouse_id: "",
     },
   });
 
@@ -289,6 +294,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       transport_company: request.transport_company || "",
       waybill_number: request.waybill_number || "",
       comments: request.comments || "",
+      product_id: (request as any).product_id || "",
+      warehouse_id: (request as any).warehouse_id || "",
     };
   }, [request]);
 
@@ -336,6 +343,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: request.transport_company || "",
         waybill_number: request.waybill_number || "",
         comments: request.comments || "",
+        product_id: (request as any).product_id || "",
+        warehouse_id: (request as any).warehouse_id || "",
       });
       
       const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
@@ -415,6 +424,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        product_id: data.product_id || null,
+        warehouse_id: data.warehouse_id || null,
       };
 
       const { data: updatedData, error } = await supabase
@@ -536,6 +547,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || "",
         waybill_number: data.waybill_number || "",
         comments: data.comments || "",
+        product_id: data.product_id || "",
+        warehouse_id: data.warehouse_id || "",
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
@@ -612,6 +625,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        product_id: data.product_id || null,
+        warehouse_id: data.warehouse_id || null,
         photo_url: finalPhotoUrls[0] || null,
         document_url: finalDocumentUrls[0] || null,
         photo_urls: finalPhotoUrls,
@@ -899,6 +914,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
+          disabled={isViewer}
+        />
+
+        {/* 5.5. ERP: Product, Warehouse */}
+        <ErpSection
+          form={form}
+          currentOrgId={request?.organization_id || null}
           disabled={isViewer}
         />
 

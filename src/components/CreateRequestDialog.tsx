@@ -48,6 +48,7 @@ import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSe
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
+import { ErpSection } from "./create-request/ErpSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -113,6 +114,8 @@ const requestSchema = z.object({
     .trim()
     .max(1000, "Комментарий не должен превышать 1000 символов")
     .optional(),
+  product_id: z.string().optional(),
+  warehouse_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -307,6 +310,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       transport_company: initialData?.transport_company || "",
       waybill_number: "",
       comments: initialData?.comments || "",
+      product_id: "",
+      warehouse_id: "",
     },
   });
 
@@ -441,6 +446,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        product_id: data.product_id || null,
+        warehouse_id: data.warehouse_id || null,
         photo_url: photoUrls[0] || null,
         document_url: documentUrls[0] || null,
         photo_urls: photoUrls,
@@ -554,6 +561,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
+        />
+
+        {/* 4.5. ERP: Product, Warehouse */}
+        <ErpSection
+          form={form}
+          currentOrgId={currentOrgId}
         />
 
         {/* 5. Additional (Collapsed by default): ZRS, Files */}

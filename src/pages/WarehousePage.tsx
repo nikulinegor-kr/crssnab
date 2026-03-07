@@ -26,6 +26,7 @@ const TYPE_LABELS: Record<string, string> = {
   UNRESERVE: "Снятие резерва",
   MOVE_IN: "Перемещение (приход)",
   MOVE_OUT: "Перемещение (расход)",
+  IN_TRANSIT: "В пути",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -35,6 +36,7 @@ const TYPE_COLORS: Record<string, string> = {
   UNRESERVE: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   MOVE_IN: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
   MOVE_OUT: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  IN_TRANSIT: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
 };
 
 export default function WarehousePage() {
@@ -108,7 +110,7 @@ export default function WarehousePage() {
 
   // Compute stock levels from movements
   const stockLevels = useMemo(() => {
-    const map = new Map<string, { product: any; warehouse: any; stock: number; reserve: number }>();
+    const map = new Map<string, { product: any; warehouse: any; stock: number; reserve: number; inTransit: number }>();
 
     for (const m of movements) {
       const key = `${m.product_id}__${m.warehouse_id}`;
@@ -118,6 +120,7 @@ export default function WarehousePage() {
           warehouse: m.warehouses,
           stock: 0,
           reserve: 0,
+          inTransit: 0,
         });
       }
       const entry = map.get(key)!;
@@ -136,11 +139,14 @@ export default function WarehousePage() {
         case "UNRESERVE":
           entry.reserve -= m.quantity;
           break;
+        case "IN_TRANSIT":
+          entry.inTransit += m.quantity;
+          break;
       }
     }
 
     return Array.from(map.values()).filter(
-      (e) => e.stock !== 0 || e.reserve !== 0
+      (e) => e.stock !== 0 || e.reserve !== 0 || e.inTransit !== 0
     );
   }, [movements]);
 
@@ -322,6 +328,7 @@ export default function WarehousePage() {
                   <TableHead>Артикул</TableHead>
                   <TableHead>Склад</TableHead>
                   <TableHead className="text-right">Остаток</TableHead>
+                  <TableHead className="text-right">В пути</TableHead>
                   <TableHead className="text-right">Резерв</TableHead>
                   <TableHead className="text-right">Доступно</TableHead>
                 </TableRow>
@@ -329,7 +336,7 @@ export default function WarehousePage() {
               <TableBody>
                 {filteredStock.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       Нет данных об остатках
                     </TableCell>
                   </TableRow>
@@ -342,6 +349,13 @@ export default function WarehousePage() {
                         <TableCell className="text-muted-foreground">{s.product?.article || "—"}</TableCell>
                         <TableCell>{s.warehouse?.name || "—"}</TableCell>
                         <TableCell className="text-right">{s.stock}</TableCell>
+                        <TableCell className="text-right">
+                          {s.inTransit > 0 ? (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              {s.inTransit}
+                            </Badge>
+                          ) : "—"}
+                        </TableCell>
                         <TableCell className="text-right">{s.reserve}</TableCell>
                         <TableCell className={`text-right font-semibold ${available < 0 ? "text-destructive" : ""}`}>
                           {available}
