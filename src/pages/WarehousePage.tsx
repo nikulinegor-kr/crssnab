@@ -326,6 +326,7 @@ export default function WarehousePage() {
                   <TableHead>Артикул</TableHead>
                   <TableHead>Склад</TableHead>
                   <TableHead className="text-right">Остаток</TableHead>
+                  <TableHead className="text-right">В пути</TableHead>
                   <TableHead className="text-right">Резерв</TableHead>
                   <TableHead className="text-right">Доступно</TableHead>
                 </TableRow>
@@ -333,7 +334,7 @@ export default function WarehousePage() {
               <TableBody>
                 {filteredStock.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       Нет данных об остатках
                     </TableCell>
                   </TableRow>
@@ -346,6 +347,13 @@ export default function WarehousePage() {
                         <TableCell className="text-muted-foreground">{s.product?.article || "—"}</TableCell>
                         <TableCell>{s.warehouse?.name || "—"}</TableCell>
                         <TableCell className="text-right">{s.stock}</TableCell>
+                        <TableCell className="text-right">
+                          {s.inTransit > 0 ? (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              {s.inTransit}
+                            </Badge>
+                          ) : "—"}
+                        </TableCell>
                         <TableCell className="text-right">{s.reserve}</TableCell>
                         <TableCell className={`text-right font-semibold ${available < 0 ? "text-destructive" : ""}`}>
                           {available}
