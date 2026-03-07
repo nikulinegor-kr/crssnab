@@ -344,9 +344,8 @@ export default function WarehousePage() {
                 ) : (
                   filteredStock.map((s, i) => {
                     const available = s.stock - s.reserve;
-                    // Find warehouse to get object name
-                    const wh = warehouses.find((w: any) => w.name === s.warehouse?.name);
-                    const objectName = (wh as any)?.request_objects?.name;
+                    // Get object name from warehouse data in movement
+                    const objectName = (s as any).objectName;
                     return (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{s.product?.name || "—"}</TableCell>
