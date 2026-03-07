@@ -310,6 +310,16 @@ const App = () => {
               }
             />
             <Route
+              path="/warehouse"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WarehousePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/system-demo"
               element={
                 <ProtectedRoute>
