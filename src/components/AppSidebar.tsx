@@ -53,6 +53,7 @@ const mainMenuItems = [
   { title: "Поставки", url: "/shipments", icon: Package },
   { title: "Контрагенты", url: "/suppliers", icon: Users },
   { title: "Объекты", url: "/objects", icon: Building2 },
+  { title: "Документы", url: "/documents", icon: FolderOpen },
   { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Аналитика", url: "/analytics", icon: BarChart3 },
 ];
