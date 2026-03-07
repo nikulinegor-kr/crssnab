@@ -297,6 +297,11 @@ const Requests = () => {
           >
             {"icon" in tab && tab.icon}
             {tab.label}
+            {"count" in tab && (tab as any).count > 0 && (
+              <span className="ml-1 bg-primary/10 text-primary text-xs rounded-full px-1.5 py-0.5 font-semibold">
+                {(tab as any).count}
+              </span>
+            )}
             {activeTab === tab.value && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
             )}
