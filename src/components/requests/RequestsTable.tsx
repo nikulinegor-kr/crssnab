@@ -513,6 +513,15 @@ export const RequestsTable = ({
                       </button>
                     </TableCell>
                   )}
+                  <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => openQuickView(request)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                      title="Быстрый просмотр"
+                    >
+                      <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </button>
+                  </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
