@@ -299,6 +299,16 @@ const App = () => {
               }
             />
             <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TeamPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/system-demo"
               element={
                 <ProtectedRoute>

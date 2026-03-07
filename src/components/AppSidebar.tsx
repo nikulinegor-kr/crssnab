@@ -64,7 +64,6 @@ const reportMenuItems = [
 ];
 
 const settingsMenuItems = [
-  { title: "Профиль", url: "/profile", icon: UserCircle },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
 ];
 
