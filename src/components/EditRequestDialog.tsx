@@ -569,6 +569,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         comments: data.comments || "",
         product_id: data.product_id || "",
         warehouse_id: data.warehouse_id || "",
+        quantity: data.quantity ?? 1,
+        unit: data.unit || "шт",
+        operation_type: data.operation_type || "",
+        planned_delivery_date: data.planned_delivery_date || "",
+        reserve_on_warehouse: data.reserve_on_warehouse || false,
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
