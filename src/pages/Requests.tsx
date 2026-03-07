@@ -411,6 +411,18 @@ const Requests = () => {
             requests={requests}
           />
 
+          <RequestsBulkActions
+            requests={requests}
+            filteredRequests={filters.filteredRequests}
+            selectedRequestIds={selectedRequestIds}
+            setSelectedRequestIds={setSelectedRequestIds}
+            canCreate={canCreate}
+            isSending={isSending}
+            setIsSending={setIsSending}
+            onBulkDelete={handleBulkDelete}
+            isArchiveTab={true}
+          />
+
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
             <RequestsTable
               requests={semanticSearchIds 
