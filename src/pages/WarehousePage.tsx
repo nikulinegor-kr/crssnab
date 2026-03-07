@@ -99,7 +99,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_movements")
-        .select("*, warehouse_products(name, article), warehouses(name), requests(request_number, description)")
+        .select("*, warehouse_products(name, article), warehouses(name, object_id, request_objects(name)), requests(request_number, description)")
         .eq("organization_id", currentOrgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
