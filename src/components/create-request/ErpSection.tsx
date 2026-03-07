@@ -10,15 +10,24 @@ import {
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FormSectionCard } from "./FormSectionCard";
-import { Package } from "lucide-react";
+import { Package, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { StockInfoCard } from "./StockInfoCard";
 
 interface ErpSectionProps {
   form: UseFormReturn<any>;
   currentOrgId: string | null;
   disabled?: boolean;
 }
+
+const UNITS = ["шт", "кг", "м", "комплект"];
+const OPERATION_TYPES = [
+  { value: "purchase", label: "Закупка" },
+  { value: "issue", label: "Выдача со склада" },
+  { value: "transfer", label: "Перемещение" },
+];
 
 export const ErpSection = ({
   form,
@@ -56,6 +65,7 @@ export const ErpSection = ({
   });
 
   const selectedProductId = form.watch("product_id");
+  const selectedWarehouseId = form.watch("warehouse_id");
 
   // When product is selected, update article search display
   useEffect(() => {
@@ -63,6 +73,10 @@ export const ErpSection = ({
       const product = products.find((p: any) => p.id === selectedProductId);
       if (product) {
         setArticleSearch(product.article || "");
+        // Auto-fill unit from product if available
+        if (product.unit) {
+          form.setValue("unit", product.unit);
+        }
       }
     }
   }, [selectedProductId, products]);
@@ -81,6 +95,9 @@ export const ErpSection = ({
     const product = products.find((p: any) => p.id === productId);
     if (product) {
       setArticleSearch(product.article || "");
+      if (product.unit) {
+        form.setValue("unit", product.unit);
+      }
     }
   };
 
@@ -90,7 +107,7 @@ export const ErpSection = ({
   };
 
   if (products.length === 0 && warehouses.length === 0) {
-    return null; // Don't show section if no ERP data exists
+    return null;
   }
 
   return (
@@ -126,7 +143,6 @@ export const ErpSection = ({
                 </button>
               )}
             </div>
-            {/* Dropdown with filtered products */}
             {articleSearch && !selectedProductId && filteredProducts.length > 0 && (
               <div className="border rounded-md bg-popover shadow-md max-h-[150px] overflow-auto">
                 {filteredProducts.slice(0, 10).map((p: any) => (
@@ -157,6 +173,9 @@ export const ErpSection = ({
                     const product = products.find((p: any) => p.id === val);
                     if (product) {
                       setArticleSearch(product.article || "");
+                      if (product.unit) {
+                        form.setValue("unit", product.unit);
+                      }
                     }
                   }}
                   disabled={disabled}
@@ -181,31 +200,167 @@ export const ErpSection = ({
           />
         </div>
 
-        {/* Warehouse select */}
+        {/* Stock info card - show when product is selected */}
+        {selectedProductId && currentOrgId && (
+          <StockInfoCard
+            productId={selectedProductId}
+            warehouseId={selectedWarehouseId}
+            organizationId={currentOrgId}
+          />
+        )}
+
+        {/* Quantity + Unit */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Количество</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="1"
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? parseInt(e.target.value, 10) : null;
+                      field.onChange(val);
+                    }}
+                    disabled={disabled}
+                    className="h-9 text-sm"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Ед. измерения</FormLabel>
+                <Select
+                  value={field.value || "шт"}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="operation_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Тип операции</FormLabel>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Выберите тип" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">— Не выбран —</SelectItem>
+                    {OPERATION_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Warehouse + Planned delivery date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          <FormField
+            control={form.control}
+            name="warehouse_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Целевой склад</FormLabel>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Выберите склад" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">— Не выбран —</SelectItem>
+                    {warehouses.map((w: any) => (
+                      <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="planned_delivery_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Плановая дата поставки</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                    className="h-9 text-sm"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Reserve checkbox */}
         <FormField
           control={form.control}
-          name="warehouse_id"
+          name="reserve_on_warehouse"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Целевой склад</FormLabel>
-              <Select
-                value={field.value || ""}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Выберите склад" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="">— Не выбран —</SelectItem>
-                  {warehouses.map((w: any) => (
-                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value || false}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled || !selectedProductId || !selectedWarehouseId}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-xs font-normal cursor-pointer">
+                  Зарезервировать товар на складе
+                </FormLabel>
+              </div>
             </FormItem>
           )}
         />
