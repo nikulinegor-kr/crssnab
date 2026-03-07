@@ -287,11 +287,11 @@ const Dashboard = () => {
               </Button>
               <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/shipments")}>
                 <Truck className="h-4 w-4" />
-                Поставки
+                Новая поставка
               </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/spare-parts")}>
-                <Package className="h-4 w-4" />
-                Запчасти
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/documents")}>
+                <FileStack className="h-4 w-4" />
+                Новый документ
               </Button>
             </div>
           </CardContent>
