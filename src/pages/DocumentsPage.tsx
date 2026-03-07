@@ -71,6 +71,7 @@ const DocumentsPage = () => {
           type: "photo",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
