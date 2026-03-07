@@ -71,7 +71,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("warehouses")
-        .select("*")
+        .select("*, request_objects(name)")
         .eq("organization_id", currentOrgId!)
         .order("name");
       if (error) throw error;
@@ -99,7 +99,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_movements")
-        .select("*, warehouse_products(name, article), warehouses(name), requests(request_number, description)")
+        .select("*, warehouse_products(name, article), warehouses(name, object_id, request_objects(name)), requests(request_number, description)")
         .eq("organization_id", currentOrgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -110,7 +110,7 @@ export default function WarehousePage() {
 
   // Compute stock levels from movements
   const stockLevels = useMemo(() => {
-    const map = new Map<string, { product: any; warehouse: any; stock: number; reserve: number; inTransit: number }>();
+    const map = new Map<string, { product: any; warehouse: any; objectName: string; stock: number; reserve: number; inTransit: number }>();
 
     for (const m of movements) {
       const key = `${m.product_id}__${m.warehouse_id}`;
@@ -118,6 +118,7 @@ export default function WarehousePage() {
         map.set(key, {
           product: m.warehouse_products,
           warehouse: m.warehouses,
+          objectName: (m.warehouses as any)?.request_objects?.name || "",
           stock: 0,
           reserve: 0,
           inTransit: 0,
@@ -321,11 +322,12 @@ export default function WarehousePage() {
           </div>
 
           <div className="rounded-md border">
-            <Table>
+             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Товар</TableHead>
                   <TableHead>Артикул</TableHead>
+                  <TableHead>Объект</TableHead>
                   <TableHead>Склад</TableHead>
                   <TableHead className="text-right">Остаток</TableHead>
                   <TableHead className="text-right">В пути</TableHead>
@@ -336,17 +338,20 @@ export default function WarehousePage() {
               <TableBody>
                 {filteredStock.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Нет данных об остатках
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredStock.map((s, i) => {
                     const available = s.stock - s.reserve;
+                    // Get object name from warehouse data in movement
+                    const objectName = (s as any).objectName;
                     return (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{s.product?.name || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{s.product?.article || "—"}</TableCell>
+                        <TableCell className="text-sm">{objectName || "—"}</TableCell>
                         <TableCell>{s.warehouse?.name || "—"}</TableCell>
                         <TableCell className="text-right">{s.stock}</TableCell>
                         <TableCell className="text-right">

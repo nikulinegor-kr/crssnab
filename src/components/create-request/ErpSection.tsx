@@ -51,11 +51,11 @@ export const ErpSection = ({
   });
 
   const { data: warehouses = [] } = useQuery({
-    queryKey: ["warehouses", currentOrgId],
+    queryKey: ["warehouses-with-objects", currentOrgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("warehouses")
-        .select("*")
+        .select("*, request_objects(name)")
         .eq("organization_id", currentOrgId!)
         .order("name");
       if (error) throw error;
@@ -311,7 +311,9 @@ export const ErpSection = ({
                   <SelectContent>
                     <SelectItem value="__none__">— Не выбран —</SelectItem>
                     {warehouses.map((w: any) => (
-                      <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.request_objects?.name ? `${w.request_objects.name} — ${w.name}` : w.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
