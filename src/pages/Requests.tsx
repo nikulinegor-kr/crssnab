@@ -40,7 +40,7 @@ const Requests = () => {
   const { canCreate } = useUserRole();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
   const { data: requests, isLoading } = useRequests(activeTab === "archived");
   const createProcurement = useCreateProcurement();
 
