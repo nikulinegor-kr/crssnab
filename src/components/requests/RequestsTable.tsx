@@ -173,6 +173,8 @@ export const RequestsTable = ({
   onDeleteClick,
   onEditClick,
   searchQuery = "",
+  favoriteIds,
+  onToggleFavorite,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { visibility, updateVisibility } = useTableColumnVisibility();
