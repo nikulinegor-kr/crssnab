@@ -286,8 +286,6 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-              }
-            />
             <Route
               path="/system-demo"
               element={
