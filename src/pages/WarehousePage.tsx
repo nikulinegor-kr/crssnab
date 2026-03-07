@@ -71,7 +71,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("warehouses")
-        .select("*")
+        .select("*, request_objects(name)")
         .eq("organization_id", currentOrgId!)
         .order("name");
       if (error) throw error;
