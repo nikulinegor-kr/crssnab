@@ -39,6 +39,7 @@ const ObjectsPage = lazyWithRetry(() => import("./pages/ObjectsPage"));
 const AnalyticsPage = lazyWithRetry(() => import("./pages/AnalyticsPage"));
 const DocumentsPage = lazyWithRetry(() => import("./pages/DocumentsPage"));
 const TeamPage = lazyWithRetry(() => import("./pages/TeamPage"));
+const WarehousePage = lazyWithRetry(() => import("./pages/WarehousePage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
