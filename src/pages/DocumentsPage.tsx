@@ -99,6 +99,7 @@ const DocumentsPage = () => {
           return (
             d.fileName.toLowerCase().includes(q) ||
             d.requestNumber.toLowerCase().includes(q) ||
+            d.requestDescription?.toLowerCase().includes(q) ||
             d.contractor?.toLowerCase().includes(q)
           );
         }
