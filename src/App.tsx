@@ -340,7 +340,7 @@ const App = () => {
                   </AppLayout>
                 </ProtectedRoute>
               }
-            
+            />
             <Route
               path="/system-demo"
               element={
