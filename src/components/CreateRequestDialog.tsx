@@ -116,6 +116,11 @@ const requestSchema = z.object({
     .optional(),
   product_id: z.string().optional(),
   warehouse_id: z.string().optional(),
+  quantity: z.number().min(1, "Минимум 1").nullable().optional(),
+  unit: z.string().optional(),
+  operation_type: z.string().optional(),
+  planned_delivery_date: z.string().optional().or(z.literal("")),
+  reserve_on_warehouse: z.boolean().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
