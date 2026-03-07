@@ -7,6 +7,7 @@ import { useRequestsFilters } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateProcurement } from "@/hooks/useProcurements";
+import { useRequestFavorites } from "@/hooks/useRequestFavorites";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
