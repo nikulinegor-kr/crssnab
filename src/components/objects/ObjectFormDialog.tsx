@@ -90,6 +90,22 @@ export const ObjectFormDialog = ({
     enabled: !!currentOrgId && open,
   });
 
+  const { data: applicants = [] } = useQuery({
+    queryKey: ["request-participants-applicants", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_participants")
+        .select("id, name")
+        .eq("organization_id", currentOrgId!)
+        .eq("participant_type", "applicant")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId && open,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
