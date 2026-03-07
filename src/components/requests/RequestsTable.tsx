@@ -67,6 +67,8 @@ interface RequestsTableProps {
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
   onEditClick?: (request: Request) => void;
   searchQuery?: string;
+  favoriteIds?: Set<string>;
+  onToggleFavorite?: (requestId: string) => void;
 }
 
 // Memoized mobile card component for better performance
