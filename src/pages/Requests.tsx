@@ -43,6 +43,7 @@ const Requests = () => {
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
   const { data: requests, isLoading } = useRequests(activeTab === "archived");
   const createProcurement = useCreateProcurement();
+  const { favoriteIds, toggleFavorite } = useRequestFavorites();
 
   // Filters
   const filters = useRequestsFilters(requests, activeTab);
