@@ -362,6 +362,7 @@ const Requests = () => {
 
           {/* LEVEL 7: Table */}
           <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+            <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
                 : filters.filteredRequests
