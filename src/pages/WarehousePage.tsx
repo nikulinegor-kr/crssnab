@@ -110,7 +110,7 @@ export default function WarehousePage() {
 
   // Compute stock levels from movements
   const stockLevels = useMemo(() => {
-    const map = new Map<string, { product: any; warehouse: any; stock: number; reserve: number; inTransit: number }>();
+    const map = new Map<string, { product: any; warehouse: any; objectName: string; stock: number; reserve: number; inTransit: number }>();
 
     for (const m of movements) {
       const key = `${m.product_id}__${m.warehouse_id}`;
@@ -118,6 +118,7 @@ export default function WarehousePage() {
         map.set(key, {
           product: m.warehouse_products,
           warehouse: m.warehouses,
+          objectName: (m.warehouses as any)?.request_objects?.name || "",
           stock: 0,
           reserve: 0,
           inTransit: 0,
