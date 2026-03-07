@@ -480,6 +480,7 @@ export const RequestsTable = ({
                   key={request.id}
                   className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
+                  onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: '48px' }}
                 >
                   <TableCell 
