@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
 import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
+import { RequestQuickView } from "./RequestQuickView";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -180,6 +181,19 @@ export const RequestsTable = ({
   const { visibility, updateVisibility } = useTableColumnVisibility();
   const { widths, updateWidth } = useTableColumnWidths();
   
+  // Quick View state
+  const [quickViewRequest, setQuickViewRequest] = useState<Request | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  const openQuickView = useCallback((request: Request) => {
+    setQuickViewRequest(request);
+    setQuickViewOpen(true);
+  }, []);
+
+  const closeQuickView = useCallback(() => {
+    setQuickViewOpen(false);
+  }, []);
+
   const handleColumnResize = useCallback((column: string, width: number) => {
     updateWidth(column as keyof ColumnWidths, width);
   }, [updateWidth]);
@@ -256,12 +270,30 @@ export const RequestsTable = ({
     setCurrentPage(1);
   }, []);
 
+  const clickTimerRef = useCallback(() => {}, []);
+  const [clickTimer, setClickTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
       return;
     }
-    navigate(`/requests/${request.id}`);
+    // Delay navigation to distinguish from double-click
+    const timer = setTimeout(() => {
+      navigate(`/requests/${request.id}`);
+    }, 250);
+    setClickTimer(timer);
   }, [navigate]);
+
+  const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
+    e.preventDefault();
+    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+    // Cancel pending single-click navigation
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      setClickTimer(null);
+    }
+    openQuickView(request);
+  }, [openQuickView, clickTimer]);
 
   if (isLoading) {
     return (
@@ -401,6 +433,9 @@ export const RequestsTable = ({
                   <Star className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
                 </TableHead>
               )}
+              <TableHead className="w-8 text-center p-1 border-r">
+                <Eye className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
+              </TableHead>
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
@@ -457,6 +492,7 @@ export const RequestsTable = ({
                   key={request.id}
                   className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/20' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
+                  onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: '48px' }}
                 >
                   <TableCell 
@@ -489,6 +525,15 @@ export const RequestsTable = ({
                       </button>
                     </TableCell>
                   )}
+                  <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => openQuickView(request)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                      title="Быстрый просмотр"
+                    >
+                      <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </button>
+                  </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
@@ -675,6 +720,13 @@ export const RequestsTable = ({
         <PaginationControls />
         </div>
       </div>
+
+      <RequestQuickView
+        request={quickViewRequest}
+        open={quickViewOpen}
+        onClose={closeQuickView}
+        onEdit={onEditClick}
+      />
     </>
   );
 };
