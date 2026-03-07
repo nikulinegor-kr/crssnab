@@ -29,7 +29,7 @@ import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
-import { AlertCircle, Plus, MessageCircle, ShoppingCart } from "lucide-react";
+import { AlertCircle, Plus, MessageCircle, ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Requests = () => {
