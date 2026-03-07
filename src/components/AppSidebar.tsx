@@ -2,7 +2,6 @@ import {
   LayoutGrid, 
   FileText, 
   Users, 
-  UserCircle, 
   Settings, 
   LogOut,
   FileBarChart,
@@ -16,6 +15,10 @@ import {
   FolderOpen,
   UsersRound,
   Warehouse,
+  Wallet,
+  ShoppingCart,
+  Truck,
+  Layers,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -46,17 +49,22 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// Основные пункты меню
-const mainMenuItems = [
+const crmMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
-  { title: "Поставки", url: "/shipments", icon: Package },
   { title: "Контрагенты", url: "/suppliers", icon: Users },
   { title: "Объекты", url: "/objects", icon: Building2 },
   { title: "Документы", url: "/documents", icon: FolderOpen },
-  { title: "Склад", url: "/warehouse", icon: Warehouse },
   { title: "Аналитика", url: "/analytics", icon: BarChart3 },
   { title: "Команда", url: "/team", icon: UsersRound },
+];
+
+const erpMenuItems = [
+  { title: "Номенклатура", url: "/nomenclature", icon: Layers },
+  { title: "Склад", url: "/warehouse", icon: Warehouse },
+  { title: "Заказы поставщикам", url: "/shipments", icon: ShoppingCart },
+  { title: "Поставки", url: "/shipments", icon: Truck },
+  { title: "Бюджеты", url: "/budgets", icon: Wallet },
 ];
 
 const reportMenuItems = [
@@ -98,8 +106,11 @@ export function AppSidebar() {
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
-  // On mobile, always show text in menu
   const showText = isMobile || !collapsed;
+
+  // Determine which section is active for default open state
+  const erpPaths = erpMenuItems.map(i => i.url);
+  const isErpActive = erpPaths.some(p => currentPath.startsWith(p));
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -118,7 +129,7 @@ export function AppSidebar() {
     }
   };
 
-  const renderMenuItems = (items: typeof mainMenuItems) => {
+  const renderMenuItems = (items: typeof crmMenuItems) => {
     return items.map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
@@ -169,21 +180,61 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Основное меню: Дашборд, Заявки, Канбан */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderMenuItems(mainMenuItems)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* CRM Section */}
+        <Collapsible defaultOpen={!isErpActive} className="group/collapsible-crm">
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {showText && <span className="font-semibold text-xs uppercase tracking-wider">CRM</span>}
+                </div>
+                {showText && (
+                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-crm:rotate-180" />
+                )}
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderMenuItems(crmMenuItems)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
         <SidebarSeparator />
 
-        {/* Отчеты агента - показываем только для администраторов */}
+        {/* ERP Section */}
+        <Collapsible defaultOpen={isErpActive} className="group/collapsible-erp">
+          <SidebarGroup>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  {showText && <span className="font-semibold text-xs uppercase tracking-wider">ERP</span>}
+                </div>
+                {showText && (
+                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-erp:rotate-180" />
+                )}
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {renderMenuItems(erpMenuItems)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+
+        <SidebarSeparator />
+
+        {/* Отчеты - только для администраторов */}
         {!isDemoMode && isAdmin && (
           <>
-            <SidebarSeparator />
             <Collapsible defaultOpen={false} className="group/collapsible-reports">
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
@@ -206,12 +257,11 @@ export function AppSidebar() {
                 </CollapsibleContent>
               </SidebarGroup>
             </Collapsible>
+            <SidebarSeparator />
           </>
         )}
 
-        <SidebarSeparator />
-
-        {/* Профиль и настройки */}
+        {/* Настройки */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -232,7 +282,6 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-
     </Sidebar>
   );
 }
