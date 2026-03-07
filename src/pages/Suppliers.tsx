@@ -257,13 +257,14 @@ export default function Suppliers() {
         <Card className="bg-card border-border/40">
           <CardHeader className="border-b border-border/40">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
-              <div className="col-span-2">Название компании</div>
-              <div className="col-span-2">Контактное лицо</div>
-              <div className="col-span-2">Email</div>
-              <div className="col-span-2">Телефон</div>
-              <div className="col-span-2">Категория</div>
+              <div className="col-span-2">Название</div>
+              <div className="col-span-1">ИНН</div>
+              <div className="col-span-2">Телефон / Email</div>
+              <div className="col-span-1">Категория</div>
               <div className="col-span-1">Статус</div>
-              <div className="col-span-1 text-right">Действия</div>
+              <div className="col-span-1 text-center">Заявки</div>
+              <div className="col-span-2 text-right">Сумма закупок</div>
+              <div className="col-span-2 text-right">Действия</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
