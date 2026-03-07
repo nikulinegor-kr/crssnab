@@ -415,8 +415,6 @@ export const RequestsBulkActions = ({
             <ExcelExportButton
               requests={requests || []}
               filteredRequests={selectedRequests}
-              label="Экспорт выбранных"
-              icon={<Download className="h-3.5 w-3.5" />}
             />
 
             <div className="h-4 w-px bg-border mx-0.5 hidden sm:block" />
