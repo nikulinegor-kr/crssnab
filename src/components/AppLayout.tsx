@@ -44,6 +44,9 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
                 {orgName || "CRSS CRM"}
               </span>
             </div>
+            <div className="flex-1 flex justify-center px-2">
+              <GlobalSearch />
+            </div>
             <NotificationBell />
           </header>
 
