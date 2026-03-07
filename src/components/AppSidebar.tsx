@@ -2,7 +2,6 @@ import {
   LayoutGrid, 
   FileText, 
   Users, 
-  Calendar, 
   UserCircle, 
   Settings, 
   LogOut,
@@ -12,10 +11,10 @@ import {
   Moon,
   Package,
   ChevronDown,
-  Archive,
   Building2,
   BarChart3,
   FolderOpen,
+  UsersRound,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -54,8 +53,8 @@ const mainMenuItems = [
   { title: "Контрагенты", url: "/suppliers", icon: Users },
   { title: "Объекты", url: "/objects", icon: Building2 },
   { title: "Документы", url: "/documents", icon: FolderOpen },
-  { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Аналитика", url: "/analytics", icon: BarChart3 },
+  { title: "Команда", url: "/team", icon: UsersRound },
 ];
 
 const reportMenuItems = [
@@ -65,7 +64,6 @@ const reportMenuItems = [
 ];
 
 const settingsMenuItems = [
-  { title: "Профиль", url: "/profile", icon: UserCircle },
   { title: "Настройки", url: "/organization/settings", icon: Settings },
 ];
 

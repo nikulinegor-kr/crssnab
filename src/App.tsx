@@ -38,6 +38,7 @@ const ShipmentsPage = lazyWithRetry(() => import("./pages/ShipmentsPage"));
 const ObjectsPage = lazyWithRetry(() => import("./pages/ObjectsPage"));
 const AnalyticsPage = lazyWithRetry(() => import("./pages/AnalyticsPage"));
 const DocumentsPage = lazyWithRetry(() => import("./pages/DocumentsPage"));
+const TeamPage = lazyWithRetry(() => import("./pages/TeamPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
@@ -293,6 +294,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <DocumentsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TeamPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
