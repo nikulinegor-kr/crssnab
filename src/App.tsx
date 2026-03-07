@@ -322,6 +322,26 @@ const App = () => {
               }
             />
             <Route
+              path="/nomenclature"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <NomenclaturePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/budgets"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BudgetsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            
+            <Route
               path="/system-demo"
               element={
                 <ProtectedRoute>
