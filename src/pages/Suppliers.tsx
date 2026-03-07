@@ -74,14 +74,25 @@ export default function Suppliers() {
     notes: "",
   });
 
-  // Получаем заявки для статистики контрагентов
-  const { data: requests } = useRequests();
+  // Получаем все заявки (включая архивные) для статистики контрагентов
+  const { data: allRequests } = useQuery({
+    queryKey: ["all-requests-for-suppliers", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("contractor, amount")
+        .eq("organization_id", currentOrgId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
 
   // Статистика по контрагентам
   const contractorStats = useMemo(() => {
-    if (!requests) return new Map<string, { count: number; totalAmount: number }>();
+    if (!allRequests) return new Map<string, { count: number; totalAmount: number }>();
     const map = new Map<string, { count: number; totalAmount: number }>();
-    requests.forEach(r => {
+    allRequests.forEach(r => {
       if (!r.contractor) return;
       const key = r.contractor.toLowerCase().trim();
       const prev = map.get(key) || { count: 0, totalAmount: 0 };
@@ -90,7 +101,7 @@ export default function Suppliers() {
       map.set(key, prev);
     });
     return map;
-  }, [requests]);
+  }, [allRequests]);
 
   // Получаем поставщиков
   const { data: suppliers, isLoading } = useQuery({
