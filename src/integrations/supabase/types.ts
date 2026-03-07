@@ -1435,6 +1435,7 @@ export type Database = {
           photo_url: string | null
           photo_urls: string[] | null
           priority: string | null
+          product_id: string | null
           request_date: string
           request_number: string
           shipment_date: string | null
@@ -1443,6 +1444,7 @@ export type Database = {
           telegram_message_ids: number[] | null
           transport_company: string | null
           updated_at: string | null
+          warehouse_id: string | null
           waybill_number: string | null
         }
         Insert: {
@@ -1471,6 +1473,7 @@ export type Database = {
           photo_url?: string | null
           photo_urls?: string[] | null
           priority?: string | null
+          product_id?: string | null
           request_date: string
           request_number: string
           shipment_date?: string | null
@@ -1479,6 +1482,7 @@ export type Database = {
           telegram_message_ids?: number[] | null
           transport_company?: string | null
           updated_at?: string | null
+          warehouse_id?: string | null
           waybill_number?: string | null
         }
         Update: {
@@ -1507,6 +1511,7 @@ export type Database = {
           photo_url?: string | null
           photo_urls?: string[] | null
           priority?: string | null
+          product_id?: string | null
           request_date?: string
           request_number?: string
           shipment_date?: string | null
@@ -1515,6 +1520,7 @@ export type Database = {
           telegram_message_ids?: number[] | null
           transport_company?: string | null
           updated_at?: string | null
+          warehouse_id?: string | null
           waybill_number?: string | null
         }
         Relationships: [
@@ -1537,6 +1543,20 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
