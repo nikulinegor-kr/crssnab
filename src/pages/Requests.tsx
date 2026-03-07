@@ -267,17 +267,6 @@ const Requests = () => {
               <span className="xs:hidden">Новая</span>
             </Button>
           )}
-          <RequestsBulkActions
-            requests={requests}
-            filteredRequests={filters.filteredRequests}
-            selectedRequestIds={selectedRequestIds}
-            setSelectedRequestIds={setSelectedRequestIds}
-            canCreate={canCreate}
-            isSending={isSending}
-            setIsSending={setIsSending}
-            onBulkDelete={handleBulkDelete}
-            isArchiveTab={activeTab === "archived"}
-          />
         </div>
       </div>
 
