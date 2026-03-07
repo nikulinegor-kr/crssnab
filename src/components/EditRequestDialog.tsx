@@ -294,6 +294,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       transport_company: request.transport_company || "",
       waybill_number: request.waybill_number || "",
       comments: request.comments || "",
+      product_id: (request as any).product_id || "",
+      warehouse_id: (request as any).warehouse_id || "",
     };
   }, [request]);
 
