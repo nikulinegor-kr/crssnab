@@ -114,6 +114,8 @@ const requestSchema = z.object({
     .trim()
     .max(1000, "Комментарий не должен превышать 1000 символов")
     .optional(),
+  product_id: z.string().optional(),
+  warehouse_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
