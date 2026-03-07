@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ReactNode } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
+import { GlobalSearch } from "./GlobalSearch";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
