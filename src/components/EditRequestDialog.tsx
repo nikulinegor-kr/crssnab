@@ -945,21 +945,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 5. Logistics: TK, TTN, Dates */}
-        <LogisticsSection
-          form={form}
-          recentTransportCompanies={recentTransportCompanies}
-          disabled={isViewer}
-        />
-
-        {/* 5.5. ERP: Product, Warehouse */}
+        {/* 5. ERP / Склад */}
         <ErpSection
           form={form}
           currentOrgId={request?.organization_id || null}
           disabled={isViewer}
         />
 
-        {/* 6. Additional: ZRS, Files */}
+        {/* 6. Logistics: TK, TTN, Dates */}
+        <LogisticsSection
+          form={form}
+          recentTransportCompanies={recentTransportCompanies}
+          disabled={isViewer}
+        />
+
+        {/* 7. Additional: ZRS, Files */}
         <AdditionalSection
           form={form}
           formValues={formValues}
