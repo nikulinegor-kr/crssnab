@@ -166,8 +166,9 @@ export const ErpSection = ({
                 <Select
                   value={field.value || ""}
                   onValueChange={(val) => {
-                    field.onChange(val);
-                    const product = products.find((p: any) => p.id === val);
+                    const realVal = val === "__none__" ? "" : val;
+                    field.onChange(realVal);
+                    const product = products.find((p: any) => p.id === realVal);
                     if (product) {
                       setArticleSearch(product.article || "");
                       if (product.unit) {
@@ -183,7 +184,7 @@ export const ErpSection = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">— Не выбран —</SelectItem>
+                    <SelectItem value="__none__">— Не выбран —</SelectItem>
                     {products.map((p: any) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name} {p.article ? `(${p.article})` : ""}
