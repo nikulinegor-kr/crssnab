@@ -269,7 +269,7 @@ export const ErpSection = ({
                 <FormLabel className="text-xs">Тип операции</FormLabel>
                 <Select
                   value={field.value || ""}
-                  onValueChange={field.onChange}
+                  onValueChange={(val) => field.onChange(val === "__none__" ? "" : val)}
                   disabled={disabled}
                 >
                   <FormControl>
@@ -278,7 +278,7 @@ export const ErpSection = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">— Не выбран —</SelectItem>
+                    <SelectItem value="__none__">— Не выбран —</SelectItem>
                     {OPERATION_TYPES.map((t) => (
                       <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                     ))}
