@@ -28,7 +28,7 @@ const ObjectsPage = () => {
 
     requests.forEach(r => {
       if (!r.object_id) return;
-      const objName = (r as any).request_objects?.name || r.object_id;
+      const objName = (r as any).object_name || (r as any).request_objects?.name || r.object_id;
       
       if (!objectMap.has(r.object_id)) {
         objectMap.set(r.object_id, {
