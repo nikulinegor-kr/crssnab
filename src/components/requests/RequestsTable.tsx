@@ -396,6 +396,11 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
+              {onToggleFavorite && (
+                <TableHead className="w-8 text-center p-1 border-r">
+                  <Star className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
+                </TableHead>
+              )}
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
