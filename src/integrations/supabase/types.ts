@@ -1212,29 +1212,50 @@ export type Database = {
       request_objects: {
         Row: {
           address: string | null
+          archived: boolean
+          comment: string | null
+          contract_number: string | null
           created_at: string
           id: string
           is_active: boolean
           name: string
           organization_id: string
+          project_end_date: string | null
+          project_start_date: string | null
+          responsible_user_id: string | null
+          status: string
           updated_at: string
         }
         Insert: {
           address?: string | null
+          archived?: boolean
+          comment?: string | null
+          contract_number?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
           organization_id: string
+          project_end_date?: string | null
+          project_start_date?: string | null
+          responsible_user_id?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
+          archived?: boolean
+          comment?: string | null
+          contract_number?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name?: string
           organization_id?: string
+          project_end_date?: string | null
+          project_start_date?: string | null
+          responsible_user_id?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
