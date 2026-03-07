@@ -159,7 +159,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                 <div>
                   <span className="text-muted-foreground">Ответственный:</span>
                   <p className="font-medium">
-                    {responsibleProfile?.full_name || responsibleProfile?.email || "—"}
+                    {responsibleProfile?.name || "—"}
                   </p>
                 </div>
                 <div>
