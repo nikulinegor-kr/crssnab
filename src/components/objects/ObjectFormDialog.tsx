@@ -140,9 +140,24 @@ export const ObjectFormDialog = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">— Не выбран —</SelectItem>
+                {orgMembers.length > 0 && (
+                  <SelectItem value="__group_members__" disabled className="text-xs font-semibold text-muted-foreground">
+                    Сотрудники
+                  </SelectItem>
+                )}
                 {orgMembers.map((m: any) => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
+                  <SelectItem key={`user-${m.user_id}`} value={m.user_id}>
                     {m.profiles?.full_name || m.profiles?.email || m.user_id}
+                  </SelectItem>
+                ))}
+                {applicants.length > 0 && (
+                  <SelectItem value="__group_applicants__" disabled className="text-xs font-semibold text-muted-foreground">
+                    Заявители
+                  </SelectItem>
+                )}
+                {applicants.map((a: any) => (
+                  <SelectItem key={`part-${a.id}`} value={a.id}>
+                    {a.name}
                   </SelectItem>
                 ))}
               </SelectContent>
