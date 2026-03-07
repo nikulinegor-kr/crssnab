@@ -26,6 +26,7 @@ const TYPE_LABELS: Record<string, string> = {
   UNRESERVE: "Снятие резерва",
   MOVE_IN: "Перемещение (приход)",
   MOVE_OUT: "Перемещение (расход)",
+  IN_TRANSIT: "В пути",
 };
 
 const TYPE_COLORS: Record<string, string> = {
