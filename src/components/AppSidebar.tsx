@@ -15,6 +15,7 @@ import {
   Archive,
   Building2,
   BarChart3,
+  FolderOpen,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
