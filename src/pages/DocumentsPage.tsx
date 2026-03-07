@@ -199,9 +199,10 @@ const DocumentsPage = () => {
                     <TableCell>
                       <button
                         onClick={() => navigate(`/requests/${doc.requestId}`)}
-                        className="text-sm text-primary hover:underline font-mono"
+                        className="text-sm text-primary hover:underline max-w-[200px] truncate block text-left"
+                        title={doc.requestDescription}
                       >
-                        #{doc.requestNumber}
+                        {doc.requestDescription || `#${doc.requestNumber}`}
                       </button>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
