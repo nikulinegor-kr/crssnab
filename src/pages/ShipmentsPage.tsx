@@ -1,14 +1,15 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequests } from "@/hooks/useRequests";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Package, ArrowLeft } from "lucide-react";
+import { Search, Package } from "lucide-react";
 import { format } from "date-fns";
 
 const ShipmentsPage = () => {
@@ -17,13 +18,21 @@ const ShipmentsPage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [contractorFilter, setContractorFilter] = useState<string>("all");
+  const [hideDelivered, setHideDelivered] = useState(true);
 
-  // Filter requests that have shipment or delivery data
-  const shipments = useMemo(() => {
+  const allShipments = useMemo(() => {
     if (!requests) return [];
-    return requests
-      .filter(r => r.shipment_date || r.delivery_date || r.transport_company || r.waybill_number)
+    return requests.filter(r => r.shipment_date || r.delivery_date || r.transport_company || r.waybill_number);
+  }, [requests]);
+
+  const deliveredCount = useMemo(() => {
+    return allShipments.filter(r => r.status === "Доставлено").length;
+  }, [allShipments]);
+
+  const shipments = useMemo(() => {
+    return allShipments
       .filter(r => {
+        if (hideDelivered && r.status === "Доставлено") return false;
         if (statusFilter !== "all" && r.status !== statusFilter) return false;
         if (contractorFilter !== "all" && r.contractor !== contractorFilter) return false;
         if (search) {
@@ -32,8 +41,7 @@ const ShipmentsPage = () => {
             r.description?.toLowerCase().includes(q) ||
             r.contractor?.toLowerCase().includes(q) ||
             r.transport_company?.toLowerCase().includes(q) ||
-            r.waybill_number?.toLowerCase().includes(q) ||
-            r.request_number?.toLowerCase().includes(q)
+            r.waybill_number?.toLowerCase().includes(q)
           );
         }
         return true;
@@ -43,7 +51,7 @@ const ShipmentsPage = () => {
         const dateB = b.shipment_date || b.delivery_date || "";
         return dateB.localeCompare(dateA);
       });
-  }, [requests, search, statusFilter, contractorFilter]);
+  }, [allShipments, search, statusFilter, contractorFilter, hideDelivered]);
 
   const uniqueStatuses = useMemo(() => {
     if (!requests) return [];
@@ -66,17 +74,15 @@ const ShipmentsPage = () => {
 
   return (
     <div className="w-full p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Поставки</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            {shipments.length} поставок
-          </p>
-        </div>
+      <div>
+        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Поставки</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          {shipments.length} поставок
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -108,6 +114,16 @@ const ShipmentsPage = () => {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2 shrink-0">
+          <Switch
+            id="hide-delivered"
+            checked={hideDelivered}
+            onCheckedChange={setHideDelivered}
+          />
+          <Label htmlFor="hide-delivered" className="text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+            Скрыть доставленные{deliveredCount > 0 ? ` (${deliveredCount})` : ""}
+          </Label>
+        </div>
       </div>
 
       {/* Table */}
@@ -116,7 +132,7 @@ const ShipmentsPage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-[100px]">№ заявки</TableHead>
+                <TableHead>Название заявки</TableHead>
                 <TableHead>Дата отгрузки</TableHead>
                 <TableHead>Дата доставки</TableHead>
                 <TableHead>Контрагент</TableHead>
@@ -148,7 +164,18 @@ const ShipmentsPage = () => {
                     className="cursor-pointer hover:bg-accent/40 transition-colors"
                     onClick={() => navigate(`/requests/${r.id}`)}
                   >
-                    <TableCell className="font-mono text-xs">{r.request_number}</TableCell>
+                    <TableCell className="text-sm font-medium max-w-[260px]">
+                      <span
+                        className="text-primary hover:underline cursor-pointer truncate block"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/requests/${r.id}`);
+                        }}
+                        title={r.description}
+                      >
+                        {r.description || "—"}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-sm">
                       {r.shipment_date ? format(new Date(r.shipment_date), "dd.MM.yyyy") : "—"}
                     </TableCell>
