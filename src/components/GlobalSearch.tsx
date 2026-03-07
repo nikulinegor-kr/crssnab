@@ -1,12 +1,14 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequests } from "@/hooks/useRequests";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Users, Building2, Hash, X } from "lucide-react";
+import { Search, FileText, Users, Building2, Hash, X, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SearchResult {
-  type: "request" | "contractor" | "object" | "invoice";
+  type: "request" | "contractor" | "object" | "invoice" | "supplier";
   id: string;
   title: string;
   subtitle?: string;
@@ -18,10 +20,26 @@ export function GlobalSearch() {
   const { data: requests } = useRequests();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  const { data: objects } = useQuery({
+    queryKey: ["search-objects"],
+    queryFn: async () => {
+      const { data } = await supabase.from("request_objects").select("id, name, address").eq("is_active", true);
+      return data || [];
+    },
+  });
+
+  const { data: suppliers } = useQuery({
+    queryKey: ["search-suppliers"],
+    queryFn: async () => {
+      const { data } = await supabase.from("suppliers").select("id, name, category, contact_person");
+      return data || [];
+    },
+  });
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -32,7 +50,6 @@ export function GlobalSearch() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Keyboard shortcut
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -50,19 +67,20 @@ export function GlobalSearch() {
   }, []);
 
   const results = useMemo((): SearchResult[] => {
-    if (!query.trim() || !requests) return [];
+    if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
     const items: SearchResult[] = [];
     const seen = new Set<string>();
 
-    requests.forEach(r => {
-      // Match requests
+    // Search requests
+    requests?.forEach(r => {
       if (
         r.description?.toLowerCase().includes(q) ||
         r.request_number?.toLowerCase().includes(q)
       ) {
-        if (!seen.has(`req-${r.id}`)) {
-          seen.add(`req-${r.id}`);
+        const key = `req-${r.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
           items.push({
             type: "request",
             id: r.id,
@@ -73,7 +91,7 @@ export function GlobalSearch() {
         }
       }
 
-      // Match contractors
+      // Contractors from requests
       if (r.contractor?.toLowerCase().includes(q)) {
         const key = `ctr-${r.contractor}`;
         if (!seen.has(key)) {
@@ -88,10 +106,11 @@ export function GlobalSearch() {
         }
       }
 
-      // Match invoice numbers
+      // Invoice numbers
       if (r.invoice_number?.toLowerCase().includes(q)) {
-        if (!seen.has(`inv-${r.id}`)) {
-          seen.add(`inv-${r.id}`);
+        const key = `inv-${r.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
           items.push({
             type: "invoice",
             id: r.id,
@@ -103,8 +122,50 @@ export function GlobalSearch() {
       }
     });
 
-    return items.slice(0, 8);
-  }, [query, requests]);
+    // Search objects
+    objects?.forEach(o => {
+      if (o.name?.toLowerCase().includes(q) || o.address?.toLowerCase().includes(q)) {
+        const key = `obj-${o.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push({
+            type: "object",
+            id: o.id,
+            title: o.name,
+            subtitle: o.address || "Объект",
+            url: `/objects`,
+          });
+        }
+      }
+    });
+
+    // Search suppliers
+    suppliers?.forEach(s => {
+      if (
+        s.name?.toLowerCase().includes(q) ||
+        s.contact_person?.toLowerCase().includes(q)
+      ) {
+        const key = `sup-${s.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push({
+            type: "supplier",
+            id: s.id,
+            title: s.name,
+            subtitle: s.category || "Поставщик",
+            url: `/suppliers`,
+          });
+        }
+      }
+    });
+
+    return items.slice(0, 10);
+  }, [query, requests, objects, suppliers]);
+
+  // Reset selection when results change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [results]);
 
   const getIcon = (type: SearchResult["type"]) => {
     switch (type) {
@@ -112,6 +173,17 @@ export function GlobalSearch() {
       case "contractor": return <Users className="h-4 w-4 text-orange-500" />;
       case "object": return <Building2 className="h-4 w-4 text-emerald-500" />;
       case "invoice": return <Hash className="h-4 w-4 text-purple-500" />;
+      case "supplier": return <Package className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
+  const getTypeLabel = (type: SearchResult["type"]) => {
+    switch (type) {
+      case "request": return "Заявка";
+      case "contractor": return "Контрагент";
+      case "object": return "Объект";
+      case "invoice": return "Счёт";
+      case "supplier": return "Поставщик";
     }
   };
 
@@ -120,6 +192,20 @@ export function GlobalSearch() {
     setQuery("");
     setIsOpen(false);
   }, [navigate]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen || results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex(i => (i + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex(i => (i - 1 + results.length) % results.length);
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelect(results[selectedIndex]);
+    }
+  };
 
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
@@ -134,6 +220,7 @@ export function GlobalSearch() {
             setIsOpen(true);
           }}
           onFocus={() => query && setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           className="pl-9 pr-8 h-9 bg-muted/50 border-border/50 text-sm"
         />
         {query && (
@@ -153,14 +240,15 @@ export function GlobalSearch() {
               Ничего не найдено
             </div>
           ) : (
-            <div className="max-h-[300px] overflow-y-auto">
-              {results.map((result) => (
+            <div className="max-h-[340px] overflow-y-auto">
+              {results.map((result, idx) => (
                 <button
                   key={result.id}
                   onClick={() => handleSelect(result)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 text-left",
-                    "hover:bg-accent/50 transition-colors text-sm"
+                    "hover:bg-accent/50 transition-colors text-sm",
+                    idx === selectedIndex && "bg-accent/50"
                   )}
                 >
                   {getIcon(result.type)}
@@ -170,6 +258,9 @@ export function GlobalSearch() {
                       <div className="text-xs text-muted-foreground truncate">{result.subtitle}</div>
                     )}
                   </div>
+                  <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider shrink-0">
+                    {getTypeLabel(result.type)}
+                  </span>
                 </button>
               ))}
             </div>
