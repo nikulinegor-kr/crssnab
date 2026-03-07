@@ -53,8 +53,8 @@ const mainMenuItems = [
   { title: "Контрагенты", url: "/suppliers", icon: Users },
   { title: "Объекты", url: "/objects", icon: Building2 },
   { title: "Документы", url: "/documents", icon: FolderOpen },
-  { title: "Календарь", url: "/calendar", icon: Calendar },
   { title: "Аналитика", url: "/analytics", icon: BarChart3 },
+  { title: "Команда", url: "/team", icon: UsersRound },
 ];
 
 const reportMenuItems = [
