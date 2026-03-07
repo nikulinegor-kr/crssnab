@@ -115,7 +115,7 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h2 className="font-semibold text-lg">{procurement?.name || "Свод"}</h2>
+            <h2 className="font-semibold text-lg">{procurement?.name || "Стоимость закупок"}</h2>
             <p className="text-xs text-muted-foreground">{procurement?.creator_name}</p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
           {items && items.length > 0 && (
             <ProcurementExportButton
               items={items}
-              procurementName={procurement?.name || "Свод"}
+              procurementName={procurement?.name || "Стоимость закупок"}
               totalAmount={totalAmount}
             />
           )}

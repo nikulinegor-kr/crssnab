@@ -76,9 +76,9 @@ export const ProcurementList = () => {
     return (
       <Card className="p-8 text-center">
         <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="text-lg font-semibold mb-1">Нет сводов</h3>
+        <h3 className="text-lg font-semibold mb-1">Нет данных</h3>
         <p className="text-sm text-muted-foreground">
-          Выделите заявки и нажмите «Сформировать свод»
+          Выделите заявки и нажмите «Сформировать стоимость закупок»
         </p>
       </Card>
     );
