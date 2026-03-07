@@ -372,6 +372,8 @@ const Requests = () => {
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
               searchQuery={filters.searchQuery}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
             />
           </Card>
         </div>
