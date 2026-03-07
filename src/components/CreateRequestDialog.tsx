@@ -446,6 +446,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         transport_company: data.transport_company || null,
         waybill_number: data.waybill_number || null,
         comments: data.comments || null,
+        product_id: data.product_id || null,
+        warehouse_id: data.warehouse_id || null,
         photo_url: photoUrls[0] || null,
         document_url: documentUrls[0] || null,
         photo_urls: photoUrls,
