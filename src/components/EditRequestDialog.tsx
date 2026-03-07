@@ -547,6 +547,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         transport_company: data.transport_company || "",
         waybill_number: data.waybill_number || "",
         comments: data.comments || "",
+        product_id: data.product_id || "",
+        warehouse_id: data.warehouse_id || "",
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
