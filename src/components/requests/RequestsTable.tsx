@@ -181,6 +181,19 @@ export const RequestsTable = ({
   const { visibility, updateVisibility } = useTableColumnVisibility();
   const { widths, updateWidth } = useTableColumnWidths();
   
+  // Quick View state
+  const [quickViewRequest, setQuickViewRequest] = useState<Request | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  const openQuickView = useCallback((request: Request) => {
+    setQuickViewRequest(request);
+    setQuickViewOpen(true);
+  }, []);
+
+  const closeQuickView = useCallback(() => {
+    setQuickViewOpen(false);
+  }, []);
+
   const handleColumnResize = useCallback((column: string, width: number) => {
     updateWidth(column as keyof ColumnWidths, width);
   }, [updateWidth]);
