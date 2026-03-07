@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Truck, Lock, CheckCircle } from "lucide-react";
+import { Package, Truck, Lock, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface StockInfoCardProps {
   productId: string;
@@ -68,6 +68,8 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
 
   if (!stockInfo) return null;
 
+  const noStock = stockInfo.inStock <= 0 && stockInfo.inTransit <= 0;
+
   const items = [
     { label: "Остаток", value: stockInfo.inStock, icon: Package, color: "text-foreground" },
     { label: "В пути", value: stockInfo.inTransit, icon: Truck, color: "text-blue-600 dark:text-blue-400" },
@@ -76,16 +78,24 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
   ];
 
   return (
-    <div className="rounded-md border border-border/50 bg-muted/30 p-3">
-      <div className="grid grid-cols-4 gap-2">
-        {items.map((item) => (
-          <div key={item.label} className="text-center space-y-1">
-            <item.icon className={`h-4 w-4 mx-auto ${item.color}`} />
-            <div className={`text-sm font-semibold ${item.color}`}>{item.value}</div>
-            <div className="text-[10px] text-muted-foreground leading-tight">{item.label}</div>
-          </div>
-        ))}
+    <div className="space-y-2">
+      <div className="rounded-md border border-border/50 bg-muted/30 p-3">
+        <div className="grid grid-cols-4 gap-2">
+          {items.map((item) => (
+            <div key={item.label} className="text-center space-y-1">
+              <item.icon className={`h-4 w-4 mx-auto ${item.color}`} />
+              <div className={`text-sm font-semibold ${item.color}`}>{item.value}</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">{item.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
+      {noStock && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span>Нет на складе — рекомендуется закупка</span>
+        </div>
+      )}
     </div>
   );
 };
