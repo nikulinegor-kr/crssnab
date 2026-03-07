@@ -16,6 +16,7 @@ interface DocEntry {
   type: "photo" | "document";
   requestId: string;
   requestNumber: string;
+  requestDescription: string;
   contractor: string | null;
   date: string;
 }
@@ -41,6 +42,7 @@ const DocumentsPage = () => {
           type: "photo",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
@@ -55,6 +57,7 @@ const DocumentsPage = () => {
           type: "document",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
@@ -68,6 +71,7 @@ const DocumentsPage = () => {
           type: "photo",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
@@ -79,6 +83,7 @@ const DocumentsPage = () => {
           type: "document",
           requestId: r.id,
           requestNumber: r.request_number,
+          requestDescription: r.description,
           contractor: r.contractor,
           date: r.request_date,
         });
@@ -94,6 +99,7 @@ const DocumentsPage = () => {
           return (
             d.fileName.toLowerCase().includes(q) ||
             d.requestNumber.toLowerCase().includes(q) ||
+            d.requestDescription?.toLowerCase().includes(q) ||
             d.contractor?.toLowerCase().includes(q)
           );
         }
@@ -194,9 +200,10 @@ const DocumentsPage = () => {
                     <TableCell>
                       <button
                         onClick={() => navigate(`/requests/${doc.requestId}`)}
-                        className="text-sm text-primary hover:underline font-mono"
+                        className="text-sm text-primary hover:underline max-w-[200px] truncate block text-left"
+                        title={doc.requestDescription}
                       >
-                        #{doc.requestNumber}
+                        {doc.requestDescription || `#${doc.requestNumber}`}
                       </button>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
