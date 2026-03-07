@@ -267,6 +267,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       transport_company: "",
       waybill_number: "",
       comments: "",
+      product_id: "",
+      warehouse_id: "",
     },
   });
 
