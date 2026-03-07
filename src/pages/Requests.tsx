@@ -7,6 +7,7 @@ import { useRequestsFilters } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateProcurement } from "@/hooks/useProcurements";
+import { useRequestFavorites } from "@/hooks/useRequestFavorites";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
-import { AlertCircle, Plus, MessageCircle, ShoppingCart } from "lucide-react";
+import { AlertCircle, Plus, MessageCircle, ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Requests = () => {
@@ -39,9 +40,10 @@ const Requests = () => {
   const { canCreate } = useUserRole();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
   const { data: requests, isLoading } = useRequests(activeTab === "archived");
   const createProcurement = useCreateProcurement();
+  const { favoriteIds, toggleFavorite } = useRequestFavorites();
 
   // Filters
   const filters = useRequestsFilters(requests, activeTab);
@@ -205,8 +207,14 @@ const Requests = () => {
     }
   };
 
+  const favoriteRequests = useMemo(() => {
+    if (!requests) return [];
+    return requests.filter(r => favoriteIds.has(r.id));
+  }, [requests, favoriteIds]);
+
   const tabs = [
     { value: "active", label: "Активные" },
+    { value: "favorites", label: "Избранные", icon: <Star className="h-3.5 w-3.5" />, count: favoriteRequests.length },
     { value: "archived", label: "Архив" },
     { value: "procurement", label: "Свод", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   ] as const;
@@ -289,6 +297,11 @@ const Requests = () => {
           >
             {"icon" in tab && tab.icon}
             {tab.label}
+            {"count" in tab && (tab as any).count > 0 && (
+              <span className="ml-1 bg-primary/10 text-primary text-xs rounded-full px-1.5 py-0.5 font-semibold">
+                {(tab as any).count}
+              </span>
+            )}
             {activeTab === tab.value && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
             )}
@@ -359,6 +372,8 @@ const Requests = () => {
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
               searchQuery={filters.searchQuery}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
             />
           </Card>
         </div>
@@ -409,6 +424,35 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
             />
           </Card>
+        </div>
+      )}
+
+      {activeTab === "favorites" && (
+        <div className="space-y-3 sm:space-y-4">
+          {favoriteRequests.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-muted-foreground font-medium">Нет избранных заявок</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Нажмите ⭐ в таблице заявок, чтобы добавить в избранное
+              </p>
+            </Card>
+          ) : (
+            <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+              <RequestsTable
+                requests={favoriteRequests}
+                isLoading={isLoading}
+                selectedRequestIds={selectedRequestIds}
+                toggleRequestSelection={toggleRequestSelection}
+                toggleAllRequests={toggleAllRequests}
+                onDeleteClick={handleDeleteClick}
+                onEditClick={handleEditClick}
+                searchQuery=""
+                favoriteIds={favoriteIds}
+                onToggleFavorite={toggleFavorite}
+              />
+            </Card>
+          )}
         </div>
       )}
 

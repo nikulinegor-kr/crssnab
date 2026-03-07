@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,8 @@ interface RequestsTableProps {
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
   onEditClick?: (request: Request) => void;
   searchQuery?: string;
+  favoriteIds?: Set<string>;
+  onToggleFavorite?: (requestId: string) => void;
 }
 
 // Memoized mobile card component for better performance
@@ -171,6 +173,8 @@ export const RequestsTable = ({
   onDeleteClick,
   onEditClick,
   searchQuery = "",
+  favoriteIds,
+  onToggleFavorite,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { visibility, updateVisibility } = useTableColumnVisibility();
@@ -392,6 +396,11 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
+              {onToggleFavorite && (
+                <TableHead className="w-8 text-center p-1 border-r">
+                  <Star className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
+                </TableHead>
+              )}
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
@@ -464,6 +473,22 @@ export const RequestsTable = ({
                       className="h-4 w-4"
                     />
                   </TableCell>
+                  {onToggleFavorite && (
+                    <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => onToggleFavorite(request.id)}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          className={`h-4 w-4 ${
+                            favoriteIds?.has(request.id)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground/30 hover:text-yellow-400"
+                          }`}
+                        />
+                      </button>
+                    </TableCell>
+                  )}
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}

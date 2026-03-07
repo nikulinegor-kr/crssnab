@@ -13,6 +13,8 @@ import {
   Package,
   ChevronDown,
   Archive,
+  Building2,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -45,12 +47,13 @@ import {
 
 // Основные пункты меню
 const mainMenuItems = [
-  { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutGrid },
   { title: "Заявки", url: "/requests", icon: FileText },
+  { title: "Поставки", url: "/shipments", icon: Package },
+  { title: "Контрагенты", url: "/suppliers", icon: Users },
+  { title: "Объекты", url: "/objects", icon: Building2 },
   { title: "Календарь", url: "/calendar", icon: Calendar },
-  { title: "Запчасти", url: "/spare-parts", icon: Package },
-  { title: "Поставщики", url: "/suppliers", icon: Users },
-  { title: "База неликвида", url: "/deadstock", icon: Archive },
+  { title: "Аналитика", url: "/analytics", icon: BarChart3 },
 ];
 
 const reportMenuItems = [

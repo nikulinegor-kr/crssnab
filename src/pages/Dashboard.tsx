@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2 } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2, Truck, Users, Package, FileStack } from "lucide-react";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -44,7 +44,7 @@ const Dashboard = () => {
 
   // Вычисление статистики для отфильтрованных заявок
   const stats = useMemo(() => {
-    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0 };
+    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0, deliveriesToday: 0, overdue: 0 };
     
     const today = new Date().toISOString().split("T")[0];
     const newToday = filteredRequests.filter(
@@ -52,18 +52,29 @@ const Dashboard = () => {
     ).length;
     
     const emergency = filteredRequests.filter(
-      r => r.priority === "Аварийно"
+      r => r.priority === "Аварийно" && r.status !== "Доставлено"
     ).length;
     
     const completed = filteredRequests.filter(
       r => r.status === "Доставлено"
     ).length;
 
+    const deliveriesToday = filteredRequests.filter(
+      r => r.delivery_date?.split("T")[0] === today
+    ).length;
+
+    const overdue = filteredRequests.filter(r => {
+      if (!r.delivery_date || r.status === "Доставлено") return false;
+      return r.delivery_date.split("T")[0] < today;
+    }).length;
+
     return {
       total: filteredRequests.length,
       newToday,
       emergency,
       completed,
+      deliveriesToday,
+      overdue,
     };
   }, [filteredRequests]);
 
@@ -254,6 +265,62 @@ const Dashboard = () => {
                 );
               })
             )}
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <Card className="bg-card border-border/40 shadow-sm">
+          <CardHeader className="pb-3 p-4">
+            <CardTitle className="text-base font-semibold">Быстрые действия</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex flex-wrap gap-2">
+              <CreateRequestDialog>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Новая заявка
+                </Button>
+              </CreateRequestDialog>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/suppliers")}>
+                <Users className="h-4 w-4" />
+                Новый контрагент
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/shipments")}>
+                <Truck className="h-4 w-4" />
+                Поставки
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/spare-parts")}>
+                <Package className="h-4 w-4" />
+                Запчасти
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today Block */}
+        {!isLoading && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {[
+              { title: "Новые сегодня", value: stats.newToday, icon: Plus, color: "text-info", bgColor: "bg-info/10" },
+              { title: "Доставки сегодня", value: stats.deliveriesToday, icon: Truck, color: "text-success", bgColor: "bg-success/10" },
+              { title: "Просроченные", value: stats.overdue, icon: Clock, color: "text-destructive", bgColor: "bg-destructive/10" },
+              { title: "Аварийные", value: stats.emergency, icon: AlertCircle, color: "text-accent", bgColor: "bg-accent/10" },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card key={item.title} className="bg-card border-border/40 shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0 p-3 sm:p-4">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">{item.title}</CardTitle>
+                    <div className={`p-1.5 rounded-md ${item.bgColor}`}>
+                      <Icon className={`h-3.5 w-3.5 ${item.color}`} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0 p-3 sm:p-4">
+                    <div className="text-2xl font-bold text-foreground">{item.value}</div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
