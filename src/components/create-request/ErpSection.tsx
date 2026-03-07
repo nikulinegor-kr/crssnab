@@ -106,9 +106,6 @@ export const ErpSection = ({
     form.setValue("product_id", "");
   };
 
-  if (products.length === 0 && warehouses.length === 0) {
-    return null;
-  }
 
   return (
     <FormSectionCard
