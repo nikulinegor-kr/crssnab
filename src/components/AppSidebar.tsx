@@ -13,6 +13,8 @@ import {
   Package,
   ChevronDown,
   Archive,
+  Building2,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
