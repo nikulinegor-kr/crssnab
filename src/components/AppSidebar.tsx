@@ -15,6 +15,7 @@ import {
   BarChart3,
   FolderOpen,
   UsersRound,
+  Warehouse,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
