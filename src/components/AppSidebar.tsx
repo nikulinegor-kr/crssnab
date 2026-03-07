@@ -2,7 +2,6 @@ import {
   LayoutGrid, 
   FileText, 
   Users, 
-  Calendar, 
   UserCircle, 
   Settings, 
   LogOut,
@@ -12,10 +11,10 @@ import {
   Moon,
   Package,
   ChevronDown,
-  Archive,
   Building2,
   BarChart3,
   FolderOpen,
+  UsersRound,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
