@@ -367,15 +367,26 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   // Auto-bind warehouse when object changes
   const watchedObjectId = form.watch("object_id");
   useEffect(() => {
-    if (watchedObjectId && warehousesData?.length) {
-      const objectWarehouse = warehousesData.find((w: any) => w.object_id === watchedObjectId);
-      if (objectWarehouse) {
-        form.setValue("warehouse_id", objectWarehouse.id);
+    if (watchedObjectId && objectsData?.length) {
+      // First check if the object has a direct warehouse_id
+      const selectedObj = objectsData.find((o: any) => o.id === watchedObjectId);
+      if (selectedObj?.warehouse_id) {
+        form.setValue("warehouse_id", selectedObj.warehouse_id);
+        return;
       }
-    } else if (!watchedObjectId) {
+      // Fallback: find warehouse linked via object_id
+      if (warehousesData?.length) {
+        const objectWarehouse = warehousesData.find((w: any) => w.object_id === watchedObjectId);
+        if (objectWarehouse) {
+          form.setValue("warehouse_id", objectWarehouse.id);
+          return;
+        }
+      }
+    }
+    if (!watchedObjectId) {
       form.setValue("warehouse_id", "");
     }
-  }, [watchedObjectId, warehousesData]);
+  }, [watchedObjectId, warehousesData, objectsData]);
 
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);

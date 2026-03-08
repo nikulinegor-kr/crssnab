@@ -23,11 +23,12 @@ interface ObjectDetailCardProps {
   onBack: () => void;
   onEdit?: (obj: any) => void;
   onArchive?: (id: string) => void;
+  onDelete?: (obj: any) => void;
 }
 
 const DOC_TYPES = ["Контракт", "Договор", "Счёт", "КП", "Фото", "Другое"];
 
-export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive }: ObjectDetailCardProps) => {
+export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDelete }: ObjectDetailCardProps) => {
   const navigate = useNavigate();
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -231,6 +232,11 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive }: Obje
           {onArchive && objectData.status !== "Завершён" && (
             <Button variant="outline" size="sm" className="gap-1 text-muted-foreground hover:text-destructive" onClick={() => onArchive(objectData.id)}>
               <Archive className="h-3.5 w-3.5" /> В архив
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => onDelete(objectData)}>
+              <Trash2 className="h-3.5 w-3.5" /> Удалить
             </Button>
           )}
         </div>

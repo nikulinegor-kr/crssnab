@@ -1,0 +1,1 @@
+ALTER TABLE public.request_objects ADD COLUMN warehouse_id uuid REFERENCES public.warehouses(id) ON DELETE SET NULL;

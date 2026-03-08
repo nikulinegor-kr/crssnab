@@ -19,6 +19,7 @@ interface ObjectFormData {
   project_end_date: string;
   status: string;
   comment: string;
+  warehouse_id: string;
 }
 
 interface ObjectFormDialogProps {
@@ -49,6 +50,7 @@ export const ObjectFormDialog = ({
     project_end_date: "",
     status: "Активный",
     comment: "",
+    warehouse_id: "",
   });
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export const ObjectFormDialog = ({
         project_end_date: initialData.project_end_date || "",
         status: initialData.status || "Активный",
         comment: initialData.comment || "",
+        warehouse_id: (initialData as any).warehouse_id || "",
       });
     } else if (open) {
       setForm({
@@ -73,9 +76,24 @@ export const ObjectFormDialog = ({
         project_end_date: "",
         status: "Активный",
         comment: "",
+        warehouse_id: "",
       });
     }
   }, [open, initialData]);
+
+  const { data: allWarehouses = [] } = useQuery({
+    queryKey: ["warehouses-all", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId && open,
+  });
 
   const { data: orgMembers = [] } = useQuery({
     queryKey: ["org-members", currentOrgId],
@@ -198,6 +216,23 @@ export const ObjectFormDialog = ({
               <SelectContent>
                 {STATUSES.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Склад объекта</Label>
+            <Select
+              value={form.warehouse_id || "__none__"}
+              onValueChange={(val) => setForm({ ...form, warehouse_id: val === "__none__" ? "" : val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите склад" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Не выбран —</SelectItem>
+                {allWarehouses.map((w: any) => (
+                  <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

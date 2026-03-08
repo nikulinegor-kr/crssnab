@@ -1365,6 +1365,7 @@ export type Database = {
           responsible_user_id: string | null
           status: string
           updated_at: string
+          warehouse_id: string | null
         }
         Insert: {
           address?: string | null
@@ -1381,6 +1382,7 @@ export type Database = {
           responsible_user_id?: string | null
           status?: string
           updated_at?: string
+          warehouse_id?: string | null
         }
         Update: {
           address?: string | null
@@ -1397,6 +1399,7 @@ export type Database = {
           responsible_user_id?: string | null
           status?: string
           updated_at?: string
+          warehouse_id?: string | null
         }
         Relationships: [
           {
@@ -1404,6 +1407,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_objects_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
