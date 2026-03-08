@@ -491,6 +491,9 @@ export const RequestsTable = ({
               {visibility.comments && (
                 <ResizableTableHeader column="comments" label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
+              <TableHead className="w-10 p-1 text-center">
+                <MoreVertical className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
