@@ -4,11 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
-import { MoreHorizontal, Copy, FileText } from "lucide-react";
+import { MoreHorizontal, Copy, FileText, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdditionalSectionProps {
   form: UseFormReturn<any>;
@@ -23,6 +24,7 @@ interface AdditionalSectionProps {
   onRemoveExistingPhoto?: (url: string) => void;
   existingDocumentUrls?: string[];
   onRemoveExistingDocument?: (url: string) => void;
+  organizationId?: string | null;
 }
 
 export const AdditionalSection = ({
@@ -38,9 +40,12 @@ export const AdditionalSection = ({
   onRemoveExistingPhoto,
   existingDocumentUrls,
   onRemoveExistingDocument,
+  organizationId,
 }: AdditionalSectionProps) => {
   const { toast } = useToast();
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [lastZrsFile, setLastZrsFile] = useState<File | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const handleCopyZRS = async () => {
     const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
@@ -121,11 +126,48 @@ export const AdditionalSection = ({
 
       // Add to document files so it appears in the Счёт/КП block below
       setDocumentFiles([...documentFiles, modifiedFile]);
+      setLastZrsFile(modifiedFile);
 
       toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт и добавлена в документы" });
     } catch (err) {
       console.error("PDF insert error:", err);
       toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
+    }
+  };
+
+  const handleSendToTelegram = async () => {
+    if (!lastZrsFile || !organizationId) return;
+    setIsSending(true);
+    try {
+      // Upload file to storage
+      const filePath = `zrs/${Date.now()}_${lastZrsFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("request-documents")
+        .upload(filePath, lastZrsFile);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("request-documents")
+        .getPublicUrl(filePath);
+
+      const zrsText = getZrsLines().join("\n");
+
+      const { error } = await supabase.functions.invoke("notify-telegram", {
+        body: {
+          action: "send_zrs_document",
+          organization_id: organizationId,
+          document_url: urlData.publicUrl,
+          file_name: lastZrsFile.name,
+          caption: `📋 ЗРС — Счёт\n\n${zrsText}`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Отправлено", description: "Счёт с ЗРС отправлен в Telegram" });
+    } catch (err) {
+      console.error("Send ZRS error:", err);
+      toast({ title: "Ошибка", description: "Не удалось отправить в Telegram", variant: "destructive" });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -169,6 +211,19 @@ export const AdditionalSection = ({
                 <Copy className="h-3 w-3 mr-1" />
                 Копировать
               </Button>
+              {lastZrsFile && (
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleSendToTelegram}
+                  disabled={isSending}
+                  className="h-7"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  {isSending ? "Отправка..." : "Отправить"}
+                </Button>
+              )}
             </div>
           </div>
           <Textarea
