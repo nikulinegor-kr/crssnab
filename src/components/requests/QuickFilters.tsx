@@ -37,14 +37,6 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     value: "Приоритетно",
   },
   {
-    id: "invoice",
-    label: "Счёт",
-    icon: <CreditCard className="h-3.5 w-3.5" />,
-    activeColor: "bg-amber-500 text-white border-amber-500 hover:bg-amber-600",
-    type: "status",
-    value: "Счёт",
-  },
-  {
     id: "invoice-accounting",
     label: "Счёт в Бухгалтерии",
     icon: <FileText className="h-3.5 w-3.5" />,
