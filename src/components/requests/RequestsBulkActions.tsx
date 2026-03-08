@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft } from "lucide-react";
+import { BulkTransferObjectDialog } from "./BulkTransferObjectDialog";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 import {
@@ -47,6 +48,7 @@ export const RequestsBulkActions = ({
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const createProcurement = useCreateProcurement();
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
   // Fetch statuses for the org
   const { data: statuses } = useQuery({
@@ -446,6 +448,19 @@ export const RequestsBulkActions = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Transfer to Object */}
+            <Button
+              onClick={() => setTransferDialogOpen(true)}
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-8 px-3"
+              disabled={isSending}
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Перенести в объект</span>
+              <span className="sm:hidden">Перенести</span>
+            </Button>
+
             {/* Change Object Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -547,6 +562,12 @@ export const RequestsBulkActions = ({
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <BulkTransferObjectDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        selectedRequestIds={selectedRequestIds}
+        onComplete={() => setSelectedRequestIds(new Set())}
+      />
     </div>
   );
 };
