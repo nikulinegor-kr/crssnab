@@ -147,15 +147,22 @@ export const AdditionalSection = ({
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Label className="text-xs">ЗРС (сводка заявки)</Label>
             <div className="flex items-center gap-2">
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={handlePdfFileSelected}
+              />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleGenerateZRSPdf}
+                onClick={handleInsertIntoInvoice}
                 className="h-7"
               >
                 <FileText className="h-3 w-3 mr-1" />
-                В счёт (PDF)
+                Вставить в счёт
               </Button>
               <Button
                 type="button"
