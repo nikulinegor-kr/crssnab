@@ -61,6 +61,8 @@ export default function WarehousePage() {
   const [productArticle, setProductArticle] = useState("");
   const [productUnit, setProductUnit] = useState("шт");
   const [movProductId, setMovProductId] = useState("");
+  const [movProductLabel, setMovProductLabel] = useState("");
+  const [movProductFromRequest, setMovProductFromRequest] = useState<{ requestId: string; description: string } | null>(null);
   const [movWarehouseId, setMovWarehouseId] = useState("");
   const [movToWarehouseId, setMovToWarehouseId] = useState("");
   const [movQuantity, setMovQuantity] = useState("");
