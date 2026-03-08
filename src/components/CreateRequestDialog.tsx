@@ -363,6 +363,19 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   }, [open]);
 
+  // Auto-bind warehouse when object changes
+  const watchedObjectId = form.watch("object_id");
+  useEffect(() => {
+    if (watchedObjectId && warehousesData?.length) {
+      const objectWarehouse = warehousesData.find((w: any) => w.object_id === watchedObjectId);
+      if (objectWarehouse) {
+        form.setValue("warehouse_id", objectWarehouse.id);
+      }
+    } else if (!watchedObjectId) {
+      form.setValue("warehouse_id", "");
+    }
+  }, [watchedObjectId, warehousesData]);
+
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);
     try {
