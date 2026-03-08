@@ -132,7 +132,7 @@ export function AppSidebar() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isViewer } = useUserRole();
   const totalUnread = useUnreadMessages();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
@@ -209,7 +209,10 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {menuGroups.map((group, idx) => {
+        {(isViewer
+          ? [{ label: "CRM", icon: FileText, items: [{ title: "Заявки", url: "/requests", icon: FileText }] }]
+          : menuGroups
+        ).map((group, idx) => {
           const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
           return (
             <div key={group.label}>
@@ -261,14 +264,16 @@ export function AppSidebar() {
           </>
         )}
 
-        {/* Настройки */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {!isDemoMode && renderMenuItems(settingsMenuItems)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Настройки — скрыты для наблюдателей */}
+        {!isViewer && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {!isDemoMode && renderMenuItems(settingsMenuItems)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-2">

@@ -48,8 +48,18 @@ const OrganizationSettings = () => {
       return;
     }
 
+    if (!roleLoading && isViewer) {
+      toast({
+        title: "Доступ запрещен",
+        description: "У вас нет доступа к настройкам организации",
+        variant: "destructive",
+      });
+      navigate("/requests");
+      return;
+    }
+
     loadSettings();
-  }, [currentOrgId, roleLoading]);
+  }, [currentOrgId, roleLoading, isViewer]);
 
   const loadSettings = async () => {
     if (!currentOrgId) return;
