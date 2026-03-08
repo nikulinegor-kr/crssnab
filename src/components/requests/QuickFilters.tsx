@@ -43,6 +43,7 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     type: "status",
     value: "Счёт в Бухгалтерии",
   },
+  {
     id: "in-transit",
     label: "В пути",
     icon: <span className="text-sm leading-none">🚚</span>,
