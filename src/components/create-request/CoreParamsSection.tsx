@@ -29,11 +29,21 @@ export const CoreParamsSection = ({
   disabled = false,
 }: CoreParamsSectionProps) => {
   const objectId = form.watch("object_id");
-  const [repairPurpose, setRepairPurpose] = useState<string>("general");
+  const currentEquipmentId = form.watch("equipment_id");
+  const [repairPurpose, setRepairPurpose] = useState<string>(
+    currentEquipmentId ? "equipment" : "general"
+  );
 
   // Determine if selected object is the repair object
   const selectedObject = objectsData?.find((o) => o.id === objectId);
   const isRepairObject = selectedObject?.name?.toLowerCase().includes("ремонт") ?? false;
+
+  // Sync repairPurpose when equipment_id is loaded from form defaults (edit mode)
+  useEffect(() => {
+    if (currentEquipmentId && isRepairObject) {
+      setRepairPurpose("equipment");
+    }
+  }, [currentEquipmentId, isRepairObject]);
 
   // Clear equipment when switching away from repair object or changing purpose
   useEffect(() => {
