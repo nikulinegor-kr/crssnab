@@ -48,6 +48,7 @@ export const RequestsBulkActions = ({
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const createProcurement = useCreateProcurement();
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
   // Fetch statuses for the org
   const { data: statuses } = useQuery({
