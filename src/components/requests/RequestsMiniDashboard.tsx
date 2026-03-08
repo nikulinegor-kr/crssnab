@@ -113,7 +113,7 @@ export const RequestsMiniDashboard = ({
       icon: <FileText className="h-3.5 w-3.5" />,
       color: "text-amber-600 dark:text-amber-400",
       iconBg: "bg-amber-100 dark:bg-amber-900/50",
-      bgColor: "bg-background border-border/60 hover:border-amber-300 dark:hover:border-amber-700",
+      bgColor: "bg-card border-border/40 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700",
       activeColor: "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800",
       type: "status",
       value: "Новая заявка",
