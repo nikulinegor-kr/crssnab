@@ -50,6 +50,8 @@ export default function EquipmentPage() {
   const [year, setYear] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment", currentOrgId],
