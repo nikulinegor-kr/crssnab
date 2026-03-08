@@ -46,6 +46,7 @@ const BudgetsPage = lazyWithRetry(() => import("./pages/BudgetsPage"));
 const ErpAnalyticsPage = lazyWithRetry(() => import("./pages/ErpAnalyticsPage"));
 const ProcurementPlanPage = lazyWithRetry(() => import("./pages/ProcurementPlanPage"));
 const SupplyDashboardPage = lazyWithRetry(() => import("./pages/SupplyDashboardPage"));
+const MovementJournalPage = lazyWithRetry(() => import("./pages/MovementJournalPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
