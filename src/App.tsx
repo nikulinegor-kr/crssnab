@@ -43,6 +43,9 @@ const WarehousePage = lazyWithRetry(() => import("./pages/WarehousePage"));
 const NomenclaturePage = lazyWithRetry(() => import("./pages/NomenclaturePage"));
 const EquipmentPage = lazyWithRetry(() => import("./pages/EquipmentPage"));
 const BudgetsPage = lazyWithRetry(() => import("./pages/BudgetsPage"));
+const ErpAnalyticsPage = lazyWithRetry(() => import("./pages/ErpAnalyticsPage"));
+const ProcurementPlanPage = lazyWithRetry(() => import("./pages/ProcurementPlanPage"));
+const SupplyDashboardPage = lazyWithRetry(() => import("./pages/SupplyDashboardPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
@@ -358,6 +361,36 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <SystemDemo />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/erp-analytics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ErpAnalyticsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/procurement-plan"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProcurementPlanPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supply-dashboard"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SupplyDashboardPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

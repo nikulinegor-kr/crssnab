@@ -19,6 +19,8 @@ import {
   ShoppingCart,
   Truck,
   Layers,
+  Boxes,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -60,11 +62,14 @@ const crmMenuItems = [
 ];
 
 const erpMenuItems = [
+  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
   { title: "Номенклатура", url: "/nomenclature", icon: Layers },
   { title: "Техника", url: "/equipment", icon: Truck },
   { title: "Склад", url: "/warehouse", icon: Warehouse },
   { title: "Поставки", url: "/shipments", icon: Truck },
+  { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
   { title: "Бюджеты", url: "/budgets", icon: Wallet },
+  { title: "ERP Аналитика", url: "/erp-analytics", icon: BarChart3 },
 ];
 
 const reportMenuItems = [
