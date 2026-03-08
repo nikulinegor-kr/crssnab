@@ -448,6 +448,45 @@ export default function EquipmentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Equipment Request History Dialog */}
+      <Dialog open={!!historyEquipmentId} onOpenChange={(open) => !open && setHistoryEquipmentId(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>История заявок по технике</DialogTitle>
+          </DialogHeader>
+          {linkedRequests.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Нет связанных заявок</p>
+          ) : (
+            <div className="rounded-md border max-h-[400px] overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Номер</TableHead>
+                    <TableHead>Описание</TableHead>
+                    <TableHead>Тип</TableHead>
+                    <TableHead>Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {linkedRequests.map((r: any) => (
+                    <TableRow
+                      key={r.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/requests/${r.id}`)}
+                    >
+                      <TableCell className="font-mono text-xs">{r.request_number}</TableCell>
+                      <TableCell className="max-w-[250px] truncate">{r.description}</TableCell>
+                      <TableCell><Badge variant="outline">{r.request_type || "—"}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary">{r.status}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
