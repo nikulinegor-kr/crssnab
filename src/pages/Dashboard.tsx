@@ -347,6 +347,38 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* ERP Supply Overview */}
+        {!isLoading && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-foreground">Снабжение</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {[
+                { title: "Счета на оплату", value: stats.invoicesToPay, icon: Receipt, color: "text-orange-500", bgColor: "bg-orange-500/10", link: "/requests?status=Счёт" },
+                { title: "Поставки в пути", value: stats.inTransit, icon: Truck, color: "text-info", bgColor: "bg-info/10", link: "/requests?status=В пути" },
+                { title: "Товары под заказ", value: stats.onOrder, icon: ShoppingCart, color: "text-purple-500", bgColor: "bg-purple-500/10", link: "/requests?status=В работе" },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Card
+                    key={item.title}
+                    className="bg-card border-border/40 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-primary/50"
+                    onClick={() => navigate(item.link)}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0 p-3 sm:p-4">
+                      <CardTitle className="text-xs font-medium text-muted-foreground">{item.title}</CardTitle>
+                      <div className={`p-1.5 rounded-md ${item.bgColor}`}>
+                        <Icon className={`h-3.5 w-3.5 ${item.color}`} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 p-3 sm:p-4">
+                      <div className="text-3xl font-semibold text-foreground">{item.value}</div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
         {/* График расходов для руководства */}
         {isAdmin && settings.dashboard.showExpenseChart && !isLoading && requests && requests.length > 0 && (
           <ExpenseChart requests={requests} selectedYear={selectedYear} />
