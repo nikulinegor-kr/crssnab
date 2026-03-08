@@ -358,6 +358,16 @@ const App = () => {
               }
             />
             <Route
+              path="/equipment/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <EquipmentDetailPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/budgets"
               element={
                 <ProtectedRoute>
