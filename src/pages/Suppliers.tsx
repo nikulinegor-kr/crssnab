@@ -244,6 +244,90 @@ export default function Suppliers() {
     mutation.mutate(formData);
   };
 
+  const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsExtractingSupplier(true);
+
+    try {
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("extract-supplier", {
+        body: { file: base64, fileName: file.name, fileType: file.type },
+      });
+
+      if (error) throw error;
+
+      const supplier = data?.supplier;
+      if (!supplier || !supplier.inn) {
+        toast({
+          title: "Не удалось извлечь данные",
+          description: "Не найдены реквизиты поставщика в документе. Попробуйте другой файл.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if supplier with this INN already exists
+      if (currentOrgId && supplier.inn) {
+        const { data: existing } = await supabase
+          .from("suppliers")
+          .select("id, name")
+          .eq("organization_id", currentOrgId)
+          .eq("inn", supplier.inn)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "Поставщик найден",
+            description: `Поставщик "${existing.name}" (ИНН: ${supplier.inn}) уже есть в базе`,
+          });
+          return;
+        }
+      }
+
+      // Fill the form with extracted data
+      setFormData((prev) => ({
+        ...prev,
+        name: supplier.name || prev.name,
+        inn: supplier.inn || prev.inn,
+        kpp: supplier.kpp || prev.kpp,
+        ogrn: supplier.ogrn || prev.ogrn,
+        bank_name: supplier.bank_name || prev.bank_name,
+        bank_account: supplier.bank_account || prev.bank_account,
+        bik: supplier.bik || prev.bik,
+        address: supplier.address || prev.address,
+        phone: supplier.phone || prev.phone,
+        email: supplier.email || prev.email,
+        contact_person: supplier.contact_person || prev.contact_person,
+      }));
+
+      setIsDialogOpen(true);
+
+      toast({
+        title: "Данные извлечены",
+        description: `Реквизиты "${supplier.name}" заполнены из документа. Проверьте и сохраните.`,
+      });
+    } catch (err: any) {
+      console.error("Extract supplier error:", err);
+      toast({
+        title: "Ошибка распознавания",
+        description: err.message || "Не удалось обработать документ",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtractingSupplier(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const filteredSuppliers = suppliers?.filter((supplier) =>
     supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     supplier.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
