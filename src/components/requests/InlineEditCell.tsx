@@ -275,6 +275,8 @@ export const InlineEditCell = ({
       case "transport_company": return "ТК";
       case "description": return "Описание заявки";
       case "applicant": return "Заявитель";
+      case "contractor": return "Контрагент";
+      case "amount": return "Сумма";
       default: return "Комментарий";
     }
   };
