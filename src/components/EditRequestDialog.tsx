@@ -147,6 +147,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [requestItems, setRequestItems] = useState<RequestItem[]>([]);
   const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [existingDocumentUrls, setExistingDocumentUrls] = useState<string[]>([]);
   const [serverSaveState, setServerSaveState] = useState<SaveState>('idle');
