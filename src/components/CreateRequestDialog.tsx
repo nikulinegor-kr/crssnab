@@ -323,7 +323,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       invoice_number: "",
       amount: null,
       payment_status: "Не выставлен",
-      invoice_date: "",
       shipment_date: "",
       delivery_date: "",
       transport_company: initialData?.transport_company || "",
