@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
-import { MoreHorizontal, Copy, FileText, Send } from "lucide-react";
+import { MoreHorizontal, Copy, FileText, Send, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
