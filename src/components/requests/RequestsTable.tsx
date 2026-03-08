@@ -394,7 +394,7 @@ export const RequestsTable = ({
   );
 
   return (
-    <>
+    <div className="flex gap-4 items-start">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
         {paginatedRequests.map((request) => (
