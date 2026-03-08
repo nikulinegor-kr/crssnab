@@ -33,7 +33,7 @@ export const CoreParamsSection = ({
 
   // Determine if selected object is the repair object
   const selectedObject = objectsData?.find((o) => o.id === objectId);
-  const isRepairObject = selectedObject?.name === "Ремонт и восстановление техники";
+  const isRepairObject = selectedObject?.name?.toLowerCase().includes("ремонт") ?? false;
 
   // Clear equipment when switching away from repair object or changing purpose
   useEffect(() => {
