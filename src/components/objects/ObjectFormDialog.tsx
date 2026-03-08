@@ -19,6 +19,7 @@ interface ObjectFormData {
   project_end_date: string;
   status: string;
   comment: string;
+  warehouse_id: string;
 }
 
 interface ObjectFormDialogProps {
