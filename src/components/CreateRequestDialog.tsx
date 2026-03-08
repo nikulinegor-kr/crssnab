@@ -118,7 +118,6 @@ const requestSchema = z.object({
   operation_type: z.string().optional(),
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
-  request_type: z.string().optional(),
   equipment_id: z.string().optional(),
 });
 
@@ -491,7 +490,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         operation_type: data.operation_type || null,
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
-        request_type: data.request_type || null,
         equipment_id: data.equipment_id || null,
         photo_url: photoUrls[0] || null,
         document_url: documentUrls[0] || null,
