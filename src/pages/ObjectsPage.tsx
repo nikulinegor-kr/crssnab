@@ -288,7 +288,7 @@ const ObjectsPage = () => {
           onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
           objectId={deleteTarget.id}
           objectName={deleteTarget.name}
-          requestCount={requests?.filter((r) => r.object_id === deleteTarget.id).length || 0}
+          requestCount={requestCountsMap[deleteTarget.id] || 0}
           availableObjects={objects.filter((o: any) => o.id !== deleteTarget.id).map((o: any) => ({ id: o.id, name: o.name }))}
           onSuccess={() => setDeleteTarget(null)}
         />
