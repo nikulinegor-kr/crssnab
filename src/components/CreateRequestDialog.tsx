@@ -91,7 +91,6 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_status: z.string().optional(),
-  invoice_date: z.string().optional().or(z.literal("")),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
