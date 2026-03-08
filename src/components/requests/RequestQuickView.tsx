@@ -1,12 +1,13 @@
 import { memo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ExternalLink, Pencil, Building2, Flag, CheckCircle, MessageSquare, User } from "lucide-react";
+import { X, ExternalLink, Pencil, Building2, Flag, CheckCircle, User, Truck, Calendar, RussianRuble } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 interface RequestQuickViewProps {
   requestId: string | null;
@@ -36,10 +37,17 @@ export const RequestQuickView = memo(function RequestQuickView({ requestId, open
 
   if (!open || !request) return null;
 
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("ru-RU").format(val) + " ₽";
+
+  const formatDate = (d: string) => {
+    try { return format(new Date(d), "dd.MM.yyyy"); } catch { return d; }
+  };
+
   return (
     <div
       className="sticky top-20 shrink-0 z-30 w-[360px] rounded-xl border border-border bg-card shadow-lg"
-      style={{ height: "auto", maxHeight: 420, overflow: "hidden" }}
+      style={{ height: "auto", maxHeight: 480, overflow: "hidden" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
@@ -81,8 +89,39 @@ export const RequestQuickView = memo(function RequestQuickView({ requestId, open
             <span className="truncate">{request.executor}</span>
           </div>
         )}
+
+        {/* Logistics */}
+        {(request.transport_company || request.shipment_date || request.delivery_date || (request.amount && request.amount > 0)) && (
+          <div className="border-t border-border/30 pt-2 space-y-1.5">
+            {request.transport_company && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Truck className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">ТК: {request.transport_company}</span>
+              </div>
+            )}
+            {request.shipment_date && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span>Отгрузка: {formatDate(request.shipment_date)}</span>
+              </div>
+            )}
+            {request.delivery_date && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span>Приход: {formatDate(request.delivery_date)}</span>
+              </div>
+            )}
+            {request.amount && request.amount > 0 && (
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <RussianRuble className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span>{formatCurrency(Number(request.amount))}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {request.comments && (
-          <p className="text-xs text-muted-foreground italic line-clamp-2">"{request.comments}"</p>
+          <p className="text-xs text-muted-foreground italic line-clamp-2 border-t border-border/30 pt-2">"{request.comments}"</p>
         )}
       </div>
 
