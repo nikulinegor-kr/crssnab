@@ -117,14 +117,13 @@ export const AdditionalSection = ({
 
       const modifiedPdf = await pdfDoc.save();
       const blob = new Blob([modifiedPdf.buffer as ArrayBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name.replace(".pdf", "_ZRS.pdf");
-      a.click();
-      URL.revokeObjectURL(url);
+      const newFileName = file.name.replace(".pdf", "_ZRS.pdf");
+      const modifiedFile = new File([blob], newFileName, { type: "application/pdf" });
 
-      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт" });
+      // Add to document files so it appears in the Счёт/КП block below
+      setDocumentFiles([...documentFiles, modifiedFile]);
+
+      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт и добавлена в документы" });
     } catch (err) {
       console.error("PDF insert error:", err);
       toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
