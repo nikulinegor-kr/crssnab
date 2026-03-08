@@ -355,10 +355,32 @@ export default function Suppliers() {
                 Управление базой данных поставщиков
               </p>
             </div>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Новый поставщик
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => handleOpenDialog()} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Новый поставщик
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isExtractingSupplier}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isExtractingSupplier ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {isExtractingSupplier ? "Распознаём..." : "Из счёта"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={handleInvoiceUpload}
+              />
+            </div>
           </div>
 
           {/* Поиск и фильтры */}
