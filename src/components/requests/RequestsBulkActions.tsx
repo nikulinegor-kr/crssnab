@@ -299,7 +299,7 @@ export const RequestsBulkActions = ({
   );
 
   // If no selection, just show export
-  if (selectedRequestIds.size < 2) {
+  if (selectedRequestIds.size < 1) {
     return <div className="flex flex-wrap gap-1.5 sm:gap-2">{exportButton}</div>;
   }
 
