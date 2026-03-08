@@ -12,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse, ChevronsUpDown, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT";
 
@@ -65,7 +67,27 @@ export default function WarehousePage() {
   const [movComment, setMovComment] = useState("");
   const [movRequestId, setMovRequestId] = useState("");
 
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [productPopoverOpen, setProductPopoverOpen] = useState(false);
+  const [requestSearchQuery, setRequestSearchQuery] = useState("");
+  const [requestPopoverOpen, setRequestPopoverOpen] = useState(false);
+
   // Queries
+  const { data: requests = [] } = useQuery({
+    queryKey: ["requests-for-movement", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("id, request_number, description")
+        .eq("organization_id", currentOrgId!)
+        .eq("archived", false)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
   const { data: warehouses = [] } = useQuery({
     queryKey: ["warehouses", currentOrgId],
     queryFn: async () => {
@@ -492,7 +514,10 @@ export default function WarehousePage() {
       </Dialog>
 
       {/* Movement Dialog */}
-      <Dialog open={showMovementDialog} onOpenChange={setShowMovementDialog}>
+      <Dialog open={showMovementDialog} onOpenChange={(open) => {
+        setShowMovementDialog(open);
+        if (!open) { setProductSearchQuery(""); setRequestSearchQuery(""); }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -500,19 +525,61 @@ export default function WarehousePage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Product searchable select */}
             <div>
               <Label>Товар</Label>
-              <Select value={movProductId} onValueChange={setMovProductId}>
-                <SelectTrigger><SelectValue placeholder="Выберите товар" /></SelectTrigger>
-                <SelectContent>
-                  {products.map((p: any) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} {p.article ? `(${p.article})` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={productPopoverOpen} onOpenChange={setProductPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {movProductId
+                      ? (() => {
+                          const p = products.find((p: any) => p.id === movProductId);
+                          return p ? `${p.name}${p.article ? ` (${p.article})` : ""}` : "Выберите товар";
+                        })()
+                      : "Выберите товар"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск по названию или артикулу..."
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {products
+                      .filter((p: any) => {
+                        if (!productSearchQuery) return true;
+                        const q = productSearchQuery.toLowerCase();
+                        return p.name?.toLowerCase().includes(q) || p.article?.toLowerCase().includes(q);
+                      })
+                      .map((p: any) => (
+                        <button
+                          key={p.id}
+                          className={cn(
+                            "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left",
+                            movProductId === p.id && "bg-accent"
+                          )}
+                          onClick={() => {
+                            setMovProductId(p.id);
+                            setProductPopoverOpen(false);
+                            setProductSearchQuery("");
+                          }}
+                        >
+                          {movProductId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                          <span className={movProductId !== p.id ? "ml-5" : ""}>
+                            {p.name} {p.article ? <span className="text-muted-foreground">({p.article})</span> : ""}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
+
             <div>
               <Label>{movementOpType === "MOVE" ? "Со склада" : "Склад"}</Label>
               <Select value={movWarehouseId} onValueChange={setMovWarehouseId}>
@@ -541,9 +608,71 @@ export default function WarehousePage() {
               <Label>Количество</Label>
               <Input type="number" min="1" value={movQuantity} onChange={(e) => setMovQuantity(e.target.value)} placeholder="0" />
             </div>
+
+            {/* Request searchable select */}
+            <div>
+              <Label>Связанная заявка</Label>
+              <Popover open={requestPopoverOpen} onOpenChange={setRequestPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {movRequestId
+                      ? (() => {
+                          const r = requests.find((r: any) => r.id === movRequestId);
+                          return r ? `#${r.request_number} — ${r.description?.slice(0, 40) || ""}` : "Выберите заявку";
+                        })()
+                      : "Не выбрана"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск по номеру или описанию..."
+                      value={requestSearchQuery}
+                      onChange={(e) => setRequestSearchQuery(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto">
+                    <button
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left text-muted-foreground"
+                      onClick={() => { setMovRequestId(""); setRequestPopoverOpen(false); setRequestSearchQuery(""); }}
+                    >
+                      Без заявки
+                    </button>
+                    {requests
+                      .filter((r: any) => {
+                        if (!requestSearchQuery) return true;
+                        const q = requestSearchQuery.toLowerCase();
+                        return r.request_number?.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q);
+                      })
+                      .map((r: any) => (
+                        <button
+                          key={r.id}
+                          className={cn(
+                            "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left",
+                            movRequestId === r.id && "bg-accent"
+                          )}
+                          onClick={() => {
+                            setMovRequestId(r.id);
+                            setRequestPopoverOpen(false);
+                            setRequestSearchQuery("");
+                          }}
+                        >
+                          {movRequestId === r.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                          <span className={movRequestId !== r.id ? "ml-5" : ""}>
+                            #{r.request_number} — {r.description?.slice(0, 50) || "Без описания"}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div>
               <Label>Комментарий</Label>
-              <Textarea value={movComment} onChange={(e) => setMovComment(e.target.value)} placeholder="Опционально" />
+              <Textarea value={movComment} onChange={(e) => setMovComment(e.target.value)} placeholder="Необязательно" />
             </div>
           </div>
           <DialogFooter>
