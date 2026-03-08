@@ -526,7 +526,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-8 text-center px-1 py-2 border-r text-[11px] text-muted-foreground/60 font-mono">
+                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-[11px] text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
                     {rowNumber}
                   </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
