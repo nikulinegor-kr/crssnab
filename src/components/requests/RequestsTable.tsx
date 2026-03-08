@@ -721,6 +721,7 @@ export const RequestsTable = ({
         <PaginationControls />
         </div>
       </div>
+      </div>
 
       <RequestQuickView
         requestId={quickViewRequestId}
