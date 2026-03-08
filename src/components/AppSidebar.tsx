@@ -236,7 +236,17 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {renderMenuItems(erpMenuItems)}
+                  {/* Склад group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Склад</SidebarGroupLabel>}
+                  {renderMenuItems(erpWarehouseItems)}
+                  
+                  {/* Снабжение group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Снабжение</SidebarGroupLabel>}
+                  {renderMenuItems(erpSupplyItems)}
+
+                  {/* Финансы group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Финансы</SidebarGroupLabel>}
+                  {renderMenuItems(erpFinanceItems)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>
