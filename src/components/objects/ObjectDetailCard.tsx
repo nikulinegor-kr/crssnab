@@ -24,6 +24,7 @@ interface ObjectDetailCardProps {
 }
 
 export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) => {
+  const navigate = useNavigate();
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
