@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Building2, Plus, Archive, Pencil } from "lucide-react";
+import { Search, Building2, Plus, Archive, Pencil, Trash2 } from "lucide-react";
 import { ObjectFormDialog } from "@/components/objects/ObjectFormDialog";
 import { ObjectDetailCard } from "@/components/objects/ObjectDetailCard";
+import { DeleteObjectDialog } from "@/components/objects/DeleteObjectDialog";
 
 const STATUS_COLORS: Record<string, string> = {
   "Активный": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
@@ -30,6 +31,7 @@ const ObjectsPage = () => {
   const [editingObject, setEditingObject] = useState<any>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [tab, setTab] = useState("active");
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const { data: objects = [], isLoading } = useQuery({
     queryKey: ["request-objects-all", currentOrgId],
@@ -58,6 +60,7 @@ const ObjectsPage = () => {
         project_end_date: formData.project_end_date || null,
         status: formData.status,
         comment: formData.comment || null,
+        warehouse_id: formData.warehouse_id || null,
         archived,
         is_active: !archived,
       });
@@ -86,6 +89,7 @@ const ObjectsPage = () => {
           project_end_date: formData.project_end_date || null,
           status: formData.status,
           comment: formData.comment || null,
+          warehouse_id: formData.warehouse_id || null,
           archived,
           is_active: !archived,
         })
@@ -137,6 +141,7 @@ const ObjectsPage = () => {
           onBack={() => setSelectedObjectId(null)}
           onEdit={(obj) => { setSelectedObjectId(null); setEditingObject(obj); }}
           onArchive={(id) => { setSelectedObjectId(null); archiveMutation.mutate(id); }}
+          onDelete={(obj) => { setSelectedObjectId(null); setDeleteTarget(obj); }}
         />
       </div>
     );
@@ -207,6 +212,14 @@ const ObjectsPage = () => {
                               <Archive className="h-3.5 w-3.5" />
                             </Button>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteTarget(obj)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -237,6 +250,19 @@ const ObjectsPage = () => {
         title="Редактирование объекта"
         currentOrgId={currentOrgId}
       />
+
+      {/* Delete Dialog */}
+      {deleteTarget && (
+        <DeleteObjectDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+          objectId={deleteTarget.id}
+          objectName={deleteTarget.name}
+          requestCount={requests?.filter((r) => r.object_id === deleteTarget.id).length || 0}
+          availableObjects={objects.filter((o: any) => o.id !== deleteTarget.id).map((o: any) => ({ id: o.id, name: o.name }))}
+          onSuccess={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 };

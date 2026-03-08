@@ -221,6 +221,23 @@ export const ObjectFormDialog = ({
             </Select>
           </div>
           <div>
+            <Label>Склад объекта</Label>
+            <Select
+              value={form.warehouse_id || "__none__"}
+              onValueChange={(val) => setForm({ ...form, warehouse_id: val === "__none__" ? "" : val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите склад" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Не выбран —</SelectItem>
+                {allWarehouses.map((w: any) => (
+                  <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Комментарий</Label>
             <Textarea
               value={form.comment}
