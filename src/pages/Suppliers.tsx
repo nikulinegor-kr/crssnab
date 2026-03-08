@@ -207,6 +207,9 @@ export default function Suppliers() {
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
         ogrn: supplier.ogrn || "",
+        bank_name: supplier.bank_name || "",
+        bank_account: supplier.bank_account || "",
+        bik: supplier.bik || "",
         notes: supplier.notes || "",
       });
     }
