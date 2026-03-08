@@ -211,8 +211,20 @@ export const AdditionalSection = ({
                 <Copy className="h-3 w-3 mr-1" />
                 Копировать
               </Button>
+              {lastZrsFile && (
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleSendToTelegram}
+                  disabled={isSending}
+                  className="h-7"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  {isSending ? "Отправка..." : "Отправить"}
+                </Button>
+              )}
             </div>
-          </div>
           <Textarea
             readOnly
             className="min-h-[80px] sm:min-h-[100px] bg-muted/50 font-mono text-xs"
