@@ -233,7 +233,7 @@ const ObjectsPage = () => {
                           {obj.contract_number && <p className="text-xs text-muted-foreground">Контракт: {obj.contract_number}</p>}
                         </div>
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Badge variant="secondary" className="text-xs">{objRequests.length} заявок</Badge>
+                          <Badge variant="secondary" className="text-xs">{reqCount} заявок</Badge>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingObject(obj)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
