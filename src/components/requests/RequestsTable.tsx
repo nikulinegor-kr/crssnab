@@ -508,7 +508,8 @@ export const RequestsTable = ({
                   ? "#f97316" 
                   : "#d1d5db";
               
-              const isEvenRow = index % 2 === 1;
+               const isEvenRow = index % 2 === 1;
+               const rowNumber = startIndex + index + 1;
               
               return (
                 <TableRow
