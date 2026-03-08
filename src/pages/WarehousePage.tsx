@@ -61,6 +61,8 @@ export default function WarehousePage() {
   const [productArticle, setProductArticle] = useState("");
   const [productUnit, setProductUnit] = useState("шт");
   const [movProductId, setMovProductId] = useState("");
+  const [movProductLabel, setMovProductLabel] = useState("");
+  const [movProductFromRequest, setMovProductFromRequest] = useState<{ requestId: string; description: string } | null>(null);
   const [movWarehouseId, setMovWarehouseId] = useState("");
   const [movToWarehouseId, setMovToWarehouseId] = useState("");
   const [movQuantity, setMovQuantity] = useState("");
@@ -240,17 +242,51 @@ export default function WarehousePage() {
       const qty = parseInt(movQuantity);
       if (!qty || qty <= 0) throw new Error("Invalid quantity");
 
+      let productId = movProductId;
+      let requestId = movRequestId || null;
+
+      // If product was selected from a request, auto-create in nomenclature
+      if (movProductFromRequest) {
+        // Check if product with same name already exists
+        const { data: existing } = await supabase
+          .from("warehouse_products")
+          .select("id")
+          .eq("organization_id", currentOrgId!)
+          .eq("name", movProductFromRequest.description)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          productId = existing[0].id;
+        } else {
+          const { data: created, error: createErr } = await supabase
+            .from("warehouse_products")
+            .insert({
+              organization_id: currentOrgId!,
+              name: movProductFromRequest.description,
+              article: null,
+              unit: "шт",
+            })
+            .select("id")
+            .single();
+          if (createErr) throw createErr;
+          productId = created.id;
+        }
+        // Auto-link the request
+        requestId = movProductFromRequest.requestId;
+        // Refresh products cache
+        queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+      }
+
       const base = {
         organization_id: currentOrgId!,
-        product_id: movProductId,
+        product_id: productId,
         quantity: qty,
         comment: movComment || null,
-        request_id: movRequestId || null,
+        request_id: requestId,
         created_by: (await supabase.auth.getUser()).data.user?.id,
       };
 
       if (movementOpType === "MOVE") {
-        // Create two entries
         const { error: e1 } = await supabase.from("stock_movements").insert({
           ...base,
           warehouse_id: movWarehouseId,
@@ -283,6 +319,8 @@ export default function WarehousePage() {
 
   const resetMovementForm = () => {
     setMovProductId("");
+    setMovProductLabel("");
+    setMovProductFromRequest(null);
     setMovWarehouseId("");
     setMovToWarehouseId("");
     setMovQuantity("");
@@ -525,56 +563,99 @@ export default function WarehousePage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Product searchable select */}
+            {/* Product searchable select — two sources */}
             <div>
               <Label>Товар</Label>
               <Popover open={productPopoverOpen} onOpenChange={setProductPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                    {movProductId
-                      ? (() => {
-                          const p = products.find((p: any) => p.id === movProductId);
-                          return p ? `${p.name}${p.article ? ` (${p.article})` : ""}` : "Выберите товар";
-                        })()
-                      : "Выберите товар"}
+                    {movProductLabel || "Выберите товар"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <div className="p-2">
                     <Input
-                      placeholder="Поиск по названию или артикулу..."
+                      placeholder="Поиск по названию, артикулу или заявке..."
                       value={productSearchQuery}
                       onChange={(e) => setProductSearchQuery(e.target.value)}
                       className="h-8"
                     />
                   </div>
-                  <div className="max-h-[200px] overflow-y-auto">
-                    {products
-                      .filter((p: any) => {
+                  <div className="max-h-[280px] overflow-y-auto">
+                    {/* Section: Nomenclature */}
+                    {(() => {
+                      const filteredProducts = products.filter((p: any) => {
                         if (!productSearchQuery) return true;
                         const q = productSearchQuery.toLowerCase();
                         return p.name?.toLowerCase().includes(q) || p.article?.toLowerCase().includes(q);
-                      })
-                      .map((p: any) => (
-                        <button
-                          key={p.id}
-                          className={cn(
-                            "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left",
-                            movProductId === p.id && "bg-accent"
+                      });
+                      const filteredRequests = requests.filter((r: any) => {
+                        if (!productSearchQuery) return true;
+                        const q = productSearchQuery.toLowerCase();
+                        return r.description?.toLowerCase().includes(q) || r.request_number?.toLowerCase().includes(q);
+                      });
+                      return (
+                        <>
+                          {filteredProducts.length > 0 && (
+                            <>
+                              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">📦 Номенклатура</div>
+                              {filteredProducts.map((p: any) => (
+                                <button
+                                  key={`prod-${p.id}`}
+                                  className={cn(
+                                    "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left",
+                                    movProductId === p.id && !movProductFromRequest && "bg-accent"
+                                  )}
+                                  onClick={() => {
+                                    setMovProductId(p.id);
+                                    setMovProductLabel(`${p.name}${p.article ? ` (${p.article})` : ""}`);
+                                    setMovProductFromRequest(null);
+                                    setProductPopoverOpen(false);
+                                    setProductSearchQuery("");
+                                  }}
+                                >
+                                  {movProductId === p.id && !movProductFromRequest && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                                  <span className={movProductId !== p.id || movProductFromRequest ? "ml-5" : ""}>
+                                    {p.name} {p.article ? <span className="text-muted-foreground">({p.article})</span> : ""}
+                                  </span>
+                                </button>
+                              ))}
+                            </>
                           )}
-                          onClick={() => {
-                            setMovProductId(p.id);
-                            setProductPopoverOpen(false);
-                            setProductSearchQuery("");
-                          }}
-                        >
-                          {movProductId === p.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
-                          <span className={movProductId !== p.id ? "ml-5" : ""}>
-                            {p.name} {p.article ? <span className="text-muted-foreground">({p.article})</span> : ""}
-                          </span>
-                        </button>
-                      ))}
+                          {filteredRequests.length > 0 && (
+                            <>
+                              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1.5">📄 Заявки</div>
+                              {filteredRequests.slice(0, 50).map((r: any) => (
+                                <button
+                                  key={`req-${r.id}`}
+                                  className={cn(
+                                    "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left",
+                                    movProductFromRequest?.requestId === r.id && "bg-accent"
+                                  )}
+                                  onClick={() => {
+                                    setMovProductId("");
+                                    setMovProductLabel(`${r.description?.slice(0, 50) || "Заявка"} (#${r.request_number})`);
+                                    setMovProductFromRequest({ requestId: r.id, description: r.description || `Заявка #${r.request_number}` });
+                                    setMovRequestId(r.id);
+                                    setProductPopoverOpen(false);
+                                    setProductSearchQuery("");
+                                  }}
+                                >
+                                  {movProductFromRequest?.requestId === r.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                                  <span className={movProductFromRequest?.requestId !== r.id ? "ml-5" : ""}>
+                                    #{r.request_number} — {r.description?.slice(0, 50) || "Без описания"}
+                                  </span>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                          {filteredProducts.length === 0 && filteredRequests.length === 0 && (
+                            <div className="px-3 py-4 text-sm text-center text-muted-foreground">Ничего не найдено</div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -679,7 +760,7 @@ export default function WarehousePage() {
             <Button
               onClick={() => createMovement.mutate()}
               disabled={
-                !movProductId ||
+                (!movProductId && !movProductFromRequest) ||
                 !movWarehouseId ||
                 !movQuantity ||
                 (movementOpType === "MOVE" && !movToWarehouseId) ||
