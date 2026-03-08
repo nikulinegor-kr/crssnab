@@ -59,6 +59,8 @@ const Requests = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateInitialData, setDuplicateInitialData] = useState<any>(null);
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
