@@ -156,26 +156,25 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
 
           <FormField
             control={form.control}
-            name="payment_status"
+            name="payment_percentage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Статус оплаты</FormLabel>
-                <Select
-                  value={field.value || "Не выставлен"}
-                  onValueChange={field.onChange}
-                  disabled={disabled}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Не выставлен">Не выставлен</SelectItem>
-                    <SelectItem value="Счёт выставлен">Счёт выставлен</SelectItem>
-                    <SelectItem value="Оплачен">Оплачен</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel className="text-xs">% оплаты</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="0"
+                    className="h-9 select-all min-w-0 text-sm"
+                    disabled={disabled}
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value === "" ? null : Math.min(100, Math.max(0, parseInt(e.target.value, 10)));
+                      field.onChange(isNaN(val as number) ? null : val);
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
