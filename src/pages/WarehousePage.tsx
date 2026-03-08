@@ -846,7 +846,9 @@ export default function WarehousePage() {
                 (!movProductId && !movProductFromRequest) ||
                 !movWarehouseId ||
                 !movQuantity ||
+                Number(movQuantity) <= 0 ||
                 (movementOpType === "MOVE" && !movToWarehouseId) ||
+                (movementOpType === "MOVE" && movWarehouseId === movToWarehouseId) ||
                 createMovement.isPending
               }
             >
