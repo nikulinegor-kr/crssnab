@@ -332,20 +332,17 @@ export default function EquipmentPage() {
           >
             Все ({equipment.length})
           </Button>
-          {uniqueBrands.map((b) => {
-            const count = equipment.filter((e: any) => e.brand?.toUpperCase() === b).length;
-            return (
+          {uniqueBrands.map(([brandName, count]) => (
               <Button
-                key={b}
-                variant={brandFilter === b ? "default" : "outline"}
+                key={brandName}
+                variant={brandFilter === brandName ? "default" : "outline"}
                 size="sm"
                 className="h-7 text-xs"
-                onClick={() => setBrandFilter(brandFilter === b ? null : b)}
+                onClick={() => setBrandFilter(brandFilter === brandName ? null : brandName)}
               >
-                {b} ({count})
+                {brandName} ({count})
               </Button>
-            );
-          })}
+          ))}
         </div>
       )}
 
