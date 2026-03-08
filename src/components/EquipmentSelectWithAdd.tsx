@@ -60,13 +60,14 @@ export const EquipmentSelectWithAdd = ({
 
   const filtered = useMemo(() => {
     if (!search) return equipmentList;
-    const q = search.toLowerCase();
-    return equipmentList.filter((e: any) =>
-      e.brand?.toLowerCase().includes(q) ||
-      e.model?.toLowerCase().includes(q) ||
-      e.vin?.toLowerCase().includes(q) ||
-      e.plate_number?.toLowerCase().includes(q)
-    );
+    const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+    return equipmentList.filter((e: any) => {
+      const haystack = [e.brand, e.model, e.vin, e.plate_number]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return words.every((w) => haystack.includes(w));
+    });
   }, [equipmentList, search]);
 
   const selectedEquipment = equipmentList.find((e: any) => e.id === value);
