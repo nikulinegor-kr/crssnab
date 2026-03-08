@@ -52,6 +52,8 @@ export default function EquipmentPage() {
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
   const [importing, setImporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: equipment = [] } = useQuery({
