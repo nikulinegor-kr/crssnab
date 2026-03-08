@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -48,6 +48,9 @@ interface Supplier {
   inn: string | null;
   kpp: string | null;
   ogrn: string | null;
+  bank_name: string | null;
+  bank_account: string | null;
+  bik: string | null;
   notes: string | null;
   created_at: string;
   organization_id: string;
@@ -76,8 +79,14 @@ export default function Suppliers() {
     inn: "",
     kpp: "",
     ogrn: "",
+    bank_name: "",
+    bank_account: "",
+    bik: "",
     notes: "",
   });
+
+  const [isExtractingSupplier, setIsExtractingSupplier] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { suggestions, isSearching, search: searchDadata, clearSuggestions } = useDadataSearch();
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -198,6 +207,9 @@ export default function Suppliers() {
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
         ogrn: supplier.ogrn || "",
+        bank_name: supplier.bank_name || "",
+        bank_account: supplier.bank_account || "",
+        bik: supplier.bik || "",
         notes: supplier.notes || "",
       });
     }
@@ -218,6 +230,9 @@ export default function Suppliers() {
       inn: "",
       kpp: "",
       ogrn: "",
+      bank_name: "",
+      bank_account: "",
+      bik: "",
       notes: "",
     });
     setDadataQuery("");
@@ -227,6 +242,90 @@ export default function Suppliers() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(formData);
+  };
+
+  const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsExtractingSupplier(true);
+
+    try {
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("extract-supplier", {
+        body: { file: base64, fileName: file.name, fileType: file.type },
+      });
+
+      if (error) throw error;
+
+      const supplier = data?.supplier;
+      if (!supplier || !supplier.inn) {
+        toast({
+          title: "Не удалось извлечь данные",
+          description: "Не найдены реквизиты поставщика в документе. Попробуйте другой файл.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if supplier with this INN already exists
+      if (currentOrgId && supplier.inn) {
+        const { data: existing } = await supabase
+          .from("suppliers")
+          .select("id, name")
+          .eq("organization_id", currentOrgId)
+          .eq("inn", supplier.inn)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "Поставщик найден",
+            description: `Поставщик "${existing.name}" (ИНН: ${supplier.inn}) уже есть в базе`,
+          });
+          return;
+        }
+      }
+
+      // Fill the form with extracted data
+      setFormData((prev) => ({
+        ...prev,
+        name: supplier.name || prev.name,
+        inn: supplier.inn || prev.inn,
+        kpp: supplier.kpp || prev.kpp,
+        ogrn: supplier.ogrn || prev.ogrn,
+        bank_name: supplier.bank_name || prev.bank_name,
+        bank_account: supplier.bank_account || prev.bank_account,
+        bik: supplier.bik || prev.bik,
+        address: supplier.address || prev.address,
+        phone: supplier.phone || prev.phone,
+        email: supplier.email || prev.email,
+        contact_person: supplier.contact_person || prev.contact_person,
+      }));
+
+      setIsDialogOpen(true);
+
+      toast({
+        title: "Данные извлечены",
+        description: `Реквизиты "${supplier.name}" заполнены из документа. Проверьте и сохраните.`,
+      });
+    } catch (err: any) {
+      console.error("Extract supplier error:", err);
+      toast({
+        title: "Ошибка распознавания",
+        description: err.message || "Не удалось обработать документ",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtractingSupplier(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const filteredSuppliers = suppliers?.filter((supplier) =>
@@ -256,10 +355,32 @@ export default function Suppliers() {
                 Управление базой данных поставщиков
               </p>
             </div>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Новый поставщик
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => handleOpenDialog()} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Новый поставщик
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isExtractingSupplier}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isExtractingSupplier ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {isExtractingSupplier ? "Распознаём..." : "Из счёта"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={handleInvoiceUpload}
+              />
+            </div>
           </div>
 
           {/* Поиск и фильтры */}
@@ -576,6 +697,35 @@ export default function Suppliers() {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bank_name">Банк</Label>
+                  <Input
+                    id="bank_name"
+                    value={formData.bank_name}
+                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bank_account">Расчётный счёт</Label>
+                  <Input
+                    id="bank_account"
+                    value={formData.bank_account}
+                    onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
+                    className="font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bik">БИК</Label>
+                  <Input
+                    id="bik"
+                    value={formData.bik}
+                    onChange={(e) => setFormData({ ...formData, bik: e.target.value })}
+                    className="font-mono"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
