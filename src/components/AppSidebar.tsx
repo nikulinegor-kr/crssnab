@@ -61,14 +61,21 @@ const crmMenuItems = [
   { title: "Команда", url: "/team", icon: UsersRound },
 ];
 
-const erpMenuItems = [
-  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
+const erpWarehouseItems = [
+  { title: "Склад", url: "/warehouse", icon: Warehouse },
   { title: "Номенклатура", url: "/nomenclature", icon: Layers },
   { title: "Техника", url: "/equipment", icon: Truck },
-  { title: "Склад", url: "/warehouse", icon: Warehouse },
+  { title: "Контрагенты", url: "/suppliers", icon: Users },
+];
+
+const erpSupplyItems = [
+  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
   { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
   { title: "Поставки", url: "/shipments", icon: Truck },
   { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
+];
+
+const erpFinanceItems = [
   { title: "Бюджеты", url: "/budgets", icon: Wallet },
   { title: "ERP Аналитика", url: "/erp-analytics", icon: BarChart3 },
 ];
