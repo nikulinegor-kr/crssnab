@@ -40,9 +40,12 @@ export const AdditionalSection = ({
   onRemoveExistingPhoto,
   existingDocumentUrls,
   onRemoveExistingDocument,
+  organizationId,
 }: AdditionalSectionProps) => {
   const { toast } = useToast();
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [lastZrsFile, setLastZrsFile] = useState<File | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const handleCopyZRS = async () => {
     const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
