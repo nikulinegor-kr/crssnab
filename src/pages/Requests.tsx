@@ -504,12 +504,14 @@ const Requests = () => {
                 selectedRequestIds={selectedRequestIds}
                 toggleRequestSelection={toggleRequestSelection}
                 toggleAllRequests={toggleAllRequests}
-                onDeleteClick={handleDeleteClick}
-                onEditClick={handleEditClick}
-                searchQuery=""
-                favoriteIds={favoriteIds}
-                onToggleFavorite={toggleFavorite}
-              />
+              onDeleteClick={handleDeleteClick}
+              onEditClick={handleEditClick}
+              onDuplicateClick={handleDuplicateClick}
+              onCreateProcurement={handleCreateProcurement}
+              searchQuery=""
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
+            />
             </Card>
           )}
         </div>
