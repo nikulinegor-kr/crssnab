@@ -977,6 +977,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           onRemoveExistingPhoto={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
           existingDocumentUrls={existingDocumentUrls}
           onRemoveExistingDocument={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
+          organizationId={request?.organization_id || null}
         />
 
         {/* Footer */}
