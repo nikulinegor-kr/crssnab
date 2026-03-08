@@ -11,7 +11,7 @@ interface Props {
 export const ExpensesByEquipmentChart = ({ requests, equipment }: Props) => {
   const data = useMemo(() => {
     const map = new Map<string, number>();
-    requests.forEach((r) => {
+    requests.forEach((r: any) => {
       if (!r.equipment_id || !r.amount) return;
       map.set(r.equipment_id, (map.get(r.equipment_id) || 0) + Number(r.amount));
     });
