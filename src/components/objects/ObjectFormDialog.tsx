@@ -50,6 +50,7 @@ export const ObjectFormDialog = ({
     project_end_date: "",
     status: "Активный",
     comment: "",
+    warehouse_id: "",
   });
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export const ObjectFormDialog = ({
         project_end_date: initialData.project_end_date || "",
         status: initialData.status || "Активный",
         comment: initialData.comment || "",
+        warehouse_id: (initialData as any).warehouse_id || "",
       });
     } else if (open) {
       setForm({
@@ -74,9 +76,24 @@ export const ObjectFormDialog = ({
         project_end_date: "",
         status: "Активный",
         comment: "",
+        warehouse_id: "",
       });
     }
   }, [open, initialData]);
+
+  const { data: allWarehouses = [] } = useQuery({
+    queryKey: ["warehouses-all", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId && open,
+  });
 
   const { data: orgMembers = [] } = useQuery({
     queryKey: ["org-members", currentOrgId],
