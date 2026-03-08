@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
-import { MoreHorizontal, Copy, FileText, Send } from "lucide-react";
+import { MoreHorizontal, Copy, FileText, Send, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
@@ -212,17 +212,36 @@ export const AdditionalSection = ({
                 Копировать
               </Button>
               {lastZrsFile && (
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleSendToTelegram}
-                  disabled={isSending}
-                  className="h-7"
-                >
-                  <Send className="h-3 w-3 mr-1" />
-                  {isSending ? "Отправка..." : "Отправить"}
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const url = URL.createObjectURL(lastZrsFile);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = lastZrsFile.name;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="h-7"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Скачать PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleSendToTelegram}
+                    disabled={isSending}
+                    className="h-7"
+                  >
+                    <Send className="h-3 w-3 mr-1" />
+                    {isSending ? "Отправка..." : "Отправить"}
+                  </Button>
+                </>
               )}
             </div>
           </div>

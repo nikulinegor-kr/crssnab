@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2, Truck, Users, Package, FileStack } from "lucide-react";
+import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2, Truck, Users, Package, FileStack, Receipt, ShoppingCart } from "lucide-react";
 import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +45,7 @@ const Dashboard = () => {
 
   // Вычисление статистики для отфильтрованных заявок
   const stats = useMemo(() => {
-    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0, deliveriesToday: 0, overdue: 0 };
+    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0, deliveriesToday: 0, overdue: 0, invoicesToPay: 0, inTransit: 0, onOrder: 0 };
     
     const today = new Date().toISOString().split("T")[0];
     const newToday = filteredRequests.filter(
@@ -69,6 +69,18 @@ const Dashboard = () => {
       return r.delivery_date.split("T")[0] < today;
     }).length;
 
+    const invoicesToPay = filteredRequests.filter(r => 
+      r.status === "Счёт" || (r.invoice_number && r.payment_percentage !== null && r.payment_percentage < 100 && r.status !== "Доставлено")
+    ).length;
+
+    const inTransit = filteredRequests.filter(r => 
+      r.status === "В пути" || r.status === "Доставлено в ТК" || r.status === "Отправлено"
+    ).length;
+
+    const onOrder = filteredRequests.filter(r => 
+      r.status === "В работе" || r.status === "КП" || r.status === "На согласовании"
+    ).length;
+
     return {
       total: filteredRequests.length,
       newToday,
@@ -76,6 +88,9 @@ const Dashboard = () => {
       completed,
       deliveriesToday,
       overdue,
+      invoicesToPay,
+      inTransit,
+      onOrder,
     };
   }, [filteredRequests]);
 
@@ -308,6 +323,39 @@ const Dashboard = () => {
                 { title: "Доставки сегодня", value: stats.deliveriesToday, icon: Truck, color: "text-success", bgColor: "bg-success/10", link: "/requests?status=Доставлено" },
                 { title: "Просроченные заявки", value: stats.overdue, icon: Clock, color: "text-destructive", bgColor: "bg-destructive/10", link: "/requests" },
                 { title: "Аварийные заявки", value: stats.emergency, icon: AlertCircle, color: "text-accent", bgColor: "bg-accent/10", link: "/requests?priority=Аварийно" },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Card
+                    key={item.title}
+                    className="bg-card border-border/40 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hover:border-primary/50"
+                    onClick={() => navigate(item.link)}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between pb-1 space-y-0 p-3 sm:p-4">
+                      <CardTitle className="text-xs font-medium text-muted-foreground">{item.title}</CardTitle>
+                      <div className={`p-1.5 rounded-md ${item.bgColor}`}>
+                        <Icon className={`h-3.5 w-3.5 ${item.color}`} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 p-3 sm:p-4">
+                      <div className="text-3xl font-semibold text-foreground">{item.value}</div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ERP Supply Overview */}
+        {!isLoading && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-foreground">Снабжение</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {[
+                { title: "Счета на оплату", value: stats.invoicesToPay, icon: Receipt, color: "text-orange-500", bgColor: "bg-orange-500/10", link: "/requests?status=Счёт" },
+                { title: "Поставки в пути", value: stats.inTransit, icon: Truck, color: "text-info", bgColor: "bg-info/10", link: "/requests?status=В пути" },
+                { title: "Товары под заказ", value: stats.onOrder, icon: ShoppingCart, color: "text-purple-500", bgColor: "bg-purple-500/10", link: "/requests?status=В работе" },
               ].map((item) => {
                 const Icon = item.icon;
                 return (

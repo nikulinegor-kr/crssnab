@@ -345,6 +345,9 @@ export default function Suppliers() {
                             <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
                               Редактировать
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/requests?contractor=${encodeURIComponent(supplier.name)}`)}>
+                              Все заявки поставщика
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => deleteMutation.mutate(supplier.id)}
                               className="text-destructive"

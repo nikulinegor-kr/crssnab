@@ -314,9 +314,16 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Склады объекта</CardTitle>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowWarehouseDialog(true)}>
-                  <Plus className="h-3 w-3 mr-1" /> Добавить склад
-                </Button>
+                <div className="flex gap-2">
+                  {warehouses.length > 0 && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/warehouse?object=${objectData.id}`)}>
+                      <Warehouse className="h-3 w-3 mr-1" /> Открыть склад
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowWarehouseDialog(true)}>
+                    <Plus className="h-3 w-3 mr-1" /> Добавить склад
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
