@@ -89,21 +89,29 @@ export default function EquipmentPage() {
     enabled: !!currentOrgId,
   });
 
-  // Extract unique brands for quick filters
+  // Normalize brand: trim, remove trailing punctuation, uppercase
+  const normalizeBrand = (brand: string | null | undefined): string => {
+    if (!brand) return "";
+    return brand.trim().replace(/[,.\s]+$/, "").toUpperCase();
+  };
+
+  // Extract unique normalized brands for quick filters
   const uniqueBrands = useMemo(() => {
-    const brands = new Set<string>();
+    const brandCounts = new Map<string, number>();
     equipment.forEach((e: any) => {
-      if (e.brand) brands.add(e.brand.toUpperCase());
+      const b = normalizeBrand(e.brand);
+      if (b) brandCounts.set(b, (brandCounts.get(b) || 0) + 1);
     });
-    return Array.from(brands).sort();
+    return Array.from(brandCounts.entries())
+      .sort(([a], [b]) => a.localeCompare(b));
   }, [equipment]);
 
   const filtered = useMemo(() => {
     let result = equipment;
     
-    // Apply brand filter
+    // Apply brand filter (normalized comparison)
     if (brandFilter) {
-      result = result.filter((e: any) => e.brand?.toUpperCase() === brandFilter);
+      result = result.filter((e: any) => normalizeBrand(e.brand) === brandFilter);
     }
     
     // Apply search filter (multi-word)
@@ -324,20 +332,17 @@ export default function EquipmentPage() {
           >
             Все ({equipment.length})
           </Button>
-          {uniqueBrands.map((b) => {
-            const count = equipment.filter((e: any) => e.brand?.toUpperCase() === b).length;
-            return (
+          {uniqueBrands.map(([brandName, count]) => (
               <Button
-                key={b}
-                variant={brandFilter === b ? "default" : "outline"}
+                key={brandName}
+                variant={brandFilter === brandName ? "default" : "outline"}
                 size="sm"
                 className="h-7 text-xs"
-                onClick={() => setBrandFilter(brandFilter === b ? null : b)}
+                onClick={() => setBrandFilter(brandFilter === brandName ? null : brandName)}
               >
-                {b} ({count})
+                {brandName} ({count})
               </Button>
-            );
-          })}
+          ))}
         </div>
       )}
 
