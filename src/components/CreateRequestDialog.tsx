@@ -548,35 +548,21 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           autoFocus={true}
         />
 
-        {/* 2. Core Params: Date, Object, Deadline */}
+        {/* 2. ERP — Stock check (before core params) */}
+        <ErpSection
+          form={form}
+          currentOrgId={currentOrgId}
+        />
+
+        {/* 3. Core Params: Date, Object */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
           currentOrgId={currentOrgId}
         />
 
-        {/* 3. Status & Responsibles */}
+        {/* 4. Status & Responsibles */}
         <StatusResponsiblesSection
-          form={form}
-          statuses={statuses}
-          priorities={priorities}
-          applicants={applicants}
-          executors={executors}
-          currentOrgId={currentOrgId}
-        />
-
-        {/* 3. Finance (Always visible): Contractor, Invoice, Amount, Payment % */}
-        <FinanceSection 
-          form={form} 
-          suppliers={suppliers}
-          recentContractors={recentContractors}
-        />
-
-        {/* 4. ERP / Склад */}
-        <ErpSection
-          form={form}
-          currentOrgId={currentOrgId}
-        />
 
         {/* 5. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
