@@ -212,17 +212,36 @@ export const AdditionalSection = ({
                 Копировать
               </Button>
               {lastZrsFile && (
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleSendToTelegram}
-                  disabled={isSending}
-                  className="h-7"
-                >
-                  <Send className="h-3 w-3 mr-1" />
-                  {isSending ? "Отправка..." : "Отправить"}
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const url = URL.createObjectURL(lastZrsFile);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = lastZrsFile.name;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="h-7"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Скачать PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleSendToTelegram}
+                    disabled={isSending}
+                    className="h-7"
+                  >
+                    <Send className="h-3 w-3 mr-1" />
+                    {isSending ? "Отправка..." : "Отправить"}
+                  </Button>
+                </>
               )}
             </div>
           </div>
