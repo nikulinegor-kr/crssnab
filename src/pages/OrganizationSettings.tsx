@@ -35,7 +35,7 @@ const OrganizationSettings = () => {
   // Determine which tabs are visible based on role
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "users", "participants", "notifications", "requests", "branding", "subscription", "integrations", "view", "audit"]
+    ? ["profile", "general", "users", "participants", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"]; // viewer / member
@@ -150,11 +150,6 @@ const OrganizationSettings = () => {
                 <Plug className="h-4 w-4" /><span className="hidden sm:inline">Интеграции</span>
               </TabsTrigger>
             )}
-            {visibleTabs.includes("view") && (
-              <TabsTrigger value="view" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
-                <Eye className="h-4 w-4" /><span className="hidden sm:inline">Отображение</span>
-              </TabsTrigger>
-            )}
             {visibleTabs.includes("audit") && (
               <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <History className="h-4 w-4" /><span className="hidden sm:inline">История</span>
@@ -242,13 +237,6 @@ const OrganizationSettings = () => {
           </TabsContent>
         )}
 
-        {visibleTabs.includes("view") && (
-          <TabsContent value="view">
-            <SettingsSection title="Настройки отображения" description="Выбор виджетов и полей для дашборда и канбан" icon={Eye}>
-              <ViewSettings />
-            </SettingsSection>
-          </TabsContent>
-        )}
 
         {visibleTabs.includes("audit") && (
           <TabsContent value="audit">
