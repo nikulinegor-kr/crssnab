@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRequests } from "@/hooks/useRequests";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,13 +24,44 @@ const ObjectsPage = () => {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: requests } = useRequests();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingObject, setEditingObject] = useState<any>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [tab, setTab] = useState("active");
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+
+  // Fetch request counts per object directly from DB (no 1000 row limit issue)
+  const { data: requestCountsMap = {} } = useQuery({
+    queryKey: ["object-request-counts", currentOrgId],
+    queryFn: async () => {
+      // Get all requests with object_id for this org, only id and object_id
+      const allRequests: Array<{ object_id: string | null }> = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("requests")
+          .select("object_id")
+          .eq("organization_id", currentOrgId!)
+          .not("object_id", "is", null)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allRequests.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const counts: Record<string, number> = {};
+      allRequests.forEach((r) => {
+        if (r.object_id) {
+          counts[r.object_id] = (counts[r.object_id] || 0) + 1;
+        }
+      });
+      return counts;
+    },
+    enabled: !!currentOrgId,
+  });
 
   const { data: objects = [], isLoading } = useQuery({
     queryKey: ["request-objects-all", currentOrgId],
