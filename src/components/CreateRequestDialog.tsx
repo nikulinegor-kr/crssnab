@@ -49,6 +49,7 @@ import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
 import { ErpSection } from "./create-request/ErpSection";
+import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -177,6 +178,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     form.reset();
     setPhotoFiles([]);
     setDocumentFiles([]);
+    setRequestItems([]);
     
     if (onOpenChange) {
       onOpenChange(false);
@@ -193,6 +195,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [requestItems, setRequestItems] = useState<RequestItem[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
@@ -525,35 +528,47 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         }
       }
 
-      // Auto-create nomenclature for repair requests with equipment
-      if (newRequest && data.equipment_id && data.product_id && currentOrgId) {
+      // Save request items and auto-create nomenclature
+      if (newRequest && requestItems.length > 0 && currentOrgId) {
         try {
-          // Get the selected product's article
-          const { data: product } = await supabase
-            .from("warehouse_products")
-            .select("article, name")
-            .eq("id", data.product_id)
-            .single();
+          // Save items to request_items table
+          const itemsToInsert = requestItems
+            .filter(item => item.name.trim())
+            .map(item => ({
+              request_id: newRequest.id,
+              organization_id: currentOrgId,
+              article: item.article || null,
+              name: item.name,
+              quantity: item.quantity || 1,
+            }));
 
-          if (product?.article) {
-            // Check if nomenclature with this article + equipment already exists
-            const { data: existing } = await supabase
-              .from("warehouse_products")
-              .select("id")
-              .eq("article", product.article)
-              .eq("equipment_id", data.equipment_id)
-              .eq("organization_id", currentOrgId)
-              .maybeSingle();
+          if (itemsToInsert.length > 0) {
+            await supabase.from("request_items").insert(itemsToInsert);
+          }
 
-            if (!existing) {
-              await supabase.from("warehouse_products").insert({
-                name: data.description || product.name,
-                article: product.article,
-                equipment_id: data.equipment_id,
-                organization_id: currentOrgId,
-              });
-              queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+          // Auto-create nomenclature for repair requests with equipment
+          if (data.equipment_id) {
+            for (const item of requestItems) {
+              if (!item.article || !item.name.trim()) continue;
+
+              const { data: existing } = await supabase
+                .from("warehouse_products")
+                .select("id")
+                .eq("article", item.article)
+                .eq("equipment_id", data.equipment_id)
+                .eq("organization_id", currentOrgId)
+                .maybeSingle();
+
+              if (!existing) {
+                await supabase.from("warehouse_products").insert({
+                  name: item.name,
+                  article: item.article,
+                  equipment_id: data.equipment_id,
+                  organization_id: currentOrgId,
+                });
+              }
             }
+            queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
           }
         } catch {
           // Non-critical, don't block request creation
@@ -566,6 +581,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       form.reset();
       setPhotoFiles([]);
       setDocumentFiles([]);
+      setRequestItems([]);
       clearDraft();
       
       if (onOpenChange) {
@@ -588,7 +604,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isMobile) {
       setTimeout(() => {
-        // Prevent unintended horizontal scrolling on mobile while keeping the field visible above the keyboard
         e.target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
       }, 300);
     }
@@ -611,20 +626,26 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           autoFocus={true}
         />
 
-        {/* 2. ERP — Stock check (before core params) */}
+        {/* 2. Request Items */}
+        <RequestItemsSection
+          items={requestItems}
+          onItemsChange={setRequestItems}
+        />
+
+        {/* 3. ERP — Stock check (before core params) */}
         <ErpSection
           form={form}
           currentOrgId={currentOrgId}
         />
 
-        {/* 3. Core Params: Date, Object */}
+        {/* 4. Core Params: Date, Object */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
           currentOrgId={currentOrgId}
         />
 
-        {/* 4. Status & Responsibles */}
+        {/* 5. Status & Responsibles */}
         <StatusResponsiblesSection
           form={form}
           statuses={statuses}
@@ -634,16 +655,16 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           currentOrgId={currentOrgId}
         />
 
-        {/* 5. Finance */}
+        {/* 6. Finance */}
         <FinanceSection form={form} suppliers={suppliers} recentContractors={recentContractors} />
 
-        {/* 6. Logistics: Availability, TK, Dates, TTN */}
+        {/* 7. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
         />
 
-        {/* 6. Additional (Collapsed by default): ZRS, Files */}
+        {/* 8. Additional (Collapsed by default): ZRS, Files */}
         <AdditionalSection
           form={form}
           formValues={formValues}

@@ -1,4 +1,9 @@
-import { corsHeaders } from "../_shared/cors.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
@@ -17,8 +22,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const isImage = fileType?.startsWith("image/");
-
     const messages: any[] = [
       {
         role: "system",
@@ -30,26 +33,14 @@ Return ONLY a JSON object with this structure:
 - "quantity" is the quantity (default 1 if not specified)
 Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`,
       },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Extract all line items (article, name, quantity) from this invoice:" },
+          { type: "image_url", image_url: { url: file } },
+        ],
+      },
     ];
-
-    if (isImage) {
-      messages.push({
-        role: "user",
-        content: [
-          { type: "text", text: "Extract all line items (article, name, quantity) from this invoice image:" },
-          { type: "image_url", image_url: { url: file } },
-        ],
-      });
-    } else {
-      // For PDF, send as base64 data
-      messages.push({
-        role: "user",
-        content: [
-          { type: "text", text: "Extract all line items (article, name, quantity) from this invoice document:" },
-          { type: "image_url", image_url: { url: file } },
-        ],
-      });
-    }
 
     const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -72,7 +63,6 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from response (handle possible markdown fences)
     let parsed;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
