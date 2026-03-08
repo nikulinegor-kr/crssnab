@@ -708,6 +708,54 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       if (error) throw error;
 
+      // Save request items: delete old, insert new
+      if (request.organization_id) {
+        await supabase
+          .from("request_items")
+          .delete()
+          .eq("request_id", request.id);
+
+        const itemsToInsert = requestItems
+          .filter(item => item.name.trim())
+          .map(item => ({
+            request_id: request.id,
+            organization_id: request.organization_id!,
+            article: item.article || null,
+            name: item.name,
+            quantity: item.quantity || 1,
+          }));
+
+        if (itemsToInsert.length > 0) {
+          await supabase.from("request_items").insert(itemsToInsert);
+        }
+
+        // Auto-create nomenclature for items with article
+        for (const item of requestItems) {
+          if (!item.article || !item.name.trim()) continue;
+          let existingQuery = supabase
+            .from("warehouse_products")
+            .select("id")
+            .eq("article", item.article)
+            .eq("organization_id", request.organization_id!);
+          if (data.equipment_id) {
+            existingQuery = existingQuery.eq("equipment_id", data.equipment_id);
+          } else {
+            existingQuery = existingQuery.is("equipment_id", null);
+          }
+          const { data: existing } = await existingQuery.maybeSingle();
+          if (!existing) {
+            await supabase.from("warehouse_products").insert({
+              name: item.name,
+              article: item.article,
+              equipment_id: data.equipment_id || null,
+              organization_id: request.organization_id!,
+            });
+          }
+        }
+        queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+        queryClient.invalidateQueries({ queryKey: ["request-items", request.id] });
+      }
+
       toast({
         title: "Успешно",
         description: "Заявка сохранена",
