@@ -216,8 +216,12 @@ export default function Suppliers() {
       status: "Активный",
       address: "",
       inn: "",
+      kpp: "",
+      ogrn: "",
       notes: "",
     });
+    setDadataQuery("");
+    clearSuggestions();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
