@@ -276,11 +276,10 @@ export default function EquipmentPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Марка</TableHead>
-              <TableHead>Модель</TableHead>
+              <TableHead>Марка / Модель</TableHead>
+              <TableHead>Гос номер</TableHead>
               <TableHead>VIN</TableHead>
               <TableHead>Год</TableHead>
-              <TableHead>Гос номер</TableHead>
               <TableHead>Копирование</TableHead>
               <TableHead className="w-[80px]" />
             </TableRow>
@@ -288,22 +287,21 @@ export default function EquipmentPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Нет техники
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((e: any) => (
                 <TableRow key={e.id}>
-                  <TableCell className="font-medium">{e.brand}</TableCell>
-                  <TableCell>{e.model}</TableCell>
-                  <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
-                  <TableCell>{e.year || "—"}</TableCell>
+                  <TableCell className="font-medium">{[e.brand, e.model].filter(Boolean).join(" ")}</TableCell>
                   <TableCell>
                     {e.plate_number ? (
                       <Badge variant="outline">{e.plate_number}</Badge>
                     ) : "—"}
                   </TableCell>
+                  <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
+                  <TableCell>{e.year || "—"}</TableCell>
                   <TableCell>
                     <CopyString equipment={e} />
                   </TableCell>
