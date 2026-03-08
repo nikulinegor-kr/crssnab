@@ -183,6 +183,8 @@ export const RequestsTable = ({
   toggleAllRequests,
   onDeleteClick,
   onEditClick,
+  onDuplicateClick,
+  onCreateProcurement,
   searchQuery = "",
   favoriteIds,
   onToggleFavorite,
