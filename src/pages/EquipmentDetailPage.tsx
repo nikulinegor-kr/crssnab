@@ -255,7 +255,7 @@ export default function EquipmentDetailPage() {
       <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList>
           <TabsTrigger value="analytics" className="gap-1.5">
-            <DollarSign className="h-4 w-4" />
+            <RussianRuble className="h-4 w-4" />
             Аналитика
           </TabsTrigger>
           <TabsTrigger value="parts" className="gap-1.5">
