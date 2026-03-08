@@ -2159,9 +2159,11 @@ export type Database = {
       warehouse_products: {
         Row: {
           article: string | null
+          category: string | null
           created_at: string
           equipment_id: string | null
           id: string
+          min_stock: number | null
           name: string
           organization_id: string
           unit: string | null
@@ -2169,9 +2171,11 @@ export type Database = {
         }
         Insert: {
           article?: string | null
+          category?: string | null
           created_at?: string
           equipment_id?: string | null
           id?: string
+          min_stock?: number | null
           name: string
           organization_id: string
           unit?: string | null
@@ -2179,9 +2183,11 @@ export type Database = {
         }
         Update: {
           article?: string | null
+          category?: string | null
           created_at?: string
           equipment_id?: string | null
           id?: string
+          min_stock?: number | null
           name?: string
           organization_id?: string
           unit?: string | null

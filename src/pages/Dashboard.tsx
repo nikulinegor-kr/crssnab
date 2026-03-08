@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Clock, AlertCircle, CheckCircle, Plus, MessageCircle, Building2, Truck, Users, Package, FileStack } from "lucide-react";
+import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -355,6 +356,9 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Low Stock Widget */}
+        <LowStockWidget />
 
         {/* Дополнительные виджеты - вторая линия */}
         {!isLoading && filteredRequests.length > 0 && (settings.dashboard.showCalendarWidget || settings.dashboard.showEmergencyWidget) && (
