@@ -149,6 +149,88 @@ export default function EquipmentPage() {
     setEditingId(null);
   };
 
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentOrgId) return;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // Skip header if first row looks like headers
+      const startIdx = rows.length > 0 && typeof rows[0][0] === "string" &&
+        ["марка", "brand"].includes(rows[0][0].toLowerCase().trim()) ? 1 : 0;
+
+      const existingSet = new Set(
+        equipment.map((eq: any) => `${(eq.brand || "").toLowerCase().trim()}|${(eq.model || "").toLowerCase().trim()}`)
+      );
+      const existingVins = new Set(
+        equipment.filter((eq: any) => eq.vin).map((eq: any) => eq.vin!.toLowerCase().trim())
+      );
+
+      const toInsert: any[] = [];
+      let skipped = 0;
+
+      for (let i = startIdx; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0]) continue;
+
+        const rBrand = String(row[0] || "").trim();
+        const rModel = String(row[1] || "").trim();
+        const rVin = String(row[2] || "").trim().toUpperCase() || null;
+        const rYear = row[3] ? parseInt(String(row[3])) : null;
+        const rPlate = String(row[4] || "").trim() || null;
+        const rComment = String(row[5] || "").trim() || null;
+
+        if (!rBrand || !rModel) { skipped++; continue; }
+
+        // Check duplicate brand+model
+        const key = `${rBrand.toLowerCase()}|${rModel.toLowerCase()}`;
+        if (existingSet.has(key)) { skipped++; continue; }
+
+        // Check duplicate VIN
+        if (rVin && existingVins.has(rVin.toLowerCase())) { skipped++; continue; }
+
+        // Avoid duplicates within the import file itself
+        if (existingSet.has(key)) { skipped++; continue; }
+        existingSet.add(key);
+        if (rVin) {
+          if (existingVins.has(rVin.toLowerCase())) { skipped++; continue; }
+          existingVins.add(rVin.toLowerCase());
+        }
+
+        toInsert.push({
+          organization_id: currentOrgId,
+          brand: rBrand,
+          model: rModel,
+          vin: rVin,
+          year: rYear && !isNaN(rYear) ? rYear : null,
+          plate_number: rPlate,
+          comment: rComment,
+        });
+      }
+
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from("equipment").insert(toInsert);
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["equipment"] });
+      toast({
+        title: `Импорт завершён`,
+        description: `Добавлено: ${toInsert.length}, пропущено: ${skipped}`,
+      });
+    } catch (err: any) {
+      toast({ title: "Ошибка импорта", description: err?.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
