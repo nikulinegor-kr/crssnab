@@ -951,7 +951,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 2. Core Params: Date, Object */}
+        {/* 2. Request Items */}
+        <RequestItemsSection
+          items={requestItems}
+          onItemsChange={setRequestItems}
+          disabled={isViewer}
+        />
+
+        {/* 3. Core Params: Date, Object */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
