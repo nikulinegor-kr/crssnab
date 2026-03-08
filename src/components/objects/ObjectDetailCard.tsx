@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useRequests } from "@/hooks/useRequests";
+
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,30 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: requests } = useRequests();
+  // Load ALL requests for this object directly (no 1000 row limit)
+  const { data: objRequests = [] } = useQuery({
+    queryKey: ["object-requests", objectData.id],
+    queryFn: async () => {
+      const allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("requests")
+          .select("id, request_number, description, status, priority, amount, payment_percentage, shipment_date, delivery_date, transport_company, object_id")
+          .eq("object_id", objectData.id)
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return allData;
+    },
+    enabled: !!objectData.id,
+  });
   const [showWarehouseDialog, setShowWarehouseDialog] = useState(false);
   const [newWarehouseName, setNewWarehouseName] = useState("");
   const [newWarehouseDescription, setNewWarehouseDescription] = useState("");
@@ -92,9 +115,6 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
     enabled: !!objectData.responsible_user_id,
   });
 
-  const objRequests = useMemo(() => {
-    return requests?.filter((r) => r.object_id === objectData.id) || [];
-  }, [requests, objectData.id]);
 
   const finances = useMemo(() => {
     const total = objRequests.reduce((sum, r) => sum + (r.amount || 0), 0);

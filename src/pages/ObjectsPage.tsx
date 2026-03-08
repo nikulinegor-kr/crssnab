@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRequests } from "@/hooks/useRequests";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,13 +24,44 @@ const ObjectsPage = () => {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: requests } = useRequests();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingObject, setEditingObject] = useState<any>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [tab, setTab] = useState("active");
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+
+  // Fetch request counts per object directly from DB (no 1000 row limit issue)
+  const { data: requestCountsMap = {} } = useQuery({
+    queryKey: ["object-request-counts", currentOrgId],
+    queryFn: async () => {
+      // Get all requests with object_id for this org, only id and object_id
+      const allRequests: Array<{ object_id: string | null }> = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("requests")
+          .select("object_id")
+          .eq("organization_id", currentOrgId!)
+          .not("object_id", "is", null)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allRequests.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const counts: Record<string, number> = {};
+      allRequests.forEach((r) => {
+        if (r.object_id) {
+          counts[r.object_id] = (counts[r.object_id] || 0) + 1;
+        }
+      });
+      return counts;
+    },
+    enabled: !!currentOrgId,
+  });
 
   const { data: objects = [], isLoading } = useQuery({
     queryKey: ["request-objects-all", currentOrgId],
@@ -189,7 +219,7 @@ const ObjectsPage = () => {
               </Card>
             ) : (
               filteredObjects.map((obj: any) => {
-                const objRequests = requests?.filter((r) => r.object_id === obj.id) || [];
+                const reqCount = requestCountsMap[obj.id] || 0;
                 return (
                   <Card key={obj.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedObjectId(obj.id)}>
                     <CardContent className="p-4">
@@ -203,7 +233,7 @@ const ObjectsPage = () => {
                           {obj.contract_number && <p className="text-xs text-muted-foreground">Контракт: {obj.contract_number}</p>}
                         </div>
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Badge variant="secondary" className="text-xs">{objRequests.length} заявок</Badge>
+                          <Badge variant="secondary" className="text-xs">{reqCount} заявок</Badge>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingObject(obj)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -258,7 +288,7 @@ const ObjectsPage = () => {
           onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
           objectId={deleteTarget.id}
           objectName={deleteTarget.name}
-          requestCount={requests?.filter((r) => r.object_id === deleteTarget.id).length || 0}
+          requestCount={requestCountsMap[deleteTarget.id] || 0}
           availableObjects={objects.filter((o: any) => o.id !== deleteTarget.id).map((o: any) => ({ id: o.id, name: o.name }))}
           onSuccess={() => setDeleteTarget(null)}
         />
