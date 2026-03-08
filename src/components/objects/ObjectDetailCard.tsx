@@ -658,6 +658,74 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Transfer Requests Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" /> Перенести заявки
+            </DialogTitle>
+            <DialogDescription>
+              Выбрано заявок: <span className="font-semibold text-foreground">{selectedRequests.size}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Новый объект</label>
+            <TransferObjectSelect currentOrgId={currentOrgId} value={transferTargetId} onChange={setTransferTargetId} excludeObjectId={objectData.id} />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowTransferDialog(false)} disabled={isTransferring}>Отмена</Button>
+            <Button
+              disabled={!transferTargetId || isTransferring}
+              onClick={async () => {
+                setIsTransferring(true);
+                try {
+                  const { data: targetWarehouse } = await supabase.from("warehouses").select("id").eq("object_id", transferTargetId).limit(1).maybeSingle();
+                  const updatePayload: Record<string, unknown> = { object_id: transferTargetId };
+                  if (targetWarehouse) updatePayload.warehouse_id = targetWarehouse.id;
+                  const { error } = await supabase.from("requests").update(updatePayload).in("id", Array.from(selectedRequests));
+                  if (error) throw error;
+                  toast({ title: `Перенесено заявок: ${selectedRequests.size}` });
+                  setSelectedRequests(new Set());
+                  setShowTransferDialog(false);
+                  setTransferTargetId("");
+                  queryClient.invalidateQueries({ queryKey: ["object-requests"] });
+                } catch (err: any) {
+                  toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+                } finally {
+                  setIsTransferring(false);
+                }
+              }}
+            >
+              {isTransferring ? "Перенос..." : "Перенести"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+// Small helper for transfer dialog object select
+function TransferObjectSelect({ currentOrgId, value, onChange, excludeObjectId }: { currentOrgId: string | null; value: string; onChange: (v: string) => void; excludeObjectId: string }) {
+  const { data: objects } = useQuery({
+    queryKey: ["request-objects-transfer", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase.from("request_objects").select("id, name").eq("organization_id", currentOrgId).eq("archived", false).order("name");
+      return (data || []).filter((o: any) => o.id !== excludeObjectId);
+    },
+    enabled: !!currentOrgId,
+  });
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
+      <SelectContent>
+        {objects?.map((o: any) => (
+          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
