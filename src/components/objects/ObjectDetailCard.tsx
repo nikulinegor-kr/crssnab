@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 interface ObjectDetailCardProps {
@@ -63,6 +64,14 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [uploadDocType, setUploadDocType] = useState("Другое");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Requests tab state
+  const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
+  const [reqPage, setReqPage] = useState(0);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferTargetId, setTransferTargetId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+  const REQ_PAGE_SIZE = 100;
 
   // Fetch warehouses for this object
   const { data: warehouses = [] } = useQuery({
@@ -363,35 +372,108 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
         <TabsContent value="requests">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Заявки объекта ({objRequests.length})</CardTitle>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base">Заявки объекта ({objRequests.length})</CardTitle>
+                <div className="flex items-center gap-2">
+                  {selectedRequests.size > 0 && (
+                    <>
+                      <span className="text-xs text-muted-foreground">Выбрано: {selectedRequests.size}</span>
+                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setShowTransferDialog(true)}>
+                        <MapPin className="h-3 w-3" /> Перенести
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+                        onClick={async () => {
+                          const ids = Array.from(selectedRequests);
+                          const { error } = await supabase.from("requests").update({ object_id: null, warehouse_id: null }).in("id", ids);
+                          if (error) { toast({ title: "Ошибка", variant: "destructive" }); return; }
+                          toast({ title: `Отвязано заявок: ${ids.length}` });
+                          setSelectedRequests(new Set());
+                          queryClient.invalidateQueries({ queryKey: ["object-requests"] });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" /> Отвязать
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {objRequests.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="text-xs">Описание</TableHead>
-                        <TableHead className="text-xs">Статус</TableHead>
-                        <TableHead className="text-xs">Сумма</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {objRequests.slice(0, 50).map((r: any) => (
-                        <TableRow key={r.id}>
-                          <TableCell className="text-sm max-w-[300px] truncate">
-                            <button className="text-primary hover:underline text-left truncate" onClick={() => navigate(`/requests/${r.id}`)}>
-                              {r.description}
-                            </button>
-                          </TableCell>
-                          <TableCell><Badge variant="secondary" className="text-xs">{r.status}</Badge></TableCell>
-                          <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
+              {objRequests.length > 0 ? (() => {
+                const totalPages = Math.ceil(objRequests.length / REQ_PAGE_SIZE);
+                const pageItems = objRequests.slice(reqPage * REQ_PAGE_SIZE, (reqPage + 1) * REQ_PAGE_SIZE);
+                const allPageIds = pageItems.map((r: any) => r.id);
+                const allSelected = allPageIds.length > 0 && allPageIds.every((id: string) => selectedRequests.has(id));
+                return (
+                  <>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="w-[40px] text-xs">
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={(checked) => {
+                                  const next = new Set(selectedRequests);
+                                  if (checked) { allPageIds.forEach((id: string) => next.add(id)); }
+                                  else { allPageIds.forEach((id: string) => next.delete(id)); }
+                                  setSelectedRequests(next);
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead className="w-[50px] text-xs">№</TableHead>
+                            <TableHead className="text-xs">Описание</TableHead>
+                            <TableHead className="text-xs">Статус</TableHead>
+                            <TableHead className="text-xs">Сумма</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {pageItems.map((r: any, idx: number) => (
+                            <TableRow key={r.id} className={selectedRequests.has(r.id) ? "bg-primary/5" : ""}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedRequests.has(r.id)}
+                                  onCheckedChange={(checked) => {
+                                    const next = new Set(selectedRequests);
+                                    if (checked) next.add(r.id); else next.delete(r.id);
+                                    setSelectedRequests(next);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{reqPage * REQ_PAGE_SIZE + idx + 1}</TableCell>
+                              <TableCell className="text-sm max-w-[300px] truncate">
+                                <button className="text-primary hover:underline text-left truncate" onClick={() => navigate(`/requests/${r.id}`)}>
+                                  {r.description}
+                                </button>
+                              </TableCell>
+                              <TableCell><Badge variant="secondary" className="text-xs">{r.status}</Badge></TableCell>
+                              <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xs text-muted-foreground">
+                          Стр. {reqPage + 1} из {totalPages}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={reqPage === 0} onClick={() => setReqPage(p => p - 1)}>
+                            <ChevronLeft className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={reqPage >= totalPages - 1} onClick={() => setReqPage(p => p + 1)}>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })() : (
                 <p className="text-sm text-muted-foreground text-center py-4">Нет заявок</p>
               )}
             </CardContent>
@@ -576,6 +658,74 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Transfer Requests Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" /> Перенести заявки
+            </DialogTitle>
+            <DialogDescription>
+              Выбрано заявок: <span className="font-semibold text-foreground">{selectedRequests.size}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Новый объект</label>
+            <TransferObjectSelect currentOrgId={currentOrgId} value={transferTargetId} onChange={setTransferTargetId} excludeObjectId={objectData.id} />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowTransferDialog(false)} disabled={isTransferring}>Отмена</Button>
+            <Button
+              disabled={!transferTargetId || isTransferring}
+              onClick={async () => {
+                setIsTransferring(true);
+                try {
+                  const { data: targetWarehouse } = await supabase.from("warehouses").select("id").eq("object_id", transferTargetId).limit(1).maybeSingle();
+                  const updatePayload: Record<string, unknown> = { object_id: transferTargetId };
+                  if (targetWarehouse) updatePayload.warehouse_id = targetWarehouse.id;
+                  const { error } = await supabase.from("requests").update(updatePayload).in("id", Array.from(selectedRequests));
+                  if (error) throw error;
+                  toast({ title: `Перенесено заявок: ${selectedRequests.size}` });
+                  setSelectedRequests(new Set());
+                  setShowTransferDialog(false);
+                  setTransferTargetId("");
+                  queryClient.invalidateQueries({ queryKey: ["object-requests"] });
+                } catch (err: any) {
+                  toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+                } finally {
+                  setIsTransferring(false);
+                }
+              }}
+            >
+              {isTransferring ? "Перенос..." : "Перенести"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+// Small helper for transfer dialog object select
+function TransferObjectSelect({ currentOrgId, value, onChange, excludeObjectId }: { currentOrgId: string | null; value: string; onChange: (v: string) => void; excludeObjectId: string }) {
+  const { data: objects } = useQuery({
+    queryKey: ["request-objects-transfer", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase.from("request_objects").select("id, name").eq("organization_id", currentOrgId).eq("archived", false).order("name");
+      return (data || []).filter((o: any) => o.id !== excludeObjectId);
+    },
+    enabled: !!currentOrgId,
+  });
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
+      <SelectContent>
+        {objects?.map((o: any) => (
+          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
