@@ -29,7 +29,10 @@ export const CoreParamsSection = ({
   disabled = false,
 }: CoreParamsSectionProps) => {
   const objectId = form.watch("object_id");
-  const [repairPurpose, setRepairPurpose] = useState<string>("general");
+  const currentEquipmentId = form.watch("equipment_id");
+  const [repairPurpose, setRepairPurpose] = useState<string>(
+    currentEquipmentId ? "equipment" : "general"
+  );
 
   // Determine if selected object is the repair object
   const selectedObject = objectsData?.find((o) => o.id === objectId);
