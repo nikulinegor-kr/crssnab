@@ -277,10 +277,10 @@ const Requests = () => {
       )}
 
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Все заявки</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Все заявки</h1>
+          <p className="text-xs text-muted-foreground">
             {filters.filteredRequests?.length || 0} найдено
             {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
               <button
@@ -301,9 +301,9 @@ const Requests = () => {
           {canCreate && activeTab === "active" && (
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="gap-2 h-9 sm:h-10 px-5 sm:px-7 text-sm sm:text-base font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+              className="gap-2 h-9 px-5 text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Plus className="h-4 w-4" />
               <span className="hidden xs:inline">Новая заявка</span>
               <span className="xs:hidden">Новая</span>
             </Button>
