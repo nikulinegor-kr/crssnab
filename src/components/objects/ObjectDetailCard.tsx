@@ -28,7 +28,7 @@ interface ObjectDetailCardProps {
 
 const DOC_TYPES = ["Контракт", "Договор", "Счёт", "КП", "Фото", "Другое"];
 
-export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive }: ObjectDetailCardProps) => {
+export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDelete }: ObjectDetailCardProps) => {
   const navigate = useNavigate();
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
