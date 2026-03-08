@@ -330,7 +330,7 @@ export default function WarehousePage() {
     setMovRequestId("");
   };
 
-  const openMovementDialog = (type: "IN" | "OUT" | "MOVE") => {
+  const openMovementDialog = (type: "IN" | "OUT" | "MOVE" | "INVENTORY") => {
     setMovementOpType(type);
     resetMovementForm();
     setShowMovementDialog(true);
