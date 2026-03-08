@@ -420,12 +420,6 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
-              headerActions={
-                <ExcelExportButton
-                  requests={requests || []}
-                  filteredRequests={filters.filteredRequests}
-                />
-              }
             />
           </Card>
         </div>
