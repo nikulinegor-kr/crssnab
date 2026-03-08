@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse, ChevronsUpDown, Check, ClipboardCheck, BookOpen } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
