@@ -96,10 +96,8 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
-  payment_percentage: z.number()
-    .min(0, "Процент не может быть отрицательным")
-    .max(100, "Процент не может превышать 100")
-    .default(0),
+  payment_status: z.string().optional(),
+  invoice_date: z.string().optional().or(z.literal("")),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
@@ -266,7 +264,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       contractor: "",
       invoice_number: "",
       amount: null,
-      payment_percentage: 0,
+      payment_status: "Не выставлен",
+      invoice_date: "",
       shipment_date: "",
       delivery_date: "",
       transport_company: "",
@@ -352,7 +351,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
-        payment_percentage: request.payment_percentage ?? 0,
+        payment_status: (request as any).payment_status || "Не выставлен",
+        invoice_date: (request as any).invoice_date || "",
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
@@ -438,7 +438,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage ?? 0,
+        payment_status: data.payment_status || "Не выставлен",
+        invoice_date: data.invoice_date || null,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -566,7 +567,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || "",
         invoice_number: data.invoice_number || "",
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage ?? 0,
+        payment_status: (data as any).payment_status || "Не выставлен",
+        invoice_date: (data as any).invoice_date || "",
         shipment_date: data.shipment_date || "",
         delivery_date: data.delivery_date || "",
         transport_company: data.transport_company || "",
@@ -649,7 +651,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage ?? 0,
+        payment_status: data.payment_status || "Не выставлен",
+        invoice_date: data.invoice_date || null,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -937,11 +940,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 4. Finance: Contractor, Invoice, Amount, Payment % */}
+        {/* 4. Finance */}
         <FinanceSection 
           form={form} 
-          suppliers={suppliers}
-          recentContractors={recentContractors}
           disabled={isViewer}
         />
 

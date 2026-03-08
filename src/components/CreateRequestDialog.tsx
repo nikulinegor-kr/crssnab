@@ -90,10 +90,8 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
-  payment_percentage: z.number()
-    .min(0, "Процент не может быть отрицательным")
-    .max(100, "Процент не может превышать 100")
-    .default(0),
+  payment_status: z.string().optional(),
+  invoice_date: z.string().optional().or(z.literal("")),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
@@ -137,7 +135,8 @@ interface InitialRequestData {
   contractor?: string;
   invoice_number?: string;
   amount?: number;
-  payment_percentage?: number;
+  payment_status?: string;
+  invoice_date?: string;
   transport_company?: string;
   comments?: string;
 }
@@ -325,7 +324,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       contractor: initialData?.contractor || "",
       invoice_number: "",
       amount: null,
-      payment_percentage: 0,
+      payment_status: "Не выставлен",
+      invoice_date: "",
       shipment_date: "",
       delivery_date: "",
       transport_company: initialData?.transport_company || "",
@@ -479,7 +479,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
-        payment_percentage: data.payment_percentage,
+        payment_status: data.payment_status || "Не выставлен",
+        invoice_date: data.invoice_date || null,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -600,7 +601,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           currentOrgId={currentOrgId}
         />
 
-        {/* 5. Logistics: Availability, TK, Dates, TTN */}
+        {/* 5. Finance */}
+        <FinanceSection form={form} />
+
+        {/* 6. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}

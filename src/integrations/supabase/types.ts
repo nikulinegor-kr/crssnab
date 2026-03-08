@@ -1449,11 +1449,13 @@ export type Database = {
           estimated_delivery_days: number | null
           executor: string | null
           id: string
+          invoice_date: string | null
           invoice_number: string | null
           object_id: string | null
           operation_type: string | null
           organization_id: string | null
           payment_percentage: number | null
+          payment_status: string | null
           photo_url: string | null
           photo_urls: string[] | null
           planned_delivery_date: string | null
@@ -1492,11 +1494,13 @@ export type Database = {
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
+          invoice_date?: string | null
           invoice_number?: string | null
           object_id?: string | null
           operation_type?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
+          payment_status?: string | null
           photo_url?: string | null
           photo_urls?: string[] | null
           planned_delivery_date?: string | null
@@ -1535,11 +1539,13 @@ export type Database = {
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
+          invoice_date?: string | null
           invoice_number?: string | null
           object_id?: string | null
           operation_type?: string | null
           organization_id?: string | null
           payment_percentage?: number | null
+          payment_status?: string | null
           photo_url?: string | null
           photo_urls?: string[] | null
           planned_delivery_date?: string | null
