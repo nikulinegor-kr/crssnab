@@ -575,7 +575,8 @@ export default function WarehousePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {movementOpType === "IN" ? "Приход" : movementOpType === "OUT" ? "Списание" : "Перемещение"}
+              {movementOpType === "IN" ? "Приход" : movementOpType === "OUT" ? "Списание" : movementOpType === "INVENTORY" ? "Инвентаризация" : "Перемещение"}
+            </DialogTitle>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">

@@ -387,9 +387,22 @@ export default function NomenclaturePage() {
               <Label>Артикул</Label>
               <Input value={article} onChange={(e) => setArticle(e.target.value)} placeholder="ART-001" />
             </div>
-            <div>
+             <div>
               <Label>Категория</Label>
-              <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Фильтры, масла, подшипники..." />
+              <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Без категории</SelectItem>
+                  <SelectItem value="Запчасти">Запчасти</SelectItem>
+                  <SelectItem value="Инструмент">Инструмент</SelectItem>
+                  <SelectItem value="Расходники">Расходники</SelectItem>
+                  <SelectItem value="Материалы">Материалы</SelectItem>
+                  <SelectItem value="Другое">Другое</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             </div>
             <div>
               <Label>Техника</Label>
