@@ -264,14 +264,16 @@ export function AppSidebar() {
           </>
         )}
 
-        {/* Настройки */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {!isDemoMode && renderMenuItems(settingsMenuItems)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Настройки — скрыты для наблюдателей */}
+        {!isViewer && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {!isDemoMode && renderMenuItems(settingsMenuItems)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-2">
