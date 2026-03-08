@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 interface ObjectDetailCardProps {
