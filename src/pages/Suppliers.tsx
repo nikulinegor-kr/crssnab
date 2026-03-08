@@ -196,6 +196,8 @@ export default function Suppliers() {
         status: supplier.status,
         address: supplier.address || "",
         inn: supplier.inn || "",
+        kpp: supplier.kpp || "",
+        ogrn: supplier.ogrn || "",
         notes: supplier.notes || "",
       });
     }
