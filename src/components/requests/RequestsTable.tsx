@@ -514,10 +514,10 @@ export const RequestsTable = ({
               return (
                   <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/15' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/10' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: '48px' }}
+                  style={{ height: '40px' }}
                 >
                   <TableCell 
                     className="w-[5px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[6px]" 
