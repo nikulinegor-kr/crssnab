@@ -39,6 +39,7 @@ export const AdditionalSection = ({
   onRemoveExistingDocument,
 }: AdditionalSectionProps) => {
   const { toast } = useToast();
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopyZRS = async () => {
     const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
@@ -47,7 +48,7 @@ export const AdditionalSection = ({
 Приоритет: ${formValues.priority || "-"}
 Наличие: ${formValues.availability_delivery_time || "-"}
 Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
-Оплата: ${formValues.payment_percentage}%
+Оплата: ${formValues.payment_percentage ?? 0}%
 Исполнил: ${formValues.executor || "-"}`;
     
     try {
@@ -58,47 +59,78 @@ export const AdditionalSection = ({
     }
   };
 
-  const handleGenerateZRSPdf = () => {
-    try {
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-      
-      // Use built-in helvetica (supports basic latin)
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text("ZRS - Summary", 20, 25);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      
-      const objectName = objectsData?.find(o => o.id === formValues.object_id)?.name || "-";
-      const lines = [
-        ["Object:", objectName],
-        ["Request:", formValues.description || "-"],
-        ["Applicant:", formValues.applicant || "-"],
-        ["Priority:", formValues.priority || "-"],
-        ["Availability:", formValues.availability_delivery_time || "-"],
-        ["Delivery term:", formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} days` : "-"],
-        ["Payment:", `${formValues.payment_percentage || 0}%`],
-        ["Executor:", formValues.executor || "-"],
-      ];
+  const getZrsLines = () => {
+    const objectName = objectsData?.find(o => o.id === formValues.object_id)?.name || "-";
+    return [
+      `Объект: ${objectName}`,
+      `Заявка: ${formValues.description || "-"}`,
+      `Заявитель: ${formValues.applicant || "-"}`,
+      `Приоритет: ${formValues.priority || "-"}`,
+      `Наличие: ${formValues.availability_delivery_time || "-"}`,
+      `Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}`,
+      `Оплата: ${formValues.payment_percentage ?? 0}%`,
+      `Исполнил: ${formValues.executor || "-"}`,
+    ];
+  };
 
-      let y = 40;
-      lines.forEach(([label, value]) => {
-        doc.setFont("helvetica", "bold");
-        doc.text(label, 20, y);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(value), 65, y);
-        y += 8;
+  const handleInsertIntoInvoice = () => {
+    pdfInputRef.current?.click();
+  };
+
+  const handlePdfFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      
+      // Embed a standard font (Helvetica doesn't support Cyrillic, but we'll draw as-is)
+      // For Cyrillic we need to fetch and embed a TTF font
+      const fontUrl = "https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@master/fonts/NimbusRoman-Regular.t1";
+      
+      // Use pdf-lib's built-in font embedding with a Google Font for Cyrillic
+      const robotoUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf";
+      const fontBytes = await fetch(robotoUrl).then(r => r.arrayBuffer());
+      const customFont = await pdfDoc.embedFont(fontBytes);
+
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+      const { width, height } = firstPage.getSize();
+
+      const lines = getZrsLines();
+      const fontSize = 9;
+      const lineHeight = 14;
+      // Place text on the right half of the page, starting from top area
+      const startX = width * 0.55;
+      let startY = height - 80;
+
+      lines.forEach((line) => {
+        firstPage.drawText(line, {
+          x: startX,
+          y: startY,
+          size: fontSize,
+          font: customFont,
+          color: rgb(0, 0, 0),
+        });
+        startY -= lineHeight;
       });
 
-      doc.setDrawColor(200);
-      doc.line(20, 35, 190, 35);
-      doc.line(20, y + 2, 190, y + 2);
+      const modifiedPdf = await pdfDoc.save();
+      const blob = new Blob([modifiedPdf], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name.replace(".pdf", "_ZRS.pdf");
+      a.click();
+      URL.revokeObjectURL(url);
 
-      doc.save(`ZRS_${formValues.request_number || "draft"}.pdf`);
-      toast({ title: "PDF создан", description: "Файл сводки скачан" });
-    } catch {
-      toast({ title: "Ошибка", description: "Не удалось создать PDF", variant: "destructive" });
+      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт" });
+    } catch (err) {
+      console.error("PDF insert error:", err);
+      toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
     }
   };
 
