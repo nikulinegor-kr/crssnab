@@ -209,7 +209,10 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {menuGroups.map((group, idx) => {
+        {(isViewer
+          ? [{ label: "CRM", icon: FileText, items: [{ title: "Заявки", url: "/requests", icon: FileText }] }]
+          : menuGroups
+        ).map((group, idx) => {
           const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
           return (
             <div key={group.label}>
