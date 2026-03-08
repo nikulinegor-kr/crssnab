@@ -181,12 +181,12 @@ export const RequestsTable = ({
   const { visibility, updateVisibility } = useTableColumnVisibility();
   const { widths, updateWidth } = useTableColumnWidths();
   
-  // Quick View state
-  const [quickViewRequest, setQuickViewRequest] = useState<Request | null>(null);
+  // Quick View state — only store ID to avoid re-renders from table data updates
+  const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
 
   const openQuickView = useCallback((request: Request) => {
-    setQuickViewRequest(request);
+    setQuickViewRequestId(request.id);
     setQuickViewOpen(true);
   }, []);
 
@@ -722,7 +722,7 @@ export const RequestsTable = ({
       </div>
 
       <RequestQuickView
-        request={quickViewRequest}
+        requestId={quickViewRequestId}
         open={quickViewOpen}
         onClose={closeQuickView}
         onEdit={onEditClick}
