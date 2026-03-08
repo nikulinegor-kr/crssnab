@@ -45,6 +45,7 @@ export default function EquipmentPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [brandFilter, setBrandFilter] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [brand, setBrand] = useState("");
