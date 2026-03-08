@@ -75,6 +75,8 @@ interface RequestsTableProps {
   toggleAllRequests: () => void;
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
   onEditClick?: (request: Request) => void;
+  onDuplicateClick?: (request: Request) => void;
+  onCreateProcurement?: (request: Request) => void;
   searchQuery?: string;
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
