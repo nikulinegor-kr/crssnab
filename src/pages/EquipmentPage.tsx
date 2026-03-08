@@ -359,7 +359,7 @@ export default function EquipmentPage() {
               </TableRow>
             ) : (
               filtered.map((e: any) => (
-                <TableRow key={e.id} className={selectedIds.has(e.id) ? "bg-muted/50" : ""}>
+                <TableRow key={e.id} className={cn("cursor-pointer hover:bg-muted/50", selectedIds.has(e.id) ? "bg-muted/50" : "")} onClick={() => navigate(`/equipment/${e.id}`)}>
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.has(e.id)}
