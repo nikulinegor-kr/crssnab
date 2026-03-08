@@ -360,7 +360,7 @@ export default function EquipmentPage() {
             ) : (
               filtered.map((e: any) => (
                 <TableRow key={e.id} className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(e.id) ? "bg-muted/50" : ""}`} onClick={() => navigate(`/equipment/${e.id}`)}>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedIds.has(e.id)}
                       onCheckedChange={(checked) => {
@@ -378,10 +378,10 @@ export default function EquipmentPage() {
                   </TableCell>
                   <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
                   <TableCell>{e.year || "—"}</TableCell>
-                  <TableCell>
+                  <TableCell onClick={(ev) => ev.stopPropagation()}>
                     <CopyString equipment={e} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(ev) => ev.stopPropagation()}>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/equipment/${e.id}`)} title="Аналитика техники">
                         <FileText className="h-3.5 w-3.5" />
