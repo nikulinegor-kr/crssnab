@@ -119,7 +119,7 @@ export const AdditionalSection = ({
       });
 
       const modifiedPdf = await pdfDoc.save();
-      const blob = new Blob([modifiedPdf], { type: "application/pdf" });
+      const blob = new Blob([modifiedPdf.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
