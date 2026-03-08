@@ -27,10 +27,20 @@ const OrganizationSettings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { role, isAdmin, isViewer, loading: roleLoading } = useUserRole();
   
   const [loading, setLoading] = useState(true);
   const [orgName, setOrgName] = useState("");
+
+  // Determine which tabs are visible based on role
+  const isEditor = role === "editor";
+  const visibleTabs = isAdmin
+    ? ["profile", "general", "users", "participants", "notifications", "requests", "branding", "subscription", "integrations", "view", "audit"]
+    : isEditor
+      ? ["profile", "notifications"]
+      : ["profile"]; // viewer / member
+
+  const defaultTab = "profile";
 
   useEffect(() => {
     if (!currentOrgId) {
@@ -38,18 +48,8 @@ const OrganizationSettings = () => {
       return;
     }
 
-    if (!roleLoading && !isAdmin) {
-      toast({
-        title: "Доступ запрещен",
-        description: "Только администраторы могут изменять настройки организации",
-        variant: "destructive",
-      });
-      navigate("/dashboard");
-      return;
-    }
-
     loadSettings();
-  }, [currentOrgId, isAdmin, roleLoading]);
+  }, [currentOrgId, roleLoading]);
 
   const loadSettings = async () => {
     if (!currentOrgId) return;
@@ -92,212 +92,161 @@ const OrganizationSettings = () => {
         <p className="text-sm sm:text-base text-muted-foreground">{orgName}</p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-4 sm:space-y-6" orientation="horizontal">
+      <Tabs defaultValue={defaultTab} className="space-y-4 sm:space-y-6" orientation="horizontal">
         <div className="border-b overflow-x-auto">
           <TabsList className="inline-flex h-auto w-auto min-w-full sm:min-w-0 rounded-none bg-transparent p-0">
-            <TabsTrigger 
-              value="profile"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Профиль</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="general"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Общие</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="users"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Пользователи</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="participants"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <UserCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Участники</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="notifications"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Уведомления</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="requests"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Заявки</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="branding"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">Брендинг</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="subscription"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <CreditCard className="h-4 w-4" />
-              <span className="hidden sm:inline">Подписка</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="integrations"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Plug className="h-4 w-4" />
-              <span className="hidden sm:inline">Интеграции</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="view"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <Eye className="h-4 w-4" />
-              <span className="hidden sm:inline">Отображение</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="audit"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200"
-            >
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">История</span>
-            </TabsTrigger>
+            {visibleTabs.includes("profile") && (
+              <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <User className="h-4 w-4" /><span className="hidden sm:inline">Профиль</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("general") && (
+              <TabsTrigger value="general" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Settings className="h-4 w-4" /><span className="hidden sm:inline">Общие</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("users") && (
+              <TabsTrigger value="users" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Users className="h-4 w-4" /><span className="hidden sm:inline">Пользователи</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("participants") && (
+              <TabsTrigger value="participants" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <UserCheck className="h-4 w-4" /><span className="hidden sm:inline">Участники</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("notifications") && (
+              <TabsTrigger value="notifications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Bell className="h-4 w-4" /><span className="hidden sm:inline">Уведомления</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("requests") && (
+              <TabsTrigger value="requests" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <FileText className="h-4 w-4" /><span className="hidden sm:inline">Заявки</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("branding") && (
+              <TabsTrigger value="branding" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Palette className="h-4 w-4" /><span className="hidden sm:inline">Брендинг</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("subscription") && (
+              <TabsTrigger value="subscription" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <CreditCard className="h-4 w-4" /><span className="hidden sm:inline">Подписка</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("integrations") && (
+              <TabsTrigger value="integrations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Plug className="h-4 w-4" /><span className="hidden sm:inline">Интеграции</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("view") && (
+              <TabsTrigger value="view" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Eye className="h-4 w-4" /><span className="hidden sm:inline">Отображение</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("audit") && (
+              <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <History className="h-4 w-4" /><span className="hidden sm:inline">История</span>
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
-        <TabsContent value="profile" className="space-y-4">
-          <SettingsSection 
-            title="Ваш профиль" 
-            description="Управление личными данными и уведомлениями"
-            icon={User}
-          >
-            <ProfileSettings />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("profile") && (
+          <TabsContent value="profile" className="space-y-4">
+            <SettingsSection title="Ваш профиль" description="Управление личными данными и уведомлениями" icon={User}>
+              <ProfileSettings />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="general">
-          <SettingsSection 
-            title="Общие настройки" 
-            description="Основная информация об организации"
-            icon={Settings}
-          >
-            <GeneralSettings organizationId={currentOrgId!} />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("general") && (
+          <TabsContent value="general">
+            <SettingsSection title="Общие настройки" description="Основная информация об организации" icon={Settings}>
+              <GeneralSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="users">
-          <SettingsSection 
-            title="Управление пользователями" 
-            description="Добавление и управление доступом пользователей"
-            icon={Users}
-          >
-            <UsersManagement 
-              organizationId={currentOrgId!} 
-              isAdmin={isAdmin}
-            />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("users") && (
+          <TabsContent value="users">
+            <SettingsSection title="Управление пользователями" description="Добавление и управление доступом пользователей" icon={Users}>
+              <UsersManagement organizationId={currentOrgId!} isAdmin={isAdmin} />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="participants">
-          <SettingsSection 
-            title="Участники заявок" 
-            description="Заявители, исполнители и подрядчики"
-            icon={UserCheck}
-          >
-            <ParticipantsManagement />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("participants") && (
+          <TabsContent value="participants">
+            <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
+              <ParticipantsManagement />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="notifications" className="space-y-8">
-          <SettingsSection 
-            title="Настройки уведомлений" 
-            description="Push-уведомления, Telegram и автонапоминания"
-            icon={Bell}
-          >
-            <div className="space-y-6">
-              <PushNotificationSettings />
-              <TelegramSettings organizationId={currentOrgId!} />
-              <DeadlineReminderSettings />
-            </div>
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("notifications") && (
+          <TabsContent value="notifications" className="space-y-8">
+            <SettingsSection title="Настройки уведомлений" description="Push-уведомления, Telegram и автонапоминания" icon={Bell}>
+              <div className="space-y-6">
+                <PushNotificationSettings />
+                {isAdmin && <TelegramSettings organizationId={currentOrgId!} />}
+                {isAdmin && <DeadlineReminderSettings />}
+              </div>
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="requests" className="space-y-6">
-          <SettingsSection 
-            title="Настройки заявок" 
-            description="Статусы, приоритеты и поля заявок"
-            icon={FileText}
-          >
-            <RequestSettings organizationId={currentOrgId!} />
-          </SettingsSection>
-          <SettingsSection 
-            title="Объекты" 
-            description="Управление объектами для заявок"
-            icon={Building2}
-          >
-            <ObjectsManagement />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("requests") && (
+          <TabsContent value="requests" className="space-y-6">
+            <SettingsSection title="Настройки заявок" description="Статусы, приоритеты и поля заявок" icon={FileText}>
+              <RequestSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+            <SettingsSection title="Объекты" description="Управление объектами для заявок" icon={Building2}>
+              <ObjectsManagement />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="branding">
-          <SettingsSection 
-            title="Брендинг" 
-            description="Логотип и цветовая схема организации"
-            icon={Palette}
-          >
-            <BrandingSettings organizationId={currentOrgId!} />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("branding") && (
+          <TabsContent value="branding">
+            <SettingsSection title="Брендинг" description="Логотип и цветовая схема организации" icon={Palette}>
+              <BrandingSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="subscription">
-          <SettingsSection 
-            title="Подписка" 
-            description="Управление тарифным планом"
-            icon={CreditCard}
-          >
-            <SubscriptionSettings organizationId={currentOrgId!} />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("subscription") && (
+          <TabsContent value="subscription">
+            <SettingsSection title="Подписка" description="Управление тарифным планом" icon={CreditCard}>
+              <SubscriptionSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="integrations">
-          <SettingsSection 
-            title="Интеграции" 
-            description="Подключение внешних сервисов"
-            icon={Plug}
-          >
-            <IntegrationsSettings organizationId={currentOrgId!} />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("integrations") && (
+          <TabsContent value="integrations">
+            <SettingsSection title="Интеграции" description="Подключение внешних сервисов" icon={Plug}>
+              <IntegrationsSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="view">
-          <SettingsSection 
-            title="Настройки отображения" 
-            description="Выбор виджетов и полей для дашборда и канбан"
-            icon={Eye}
-          >
-            <ViewSettings />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("view") && (
+          <TabsContent value="view">
+            <SettingsSection title="Настройки отображения" description="Выбор виджетов и полей для дашборда и канбан" icon={Eye}>
+              <ViewSettings />
+            </SettingsSection>
+          </TabsContent>
+        )}
 
-        <TabsContent value="audit">
-          <SettingsSection 
-            title="История изменений" 
-            description="Журнал действий пользователей"
-            icon={History}
-          >
-            <AuditLog organizationId={currentOrgId!} />
-          </SettingsSection>
-        </TabsContent>
+        {visibleTabs.includes("audit") && (
+          <TabsContent value="audit">
+            <SettingsSection title="История изменений" description="Журнал действий пользователей" icon={History}>
+              <AuditLog organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
