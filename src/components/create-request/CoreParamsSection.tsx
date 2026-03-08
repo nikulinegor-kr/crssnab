@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
@@ -6,24 +7,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { ObjectSelectWithAdd } from "@/components/ObjectSelectWithAdd";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { FormSectionCard } from "./FormSectionCard";
-import { CalendarDays } from "lucide-react";
-
-const REQUEST_TYPES = [
-  "Закупка",
-  "Ремонт и восстановление техники",
-  "Хозяйственные нужды",
-];
+import { CalendarDays, Wrench } from "lucide-react";
 
 interface CoreParamsSectionProps {
   form: UseFormReturn<any>;
@@ -38,8 +28,19 @@ export const CoreParamsSection = ({
   currentOrgId,
   disabled = false,
 }: CoreParamsSectionProps) => {
-  const requestType = form.watch("request_type");
-  const showEquipment = requestType === "Ремонт и восстановление техники";
+  const objectId = form.watch("object_id");
+  const [repairPurpose, setRepairPurpose] = useState<string>("general");
+
+  // Determine if selected object is the repair object
+  const selectedObject = objectsData?.find((o) => o.id === objectId);
+  const isRepairObject = selectedObject?.name === "Ремонт и восстановление техники";
+
+  // Clear equipment when switching away from repair object or changing purpose
+  useEffect(() => {
+    if (!isRepairObject || repairPurpose !== "equipment") {
+      form.setValue("equipment_id", "");
+    }
+  }, [isRepairObject, repairPurpose]);
 
   return (
     <FormSectionCard
@@ -88,59 +89,57 @@ export const CoreParamsSection = ({
         />
       </div>
 
-      <div className={showEquipment ? "grid grid-cols-2 gap-2 sm:gap-3 mt-3" : "mt-3"}>
-        <FormField
-          control={form.control}
-          name="request_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Тип заявки</FormLabel>
-              <Select
-                onValueChange={(val) => {
-                  field.onChange(val);
-                  if (val !== "Ремонт и восстановление техники") {
-                    form.setValue("equipment_id", "");
-                  }
-                }}
-                value={field.value || ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Выберите тип" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {REQUEST_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {isRepairObject && (
+        <div className="mt-3 space-y-3">
+          <FormSectionCard
+            title="Назначение ремонта"
+            icon={<Wrench className="h-4 w-4 text-muted-foreground" />}
+          >
+            <RadioGroup
+              value={repairPurpose}
+              onValueChange={setRepairPurpose}
+              className="flex flex-col gap-2"
+              disabled={disabled}
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="general" id="repair-general" />
+                <Label htmlFor="repair-general" className="text-sm font-normal cursor-pointer">
+                  Общие нужды
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="equipment" id="repair-equipment" />
+                <Label htmlFor="repair-equipment" className="text-sm font-normal cursor-pointer">
+                  Относимость к технике
+                </Label>
+              </div>
+            </RadioGroup>
 
-        {showEquipment && (
-          <FormField
-            control={form.control}
-            name="equipment_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Относимость к технике</FormLabel>
-                <FormControl>
-                  <EquipmentSelectWithAdd
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    organizationId={currentOrgId}
-                    disabled={disabled}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            {repairPurpose === "equipment" && (
+              <div className="mt-3">
+                <FormField
+                  control={form.control}
+                  name="equipment_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Техника</FormLabel>
+                      <FormControl>
+                        <EquipmentSelectWithAdd
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          organizationId={currentOrgId}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             )}
-          />
-        )}
-      </div>
+          </FormSectionCard>
+        </div>
+      )}
     </FormSectionCard>
   );
 };
