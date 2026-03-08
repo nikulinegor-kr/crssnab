@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import { useDadataSearch, DadataSuggestion } from "@/hooks/useDadataSearch";
 
 interface Supplier {
   id: string;
