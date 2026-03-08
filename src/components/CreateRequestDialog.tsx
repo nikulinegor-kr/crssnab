@@ -557,32 +557,66 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             await supabase.from("request_items").insert(itemsToInsert);
           }
 
-          // Auto-create nomenclature for repair requests with equipment
-          if (data.equipment_id) {
-            for (const item of requestItems) {
-              if (!item.article || !item.name.trim()) continue;
+          // Auto-create nomenclature entries for items with article
+          for (const item of requestItems) {
+            if (!item.article || !item.name.trim()) continue;
 
-              const { data: existing } = await supabase
-                .from("warehouse_products")
-                .select("id")
-                .eq("article", item.article)
-                .eq("equipment_id", data.equipment_id)
-                .eq("organization_id", currentOrgId)
-                .maybeSingle();
+            // Build query to check for existing nomenclature
+            let existingQuery = supabase
+              .from("warehouse_products")
+              .select("id")
+              .eq("article", item.article)
+              .eq("organization_id", currentOrgId);
 
-              if (!existing) {
-                await supabase.from("warehouse_products").insert({
-                  name: item.name,
-                  article: item.article,
-                  equipment_id: data.equipment_id,
-                  organization_id: currentOrgId,
-                });
-              }
+            if (data.equipment_id) {
+              existingQuery = existingQuery.eq("equipment_id", data.equipment_id);
+            } else {
+              existingQuery = existingQuery.is("equipment_id", null);
             }
-            queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+
+            const { data: existing } = await existingQuery.maybeSingle();
+
+            if (!existing) {
+              await supabase.from("warehouse_products").insert({
+                name: item.name,
+                article: item.article,
+                equipment_id: data.equipment_id || null,
+                organization_id: currentOrgId,
+              });
+            }
           }
+          queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
         } catch {
           // Non-critical, don't block request creation
+        }
+      }
+
+      // Auto-add new contractor to suppliers
+      if (data.contractor?.trim() && currentOrgId) {
+        try {
+          const contractorName = data.contractor.trim();
+          const { data: existingSupplier } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("name", contractorName)
+            .eq("organization_id", currentOrgId)
+            .maybeSingle();
+
+          if (!existingSupplier) {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+              await supabase.from("suppliers").insert({
+                name: contractorName,
+                organization_id: currentOrgId,
+                created_by: currentUser.id,
+                category: "Другое",
+                status: "Активный",
+              });
+              queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
+            }
+          }
+        } catch {
+          // Non-critical
         }
       }
 
