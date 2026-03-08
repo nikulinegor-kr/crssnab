@@ -189,6 +189,7 @@ export const RequestsTable = ({
   searchQuery = "",
   favoriteIds,
   onToggleFavorite,
+  headerActions,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { visibility, updateVisibility } = useTableColumnVisibility();
