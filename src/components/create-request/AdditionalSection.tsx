@@ -24,6 +24,7 @@ interface AdditionalSectionProps {
   onRemoveExistingPhoto?: (url: string) => void;
   existingDocumentUrls?: string[];
   onRemoveExistingDocument?: (url: string) => void;
+  organizationId?: string | null;
 }
 
 export const AdditionalSection = ({
