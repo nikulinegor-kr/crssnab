@@ -684,6 +684,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           setPhotoFiles={setPhotoFiles}
           documentFiles={documentFiles}
           setDocumentFiles={setDocumentFiles}
+          organizationId={currentOrgId}
         />
       </form>
     </Form>
