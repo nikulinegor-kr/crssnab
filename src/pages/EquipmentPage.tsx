@@ -239,10 +239,27 @@ export default function EquipmentPage() {
           <h1 className="text-2xl font-bold">Справочник техники</h1>
           <span className="text-muted-foreground text-sm">({equipment.length})</span>
         </div>
-        <Button onClick={openCreate} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Добавить технику
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImportExcel}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importing ? "Импорт..." : "Импорт Excel"}
+          </Button>
+          <Button onClick={openCreate} size="sm">
+            <Plus className="h-4 w-4 mr-1" /> Добавить технику
+          </Button>
+        </div>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
