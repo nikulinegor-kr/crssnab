@@ -414,6 +414,8 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onDuplicateClick={handleDuplicateClick}
+              onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
