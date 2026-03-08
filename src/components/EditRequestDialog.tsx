@@ -564,7 +564,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: data.invoice_number || "",
         amount: data.amount ?? null,
         payment_status: (data as any).payment_status || "Не выставлен",
-        invoice_date: (data as any).invoice_date || "",
         shipment_date: data.shipment_date || "",
         delivery_date: data.delivery_date || "",
         transport_company: data.transport_company || "",
