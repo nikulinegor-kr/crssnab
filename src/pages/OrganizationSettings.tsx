@@ -27,10 +27,20 @@ const OrganizationSettings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { role, isAdmin, isViewer, loading: roleLoading } = useUserRole();
   
   const [loading, setLoading] = useState(true);
   const [orgName, setOrgName] = useState("");
+
+  // Determine which tabs are visible based on role
+  const isEditor = role === "editor";
+  const visibleTabs = isAdmin
+    ? ["profile", "general", "users", "participants", "notifications", "requests", "branding", "subscription", "integrations", "view", "audit"]
+    : isEditor
+      ? ["profile", "notifications"]
+      : ["profile"]; // viewer / member
+
+  const defaultTab = "profile";
 
   useEffect(() => {
     if (!currentOrgId) {
@@ -38,18 +48,8 @@ const OrganizationSettings = () => {
       return;
     }
 
-    if (!roleLoading && !isAdmin) {
-      toast({
-        title: "Доступ запрещен",
-        description: "Только администраторы могут изменять настройки организации",
-        variant: "destructive",
-      });
-      navigate("/dashboard");
-      return;
-    }
-
     loadSettings();
-  }, [currentOrgId, isAdmin, roleLoading]);
+  }, [currentOrgId, roleLoading]);
 
   const loadSettings = async () => {
     if (!currentOrgId) return;
