@@ -33,7 +33,30 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: requests } = useRequests();
+  // Load ALL requests for this object directly (no 1000 row limit)
+  const { data: objRequests = [] } = useQuery({
+    queryKey: ["object-requests", objectData.id],
+    queryFn: async () => {
+      const allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("requests")
+          .select("id, request_number, description, status, priority, amount, payment_percentage, shipment_date, delivery_date, transport_company, object_id")
+          .eq("object_id", objectData.id)
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return allData;
+    },
+    enabled: !!objectData.id,
+  });
   const [showWarehouseDialog, setShowWarehouseDialog] = useState(false);
   const [newWarehouseName, setNewWarehouseName] = useState("");
   const [newWarehouseDescription, setNewWarehouseDescription] = useState("");
