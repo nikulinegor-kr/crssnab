@@ -65,6 +65,14 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
   const [uploadDocType, setUploadDocType] = useState("Другое");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Requests tab state
+  const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
+  const [reqPage, setReqPage] = useState(0);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferTargetId, setTransferTargetId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+  const REQ_PAGE_SIZE = 100;
+
   // Fetch warehouses for this object
   const { data: warehouses = [] } = useQuery({
     queryKey: ["warehouses", currentOrgId, objectData.id],
