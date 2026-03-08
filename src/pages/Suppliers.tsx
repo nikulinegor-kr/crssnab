@@ -455,6 +455,21 @@ export default function Suppliers() {
                 className="hidden"
                 onChange={handleInvoiceUpload}
               />
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isBatchEnriching}
+                onClick={handleBatchEnrich}
+              >
+                {isBatchEnriching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {isBatchEnriching
+                  ? `Обновляем ${batchProgress.current}/${batchProgress.total}...`
+                  : "Заполнить реквизиты"}
+              </Button>
             </div>
           </div>
 
