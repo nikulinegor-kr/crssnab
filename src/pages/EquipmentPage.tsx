@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Truck, Pencil, Trash2, Copy, Check } from "lucide-react";
+import { Plus, Search, Truck, Pencil, Trash2, Copy, Check, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
+import * as XLSX from "xlsx";
 function CopyString({ equipment }: { equipment: any }) {
   const [copied, setCopied] = useState(false);
   const parts = [
@@ -50,6 +50,8 @@ export default function EquipmentPage() {
   const [year, setYear] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment", currentOrgId],
@@ -147,6 +149,88 @@ export default function EquipmentPage() {
     setEditingId(null);
   };
 
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentOrgId) return;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // Skip header if first row looks like headers
+      const startIdx = rows.length > 0 && typeof rows[0][0] === "string" &&
+        ["марка", "brand"].includes(rows[0][0].toLowerCase().trim()) ? 1 : 0;
+
+      const existingSet = new Set(
+        equipment.map((eq: any) => `${(eq.brand || "").toLowerCase().trim()}|${(eq.model || "").toLowerCase().trim()}`)
+      );
+      const existingVins = new Set(
+        equipment.filter((eq: any) => eq.vin).map((eq: any) => eq.vin!.toLowerCase().trim())
+      );
+
+      const toInsert: any[] = [];
+      let skipped = 0;
+
+      for (let i = startIdx; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0]) continue;
+
+        const rBrand = String(row[0] || "").trim();
+        const rModel = String(row[1] || "").trim();
+        const rVin = String(row[2] || "").trim().toUpperCase() || null;
+        const rYear = row[3] ? parseInt(String(row[3])) : null;
+        const rPlate = String(row[4] || "").trim() || null;
+        const rComment = String(row[5] || "").trim() || null;
+
+        if (!rBrand || !rModel) { skipped++; continue; }
+
+        // Check duplicate brand+model
+        const key = `${rBrand.toLowerCase()}|${rModel.toLowerCase()}`;
+        if (existingSet.has(key)) { skipped++; continue; }
+
+        // Check duplicate VIN
+        if (rVin && existingVins.has(rVin.toLowerCase())) { skipped++; continue; }
+
+        // Avoid duplicates within the import file itself
+        if (existingSet.has(key)) { skipped++; continue; }
+        existingSet.add(key);
+        if (rVin) {
+          if (existingVins.has(rVin.toLowerCase())) { skipped++; continue; }
+          existingVins.add(rVin.toLowerCase());
+        }
+
+        toInsert.push({
+          organization_id: currentOrgId,
+          brand: rBrand,
+          model: rModel,
+          vin: rVin,
+          year: rYear && !isNaN(rYear) ? rYear : null,
+          plate_number: rPlate,
+          comment: rComment,
+        });
+      }
+
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from("equipment").insert(toInsert);
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["equipment"] });
+      toast({
+        title: `Импорт завершён`,
+        description: `Добавлено: ${toInsert.length}, пропущено: ${skipped}`,
+      });
+    } catch (err: any) {
+      toast({ title: "Ошибка импорта", description: err?.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -155,9 +239,27 @@ export default function EquipmentPage() {
           <h1 className="text-2xl font-bold">Справочник техники</h1>
           <span className="text-muted-foreground text-sm">({equipment.length})</span>
         </div>
-        <Button onClick={openCreate} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Добавить технику
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImportExcel}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importing ? "Импорт..." : "Импорт Excel"}
+          </Button>
+          <Button onClick={openCreate} size="sm">
+            <Plus className="h-4 w-4 mr-1" /> Добавить технику
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
