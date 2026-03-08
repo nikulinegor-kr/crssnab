@@ -126,11 +126,48 @@ export const AdditionalSection = ({
 
       // Add to document files so it appears in the Счёт/КП block below
       setDocumentFiles([...documentFiles, modifiedFile]);
+      setLastZrsFile(modifiedFile);
 
       toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт и добавлена в документы" });
     } catch (err) {
       console.error("PDF insert error:", err);
       toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
+    }
+  };
+
+  const handleSendToTelegram = async () => {
+    if (!lastZrsFile || !organizationId) return;
+    setIsSending(true);
+    try {
+      // Upload file to storage
+      const filePath = `zrs/${Date.now()}_${lastZrsFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("request-documents")
+        .upload(filePath, lastZrsFile);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("request-documents")
+        .getPublicUrl(filePath);
+
+      const zrsText = getZrsLines().join("\n");
+
+      const { error } = await supabase.functions.invoke("notify-telegram", {
+        body: {
+          action: "send_zrs_document",
+          organization_id: organizationId,
+          document_url: urlData.publicUrl,
+          file_name: lastZrsFile.name,
+          caption: `📋 ЗРС — Счёт\n\n${zrsText}`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Отправлено", description: "Счёт с ЗРС отправлен в Telegram" });
+    } catch (err) {
+      console.error("Send ZRS error:", err);
+      toast({ title: "Ошибка", description: "Не удалось отправить в Telegram", variant: "destructive" });
+    } finally {
+      setIsSending(false);
     }
   };
 
