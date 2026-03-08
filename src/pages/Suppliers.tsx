@@ -48,6 +48,9 @@ interface Supplier {
   inn: string | null;
   kpp: string | null;
   ogrn: string | null;
+  bank_name: string | null;
+  bank_account: string | null;
+  bik: string | null;
   notes: string | null;
   created_at: string;
   organization_id: string;
