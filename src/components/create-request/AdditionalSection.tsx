@@ -4,8 +4,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
-import { MoreHorizontal, Copy } from "lucide-react";
+import { MoreHorizontal, Copy, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 interface AdditionalSectionProps {
   form: UseFormReturn<any>;
