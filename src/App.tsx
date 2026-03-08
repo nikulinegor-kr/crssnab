@@ -365,6 +365,36 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/erp-analytics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ErpAnalyticsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/procurement-plan"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProcurementPlanPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supply-dashboard"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SupplyDashboardPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
