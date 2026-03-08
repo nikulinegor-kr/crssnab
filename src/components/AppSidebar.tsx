@@ -61,6 +61,7 @@ const crmMenuItems = [
 
 const erpMenuItems = [
   { title: "Номенклатура", url: "/nomenclature", icon: Layers },
+  { title: "Техника", url: "/equipment", icon: Truck },
   { title: "Склад", url: "/warehouse", icon: Warehouse },
   { title: "Поставки", url: "/shipments", icon: Truck },
   { title: "Бюджеты", url: "/budgets", icon: Wallet },
