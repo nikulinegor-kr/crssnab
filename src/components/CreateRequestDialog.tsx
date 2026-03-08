@@ -135,7 +135,6 @@ interface InitialRequestData {
   invoice_number?: string;
   amount?: number;
   payment_status?: string;
-  invoice_date?: string;
   transport_company?: string;
   comments?: string;
 }
