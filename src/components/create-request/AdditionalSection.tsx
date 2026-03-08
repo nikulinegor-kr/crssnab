@@ -7,6 +7,7 @@ import { FormSectionCard } from "./FormSectionCard";
 import { MoreHorizontal, Copy, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import { useRef } from "react";
 
 interface AdditionalSectionProps {
