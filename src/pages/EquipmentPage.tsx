@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Truck, Pencil, Trash2, Copy, Check, Upload } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from "xlsx";
 function CopyString({ equipment }: { equipment: any }) {
@@ -51,6 +52,8 @@ export default function EquipmentPage() {
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
   const [importing, setImporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: equipment = [] } = useQuery({
@@ -272,10 +275,54 @@ export default function EquipmentPage() {
         />
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
+          <span className="text-sm font-medium">Выбрано: {selectedIds.size}</span>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={bulkDeleting}
+            onClick={async () => {
+              setBulkDeleting(true);
+              try {
+                const ids = Array.from(selectedIds);
+                const { error } = await supabase.from("equipment").delete().in("id", ids);
+                if (error) throw error;
+                queryClient.invalidateQueries({ queryKey: ["equipment"] });
+                setSelectedIds(new Set());
+                toast({ title: `Удалено: ${ids.length}` });
+              } catch {
+                toast({ title: "Ошибка удаления", variant: "destructive" });
+              } finally {
+                setBulkDeleting(false);
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            {bulkDeleting ? "Удаление..." : "Удалить выбранные"}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+            Снять выделение
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedIds(new Set(filtered.map((e: any) => e.id)));
+                    } else {
+                      setSelectedIds(new Set());
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Марка / Модель</TableHead>
               <TableHead>Гос номер</TableHead>
               <TableHead>VIN</TableHead>
@@ -287,13 +334,23 @@ export default function EquipmentPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Нет техники
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((e: any) => (
-                <TableRow key={e.id}>
+                <TableRow key={e.id} className={selectedIds.has(e.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(e.id)}
+                      onCheckedChange={(checked) => {
+                        const next = new Set(selectedIds);
+                        if (checked) next.add(e.id); else next.delete(e.id);
+                        setSelectedIds(next);
+                      }}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{[e.brand, e.model].filter(Boolean).join(" ")}</TableCell>
                   <TableCell>
                     {e.plate_number ? (
