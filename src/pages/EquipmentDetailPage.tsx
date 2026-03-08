@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Truck, Wrench, FileText, DollarSign, Cog, Search } from "lucide-react";
+import { ArrowLeft, Truck, Wrench, FileText, RussianRuble, Cog, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
