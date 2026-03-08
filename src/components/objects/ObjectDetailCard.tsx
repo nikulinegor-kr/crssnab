@@ -234,6 +234,11 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
               <Archive className="h-3.5 w-3.5" /> В архив
             </Button>
           )}
+          {onDelete && (
+            <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => onDelete(objectData)}>
+              <Trash2 className="h-3.5 w-3.5" /> Удалить
+            </Button>
+          )}
         </div>
       </div>
 
