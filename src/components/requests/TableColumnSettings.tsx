@@ -20,6 +20,7 @@ export interface ColumnVisibility {
   shipment_date: boolean;
   delivery_date: boolean;
   transport_company: boolean;
+  amount: boolean;
   applicant: boolean;
   comments: boolean;
 }
@@ -33,9 +34,10 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   contractor: true,
   invoice_number: true,
   payment_percentage: true,
-  shipment_date: false,
-  delivery_date: false,
-  transport_company: false,
+  shipment_date: true,
+  delivery_date: true,
+  transport_company: true,
+  amount: true,
   applicant: true,
   comments: true,
 };
@@ -49,9 +51,10 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   contractor: "Контрагент",
   invoice_number: "Счёт",
   payment_percentage: "Оплата",
-  shipment_date: "Дата отправки",
-  delivery_date: "Дата доставки",
+  shipment_date: "Отгрузка",
+  delivery_date: "Приход",
   transport_company: "ТК",
+  amount: "Стоимость",
   applicant: "Заявитель",
   comments: "Комментарий",
 };
