@@ -148,7 +148,7 @@ export function GlobalSearch() {
           items.push({
             type: "request",
             id: r.id,
-            title: `#${r.request_number} — ${r.description}`,
+            title: r.description,
             subtitle: r.status,
             url: `/requests/${r.id}`,
           });
