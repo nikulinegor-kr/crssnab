@@ -241,7 +241,6 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
-                        <TableHead className="text-xs">№</TableHead>
                         <TableHead className="text-xs">Описание</TableHead>
                         <TableHead className="text-xs">Статус</TableHead>
                         <TableHead className="text-xs">Сумма</TableHead>
@@ -250,8 +249,14 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                     <TableBody>
                       {objRequests.slice(0, 50).map((r: any) => (
                         <TableRow key={r.id}>
-                          <TableCell className="text-sm font-medium">{r.request_number}</TableCell>
-                          <TableCell className="text-sm max-w-[200px] truncate">{r.description}</TableCell>
+                          <TableCell className="text-sm max-w-[300px] truncate">
+                            <button
+                              className="text-primary hover:underline text-left truncate"
+                              onClick={() => navigate(`/requests/${r.id}`)}
+                            >
+                              {r.description}
+                            </button>
+                          </TableCell>
                           <TableCell><Badge variant="secondary" className="text-xs">{r.status}</Badge></TableCell>
                           <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>
                         </TableRow>
