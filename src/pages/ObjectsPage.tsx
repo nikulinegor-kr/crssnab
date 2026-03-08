@@ -132,7 +132,12 @@ const ObjectsPage = () => {
   if (selectedObject) {
     return (
       <div className="w-full p-2 sm:p-4 md:p-6">
-        <ObjectDetailCard objectData={selectedObject} onBack={() => setSelectedObjectId(null)} />
+        <ObjectDetailCard
+          objectData={selectedObject}
+          onBack={() => setSelectedObjectId(null)}
+          onEdit={(obj) => { setSelectedObjectId(null); setEditingObject(obj); }}
+          onArchive={(id) => { setSelectedObjectId(null); archiveMutation.mutate(id); }}
+        />
       </div>
     );
   }
