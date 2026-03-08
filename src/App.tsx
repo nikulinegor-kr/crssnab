@@ -327,6 +327,16 @@ const App = () => {
               }
             />
             <Route
+              path="/warehouse/journal"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MovementJournalPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/nomenclature"
               element={
                 <ProtectedRoute>
