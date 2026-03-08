@@ -89,15 +89,34 @@ export default function EquipmentPage() {
     enabled: !!currentOrgId,
   });
 
-  const filtered = search
-    ? equipment.filter(
-        (e: any) =>
-          e.brand?.toLowerCase().includes(search.toLowerCase()) ||
-          e.model?.toLowerCase().includes(search.toLowerCase()) ||
-          e.vin?.toLowerCase().includes(search.toLowerCase()) ||
-          e.plate_number?.toLowerCase().includes(search.toLowerCase())
-      )
-    : equipment;
+  // Extract unique brands for quick filters
+  const uniqueBrands = useMemo(() => {
+    const brands = new Set<string>();
+    equipment.forEach((e: any) => {
+      if (e.brand) brands.add(e.brand.toUpperCase());
+    });
+    return Array.from(brands).sort();
+  }, [equipment]);
+
+  const filtered = useMemo(() => {
+    let result = equipment;
+    
+    // Apply brand filter
+    if (brandFilter) {
+      result = result.filter((e: any) => e.brand?.toUpperCase() === brandFilter);
+    }
+    
+    // Apply search filter (multi-word)
+    if (search) {
+      const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+      result = result.filter((e: any) => {
+        const haystack = `${e.brand || ""} ${e.model || ""} ${e.vin || ""} ${e.plate_number || ""}`.toLowerCase();
+        return words.every((w) => haystack.includes(w));
+      });
+    }
+    
+    return result;
+  }, [equipment, brandFilter, search]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
