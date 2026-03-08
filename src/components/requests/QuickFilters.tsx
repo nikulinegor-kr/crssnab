@@ -53,12 +53,12 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     value: "В пути",
   },
   {
-    id: "delivered",
-    label: "Доставлено",
+    id: "delivered-tk",
+    label: "Доставлено в ТК",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
     activeColor: "bg-green-600 text-white border-green-600 hover:bg-green-700",
     type: "status",
-    value: "Доставлено",
+    value: "Доставлено в ТК",
   },
 ];
 
