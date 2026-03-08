@@ -1304,6 +1304,51 @@ export type Database = {
           },
         ]
       }
+      request_items: {
+        Row: {
+          article: string | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          quantity: number
+          request_id: string
+        }
+        Insert: {
+          article?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          quantity?: number
+          request_id: string
+        }
+        Update: {
+          article?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          quantity?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_objects: {
         Row: {
           address: string | null
