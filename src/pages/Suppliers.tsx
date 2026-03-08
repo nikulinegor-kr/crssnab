@@ -79,8 +79,14 @@ export default function Suppliers() {
     inn: "",
     kpp: "",
     ogrn: "",
+    bank_name: "",
+    bank_account: "",
+    bik: "",
     notes: "",
   });
+
+  const [isExtractingSupplier, setIsExtractingSupplier] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { suggestions, isSearching, search: searchDadata, clearSuggestions } = useDadataSearch();
   const [showSuggestions, setShowSuggestions] = useState(false);
