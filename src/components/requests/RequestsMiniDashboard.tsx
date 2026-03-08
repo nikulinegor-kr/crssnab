@@ -135,7 +135,7 @@ export const RequestsMiniDashboard = ({
       icon: <CheckCircle2 className="h-3.5 w-3.5" />,
       color: "text-green-600 dark:text-green-400",
       iconBg: "bg-green-100 dark:bg-green-900/50",
-      bgColor: "bg-background border-border/60 hover:border-green-300 dark:hover:border-green-700",
+      bgColor: "bg-card border-border/40 shadow-sm hover:shadow-md hover:border-green-300 dark:hover:border-green-700",
       activeColor: "bg-green-50 dark:bg-green-950/60 border-green-400 dark:border-green-600 ring-1 ring-green-200 dark:ring-green-800",
       type: "special",
       specialFilter: "deliveredLast7Days",
