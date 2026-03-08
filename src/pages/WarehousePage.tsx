@@ -55,7 +55,7 @@ export default function WarehousePage() {
   const [showWarehouseDialog, setShowWarehouseDialog] = useState(false);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showMovementDialog, setShowMovementDialog] = useState(false);
-  const [movementOpType, setMovementOpType] = useState<"IN" | "OUT" | "MOVE">("IN");
+  const [movementOpType, setMovementOpType] = useState<"IN" | "OUT" | "MOVE" | "INVENTORY">("IN");
 
   // Form states
   const [warehouseName, setWarehouseName] = useState("");
