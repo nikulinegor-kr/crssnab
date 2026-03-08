@@ -111,18 +111,30 @@ export const AdditionalSection = ({
       <div className="space-y-3 sm:space-y-4">
         {/* ZRS Summary */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <Label className="text-xs">ЗРС (сводка заявки)</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCopyZRS}
-              className="h-7"
-            >
-              <Copy className="h-3 w-3 mr-1" />
-              Копировать
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateZRSPdf}
+                className="h-7"
+              >
+                <FileText className="h-3 w-3 mr-1" />
+                В счёт (PDF)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyZRS}
+                className="h-7"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Копировать
+              </Button>
+            </div>
           </div>
           <Textarea
             readOnly
