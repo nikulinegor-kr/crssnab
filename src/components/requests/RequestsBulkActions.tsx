@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
 import {
@@ -93,6 +93,41 @@ export const RequestsBulkActions = ({
     },
     enabled: !!currentOrgId,
   });
+
+  // Fetch objects
+  const { data: objects } = useQuery({
+    queryKey: ["request-objects", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .eq("archived", false)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const handleBulkObjectUpdate = async (objectId: string) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .update({ object_id: objectId })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Объект обновлён", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
     if (selectedRequestIds.size === 0) return;
@@ -299,7 +334,7 @@ export const RequestsBulkActions = ({
   );
 
   // If no selection, just show export
-  if (selectedRequestIds.size < 2) {
+  if (selectedRequestIds.size < 1) {
     return <div className="flex flex-wrap gap-1.5 sm:gap-2">{exportButton}</div>;
   }
 
@@ -407,6 +442,29 @@ export const RequestsBulkActions = ({
                   ))
                 ) : (
                   <DropdownMenuItem disabled>Нет участников</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Change Object Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Изменить объект</span>
+                  <span className="sm:hidden">Объект</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {objects && objects.length > 0 ? (
+                  objects.map((o) => (
+                    <DropdownMenuItem key={o.id} onClick={() => handleBulkObjectUpdate(o.id)}>
+                      {o.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>Нет объектов</DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

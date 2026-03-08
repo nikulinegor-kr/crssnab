@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description" | "applicant";
+  field: "status" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description" | "applicant" | "contractor" | "amount";
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
@@ -58,9 +58,9 @@ export const InlineEditCell = ({
     try {
       let updateData: Record<string, string | number | null>;
 
-      if (field === "payment_percentage") {
-        // Parse percentage value (remove % if present)
-        const numValue = parseInt(String(editValue).replace("%", ""), 10);
+      if (field === "payment_percentage" || field === "amount") {
+        const numStr = String(editValue).replace(/[^\d.,]/g, "").replace(",", ".");
+        const numValue = parseFloat(numStr);
         updateData = { [field]: isNaN(numValue) ? null : numValue };
       } else {
         updateData = { [field]: editValue || null };
@@ -275,6 +275,8 @@ export const InlineEditCell = ({
       case "transport_company": return "ТК";
       case "description": return "Описание заявки";
       case "applicant": return "Заявитель";
+      case "contractor": return "Контрагент";
+      case "amount": return "Сумма";
       default: return "Комментарий";
     }
   };
