@@ -722,7 +722,7 @@ export const RequestsTable = ({
       </div>
 
       <RequestQuickView
-        request={quickViewRequest}
+        requestId={quickViewRequestId}
         open={quickViewOpen}
         onClose={closeQuickView}
         onEdit={onEditClick}
