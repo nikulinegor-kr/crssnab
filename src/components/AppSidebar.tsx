@@ -66,6 +66,7 @@ const erpMenuItems = [
   { title: "Номенклатура", url: "/nomenclature", icon: Layers },
   { title: "Техника", url: "/equipment", icon: Truck },
   { title: "Склад", url: "/warehouse", icon: Warehouse },
+  { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
   { title: "Поставки", url: "/shipments", icon: Truck },
   { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
   { title: "Бюджеты", url: "/budgets", icon: Wallet },

@@ -13,13 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, PackagePlus, PackageMinus, ArrowRightLeft, Search, Warehouse, ChevronsUpDown, Check, ClipboardCheck, BookOpen } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT";
+type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT" | "INVENTORY";
 
 const TYPE_LABELS: Record<string, string> = {
   IN: "Приход",
@@ -29,6 +29,7 @@ const TYPE_LABELS: Record<string, string> = {
   MOVE_IN: "Перемещение (приход)",
   MOVE_OUT: "Перемещение (расход)",
   IN_TRANSIT: "В пути",
+  INVENTORY: "Инвентаризация",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -39,6 +40,7 @@ const TYPE_COLORS: Record<string, string> = {
   MOVE_IN: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
   MOVE_OUT: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   IN_TRANSIT: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
+  INVENTORY: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
 export default function WarehousePage() {
@@ -53,7 +55,7 @@ export default function WarehousePage() {
   const [showWarehouseDialog, setShowWarehouseDialog] = useState(false);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showMovementDialog, setShowMovementDialog] = useState(false);
-  const [movementOpType, setMovementOpType] = useState<"IN" | "OUT" | "MOVE">("IN");
+  const [movementOpType, setMovementOpType] = useState<"IN" | "OUT" | "MOVE" | "INVENTORY">("IN");
 
   // Form states
   const [warehouseName, setWarehouseName] = useState("");
@@ -166,6 +168,9 @@ export default function WarehousePage() {
           break;
         case "IN_TRANSIT":
           entry.inTransit += m.quantity;
+          break;
+        case "INVENTORY":
+          entry.stock += m.quantity; // Корректирующая запись (может быть +/-)
           break;
       }
     }
@@ -299,6 +304,14 @@ export default function WarehousePage() {
           type: "MOVE_IN",
         });
         if (e2) throw e2;
+      } else if (movementOpType === "INVENTORY") {
+        // Инвентаризация: корректирующая запись
+        const { error } = await supabase.from("stock_movements").insert({
+          ...base,
+          warehouse_id: movWarehouseId,
+          type: "INVENTORY",
+        });
+        if (error) throw error;
       } else {
         const { error } = await supabase.from("stock_movements").insert({
           ...base,
@@ -328,7 +341,7 @@ export default function WarehousePage() {
     setMovRequestId("");
   };
 
-  const openMovementDialog = (type: "IN" | "OUT" | "MOVE") => {
+  const openMovementDialog = (type: "IN" | "OUT" | "MOVE" | "INVENTORY") => {
     setMovementOpType(type);
     resetMovementForm();
     setShowMovementDialog(true);
@@ -377,6 +390,12 @@ export default function WarehousePage() {
               </Button>
               <Button onClick={() => openMovementDialog("MOVE")} size="sm" variant="outline">
                 <ArrowRightLeft className="h-4 w-4 mr-1" /> Перемещение
+              </Button>
+              <Button onClick={() => openMovementDialog("INVENTORY")} size="sm" variant="outline">
+                <ClipboardCheck className="h-4 w-4 mr-1" /> Инвентаризация
+              </Button>
+              <Button onClick={() => navigate("/warehouse/journal")} size="sm" variant="ghost">
+                <BookOpen className="h-4 w-4 mr-1" /> Журнал
               </Button>
             </div>
           </div>
@@ -559,7 +578,7 @@ export default function WarehousePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {movementOpType === "IN" ? "Приход" : movementOpType === "OUT" ? "Списание" : "Перемещение"}
+              {movementOpType === "IN" ? "Приход" : movementOpType === "OUT" ? "Списание" : movementOpType === "INVENTORY" ? "Инвентаризация" : "Перемещение"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
