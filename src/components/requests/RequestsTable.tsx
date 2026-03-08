@@ -80,6 +80,7 @@ interface RequestsTableProps {
   searchQuery?: string;
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
+  headerActions?: ReactNode;
 }
 
 // Memoized mobile card component for better performance
