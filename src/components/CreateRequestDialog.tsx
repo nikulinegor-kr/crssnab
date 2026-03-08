@@ -291,6 +291,22 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     enabled: !!currentOrgId,
   });
 
+  // Fetch warehouses for auto-binding
+  const { data: warehousesData } = useQuery({
+    queryKey: ["warehouses-for-objects", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name, object_id")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
@@ -346,6 +362,19 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       }, 100);
     }
   }, [open]);
+
+  // Auto-bind warehouse when object changes
+  const watchedObjectId = form.watch("object_id");
+  useEffect(() => {
+    if (watchedObjectId && warehousesData?.length) {
+      const objectWarehouse = warehousesData.find((w: any) => w.object_id === watchedObjectId);
+      if (objectWarehouse) {
+        form.setValue("warehouse_id", objectWarehouse.id);
+      }
+    } else if (!watchedObjectId) {
+      form.setValue("warehouse_id", "");
+    }
+  }, [watchedObjectId, warehousesData]);
 
   const onSubmit = async (data: RequestFormData) => {
     setIsSubmitting(true);
@@ -548,33 +577,26 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           autoFocus={true}
         />
 
-        {/* 2. Core Params: Date, Object, Deadline */}
+        {/* 2. ERP — Stock check (before core params) */}
+        <ErpSection
+          form={form}
+          currentOrgId={currentOrgId}
+        />
+
+        {/* 3. Core Params: Date, Object */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
           currentOrgId={currentOrgId}
         />
 
-        {/* 3. Status & Responsibles */}
+        {/* 4. Status & Responsibles */}
         <StatusResponsiblesSection
           form={form}
           statuses={statuses}
           priorities={priorities}
           applicants={applicants}
           executors={executors}
-          currentOrgId={currentOrgId}
-        />
-
-        {/* 3. Finance (Always visible): Contractor, Invoice, Amount, Payment % */}
-        <FinanceSection 
-          form={form} 
-          suppliers={suppliers}
-          recentContractors={recentContractors}
-        />
-
-        {/* 4. ERP / Склад */}
-        <ErpSection
-          form={form}
           currentOrgId={currentOrgId}
         />
 
