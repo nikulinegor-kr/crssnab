@@ -180,6 +180,59 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
             )}
           />
         </div>
+
+        {/* Availability row */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <FormField
+            control={form.control}
+            name="availability_delivery_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Наличие</FormLabel>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Выбрать..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="В наличии">В наличии</SelectItem>
+                    <SelectItem value="Под заказ">Под заказ</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {form.watch("availability_delivery_time") === "Под заказ" && (
+            <FormField
+              control={form.control}
+              name="estimated_delivery_days"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs">Срок (дней)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="кол-во дней"
+                      className="h-9 select-all min-w-0 text-sm"
+                      disabled={disabled}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
       </div>
     </FormSectionCard>
   );
