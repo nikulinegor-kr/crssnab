@@ -150,11 +150,6 @@ const OrganizationSettings = () => {
                 <Plug className="h-4 w-4" /><span className="hidden sm:inline">Интеграции</span>
               </TabsTrigger>
             )}
-            {visibleTabs.includes("view") && (
-              <TabsTrigger value="view" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
-                <Eye className="h-4 w-4" /><span className="hidden sm:inline">Отображение</span>
-              </TabsTrigger>
-            )}
             {visibleTabs.includes("audit") && (
               <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <History className="h-4 w-4" /><span className="hidden sm:inline">История</span>
