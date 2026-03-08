@@ -124,6 +124,8 @@ const requestSchema = z.object({
   operation_type: z.string().optional(),
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
+  request_type: z.string().optional(),
+  equipment_id: z.string().optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -276,6 +278,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       operation_type: "",
       planned_delivery_date: "",
       reserve_on_warehouse: false,
+      request_type: "",
+      equipment_id: "",
     },
   });
 
@@ -308,6 +312,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       operation_type: (request as any).operation_type || "",
       planned_delivery_date: (request as any).planned_delivery_date || "",
       reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
+      request_type: (request as any).request_type || "",
+      equipment_id: (request as any).equipment_id || "",
     };
   }, [request]);
 
@@ -362,6 +368,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: (request as any).operation_type || "",
         planned_delivery_date: (request as any).planned_delivery_date || "",
         reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
+        request_type: (request as any).request_type || "",
+        equipment_id: (request as any).equipment_id || "",
       });
       
       const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
@@ -448,6 +456,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: data.operation_type || null,
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
+        request_type: data.request_type || null,
+        equipment_id: data.equipment_id || null,
       };
 
       const { data: updatedData, error } = await supabase
@@ -576,6 +586,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: data.operation_type || "",
         planned_delivery_date: data.planned_delivery_date || "",
         reserve_on_warehouse: data.reserve_on_warehouse || false,
+        request_type: data.request_type || "",
+        equipment_id: data.equipment_id || "",
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
@@ -659,6 +671,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: data.operation_type || null,
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
+        request_type: data.request_type || null,
+        equipment_id: data.equipment_id || null,
         photo_url: finalPhotoUrls[0] || null,
         document_url: finalDocumentUrls[0] || null,
         photo_urls: finalPhotoUrls,

@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Truck, Pencil, Trash2, Copy, Check, Upload } from "lucide-react";
+import { Plus, Search, Truck, Pencil, Trash2, Copy, Check, Upload, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 function CopyString({ equipment }: { equipment: any }) {
   const [copied, setCopied] = useState(false);
@@ -42,6 +43,7 @@ export default function EquipmentPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -54,7 +56,22 @@ export default function EquipmentPage() {
   const [importing, setImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [historyEquipmentId, setHistoryEquipmentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: linkedRequests = [] } = useQuery({
+    queryKey: ["equipment-requests", historyEquipmentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("id, request_number, description, status, priority, created_at, request_type")
+        .eq("equipment_id", historyEquipmentId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!historyEquipmentId,
+  });
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment", currentOrgId],
@@ -366,6 +383,9 @@ export default function EquipmentPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setHistoryEquipmentId(e.id)} title="История заявок">
+                        <FileText className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -426,6 +446,45 @@ export default function EquipmentPage() {
               {editingId ? "Сохранить" : "Создать"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Equipment Request History Dialog */}
+      <Dialog open={!!historyEquipmentId} onOpenChange={(open) => !open && setHistoryEquipmentId(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>История заявок по технике</DialogTitle>
+          </DialogHeader>
+          {linkedRequests.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Нет связанных заявок</p>
+          ) : (
+            <div className="rounded-md border max-h-[400px] overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Номер</TableHead>
+                    <TableHead>Описание</TableHead>
+                    <TableHead>Тип</TableHead>
+                    <TableHead>Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {linkedRequests.map((r: any) => (
+                    <TableRow
+                      key={r.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/requests/${r.id}`)}
+                    >
+                      <TableCell className="font-mono text-xs">{r.request_number}</TableCell>
+                      <TableCell className="max-w-[250px] truncate">{r.description}</TableCell>
+                      <TableCell><Badge variant="outline">{r.request_type || "—"}</Badge></TableCell>
+                      <TableCell><Badge variant="secondary">{r.status}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

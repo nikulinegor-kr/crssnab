@@ -1541,6 +1541,7 @@ export type Database = {
           description: string
           document_url: string | null
           document_urls: string[] | null
+          equipment_id: string | null
           estimated_delivery_days: number | null
           executor: string | null
           id: string
@@ -1559,6 +1560,7 @@ export type Database = {
           quantity: number | null
           request_date: string
           request_number: string
+          request_type: string | null
           reserve_on_warehouse: boolean | null
           shipment_date: string | null
           status: string
@@ -1586,6 +1588,7 @@ export type Database = {
           description: string
           document_url?: string | null
           document_urls?: string[] | null
+          equipment_id?: string | null
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
@@ -1604,6 +1607,7 @@ export type Database = {
           quantity?: number | null
           request_date: string
           request_number: string
+          request_type?: string | null
           reserve_on_warehouse?: boolean | null
           shipment_date?: string | null
           status?: string
@@ -1631,6 +1635,7 @@ export type Database = {
           description?: string
           document_url?: string | null
           document_urls?: string[] | null
+          equipment_id?: string | null
           estimated_delivery_days?: number | null
           executor?: string | null
           id?: string
@@ -1649,6 +1654,7 @@ export type Database = {
           quantity?: number | null
           request_date?: string
           request_number?: string
+          request_type?: string | null
           reserve_on_warehouse?: boolean | null
           shipment_date?: string | null
           status?: string
@@ -1666,6 +1672,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
             referencedColumns: ["id"]
           },
           {
