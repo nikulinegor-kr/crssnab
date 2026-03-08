@@ -600,7 +600,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           currentOrgId={currentOrgId}
         />
 
-        {/* 5. Logistics: Availability, TK, Dates, TTN */}
+        {/* 5. Finance */}
+        <FinanceSection form={form} />
+
+        {/* 6. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
