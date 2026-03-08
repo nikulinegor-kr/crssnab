@@ -37,15 +37,26 @@ export const useRequests = (showArchived: boolean = false) => {
   return useQuery({
     queryKey: ["requests", showArchived],
     queryFn: async () => {
-      const query = supabase
-        .from("requests")
-        .select("*, request_objects(id, name)")
-        .eq("archived", showArchived);
-      
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const PAGE_SIZE = 1000;
+      let allData: any[] = [];
+      let from = 0;
+      let hasMore = true;
 
-      if (error) throw error;
-      return (data || []).map((r: any) => ({
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("requests")
+          .select("*, request_objects(id, name)")
+          .eq("archived", showArchived)
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (error) throw error;
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        from += PAGE_SIZE;
+      }
+
+      return allData.map((r: any) => ({
         ...r,
         object_name: r.request_objects?.name || null,
       })) as (Request & { object_name: string | null })[];
