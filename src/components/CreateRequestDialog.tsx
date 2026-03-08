@@ -602,7 +602,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         />
 
         {/* 5. Finance */}
-        <FinanceSection form={form} />
+        <FinanceSection form={form} suppliers={suppliers} recentContractors={recentContractors} />
 
         {/* 6. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
