@@ -759,27 +759,39 @@ export type Database = {
       equipment: {
         Row: {
           brand: string
+          comment: string | null
           created_at: string
           id: string
           model: string
           organization_id: string
+          plate_number: string | null
           updated_at: string
+          vin: string | null
+          year: number | null
         }
         Insert: {
           brand: string
+          comment?: string | null
           created_at?: string
           id?: string
           model: string
           organization_id: string
+          plate_number?: string | null
           updated_at?: string
+          vin?: string | null
+          year?: number | null
         }
         Update: {
           brand?: string
+          comment?: string | null
           created_at?: string
           id?: string
           model?: string
           organization_id?: string
+          plate_number?: string | null
           updated_at?: string
+          vin?: string | null
+          year?: number | null
         }
         Relationships: [
           {
