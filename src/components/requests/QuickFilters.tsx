@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Zap, CreditCard, FileText, Truck, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Zap, FileText, Truck, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
