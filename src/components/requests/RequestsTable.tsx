@@ -50,7 +50,8 @@ type SortField =
   | "delivery_date"
   | "invoice_number"
   | "transport_company"
-  | "waybill_number";
+  | "waybill_number"
+  | "amount";
 
 type SortDirection = "asc" | "desc";
 
@@ -462,13 +463,16 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="payment_percentage" label="Оплата" width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.shipment_date && (
-                <ResizableTableHeader column="shipment_date" label="Отправка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
+                <ResizableTableHeader column="shipment_date" label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
               )}
               {visibility.delivery_date && (
-                <ResizableTableHeader column="delivery_date" label="Доставка" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
+                <ResizableTableHeader column="delivery_date" label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
               )}
               {visibility.transport_company && (
                 <ResizableTableHeader column="transport_company" label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
+              )}
+              {visibility.amount && (
+                <ResizableTableHeader column="amount" label="Стоимость" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
               )}
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
@@ -675,6 +679,17 @@ export const RequestsTable = ({
                           )
                         }
                       />
+                    </TableCell>
+                  )}
+                  {visibility.amount && (
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.amount }}>
+                      {request.amount && request.amount > 0 ? (
+                        <span className="font-medium">
+                          {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.applicant && (
