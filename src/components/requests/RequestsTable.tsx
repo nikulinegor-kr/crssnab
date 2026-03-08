@@ -50,7 +50,8 @@ type SortField =
   | "delivery_date"
   | "invoice_number"
   | "transport_company"
-  | "waybill_number";
+  | "waybill_number"
+  | "amount";
 
 type SortDirection = "asc" | "desc";
 
