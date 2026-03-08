@@ -51,33 +51,54 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-const crmMenuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutGrid },
-  { title: "Заявки", url: "/requests", icon: FileText },
-  { title: "Контрагенты", url: "/suppliers", icon: Users },
-  { title: "Объекты", url: "/objects", icon: Building2 },
-  { title: "Документы", url: "/documents", icon: FolderOpen },
-  { title: "Аналитика", url: "/analytics", icon: BarChart3 },
-  { title: "Команда", url: "/team", icon: UsersRound },
-];
-
-const erpWarehouseItems = [
-  { title: "Склад", url: "/warehouse", icon: Warehouse },
-  { title: "Номенклатура", url: "/nomenclature", icon: Layers },
-  { title: "Техника", url: "/equipment", icon: Truck },
-  { title: "Контрагенты", url: "/suppliers", icon: Users },
-];
-
-const erpSupplyItems = [
-  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
-  { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
-  { title: "Поставки", url: "/shipments", icon: Truck },
-  { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
-];
-
-const erpFinanceItems = [
-  { title: "Бюджеты", url: "/budgets", icon: Wallet },
-  { title: "ERP Аналитика", url: "/erp-analytics", icon: BarChart3 },
+const menuGroups = [
+  {
+    label: "CRM",
+    icon: FileText,
+    items: [
+      { title: "Заявки", url: "/requests", icon: FileText },
+      { title: "Объекты", url: "/objects", icon: Building2 },
+    ],
+  },
+  {
+    label: "ERP",
+    icon: Package,
+    items: [
+      { title: "Номенклатура", url: "/nomenclature", icon: Layers },
+      { title: "Техника", url: "/equipment", icon: Truck },
+    ],
+  },
+  {
+    label: "Склад",
+    icon: Warehouse,
+    items: [
+      { title: "Склад", url: "/warehouse", icon: Warehouse },
+      { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Снабжение",
+    icon: Boxes,
+    items: [
+      { title: "Поставщики", url: "/suppliers", icon: Users },
+      { title: "Поставки", url: "/shipments", icon: Truck },
+    ],
+  },
+  {
+    label: "Финансы",
+    icon: Wallet,
+    items: [
+      { title: "Бюджеты", url: "/budgets", icon: Wallet },
+    ],
+  },
+  {
+    label: "Аналитика",
+    icon: BarChart3,
+    items: [
+      { title: "Аналитика", url: "/analytics", icon: BarChart3 },
+      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+    ],
+  },
 ];
 
 const reportMenuItems = [
