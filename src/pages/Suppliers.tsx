@@ -74,8 +74,15 @@ export default function Suppliers() {
     status: "Активный",
     address: "",
     inn: "",
+    kpp: "",
+    ogrn: "",
     notes: "",
   });
+
+  const { suggestions, isSearching, search: searchDadata, clearSuggestions } = useDadataSearch();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [dadataQuery, setDadataQuery] = useState("");
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Получаем все заявки (включая архивные) для статистики контрагентов
   const { data: allRequests } = useQuery({
