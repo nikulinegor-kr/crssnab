@@ -8,27 +8,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Package, Pencil, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Package, Pencil, Trash2, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
 
 export default function NomenclaturePage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [article, setArticle] = useState("");
   const [unit, setUnit] = useState("шт");
+  const [equipmentId, setEquipmentId] = useState<string>("");
 
   const { data: products = [] } = useQuery({
     queryKey: ["warehouse-products", currentOrgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("warehouse_products")
-        .select("*")
+        .select("*, equipment:equipment_id(id, brand, model)")
         .eq("organization_id", currentOrgId!)
         .order("name");
       if (error) throw error;
@@ -37,28 +41,48 @@ export default function NomenclaturePage() {
     enabled: !!currentOrgId,
   });
 
-  const filtered = search
-    ? products.filter(
-        (p: any) =>
-          p.name?.toLowerCase().includes(search.toLowerCase()) ||
-          p.article?.toLowerCase().includes(search.toLowerCase())
-      )
-    : products;
+  const { data: equipment = [] } = useQuery({
+    queryKey: ["equipment", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("equipment")
+        .select("*")
+        .eq("organization_id", currentOrgId!)
+        .order("brand")
+        .order("model");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const filtered = products.filter((p: any) => {
+    const matchesSearch = !search ||
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.article?.toLowerCase().includes(search.toLowerCase());
+    const matchesEquipment = equipmentFilter === "all" ||
+      (equipmentFilter === "none" ? !p.equipment_id : p.equipment_id === equipmentFilter);
+    return matchesSearch && matchesEquipment;
+  });
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const payload = {
+        name,
+        article: article || null,
+        unit,
+        equipment_id: equipmentId || null,
+      };
       if (editingId) {
         const { error } = await supabase
           .from("warehouse_products")
-          .update({ name, article: article || null, unit })
+          .update(payload)
           .eq("id", editingId);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("warehouse_products").insert({
           organization_id: currentOrgId!,
-          name,
-          article: article || null,
-          unit,
+          ...payload,
         });
         if (error) throw error;
       }
@@ -88,6 +112,7 @@ export default function NomenclaturePage() {
     setName("");
     setArticle("");
     setUnit("шт");
+    setEquipmentId("");
     setShowDialog(true);
   };
 
@@ -96,6 +121,7 @@ export default function NomenclaturePage() {
     setName(p.name);
     setArticle(p.article || "");
     setUnit(p.unit || "шт");
+    setEquipmentId(p.equipment_id || "");
     setShowDialog(true);
   };
 
@@ -104,27 +130,51 @@ export default function NomenclaturePage() {
     setEditingId(null);
   };
 
+  const getEquipmentLabel = (p: any) => {
+    if (!p.equipment) return null;
+    return `${p.equipment.brand} ${p.equipment.model}`;
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Package className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Номенклатура</h1>
-          <span className="text-muted-foreground text-sm">({products.length})</span>
+          <span className="text-muted-foreground text-sm">({filtered.length})</span>
         </div>
         <Button onClick={openCreate} size="sm">
           <Plus className="h-4 w-4 mr-1" /> Добавить товар
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Поиск по названию или артикулу..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Поиск по названию или артикулу..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Все техника" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Вся техника</SelectItem>
+              <SelectItem value="none">Без техники</SelectItem>
+              {equipment.map((e: any) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.brand} {e.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -133,6 +183,7 @@ export default function NomenclaturePage() {
             <TableRow>
               <TableHead>Название</TableHead>
               <TableHead>Артикул</TableHead>
+              <TableHead>Техника</TableHead>
               <TableHead>Ед. изм.</TableHead>
               <TableHead>Создан</TableHead>
               <TableHead className="w-[80px]" />
@@ -141,7 +192,7 @@ export default function NomenclaturePage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Нет товаров
                 </TableCell>
               </TableRow>
@@ -150,6 +201,15 @@ export default function NomenclaturePage() {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell className="text-muted-foreground">{p.article || "—"}</TableCell>
+                  <TableCell>
+                    {getEquipmentLabel(p) ? (
+                      <Badge variant="secondary" className="font-normal">
+                        {getEquipmentLabel(p)}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>{p.unit || "шт"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(p.created_at), "dd.MM.yyyy", { locale: ru })}
@@ -189,6 +249,22 @@ export default function NomenclaturePage() {
             <div>
               <Label>Артикул</Label>
               <Input value={article} onChange={(e) => setArticle(e.target.value)} placeholder="ART-001" />
+            </div>
+            <div>
+              <Label>Техника</Label>
+              <Select value={equipmentId || "none"} onValueChange={(v) => setEquipmentId(v === "none" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите технику" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Без техники</SelectItem>
+                  {equipment.map((e: any) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.brand} {e.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Единица измерения</Label>
