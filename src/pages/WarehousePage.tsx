@@ -301,6 +301,14 @@ export default function WarehousePage() {
           type: "MOVE_IN",
         });
         if (e2) throw e2;
+      } else if (movementOpType === "INVENTORY") {
+        // Инвентаризация: корректирующая запись
+        const { error } = await supabase.from("stock_movements").insert({
+          ...base,
+          warehouse_id: movWarehouseId,
+          type: "INVENTORY",
+        });
+        if (error) throw error;
       } else {
         const { error } = await supabase.from("stock_movements").insert({
           ...base,
