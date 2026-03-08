@@ -291,6 +291,22 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     enabled: !!currentOrgId,
   });
 
+  // Fetch warehouses for auto-binding
+  const { data: warehousesData } = useQuery({
+    queryKey: ["warehouses-for-objects", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name, object_id")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
