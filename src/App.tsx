@@ -333,6 +333,16 @@ const App = () => {
               }
             />
             <Route
+              path="/equipment"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <EquipmentPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/budgets"
               element={
                 <ProtectedRoute>
