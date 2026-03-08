@@ -2051,6 +2051,9 @@ export type Database = {
       suppliers: {
         Row: {
           address: string | null
+          bank_account: string | null
+          bank_name: string | null
+          bik: string | null
           category: string
           contact_person: string | null
           created_at: string
@@ -2069,6 +2072,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bik?: string | null
           category?: string
           contact_person?: string | null
           created_at?: string
@@ -2087,6 +2093,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bik?: string | null
           category?: string
           contact_person?: string | null
           created_at?: string
