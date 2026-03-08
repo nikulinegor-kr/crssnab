@@ -22,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
