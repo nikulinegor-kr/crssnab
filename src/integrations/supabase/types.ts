@@ -756,6 +756,41 @@ export type Database = {
           },
         ]
       }
+      equipment: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          model: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          model: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          model?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linked_requests: {
         Row: {
           created_at: string
@@ -2125,6 +2160,7 @@ export type Database = {
         Row: {
           article: string | null
           created_at: string
+          equipment_id: string | null
           id: string
           name: string
           organization_id: string
@@ -2134,6 +2170,7 @@ export type Database = {
         Insert: {
           article?: string | null
           created_at?: string
+          equipment_id?: string | null
           id?: string
           name: string
           organization_id: string
@@ -2143,6 +2180,7 @@ export type Database = {
         Update: {
           article?: string | null
           created_at?: string
+          equipment_id?: string | null
           id?: string
           name?: string
           organization_id?: string
@@ -2150,6 +2188,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "warehouse_products_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "warehouse_products_organization_id_fkey"
             columns: ["organization_id"]
