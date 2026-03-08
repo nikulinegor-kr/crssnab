@@ -55,6 +55,7 @@ import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
 import { ErpSection } from "./create-request/ErpSection";
+import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -146,6 +147,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [requestItems, setRequestItems] = useState<RequestItem[]>([]);
   const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [existingDocumentUrls, setExistingDocumentUrls] = useState<string[]>([]);
   const [serverSaveState, setServerSaveState] = useState<SaveState>('idle');
@@ -228,6 +230,33 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     },
     enabled: !!request?.organization_id && open,
   });
+
+  // Fetch request items
+  const { data: requestItemsData } = useQuery({
+    queryKey: ["request-items", request?.id],
+    queryFn: async () => {
+      if (!request?.id) return [];
+      const { data, error } = await supabase
+        .from("request_items")
+        .select("*")
+        .eq("request_id", request.id)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.id && open,
+  });
+
+  // Sync request items from DB
+  useEffect(() => {
+    if (requestItemsData) {
+      setRequestItems(requestItemsData.map(item => ({
+        article: item.article || "",
+        name: item.name,
+        quantity: item.quantity || 1,
+      })));
+    }
+  }, [requestItemsData]);
 
   // Fetch objects
   const { data: objectsData } = useQuery({
@@ -679,6 +708,54 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       if (error) throw error;
 
+      // Save request items: delete old, insert new
+      if (request.organization_id) {
+        await supabase
+          .from("request_items")
+          .delete()
+          .eq("request_id", request.id);
+
+        const itemsToInsert = requestItems
+          .filter(item => item.name.trim())
+          .map(item => ({
+            request_id: request.id,
+            organization_id: request.organization_id!,
+            article: item.article || null,
+            name: item.name,
+            quantity: item.quantity || 1,
+          }));
+
+        if (itemsToInsert.length > 0) {
+          await supabase.from("request_items").insert(itemsToInsert);
+        }
+
+        // Auto-create nomenclature for items with article
+        for (const item of requestItems) {
+          if (!item.article || !item.name.trim()) continue;
+          let existingQuery = supabase
+            .from("warehouse_products")
+            .select("id")
+            .eq("article", item.article)
+            .eq("organization_id", request.organization_id!);
+          if (data.equipment_id) {
+            existingQuery = existingQuery.eq("equipment_id", data.equipment_id);
+          } else {
+            existingQuery = existingQuery.is("equipment_id", null);
+          }
+          const { data: existing } = await existingQuery.maybeSingle();
+          if (!existing) {
+            await supabase.from("warehouse_products").insert({
+              name: item.name,
+              article: item.article,
+              equipment_id: data.equipment_id || null,
+              organization_id: request.organization_id!,
+            });
+          }
+        }
+        queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+        queryClient.invalidateQueries({ queryKey: ["request-items", request.id] });
+      }
+
       toast({
         title: "Успешно",
         description: "Заявка сохранена",
@@ -922,7 +999,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 2. Core Params: Date, Object */}
+        {/* 2. Request Items */}
+        <RequestItemsSection
+          items={requestItems}
+          onItemsChange={setRequestItems}
+          disabled={isViewer}
+        />
+
+        {/* 3. Core Params: Date, Object */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
