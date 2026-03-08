@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.dadata-lookup]
 verify_jwt = false
+
+[functions.extract-supplier]
+verify_jwt = false
