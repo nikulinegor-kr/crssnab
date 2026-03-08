@@ -760,7 +760,7 @@ export default function WarehousePage() {
             <Button
               onClick={() => createMovement.mutate()}
               disabled={
-                !movProductId ||
+                (!movProductId && !movProductFromRequest) ||
                 !movWarehouseId ||
                 !movQuantity ||
                 (movementOpType === "MOVE" && !movToWarehouseId) ||
