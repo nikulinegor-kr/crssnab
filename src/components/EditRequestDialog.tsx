@@ -96,10 +96,8 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
-  payment_percentage: z.number()
-    .min(0, "Процент не может быть отрицательным")
-    .max(100, "Процент не может превышать 100")
-    .default(0),
+  payment_status: z.string().optional(),
+  invoice_date: z.string().optional().or(z.literal("")),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
