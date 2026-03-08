@@ -428,7 +428,8 @@ export const RequestsTable = ({
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
-        <div className="flex justify-end mb-2">
+        <div className="flex items-center justify-end gap-2 mb-2">
+          {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} />
         </div>
         <div className="rounded-md border overflow-x-auto">
