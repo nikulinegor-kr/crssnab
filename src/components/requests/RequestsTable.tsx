@@ -727,6 +727,6 @@ export const RequestsTable = ({
         onClose={closeQuickView}
         onEdit={onEditClick}
       />
-    </>
+    </div>
   );
 };
