@@ -237,13 +237,6 @@ const OrganizationSettings = () => {
           </TabsContent>
         )}
 
-        {visibleTabs.includes("view") && (
-          <TabsContent value="view">
-            <SettingsSection title="Настройки отображения" description="Выбор виджетов и полей для дашборда и канбан" icon={Eye}>
-              <ViewSettings />
-            </SettingsSection>
-          </TabsContent>
-        )}
 
         {visibleTabs.includes("audit") && (
           <TabsContent value="audit">
