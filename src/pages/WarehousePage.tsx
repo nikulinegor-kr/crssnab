@@ -242,17 +242,51 @@ export default function WarehousePage() {
       const qty = parseInt(movQuantity);
       if (!qty || qty <= 0) throw new Error("Invalid quantity");
 
+      let productId = movProductId;
+      let requestId = movRequestId || null;
+
+      // If product was selected from a request, auto-create in nomenclature
+      if (movProductFromRequest) {
+        // Check if product with same name already exists
+        const { data: existing } = await supabase
+          .from("warehouse_products")
+          .select("id")
+          .eq("organization_id", currentOrgId!)
+          .eq("name", movProductFromRequest.description)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          productId = existing[0].id;
+        } else {
+          const { data: created, error: createErr } = await supabase
+            .from("warehouse_products")
+            .insert({
+              organization_id: currentOrgId!,
+              name: movProductFromRequest.description,
+              article: null,
+              unit: "шт",
+            })
+            .select("id")
+            .single();
+          if (createErr) throw createErr;
+          productId = created.id;
+        }
+        // Auto-link the request
+        requestId = movProductFromRequest.requestId;
+        // Refresh products cache
+        queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+      }
+
       const base = {
         organization_id: currentOrgId!,
-        product_id: movProductId,
+        product_id: productId,
         quantity: qty,
         comment: movComment || null,
-        request_id: movRequestId || null,
+        request_id: requestId,
         created_by: (await supabase.auth.getUser()).data.user?.id,
       };
 
       if (movementOpType === "MOVE") {
-        // Create two entries
         const { error: e1 } = await supabase.from("stock_movements").insert({
           ...base,
           warehouse_id: movWarehouseId,
