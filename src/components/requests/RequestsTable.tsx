@@ -437,6 +437,7 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
+              <TableHead className="w-8 text-center p-1 border-r text-[10px] text-muted-foreground">№</TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
