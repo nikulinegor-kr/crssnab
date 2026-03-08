@@ -225,6 +225,7 @@ export const AdditionalSection = ({
                 </Button>
               )}
             </div>
+          </div>
           <Textarea
             readOnly
             className="min-h-[80px] sm:min-h-[100px] bg-muted/50 font-mono text-xs"
