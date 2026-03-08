@@ -671,6 +671,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: data.operation_type || null,
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
+        request_type: data.request_type || null,
+        equipment_id: data.equipment_id || null,
         photo_url: finalPhotoUrls[0] || null,
         document_url: finalDocumentUrls[0] || null,
         photo_urls: finalPhotoUrls,
