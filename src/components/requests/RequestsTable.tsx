@@ -437,7 +437,7 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="w-8 text-center p-1 border-r text-[10px] text-muted-foreground">№</TableHead>
+              <TableHead className="w-8 text-center p-1 border-r text-[10px] text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -514,10 +514,10 @@ export const RequestsTable = ({
               return (
                   <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/15' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/10' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: '48px' }}
+                  style={{ height: '40px' }}
                 >
                   <TableCell 
                     className="w-[5px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[6px]" 
@@ -526,7 +526,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-8 text-center px-1 py-2 border-r text-[11px] text-muted-foreground/60 font-mono">
+                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-[11px] text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
                     {rowNumber}
                   </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>

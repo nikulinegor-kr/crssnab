@@ -61,14 +61,21 @@ const crmMenuItems = [
   { title: "Команда", url: "/team", icon: UsersRound },
 ];
 
-const erpMenuItems = [
-  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
+const erpWarehouseItems = [
+  { title: "Склад", url: "/warehouse", icon: Warehouse },
   { title: "Номенклатура", url: "/nomenclature", icon: Layers },
   { title: "Техника", url: "/equipment", icon: Truck },
-  { title: "Склад", url: "/warehouse", icon: Warehouse },
+  { title: "Контрагенты", url: "/suppliers", icon: Users },
+];
+
+const erpSupplyItems = [
+  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
   { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
   { title: "Поставки", url: "/shipments", icon: Truck },
   { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
+];
+
+const erpFinanceItems = [
   { title: "Бюджеты", url: "/budgets", icon: Wallet },
   { title: "ERP Аналитика", url: "/erp-analytics", icon: BarChart3 },
 ];
@@ -115,8 +122,8 @@ export function AppSidebar() {
   const showText = isMobile || !collapsed;
 
   // Determine which section is active for default open state
-  const erpPaths = erpMenuItems.map(i => i.url);
-  const isErpActive = erpPaths.some(p => currentPath.startsWith(p));
+  const allErpPaths = [...erpWarehouseItems, ...erpSupplyItems, ...erpFinanceItems].map(i => i.url);
+  const isErpActive = allErpPaths.some(p => currentPath.startsWith(p));
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -229,7 +236,17 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {renderMenuItems(erpMenuItems)}
+                  {/* Склад group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Склад</SidebarGroupLabel>}
+                  {renderMenuItems(erpWarehouseItems)}
+                  
+                  {/* Снабжение group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Снабжение</SidebarGroupLabel>}
+                  {renderMenuItems(erpSupplyItems)}
+
+                  {/* Финансы group */}
+                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Финансы</SidebarGroupLabel>}
+                  {renderMenuItems(erpFinanceItems)}
                 </SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>
