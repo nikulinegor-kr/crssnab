@@ -62,7 +62,7 @@ export function RequestQuickView({ request, open, onClose, onEdit }: RequestQuic
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground font-mono">#{request.request_number}</div>
+            <div className="text-xs text-muted-foreground font-mono">Быстрый просмотр</div>
             <h3 className="text-base font-semibold text-foreground truncate mt-0.5">Быстрый просмотр</h3>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onClose}>
