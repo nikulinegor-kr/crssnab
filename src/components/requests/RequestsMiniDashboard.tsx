@@ -124,7 +124,7 @@ export const RequestsMiniDashboard = ({
       icon: <Truck className="h-3.5 w-3.5" />,
       color: "text-blue-600 dark:text-blue-400",
       iconBg: "bg-blue-100 dark:bg-blue-900/50",
-      bgColor: "bg-background border-border/60 hover:border-blue-300 dark:hover:border-blue-700",
+      bgColor: "bg-card border-border/40 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700",
       activeColor: "bg-blue-50 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 ring-1 ring-blue-200 dark:ring-blue-800",
       type: "status",
       value: "В пути",
