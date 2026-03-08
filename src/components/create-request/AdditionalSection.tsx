@@ -87,12 +87,8 @@ export const AdditionalSection = ({
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
+      pdfDoc.registerFontkit(fontkit);
       
-      // Embed a standard font (Helvetica doesn't support Cyrillic, but we'll draw as-is)
-      // For Cyrillic we need to fetch and embed a TTF font
-      const fontUrl = "https://cdn.jsdelivr.net/gh/ArtifexSoftware/urw-base35-fonts@master/fonts/NimbusRoman-Regular.t1";
-      
-      // Use pdf-lib's built-in font embedding with a Google Font for Cyrillic
       const robotoUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf";
       const fontBytes = await fetch(robotoUrl).then(r => r.arrayBuffer());
       const customFont = await pdfDoc.embedFont(fontBytes);
