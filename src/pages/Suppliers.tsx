@@ -328,6 +328,81 @@ export default function Suppliers() {
     }
   };
 
+  const [isBatchEnriching, setIsBatchEnriching] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+
+  const handleBatchEnrich = async () => {
+    if (!suppliers || !currentOrgId) return;
+
+    const toEnrich = suppliers.filter(
+      (s) => !s.inn || !s.kpp
+    );
+
+    if (toEnrich.length === 0) {
+      toast({
+        title: "Все поставщики заполнены",
+        description: "Нет поставщиков с пустым ИНН или КПП",
+      });
+      return;
+    }
+
+    setIsBatchEnriching(true);
+    setBatchProgress({ current: 0, total: toEnrich.length });
+    let updated = 0;
+    let failed = 0;
+
+    for (let i = 0; i < toEnrich.length; i++) {
+      const supplier = toEnrich[i];
+      setBatchProgress({ current: i + 1, total: toEnrich.length });
+
+      try {
+        const { data, error } = await supabase.functions.invoke("dadata-lookup", {
+          body: { query: supplier.name, count: 1 },
+        });
+
+        if (error || !data?.suggestions?.length) {
+          failed++;
+          continue;
+        }
+
+        const s = data.suggestions[0];
+        const updateData: Record<string, string> = {};
+
+        if (!supplier.inn && s.inn) updateData.inn = s.inn;
+        if (!supplier.kpp && s.kpp) updateData.kpp = s.kpp;
+        if (s.ogrn && !supplier.ogrn) updateData.ogrn = s.ogrn;
+        if (s.address && !supplier.address) updateData.address = s.address;
+        if (s.management_name && !supplier.contact_person) updateData.contact_person = s.management_name;
+
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from("suppliers")
+            .update(updateData)
+            .eq("id", supplier.id);
+
+          if (updateError) {
+            failed++;
+          } else {
+            updated++;
+          }
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise((r) => setTimeout(r, 300));
+      } catch {
+        failed++;
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    setIsBatchEnriching(false);
+
+    toast({
+      title: "Обновление завершено",
+      description: `Обновлено: ${updated}, не найдено: ${failed}, всего обработано: ${toEnrich.length}`,
+    });
+  };
+
   const filteredSuppliers = suppliers?.filter((supplier) =>
     supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     supplier.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
