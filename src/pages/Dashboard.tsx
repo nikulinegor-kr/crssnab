@@ -378,6 +378,7 @@ const Dashboard = () => {
               })}
             </div>
           </div>
+        )}
 
         {/* График расходов для руководства */}
         {isAdmin && settings.dashboard.showExpenseChart && !isLoading && requests && requests.length > 0 && (
