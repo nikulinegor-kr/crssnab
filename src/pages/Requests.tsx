@@ -116,6 +116,50 @@ const Requests = () => {
     setShowDeleteDialog(true);
   };
 
+  const handleDuplicateClick = (request: Request) => {
+    setDuplicateInitialData({
+      description: request.description,
+      status: request.status,
+      priority: request.priority || undefined,
+      applicant: request.applicant || undefined,
+      executor: request.executor || undefined,
+      object_id: request.object_id || undefined,
+      contractor: request.contractor || undefined,
+      transport_company: request.transport_company || undefined,
+      comments: request.comments || undefined,
+      amount: request.amount || undefined,
+      invoice_number: request.invoice_number || undefined,
+    });
+    setDuplicateDialogOpen(true);
+  };
+
+  const handleCreateProcurement = async (request: Request) => {
+    if (!currentOrgId) return;
+    try {
+      await createProcurement.mutateAsync({
+        organization_id: currentOrgId,
+        name: `Поставка: ${request.description}`,
+        items: [{
+          request_id: request.id,
+          name: request.description,
+          qty: request.quantity || 1,
+          price: Number(request.amount) || 0,
+          total: (request.quantity || 1) * (Number(request.amount) || 0),
+        }],
+      });
+      toast({
+        title: "Поставка создана",
+        description: `Создана поставка для заявки "${request.description}"`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать поставку",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleBulkDelete = () => {
     if (selectedRequestIds.size === 0) return;
     setRequestToDelete(null);
