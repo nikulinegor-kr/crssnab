@@ -146,7 +146,7 @@ export const RequestsMiniDashboard = ({
       icon: <Calendar className="h-3.5 w-3.5" />,
       color: "text-purple-600 dark:text-purple-400",
       iconBg: "bg-purple-100 dark:bg-purple-900/50",
-      bgColor: "bg-background border-border/60 hover:border-purple-300 dark:hover:border-purple-700",
+      bgColor: "bg-card border-border/40 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700",
       activeColor: "bg-purple-50 dark:bg-purple-950/60 border-purple-400 dark:border-purple-600 ring-1 ring-purple-200 dark:ring-purple-800",
       type: "special",
       specialFilter: "upcomingNext7Days",

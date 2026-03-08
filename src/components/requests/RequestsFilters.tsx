@@ -237,11 +237,13 @@ export const RequestsFilters = ({
         {/* Combined Filter popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="shrink-0 h-9 sm:h-10 px-3 gap-1.5 relative">
+            <Button variant="outline" size="sm" className="shrink-0 h-9 sm:h-10 px-3 gap-1.5">
               <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">Фильтр</span>
+              <span className="hidden sm:inline">
+                Фильтр{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+              </span>
               {activeFilterCount > 0 && (
-                <Badge className="h-4 min-w-4 px-1 text-[10px] absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground">
+                <Badge className="h-4 min-w-4 px-1 text-[10px] sm:hidden bg-primary text-primary-foreground">
                   {activeFilterCount}
                 </Badge>
               )}
