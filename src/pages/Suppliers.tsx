@@ -699,6 +699,35 @@ export default function Suppliers() {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bank_name">Банк</Label>
+                  <Input
+                    id="bank_name"
+                    value={formData.bank_name}
+                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bank_account">Расчётный счёт</Label>
+                  <Input
+                    id="bank_account"
+                    value={formData.bank_account}
+                    onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
+                    className="font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bik">БИК</Label>
+                  <Input
+                    id="bik"
+                    value={formData.bik}
+                    onChange={(e) => setFormData({ ...formData, bik: e.target.value })}
+                    className="font-mono"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="notes">Примечания</Label>
                 <Textarea
