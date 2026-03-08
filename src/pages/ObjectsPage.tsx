@@ -219,7 +219,7 @@ const ObjectsPage = () => {
               </Card>
             ) : (
               filteredObjects.map((obj: any) => {
-                const objRequests = requests?.filter((r) => r.object_id === obj.id) || [];
+                const reqCount = requestCountsMap[obj.id] || 0;
                 return (
                   <Card key={obj.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedObjectId(obj.id)}>
                     <CardContent className="p-4">
