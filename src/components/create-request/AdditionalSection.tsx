@@ -57,6 +57,50 @@ export const AdditionalSection = ({
     }
   };
 
+  const handleGenerateZRSPdf = () => {
+    try {
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      
+      // Use built-in helvetica (supports basic latin)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("ZRS - Summary", 20, 25);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      
+      const objectName = objectsData?.find(o => o.id === formValues.object_id)?.name || "-";
+      const lines = [
+        ["Object:", objectName],
+        ["Request:", formValues.description || "-"],
+        ["Applicant:", formValues.applicant || "-"],
+        ["Priority:", formValues.priority || "-"],
+        ["Availability:", formValues.availability_delivery_time || "-"],
+        ["Delivery term:", formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} days` : "-"],
+        ["Payment:", `${formValues.payment_percentage || 0}%`],
+        ["Executor:", formValues.executor || "-"],
+      ];
+
+      let y = 40;
+      lines.forEach(([label, value]) => {
+        doc.setFont("helvetica", "bold");
+        doc.text(label, 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(value), 65, y);
+        y += 8;
+      });
+
+      doc.setDrawColor(200);
+      doc.line(20, 35, 190, 35);
+      doc.line(20, y + 2, 190, y + 2);
+
+      doc.save(`ZRS_${formValues.request_number || "draft"}.pdf`);
+      toast({ title: "PDF создан", description: "Файл сводки скачан" });
+    } catch {
+      toast({ title: "Ошибка", description: "Не удалось создать PDF", variant: "destructive" });
+    }
+  };
+
   return (
     <FormSectionCard 
       title="Дополнительно" 
