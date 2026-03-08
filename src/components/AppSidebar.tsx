@@ -12,11 +12,8 @@ import {
   ChevronDown,
   Building2,
   BarChart3,
-  FolderOpen,
-  UsersRound,
   Warehouse,
   Wallet,
-  ShoppingCart,
   Truck,
   Layers,
   Boxes,
@@ -51,33 +48,54 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-const crmMenuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutGrid },
-  { title: "Заявки", url: "/requests", icon: FileText },
-  { title: "Контрагенты", url: "/suppliers", icon: Users },
-  { title: "Объекты", url: "/objects", icon: Building2 },
-  { title: "Документы", url: "/documents", icon: FolderOpen },
-  { title: "Аналитика", url: "/analytics", icon: BarChart3 },
-  { title: "Команда", url: "/team", icon: UsersRound },
-];
-
-const erpWarehouseItems = [
-  { title: "Склад", url: "/warehouse", icon: Warehouse },
-  { title: "Номенклатура", url: "/nomenclature", icon: Layers },
-  { title: "Техника", url: "/equipment", icon: Truck },
-  { title: "Контрагенты", url: "/suppliers", icon: Users },
-];
-
-const erpSupplyItems = [
-  { title: "Снабжение", url: "/supply-dashboard", icon: Boxes },
-  { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
-  { title: "Поставки", url: "/shipments", icon: Truck },
-  { title: "План закупок", url: "/procurement-plan", icon: ClipboardList },
-];
-
-const erpFinanceItems = [
-  { title: "Бюджеты", url: "/budgets", icon: Wallet },
-  { title: "ERP Аналитика", url: "/erp-analytics", icon: BarChart3 },
+const menuGroups = [
+  {
+    label: "CRM",
+    icon: FileText,
+    items: [
+      { title: "Заявки", url: "/requests", icon: FileText },
+      { title: "Объекты", url: "/objects", icon: Building2 },
+    ],
+  },
+  {
+    label: "ERP",
+    icon: Package,
+    items: [
+      { title: "Номенклатура", url: "/nomenclature", icon: Layers },
+      { title: "Техника", url: "/equipment", icon: Truck },
+    ],
+  },
+  {
+    label: "Склад",
+    icon: Warehouse,
+    items: [
+      { title: "Склад", url: "/warehouse", icon: Warehouse },
+      { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Снабжение",
+    icon: Boxes,
+    items: [
+      { title: "Поставщики", url: "/suppliers", icon: Users },
+      { title: "Поставки", url: "/shipments", icon: Truck },
+    ],
+  },
+  {
+    label: "Финансы",
+    icon: Wallet,
+    items: [
+      { title: "Бюджеты", url: "/budgets", icon: Wallet },
+    ],
+  },
+  {
+    label: "Аналитика",
+    icon: BarChart3,
+    items: [
+      { title: "Аналитика", url: "/analytics", icon: BarChart3 },
+      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+    ],
+  },
 ];
 
 const reportMenuItems = [
@@ -121,9 +139,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const showText = isMobile || !collapsed;
 
-  // Determine which section is active for default open state
-  const allErpPaths = [...erpWarehouseItems, ...erpSupplyItems, ...erpFinanceItems].map(i => i.url);
-  const isErpActive = allErpPaths.some(p => currentPath.startsWith(p));
+  const allPaths = menuGroups.flatMap(g => g.items.map(i => i.url));
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -142,7 +158,7 @@ export function AppSidebar() {
     }
   };
 
-  const renderMenuItems = (items: typeof crmMenuItems) => {
+  const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }> }[]) => {
     return items.map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
@@ -193,65 +209,26 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* CRM Section */}
-        <Collapsible defaultOpen={!isErpActive} className="group/collapsible-crm">
-          <SidebarGroup>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  {showText && <span className="font-semibold text-xs uppercase tracking-wider">CRM</span>}
-                </div>
+        {menuGroups.map((group, idx) => {
+          const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
+          return (
+            <div key={group.label}>
+              {idx > 0 && <SidebarSeparator />}
+              <SidebarGroup>
                 {showText && (
-                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-crm:rotate-180" />
+                  <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
+                    {group.label}
+                  </SidebarGroupLabel>
                 )}
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {renderMenuItems(crmMenuItems)}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-
-        <SidebarSeparator />
-
-        {/* ERP Section */}
-        <Collapsible defaultOpen={isErpActive} className="group/collapsible-erp">
-          <SidebarGroup>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  {showText && <span className="font-semibold text-xs uppercase tracking-wider">ERP</span>}
-                </div>
-                {showText && (
-                  <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-erp:rotate-180" />
-                )}
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {/* Склад group */}
-                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Склад</SidebarGroupLabel>}
-                  {renderMenuItems(erpWarehouseItems)}
-                  
-                  {/* Снабжение group */}
-                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Снабжение</SidebarGroupLabel>}
-                  {renderMenuItems(erpSupplyItems)}
-
-                  {/* Финансы group */}
-                  {showText && <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">Финансы</SidebarGroupLabel>}
-                  {renderMenuItems(erpFinanceItems)}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {renderMenuItems(group.items)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </div>
+          );
+        })}
 
         <SidebarSeparator />
 
