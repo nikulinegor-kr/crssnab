@@ -91,7 +91,6 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_status: z.string().optional(),
-  invoice_date: z.string().optional().or(z.literal("")),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
     .optional()
@@ -136,7 +135,6 @@ interface InitialRequestData {
   invoice_number?: string;
   amount?: number;
   payment_status?: string;
-  invoice_date?: string;
   transport_company?: string;
   comments?: string;
 }
@@ -325,7 +323,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       invoice_number: "",
       amount: null,
       payment_status: "Не выставлен",
-      invoice_date: "",
       shipment_date: "",
       delivery_date: "",
       transport_company: initialData?.transport_company || "",
@@ -480,7 +477,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_status: data.payment_status || "Не выставлен",
-        invoice_date: data.invoice_date || null,
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -602,7 +598,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         />
 
         {/* 5. Finance */}
-        <FinanceSection form={form} />
+        <FinanceSection form={form} suppliers={suppliers} recentContractors={recentContractors} />
 
         {/* 6. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
