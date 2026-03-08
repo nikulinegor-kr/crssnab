@@ -566,6 +566,70 @@ export default function RequestDetail() {
               onUpdate={handleUpdate}
             />
 
+  const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingFiles(false);
+    dragCounterRef.current = 0;
+    if (!id || !request || !canEdit) return;
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const docFiles = files.filter(f => !f.type.startsWith('image/'));
+    if (imageFiles.length > 0) {
+      setIsUploadingPhoto(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of imageFiles) {
+          const sanitizedName = sanitizeFilename(file.name);
+          const fileName = `${id}-${Date.now()}-${sanitizedName}`;
+          const { error: uploadError } = await supabase.storage.from("request-photos").upload(fileName, file);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from("request-photos").getPublicUrl(fileName);
+          newUrls.push(publicUrl);
+        }
+        const existingUrls = request.photo_urls || [];
+        await updateRequestMutation.mutateAsync({ photo_urls: [...existingUrls, ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено фото: ${imageFiles.length}` });
+      } catch (error) {
+        console.error("Photo drop error:", error);
+        toast({ title: "Ошибка", description: "Не удалось загрузить фото", variant: "destructive" });
+      } finally { setIsUploadingPhoto(false); }
+    }
+    if (docFiles.length > 0) {
+      setIsUploadingDoc(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of docFiles) {
+          const sanitizedName = sanitizeFilename(file.name);
+          const fileName = `${id}-${Date.now()}-${sanitizedName}`;
+          const { error: uploadError } = await supabase.storage.from("request-documents").upload(fileName, file);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fileName);
+          newUrls.push(publicUrl);
+        }
+        const existingUrls = request.document_urls || [];
+        await updateRequestMutation.mutateAsync({ document_urls: [...existingUrls, ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено документов: ${docFiles.length}` });
+      } catch (error) {
+        console.error("Doc drop error:", error);
+        toast({ title: "Ошибка", description: "Не удалось загрузить документы", variant: "destructive" });
+      } finally { setIsUploadingDoc(false); }
+    }
+  }, [id, request, canEdit, updateRequestMutation, toast]);
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes('Files')) setIsDraggingFiles(true);
+  }, []);
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setIsDraggingFiles(false);
+  }, []);
+
 
             {/* 4. Financial Information */}
             <Card className="glassmorphism border-border/40">
