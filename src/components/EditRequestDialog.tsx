@@ -586,6 +586,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: data.operation_type || "",
         planned_delivery_date: data.planned_delivery_date || "",
         reserve_on_warehouse: data.reserve_on_warehouse || false,
+        request_type: data.request_type || "",
+        equipment_id: data.equipment_id || "",
       });
       setServerUpdatedAt(data.updated_at);
       clearDraft();
