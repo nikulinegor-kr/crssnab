@@ -756,6 +756,42 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+                  {/* Row Action Menu */}
+                  <TableCell className="w-10 text-center px-1 py-2" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => navigate(`/requests/${request.id}`)}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Открыть заявку
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEditClick?.(request)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Редактировать
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDuplicateClick?.(request)}>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Дублировать заявку
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onCreateProcurement?.(request)}>
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Создать поставку
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => onDeleteClick(request, e as unknown as React.MouseEvent)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Удалить
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               );
             })}
