@@ -36,6 +36,14 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     value: "Приоритетно",
   },
   {
+    id: "invoice-accounting",
+    label: "Счёт в Бухгалтерии",
+    icon: <span className="text-sm leading-none">🧾</span>,
+    activeColor: "bg-purple-500 text-white border-purple-500 hover:bg-purple-600",
+    type: "status",
+    value: "Счёт в Бухгалтерии",
+  },
+  {
     id: "in-transit",
     label: "В пути",
     icon: <span className="text-sm leading-none">🚚</span>,
