@@ -58,9 +58,9 @@ export const InlineEditCell = ({
     try {
       let updateData: Record<string, string | number | null>;
 
-      if (field === "payment_percentage") {
-        // Parse percentage value (remove % if present)
-        const numValue = parseInt(String(editValue).replace("%", ""), 10);
+      if (field === "payment_percentage" || field === "amount") {
+        const numStr = String(editValue).replace(/[^\d.,]/g, "").replace(",", ".");
+        const numValue = parseFloat(numStr);
         updateData = { [field]: isNaN(numValue) ? null : numValue };
       } else {
         updateData = { [field]: editValue || null };
