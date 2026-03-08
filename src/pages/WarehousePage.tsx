@@ -425,7 +425,7 @@ export default function WarehousePage() {
                             className="text-primary hover:underline text-sm"
                             onClick={() => navigate(`/requests/${m.request_id}`)}
                           >
-                            {m.requests.description || `#${m.requests.request_number}`}
+                            {m.requests.description || "—"}
                           </button>
                         ) : (
                           "—"

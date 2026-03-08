@@ -292,7 +292,14 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                     <TableBody>
                       {deliveries.map((r: any) => (
                         <TableRow key={r.id}>
-                          <TableCell className="text-sm font-medium">{r.request_number}</TableCell>
+                          <TableCell className="text-sm">
+                            <button
+                              className="text-primary hover:underline text-left truncate max-w-[200px] block"
+                              onClick={() => navigate(`/requests/${r.id}`)}
+                            >
+                              {r.description || "—"}
+                            </button>
+                          </TableCell>
                           <TableCell className="text-sm">{r.transport_company || "—"}</TableCell>
                           <TableCell className="text-sm">
                             {r.shipment_date ? format(new Date(r.shipment_date), "dd.MM.yyyy") : "—"}
