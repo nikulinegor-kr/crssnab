@@ -577,7 +577,6 @@ export default function WarehousePage() {
             <DialogTitle>
               {movementOpType === "IN" ? "Приход" : movementOpType === "OUT" ? "Списание" : movementOpType === "INVENTORY" ? "Инвентаризация" : "Перемещение"}
             </DialogTitle>
-            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Product searchable select — two sources */}

@@ -403,7 +403,6 @@ export default function NomenclaturePage() {
                 </SelectContent>
               </Select>
             </div>
-            </div>
             <div>
               <Label>Техника</Label>
               <Select value={equipmentId || "none"} onValueChange={(v) => setEquipmentId(v === "none" ? "" : v)}>
