@@ -43,6 +43,7 @@ export default function EquipmentPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,7 +56,22 @@ export default function EquipmentPage() {
   const [importing, setImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [historyEquipmentId, setHistoryEquipmentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: linkedRequests = [] } = useQuery({
+    queryKey: ["equipment-requests", historyEquipmentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("id, request_number, description, status, priority, created_at, request_type")
+        .eq("equipment_id", historyEquipmentId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!historyEquipmentId,
+  });
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment", currentOrgId],
