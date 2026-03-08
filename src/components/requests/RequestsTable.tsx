@@ -526,6 +526,9 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
+                  <TableCell className="w-8 text-center px-1 py-2 border-r text-[11px] text-muted-foreground/60 font-mono">
+                    {rowNumber}
+                  </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRequestIds.has(request.id)}
