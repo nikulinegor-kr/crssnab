@@ -99,9 +99,9 @@ export const AdditionalSection = ({
       const lines = getZrsLines();
       const fontSize = 9;
       const lineHeight = 14;
-      // Place text on the right half of the page, starting from top area
+      // Place text in the bottom-right corner
       const startX = width * 0.55;
-      let startY = height - 80;
+      let startY = 20 + (lines.length - 1) * lineHeight;
 
       lines.forEach((line) => {
         firstPage.drawText(line, {
