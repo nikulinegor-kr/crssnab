@@ -79,6 +79,8 @@ export default function RequestDetail() {
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const dragCounterRef = useRef(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: request, isLoading } = useQuery({
