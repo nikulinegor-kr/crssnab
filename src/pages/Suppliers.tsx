@@ -230,6 +230,9 @@ export default function Suppliers() {
       inn: "",
       kpp: "",
       ogrn: "",
+      bank_name: "",
+      bank_account: "",
+      bik: "",
       notes: "",
     });
     setDadataQuery("");
