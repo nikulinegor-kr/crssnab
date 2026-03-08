@@ -525,6 +525,41 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         }
       }
 
+      // Auto-create nomenclature for repair requests with equipment
+      if (newRequest && data.equipment_id && data.product_id && currentOrgId) {
+        try {
+          // Get the selected product's article
+          const { data: product } = await supabase
+            .from("warehouse_products")
+            .select("article, name")
+            .eq("id", data.product_id)
+            .single();
+
+          if (product?.article) {
+            // Check if nomenclature with this article + equipment already exists
+            const { data: existing } = await supabase
+              .from("warehouse_products")
+              .select("id")
+              .eq("article", product.article)
+              .eq("equipment_id", data.equipment_id)
+              .eq("organization_id", currentOrgId)
+              .maybeSingle();
+
+            if (!existing) {
+              await supabase.from("warehouse_products").insert({
+                name: data.description || product.name,
+                article: product.article,
+                equipment_id: data.equipment_id,
+                organization_id: currentOrgId,
+              });
+              queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
+            }
+          }
+        } catch {
+          // Non-critical, don't block request creation
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
