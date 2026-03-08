@@ -231,6 +231,33 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     enabled: !!request?.organization_id && open,
   });
 
+  // Fetch request items
+  const { data: requestItemsData } = useQuery({
+    queryKey: ["request-items", request?.id],
+    queryFn: async () => {
+      if (!request?.id) return [];
+      const { data, error } = await supabase
+        .from("request_items")
+        .select("*")
+        .eq("request_id", request.id)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!request?.id && open,
+  });
+
+  // Sync request items from DB
+  useEffect(() => {
+    if (requestItemsData) {
+      setRequestItems(requestItemsData.map(item => ({
+        article: item.article || "",
+        name: item.name,
+        quantity: item.quantity || 1,
+      })));
+    }
+  }, [requestItemsData]);
+
   // Fetch objects
   const { data: objectsData } = useQuery({
     queryKey: ["request-objects", request?.organization_id],
