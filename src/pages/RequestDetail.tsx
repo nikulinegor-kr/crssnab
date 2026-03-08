@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, type DragEvent } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
@@ -79,6 +79,8 @@ export default function RequestDetail() {
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const dragCounterRef = useRef(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: request, isLoading } = useQuery({
@@ -416,6 +418,66 @@ export default function RequestDetail() {
     }
   };
 
+  const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingFiles(false);
+    dragCounterRef.current = 0;
+    if (!id || !request || !canEdit) return;
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+    const imageFiles = droppedFiles.filter(f => f.type.startsWith('image/'));
+    const docFiles = droppedFiles.filter(f => !f.type.startsWith('image/'));
+    if (imageFiles.length > 0) {
+      setIsUploadingPhoto(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of imageFiles) {
+          const sName = sanitizeFilename(file.name);
+          const fName = `${id}-${Date.now()}-${sName}`;
+          const { error: ue } = await supabase.storage.from("request-photos").upload(fName, file);
+          if (ue) throw ue;
+          const { data: { publicUrl } } = supabase.storage.from("request-photos").getPublicUrl(fName);
+          newUrls.push(publicUrl);
+        }
+        await updateRequestMutation.mutateAsync({ photo_urls: [...(request.photo_urls || []), ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено фото: ${imageFiles.length}` });
+      } catch (err) {
+        toast({ title: "Ошибка", description: "Не удалось загрузить фото", variant: "destructive" });
+      } finally { setIsUploadingPhoto(false); }
+    }
+    if (docFiles.length > 0) {
+      setIsUploadingDoc(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of docFiles) {
+          const sName = sanitizeFilename(file.name);
+          const fName = `${id}-${Date.now()}-${sName}`;
+          const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file);
+          if (ue) throw ue;
+          const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fName);
+          newUrls.push(publicUrl);
+        }
+        await updateRequestMutation.mutateAsync({ document_urls: [...(request.document_urls || []), ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено документов: ${docFiles.length}` });
+      } catch (err) {
+        toast({ title: "Ошибка", description: "Не удалось загрузить документы", variant: "destructive" });
+      } finally { setIsUploadingDoc(false); }
+    }
+  }, [id, request, canEdit, updateRequestMutation, toast]);
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes('Files')) setIsDraggingFiles(true);
+  }, []);
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setIsDraggingFiles(false);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 p-6">
@@ -565,6 +627,7 @@ export default function RequestDetail() {
             />
 
 
+
             {/* 4. Financial Information */}
             <Card className="glassmorphism border-border/40">
               <CardHeader className="pb-3">
@@ -599,8 +662,26 @@ export default function RequestDetail() {
               </CardContent>
             </Card>
 
-            {/* 5. Attached Files */}
-            <Card className="glassmorphism border-border/40">
+            {/* 5. Attached Files - with drag & drop */}
+            <Card
+              className={cn(
+                "glassmorphism border-border/40 transition-all duration-200 relative",
+                isDraggingFiles && "border-primary border-2 bg-primary/5 ring-2 ring-primary/20"
+              )}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleFileDrop}
+            >
+              {isDraggingFiles && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/5 rounded-lg pointer-events-none">
+                  <div className="flex flex-col items-center gap-2 text-primary">
+                    <Upload className="h-8 w-8 animate-bounce" />
+                    <p className="text-sm font-medium">Отпустите файлы для загрузки</p>
+                    <p className="text-xs text-muted-foreground">Изображения → Фото, остальные → Документы</p>
+                  </div>
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base flex items-center gap-2">
