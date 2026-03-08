@@ -46,6 +46,8 @@ interface Supplier {
   status: string;
   address: string | null;
   inn: string | null;
+  kpp: string | null;
+  ogrn: string | null;
   notes: string | null;
   created_at: string;
   organization_id: string;
