@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart } from "lucide-react";
@@ -80,6 +80,7 @@ interface RequestsTableProps {
   searchQuery?: string;
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
+  headerActions?: ReactNode;
 }
 
 // Memoized mobile card component for better performance
@@ -188,6 +189,7 @@ export const RequestsTable = ({
   searchQuery = "",
   favoriteIds,
   onToggleFavorite,
+  headerActions,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { visibility, updateVisibility } = useTableColumnVisibility();
@@ -426,7 +428,8 @@ export const RequestsTable = ({
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
-        <div className="flex justify-end mb-2">
+        <div className="flex items-center justify-end gap-2 mb-2">
+          {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} />
         </div>
         <div className="rounded-md border overflow-x-auto">
@@ -434,6 +437,7 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
+              <TableHead className="w-8 text-center p-1 border-r text-[10px] text-muted-foreground">№</TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -504,12 +508,13 @@ export const RequestsTable = ({
                   ? "#f97316" 
                   : "#d1d5db";
               
-              const isEvenRow = index % 2 === 1;
+               const isEvenRow = index % 2 === 1;
+               const rowNumber = startIndex + index + 1;
               
               return (
-                <TableRow
+                  <TableRow
                   key={request.id}
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/20' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-accent/60 hover:shadow-sm active:scale-[0.998] active:bg-accent/80 ${isEvenRow ? 'bg-muted/15' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: '48px' }}
@@ -521,6 +526,9 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
+                  <TableCell className="w-8 text-center px-1 py-2 border-r text-[11px] text-muted-foreground/60 font-mono">
+                    {rowNumber}
+                  </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRequestIds.has(request.id)}
