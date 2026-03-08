@@ -372,35 +372,108 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
         <TabsContent value="requests">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Заявки объекта ({objRequests.length})</CardTitle>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base">Заявки объекта ({objRequests.length})</CardTitle>
+                <div className="flex items-center gap-2">
+                  {selectedRequests.size > 0 && (
+                    <>
+                      <span className="text-xs text-muted-foreground">Выбрано: {selectedRequests.size}</span>
+                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setShowTransferDialog(true)}>
+                        <MapPin className="h-3 w-3" /> Перенести
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+                        onClick={async () => {
+                          const ids = Array.from(selectedRequests);
+                          const { error } = await supabase.from("requests").update({ object_id: null, warehouse_id: null }).in("id", ids);
+                          if (error) { toast({ title: "Ошибка", variant: "destructive" }); return; }
+                          toast({ title: `Отвязано заявок: ${ids.length}` });
+                          setSelectedRequests(new Set());
+                          queryClient.invalidateQueries({ queryKey: ["object-requests"] });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" /> Отвязать
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {objRequests.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="text-xs">Описание</TableHead>
-                        <TableHead className="text-xs">Статус</TableHead>
-                        <TableHead className="text-xs">Сумма</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {objRequests.slice(0, 50).map((r: any) => (
-                        <TableRow key={r.id}>
-                          <TableCell className="text-sm max-w-[300px] truncate">
-                            <button className="text-primary hover:underline text-left truncate" onClick={() => navigate(`/requests/${r.id}`)}>
-                              {r.description}
-                            </button>
-                          </TableCell>
-                          <TableCell><Badge variant="secondary" className="text-xs">{r.status}</Badge></TableCell>
-                          <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
+              {objRequests.length > 0 ? (() => {
+                const totalPages = Math.ceil(objRequests.length / REQ_PAGE_SIZE);
+                const pageItems = objRequests.slice(reqPage * REQ_PAGE_SIZE, (reqPage + 1) * REQ_PAGE_SIZE);
+                const allPageIds = pageItems.map((r: any) => r.id);
+                const allSelected = allPageIds.length > 0 && allPageIds.every((id: string) => selectedRequests.has(id));
+                return (
+                  <>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="w-[40px] text-xs">
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={(checked) => {
+                                  const next = new Set(selectedRequests);
+                                  if (checked) { allPageIds.forEach((id: string) => next.add(id)); }
+                                  else { allPageIds.forEach((id: string) => next.delete(id)); }
+                                  setSelectedRequests(next);
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead className="w-[50px] text-xs">№</TableHead>
+                            <TableHead className="text-xs">Описание</TableHead>
+                            <TableHead className="text-xs">Статус</TableHead>
+                            <TableHead className="text-xs">Сумма</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {pageItems.map((r: any, idx: number) => (
+                            <TableRow key={r.id} className={selectedRequests.has(r.id) ? "bg-primary/5" : ""}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedRequests.has(r.id)}
+                                  onCheckedChange={(checked) => {
+                                    const next = new Set(selectedRequests);
+                                    if (checked) next.add(r.id); else next.delete(r.id);
+                                    setSelectedRequests(next);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{reqPage * REQ_PAGE_SIZE + idx + 1}</TableCell>
+                              <TableCell className="text-sm max-w-[300px] truncate">
+                                <button className="text-primary hover:underline text-left truncate" onClick={() => navigate(`/requests/${r.id}`)}>
+                                  {r.description}
+                                </button>
+                              </TableCell>
+                              <TableCell><Badge variant="secondary" className="text-xs">{r.status}</Badge></TableCell>
+                              <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xs text-muted-foreground">
+                          Стр. {reqPage + 1} из {totalPages}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={reqPage === 0} onClick={() => setReqPage(p => p - 1)}>
+                            <ChevronLeft className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={reqPage >= totalPages - 1} onClick={() => setReqPage(p => p + 1)}>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })() : (
                 <p className="text-sm text-muted-foreground text-center py-4">Нет заявок</p>
               )}
             </CardContent>
