@@ -38,6 +38,13 @@ export const CoreParamsSection = ({
   const selectedObject = objectsData?.find((o) => o.id === objectId);
   const isRepairObject = selectedObject?.name?.toLowerCase().includes("ремонт") ?? false;
 
+  // Sync repairPurpose when equipment_id is loaded from form defaults (edit mode)
+  useEffect(() => {
+    if (currentEquipmentId && isRepairObject) {
+      setRepairPurpose("equipment");
+    }
+  }, [currentEquipmentId, isRepairObject]);
+
   // Clear equipment when switching away from repair object or changing purpose
   useEffect(() => {
     if (!isRepairObject || repairPurpose !== "equipment") {
