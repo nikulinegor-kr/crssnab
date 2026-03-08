@@ -45,7 +45,7 @@ const Dashboard = () => {
 
   // Вычисление статистики для отфильтрованных заявок
   const stats = useMemo(() => {
-    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0, deliveriesToday: 0, overdue: 0 };
+    if (!filteredRequests.length) return { total: 0, newToday: 0, emergency: 0, completed: 0, deliveriesToday: 0, overdue: 0, invoicesToPay: 0, inTransit: 0, onOrder: 0 };
     
     const today = new Date().toISOString().split("T")[0];
     const newToday = filteredRequests.filter(
@@ -69,6 +69,18 @@ const Dashboard = () => {
       return r.delivery_date.split("T")[0] < today;
     }).length;
 
+    const invoicesToPay = filteredRequests.filter(r => 
+      r.status === "Счёт" || (r.invoice_number && r.payment_percentage !== null && r.payment_percentage < 100 && r.status !== "Доставлено")
+    ).length;
+
+    const inTransit = filteredRequests.filter(r => 
+      r.status === "В пути" || r.status === "Доставлено в ТК" || r.status === "Отправлено"
+    ).length;
+
+    const onOrder = filteredRequests.filter(r => 
+      r.status === "В работе" || r.status === "КП" || r.status === "На согласовании"
+    ).length;
+
     return {
       total: filteredRequests.length,
       newToday,
@@ -76,6 +88,9 @@ const Dashboard = () => {
       completed,
       deliveriesToday,
       overdue,
+      invoicesToPay,
+      inTransit,
+      onOrder,
     };
   }, [filteredRequests]);
 
