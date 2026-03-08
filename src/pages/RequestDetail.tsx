@@ -662,8 +662,26 @@ export default function RequestDetail() {
               </CardContent>
             </Card>
 
-            {/* 5. Attached Files */}
-            <Card className="glassmorphism border-border/40">
+            {/* 5. Attached Files - with drag & drop */}
+            <Card
+              className={cn(
+                "glassmorphism border-border/40 transition-all duration-200 relative",
+                isDraggingFiles && "border-primary border-2 bg-primary/5 ring-2 ring-primary/20"
+              )}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleFileDrop}
+            >
+              {isDraggingFiles && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/5 rounded-lg pointer-events-none">
+                  <div className="flex flex-col items-center gap-2 text-primary">
+                    <Upload className="h-8 w-8 animate-bounce" />
+                    <p className="text-sm font-medium">Отпустите файлы для загрузки</p>
+                    <p className="text-xs text-muted-foreground">Изображения → Фото, остальные → Документы</p>
+                  </div>
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base flex items-center gap-2">
