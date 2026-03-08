@@ -418,6 +418,66 @@ export default function RequestDetail() {
     }
   };
 
+  const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingFiles(false);
+    dragCounterRef.current = 0;
+    if (!id || !request || !canEdit) return;
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+    const imageFiles = droppedFiles.filter(f => f.type.startsWith('image/'));
+    const docFiles = droppedFiles.filter(f => !f.type.startsWith('image/'));
+    if (imageFiles.length > 0) {
+      setIsUploadingPhoto(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of imageFiles) {
+          const sName = sanitizeFilename(file.name);
+          const fName = `${id}-${Date.now()}-${sName}`;
+          const { error: ue } = await supabase.storage.from("request-photos").upload(fName, file);
+          if (ue) throw ue;
+          const { data: { publicUrl } } = supabase.storage.from("request-photos").getPublicUrl(fName);
+          newUrls.push(publicUrl);
+        }
+        await updateRequestMutation.mutateAsync({ photo_urls: [...(request.photo_urls || []), ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено фото: ${imageFiles.length}` });
+      } catch (err) {
+        toast({ title: "Ошибка", description: "Не удалось загрузить фото", variant: "destructive" });
+      } finally { setIsUploadingPhoto(false); }
+    }
+    if (docFiles.length > 0) {
+      setIsUploadingDoc(true);
+      try {
+        const newUrls: string[] = [];
+        for (const file of docFiles) {
+          const sName = sanitizeFilename(file.name);
+          const fName = `${id}-${Date.now()}-${sName}`;
+          const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file);
+          if (ue) throw ue;
+          const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fName);
+          newUrls.push(publicUrl);
+        }
+        await updateRequestMutation.mutateAsync({ document_urls: [...(request.document_urls || []), ...newUrls] });
+        toast({ title: "Успешно", description: `Загружено документов: ${docFiles.length}` });
+      } catch (err) {
+        toast({ title: "Ошибка", description: "Не удалось загрузить документы", variant: "destructive" });
+      } finally { setIsUploadingDoc(false); }
+    }
+  }, [id, request, canEdit, updateRequestMutation, toast]);
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes('Files')) setIsDraggingFiles(true);
+  }, []);
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setIsDraggingFiles(false);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 p-6">
