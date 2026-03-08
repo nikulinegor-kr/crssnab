@@ -115,9 +115,6 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
     enabled: !!objectData.responsible_user_id,
   });
 
-  const objRequests = useMemo(() => {
-    return requests?.filter((r) => r.object_id === objectData.id) || [];
-  }, [requests, objectData.id]);
 
   const finances = useMemo(() => {
     const total = objRequests.reduce((sum, r) => sum + (r.amount || 0), 0);
