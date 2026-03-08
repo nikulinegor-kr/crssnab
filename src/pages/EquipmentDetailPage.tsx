@@ -217,7 +217,7 @@ export default function EquipmentDetailPage() {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <DollarSign className="h-5 w-5 text-primary" />
+              <RussianRuble className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Всего потрачено</p>
