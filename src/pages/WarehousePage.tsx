@@ -67,7 +67,27 @@ export default function WarehousePage() {
   const [movComment, setMovComment] = useState("");
   const [movRequestId, setMovRequestId] = useState("");
 
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [productPopoverOpen, setProductPopoverOpen] = useState(false);
+  const [requestSearchQuery, setRequestSearchQuery] = useState("");
+  const [requestPopoverOpen, setRequestPopoverOpen] = useState(false);
+
   // Queries
+  const { data: requests = [] } = useQuery({
+    queryKey: ["requests-for-movement", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("id, request_number, description")
+        .eq("organization_id", currentOrgId!)
+        .eq("archived", false)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrgId,
+  });
   const { data: warehouses = [] } = useQuery({
     queryKey: ["warehouses", currentOrgId],
     queryFn: async () => {
