@@ -6,7 +6,8 @@ import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
 import { MoreHorizontal, Copy, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
+import { PDFDocument, rgb } from "pdf-lib";
+import { useRef } from "react";
 
 interface AdditionalSectionProps {
   form: UseFormReturn<any>;
