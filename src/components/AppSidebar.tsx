@@ -122,8 +122,8 @@ export function AppSidebar() {
   const showText = isMobile || !collapsed;
 
   // Determine which section is active for default open state
-  const erpPaths = erpMenuItems.map(i => i.url);
-  const isErpActive = erpPaths.some(p => currentPath.startsWith(p));
+  const allErpPaths = [...erpWarehouseItems, ...erpSupplyItems, ...erpFinanceItems].map(i => i.url);
+  const isErpActive = allErpPaths.some(p => currentPath.startsWith(p));
 
   const handleLogout = async () => {
     if (isDemoMode) {
