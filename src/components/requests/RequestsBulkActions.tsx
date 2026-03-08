@@ -562,6 +562,12 @@ export const RequestsBulkActions = ({
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <BulkTransferObjectDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        selectedRequestIds={selectedRequestIds}
+        onComplete={() => setSelectedRequestIds(new Set())}
+      />
     </div>
   );
 };
