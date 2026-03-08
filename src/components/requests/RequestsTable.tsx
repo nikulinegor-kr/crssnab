@@ -690,13 +690,20 @@ export const RequestsTable = ({
                   )}
                   {visibility.amount && (
                     <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.amount }}>
-                      {request.amount && request.amount > 0 ? (
-                        <span className="font-medium">
-                          {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/40">—</span>
-                      )}
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="amount"
+                        value={request.amount ?? ""}
+                        displayValue={
+                          request.amount && request.amount > 0 ? (
+                            <span className="font-medium">
+                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.applicant && (
