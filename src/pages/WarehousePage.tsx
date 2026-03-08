@@ -682,7 +682,13 @@ export default function WarehousePage() {
 
             <div>
               <Label>{movementOpType === "MOVE" ? "Со склада" : "Склад"}</Label>
-              <Select value={movWarehouseId} onValueChange={setMovWarehouseId}>
+              <Select value={movWarehouseId} onValueChange={(val) => {
+                setMovWarehouseId(val);
+                // Reset toWarehouse if same
+                if (val === movToWarehouseId) setMovToWarehouseId("");
+                // Reset quantity when warehouse changes
+                setMovQuantity("");
+              }}>
                 <SelectTrigger><SelectValue placeholder="Выберите склад" /></SelectTrigger>
                 <SelectContent>
                   {warehouses.map((w: any) => (
@@ -691,6 +697,30 @@ export default function WarehousePage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Stock info for source warehouse in MOVE/OUT operations */}
+            {movWarehouseId && movProductId && (movementOpType === "MOVE" || movementOpType === "OUT") && (() => {
+              const key = `${movProductId}__${movWarehouseId}`;
+              const entry = stockLevels.find(s => `${(s as any).productId || ""}__${(s as any).warehouseId || ""}` === key);
+              // Compute directly from movements
+              let availableStock = 0;
+              for (const m of movements) {
+                if (m.product_id === movProductId && m.warehouse_id === movWarehouseId) {
+                  switch (m.type) {
+                    case "IN": case "MOVE_IN": availableStock += m.quantity; break;
+                    case "OUT": case "MOVE_OUT": availableStock -= m.quantity; break;
+                    case "RESERVE": availableStock -= m.quantity; break;
+                    case "UNRESERVE": availableStock += m.quantity; break;
+                  }
+                }
+              }
+              return (
+                <div className="text-sm px-1">
+                  Остаток на складе: <span className={cn("font-semibold", availableStock <= 0 ? "text-destructive" : "text-primary")}>{Math.max(0, availableStock)}</span>
+                </div>
+              );
+            })()}
+
             {movementOpType === "MOVE" && (
               <div>
                 <Label>На склад</Label>
@@ -706,7 +736,41 @@ export default function WarehousePage() {
             )}
             <div>
               <Label>Количество</Label>
-              <Input type="number" min="1" value={movQuantity} onChange={(e) => setMovQuantity(e.target.value)} placeholder="0" />
+              {(() => {
+                // Calculate max for MOVE/OUT
+                let maxQty: number | undefined;
+                if (movWarehouseId && movProductId && (movementOpType === "MOVE" || movementOpType === "OUT")) {
+                  let available = 0;
+                  for (const m of movements) {
+                    if (m.product_id === movProductId && m.warehouse_id === movWarehouseId) {
+                      switch (m.type) {
+                        case "IN": case "MOVE_IN": available += m.quantity; break;
+                        case "OUT": case "MOVE_OUT": available -= m.quantity; break;
+                        case "RESERVE": available -= m.quantity; break;
+                        case "UNRESERVE": available += m.quantity; break;
+                      }
+                    }
+                  }
+                  maxQty = Math.max(0, available);
+                }
+                return (
+                  <Input
+                    type="number"
+                    min="1"
+                    max={maxQty}
+                    value={movQuantity}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (maxQty !== undefined && Number(val) > maxQty) {
+                        setMovQuantity(String(maxQty));
+                      } else {
+                        setMovQuantity(val);
+                      }
+                    }}
+                    placeholder={maxQty !== undefined ? `Макс: ${maxQty}` : "0"}
+                  />
+                );
+              })()}
             </div>
 
             {/* Request searchable select */}
@@ -782,7 +846,9 @@ export default function WarehousePage() {
                 (!movProductId && !movProductFromRequest) ||
                 !movWarehouseId ||
                 !movQuantity ||
+                Number(movQuantity) <= 0 ||
                 (movementOpType === "MOVE" && !movToWarehouseId) ||
+                (movementOpType === "MOVE" && movWarehouseId === movToWarehouseId) ||
                 createMovement.isPending
               }
             >
