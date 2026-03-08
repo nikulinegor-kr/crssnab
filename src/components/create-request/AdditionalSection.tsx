@@ -89,8 +89,7 @@ export const AdditionalSection = ({
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       pdfDoc.registerFontkit(fontkit);
       
-      const robotoUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf";
-      const fontBytes = await fetch(robotoUrl).then(r => r.arrayBuffer());
+      const fontBytes = await fetch('/fonts/Roboto-Regular.ttf').then(r => r.arrayBuffer());
       const customFont = await pdfDoc.embedFont(fontBytes);
 
       const pages = pdfDoc.getPages();
