@@ -297,7 +297,7 @@ export default function EquipmentDetailPage() {
           {/* Service History Table */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">История обслуживания</CardTitle>
+              <CardTitle className="text-base font-semibold">История закупок</CardTitle>
             </CardHeader>
             <CardContent>
               {serviceHistory.length === 0 ? (
