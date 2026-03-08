@@ -446,6 +446,29 @@ export const RequestsBulkActions = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Change Object Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Изменить объект</span>
+                  <span className="sm:hidden">Объект</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {objects && objects.length > 0 ? (
+                  objects.map((o) => (
+                    <DropdownMenuItem key={o.id} onClick={() => handleBulkObjectUpdate(o.id)}>
+                      {o.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>Нет объектов</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Export Selected */}
             <ExcelExportButton
               requests={requests || []}
