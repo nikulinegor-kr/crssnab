@@ -226,7 +226,7 @@ export function ClosureTimeAnalytics({ requests }: ClosureTimeAnalyticsProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <TrendingDown className="h-4 w-4" />
-              Среднее время по приоритетам
+              Среднее время по приоритетам (от создания заявки до её закрытия)
             </CardTitle>
           </CardHeader>
           <CardContent>
