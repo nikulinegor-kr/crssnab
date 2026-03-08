@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,19 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
 
 interface ObjectDetailCardProps {
   objectData: any;
   onBack: () => void;
+  onEdit?: (obj: any) => void;
+  onArchive?: (id: string) => void;
 }
 
-export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) => {
+const DOC_TYPES = ["Контракт", "Договор", "Счёт", "КП", "Фото", "Другое"];
+
+export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive }: ObjectDetailCardProps) => {
   const navigate = useNavigate();
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -32,6 +36,9 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
   const [showWarehouseDialog, setShowWarehouseDialog] = useState(false);
   const [newWarehouseName, setNewWarehouseName] = useState("");
   const [newWarehouseDescription, setNewWarehouseDescription] = useState("");
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [uploadDocType, setUploadDocType] = useState("Другое");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch warehouses for this object
   const { data: warehouses = [] } = useQuery({
@@ -49,18 +56,30 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
     enabled: !!currentOrgId,
   });
 
+  // Fetch object documents
+  const { data: documents = [] } = useQuery({
+    queryKey: ["object-documents", objectData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("object_documents")
+        .select("*")
+        .eq("object_id", objectData.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch responsible - could be a user or a participant
   const { data: responsibleProfile } = useQuery({
     queryKey: ["profile", objectData.responsible_user_id],
     queryFn: async () => {
-      // Try profiles first
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, email")
         .eq("id", objectData.responsible_user_id)
         .maybeSingle();
       if (profile) return { name: profile.full_name || profile.email };
-      // Try request_participants
       const { data: participant } = await supabase
         .from("request_participants")
         .select("name")
@@ -120,10 +139,72 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
     onError: () => toast({ title: "Ошибка удаления", variant: "destructive" }),
   });
 
+  const deleteDocument = useMutation({
+    mutationFn: async (docId: string) => {
+      const { error } = await supabase.from("object_documents").delete().eq("id", docId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["object-documents"] });
+      toast({ title: "Документ удалён" });
+    },
+    onError: () => toast({ title: "Ошибка удаления", variant: "destructive" }),
+  });
+
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !currentOrgId) return;
+
+    setIsUploadingDoc(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      for (const file of Array.from(files)) {
+        const sanitized = file.name.replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9.-]/g, '_') || `file_${Date.now()}`;
+        const fileName = `${objectData.id}-${Date.now()}-${sanitized}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("object-documents")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("object-documents")
+          .getPublicUrl(fileName);
+
+        await supabase.from("object_documents").insert({
+          object_id: objectData.id,
+          organization_id: currentOrgId,
+          doc_type: uploadDocType,
+          name: file.name,
+          file_url: publicUrl,
+          created_by: user?.id || null,
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["object-documents"] });
+      toast({ title: "Документ загружен" });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({ title: "Ошибка загрузки", variant: "destructive" });
+    } finally {
+      setIsUploadingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const STATUS_COLORS: Record<string, string> = {
     "Активный": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     "Приостановлен": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
     "Завершён": "bg-muted text-muted-foreground",
+  };
+
+  const DOC_TYPE_COLORS: Record<string, string> = {
+    "Контракт": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "Договор": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    "Счёт": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    "КП": "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+    "Фото": "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
   };
 
   return (
@@ -137,7 +218,22 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
           <h2 className="text-xl font-bold">{objectData.name}</h2>
           {objectData.address && <p className="text-sm text-muted-foreground">{objectData.address}</p>}
         </div>
-        <Badge className={STATUS_COLORS[objectData.status] || ""}>{objectData.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge className={STATUS_COLORS[objectData.status] || ""}>{objectData.status}</Badge>
+          {onEdit && (
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => onEdit(objectData)}>
+              <Pencil className="h-3.5 w-3.5" /> Редактировать
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowWarehouseDialog(true)}>
+            <Plus className="h-3.5 w-3.5" /> Склад
+          </Button>
+          {onArchive && objectData.status !== "Завершён" && (
+            <Button variant="outline" size="sm" className="gap-1 text-muted-foreground hover:text-destructive" onClick={() => onArchive(objectData.id)}>
+              <Archive className="h-3.5 w-3.5" /> В архив
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="info" className="w-full">
@@ -147,6 +243,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
           <TabsTrigger value="requests" className="gap-1"><FileText className="h-3.5 w-3.5" /> Заявки</TabsTrigger>
           <TabsTrigger value="deliveries" className="gap-1"><Truck className="h-3.5 w-3.5" /> Поставки</TabsTrigger>
           <TabsTrigger value="finances" className="gap-1"><DollarSign className="h-3.5 w-3.5" /> Финансы</TabsTrigger>
+          <TabsTrigger value="documents" className="gap-1"><FolderOpen className="h-3.5 w-3.5" /> Документы</TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
@@ -160,9 +257,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                 </div>
                 <div>
                   <span className="text-muted-foreground">Ответственный:</span>
-                  <p className="font-medium">
-                    {responsibleProfile?.name || "—"}
-                  </p>
+                  <p className="font-medium">{responsibleProfile?.name || "—"}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Дата начала:</span>
@@ -252,10 +347,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                       {objRequests.slice(0, 50).map((r: any) => (
                         <TableRow key={r.id}>
                           <TableCell className="text-sm max-w-[300px] truncate">
-                            <button
-                              className="text-primary hover:underline text-left truncate"
-                              onClick={() => navigate(`/requests/${r.id}`)}
-                            >
+                            <button className="text-primary hover:underline text-left truncate" onClick={() => navigate(`/requests/${r.id}`)}>
                               {r.description}
                             </button>
                           </TableCell>
@@ -295,10 +387,7 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                       {deliveries.map((r: any) => (
                         <TableRow key={r.id}>
                           <TableCell className="text-sm">
-                            <button
-                              className="text-primary hover:underline text-left truncate max-w-[200px] block"
-                              onClick={() => navigate(`/requests/${r.id}`)}
-                            >
+                            <button className="text-primary hover:underline text-left truncate max-w-[200px] block" onClick={() => navigate(`/requests/${r.id}`)}>
                               {r.description || "—"}
                             </button>
                           </TableCell>
@@ -339,6 +428,93 @@ export const ObjectDetailCard = ({ objectData, onBack }: ObjectDetailCardProps) 
                   <p className="text-xs text-muted-foreground">Оплачено</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base">Документы объекта ({documents.length})</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Select value={uploadDocType} onValueChange={setUploadDocType}>
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DOC_TYPES.map((t) => (
+                        <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" disabled={isUploadingDoc} asChild>
+                    <label className="cursor-pointer">
+                      <Upload className="h-3.5 w-3.5" />
+                      {isUploadingDoc ? "Загрузка..." : "Загрузить"}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        onChange={handleDocumentUpload}
+                        className="hidden"
+                        disabled={isUploadingDoc}
+                      />
+                    </label>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {documents.length > 0 ? (
+                <div className="space-y-2">
+                  {documents.map((doc: any) => (
+                    <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{doc.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge className={`text-[10px] px-1.5 py-0 ${DOC_TYPE_COLORS[doc.doc_type] || "bg-muted text-muted-foreground"}`}>
+                            {doc.doc_type}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(doc.created_at), "dd.MM.yyyy")}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-3 w-3 mr-1" /> Открыть
+                          </a>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                          <a href={doc.file_url} download>
+                            <Download className="h-3 w-3" />
+                          </a>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteDocument.mutate(doc.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FolderOpen className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">Нет документов</p>
+                  <p className="text-xs text-muted-foreground mt-1">Загрузите контракты, счета и другие файлы объекта</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
