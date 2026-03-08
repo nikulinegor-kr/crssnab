@@ -937,11 +937,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 4. Finance: Contractor, Invoice, Amount, Payment % */}
+        {/* 4. Finance */}
         <FinanceSection 
           form={form} 
-          suppliers={suppliers}
-          recentContractors={recentContractors}
           disabled={isViewer}
         />
 
