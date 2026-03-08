@@ -591,6 +591,35 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         }
       }
 
+      // Auto-add new contractor to suppliers
+      if (data.contractor?.trim() && currentOrgId) {
+        try {
+          const contractorName = data.contractor.trim();
+          const { data: existingSupplier } = await supabase
+            .from("suppliers")
+            .select("id")
+            .eq("name", contractorName)
+            .eq("organization_id", currentOrgId)
+            .maybeSingle();
+
+          if (!existingSupplier) {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+              await supabase.from("suppliers").insert({
+                name: contractorName,
+                organization_id: currentOrgId,
+                created_by: currentUser.id,
+                category: "Другое",
+                status: "Активный",
+              });
+              queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
+            }
+          }
+        } catch {
+          // Non-critical
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-stats"] });
 
