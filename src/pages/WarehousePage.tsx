@@ -319,6 +319,8 @@ export default function WarehousePage() {
 
   const resetMovementForm = () => {
     setMovProductId("");
+    setMovProductLabel("");
+    setMovProductFromRequest(null);
     setMovWarehouseId("");
     setMovToWarehouseId("");
     setMovQuantity("");
