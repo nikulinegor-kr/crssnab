@@ -341,7 +341,7 @@ const Requests = () => {
 
       {/* === Tab Content === */}
       {activeTab === "active" && (
-        <div className="space-y-4 sm:space-y-5">
+        <div className="space-y-3">
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
             requests={requests}

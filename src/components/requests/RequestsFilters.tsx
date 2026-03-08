@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin } from "lucide-react";
+import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -173,14 +173,21 @@ export const RequestsFilters = ({
     !hideDelivered ||
     isSmartSearchActive;
 
+  const activeFilterCount = [
+    statusFilter.length > 0,
+    yearFilter !== "all",
+    objectFilter !== "all",
+    applicantFilter !== "all",
+  ].filter(Boolean).length;
+
   return (
-    <div className="flex flex-col gap-3 sm:gap-4">
-      {/* === LEVEL 4: Search === */}
+    <div className="flex flex-col gap-2 sm:gap-3">
+      {/* === Search + Filter button row === */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по заявкам..."
+            placeholder="Поиск заявок, артикулов, поставщиков..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -191,7 +198,7 @@ export const RequestsFilters = ({
                 handleSmartSearch();
               }
             }}
-            className="pl-8 sm:pl-10 pr-20 h-9 sm:h-10 text-sm"
+            className="pl-9 pr-20 h-9 sm:h-10 text-sm"
           />
           <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
             {searchQuery && (
@@ -226,6 +233,148 @@ export const RequestsFilters = ({
             )}
           </div>
         </div>
+
+        {/* Combined Filter popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="shrink-0 h-9 sm:h-10 px-3 gap-1.5 relative">
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Фильтр</span>
+              {activeFilterCount > 0 && (
+                <Badge className="h-4 min-w-4 px-1 text-[10px] absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[280px] sm:w-[320px] p-4 bg-background z-50" align="end">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">Фильтры</span>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => { resetFilters(); clearSmartSearch(); }}>
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Сбросить
+                  </Button>
+                )}
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Статус</Label>
+                  <Button variant="ghost" size="sm" onClick={selectAllStatuses} className="h-5 text-[10px] px-1.5">
+                    {statusFilter.length === STATUSES.length ? "Снять" : "Все"}
+                  </Button>
+                </div>
+                <div className="space-y-1 max-h-[160px] overflow-y-auto">
+                  {STATUSES.map((status) => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-status-${status}`}
+                        checked={statusFilter.includes(status)}
+                        onCheckedChange={(checked) => {
+                          if (checked) setStatusFilter([...statusFilter, status]);
+                          else setStatusFilter(statusFilter.filter((s) => s !== status));
+                        }}
+                        className="h-3.5 w-3.5"
+                      />
+                      <label htmlFor={`filter-status-${status}`} className="text-xs cursor-pointer">{status}</label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Hide delivered toggle — right after statuses */}
+              <div className="flex items-center gap-2 py-1 px-2 bg-muted/30 rounded-md">
+                <Switch
+                  id="hideDeliveredFilter"
+                  checked={hideDelivered}
+                  onCheckedChange={setHideDelivered}
+                  className="scale-75 shrink-0"
+                />
+                <Label htmlFor="hideDeliveredFilter" className="cursor-pointer text-xs flex items-center gap-1.5">
+                  {hideDelivered ? <EyeOff className="h-3 w-3 text-muted-foreground" /> : <Eye className="h-3 w-3 text-muted-foreground" />}
+                  <span>Скрыть доставленные</span>
+                  {deliveredCount > 0 && hideDelivered && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px]">{deliveredCount}</Badge>
+                  )}
+                </Label>
+              </div>
+
+              {/* Object */}
+              {availableObjects.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Объект</Label>
+                  <Select value={objectFilter} onValueChange={setObjectFilter}>
+                    <SelectTrigger className="text-xs h-8">
+                      <div className="flex items-center gap-1 truncate">
+                        <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        <SelectValue placeholder="Объект" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-background max-h-[200px]">
+                      <SelectItem value="all" className="text-xs">Все объекты</SelectItem>
+                      {availableObjects.map((obj) => (
+                        <SelectItem key={obj.id} value={obj.id} className="text-xs">{obj.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Year */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Год</Label>
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue placeholder="Год" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background">
+                    <SelectItem value="all" className="text-xs">Все годы</SelectItem>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Applicant */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Контрагент</Label>
+                <Select value={applicantFilter} onValueChange={setApplicantFilter}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue placeholder="Контрагент" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background max-h-[200px]">
+                    <SelectItem value="all" className="text-xs">Все</SelectItem>
+                    {uniqueApplicants.map((applicant) => (
+                      <SelectItem key={applicant} value={applicant} className="text-xs">{applicant}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Saved Filters */}
+              <div className="border-t pt-3">
+                <SavedFiltersDropdown
+                  currentFilters={currentFilters}
+                  onApplyFilter={(filters) => {
+                    applyFilters({
+                      searchQuery: filters.searchQuery || "",
+                      statusFilter: filters.statusFilter || [],
+                      priorityFilter: filters.priorityFilter || "all",
+                      yearFilter: filters.yearFilter || "all",
+                      applicantFilter: filters.applicantFilter || "all",
+                      hideDelivered: filters.hideDelivered ?? true,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Button
           variant={hasActiveFilters ? "destructive" : "outline"}
           size="sm"
@@ -241,7 +390,7 @@ export const RequestsFilters = ({
 
       {/* Smart search indicator */}
       {isSmartSearchActive && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-md text-sm">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-md text-sm">
           <Sparkles className="h-4 w-4 text-primary" />
           <span>Умный поиск активен</span>
           <Button variant="ghost" size="sm" className="h-6 px-2 ml-auto" onClick={clearSmartSearch}>
@@ -251,169 +400,13 @@ export const RequestsFilters = ({
         </div>
       )}
 
-      {/* === LEVEL 5: Quick Filters === */}
+      {/* Quick Filters */}
       <QuickFilters
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         priorityFilter={priorityFilter}
         setPriorityFilter={setPriorityFilter}
       />
-
-      {/* === LEVEL 6: Advanced Filters === */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {/* Saved filters */}
-        <SavedFiltersDropdown
-          currentFilters={currentFilters}
-          onApplyFilter={(filters) => {
-            applyFilters({
-              searchQuery: filters.searchQuery || "",
-              statusFilter: filters.statusFilter || [],
-              priorityFilter: filters.priorityFilter || "all",
-              yearFilter: filters.yearFilter || "all",
-              applicantFilter: filters.applicantFilter || "all",
-              hideDelivered: filters.hideDelivered ?? true,
-            });
-          }}
-        />
-
-        {/* Status Filter */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="justify-between text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
-              <span className="truncate">
-                {statusFilter.length === 0 ? "Статус" : `Статус (${statusFilter.length})`}
-              </span>
-              {statusFilter.length > 0 && (
-                <X
-                  className="h-3 w-3 sm:h-4 sm:w-4 ml-1 shrink-0"
-                  onClick={(e) => { e.stopPropagation(); setStatusFilter([]); }}
-                />
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] sm:w-[250px] p-3 sm:p-4 bg-background z-50" align="start">
-            <div className="space-y-2 sm:space-y-3">
-              <Label className="text-xs sm:text-sm font-semibold">Выберите статусы</Label>
-              <Button variant="outline" size="sm" onClick={selectAllStatuses} className="w-full text-xs sm:text-sm h-8">
-                {statusFilter.length === STATUSES.length ? "Снять всё" : "Выбрать всё"}
-              </Button>
-              <div className="space-y-1.5 sm:space-y-2 max-h-[200px] overflow-y-auto">
-                {STATUSES.map((status) => (
-                  <div key={status} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`status-${status}`}
-                      checked={statusFilter.includes(status)}
-                      onCheckedChange={(checked) => {
-                        if (checked) setStatusFilter([...statusFilter, status]);
-                        else setStatusFilter(statusFilter.filter((s) => s !== status));
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <label htmlFor={`status-${status}`} className="text-xs sm:text-sm cursor-pointer">{status}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Applicant Filter */}
-        <Select value={applicantFilter} onValueChange={setApplicantFilter}>
-          <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0 w-auto max-w-[160px]">
-            <SelectValue placeholder="Контрагент" />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-background max-h-[200px]">
-            <SelectItem value="all" className="text-xs sm:text-sm">Все</SelectItem>
-            {uniqueApplicants.map((applicant) => (
-              <SelectItem key={applicant} value={applicant} className="text-xs sm:text-sm">{applicant}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Object Filter (dropdown) */}
-        {availableObjects.length > 0 && (
-          <Select value={objectFilter} onValueChange={setObjectFilter}>
-            <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0 w-auto max-w-[180px]">
-              <div className="flex items-center gap-1 truncate">
-                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <SelectValue placeholder="Объект" />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="z-50 bg-background max-h-[200px]">
-              <SelectItem value="all" className="text-xs sm:text-sm">Все объекты</SelectItem>
-              {availableObjects.map((obj) => (
-                <SelectItem key={obj.id} value={obj.id} className="text-xs sm:text-sm">{obj.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {/* Year Filter */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 min-w-0">
-              <span className="truncate">{yearFilter === "all" ? "Год" : yearFilter}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] sm:w-[250px] p-3 sm:p-4 bg-background z-50" align="start">
-            <div className="space-y-2 sm:space-y-3">
-              <Label className="text-xs sm:text-sm font-semibold">Выберите год</Label>
-              <Select value={yearFilter} onValueChange={setYearFilter}>
-                <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-9">
-                  <SelectValue placeholder="Год" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-background">
-                  <SelectItem value="all" className="text-xs sm:text-sm">Все годы</SelectItem>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year} className="text-xs sm:text-sm">{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="space-y-2 border-t pt-2 sm:pt-3">
-                <Label className="text-xs sm:text-sm font-semibold">Добавить год</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder="2026"
-                    value={newYear}
-                    onChange={(e) => setNewYear(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleAddYear(); }}
-                    className="text-xs sm:text-sm h-8"
-                  />
-                  <Button onClick={handleAddYear} size="sm" className="h-8 text-xs sm:text-sm px-2 sm:px-3">+</Button>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Spacer to push right-side items */}
-        <div className="flex-1" />
-
-        {/* Hide Delivered */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-muted/30 px-2 sm:px-3 py-1.5 rounded-md min-w-0">
-          <Switch
-            id="hideDelivered"
-            checked={hideDelivered}
-            onCheckedChange={setHideDelivered}
-            className="scale-75 sm:scale-90 shrink-0"
-          />
-          <Label 
-            htmlFor="hideDelivered" 
-            className="cursor-pointer text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 truncate"
-          >
-            {hideDelivered ? (
-              <EyeOff className="h-3 w-3 text-muted-foreground shrink-0" />
-            ) : (
-              <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
-            )}
-            <span className="truncate hidden sm:inline">Скрыть доставл.</span>
-            {deliveredCount > 0 && hideDelivered && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-0.5 shrink-0">{deliveredCount}</Badge>
-            )}
-          </Label>
-        </div>
-      </div>
     </div>
   );
 };
