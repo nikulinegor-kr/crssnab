@@ -380,6 +380,12 @@ export default function WarehousePage() {
               <Button onClick={() => openMovementDialog("MOVE")} size="sm" variant="outline">
                 <ArrowRightLeft className="h-4 w-4 mr-1" /> Перемещение
               </Button>
+              <Button onClick={() => openMovementDialog("INVENTORY")} size="sm" variant="outline">
+                <ClipboardCheck className="h-4 w-4 mr-1" /> Инвентаризация
+              </Button>
+              <Button onClick={() => navigate("/warehouse/journal")} size="sm" variant="ghost">
+                <BookOpen className="h-4 w-4 mr-1" /> Журнал
+              </Button>
             </div>
           </div>
 
