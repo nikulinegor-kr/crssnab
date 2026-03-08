@@ -563,6 +563,13 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
         {/* 4. Status & Responsibles */}
         <StatusResponsiblesSection
+          form={form}
+          statuses={statuses}
+          priorities={priorities}
+          applicants={applicants}
+          executors={executors}
+          currentOrgId={currentOrgId}
+        />
 
         {/* 5. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
