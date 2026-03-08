@@ -19,6 +19,8 @@ import {
   ShoppingCart,
   Truck,
   Layers,
+  Boxes,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
