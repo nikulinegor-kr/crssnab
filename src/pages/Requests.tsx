@@ -59,6 +59,8 @@ const Requests = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateInitialData, setDuplicateInitialData] = useState<any>(null);
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -112,6 +114,45 @@ const Requests = () => {
     e.stopPropagation();
     setRequestToDelete(request);
     setShowDeleteDialog(true);
+  };
+
+  const handleDuplicateClick = (request: Request) => {
+    setDuplicateInitialData({
+      description: request.description,
+      status: request.status,
+      priority: request.priority || undefined,
+      applicant: request.applicant || undefined,
+      executor: request.executor || undefined,
+      object_id: request.object_id || undefined,
+      contractor: request.contractor || undefined,
+      transport_company: request.transport_company || undefined,
+      comments: request.comments || undefined,
+      amount: request.amount || undefined,
+      invoice_number: request.invoice_number || undefined,
+    });
+    setDuplicateDialogOpen(true);
+  };
+
+  const handleCreateProcurement = async (request: Request) => {
+    if (!currentOrgId) return;
+    try {
+      await createProcurement.mutateAsync([{
+        request_id: request.id,
+        name: request.description,
+        qty: 1,
+        price: Number(request.amount) || 0,
+      }]);
+      toast({
+        title: "Поставка создана",
+        description: `Создана поставка для заявки "${request.description}"`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать поставку",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBulkDelete = () => {
@@ -373,6 +414,8 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onDuplicateClick={handleDuplicateClick}
+              onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
@@ -435,6 +478,8 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onDuplicateClick={handleDuplicateClick}
+              onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
             />
           </Card>
@@ -459,12 +504,14 @@ const Requests = () => {
                 selectedRequestIds={selectedRequestIds}
                 toggleRequestSelection={toggleRequestSelection}
                 toggleAllRequests={toggleAllRequests}
-                onDeleteClick={handleDeleteClick}
-                onEditClick={handleEditClick}
-                searchQuery=""
-                favoriteIds={favoriteIds}
-                onToggleFavorite={toggleFavorite}
-              />
+              onDeleteClick={handleDeleteClick}
+              onEditClick={handleEditClick}
+              onDuplicateClick={handleDuplicateClick}
+              onCreateProcurement={handleCreateProcurement}
+              searchQuery=""
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
+            />
             </Card>
           )}
         </div>
@@ -483,6 +530,19 @@ const Requests = () => {
 
       {canCreate && (
         <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <span className="hidden" />
+        </CreateRequestDialog>
+      )}
+
+      {duplicateInitialData && (
+        <CreateRequestDialog
+          open={duplicateDialogOpen}
+          onOpenChange={(open) => {
+            setDuplicateDialogOpen(open);
+            if (!open) setDuplicateInitialData(null);
+          }}
+          initialData={duplicateInitialData}
+        >
           <span className="hidden" />
         </CreateRequestDialog>
       )}
