@@ -314,6 +314,33 @@ export default function EquipmentPage() {
         />
       </div>
 
+      {uniqueBrands.length > 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          <Button
+            variant={brandFilter === null ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setBrandFilter(null)}
+          >
+            Все ({equipment.length})
+          </Button>
+          {uniqueBrands.map((b) => {
+            const count = equipment.filter((e: any) => e.brand?.toUpperCase() === b).length;
+            return (
+              <Button
+                key={b}
+                variant={brandFilter === b ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setBrandFilter(brandFilter === b ? null : b)}
+              >
+                {b} ({count})
+              </Button>
+            );
+          })}
+        </div>
+      )}
+
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
           <span className="text-sm font-medium">Выбрано: {selectedIds.size}</span>
