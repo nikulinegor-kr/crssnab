@@ -102,7 +102,7 @@ export const RequestsMiniDashboard = ({
       icon: <AlertTriangle className="h-3.5 w-3.5" />,
       color: "text-red-600 dark:text-red-400",
       iconBg: "bg-red-100 dark:bg-red-900/50",
-      bgColor: "bg-background border-border/60 hover:border-red-300 dark:hover:border-red-700",
+      bgColor: "bg-card border-border/40 shadow-sm hover:shadow-md hover:border-red-300 dark:hover:border-red-700",
       activeColor: "bg-red-50 dark:bg-red-950/60 border-red-400 dark:border-red-600 ring-1 ring-red-200 dark:ring-red-800",
       type: "priority",
       value: "Аварийно",
