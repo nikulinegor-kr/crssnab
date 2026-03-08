@@ -182,14 +182,16 @@ export default function EquipmentPage() {
         const row = rows[i];
         if (!row || !row[0]) continue;
 
-        const rBrand = String(row[0] || "").trim();
-        const rModel = String(row[1] || "").trim();
+        const rawName = String(row[0] || "").trim();
+        const spaceIdx = rawName.indexOf(" ");
+        const rBrand = spaceIdx > 0 ? rawName.substring(0, spaceIdx).trim() : rawName;
+        const rModel = spaceIdx > 0 ? rawName.substring(spaceIdx + 1).trim() : "";
+        const rPlate = String(row[1] || "").trim() || null;
         const rVin = String(row[2] || "").trim().toUpperCase() || null;
         const rYear = row[3] ? parseInt(String(row[3])) : null;
-        const rPlate = String(row[4] || "").trim() || null;
-        const rComment = String(row[5] || "").trim() || null;
+        const rComment = String(row[4] || "").trim() || null;
 
-        if (!rBrand || !rModel) { skipped++; continue; }
+        if (!rBrand) { skipped++; continue; }
 
         // Check duplicate brand+model
         const key = `${rBrand.toLowerCase()}|${rModel.toLowerCase()}`;
