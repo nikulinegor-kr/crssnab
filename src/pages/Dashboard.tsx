@@ -357,6 +357,9 @@ const Dashboard = () => {
           </Tabs>
         )}
 
+        {/* Low Stock Widget */}
+        <LowStockWidget />
+
         {/* Дополнительные виджеты - вторая линия */}
         {!isLoading && filteredRequests.length > 0 && (settings.dashboard.showCalendarWidget || settings.dashboard.showEmergencyWidget) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
