@@ -169,6 +169,9 @@ export default function WarehousePage() {
         case "IN_TRANSIT":
           entry.inTransit += m.quantity;
           break;
+        case "INVENTORY":
+          entry.stock += m.quantity; // Корректирующая запись (может быть +/-)
+          break;
       }
     }
 
