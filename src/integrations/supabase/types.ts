@@ -2058,8 +2058,10 @@ export type Database = {
           email: string | null
           id: string
           inn: string | null
+          kpp: string | null
           name: string
           notes: string | null
+          ogrn: string | null
           organization_id: string
           phone: string | null
           status: string
@@ -2074,8 +2076,10 @@ export type Database = {
           email?: string | null
           id?: string
           inn?: string | null
+          kpp?: string | null
           name: string
           notes?: string | null
+          ogrn?: string | null
           organization_id: string
           phone?: string | null
           status?: string
@@ -2090,8 +2094,10 @@ export type Database = {
           email?: string | null
           id?: string
           inn?: string | null
+          kpp?: string | null
           name?: string
           notes?: string | null
+          ogrn?: string | null
           organization_id?: string
           phone?: string | null
           status?: string
