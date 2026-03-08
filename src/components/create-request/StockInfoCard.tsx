@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Truck, Lock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Package, Truck, Lock, CheckCircle, AlertTriangle, Warehouse } from "lucide-react";
 
 interface StockInfoCardProps {
   productId: string;
@@ -9,6 +9,32 @@ interface StockInfoCardProps {
 }
 
 export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockInfoCardProps) => {
+  const { data: product } = useQuery({
+    queryKey: ["product-info", productId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("warehouse_products")
+        .select("name, article")
+        .eq("id", productId)
+        .single();
+      return data;
+    },
+    enabled: !!productId,
+  });
+
+  const { data: warehouse } = useQuery({
+    queryKey: ["warehouse-info", warehouseId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("warehouses")
+        .select("name, request_objects(name)")
+        .eq("id", warehouseId!)
+        .single();
+      return data;
+    },
+    enabled: !!warehouseId,
+  });
+
   const { data: stockInfo, isLoading } = useQuery({
     queryKey: ["stock-info", productId, warehouseId, organizationId],
     queryFn: async () => {
@@ -70,6 +96,12 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
 
   const noStock = stockInfo.inStock <= 0 && stockInfo.inTransit <= 0;
 
+  const warehouseName = warehouse
+    ? (warehouse as any).request_objects?.name
+      ? `${(warehouse as any).request_objects.name} — ${warehouse.name}`
+      : warehouse.name
+    : null;
+
   const items = [
     { label: "Остаток", value: stockInfo.inStock, icon: Package, color: "text-foreground" },
     { label: "В пути", value: stockInfo.inTransit, icon: Truck, color: "text-blue-600 dark:text-blue-400" },
@@ -79,7 +111,22 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
 
   return (
     <div className="space-y-2">
-      <div className="rounded-md border border-border/50 bg-muted/30 p-3">
+      <div className="rounded-md border border-border/50 bg-muted/30 p-3 space-y-2">
+        {/* Product + Warehouse header */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          {product && (
+            <span className="font-medium text-foreground truncate">
+              {product.name} {product.article ? `(${product.article})` : ""}
+            </span>
+          )}
+          {warehouseName && (
+            <span className="flex items-center gap-1 shrink-0 ml-2">
+              <Warehouse className="h-3 w-3" />
+              {warehouseName}
+            </span>
+          )}
+        </div>
+
         <div className="grid grid-cols-4 gap-2">
           {items.map((item) => (
             <div key={item.label} className="text-center space-y-1">
