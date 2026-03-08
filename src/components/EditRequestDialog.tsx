@@ -365,7 +365,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         operation_type: (request as any).operation_type || "",
         planned_delivery_date: (request as any).planned_delivery_date || "",
         reserve_on_warehouse: (request as any).reserve_on_warehouse || false,
-        request_type: (request as any).request_type || "",
         equipment_id: (request as any).equipment_id || "",
       });
       
