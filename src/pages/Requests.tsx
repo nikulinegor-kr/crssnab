@@ -136,17 +136,12 @@ const Requests = () => {
   const handleCreateProcurement = async (request: Request) => {
     if (!currentOrgId) return;
     try {
-      await createProcurement.mutateAsync({
-        organization_id: currentOrgId,
-        name: `Поставка: ${request.description}`,
-        items: [{
-          request_id: request.id,
-          name: request.description,
-          qty: request.quantity || 1,
-          price: Number(request.amount) || 0,
-          total: (request.quantity || 1) * (Number(request.amount) || 0),
-        }],
-      });
+      await createProcurement.mutateAsync([{
+        request_id: request.id,
+        name: request.description,
+        qty: 1,
+        price: Number(request.amount) || 0,
+      }]);
       toast({
         title: "Поставка создана",
         description: `Создана поставка для заявки "${request.description}"`,
