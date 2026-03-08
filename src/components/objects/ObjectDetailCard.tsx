@@ -23,6 +23,7 @@ interface ObjectDetailCardProps {
   onBack: () => void;
   onEdit?: (obj: any) => void;
   onArchive?: (id: string) => void;
+  onDelete?: (obj: any) => void;
 }
 
 const DOC_TYPES = ["Контракт", "Договор", "Счёт", "КП", "Фото", "Другое"];
