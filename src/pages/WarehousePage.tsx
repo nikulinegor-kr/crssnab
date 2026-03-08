@@ -19,7 +19,7 @@ import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT";
+type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT" | "INVENTORY";
 
 const TYPE_LABELS: Record<string, string> = {
   IN: "Приход",
@@ -29,6 +29,7 @@ const TYPE_LABELS: Record<string, string> = {
   MOVE_IN: "Перемещение (приход)",
   MOVE_OUT: "Перемещение (расход)",
   IN_TRANSIT: "В пути",
+  INVENTORY: "Инвентаризация",
 };
 
 const TYPE_COLORS: Record<string, string> = {
