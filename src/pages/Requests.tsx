@@ -403,7 +403,7 @@ const Requests = () => {
           />
 
           {/* LEVEL 7: Table */}
-          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+          <Card className="p-2 sm:p-3 md:p-4 overflow-hidden">
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -420,6 +420,12 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
+              headerActions={
+                <ExcelExportButton
+                  requests={requests || []}
+                  filteredRequests={filters.filteredRequests}
+                />
+              }
             />
           </Card>
         </div>
