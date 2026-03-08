@@ -356,8 +356,60 @@ serve(async (req) => {
     console.log("User authenticated:", user.id);
 
     const requestBody = await req.json();
+
+    // Handle ZRS document sending
+    if (requestBody.action === "send_zrs_document") {
+      const { organization_id, document_url, file_name, caption } = requestBody;
+      if (!organization_id || !document_url) {
+        return new Response(
+          JSON.stringify({ error: "Не указаны обязательные параметры" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("telegram_bot_token, telegram_chat_id")
+        .eq("id", organization_id)
+        .single();
+
+      if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
+        return new Response(
+          JSON.stringify({ error: "Telegram не настроен для организации" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Generate signed URL for the document
+      let signedDocUrl = document_url;
+      try {
+        const url = new URL(document_url);
+        const pathParts = url.pathname.split('/');
+        const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+        if (bucketIndex !== -1) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/');
+          const { data: signedData } = await supabase.storage
+            .from('request-documents')
+            .createSignedUrl(filePath, 86400);
+          if (signedData?.signedUrl) signedDocUrl = signedData.signedUrl;
+        }
+      } catch (e) {
+        console.error("Error creating signed URL for ZRS:", e);
+      }
+
+      const result = await sendTelegramRequest(org.telegram_bot_token, "sendDocument", {
+        chat_id: org.telegram_chat_id,
+        document: signedDocUrl,
+        caption: caption || `📋 ${file_name || "Счёт с ЗРС"}`,
+        parse_mode: "HTML",
+      });
+
+      return new Response(JSON.stringify({ success: result.ok, result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     
-    // Validate input
+    // Validate input for standard request notification
     const schema = z.object({
       requestId: z.string().uuid(),
       mode: z.enum(["auto", "send", "edit"]).optional().default("auto"),
