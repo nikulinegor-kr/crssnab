@@ -94,6 +94,41 @@ export const RequestsBulkActions = ({
     enabled: !!currentOrgId,
   });
 
+  // Fetch objects
+  const { data: objects } = useQuery({
+    queryKey: ["request-objects", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .eq("archived", false)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const handleBulkObjectUpdate = async (objectId: string) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const { error } = await supabase
+        .from("requests")
+        .update({ object_id: objectId })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Объект обновлён", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleBulkStatusUpdate = async (newStatus: string) => {
     if (selectedRequestIds.size === 0) return;
     setIsSending(true);
