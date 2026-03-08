@@ -534,6 +534,19 @@ const Requests = () => {
         </CreateRequestDialog>
       )}
 
+      {duplicateInitialData && (
+        <CreateRequestDialog
+          open={duplicateDialogOpen}
+          onOpenChange={(open) => {
+            setDuplicateDialogOpen(open);
+            if (!open) setDuplicateInitialData(null);
+          }}
+          initialData={duplicateInitialData}
+        >
+          <span className="hidden" />
+        </CreateRequestDialog>
+      )}
+
       <Button
         onClick={() => navigate("/chat")}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
