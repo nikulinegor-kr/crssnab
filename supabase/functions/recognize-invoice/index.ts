@@ -25,12 +25,12 @@ Deno.serve(async (req) => {
     const isFinanceMode = mode === "finance";
 
     const systemPrompt = isFinanceMode
-      ? `You are an invoice/receipt parser. Extract the following financial details from the document.
+      ? `You are an invoice/receipt parser for Russian documents. Extract the following financial details from the document.
 Return ONLY a JSON object with this structure:
 {"contractor": "string or empty", "invoice_number": "string or empty", "amount": number or null}
-- "contractor" is the supplier/vendor company name (контрагент / поставщик)
-- "invoice_number" is the invoice number (номер счёта)
-- "amount" is the total amount in the document (сумма, итого)
+- "contractor" is the SUPPLIER (Поставщик) company name. Look for the field labeled "Поставщик" or "Продавец". It typically starts with "ООО", "ИП", "АО", "ПАО", "ЗАО" followed by the company name in quotes. Extract the full legal name including the organizational form (e.g. "ООО \"Компания\"", "ИП Иванов И.И."). Do NOT use the "Покупатель" (buyer) field.
+- "invoice_number" is the invoice number (номер счёта). Look for "Счет №" or "Счёт на оплату №" in the document header.
+- "amount" is the total amount (Итого / Всего к оплате) as a number without currency symbols.
 Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`
       : `You are an invoice/receipt parser. Extract line items from the document. 
 Return ONLY a JSON object with this structure:
