@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { UseFormReturn } from "react-hook-form";
 import {
   FormControl,
@@ -15,9 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/decimal-input";
+import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
-import { Banknote } from "lucide-react";
+import { Banknote, ScanText, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +36,8 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [isRecognizing, setIsRecognizing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddContractor = async (name: string) => {
     if (!currentOrgId) {
@@ -76,6 +80,61 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
     queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRecognizeInvoice = async (file: File) => {
+    setIsRecognizing(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("recognize-invoice", {
+        body: { file: base64, fileName: file.name, fileType: file.type, mode: "finance" },
+      });
+      if (error) throw error;
+
+      let filled = 0;
+
+      if (data?.contractor) {
+        // Try to match supplier by name
+        const match = suppliers?.find(s => 
+          s.name.toLowerCase().includes(data.contractor.toLowerCase()) ||
+          data.contractor.toLowerCase().includes(s.name.toLowerCase())
+        );
+        if (match) {
+          form.setValue("contractor", match.id);
+        } else {
+          form.setValue("contractor", data.contractor);
+        }
+        filled++;
+      }
+      if (data?.invoice_number) {
+        form.setValue("invoice_number", data.invoice_number);
+        filled++;
+      }
+      if (data?.amount != null) {
+        form.setValue("amount", data.amount);
+        filled++;
+      }
+
+      if (filled > 0) {
+        toast({ title: "Распознано", description: `Заполнено ${filled} полей из документа` });
+      } else {
+        toast({ title: "Не удалось распознать", description: "Данные не найдены в документе", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Ошибка распознавания", description: err.message || "Не удалось обработать документ", variant: "destructive" });
+    } finally {
+      setIsRecognizing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <FormSectionCard 
       title="Финансы" 
@@ -84,6 +143,35 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
       titleClassName="text-base font-semibold"
     >
       <div className="space-y-3 sm:space-y-4">
+        {/* Recognize invoice button */}
+        <div className="flex justify-end">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleRecognizeInvoice(f);
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || isRecognizing}
+            className="h-8"
+          >
+            {isRecognizing ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            ) : (
+              <ScanText className="h-3.5 w-3.5 mr-1" />
+            )}
+            Распознать счёт
+          </Button>
+        </div>
+
         {/* Contractor */}
         <FormField
           control={form.control}

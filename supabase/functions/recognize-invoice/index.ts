@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { file, fileName, fileType } = await req.json();
+    const { file, fileName, fileType, mode } = await req.json();
 
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
@@ -22,21 +22,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    const messages: any[] = [
-      {
-        role: "system",
-        content: `You are an invoice/receipt parser. Extract line items from the document. 
+    const isFinanceMode = mode === "finance";
+
+    const systemPrompt = isFinanceMode
+      ? `You are an invoice/receipt parser. Extract the following financial details from the document.
+Return ONLY a JSON object with this structure:
+{"contractor": "string or empty", "invoice_number": "string or empty", "amount": number or null}
+- "contractor" is the supplier/vendor company name (контрагент / поставщик)
+- "invoice_number" is the invoice number (номер счёта)
+- "amount" is the total amount in the document (сумма, итого)
+Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`
+      : `You are an invoice/receipt parser. Extract line items from the document. 
 Return ONLY a JSON object with this structure:
 {"items": [{"article": "string or empty", "name": "string", "quantity": number}]}
 - "article" is the part number / SKU / артикул
 - "name" is the product/item name
 - "quantity" is the quantity (default 1 if not specified)
-Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`,
-      },
+Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`;
+
+    const userPrompt = isFinanceMode
+      ? "Extract the contractor name, invoice number, and total amount from this invoice:"
+      : "Extract all line items (article, name, quantity) from this invoice:";
+
+    const messages: any[] = [
+      { role: "system", content: systemPrompt },
       {
         role: "user",
         content: [
-          { type: "text", text: "Extract all line items (article, name, quantity) from this invoice:" },
+          { type: "text", text: userPrompt },
           { type: "image_url", image_url: { url: file } },
         ],
       },
@@ -66,9 +79,9 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
     let parsed;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
-      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { items: [] };
+      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : isFinanceMode ? {} : { items: [] };
     } catch {
-      parsed = { items: [] };
+      parsed = isFinanceMode ? {} : { items: [] };
     }
 
     return new Response(JSON.stringify(parsed), {
