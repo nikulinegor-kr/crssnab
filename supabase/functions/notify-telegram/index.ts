@@ -538,9 +538,11 @@ serve(async (req) => {
           })
           .eq("id", requestId);
 
-        // Send invoice to separate chat if configured and invoice_number exists
+        // Send invoice to separate chat if configured and status is "Счёт в Бухгалтерии"
         const invoiceChatId = org.telegram_invoice_chat_id;
-        if (invoiceChatId && request.invoice_number) {
+        const invoiceStatus = request.status?.toLowerCase() || "";
+        const isInvoiceStatusForChat = invoiceStatus.includes("счёт в бухгалтерии") || invoiceStatus.includes("счет в бухгалтерии");
+        if (invoiceChatId && isInvoiceStatusForChat) {
           console.log("Sending invoice notification to separate chat:", invoiceChatId);
           
           const invoiceLines: string[] = [];
