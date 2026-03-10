@@ -569,10 +569,11 @@ serve(async (req) => {
           
           const invoiceMessage = invoiceLines.join("\n");
           
-          await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
+          const invoiceSendResult = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
             chat_id: invoiceChatId,
             text: invoiceMessage,
           });
+          console.log("Invoice chat send result:", JSON.stringify(invoiceSendResult));
 
           // Also send document files to invoice chat if available
           const invoiceDocUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
