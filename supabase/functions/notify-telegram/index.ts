@@ -405,6 +405,99 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Handle send to invoice chat only
+    if (requestBody.action === "send_to_invoice_chat") {
+      const { requestId } = requestBody;
+      if (!requestId) {
+        return new Response(
+          JSON.stringify({ error: "Не указан requestId" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: req, error: reqErr } = await supabase
+        .from("requests")
+        .select("*, organizations!inner(telegram_bot_token, telegram_invoice_chat_id)")
+        .eq("id", requestId)
+        .single();
+
+      if (reqErr || !req) {
+        return new Response(
+          JSON.stringify({ error: "Заявка не найдена" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const reqOrg = req.organizations;
+      if (!reqOrg?.telegram_bot_token || !reqOrg?.telegram_invoice_chat_id) {
+        return new Response(
+          JSON.stringify({ error: "Telegram Buh чат не настроен" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Build invoice message
+      const invoiceLines: string[] = [];
+      invoiceLines.push(`💰 Счёт на оплату`);
+      invoiceLines.push("");
+      invoiceLines.push(`🧾 Заявка — ${req.description}`);
+      if (req.contractor) invoiceLines.push(`🏢 Контрагент — ${req.contractor}`);
+      if (req.invoice_number) invoiceLines.push(`📄 № счёта — ${req.invoice_number}`);
+      if (req.amount) invoiceLines.push(`💵 Сумма — ${Number(req.amount).toLocaleString("ru-RU")} ₽`);
+      if (req.payment_percentage != null) invoiceLines.push(`📊 Оплата — ${req.payment_percentage}%`);
+      if (req.payment_status) invoiceLines.push(`📋 Статус оплаты — ${req.payment_status}`);
+      if (req.applicant) {
+        invoiceLines.push("");
+        invoiceLines.push(`👤 Заявитель — ${req.applicant}`);
+      }
+
+      const invoiceKeyboard = {
+        inline_keyboard: [
+          [{ text: "✅ Отписать в оплату", callback_data: `invoice_approve_${requestId.substring(0, 20)}` }],
+        ]
+      };
+
+      const sendResult = await sendTelegramRequest(reqOrg.telegram_bot_token, "sendMessage", {
+        chat_id: reqOrg.telegram_invoice_chat_id,
+        text: invoiceLines.join("\n"),
+        reply_markup: invoiceKeyboard,
+      });
+
+      // Also send document files
+      const docUrls = req.document_urls || (req.document_url ? [req.document_url] : []);
+      for (const docUrl of docUrls) {
+        if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
+          try {
+            let finalDocUrl = docUrl;
+            try {
+              const url = new URL(docUrl);
+              const pathParts = url.pathname.split('/');
+              const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+              if (bucketIndex !== -1) {
+                const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                const { data: signedData } = await supabase.storage
+                  .from('request-documents')
+                  .createSignedUrl(filePath, 86400);
+                if (signedData?.signedUrl) finalDocUrl = signedData.signedUrl;
+              }
+            } catch (e) { /* use original */ }
+
+            await sendTelegramRequest(reqOrg.telegram_bot_token, "sendDocument", {
+              chat_id: reqOrg.telegram_invoice_chat_id,
+              document: finalDocUrl,
+              caption: `📄 Счёт к заявке: ${req.description?.substring(0, 100) || ''}`,
+            });
+          } catch (e) {
+            console.error("Error sending doc to invoice chat:", e);
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ success: sendResult.ok, result: sendResult }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     
     // Validate input for standard request notification
     const schema = z.object({
