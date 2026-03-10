@@ -77,6 +77,7 @@ export default function RequestDetail() {
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [isSendingTelegramBuh, setIsSendingTelegramBuh] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
