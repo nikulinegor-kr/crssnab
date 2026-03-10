@@ -979,6 +979,40 @@ export default function RequestDetail() {
           </div>
         </div>
       </div>
+      {/* Revision Dialog */}
+      <Dialog open={revisionDialogOpen} onOpenChange={(open) => { setRevisionDialogOpen(open); if (!open) setRevisionComment(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>На доработку</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Укажите причину доработки…"
+            value={revisionComment}
+            onChange={(e) => setRevisionComment(e.target.value)}
+            className="min-h-[120px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRevisionDialogOpen(false); setRevisionComment(""); }}>
+              Отмена
+            </Button>
+            <Button
+              disabled={!revisionComment.trim()}
+              onClick={() => {
+                const prev = request?.comments || "";
+                const timestamp = new Date().toLocaleString("ru-RU");
+                const newComment = `[На доработку ${timestamp}]: ${revisionComment.trim()}`;
+                const combined = prev ? `${prev}\n\n${newComment}` : newComment;
+                handleUpdate({ comments: combined, status: "На доработке" });
+                setRevisionDialogOpen(false);
+                setRevisionComment("");
+                toast({ title: "Заявка отправлена на доработку" });
+              }}
+            >
+              Отправить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
