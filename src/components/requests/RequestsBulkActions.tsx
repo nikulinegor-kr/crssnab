@@ -583,6 +583,17 @@ export const RequestsBulkActions = ({
             </Button>
 
             <Button
+              onClick={handleSendToTelegramBuh}
+              disabled={isSending}
+              variant="outline"
+              className="gap-1.5 text-xs h-8 px-3"
+              size="sm"
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Telegram Buh</span>
+            </Button>
+
+            <Button
               onClick={onBulkDelete}
               variant="destructive"
               className="gap-1.5 text-xs h-8 px-3"
