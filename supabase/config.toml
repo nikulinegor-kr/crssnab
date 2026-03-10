@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.extract-supplier]
 verify_jwt = false
+
+[functions.resend-delivery-reminder]
+verify_jwt = false
