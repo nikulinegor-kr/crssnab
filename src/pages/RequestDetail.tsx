@@ -419,6 +419,30 @@ export default function RequestDetail() {
     }
   };
 
+  const handleSendTelegramBuh = async () => {
+    if (!id) return;
+    
+    setIsSendingTelegramBuh(true);
+    try {
+      const success = await notifyTelegramInvoiceChat(id);
+      if (success) {
+        toast({
+          title: "Успешно",
+          description: "Уведомление отправлено в Telegram Buh",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending telegram buh:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить уведомление",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTelegramBuh(false);
+    }
+  };
+
   const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
