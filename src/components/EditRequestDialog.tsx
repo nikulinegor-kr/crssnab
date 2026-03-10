@@ -97,6 +97,7 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
+  payment_percentage: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
@@ -468,6 +469,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
+        payment_percentage: data.payment_percentage ?? null,
         payment_status: data.payment_status || "Не выставлен",
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
@@ -681,6 +683,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
+        payment_percentage: data.payment_percentage ?? null,
         payment_status: data.payment_status || "Не выставлен",
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
