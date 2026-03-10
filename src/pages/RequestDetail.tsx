@@ -641,6 +641,17 @@ export default function RequestDetail() {
                 )}
                 Telegram Buh
               </Button>
+              {(request.status === "Счёт в бухгалтерии" || request.status === "Счёт в Бухгалтерии") && (
+                <Button
+                  onClick={() => setRevisionDialogOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                >
+                  <Edit className="h-4 w-4" />
+                  На доработку
+                </Button>
+              )}
             </div>
           )}
         </div>
