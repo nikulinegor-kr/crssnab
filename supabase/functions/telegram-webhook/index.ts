@@ -192,10 +192,7 @@ async function buildOriginalKeyboard(request: any, supabaseClient: any) {
     keyboard.push([{ text: "❌ ОТКЛОНЕНО", callback_data: "reject" }]);
   }
 
-  // Кнопка "Отписано в оплату" для статуса "Счёт в Бухгалтерии"
-  if (status.includes("счёт в бухгалтерии")) {
-    keyboard.push([{ text: "✅ Отписано в оплату", callback_data: "paid" }]);
-  }
+  // Кнопка "Отписано в оплату" убрана из основного чата — используется только в чате счетов
 
   // Кнопка открыть счёт
   if (status.includes("счёт в бухгалтерии") && documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
