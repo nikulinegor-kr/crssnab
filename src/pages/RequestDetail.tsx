@@ -627,6 +627,20 @@ export default function RequestDetail() {
                 )}
                 Telegram
               </Button>
+              <Button 
+                onClick={handleSendTelegramBuh} 
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingTelegramBuh}
+              >
+                {isSendingTelegramBuh ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Telegram Buh
+              </Button>
             </div>
           )}
         </div>
