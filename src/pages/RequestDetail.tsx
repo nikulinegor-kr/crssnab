@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   ArrowLeft, 
   Edit, 
@@ -79,6 +81,8 @@ export default function RequestDetail() {
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [isSendingTelegramBuh, setIsSendingTelegramBuh] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
+  const [revisionComment, setRevisionComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const dragCounterRef = useRef(0);
@@ -641,6 +645,17 @@ export default function RequestDetail() {
                 )}
                 Telegram Buh
               </Button>
+              {(request.status === "Счёт в бухгалтерии" || request.status === "Счёт в Бухгалтерии") && (
+                <Button
+                  onClick={() => setRevisionDialogOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                >
+                  <Edit className="h-4 w-4" />
+                  На доработку
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -964,6 +979,40 @@ export default function RequestDetail() {
           </div>
         </div>
       </div>
+      {/* Revision Dialog */}
+      <Dialog open={revisionDialogOpen} onOpenChange={(open) => { setRevisionDialogOpen(open); if (!open) setRevisionComment(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>На доработку</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Укажите причину доработки…"
+            value={revisionComment}
+            onChange={(e) => setRevisionComment(e.target.value)}
+            className="min-h-[120px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRevisionDialogOpen(false); setRevisionComment(""); }}>
+              Отмена
+            </Button>
+            <Button
+              disabled={!revisionComment.trim()}
+              onClick={() => {
+                const prev = request?.comments || "";
+                const timestamp = new Date().toLocaleString("ru-RU");
+                const newComment = `[На доработку ${timestamp}]: ${revisionComment.trim()}`;
+                const combined = prev ? `${prev}\n\n${newComment}` : newComment;
+                handleUpdate({ comments: combined, status: "На доработке" });
+                setRevisionDialogOpen(false);
+                setRevisionComment("");
+                toast({ title: "Заявка отправлена на доработку" });
+              }}
+            >
+              Отправить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
