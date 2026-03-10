@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
-import { notifyTelegram } from "@/lib/telegram";
+import { notifyTelegram, notifyTelegramInvoiceChat } from "@/lib/telegram";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
@@ -77,6 +77,7 @@ export default function RequestDetail() {
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [isSendingTelegramBuh, setIsSendingTelegramBuh] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -418,6 +419,30 @@ export default function RequestDetail() {
     }
   };
 
+  const handleSendTelegramBuh = async () => {
+    if (!id) return;
+    
+    setIsSendingTelegramBuh(true);
+    try {
+      const success = await notifyTelegramInvoiceChat(id);
+      if (success) {
+        toast({
+          title: "Успешно",
+          description: "Уведомление отправлено в Telegram Buh",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending telegram buh:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить уведомление",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTelegramBuh(false);
+    }
+  };
+
   const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -601,6 +626,20 @@ export default function RequestDetail() {
                   <Send className="h-4 w-4" />
                 )}
                 Telegram
+              </Button>
+              <Button 
+                onClick={handleSendTelegramBuh} 
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingTelegramBuh}
+              >
+                {isSendingTelegramBuh ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Telegram Buh
               </Button>
             </div>
           )}

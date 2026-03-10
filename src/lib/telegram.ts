@@ -43,3 +43,39 @@ export async function notifyTelegram(requestId: string, mode: "auto" | "send" | 
     return false;
   }
 }
+
+export async function notifyTelegramInvoiceChat(requestId: string) {
+  try {
+    console.log("Sending Telegram Buh notification for request:", requestId);
+    
+    const { data, error } = await supabase.functions.invoke("notify-telegram", {
+      body: { requestId, action: "send_to_invoice_chat" },
+    });
+
+    if (error) {
+      console.error("Error notifying Telegram Buh:", error);
+      toast({
+        title: "Ошибка отправки в Telegram Buh",
+        description: error.message || "Не удалось отправить уведомление",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (data?.success === false) {
+      console.error("Telegram Buh API error:", data.error);
+      toast({
+        title: "Ошибка Telegram Buh",
+        description: data.error || "Не удалось отправить уведомление",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    console.log("Telegram Buh notification sent successfully");
+    return true;
+  } catch (error) {
+    console.error("Error calling notify-telegram (invoice):", error);
+    return false;
+  }
+}
