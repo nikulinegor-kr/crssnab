@@ -477,14 +477,14 @@ async function handleCallbackQuery(callbackQuery: any) {
   }
 
   // Handle invoice chat "Отписать в оплату" button
-  if (data.startsWith("invoice_approve_")) {
-    const requestIdPart = data.replace("invoice_approve_", "");
-    console.log("Processing invoice_approve for request:", requestIdPart);
+  if (data.startsWith("inv_a_")) {
+    const requestId = data.replace("inv_a_", "");
+    console.log("Processing invoice_approve for request:", requestId);
     
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .filter("id::text", "like", `${requestIdPart}%`)
+      .eq("id", requestId)
       .maybeSingle();
     
     if (error || !request) {
@@ -516,7 +516,7 @@ async function handleCallbackQuery(callbackQuery: any) {
       text: updatedText,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "💰 Оплачено", callback_data: `invoice_paid_${requestIdPart}` }],
+          [{ text: "💰 Оплачено", callback_data: `inv_p_${requestId}` }],
         ]
       }
     });
@@ -529,14 +529,14 @@ async function handleCallbackQuery(callbackQuery: any) {
   }
 
   // Handle invoice chat "Оплачено" button
-  if (data.startsWith("invoice_paid_")) {
-    const requestIdPart = data.replace("invoice_paid_", "");
-    console.log("Processing invoice_paid for request:", requestIdPart);
+  if (data.startsWith("inv_p_")) {
+    const requestId = data.replace("inv_p_", "");
+    console.log("Processing invoice_paid for request:", requestId);
     
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .filter("id::text", "like", `${requestIdPart}%`)
+      .eq("id", requestId)
       .maybeSingle();
     
     if (error || !request) {
