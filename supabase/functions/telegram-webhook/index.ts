@@ -484,8 +484,8 @@ async function handleCallbackQuery(callbackQuery: any) {
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
-      .single();
+      .filter("id::text", "like", `${requestIdPart}%`)
+      .maybeSingle();
     
     if (error || !request) {
       console.error("Request not found:", error);
@@ -536,8 +536,8 @@ async function handleCallbackQuery(callbackQuery: any) {
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
-      .single();
+      .filter("id::text", "like", `${requestIdPart}%`)
+      .maybeSingle();
     
     if (error || !request) {
       console.error("Request not found:", error);
