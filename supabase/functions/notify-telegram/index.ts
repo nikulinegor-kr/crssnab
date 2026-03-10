@@ -454,7 +454,7 @@ serve(async (req) => {
 
       const invoiceKeyboard = {
         inline_keyboard: [
-          [{ text: "✅ Отписать в оплату", callback_data: `invoice_approve_${requestId.substring(0, 20)}` }],
+          [{ text: "✅ Отписать в оплату", callback_data: `inv_a_${requestId}` }],
         ]
       };
 
