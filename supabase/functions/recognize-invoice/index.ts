@@ -41,19 +41,51 @@ Return ONLY a JSON object with this structure:
 Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`;
 
     const userPrompt = isFinanceMode
-      ? "Extract the contractor name, invoice number, and total amount from this invoice:"
-      : "Extract all line items (article, name, quantity) from this invoice:";
+      ? "Extract the contractor name, invoice number, and total amount from this document:"
+      : "Extract all line items (article, name, quantity) from this document:";
+
+    // Parse the base64 data URL to extract mime type and raw base64
+    // Format: "data:<mime>;base64,<data>"
+    let mimeType = fileType || "image/png";
+    let base64Data = file;
+
+    if (file.startsWith("data:")) {
+      const match = file.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        mimeType = match[1];
+        base64Data = match[2];
+      }
+    }
+
+    const isPdf = mimeType === "application/pdf" || fileName?.toLowerCase()?.endsWith(".pdf");
+
+    // Build the user message content
+    const userContent: any[] = [
+      { type: "text", text: userPrompt },
+    ];
+
+    if (isPdf) {
+      // For PDFs, use inline_data format which Gemini supports natively
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:application/pdf;base64,${base64Data}`,
+        },
+      });
+    } else {
+      // For images, use the original data URL
+      userContent.push({
+        type: "image_url",
+        image_url: { url: file },
+      });
+    }
 
     const messages: any[] = [
       { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: userPrompt },
-          { type: "image_url", image_url: { url: file } },
-        ],
-      },
+      { role: "user", content: userContent },
     ];
+
+    console.log("Sending request to AI gateway, mimeType:", mimeType, "isPdf:", isPdf, "mode:", mode || "items");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -70,11 +102,13 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error("AI API error:", response.status, errText);
       throw new Error(`AI API error: ${response.status} ${errText}`);
     }
 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
+    console.log("AI response content:", content.substring(0, 500));
 
     let parsed;
     try {
@@ -88,6 +122,7 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    console.error("Function error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
