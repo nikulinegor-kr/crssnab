@@ -479,6 +479,110 @@ async function handleCallbackQuery(callbackQuery: any) {
     return;
   }
 
+  // Handle invoice chat "Отписать в оплату" button
+  if (data.startsWith("invoice_approve_")) {
+    const requestIdPart = data.replace("invoice_approve_", "");
+    console.log("Processing invoice_approve for request:", requestIdPart);
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !request) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    const now = new Date().toLocaleString("ru-RU");
+    const originalText = validated.message.text || "";
+    const updatedText = originalText + `\n\n✅ Отписано в оплату — @${username || fullName}, ${now}`;
+    
+    // Log activity
+    await supabase.from("request_activities").insert({
+      request_id: request.id,
+      organization_id: request.organization_id,
+      action: "invoice_sent_to_payment",
+      description: `✅ Отписано в оплату — @${username || fullName}, ${now}`,
+    });
+    
+    // Replace button with "Оплачено"
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: updatedText,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "💰 Оплачено", callback_data: `invoice_paid_${requestIdPart}` }],
+        ]
+      }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "✅ Отписано в оплату",
+    });
+    return;
+  }
+
+  // Handle invoice chat "Оплачено" button
+  if (data.startsWith("invoice_paid_")) {
+    const requestIdPart = data.replace("invoice_paid_", "");
+    console.log("Processing invoice_paid for request:", requestIdPart);
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*")
+      .like("id", `${requestIdPart}%`)
+      .single();
+    
+    if (error || !request) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    const now = new Date().toLocaleString("ru-RU");
+    
+    // Update status to "Оплачено"
+    await updateRequestStatus(request.id, "Оплачено", username, fullName);
+    await notifyGroupAboutStatusChange(request, "Оплачено", username, fullName);
+    
+    // Log activity
+    await supabase.from("request_activities").insert({
+      request_id: request.id,
+      organization_id: request.organization_id,
+      action: "invoice_marked_paid",
+      description: `💰 Оплачено — @${username || fullName}, ${now}`,
+    });
+    
+    const originalText = validated.message.text || "";
+    const updatedText = originalText + `\n\n💰 Оплачено — @${username || fullName}, ${now}`;
+    
+    // Remove keyboard
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: updatedText,
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "✅ Статус изменён на Оплачено!",
+    });
+    return;
+  }
+
   // Handle status change from inline keyboard
   if (data.startsWith("status_")) {
     const parts = data.split("_");
