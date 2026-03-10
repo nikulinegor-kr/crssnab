@@ -21,6 +21,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
   const [chatId, setChatId] = useState("");
   const [autoSendOnCreate, setAutoSendOnCreate] = useState(true);
   const [autoSendOnStatusChange, setAutoSendOnStatusChange] = useState(true);
+  const [invoiceChatId, setInvoiceChatId] = useState("");
 
   useEffect(() => {
     loadSettings();
