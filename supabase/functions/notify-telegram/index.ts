@@ -537,6 +537,71 @@ serve(async (req) => {
             telegram_message_ids: [newMessageId]
           })
           .eq("id", requestId);
+
+        // Send invoice to separate chat if configured and invoice_number exists
+        const invoiceChatId = org.telegram_invoice_chat_id;
+        if (invoiceChatId && request.invoice_number) {
+          console.log("Sending invoice notification to separate chat:", invoiceChatId);
+          
+          const invoiceLines: string[] = [];
+          invoiceLines.push(`💰 Счёт на оплату`);
+          invoiceLines.push("");
+          invoiceLines.push(`🧾 Заявка — ${request.description}`);
+          if (request.contractor) {
+            invoiceLines.push(`🏢 Контрагент — ${request.contractor}`);
+          }
+          invoiceLines.push(`📄 № счёта — ${request.invoice_number}`);
+          if (request.amount) {
+            invoiceLines.push(`💵 Сумма — ${Number(request.amount).toLocaleString("ru-RU")} ₽`);
+          }
+          if (request.payment_percentage != null) {
+            invoiceLines.push(`📊 Оплата — ${request.payment_percentage}%`);
+          }
+          if (request.payment_status) {
+            invoiceLines.push(`📋 Статус оплаты — ${request.payment_status}`);
+          }
+          if (request.applicant) {
+            invoiceLines.push("");
+            invoiceLines.push(`👤 Заявитель — ${request.applicant}`);
+          }
+          
+          const invoiceMessage = invoiceLines.join("\n");
+          
+          await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
+            chat_id: invoiceChatId,
+            text: invoiceMessage,
+          });
+
+          // Also send document files to invoice chat if available
+          const invoiceDocUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+          for (const docUrl of invoiceDocUrls) {
+            if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
+              try {
+                let finalDocUrl = docUrl;
+                try {
+                  const url = new URL(docUrl);
+                  const pathParts = url.pathname.split('/');
+                  const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+                  if (bucketIndex !== -1) {
+                    const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                    const { data: signedData } = await supabase.storage
+                      .from('request-documents')
+                      .createSignedUrl(filePath, 86400);
+                    if (signedData?.signedUrl) finalDocUrl = signedData.signedUrl;
+                  }
+                } catch (e) { /* use original */ }
+
+                await sendTelegramRequest(org.telegram_bot_token, "sendDocument", {
+                  chat_id: invoiceChatId,
+                  document: finalDocUrl,
+                  caption: `📄 Счёт к заявке: ${request.description?.substring(0, 100) || ''}`,
+                });
+              } catch (e) {
+                console.error("Error sending invoice doc to separate chat:", e);
+              }
+            }
+          }
+        }
         
         // Send documents ONLY if status is "Счёт в Бухгалтерии"
         const status = request.status?.toLowerCase() || "";
