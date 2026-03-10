@@ -569,9 +569,17 @@ serve(async (req) => {
           
           const invoiceMessage = invoiceLines.join("\n");
           
+          // Add inline keyboard with payment buttons
+          const invoiceKeyboard = {
+            inline_keyboard: [
+              [{ text: "✅ Отписать в оплату", callback_data: `invoice_approve_${requestId.substring(0, 20)}` }],
+            ]
+          };
+          
           const invoiceSendResult = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
             chat_id: invoiceChatId,
             text: invoiceMessage,
+            reply_markup: invoiceKeyboard,
           });
           console.log("Invoice chat send result:", JSON.stringify(invoiceSendResult));
 
