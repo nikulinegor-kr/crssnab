@@ -86,7 +86,8 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
           telegram_chat_id: chatId || null,
           telegram_auto_send_on_create: autoSendOnCreate,
           telegram_auto_send_on_status_change: autoSendOnStatusChange,
-        })
+          telegram_invoice_chat_id: invoiceChatId || null,
+        } as any)
         .eq("id", organizationId);
 
       if (error) throw error;
