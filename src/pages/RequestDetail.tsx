@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
-import { notifyTelegram } from "@/lib/telegram";
+import { notifyTelegram, notifyTelegramInvoiceChat } from "@/lib/telegram";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
