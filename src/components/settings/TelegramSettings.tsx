@@ -44,6 +44,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         setChatId(settings.telegram_chat_id || "");
         setAutoSendOnCreate(settings.telegram_auto_send_on_create ?? true);
         setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
+        setInvoiceChatId(settings.telegram_invoice_chat_id || "");
       }
     } catch (error: any) {
       toast({
