@@ -21,6 +21,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
   const [chatId, setChatId] = useState("");
   const [autoSendOnCreate, setAutoSendOnCreate] = useState(true);
   const [autoSendOnStatusChange, setAutoSendOnStatusChange] = useState(true);
+  const [invoiceChatId, setInvoiceChatId] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -43,6 +44,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         setChatId(settings.telegram_chat_id || "");
         setAutoSendOnCreate(settings.telegram_auto_send_on_create ?? true);
         setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
+        setInvoiceChatId(settings.telegram_invoice_chat_id || "");
       }
     } catch (error: any) {
       toast({
@@ -84,7 +86,8 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
           telegram_chat_id: chatId || null,
           telegram_auto_send_on_create: autoSendOnCreate,
           telegram_auto_send_on_status_change: autoSendOnStatusChange,
-        })
+          telegram_invoice_chat_id: invoiceChatId || null,
+        } as any)
         .eq("id", organizationId);
 
       if (error) throw error;
@@ -166,6 +169,20 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
             />
             <p className="text-xs text-muted-foreground">
               Для групп обычно начинается с <code className="bg-muted px-1 py-0.5 rounded">-100</code>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invoiceChatId">Chat ID для счетов (необязательно)</Label>
+            <Input
+              id="invoiceChatId"
+              type="text"
+              placeholder="-1001234567890"
+              value={invoiceChatId}
+              onChange={(e) => setInvoiceChatId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Отдельный чат для отправки счетов на оплату. Если не указан, счета отправляются в основной чат.
             </p>
           </div>
         </div>
