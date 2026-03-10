@@ -1026,6 +1026,7 @@ export type Database = {
           telegram_auto_send_on_status_change: boolean | null
           telegram_bot_token: string | null
           telegram_chat_id: string | null
+          telegram_invoice_chat_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1043,6 +1044,7 @@ export type Database = {
           telegram_auto_send_on_status_change?: boolean | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
+          telegram_invoice_chat_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1060,6 +1062,7 @@ export type Database = {
           telegram_auto_send_on_status_change?: boolean | null
           telegram_bot_token?: string | null
           telegram_chat_id?: string | null
+          telegram_invoice_chat_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2406,6 +2409,7 @@ export type Database = {
           telegram_auto_send_on_status_change: boolean
           telegram_bot_token: string
           telegram_chat_id: string
+          telegram_invoice_chat_id: string
         }[]
       }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
