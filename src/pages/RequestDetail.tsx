@@ -79,6 +79,8 @@ export default function RequestDetail() {
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [isSendingTelegramBuh, setIsSendingTelegramBuh] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
+  const [revisionComment, setRevisionComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const dragCounterRef = useRef(0);
