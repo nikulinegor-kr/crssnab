@@ -294,6 +294,48 @@ export const RequestsBulkActions = ({
     }
   };
 
+  const handleSendToTelegramBuh = async () => {
+    if (selectedRequestIds.size === 0) {
+      toast({ title: "Ошибка", description: "Выберите хотя бы одну заявку для отправки", variant: "destructive" });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Ошибка авторизации", description: "Сессия истекла.", variant: "destructive" });
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const requestId of Array.from(selectedRequestIds)) {
+        try {
+          const { data, error } = await supabase.functions.invoke('notify-telegram', {
+            body: { requestId, action: 'send_to_invoice_chat' },
+          });
+          if (error || data?.error) errorCount++;
+          else successCount++;
+        } catch {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast({ title: "Telegram Buh", description: `Отправлено: ${successCount}${errorCount > 0 ? `, ошибок: ${errorCount}` : ''}` });
+        setSelectedRequestIds(new Set());
+      } else {
+        toast({ title: "Ошибка отправки", description: "Проверьте настройки Telegram Buh", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Ошибка отправки", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleBulkRestore = async () => {
     if (selectedRequestIds.size === 0) return;
     setIsSending(true);
