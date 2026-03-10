@@ -171,6 +171,20 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
               Для групп обычно начинается с <code className="bg-muted px-1 py-0.5 rounded">-100</code>
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invoiceChatId">Chat ID для счетов (необязательно)</Label>
+            <Input
+              id="invoiceChatId"
+              type="text"
+              placeholder="-1001234567890"
+              value={invoiceChatId}
+              onChange={(e) => setInvoiceChatId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Отдельный чат для отправки счетов на оплату. Если не указан, счета отправляются в основной чат.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4 pt-4 border-t">

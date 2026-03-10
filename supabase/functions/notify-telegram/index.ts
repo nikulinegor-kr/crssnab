@@ -423,7 +423,7 @@ serve(async (req) => {
       .from("requests")
       .select(`
         *,
-        organizations!inner(telegram_bot_token, telegram_chat_id)
+        organizations!inner(telegram_bot_token, telegram_chat_id, telegram_invoice_chat_id)
       `)
       .eq("id", requestId)
       .single();
