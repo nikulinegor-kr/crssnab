@@ -257,7 +257,8 @@ function formatRequestMessage(request: any, participants: any[] = []): string {
 async function createKeyboard(request: any, supabaseClient: any) {
   const status = request.status?.toLowerCase() || "";
   const comments = request.comments?.toLowerCase() || "";
-  const documentUrl = request.document_url || "";
+  // Check both singular and array document fields
+  const documentUrl = request.document_url || (request.document_urls?.length > 0 ? request.document_urls[0] : "") || "";
   
   const keyboard: any[][] = [];
 
