@@ -101,10 +101,13 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
       let filled = 0;
 
       if (data?.contractor) {
+        // Normalize full legal forms to abbreviations
+        const { formatCompanyName } = await import("@/lib/companyFormat");
+        const normalizedContractor = formatCompanyName(data.contractor);
         // Try to match supplier by name
         const match = suppliers?.find(s => 
-          s.name.toLowerCase().includes(data.contractor.toLowerCase()) ||
-          data.contractor.toLowerCase().includes(s.name.toLowerCase())
+          s.name.toLowerCase().includes(normalizedContractor.toLowerCase()) ||
+          normalizedContractor.toLowerCase().includes(s.name.toLowerCase())
         );
         if (match) {
           form.setValue("contractor", match.id);
