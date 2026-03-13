@@ -716,7 +716,7 @@ serve(async (req) => {
         
         if (isInvoiceStatus) {
           // Send documents as separate files
-          const documentUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+          const documentUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
           console.log("Main chat - document URLs to send:", documentUrls.length, JSON.stringify(documentUrls));
           
           if (documentUrls.length > 0) {
