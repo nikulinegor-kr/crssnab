@@ -774,7 +774,7 @@ serve(async (req) => {
           }
           
           // Send photo files only for invoice status
-          const photoUrls = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
+          const photoUrls = (request.photo_urls?.length > 0 ? request.photo_urls : (request.photo_url ? [request.photo_url] : []));
           
           if (photoUrls.length > 0) {
             console.log("Status is 'Счёт в Бухгалтерии', sending photo files:", photoUrls.length);
