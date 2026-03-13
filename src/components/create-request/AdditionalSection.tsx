@@ -91,7 +91,7 @@ export const AdditionalSection = ({
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       pdfDoc.registerFontkit(fontkit);
       
       const fontBytes = await fetch('/fonts/Roboto-Regular.ttf').then(r => r.arrayBuffer());
