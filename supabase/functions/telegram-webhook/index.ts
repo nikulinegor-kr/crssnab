@@ -1268,13 +1268,18 @@ async function handleMessage(message: any) {
 
   if (requests && requests.length > 0) {
     const request = requests[0];
+    const now = new Date().toLocaleString("ru-RU");
+    const revisionComment = `[На доработку ${now}]: ${text}`;
+    const combinedComments = request.comments 
+      ? `${request.comments}\n\n${revisionComment}` 
+      : revisionComment;
     
     // Update request with comment and status
     const { error: updateError } = await supabase
       .from("requests")
       .update({
-        comments: text,
-        status: "На доработку",
+        comments: combinedComments,
+        status: "На доработке",
         awaiting_comment_from: null,
       })
       .eq("id", request.id);
@@ -1283,8 +1288,23 @@ async function handleMessage(message: any) {
       console.error("Error updating request:", updateError);
     } else {
       console.log("Comment added to request:", request.id);
+      
+      // Log activity
+      await supabase.from("request_activities").insert({
+        request_id: request.id,
+        organization_id: request.organization_id,
+        action: "revision_requested",
+        description: `🔧 На доработку — @${username || fullName}: ${text}`,
+      });
+      
       // Notify group about rework status
-      await notifyGroupAboutStatusChange(request, "На доработку", username, fullName);
+      await notifyGroupAboutStatusChange(request, "На доработке", username, fullName);
+      
+      // Confirm in chat
+      await sendTelegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: `✅ Заявка "${request.description}" отправлена на доработку с комментарием:\n\n${text}`,
+      });
     }
   }
 }
