@@ -277,34 +277,34 @@ async function createKeyboard(request: any, supabaseClient: any) {
 
   // Кнопка "Отписано в оплату" убрана из основного чата — используется только в чате счетов
 
-  // Кнопка открыть счёт - показываем ТОЛЬКО для статуса "Счёт в Бухгалтерии"
-  if (status.includes("счёт в бухгалтерии") && documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
-    try {
-      // Extract file path from URL
-      const url = new URL(documentUrl);
-      const pathParts = url.pathname.split('/');
-      const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
-      if (bucketIndex !== -1) {
-        const filePath = pathParts.slice(bucketIndex + 1).join('/');
-        
-        // Generate signed URL with 24 hour expiry
-        const { data, error } = await supabaseClient.storage
-          .from('request-documents')
-          .createSignedUrl(filePath, 86400);
-        
-        if (!error && data?.signedUrl) {
-          keyboard.push([{ text: "📄 Открыть счёт", url: data.signedUrl }]);
+  // Кнопки для статуса "Счёт в Бухгалтерии"
+  if (status.includes("счёт в бухгалтерии")) {
+    // Кнопка открыть счёт
+    if (documentUrl && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
+      try {
+        const url = new URL(documentUrl);
+        const pathParts = url.pathname.split('/');
+        const bucketIndex = pathParts.findIndex((p: string) => p === 'request-documents');
+        if (bucketIndex !== -1) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/');
+          const { data, error } = await supabaseClient.storage
+            .from('request-documents')
+            .createSignedUrl(filePath, 86400);
+          if (!error && data?.signedUrl) {
+            keyboard.push([{ text: "📄 Открыть счёт", url: data.signedUrl }]);
+          } else {
+            keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
+          }
         } else {
-          console.error('Error creating signed URL:', error);
           keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
         }
-      } else {
+      } catch (error) {
         keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
       }
-    } catch (error) {
-      console.error('Error processing document URL:', error);
-      keyboard.push([{ text: "📄 Открыть счёт", url: documentUrl }]);
     }
+    // Кнопки оплаты и доработки
+    keyboard.push([{ text: "✅ Отписать в оплату", callback_data: `inv_a_${request.id}` }]);
+    keyboard.push([{ text: "🔧 На доработку", callback_data: `inv_r_${request.id}` }]);
   }
 
 
