@@ -258,7 +258,8 @@ async function createKeyboard(request: any, supabaseClient: any) {
   const status = request.status?.toLowerCase() || "";
   const comments = request.comments?.toLowerCase() || "";
   // Check both singular and array document fields
-  const documentUrl = request.document_url || (request.document_urls?.length > 0 ? request.document_urls[0] : "") || "";
+  const allDocUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
+  const documentUrl = allDocUrls[0] || "";
   
   const keyboard: any[][] = [];
 
