@@ -580,7 +580,53 @@ async function handleCallbackQuery(callbackQuery: any) {
     return;
   }
 
-  // Handle status change from inline keyboard
+  // Handle invoice chat "На доработку" button
+  if (data.startsWith("inv_r_")) {
+    const requestId = data.replace("inv_r_", "");
+    console.log("Processing invoice_revision for request:", requestId);
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*")
+      .eq("id", requestId)
+      .maybeSingle();
+    
+    if (error || !request) {
+      console.error("Request not found:", error);
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    const now = new Date().toLocaleString("ru-RU");
+    const originalText = validated.message.text || "";
+    const updatedText = originalText + `\n\n🔧 На доработку — ждём комментарий от: @${username || fullName}, ${now}`;
+    
+    // Save who we're waiting comment from
+    await supabase
+      .from("requests")
+      .update({ awaiting_comment_from: username || fullName })
+      .eq("id", request.id);
+    
+    // Update message text, remove keyboard
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: updatedText,
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "📝 Пришлите комментарий следующим сообщением",
+      show_alert: true,
+    });
+    return;
+  }
+
+
   if (data.startsWith("status_")) {
     const parts = data.split("_");
     const statusIndex = parseInt(parts[1]);
@@ -1222,13 +1268,18 @@ async function handleMessage(message: any) {
 
   if (requests && requests.length > 0) {
     const request = requests[0];
+    const now = new Date().toLocaleString("ru-RU");
+    const revisionComment = `[На доработку ${now}]: ${text}`;
+    const combinedComments = request.comments 
+      ? `${request.comments}\n\n${revisionComment}` 
+      : revisionComment;
     
     // Update request with comment and status
     const { error: updateError } = await supabase
       .from("requests")
       .update({
-        comments: text,
-        status: "На доработку",
+        comments: combinedComments,
+        status: "На доработке",
         awaiting_comment_from: null,
       })
       .eq("id", request.id);
@@ -1237,8 +1288,23 @@ async function handleMessage(message: any) {
       console.error("Error updating request:", updateError);
     } else {
       console.log("Comment added to request:", request.id);
+      
+      // Log activity
+      await supabase.from("request_activities").insert({
+        request_id: request.id,
+        organization_id: request.organization_id,
+        action: "revision_requested",
+        description: `🔧 На доработку — @${username || fullName}: ${text}`,
+      });
+      
       // Notify group about rework status
-      await notifyGroupAboutStatusChange(request, "На доработку", username, fullName);
+      await notifyGroupAboutStatusChange(request, "На доработке", username, fullName);
+      
+      // Confirm in chat
+      await sendTelegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: `✅ Заявка "${request.description}" отправлена на доработку с комментарием:\n\n${text}`,
+      });
     }
   }
 }
