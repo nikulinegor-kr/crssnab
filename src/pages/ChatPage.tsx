@@ -94,7 +94,7 @@ export default function ChatPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
