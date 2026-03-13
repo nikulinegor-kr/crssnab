@@ -679,6 +679,7 @@ serve(async (req) => {
 
           // Also send document files to invoice chat if available
           const invoiceDocUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+          console.log("Auto invoice chat - document URLs to send:", invoiceDocUrls.length, JSON.stringify(invoiceDocUrls));
           for (const docUrl of invoiceDocUrls) {
             if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
               try {
