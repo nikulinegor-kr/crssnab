@@ -112,7 +112,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
         if (match) {
           form.setValue("contractor", match.id);
         } else {
-          form.setValue("contractor", data.contractor);
+          form.setValue("contractor", normalizedContractor);
         }
         filled++;
       }
