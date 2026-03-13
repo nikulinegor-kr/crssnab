@@ -258,7 +258,8 @@ async function createKeyboard(request: any, supabaseClient: any) {
   const status = request.status?.toLowerCase() || "";
   const comments = request.comments?.toLowerCase() || "";
   // Check both singular and array document fields
-  const documentUrl = request.document_url || (request.document_urls?.length > 0 ? request.document_urls[0] : "") || "";
+  const allDocUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
+  const documentUrl = allDocUrls[0] || "";
   
   const keyboard: any[][] = [];
 
@@ -467,7 +468,7 @@ serve(async (req) => {
       });
 
       // Also send document files
-      const docUrls = req.document_urls || (req.document_url ? [req.document_url] : []);
+      const docUrls = (req.document_urls?.length > 0 ? req.document_urls : (req.document_url ? [req.document_url] : []));
       console.log("Invoice chat - document URLs to send:", docUrls.length, docUrls);
       for (const docUrl of docUrls) {
         if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
@@ -678,7 +679,7 @@ serve(async (req) => {
           console.log("Invoice chat send result:", JSON.stringify(invoiceSendResult));
 
           // Also send document files to invoice chat if available
-          const invoiceDocUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+          const invoiceDocUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
           console.log("Auto invoice chat - document URLs to send:", invoiceDocUrls.length, JSON.stringify(invoiceDocUrls));
           for (const docUrl of invoiceDocUrls) {
             if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
@@ -715,7 +716,7 @@ serve(async (req) => {
         
         if (isInvoiceStatus) {
           // Send documents as separate files
-          const documentUrls = request.document_urls || (request.document_url ? [request.document_url] : []);
+          const documentUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
           console.log("Main chat - document URLs to send:", documentUrls.length, JSON.stringify(documentUrls));
           
           if (documentUrls.length > 0) {
@@ -773,7 +774,7 @@ serve(async (req) => {
           }
           
           // Send photo files only for invoice status
-          const photoUrls = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
+          const photoUrls = (request.photo_urls?.length > 0 ? request.photo_urls : (request.photo_url ? [request.photo_url] : []));
           
           if (photoUrls.length > 0) {
             console.log("Status is 'Счёт в Бухгалтерии', sending photo files:", photoUrls.length);
