@@ -468,6 +468,7 @@ serve(async (req) => {
 
       // Also send document files
       const docUrls = req.document_urls || (req.document_url ? [req.document_url] : []);
+      console.log("Invoice chat - document URLs to send:", docUrls.length, docUrls);
       for (const docUrl of docUrls) {
         if (docUrl && (docUrl.startsWith("http://") || docUrl.startsWith("https://"))) {
           try {
