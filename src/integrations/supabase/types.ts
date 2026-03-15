@@ -842,6 +842,120 @@ export type Database = {
           },
         ]
       }
+      material_statement_items: {
+        Row: {
+          created_at: string
+          id: string
+          mass_per_unit: number | null
+          name: string
+          organization_id: string
+          quantity: number | null
+          row_number: number
+          statement_id: string
+          type_mark: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mass_per_unit?: number | null
+          name?: string
+          organization_id: string
+          quantity?: number | null
+          row_number?: number
+          statement_id: string
+          type_mark?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mass_per_unit?: number | null
+          name?: string
+          organization_id?: string
+          quantity?: number | null
+          row_number?: number
+          statement_id?: string
+          type_mark?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_statement_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_statement_items_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "material_statements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_statements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          is_recognized: boolean
+          object_id: string | null
+          organization_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_type?: string
+          file_url: string
+          id?: string
+          is_recognized?: boolean
+          object_id?: string | null
+          organization_id: string
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_recognized?: boolean
+          object_id?: string | null
+          organization_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_statements_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_statements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_attachments: {
         Row: {
           created_at: string

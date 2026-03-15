@@ -18,6 +18,7 @@ import {
   Layers,
   Boxes,
   ClipboardList,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -63,6 +64,7 @@ const menuGroups = [
     items: [
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
       { title: "Техника", url: "/equipment", icon: Truck },
+      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
     ],
   },
   {
