@@ -814,6 +814,41 @@ export default function MaterialStatementsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Object Dialog */}
+      <Dialog open={createObjectOpen} onOpenChange={setCreateObjectOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Создать объект</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Название объекта</label>
+              <Input value={newObjName} onChange={e => setNewObjName(e.target.value)} placeholder="Например: ТНВ ВЖК" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Год</label>
+              <Select value={String(newObjYear)} onValueChange={v => setNewObjYear(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[2024, 2025, 2026, 2027].map(y => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Описание (необязательно)</label>
+              <Input value={newObjDesc} onChange={e => setNewObjDesc(e.target.value)} placeholder="Описание объекта" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateObject} disabled={!newObjName.trim()}>
+              <Plus className="h-4 w-4 mr-1" /> Создать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
