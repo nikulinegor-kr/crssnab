@@ -1,0 +1,1 @@
+ALTER TABLE public.material_statements ADD COLUMN IF NOT EXISTS display_name text DEFAULT null;
