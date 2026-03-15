@@ -512,15 +512,19 @@ export default function MaterialStatementsPage() {
                           const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
                           if (uploadError) { toast({ title: "Ошибка", description: uploadError.message, variant: "destructive" }); continue; }
                           const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-                          await (supabase.from("material_statements" as any).insert({
-                            organization_id: orgId,
-                            object_id: selectedObjectId,
-                            year: selectedYear,
-                            file_name: file.name,
-                            file_url: urlData.publicUrl,
-                            file_type: fileType,
-                            is_recognized: fileType === "xlsx",
-                          }) as any);
+                          const { error: dbErr } = await supabase
+                            .from("material_statements" as any)
+                            .insert({
+                              organization_id: orgId,
+                              object_id: selectedObjectId,
+                              year: selectedYear,
+                              file_name: file.name,
+                              file_url: urlData.publicUrl,
+                              file_type: fileType,
+                              is_recognized: fileType === "xlsx",
+                            });
+                          console.log("Quick insert:", file.name, "object_id:", selectedObjectId, "error:", dbErr);
+                          if (dbErr) { toast({ title: "Ошибка записи", description: dbErr.message, variant: "destructive" }); }
                         }
                         toast({ title: "Файлы добавлены" });
                         queryClient.invalidateQueries({ queryKey: ["material-statements"] });
