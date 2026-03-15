@@ -316,12 +316,15 @@ export default function MaterialStatementsPage() {
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
   };
 
-  // Add item
+  // Add item to a specific statement
+  const [addingToStatementId, setAddingToStatementId] = useState<string | null>(null);
   const handleAddItem = async () => {
-    if (!orgId || !selectedStatementId) return;
-    const maxRow = items.reduce((m, i) => Math.max(m, i.row_number), 0);
+    const targetStId = addingToStatementId || selectedStatementId;
+    if (!orgId || !targetStId) return;
+    const stItems = itemsByStatement.get(targetStId) || [];
+    const maxRow = stItems.reduce((m, i) => Math.max(m, i.row_number), 0);
     await (supabase.from("material_statement_items" as any).insert({
-      statement_id: selectedStatementId,
+      statement_id: targetStId,
       organization_id: orgId,
       row_number: maxRow + 1,
       name: newItem.name,
@@ -332,6 +335,7 @@ export default function MaterialStatementsPage() {
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false);
+    setAddingToStatementId(null);
     setNewItem({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "" });
     toast({ title: "Материал добавлен" });
   };
