@@ -300,7 +300,7 @@ export default function MaterialStatementsPage() {
 
   // Delete item
   const handleDeleteItem = async (id: string) => {
-    await supabase.from("material_statement_items").delete().eq("id", id);
+    await (supabase.from("material_statement_items" as any).delete().eq("id", id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
   };
 
