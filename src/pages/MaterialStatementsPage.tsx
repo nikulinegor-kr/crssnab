@@ -61,8 +61,7 @@ interface TreeNode {
 }
 
 export default function MaterialStatementsPage() {
-  const { currentOrganization } = useCurrentOrganization();
-  const orgId = currentOrganization?.id;
+  const { currentOrgId: orgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
