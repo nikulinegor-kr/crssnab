@@ -275,7 +275,14 @@ export default function MaterialStatementsPage() {
         },
       });
       if (error) throw error;
-      toast({ title: "Распознано", description: `Найдено ${data?.count || 0} материалов` });
+
+      const warnings = Array.isArray(data?.warnings) ? (data.warnings as string[]) : [];
+      toast({
+        title: warnings.length > 0 ? "Распознано с предупреждением" : "Распознано",
+        description: warnings.length > 0
+          ? `Найдено ${data?.count || 0} материалов. ${warnings[0]}`
+          : `Найдено ${data?.count || 0} материалов`,
+      });
       queryClient.invalidateQueries({ queryKey: ["material-statements"] });
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       setSelectedStatementId(statement.id);

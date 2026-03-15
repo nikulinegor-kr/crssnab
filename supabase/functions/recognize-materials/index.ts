@@ -361,7 +361,13 @@ Deno.serve(async (req) => {
       .eq("id", statementId);
 
     return new Response(
-      JSON.stringify({ success: true, count: materials.length, materials }),
+      JSON.stringify({
+        success: true,
+        count: materials.length,
+        materials,
+        warnings,
+        missingPositions,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
