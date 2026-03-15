@@ -340,10 +340,10 @@ export default function MaterialStatementsPage() {
     toast({ title: "Материал добавлен" });
   };
 
-  // Merged items (deduplicate by name+type_mark, sum quantity)
+  // Merged items across all statements (for export)
   const mergedItems = useMemo(() => {
     const map = new Map<string, MaterialItem>();
-    for (const item of items) {
+    for (const item of allItems) {
       const key = `${item.name.trim().toLowerCase()}|${(item.type_mark || "").trim().toLowerCase()}`;
       if (map.has(key)) {
         const existing = map.get(key)!;
@@ -353,7 +353,7 @@ export default function MaterialStatementsPage() {
       }
     }
     return [...map.values()].sort((a, b) => a.row_number - b.row_number);
-  }, [items]);
+  }, [allItems]);
 
   // Export Excel
   const handleExportExcel = () => {
