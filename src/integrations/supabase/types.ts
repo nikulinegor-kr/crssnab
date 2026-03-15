@@ -842,6 +842,48 @@ export type Database = {
           },
         ]
       }
+      material_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          object_id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          object_id: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          object_id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_folders_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "material_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_folders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_objects: {
         Row: {
           created_at: string
@@ -948,6 +990,7 @@ export type Database = {
           file_name: string
           file_type: string
           file_url: string
+          folder_id: string | null
           id: string
           is_recognized: boolean
           object_id: string | null
@@ -962,6 +1005,7 @@ export type Database = {
           file_name: string
           file_type?: string
           file_url: string
+          folder_id?: string | null
           id?: string
           is_recognized?: boolean
           object_id?: string | null
@@ -976,6 +1020,7 @@ export type Database = {
           file_name?: string
           file_type?: string
           file_url?: string
+          folder_id?: string | null
           id?: string
           is_recognized?: boolean
           object_id?: string | null
@@ -984,6 +1029,13 @@ export type Database = {
           year?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "material_statements_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "material_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "material_statements_object_id_fkey"
             columns: ["object_id"]
