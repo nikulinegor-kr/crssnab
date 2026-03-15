@@ -222,7 +222,8 @@ export default function MaterialStatementsPage() {
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-      const path = `${orgId}/${uploadYear}/${uploadObjectId}/${Date.now()}_${file.name}`;
+      const safeFileName = `${Date.now()}_file.${ext || 'pdf'}`;
+      const path = `${orgId}/${uploadYear}/${uploadObjectId}/${safeFileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("material-statements")
@@ -235,15 +236,21 @@ export default function MaterialStatementsPage() {
       const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
       const fileUrl = urlData.publicUrl;
 
-      await (supabase.from("material_statements" as any).insert({
-        organization_id: orgId,
-        object_id: uploadObjectId,
-        year: uploadYear,
-        file_name: file.name,
-        file_url: fileUrl,
-        file_type: fileType,
-        is_recognized: fileType === "xlsx",
-      }) as any);
+      const { error: dbError } = await supabase
+        .from("material_statements" as any)
+        .insert({
+          organization_id: orgId,
+          object_id: uploadObjectId,
+          year: uploadYear,
+          file_name: file.name,
+          file_url: fileUrl,
+          file_type: fileType,
+          is_recognized: fileType === "xlsx",
+        });
+      console.log("Insert result for", file.name, "object_id:", uploadObjectId, "error:", dbError);
+      if (dbError) {
+        toast({ title: "Ошибка записи", description: dbError.message, variant: "destructive" });
+      }
     }
     toast({ title: "Файлы загружены" });
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
@@ -378,7 +385,7 @@ export default function MaterialStatementsPage() {
     XLSX.utils.book_append_sheet(wb, ws, "Материалы");
     const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const fileName = `${excelName.trim() || "Итоговая ведомость"}.xlsx`;
-    const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${fileName}`;
+    const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_export.xlsx`;
 
     const { error } = await supabase.storage
       .from("material-statements")
@@ -502,19 +509,24 @@ export default function MaterialStatementsPage() {
                         for (const file of Array.from(e.target.files)) {
                           const ext = file.name.split(".").pop()?.toLowerCase();
                           const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${file.name}`;
+                          const safeFileName = `${Date.now()}_file.${ext || 'pdf'}`;
+                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${safeFileName}`;
                           const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
                           if (uploadError) { toast({ title: "Ошибка", description: uploadError.message, variant: "destructive" }); continue; }
                           const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-                          await (supabase.from("material_statements" as any).insert({
-                            organization_id: orgId,
-                            object_id: selectedObjectId,
-                            year: selectedYear,
-                            file_name: file.name,
-                            file_url: urlData.publicUrl,
-                            file_type: fileType,
-                            is_recognized: fileType === "xlsx",
-                          }) as any);
+                          const { error: dbErr } = await supabase
+                            .from("material_statements" as any)
+                            .insert({
+                              organization_id: orgId,
+                              object_id: selectedObjectId,
+                              year: selectedYear,
+                              file_name: file.name,
+                              file_url: urlData.publicUrl,
+                              file_type: fileType,
+                              is_recognized: fileType === "xlsx",
+                            });
+                          console.log("Quick insert:", file.name, "object_id:", selectedObjectId, "error:", dbErr);
+                          if (dbErr) { toast({ title: "Ошибка записи", description: dbErr.message, variant: "destructive" }); }
                         }
                         toast({ title: "Файлы добавлены" });
                         queryClient.invalidateQueries({ queryKey: ["material-statements"] });
