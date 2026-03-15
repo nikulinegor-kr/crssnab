@@ -654,6 +654,12 @@ export default function MaterialStatementsPage() {
                         className={`cursor-pointer ${selectedStatementId === st.id ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedStatementId(st.id)}
                       >
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedFileIds.has(st.id)}
+                            onCheckedChange={() => toggleFileSelection(st.id)}
+                          />
+                        </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <File className="h-4 w-4 text-muted-foreground" />
                           <a
