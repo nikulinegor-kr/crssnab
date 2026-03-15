@@ -87,6 +87,8 @@ export default function MaterialStatementsPage() {
   const [newObjName, setNewObjName] = useState("");
   const [newObjYear, setNewObjYear] = useState<number>(new Date().getFullYear());
   const [newObjDesc, setNewObjDesc] = useState("");
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
+  const [bulkRecognizing, setBulkRecognizing] = useState(false);
 
   // Fetch material objects (own structure)
   const { data: objects = [] } = useQuery({
