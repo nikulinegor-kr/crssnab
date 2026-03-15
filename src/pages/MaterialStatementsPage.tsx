@@ -607,13 +607,39 @@ export default function MaterialStatementsPage() {
 
             {/* Files */}
             <Card>
-              <CardHeader className="py-3">
+              <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
+                {selectedFileIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Выбрано: {selectedFileIds.size}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkRecognize}
+                      disabled={bulkRecognizing}
+                    >
+                      {bulkRecognizing ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                      )}
+                      Распознать заново
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={currentStatements.length > 0 && selectedFileIds.size === currentStatements.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Файл</TableHead>
                       <TableHead>Тип</TableHead>
                       <TableHead>Статус</TableHead>
