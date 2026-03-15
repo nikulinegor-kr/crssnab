@@ -489,8 +489,39 @@ export default function MaterialStatementsPage() {
                 <p className="text-sm text-muted-foreground">{selectedYear} год</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setUploadYear(selectedYear!); setUploadObjectId(selectedObjectId!); setUploadDialogOpen(true); }}>
-                  <Upload className="h-4 w-4 mr-1" /> Загрузить файл
+                <Button variant="outline" size="sm" asChild>
+                  <label className="cursor-pointer">
+                    <Plus className="h-4 w-4 mr-1" /> Добавить файлы
+                    <input
+                      type="file"
+                      accept=".pdf,.xlsx,.xls"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (!e.target.files || !orgId || !selectedObjectId || !selectedYear) return;
+                        for (const file of Array.from(e.target.files)) {
+                          const ext = file.name.split(".").pop()?.toLowerCase();
+                          const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
+                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${file.name}`;
+                          const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
+                          if (uploadError) { toast({ title: "Ошибка", description: uploadError.message, variant: "destructive" }); continue; }
+                          const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
+                          await (supabase.from("material_statements" as any).insert({
+                            organization_id: orgId,
+                            object_id: selectedObjectId,
+                            year: selectedYear,
+                            file_name: file.name,
+                            file_url: urlData.publicUrl,
+                            file_type: fileType,
+                            is_recognized: fileType === "xlsx",
+                          }) as any);
+                        }
+                        toast({ title: "Файлы добавлены" });
+                        queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
                 </Button>
                 {mergedItems.length > 0 && (
                   <Button size="sm" onClick={() => setExcelDialogOpen(true)}>
