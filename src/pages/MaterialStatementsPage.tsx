@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
-  Download, Plus, Trash2, Pencil, File, Loader2, Calendar,
+  Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
