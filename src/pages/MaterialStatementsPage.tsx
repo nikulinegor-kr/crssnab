@@ -235,7 +235,7 @@ export default function MaterialStatementsPage() {
       const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
       const fileUrl = urlData.publicUrl;
 
-      await supabase.from("material_statements").insert({
+      await (supabase.from("material_statements" as any).insert({
         organization_id: orgId,
         object_id: uploadObjectId,
         year: uploadYear,
@@ -243,7 +243,7 @@ export default function MaterialStatementsPage() {
         file_url: fileUrl,
         file_type: fileType,
         is_recognized: fileType === "xlsx",
-      });
+      }) as any);
     }
     toast({ title: "Файлы загружены" });
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
