@@ -49,15 +49,19 @@ interface MaterialItem {
   mass_per_unit: number | null;
 }
 
-interface ObjectInfo {
+interface MaterialObject {
   id: string;
   name: string;
+  year: number;
+  description: string | null;
+  organization_id: string;
+  created_at: string;
 }
 
 // Tree structure types
 interface TreeNode {
   year: number;
-  objects: { object: ObjectInfo; statements: MaterialStatement[] }[];
+  objects: { object: MaterialObject; statements: MaterialStatement[] }[];
 }
 
 export default function MaterialStatementsPage() {
@@ -78,19 +82,22 @@ export default function MaterialStatementsPage() {
   const [excelName, setExcelName] = useState("");
   const [excelDialogOpen, setExcelDialogOpen] = useState(false);
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(null);
+  const [createObjectOpen, setCreateObjectOpen] = useState(false);
+  const [newObjName, setNewObjName] = useState("");
+  const [newObjYear, setNewObjYear] = useState<number>(new Date().getFullYear());
+  const [newObjDesc, setNewObjDesc] = useState("");
 
-  // Fetch objects
+  // Fetch material objects (own structure)
   const { data: objects = [] } = useQuery({
-    queryKey: ["request-objects", orgId],
+    queryKey: ["material-objects", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
-        .from("request_objects")
-        .select("id, name")
+      const { data } = await (supabase
+        .from("material_objects" as any)
+        .select("*")
         .eq("organization_id", orgId)
-        .eq("archived", false)
-        .order("name");
-      return (data || []) as ObjectInfo[];
+        .order("year", { ascending: false }) as any);
+      return (data || []) as MaterialObject[];
     },
     enabled: !!orgId,
   });
@@ -141,30 +148,27 @@ export default function MaterialStatementsPage() {
     enabled: !!orgId && (!!selectedStatementId || (!!selectedObjectId && !!selectedYear)),
   });
 
-  // Build tree
+  // Build tree from material_objects (not from statements)
   const tree = useMemo((): TreeNode[] => {
-    const yearMap = new Map<number, Map<string, MaterialStatement[]>>();
-    for (const s of statements) {
-      if (!yearMap.has(s.year)) yearMap.set(s.year, new Map());
-      const objMap = yearMap.get(s.year)!;
-      const objKey = s.object_id || "__none__";
-      if (!objMap.has(objKey)) objMap.set(objKey, []);
-      objMap.get(objKey)!.push(s);
+    const yearMap = new Map<number, MaterialObject[]>();
+    for (const obj of objects) {
+      if (!yearMap.has(obj.year)) yearMap.set(obj.year, []);
+      yearMap.get(obj.year)!.push(obj);
     }
     const result: TreeNode[] = [];
     const sortedYears = [...yearMap.keys()].sort((a, b) => b - a);
     for (const year of sortedYears) {
-      const objMap = yearMap.get(year)!;
-      const objectEntries: TreeNode["objects"] = [];
-      for (const [objId, stmts] of objMap) {
-        const obj = objects.find(o => o.id === objId) || { id: objId, name: objId === "__none__" ? "Без объекта" : "Неизвестный" };
-        objectEntries.push({ object: obj, statements: stmts });
-      }
-      objectEntries.sort((a, b) => a.object.name.localeCompare(b.object.name));
+      const objs = yearMap.get(year)!;
+      const objectEntries: TreeNode["objects"] = objs
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(obj => ({
+          object: obj,
+          statements: statements.filter(s => s.object_id === obj.id),
+        }));
       result.push({ year, objects: objectEntries });
     }
     return result;
-  }, [statements, objects]);
+  }, [objects, statements]);
 
   // Auto-expand current year
   useEffect(() => {
@@ -186,7 +190,33 @@ export default function MaterialStatementsPage() {
     setSelectedStatementId(null);
   };
 
-  // Upload file
+  // Create object
+  const handleCreateObject = async () => {
+    if (!orgId || !newObjName.trim()) return;
+    await (supabase.from("material_objects" as any).insert({
+      organization_id: orgId,
+      name: newObjName.trim(),
+      year: newObjYear,
+      description: newObjDesc.trim() || null,
+    }) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    setCreateObjectOpen(false);
+    setNewObjName("");
+    setNewObjDesc("");
+    toast({ title: "Объект создан" });
+  };
+
+  // Delete object
+  const handleDeleteObject = async (objId: string) => {
+    await (supabase.from("material_objects" as any).delete().eq("id", objId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    if (selectedObjectId === objId) {
+      setSelectedObjectId(null);
+      setSelectedYear(null);
+    }
+    toast({ title: "Объект удалён" });
+  };
+
   const handleFileUpload = async (files: FileList) => {
     if (!orgId || !uploadObjectId) return;
     for (const file of Array.from(files)) {
@@ -385,11 +415,16 @@ export default function MaterialStatementsPage() {
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
       <div className="w-72 border-r border-border bg-muted/30 overflow-y-auto flex-shrink-0">
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-3 border-b border-border space-y-2">
           <h2 className="font-semibold text-sm">Ведомости материалов</h2>
-          <Button size="sm" variant="outline" onClick={() => setUploadDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-1" /> Загрузить
-          </Button>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setCreateObjectOpen(true)}>
+              <Plus className="h-3 w-3 mr-1" /> Объект
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setUploadDialogOpen(true)}>
+              <Upload className="h-3 w-3 mr-1" /> Файл
+            </Button>
+          </div>
         </div>
         <div className="p-2">
           {tree.length === 0 && (
@@ -413,14 +448,18 @@ export default function MaterialStatementsPage() {
                     return (
                       <button
                         key={entry.object.id}
-                        className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                        className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors group ${
                           isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
                         }`}
                         onClick={() => selectObject(node.year, entry.object.id)}
                       >
-                        <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{entry.object.name}</span>
-                        <Badge variant="outline" className="ml-auto text-xs">{entry.statements.length}</Badge>
+                        <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate flex-1 text-left">{entry.object.name}</span>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">{entry.statements.length}</Badge>
+                        <Trash2
+                          className="h-3 w-3 text-destructive opacity-0 group-hover:opacity-100 flex-shrink-0 cursor-pointer"
+                          onClick={e => { e.stopPropagation(); handleDeleteObject(entry.object.id); }}
+                        />
                       </button>
                     );
                   })}
@@ -729,9 +768,12 @@ export default function MaterialStatementsPage() {
               <Select value={uploadObjectId} onValueChange={setUploadObjectId}>
                 <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
                 <SelectContent>
-                  {objects.map(o => (
+                  {objects.filter(o => o.year === uploadYear).map(o => (
                     <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
                   ))}
+                  {objects.filter(o => o.year === uploadYear).length === 0 && (
+                    <div className="p-2 text-sm text-muted-foreground text-center">Нет объектов за {uploadYear} год</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -771,6 +813,41 @@ export default function MaterialStatementsPage() {
             </Button>
             <Button onClick={handleSaveExcelToStorage}>
               <Upload className="h-4 w-4 mr-1" /> Сохранить в папку
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Object Dialog */}
+      <Dialog open={createObjectOpen} onOpenChange={setCreateObjectOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Создать объект</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Название объекта</label>
+              <Input value={newObjName} onChange={e => setNewObjName(e.target.value)} placeholder="Например: ТНВ ВЖК" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Год</label>
+              <Select value={String(newObjYear)} onValueChange={v => setNewObjYear(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[2024, 2025, 2026, 2027].map(y => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Описание (необязательно)</label>
+              <Input value={newObjDesc} onChange={e => setNewObjDesc(e.target.value)} placeholder="Описание объекта" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateObject} disabled={!newObjName.trim()}>
+              <Plus className="h-4 w-4 mr-1" /> Создать
             </Button>
           </DialogFooter>
         </DialogContent>
