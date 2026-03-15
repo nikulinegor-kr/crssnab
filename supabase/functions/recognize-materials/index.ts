@@ -174,20 +174,35 @@ Deno.serve(async (req) => {
       return Number.isFinite(n) ? n : null;
     };
 
+    const MAX_REASONABLE_POSITION = 500;
+
+    const sanitizePosition = (pos: number | null): number | null => {
+      if (pos === null) return null;
+      if (!Number.isInteger(pos) || pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
+      return pos;
+    };
+
     const parsePosition = (value: any): number | null => {
       const s = normalizeText(value).replace(/\u00A0/g, " ");
       if (!s) return null;
 
       const direct = s.match(/^(\d{1,4})(?:[.)])?$/);
       if (direct) {
-        const pos = Number(direct[1]);
-        return Number.isInteger(pos) && pos > 0 ? pos : null;
+        return sanitizePosition(Number(direct[1]));
       }
 
       const embedded = s.match(/(?:^|\D)(\d{1,4})(?:\D|$)/);
       if (!embedded) return null;
-      const pos = Number(embedded[1]);
-      return Number.isInteger(pos) && pos > 0 ? pos : null;
+      return sanitizePosition(Number(embedded[1]));
+    };
+
+    const extractLeadingPositionFromName = (name: string): { position: number | null; cleanName: string } => {
+      const match = name.match(/^(\d{1,4})(?:\s*[.)-])?\s+(.+)$/);
+      if (!match) return { position: null, cleanName: name };
+      return {
+        position: sanitizePosition(Number(match[1])),
+        cleanName: match[2].trim(),
+      };
     };
 
     type ParsedRow = {
@@ -202,14 +217,22 @@ Deno.serve(async (req) => {
     type GroupedRow = ParsedRow & { position: number };
 
     const normalizedRows: ParsedRow[] = rawRows
-      .map((row: any) => ({
-        position: parsePosition(row?.position),
-        name: normalizeText(row?.name),
-        type_mark: normalizeText(row?.type_mark) || null,
-        unit: normalizeText(row?.unit) || null,
-        quantity: parseLocaleNumber(row?.quantity),
-        mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
-      }))
+      .map((row: any) => {
+        const rawName = normalizeText(row?.name);
+        const columnPosition = parsePosition(row?.position);
+        const fallbackFromName = columnPosition === null
+          ? extractLeadingPositionFromName(rawName)
+          : { position: null, cleanName: rawName };
+
+        return {
+          position: columnPosition ?? fallbackFromName.position,
+          name: fallbackFromName.cleanName,
+          type_mark: normalizeText(row?.type_mark) || null,
+          unit: normalizeText(row?.unit) || null,
+          quantity: parseLocaleNumber(row?.quantity),
+          mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
+        };
+      })
       .filter((row) =>
         row.position !== null ||
         !!row.name ||
