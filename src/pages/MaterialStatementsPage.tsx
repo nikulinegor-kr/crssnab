@@ -484,6 +484,25 @@ export default function MaterialStatementsPage() {
     });
   };
 
+  // Bulk delete selected items
+  const handleBulkDeleteItems = async () => {
+    if (selectedItemIds.size === 0) return;
+    for (const id of selectedItemIds) {
+      await (supabase.from("material_statement_items" as any).delete().eq("id", id) as any);
+    }
+    setSelectedItemIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    toast({ title: `Удалено: ${selectedItemIds.size} материалов` });
+  };
+
+  // Rename statement section
+  const handleRenameStatement = async (stId: string, name: string) => {
+    await (supabase.from("material_statements" as any).update({ display_name: name.trim() || null }).eq("id", stId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    setEditingStatementName(null);
+    toast({ title: "Название обновлено" });
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
