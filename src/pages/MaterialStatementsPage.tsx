@@ -34,6 +34,7 @@ interface MaterialStatement {
   file_url: string;
   file_type: string;
   is_recognized: boolean;
+  display_name: string | null;
   created_by: string | null;
   created_at: string;
 }
