@@ -308,7 +308,7 @@ export default function MaterialStatementsPage() {
   const handleAddItem = async () => {
     if (!orgId || !selectedStatementId) return;
     const maxRow = items.reduce((m, i) => Math.max(m, i.row_number), 0);
-    await supabase.from("material_statement_items").insert({
+    await (supabase.from("material_statement_items" as any).insert({
       statement_id: selectedStatementId,
       organization_id: orgId,
       row_number: maxRow + 1,
@@ -317,7 +317,7 @@ export default function MaterialStatementsPage() {
       unit: newItem.unit || null,
       quantity: newItem.quantity ? Number(newItem.quantity) : null,
       mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
-    });
+    }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false);
     setNewItem({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "" });
