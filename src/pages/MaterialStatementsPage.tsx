@@ -390,7 +390,7 @@ export default function MaterialStatementsPage() {
     }
 
     const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-    await supabase.from("material_statements").insert({
+    await (supabase.from("material_statements" as any).insert({
       organization_id: orgId,
       object_id: selectedObjectId,
       year: selectedYear,
@@ -398,7 +398,7 @@ export default function MaterialStatementsPage() {
       file_url: urlData.publicUrl,
       file_type: "xlsx",
       is_recognized: true,
-    });
+    }) as any);
 
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
     setExcelDialogOpen(false);
