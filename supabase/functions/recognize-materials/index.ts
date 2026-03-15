@@ -130,9 +130,9 @@ Deno.serve(async (req) => {
     // Clean markdown wrapping if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    let materials: any[];
+    let rawRows: any[];
     try {
-      materials = JSON.parse(content);
+      rawRows = JSON.parse(content);
     } catch {
       console.error("Failed to parse AI response:", content);
       return new Response(
@@ -141,8 +141,143 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!Array.isArray(materials)) {
-      materials = [];
+    if (!Array.isArray(rawRows)) {
+      rawRows = [];
+    }
+
+    const normalizeText = (value: any): string => {
+      if (value === null || value === undefined) return "";
+      return String(value).replace(/\s+/g, " ").trim();
+    };
+
+    const parseLocaleNumber = (value: any): number | null => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value === "number") return Number.isFinite(value) ? value : null;
+
+      let s = String(value).trim().replace(/\u00A0/g, "").replace(/\s+/g, "");
+      if (!s) return null;
+
+      if (s.includes(",") && s.includes(".")) {
+        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+          s = s.replace(/\./g, "").replace(",", ".");
+        } else {
+          s = s.replace(/,/g, "");
+        }
+      } else if (s.includes(",")) {
+        s = s.replace(",", ".");
+      }
+
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const parsePosition = (value: any): number | null => {
+      const s = normalizeText(value);
+      if (!s) return null;
+      const match = s.match(/\d+/);
+      if (!match) return null;
+      const pos = Number(match[0]);
+      return Number.isInteger(pos) && pos > 0 ? pos : null;
+    };
+
+    type ParsedRow = {
+      position: number | null;
+      name: string;
+      type_mark: string | null;
+      unit: string | null;
+      quantity: number | null;
+      mass_per_unit: number | null;
+    };
+
+    const normalizedRows: ParsedRow[] = rawRows
+      .map((row: any) => ({
+        position: parsePosition(row?.position),
+        name: normalizeText(row?.name),
+        type_mark: normalizeText(row?.type_mark) || null,
+        unit: normalizeText(row?.unit) || null,
+        quantity: parseLocaleNumber(row?.quantity),
+        mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
+      }))
+      .filter((row) =>
+        row.position !== null ||
+        !!row.name ||
+        !!row.type_mark ||
+        !!row.unit ||
+        row.quantity !== null ||
+        row.mass_per_unit !== null
+      );
+
+    const mergedRows: ParsedRow[] = [];
+    let current: ParsedRow | null = null;
+
+    for (const row of normalizedRows) {
+      if (row.position !== null) {
+        if (!current) {
+          current = { ...row };
+          continue;
+        }
+
+        if (current.position === row.position) {
+          current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
+          current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+          if (!current.unit && row.unit) current.unit = row.unit;
+          if (current.quantity === null && row.quantity !== null) current.quantity = row.quantity;
+          if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
+          continue;
+        }
+
+        mergedRows.push(current);
+        current = { ...row };
+        continue;
+      }
+
+      const isContinuation = !!current && !row.unit && row.quantity === null;
+      if (isContinuation && current) {
+        current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
+        current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+        if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
+        continue;
+      }
+
+      if (current) mergedRows.push(current);
+      current = { ...row, position: null };
+    }
+
+    if (current) mergedRows.push(current);
+
+    const materials = mergedRows.map(({ position, ...row }) => row);
+
+    const numericPositions = mergedRows
+      .map((r) => r.position)
+      .filter((p): p is number => p !== null);
+
+    const uniquePositions = [...new Set(numericPositions)];
+    let missingPositions: number[] = [];
+
+    if (uniquePositions.length > 0) {
+      const maxPos = Math.max(...uniquePositions);
+      if (maxPos <= 1000) {
+        const set = new Set(uniquePositions);
+        for (let i = 1; i <= maxPos; i++) {
+          if (!set.has(i)) missingPositions.push(i);
+        }
+      }
+
+      console.log("Recognition diagnostics:", JSON.stringify({
+        rawRows: rawRows.length,
+        normalizedRows: normalizedRows.length,
+        mergedRows: mergedRows.length,
+        uniquePositions: uniquePositions.length,
+        maxPos,
+        missingPositionsSample: missingPositions.slice(0, 20),
+      }));
+    } else {
+      console.log("Recognition diagnostics:", JSON.stringify({
+        rawRows: rawRows.length,
+        normalizedRows: normalizedRows.length,
+        mergedRows: mergedRows.length,
+        uniquePositions: 0,
+      }));
     }
 
     // Save to database
@@ -165,8 +300,8 @@ Deno.serve(async (req) => {
         name: m.name || "",
         type_mark: m.type_mark || null,
         unit: m.unit || null,
-        quantity: m.quantity != null ? Number(m.quantity) : null,
-        mass_per_unit: m.mass_per_unit != null ? Number(m.mass_per_unit) : null,
+        quantity: m.quantity,
+        mass_per_unit: m.mass_per_unit,
       }));
 
       const { error: insertError } = await supabase
