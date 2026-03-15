@@ -190,7 +190,33 @@ export default function MaterialStatementsPage() {
     setSelectedStatementId(null);
   };
 
-  // Upload file
+  // Create object
+  const handleCreateObject = async () => {
+    if (!orgId || !newObjName.trim()) return;
+    await (supabase.from("material_objects" as any).insert({
+      organization_id: orgId,
+      name: newObjName.trim(),
+      year: newObjYear,
+      description: newObjDesc.trim() || null,
+    }) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    setCreateObjectOpen(false);
+    setNewObjName("");
+    setNewObjDesc("");
+    toast({ title: "Объект создан" });
+  };
+
+  // Delete object
+  const handleDeleteObject = async (objId: string) => {
+    await (supabase.from("material_objects" as any).delete().eq("id", objId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    if (selectedObjectId === objId) {
+      setSelectedObjectId(null);
+      setSelectedYear(null);
+    }
+    toast({ title: "Объект удалён" });
+  };
+
   const handleFileUpload = async (files: FileList) => {
     if (!orgId || !uploadObjectId) return;
     for (const file of Array.from(files)) {
