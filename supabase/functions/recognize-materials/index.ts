@@ -172,20 +172,19 @@ Deno.serve(async (req) => {
     };
 
     const parsePosition = (value: any): number | null => {
-      const s = normalizeText(value).replace(/\u00A0/g, "");
+      const s = normalizeText(value).replace(/\u00A0/g, " ");
       if (!s) return null;
-      const match = s.match(/^(\d{1,4})(?:[.)])?$/);
-      if (!match) return null;
-      const pos = Number(match[1]);
-      return Number.isInteger(pos) && pos > 0 ? pos : null;
-    };
 
-    const extractPositionFromName = (name: string): { position: number | null; cleanName: string } => {
-      const match = name.match(/^(\d{1,4})\s*[.)]\s*(.+)$/);
-      if (!match) return { position: null, cleanName: name };
-      const pos = Number(match[1]);
-      if (!Number.isInteger(pos) || pos <= 0) return { position: null, cleanName: name };
-      return { position: pos, cleanName: match[2].trim() };
+      const direct = s.match(/^(\d{1,4})(?:[.)])?$/);
+      if (direct) {
+        const pos = Number(direct[1]);
+        return Number.isInteger(pos) && pos > 0 ? pos : null;
+      }
+
+      const embedded = s.match(/(?:^|\D)(\d{1,4})(?:\D|$)/);
+      if (!embedded) return null;
+      const pos = Number(embedded[1]);
+      return Number.isInteger(pos) && pos > 0 ? pos : null;
     };
 
     type ParsedRow = {
@@ -197,19 +196,17 @@ Deno.serve(async (req) => {
       mass_per_unit: number | null;
     };
 
+    type GroupedRow = ParsedRow & { position: number };
+
     const normalizedRows: ParsedRow[] = rawRows
-      .map((row: any) => {
-        const rawName = normalizeText(row?.name);
-        const fromName = extractPositionFromName(rawName);
-        return {
-          position: parsePosition(row?.position) ?? fromName.position,
-          name: fromName.cleanName,
-          type_mark: normalizeText(row?.type_mark) || null,
-          unit: normalizeText(row?.unit) || null,
-          quantity: parseLocaleNumber(row?.quantity),
-          mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
-        };
-      })
+      .map((row: any) => ({
+        position: parsePosition(row?.position),
+        name: normalizeText(row?.name),
+        type_mark: normalizeText(row?.type_mark) || null,
+        unit: normalizeText(row?.unit) || null,
+        quantity: parseLocaleNumber(row?.quantity),
+        mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
+      }))
       .filter((row) =>
         row.position !== null ||
         !!row.name ||
@@ -219,90 +216,106 @@ Deno.serve(async (req) => {
         row.mass_per_unit !== null
       );
 
-    const numericPositions = normalizedRows
-      .map((r) => r.position)
-      .filter((p): p is number => p !== null);
+    const mergeText = (left: string | null | undefined, right: string | null | undefined): string =>
+      [left || "", right || ""].filter(Boolean).join(" ").trim();
 
-    const uniquePositions = [...new Set(numericPositions)];
-    const canTrustPositions = uniquePositions.length >= Math.floor(normalizedRows.length * 0.8);
+    const mergeIntoGroup = (target: GroupedRow, source: ParsedRow) => {
+      target.name = mergeText(target.name, source.name);
+      target.type_mark = mergeText(target.type_mark, source.type_mark) || null;
+      if (!target.unit && source.unit) target.unit = source.unit;
+      if (target.quantity === null && source.quantity !== null) target.quantity = source.quantity;
+      if (target.mass_per_unit === null && source.mass_per_unit !== null) {
+        target.mass_per_unit = source.mass_per_unit;
+      }
+    };
 
-    let finalRows: ParsedRow[] = [];
+    const groupedRows: GroupedRow[] = [];
+    const leadingRows: ParsedRow[] = [];
+    let currentGroup: GroupedRow | null = null;
 
-    if (canTrustPositions) {
-      const grouped = new Map<number, ParsedRow>();
-      const orderedPositions: number[] = [];
-      const orphanRows: ParsedRow[] = [];
-      let currentPos: number | null = null;
-
-      for (const row of normalizedRows) {
-        if (row.position !== null) {
-          currentPos = row.position;
-          if (!grouped.has(currentPos)) {
-            grouped.set(currentPos, { ...row });
-            orderedPositions.push(currentPos);
-          } else {
-            const existing = grouped.get(currentPos)!;
-            existing.name = [existing.name, row.name].filter(Boolean).join(" ").trim();
-            existing.type_mark = [existing.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
-            if (!existing.unit && row.unit) existing.unit = row.unit;
-            if (existing.quantity === null && row.quantity !== null) existing.quantity = row.quantity;
-            if (existing.mass_per_unit === null && row.mass_per_unit !== null) existing.mass_per_unit = row.mass_per_unit;
-          }
+    for (const row of normalizedRows) {
+      if (row.position !== null) {
+        if (currentGroup && row.position === currentGroup.position) {
+          mergeIntoGroup(currentGroup, row);
           continue;
         }
 
-        const isContinuation = currentPos !== null && !row.unit && row.quantity === null;
-        if (isContinuation && currentPos !== null) {
-          const existing = grouped.get(currentPos);
-          if (existing) {
-            existing.name = [existing.name, row.name].filter(Boolean).join(" ").trim();
-            existing.type_mark = [existing.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
-            if (existing.mass_per_unit === null && row.mass_per_unit !== null) {
-              existing.mass_per_unit = row.mass_per_unit;
-            }
-            continue;
-          }
-        }
-
-        orphanRows.push({ ...row });
+        if (currentGroup) groupedRows.push(currentGroup);
+        currentGroup = { ...row, position: row.position };
+        continue;
       }
 
-      finalRows = [...orderedPositions.map((p) => grouped.get(p)!).filter(Boolean), ...orphanRows];
-    } else {
-      // fallback: не схлопываем строки, чтобы не терять позиции
-      finalRows = normalizedRows;
-    }
-
-    const materials = finalRows.map(({ position, ...row }) => row);
-
-    let missingPositions: number[] = [];
-    if (canTrustPositions && uniquePositions.length > 0) {
-      const maxPos = Math.max(...uniquePositions);
-      if (maxPos <= 1000) {
-        const set = new Set(uniquePositions);
-        for (let i = 1; i <= maxPos; i++) {
-          if (!set.has(i)) missingPositions.push(i);
-        }
+      if (currentGroup) {
+        // Позиция N = все строки до позиции N+1
+        mergeIntoGroup(currentGroup, row);
+      } else {
+        leadingRows.push({ ...row });
       }
-
-      console.log("Recognition diagnostics:", JSON.stringify({
-        strategy: "group_by_position",
-        rawRows: rawRows.length,
-        normalizedRows: normalizedRows.length,
-        finalRows: finalRows.length,
-        uniquePositions: uniquePositions.length,
-        maxPos,
-        missingPositionsSample: missingPositions.slice(0, 20),
-      }));
-    } else {
-      console.log("Recognition diagnostics:", JSON.stringify({
-        strategy: "fallback_no_merge",
-        rawRows: rawRows.length,
-        normalizedRows: normalizedRows.length,
-        finalRows: finalRows.length,
-        uniquePositions: uniquePositions.length,
-      }));
     }
+
+    if (currentGroup) groupedRows.push(currentGroup);
+
+    const positionSequence = groupedRows.map((row) => row.position);
+    const missingPositions: number[] = [];
+    const outOfOrderTransitions: Array<{ from: number; to: number }> = [];
+
+    for (let i = 1; i < positionSequence.length; i++) {
+      const prev = positionSequence[i - 1];
+      const next = positionSequence[i];
+
+      if (next > prev + 1) {
+        for (let p = prev + 1; p < next; p++) {
+          missingPositions.push(p);
+          if (missingPositions.length >= 5000) break;
+        }
+      } else if (next < prev) {
+        outOfOrderTransitions.push({ from: prev, to: next });
+      }
+    }
+
+    const warnings: string[] = [];
+    if (missingPositions.length > 0) {
+      const sample = missingPositions.slice(0, 25).join(", ");
+      const tail = missingPositions.length > 25 ? ", ..." : "";
+      warnings.push(
+        `Обнаружены пропущенные позиции: ${sample}${tail} (всего: ${missingPositions.length}).`
+      );
+    }
+
+    if (outOfOrderTransitions.length > 0) {
+      const sample = outOfOrderTransitions
+        .slice(0, 10)
+        .map((t) => `${t.from}→${t.to}`)
+        .join(", ");
+      warnings.push(`Обнаружены непоследовательные переходы позиций: ${sample}.`);
+    }
+
+    if (leadingRows.length > 0) {
+      warnings.push(
+        `Есть ${leadingRows.length} строк(и) до первой распознанной позиции — проверьте колонку «Позиция».`
+      );
+    }
+
+    if (groupedRows.length === 0 && normalizedRows.length > 0) {
+      warnings.push("Не удалось извлечь номера позиций из колонки «Позиция». Проверьте качество исходного файла.");
+    }
+
+    const materials = groupedRows.length > 0
+      ? [...leadingRows, ...groupedRows.map(({ position, ...row }) => row)]
+      : normalizedRows.map(({ position, ...row }) => row);
+
+    console.log("Recognition diagnostics:", JSON.stringify({
+      strategy: "position_ranges",
+      rawRows: rawRows.length,
+      normalizedRows: normalizedRows.length,
+      groupedRows: groupedRows.length,
+      leadingRows: leadingRows.length,
+      finalRows: materials.length,
+      positionSequenceSample: positionSequence.slice(0, 20),
+      missingPositionsSample: missingPositions.slice(0, 20),
+      outOfOrderTransitions: outOfOrderTransitions.slice(0, 10),
+      warningsCount: warnings.length,
+    }));
 
     // Save to database
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
