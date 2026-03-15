@@ -123,11 +123,11 @@ export default function MaterialStatementsPage() {
     queryFn: async () => {
       if (!orgId) return [];
       if (selectedStatementId) {
-        const { data } = await supabase
-          .from("material_statement_items")
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
           .select("*")
           .eq("statement_id", selectedStatementId)
-          .order("row_number");
+          .order("row_number") as any);
         return (data || []) as MaterialItem[];
       }
       if (selectedObjectId && selectedYear) {
