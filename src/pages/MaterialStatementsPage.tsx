@@ -286,13 +286,13 @@ export default function MaterialStatementsPage() {
 
   // Update item
   const handleUpdateItem = async (item: MaterialItem) => {
-    await supabase.from("material_statement_items").update({
+    await (supabase.from("material_statement_items" as any).update({
       name: item.name,
       type_mark: item.type_mark,
       unit: item.unit,
       quantity: item.quantity,
       mass_per_unit: item.mass_per_unit,
-    }).eq("id", item.id);
+    }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
     toast({ title: "Обновлено" });
