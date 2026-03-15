@@ -107,11 +107,11 @@ export default function MaterialStatementsPage() {
     queryKey: ["material-statements", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
-        .from("material_statements")
+      const { data } = await (supabase
+        .from("material_statements" as any)
         .select("*")
         .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as any);
       return (data || []) as MaterialStatement[];
     },
     enabled: !!orgId,
@@ -123,11 +123,11 @@ export default function MaterialStatementsPage() {
     queryFn: async () => {
       if (!orgId) return [];
       if (selectedStatementId) {
-        const { data } = await supabase
-          .from("material_statement_items")
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
           .select("*")
           .eq("statement_id", selectedStatementId)
-          .order("row_number");
+          .order("row_number") as any);
         return (data || []) as MaterialItem[];
       }
       if (selectedObjectId && selectedYear) {
@@ -136,11 +136,11 @@ export default function MaterialStatementsPage() {
           .filter(s => s.object_id === selectedObjectId && s.year === selectedYear)
           .map(s => s.id);
         if (stIds.length === 0) return [];
-        const { data } = await supabase
-          .from("material_statement_items")
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
           .select("*")
           .in("statement_id", stIds)
-          .order("row_number");
+          .order("row_number") as any);
         return (data || []) as MaterialItem[];
       }
       return [];
@@ -235,7 +235,7 @@ export default function MaterialStatementsPage() {
       const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
       const fileUrl = urlData.publicUrl;
 
-      await supabase.from("material_statements").insert({
+      await (supabase.from("material_statements" as any).insert({
         organization_id: orgId,
         object_id: uploadObjectId,
         year: uploadYear,
@@ -243,7 +243,7 @@ export default function MaterialStatementsPage() {
         file_url: fileUrl,
         file_type: fileType,
         is_recognized: fileType === "xlsx",
-      });
+      }) as any);
     }
     toast({ title: "Файлы загружены" });
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
@@ -276,8 +276,8 @@ export default function MaterialStatementsPage() {
 
   // Delete statement
   const handleDeleteStatement = async (id: string) => {
-    await supabase.from("material_statement_items").delete().eq("statement_id", id);
-    await supabase.from("material_statements").delete().eq("id", id);
+    await (supabase.from("material_statement_items" as any).delete().eq("statement_id", id) as any);
+    await (supabase.from("material_statements" as any).delete().eq("id", id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     if (selectedStatementId === id) setSelectedStatementId(null);
@@ -286,13 +286,13 @@ export default function MaterialStatementsPage() {
 
   // Update item
   const handleUpdateItem = async (item: MaterialItem) => {
-    await supabase.from("material_statement_items").update({
+    await (supabase.from("material_statement_items" as any).update({
       name: item.name,
       type_mark: item.type_mark,
       unit: item.unit,
       quantity: item.quantity,
       mass_per_unit: item.mass_per_unit,
-    }).eq("id", item.id);
+    }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
     toast({ title: "Обновлено" });
@@ -300,7 +300,7 @@ export default function MaterialStatementsPage() {
 
   // Delete item
   const handleDeleteItem = async (id: string) => {
-    await supabase.from("material_statement_items").delete().eq("id", id);
+    await (supabase.from("material_statement_items" as any).delete().eq("id", id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
   };
 
@@ -308,7 +308,7 @@ export default function MaterialStatementsPage() {
   const handleAddItem = async () => {
     if (!orgId || !selectedStatementId) return;
     const maxRow = items.reduce((m, i) => Math.max(m, i.row_number), 0);
-    await supabase.from("material_statement_items").insert({
+    await (supabase.from("material_statement_items" as any).insert({
       statement_id: selectedStatementId,
       organization_id: orgId,
       row_number: maxRow + 1,
@@ -317,7 +317,7 @@ export default function MaterialStatementsPage() {
       unit: newItem.unit || null,
       quantity: newItem.quantity ? Number(newItem.quantity) : null,
       mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
-    });
+    }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false);
     setNewItem({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "" });
@@ -390,7 +390,7 @@ export default function MaterialStatementsPage() {
     }
 
     const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-    await supabase.from("material_statements").insert({
+    await (supabase.from("material_statements" as any).insert({
       organization_id: orgId,
       object_id: selectedObjectId,
       year: selectedYear,
@@ -398,7 +398,7 @@ export default function MaterialStatementsPage() {
       file_url: urlData.publicUrl,
       file_type: "xlsx",
       is_recognized: true,
-    });
+    }) as any);
 
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
     setExcelDialogOpen(false);
@@ -489,8 +489,39 @@ export default function MaterialStatementsPage() {
                 <p className="text-sm text-muted-foreground">{selectedYear} год</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setUploadYear(selectedYear!); setUploadObjectId(selectedObjectId!); setUploadDialogOpen(true); }}>
-                  <Upload className="h-4 w-4 mr-1" /> Загрузить файл
+                <Button variant="outline" size="sm" asChild>
+                  <label className="cursor-pointer">
+                    <Plus className="h-4 w-4 mr-1" /> Добавить файлы
+                    <input
+                      type="file"
+                      accept=".pdf,.xlsx,.xls"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (!e.target.files || !orgId || !selectedObjectId || !selectedYear) return;
+                        for (const file of Array.from(e.target.files)) {
+                          const ext = file.name.split(".").pop()?.toLowerCase();
+                          const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
+                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${file.name}`;
+                          const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
+                          if (uploadError) { toast({ title: "Ошибка", description: uploadError.message, variant: "destructive" }); continue; }
+                          const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
+                          await (supabase.from("material_statements" as any).insert({
+                            organization_id: orgId,
+                            object_id: selectedObjectId,
+                            year: selectedYear,
+                            file_name: file.name,
+                            file_url: urlData.publicUrl,
+                            file_type: fileType,
+                            is_recognized: fileType === "xlsx",
+                          }) as any);
+                        }
+                        toast({ title: "Файлы добавлены" });
+                        queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
                 </Button>
                 {mergedItems.length > 0 && (
                   <Button size="sm" onClick={() => setExcelDialogOpen(true)}>
