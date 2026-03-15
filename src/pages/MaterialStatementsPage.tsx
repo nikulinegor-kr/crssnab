@@ -415,11 +415,16 @@ export default function MaterialStatementsPage() {
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
       <div className="w-72 border-r border-border bg-muted/30 overflow-y-auto flex-shrink-0">
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-3 border-b border-border space-y-2">
           <h2 className="font-semibold text-sm">Ведомости материалов</h2>
-          <Button size="sm" variant="outline" onClick={() => setUploadDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-1" /> Загрузить
-          </Button>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setCreateObjectOpen(true)}>
+              <Plus className="h-3 w-3 mr-1" /> Объект
+            </Button>
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setUploadDialogOpen(true)}>
+              <Upload className="h-3 w-3 mr-1" /> Файл
+            </Button>
+          </div>
         </div>
         <div className="p-2">
           {tree.length === 0 && (
