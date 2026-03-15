@@ -136,11 +136,11 @@ export default function MaterialStatementsPage() {
           .filter(s => s.object_id === selectedObjectId && s.year === selectedYear)
           .map(s => s.id);
         if (stIds.length === 0) return [];
-        const { data } = await supabase
-          .from("material_statement_items")
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
           .select("*")
           .in("statement_id", stIds)
-          .order("row_number");
+          .order("row_number") as any);
         return (data || []) as MaterialItem[];
       }
       return [];
