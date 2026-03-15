@@ -421,6 +421,65 @@ export default function MaterialStatementsPage() {
   );
   const selectedObj = objects.find(o => o.id === selectedObjectId);
 
+  // Reset selection when object changes
+  useEffect(() => {
+    setSelectedFileIds(new Set());
+  }, [selectedObjectId, selectedYear]);
+
+  const toggleFileSelection = (id: string) => {
+    setSelectedFileIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFileIds.size === currentStatements.length) {
+      setSelectedFileIds(new Set());
+    } else {
+      setSelectedFileIds(new Set(currentStatements.map(s => s.id)));
+    }
+  };
+
+  const handleBulkRecognize = async () => {
+    if (!orgId || selectedFileIds.size === 0) return;
+    const toRecognize = currentStatements.filter(
+      s => selectedFileIds.has(s.id) && s.file_type === "pdf"
+    );
+    if (toRecognize.length === 0) {
+      toast({ title: "Нет PDF файлов для распознавания", variant: "destructive" });
+      return;
+    }
+    setBulkRecognizing(true);
+    let successCount = 0;
+    let errorCount = 0;
+    for (const st of toRecognize) {
+      try {
+        // Reset recognition: delete old items first
+        await (supabase.from("material_statement_items" as any).delete().eq("statement_id", st.id) as any);
+        await (supabase.from("material_statements" as any).update({ is_recognized: false }).eq("id", st.id) as any);
+
+        const { data, error } = await supabase.functions.invoke("recognize-materials", {
+          body: { fileUrl: st.file_url, statementId: st.id, organizationId: orgId },
+        });
+        if (error) throw error;
+        successCount++;
+      } catch (e: any) {
+        console.error("Bulk recognize error for", st.file_name, e);
+        errorCount++;
+      }
+    }
+    setBulkRecognizing(false);
+    setSelectedFileIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    toast({
+      title: `Распознано: ${successCount}`,
+      description: errorCount > 0 ? `Ошибок: ${errorCount}` : undefined,
+    });
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
