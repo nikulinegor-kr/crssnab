@@ -90,6 +90,9 @@ export default function MaterialStatementsPage() {
   const [newObjDesc, setNewObjDesc] = useState("");
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [bulkRecognizing, setBulkRecognizing] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [editingStatementName, setEditingStatementName] = useState<string | null>(null);
+  const [statementNameValue, setStatementNameValue] = useState("");
 
   // Fetch material objects (own structure)
   const { data: objects = [] } = useQuery({
