@@ -799,6 +799,25 @@ export default function MaterialStatementsPage() {
                                 <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                               </Button>
                             )}
+                            {stItems.length > 0 && (
+                              <Button size="sm" variant="outline" onClick={() => {
+                                const data = stItems.map((m, i) => ({
+                                  "№": i + 1,
+                                  "Наименование и техническая характеристика": m.name,
+                                  "Тип / марка / обозначение": m.type_mark || "",
+                                  "Единица измерения": m.unit || "",
+                                  "Количество": m.quantity ?? "",
+                                  "Масса единицы (кг)": m.mass_per_unit ?? "",
+                                }));
+                                const ws = XLSX.utils.json_to_sheet(data);
+                                ws["!cols"] = [5, 50, 30, 15, 12, 15].map(w => ({ wch: w }));
+                                const wb = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(wb, ws, "Материалы");
+                                XLSX.writeFile(wb, `${sectionName}.xlsx`);
+                              }}>
+                                <Download className="h-4 w-4 mr-1" /> Excel
+                              </Button>
+                            )}
                             <Button size="sm" variant="outline" onClick={() => { setAddingItem(true); setAddingToStatementId(st.id); }}>
                               <Plus className="h-4 w-4 mr-1" /> Добавить
                             </Button>
