@@ -124,36 +124,34 @@ export default function MaterialStatementsPage() {
     enabled: !!orgId,
   });
 
-  // Fetch items for selected statement or all items for selected object+year
-  const { data: items = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["material-items", selectedStatementId, selectedObjectId, selectedYear, orgId],
+  // Fetch all items for the selected object's statements
+  const { data: allItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ["material-items", selectedObjectId, selectedYear, orgId],
     queryFn: async () => {
-      if (!orgId) return [];
-      if (selectedStatementId) {
-        const { data } = await (supabase
-          .from("material_statement_items" as any)
-          .select("*")
-          .eq("statement_id", selectedStatementId)
-          .order("row_number") as any);
-        return (data || []) as MaterialItem[];
-      }
-      if (selectedObjectId && selectedYear) {
-        // Get all statement IDs for this object+year
-        const stIds = statements
-          .filter(s => s.object_id === selectedObjectId && s.year === selectedYear)
-          .map(s => s.id);
-        if (stIds.length === 0) return [];
-        const { data } = await (supabase
-          .from("material_statement_items" as any)
-          .select("*")
-          .in("statement_id", stIds)
-          .order("row_number") as any);
-        return (data || []) as MaterialItem[];
-      }
-      return [];
+      if (!orgId || !selectedObjectId || !selectedYear) return [];
+      const stIds = statements
+        .filter(s => s.object_id === selectedObjectId && s.year === selectedYear)
+        .map(s => s.id);
+      if (stIds.length === 0) return [];
+      const { data } = await (supabase
+        .from("material_statement_items" as any)
+        .select("*")
+        .in("statement_id", stIds)
+        .order("row_number") as any);
+      return (data || []) as MaterialItem[];
     },
-    enabled: !!orgId && (!!selectedStatementId || (!!selectedObjectId && !!selectedYear)),
+    enabled: !!orgId && !!selectedObjectId && !!selectedYear,
   });
+
+  // Items grouped by statement_id
+  const itemsByStatement = useMemo(() => {
+    const map = new Map<string, MaterialItem[]>();
+    for (const item of allItems) {
+      if (!map.has(item.statement_id)) map.set(item.statement_id, []);
+      map.get(item.statement_id)!.push(item);
+    }
+    return map;
+  }, [allItems]);
 
   // Build tree from material_objects (not from statements)
   const tree = useMemo((): TreeNode[] => {
