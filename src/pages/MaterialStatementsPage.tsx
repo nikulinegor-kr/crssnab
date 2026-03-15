@@ -49,9 +49,13 @@ interface MaterialItem {
   mass_per_unit: number | null;
 }
 
-interface ObjectInfo {
+interface MaterialObject {
   id: string;
   name: string;
+  year: number;
+  description: string | null;
+  organization_id: string;
+  created_at: string;
 }
 
 // Tree structure types
