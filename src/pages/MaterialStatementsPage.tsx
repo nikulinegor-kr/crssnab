@@ -748,160 +748,192 @@ export default function MaterialStatementsPage() {
               </CardContent>
             </Card>
 
-            {/* Materials Table */}
-            {(selectedStatementId || (selectedObjectId && selectedYear)) && (
-              <Card>
-                <CardHeader className="py-3 flex-row items-center justify-between">
-                  <CardTitle className="text-sm">
-                    Материалы ({mergedItems.length})
-                    {items.length !== mergedItems.length && (
-                      <span className="text-muted-foreground font-normal ml-2">
-                        (объединено из {items.length})
-                      </span>
-                    )}
-                  </CardTitle>
-                  {selectedStatementId && (
-                    <Button size="sm" variant="outline" onClick={() => setAddingItem(true)}>
-                      <Plus className="h-4 w-4 mr-1" /> Добавить
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="p-0">
-                  {itemsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">№</TableHead>
-                          <TableHead>Наименование</TableHead>
-                          <TableHead>Тип / марка</TableHead>
-                          <TableHead className="w-20">Ед. изм.</TableHead>
-                          <TableHead className="w-24">Кол-во</TableHead>
-                          <TableHead className="w-24">Масса (кг)</TableHead>
-                          <TableHead className="w-20"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mergedItems.map((item, idx) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{idx + 1}</TableCell>
-                            <TableCell>
-                              {editingItem?.id === item.id ? (
+            {/* Per-file material sections */}
+            {selectedObjectId && selectedYear && (
+              <>
+                {itemsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
+                    const stItems = itemsByStatement.get(st.id) || [];
+                    const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
+                    const someSelected = stItems.some(i => selectedItemIds.has(i.id));
+                    const sectionName = st.display_name || st.file_name;
+
+                    return (
+                      <Card key={st.id}>
+                        <CardHeader className="py-3 flex-row items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {editingStatementName === st.id ? (
+                              <div className="flex items-center gap-1 flex-1">
                                 <Input
-                                  value={editingItem.name}
-                                  onChange={e => setEditingItem({ ...editingItem, name: e.target.value })}
-                                  className="h-8"
+                                  value={statementNameValue}
+                                  onChange={e => setStatementNameValue(e.target.value)}
+                                  className="h-7 text-sm"
+                                  autoFocus
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") handleRenameStatement(st.id, statementNameValue);
+                                    if (e.key === "Escape") setEditingStatementName(null);
+                                  }}
                                 />
-                              ) : (
-                                item.name
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editingItem?.id === item.id ? (
-                                <Input
-                                  value={editingItem.type_mark || ""}
-                                  onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })}
-                                  className="h-8"
-                                />
-                              ) : (
-                                item.type_mark || "—"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editingItem?.id === item.id ? (
-                                <Input
-                                  value={editingItem.unit || ""}
-                                  onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })}
-                                  className="h-8 w-16"
-                                />
-                              ) : (
-                                item.unit || "—"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editingItem?.id === item.id ? (
-                                <Input
-                                  type="number"
-                                  value={editingItem.quantity ?? ""}
-                                  onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })}
-                                  className="h-8 w-20"
-                                />
-                              ) : (
-                                item.quantity ?? "—"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editingItem?.id === item.id ? (
-                                <Input
-                                  type="number"
-                                  value={editingItem.mass_per_unit ?? ""}
-                                  onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })}
-                                  className="h-8 w-20"
-                                />
-                              ) : (
-                                item.mass_per_unit ?? "—"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {editingItem?.id === item.id ? (
-                                  <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>
-                                    ✓
-                                  </Button>
-                                ) : (
-                                  <Button size="sm" variant="ghost" onClick={() => setEditingItem({ ...item })}>
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                )}
-                                <Button size="sm" variant="ghost" onClick={() => handleDeleteItem(item.id)}>
-                                  <Trash2 className="h-3 w-3 text-destructive" />
-                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleRenameStatement(st.id, statementNameValue)}>✓</Button>
+                                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditingStatementName(null)}>✕</Button>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {/* Add row */}
-                        {addingItem && (
-                          <TableRow>
-                            <TableCell>+</TableCell>
-                            <TableCell>
-                              <Input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className="h-8" placeholder="Наименование" />
-                            </TableCell>
-                            <TableCell>
-                              <Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" />
-                            </TableCell>
-                            <TableCell>
-                              <Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" />
-                            </TableCell>
-                            <TableCell>
-                              <Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" />
-                            </TableCell>
-                            <TableCell>
-                              <Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
-                                <Button size="sm" variant="ghost" onClick={() => setAddingItem(false)}>✕</Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                            ) : (
+                              <CardTitle
+                                className="text-sm cursor-pointer hover:text-primary truncate"
+                                onClick={() => { setEditingStatementName(st.id); setStatementNameValue(st.display_name || st.file_name); }}
+                                title="Нажмите для переименования"
+                              >
+                                {sectionName}
+                                <span className="text-muted-foreground font-normal ml-2">({stItems.length})</span>
+                                <Pencil className="h-3 w-3 inline ml-1 text-muted-foreground" />
+                              </CardTitle>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {someSelected && (
+                              <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
+                                <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => { setAddingItem(true); setAddingToStatementId(st.id); }}>
+                              <Plus className="h-4 w-4 mr-1" /> Добавить
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-10">
+                                  <Checkbox
+                                    checked={allSelected}
+                                    onCheckedChange={() => {
+                                      setSelectedItemIds(prev => {
+                                        const next = new Set(prev);
+                                        if (allSelected) {
+                                          stItems.forEach(i => next.delete(i.id));
+                                        } else {
+                                          stItems.forEach(i => next.add(i.id));
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                  />
+                                </TableHead>
+                                <TableHead className="w-12">№</TableHead>
+                                <TableHead>Наименование</TableHead>
+                                <TableHead>Тип / марка</TableHead>
+                                <TableHead className="w-20">Ед. изм.</TableHead>
+                                <TableHead className="w-24">Кол-во</TableHead>
+                                <TableHead className="w-24">Масса (кг)</TableHead>
+                                <TableHead className="w-20"></TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {stItems.map((item, idx) => (
+                                <TableRow key={item.id}>
+                                  <TableCell>
+                                    <Checkbox
+                                      checked={selectedItemIds.has(item.id)}
+                                      onCheckedChange={() => {
+                                        setSelectedItemIds(prev => {
+                                          const next = new Set(prev);
+                                          next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+                                          return next;
+                                        });
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>{idx + 1}</TableCell>
+                                  <TableCell>
+                                    {editingItem?.id === item.id ? (
+                                      <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" />
+                                    ) : item.name}
+                                  </TableCell>
+                                  <TableCell>
+                                    {editingItem?.id === item.id ? (
+                                      <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" />
+                                    ) : item.type_mark || "—"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {editingItem?.id === item.id ? (
+                                      <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" />
+                                    ) : item.unit || "—"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {editingItem?.id === item.id ? (
+                                      <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" />
+                                    ) : item.quantity ?? "—"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {editingItem?.id === item.id ? (
+                                      <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" />
+                                    ) : item.mass_per_unit ?? "—"}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1">
+                                      {editingItem?.id === item.id ? (
+                                        <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
+                                      ) : (
+                                        <Button size="sm" variant="ghost" onClick={() => setEditingItem({ ...item })}><Pencil className="h-3 w-3" /></Button>
+                                      )}
+                                      <Button size="sm" variant="ghost" onClick={() => handleDeleteItem(item.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {addingItem && addingToStatementId === st.id && (
+                                <TableRow>
+                                  <TableCell />
+                                  <TableCell>+</TableCell>
+                                  <TableCell><Input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className="h-8" placeholder="Наименование" /></TableCell>
+                                  <TableCell><Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" /></TableCell>
+                                  <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
+                                  <TableCell><Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" /></TableCell>
+                                  <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1">
+                                      <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
+                                      <Button size="sm" variant="ghost" onClick={() => { setAddingItem(false); setAddingToStatementId(null); }}>✕</Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
+                                <TableRow>
+                                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                                    Нет распознанных материалов
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+
+                {/* Summary */}
+                {mergedItems.length > 0 && (
+                  <Card>
+                    <CardHeader className="py-3 flex-row items-center justify-between">
+                      <CardTitle className="text-sm">
+                        Сводная ({mergedItems.length})
+                        {allItems.length !== mergedItems.length && (
+                          <span className="text-muted-foreground font-normal ml-2">
+                            (объединено из {allItems.length})
+                          </span>
                         )}
-                        {mergedItems.length === 0 && !addingItem && (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                              Нет распознанных материалов
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                )}
+              </>
             )}
           </div>
         )}
