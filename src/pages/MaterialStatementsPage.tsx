@@ -82,19 +82,22 @@ export default function MaterialStatementsPage() {
   const [excelName, setExcelName] = useState("");
   const [excelDialogOpen, setExcelDialogOpen] = useState(false);
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(null);
+  const [createObjectOpen, setCreateObjectOpen] = useState(false);
+  const [newObjName, setNewObjName] = useState("");
+  const [newObjYear, setNewObjYear] = useState<number>(new Date().getFullYear());
+  const [newObjDesc, setNewObjDesc] = useState("");
 
-  // Fetch objects
+  // Fetch material objects (own structure)
   const { data: objects = [] } = useQuery({
-    queryKey: ["request-objects", orgId],
+    queryKey: ["material-objects", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
-        .from("request_objects")
-        .select("id, name")
+      const { data } = await (supabase
+        .from("material_objects" as any)
+        .select("*")
         .eq("organization_id", orgId)
-        .eq("archived", false)
-        .order("name");
-      return (data || []) as ObjectInfo[];
+        .order("year", { ascending: false }) as any);
+      return (data || []) as MaterialObject[];
     },
     enabled: !!orgId,
   });
