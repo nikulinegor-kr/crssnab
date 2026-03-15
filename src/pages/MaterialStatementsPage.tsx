@@ -448,14 +448,18 @@ export default function MaterialStatementsPage() {
                     return (
                       <button
                         key={entry.object.id}
-                        className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                        className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors group ${
                           isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
                         }`}
                         onClick={() => selectObject(node.year, entry.object.id)}
                       >
-                        <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{entry.object.name}</span>
-                        <Badge variant="outline" className="ml-auto text-xs">{entry.statements.length}</Badge>
+                        <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate flex-1 text-left">{entry.object.name}</span>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">{entry.statements.length}</Badge>
+                        <Trash2
+                          className="h-3 w-3 text-destructive opacity-0 group-hover:opacity-100 flex-shrink-0 cursor-pointer"
+                          onClick={e => { e.stopPropagation(); handleDeleteObject(entry.object.id); }}
+                        />
                       </button>
                     );
                   })}
