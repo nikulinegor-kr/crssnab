@@ -61,7 +61,7 @@ interface MaterialObject {
 // Tree structure types
 interface TreeNode {
   year: number;
-  objects: { object: ObjectInfo; statements: MaterialStatement[] }[];
+  objects: { object: MaterialObject; statements: MaterialStatement[] }[];
 }
 
 export default function MaterialStatementsPage() {
