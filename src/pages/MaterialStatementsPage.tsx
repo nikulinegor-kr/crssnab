@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
-  Download, Plus, Trash2, Pencil, File, Loader2, Calendar,
+  Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
 
 // Types
@@ -86,6 +87,8 @@ export default function MaterialStatementsPage() {
   const [newObjName, setNewObjName] = useState("");
   const [newObjYear, setNewObjYear] = useState<number>(new Date().getFullYear());
   const [newObjDesc, setNewObjDesc] = useState("");
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
+  const [bulkRecognizing, setBulkRecognizing] = useState(false);
 
   // Fetch material objects (own structure)
   const { data: objects = [] } = useQuery({
@@ -418,6 +421,65 @@ export default function MaterialStatementsPage() {
   );
   const selectedObj = objects.find(o => o.id === selectedObjectId);
 
+  // Reset selection when object changes
+  useEffect(() => {
+    setSelectedFileIds(new Set());
+  }, [selectedObjectId, selectedYear]);
+
+  const toggleFileSelection = (id: string) => {
+    setSelectedFileIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFileIds.size === currentStatements.length) {
+      setSelectedFileIds(new Set());
+    } else {
+      setSelectedFileIds(new Set(currentStatements.map(s => s.id)));
+    }
+  };
+
+  const handleBulkRecognize = async () => {
+    if (!orgId || selectedFileIds.size === 0) return;
+    const toRecognize = currentStatements.filter(
+      s => selectedFileIds.has(s.id) && s.file_type === "pdf"
+    );
+    if (toRecognize.length === 0) {
+      toast({ title: "Нет PDF файлов для распознавания", variant: "destructive" });
+      return;
+    }
+    setBulkRecognizing(true);
+    let successCount = 0;
+    let errorCount = 0;
+    for (const st of toRecognize) {
+      try {
+        // Reset recognition: delete old items first
+        await (supabase.from("material_statement_items" as any).delete().eq("statement_id", st.id) as any);
+        await (supabase.from("material_statements" as any).update({ is_recognized: false }).eq("id", st.id) as any);
+
+        const { data, error } = await supabase.functions.invoke("recognize-materials", {
+          body: { fileUrl: st.file_url, statementId: st.id, organizationId: orgId },
+        });
+        if (error) throw error;
+        successCount++;
+      } catch (e: any) {
+        console.error("Bulk recognize error for", st.file_name, e);
+        errorCount++;
+      }
+    }
+    setBulkRecognizing(false);
+    setSelectedFileIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    toast({
+      title: `Распознано: ${successCount}`,
+      description: errorCount > 0 ? `Ошибок: ${errorCount}` : undefined,
+    });
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
@@ -545,13 +607,39 @@ export default function MaterialStatementsPage() {
 
             {/* Files */}
             <Card>
-              <CardHeader className="py-3">
+              <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
+                {selectedFileIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Выбрано: {selectedFileIds.size}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkRecognize}
+                      disabled={bulkRecognizing}
+                    >
+                      {bulkRecognizing ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                      )}
+                      Распознать заново
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={currentStatements.length > 0 && selectedFileIds.size === currentStatements.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Файл</TableHead>
                       <TableHead>Тип</TableHead>
                       <TableHead>Статус</TableHead>
@@ -566,6 +654,12 @@ export default function MaterialStatementsPage() {
                         className={`cursor-pointer ${selectedStatementId === st.id ? "bg-primary/5" : ""}`}
                         onClick={() => setSelectedStatementId(st.id)}
                       >
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedFileIds.has(st.id)}
+                            onCheckedChange={() => toggleFileSelection(st.id)}
+                          />
+                        </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <File className="h-4 w-4 text-muted-foreground" />
                           <a
@@ -595,7 +689,7 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            {st.file_type === "pdf" && !st.is_recognized && (
+                            {st.file_type === "pdf" && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -619,7 +713,7 @@ export default function MaterialStatementsPage() {
                     ))}
                     {currentStatements.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           Нет загруженных файлов
                         </TableCell>
                       </TableRow>
