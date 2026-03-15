@@ -385,7 +385,7 @@ export default function MaterialStatementsPage() {
     XLSX.utils.book_append_sheet(wb, ws, "Материалы");
     const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const fileName = `${excelName.trim() || "Итоговая ведомость"}.xlsx`;
-    const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${fileName}`;
+    const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_export.xlsx`;
 
     const { error } = await supabase.storage
       .from("material-statements")
