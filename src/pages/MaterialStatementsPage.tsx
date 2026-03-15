@@ -689,7 +689,7 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            {st.file_type === "pdf" && !st.is_recognized && (
+                            {st.file_type === "pdf" && (
                               <Button
                                 size="sm"
                                 variant="outline"
