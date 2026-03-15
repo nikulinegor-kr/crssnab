@@ -172,12 +172,20 @@ Deno.serve(async (req) => {
     };
 
     const parsePosition = (value: any): number | null => {
-      const s = normalizeText(value);
+      const s = normalizeText(value).replace(/\u00A0/g, "");
       if (!s) return null;
-      const match = s.match(/\d+/);
+      const match = s.match(/^(\d{1,4})(?:[.)])?$/);
       if (!match) return null;
-      const pos = Number(match[0]);
+      const pos = Number(match[1]);
       return Number.isInteger(pos) && pos > 0 ? pos : null;
+    };
+
+    const extractPositionFromName = (name: string): { position: number | null; cleanName: string } => {
+      const match = name.match(/^(\d{1,4})\s*[.)]\s*(.+)$/);
+      if (!match) return { position: null, cleanName: name };
+      const pos = Number(match[1]);
+      if (!Number.isInteger(pos) || pos <= 0) return { position: null, cleanName: name };
+      return { position: pos, cleanName: match[2].trim() };
     };
 
     type ParsedRow = {
@@ -190,14 +198,18 @@ Deno.serve(async (req) => {
     };
 
     const normalizedRows: ParsedRow[] = rawRows
-      .map((row: any) => ({
-        position: parsePosition(row?.position),
-        name: normalizeText(row?.name),
-        type_mark: normalizeText(row?.type_mark) || null,
-        unit: normalizeText(row?.unit) || null,
-        quantity: parseLocaleNumber(row?.quantity),
-        mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
-      }))
+      .map((row: any) => {
+        const rawName = normalizeText(row?.name);
+        const fromName = extractPositionFromName(rawName);
+        return {
+          position: parsePosition(row?.position) ?? fromName.position,
+          name: fromName.cleanName,
+          type_mark: normalizeText(row?.type_mark) || null,
+          unit: normalizeText(row?.unit) || null,
+          quantity: parseLocaleNumber(row?.quantity),
+          mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
+        };
+      })
       .filter((row) =>
         row.position !== null ||
         !!row.name ||
@@ -207,54 +219,64 @@ Deno.serve(async (req) => {
         row.mass_per_unit !== null
       );
 
-    const mergedRows: ParsedRow[] = [];
-    let current: ParsedRow | null = null;
-
-    for (const row of normalizedRows) {
-      if (row.position !== null) {
-        if (!current) {
-          current = { ...row };
-          continue;
-        }
-
-        if (current.position === row.position) {
-          current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
-          current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
-          if (!current.unit && row.unit) current.unit = row.unit;
-          if (current.quantity === null && row.quantity !== null) current.quantity = row.quantity;
-          if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
-          continue;
-        }
-
-        mergedRows.push(current);
-        current = { ...row };
-        continue;
-      }
-
-      const isContinuation = !!current && !row.unit && row.quantity === null;
-      if (isContinuation && current) {
-        current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
-        current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
-        if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
-        continue;
-      }
-
-      if (current) mergedRows.push(current);
-      current = { ...row, position: null };
-    }
-
-    if (current) mergedRows.push(current);
-
-    const materials = mergedRows.map(({ position, ...row }) => row);
-
-    const numericPositions = mergedRows
+    const numericPositions = normalizedRows
       .map((r) => r.position)
       .filter((p): p is number => p !== null);
 
     const uniquePositions = [...new Set(numericPositions)];
-    let missingPositions: number[] = [];
+    const canTrustPositions = uniquePositions.length >= Math.floor(normalizedRows.length * 0.8);
 
-    if (uniquePositions.length > 0) {
+    let finalRows: ParsedRow[] = [];
+
+    if (canTrustPositions) {
+      const grouped = new Map<number, ParsedRow>();
+      const orderedPositions: number[] = [];
+      const orphanRows: ParsedRow[] = [];
+      let currentPos: number | null = null;
+
+      for (const row of normalizedRows) {
+        if (row.position !== null) {
+          currentPos = row.position;
+          if (!grouped.has(currentPos)) {
+            grouped.set(currentPos, { ...row });
+            orderedPositions.push(currentPos);
+          } else {
+            const existing = grouped.get(currentPos)!;
+            existing.name = [existing.name, row.name].filter(Boolean).join(" ").trim();
+            existing.type_mark = [existing.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+            if (!existing.unit && row.unit) existing.unit = row.unit;
+            if (existing.quantity === null && row.quantity !== null) existing.quantity = row.quantity;
+            if (existing.mass_per_unit === null && row.mass_per_unit !== null) existing.mass_per_unit = row.mass_per_unit;
+          }
+          continue;
+        }
+
+        const isContinuation = currentPos !== null && !row.unit && row.quantity === null;
+        if (isContinuation && currentPos !== null) {
+          const existing = grouped.get(currentPos);
+          if (existing) {
+            existing.name = [existing.name, row.name].filter(Boolean).join(" ").trim();
+            existing.type_mark = [existing.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+            if (existing.mass_per_unit === null && row.mass_per_unit !== null) {
+              existing.mass_per_unit = row.mass_per_unit;
+            }
+            continue;
+          }
+        }
+
+        orphanRows.push({ ...row });
+      }
+
+      finalRows = [...orderedPositions.map((p) => grouped.get(p)!).filter(Boolean), ...orphanRows];
+    } else {
+      // fallback: не схлопываем строки, чтобы не терять позиции
+      finalRows = normalizedRows;
+    }
+
+    const materials = finalRows.map(({ position, ...row }) => row);
+
+    let missingPositions: number[] = [];
+    if (canTrustPositions && uniquePositions.length > 0) {
       const maxPos = Math.max(...uniquePositions);
       if (maxPos <= 1000) {
         const set = new Set(uniquePositions);
@@ -264,19 +286,21 @@ Deno.serve(async (req) => {
       }
 
       console.log("Recognition diagnostics:", JSON.stringify({
+        strategy: "group_by_position",
         rawRows: rawRows.length,
         normalizedRows: normalizedRows.length,
-        mergedRows: mergedRows.length,
+        finalRows: finalRows.length,
         uniquePositions: uniquePositions.length,
         maxPos,
         missingPositionsSample: missingPositions.slice(0, 20),
       }));
     } else {
       console.log("Recognition diagnostics:", JSON.stringify({
+        strategy: "fallback_no_merge",
         rawRows: rawRows.length,
         normalizedRows: normalizedRows.length,
-        mergedRows: mergedRows.length,
-        uniquePositions: 0,
+        finalRows: finalRows.length,
+        uniquePositions: uniquePositions.length,
       }));
     }
 
