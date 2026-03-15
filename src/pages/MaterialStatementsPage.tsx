@@ -107,11 +107,11 @@ export default function MaterialStatementsPage() {
     queryKey: ["material-statements", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await supabase
-        .from("material_statements")
+      const { data } = await (supabase
+        .from("material_statements" as any)
         .select("*")
         .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }) as any);
       return (data || []) as MaterialStatement[];
     },
     enabled: !!orgId,
