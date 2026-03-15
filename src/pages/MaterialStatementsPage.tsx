@@ -142,10 +142,20 @@ export default function MaterialStatementsPage() {
     queryKey: ["material-statements", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await (supabase
-        .from("material_statements" as any).select("*")
-        .eq("organization_id", orgId).order("created_at", { ascending: false }) as any);
-      return (data || []) as MaterialStatement[];
+      const PAGE_SIZE = 1000;
+      let all: MaterialStatement[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await (supabase
+          .from("material_statements" as any).select("*")
+          .eq("organization_id", orgId).order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1) as any);
+        const chunk = (data || []) as MaterialStatement[];
+        all = all.concat(chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all;
     },
     enabled: !!orgId,
   });
