@@ -142,10 +142,20 @@ export default function MaterialStatementsPage() {
     queryKey: ["material-statements", orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const { data } = await (supabase
-        .from("material_statements" as any).select("*")
-        .eq("organization_id", orgId).order("created_at", { ascending: false }) as any);
-      return (data || []) as MaterialStatement[];
+      const PAGE_SIZE = 1000;
+      let all: MaterialStatement[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await (supabase
+          .from("material_statements" as any).select("*")
+          .eq("organization_id", orgId).order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1) as any);
+        const chunk = (data || []) as MaterialStatement[];
+        all = all.concat(chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all;
     },
     enabled: !!orgId,
   });
@@ -162,10 +172,20 @@ export default function MaterialStatementsPage() {
       if (!orgId || !selectedObjectId || !selectedFolderId) return [];
       const stIds = currentStatements.map(s => s.id);
       if (stIds.length === 0) return [];
-      const { data } = await (supabase
-        .from("material_statement_items" as any).select("*")
-        .in("statement_id", stIds).order("row_number") as any);
-      return (data || []) as MaterialItem[];
+      const PAGE_SIZE = 1000;
+      let all: MaterialItem[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await (supabase
+          .from("material_statement_items" as any).select("*")
+          .in("statement_id", stIds).order("row_number")
+          .range(from, from + PAGE_SIZE - 1) as any);
+        const chunk = (data || []) as MaterialItem[];
+        all = all.concat(chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all;
     },
     enabled: !!orgId && !!selectedObjectId && !!selectedFolderId && currentStatements.length > 0,
   });
