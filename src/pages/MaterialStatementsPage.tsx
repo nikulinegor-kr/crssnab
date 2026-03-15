@@ -222,7 +222,8 @@ export default function MaterialStatementsPage() {
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-      const path = `${orgId}/${uploadYear}/${uploadObjectId}/${Date.now()}_${file.name}`;
+      const safeFileName = `${Date.now()}_file.${ext || 'pdf'}`;
+      const path = `${orgId}/${uploadYear}/${uploadObjectId}/${safeFileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("material-statements")
