@@ -48,43 +48,27 @@ Deno.serve(async (req) => {
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
-Проанализируй этот PDF документ и извлеки таблицу материалов.
+Проанализируй этот PDF документ и извлеки строки таблицы материалов.
 
 Таблица обычно имеет 8 столбцов:
-1 — Позиция (ИГНОРИРОВАТЬ)
-2 — Наименование и техническая характеристика (ИЗВЛЕЧЬ → поле "name")
-3 — Тип, марка, обозначение документа, опросного листа (ИЗВЛЕЧЬ → поле "type_mark")
+1 — Позиция (извлечь во временное поле "position" для контроля)
+2 — Наименование и техническая характеристика ("name")
+3 — Тип, марка, обозначение документа, опросного листа ("type_mark")
 4 — Код оборудования, изделия, материала (ИГНОРИРОВАТЬ)
-5 — Единица измерения (ИЗВЛЕЧЬ → поле "unit")
-6 — Количество (ИЗВЛЕЧЬ → поле "quantity")
-7 — Масса единицы, кг (ИЗВЛЕЧЬ → поле "mass_per_unit")
+5 — Единица измерения ("unit")
+6 — Количество ("quantity")
+7 — Масса единицы, кг ("mass_per_unit")
 8 — Примечания (ИГНОРИРОВАТЬ)
 
-СТОЛБЦЫ 1, 4 И 8 ПОЛНОСТЬЮ ИГНОРИРУЙ. НЕ включай их в результат.
+ВАЖНО:
+- НЕ объединяй строки самостоятельно.
+- Верни СЫРЫЕ строки в том же порядке, как в таблице.
+- Для строк-продолжений position может быть null/пусто.
+- Игнорируй полностью пустые строки и строки-заголовки.
 
-КРИТИЧЕСКОЕ ПРАВИЛО: Количество записей в результате ДОЛЖНО ТОЧНО совпадать с количеством уникальных номеров позиций в столбце 1 ("Позиция"). Если в документе позиции пронумерованы от 1 до 154, то в результате должно быть ровно 154 записи.
-
-ВАЖНОЕ ПРАВИЛО ОБЪЕДИНЕНИЯ СТРОК:
-В ведомостях часто одна позиция занимает 2 или более строк. Признаки строки-продолжения (НЕ отдельная позиция):
-- В столбце 1 ("Позиция") НЕТ нового номера (пусто)
-- В столбцах "Единица измерения" (5) и "Количество" (6) значения ПУСТЫЕ
-
-Если строка является продолжением:
-- Объедини текст столбца 2 (Наименование) через пробел с предыдущей позицией
-- Объедини текст столбца 3 (Тип/марка) через пробел с предыдущей позицией
-- НЕ создавай отдельную запись
-
-Если в строке ЕСТЬ номер позиции в столбце 1 И заполнены "Единица измерения" или "Количество" — это НОВАЯ отдельная позиция, даже если наименование похоже на предыдущее.
-
-Пример:
-Строка 1: позиция=1, name="Кабель силовой медный", type_mark="ВВГнг-LS", unit="м", quantity=100
-Строка 2: позиция="", name="3x2.5 ГОСТ 31996-2012", type_mark="", unit="", quantity=""
-Результат: ОДНА запись с name="Кабель силовой медный 3x2.5 ГОСТ 31996-2012", type_mark="ВВГнг-LS", unit="м", quantity=100
-
-ВАЖНО ПО ОПРЕДЕЛЕНИЮ СТОЛБЦОВ:
-Названия столбцов могут немного отличаться в разных документах. Используй гибкое сопоставление:
+Гибкое сопоставление заголовков:
 - "Наименование" или "Наименование и техническая характеристика" → name
-- "Тип" или "Тип, марка" или "Обозначение" → type_mark  
+- "Тип" или "Тип, марка" или "Обозначение" → type_mark
 - "Ед. изм." или "Единица измерения" → unit
 - "Кол-во" или "Количество" → quantity
 - "Масса ед." или "Масса единицы" или "Масса единицы, кг" → mass_per_unit
@@ -92,6 +76,7 @@ Deno.serve(async (req) => {
 Верни результат СТРОГО в формате JSON массива:
 [
   {
+    "position": 1,
     "name": "Полное наименование материала",
     "type_mark": "Тип/марка/обозначение или null",
     "unit": "шт",
@@ -101,7 +86,7 @@ Deno.serve(async (req) => {
 ]
 
 Если quantity или mass_per_unit отсутствуют, ставь null.
-Числа с запятой (напр. "1,5") преобразуй в число с точкой (1.5).
+Числа с запятой (напр. "1,5") передавай как есть, сервер нормализует.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
     // Call Lovable AI (Gemini for PDF/vision)
@@ -145,9 +130,9 @@ Deno.serve(async (req) => {
     // Clean markdown wrapping if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    let materials: any[];
+    let rawRows: any[];
     try {
-      materials = JSON.parse(content);
+      rawRows = JSON.parse(content);
     } catch {
       console.error("Failed to parse AI response:", content);
       return new Response(
@@ -156,8 +141,143 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!Array.isArray(materials)) {
-      materials = [];
+    if (!Array.isArray(rawRows)) {
+      rawRows = [];
+    }
+
+    const normalizeText = (value: any): string => {
+      if (value === null || value === undefined) return "";
+      return String(value).replace(/\s+/g, " ").trim();
+    };
+
+    const parseLocaleNumber = (value: any): number | null => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value === "number") return Number.isFinite(value) ? value : null;
+
+      let s = String(value).trim().replace(/\u00A0/g, "").replace(/\s+/g, "");
+      if (!s) return null;
+
+      if (s.includes(",") && s.includes(".")) {
+        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+          s = s.replace(/\./g, "").replace(",", ".");
+        } else {
+          s = s.replace(/,/g, "");
+        }
+      } else if (s.includes(",")) {
+        s = s.replace(",", ".");
+      }
+
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const parsePosition = (value: any): number | null => {
+      const s = normalizeText(value);
+      if (!s) return null;
+      const match = s.match(/\d+/);
+      if (!match) return null;
+      const pos = Number(match[0]);
+      return Number.isInteger(pos) && pos > 0 ? pos : null;
+    };
+
+    type ParsedRow = {
+      position: number | null;
+      name: string;
+      type_mark: string | null;
+      unit: string | null;
+      quantity: number | null;
+      mass_per_unit: number | null;
+    };
+
+    const normalizedRows: ParsedRow[] = rawRows
+      .map((row: any) => ({
+        position: parsePosition(row?.position),
+        name: normalizeText(row?.name),
+        type_mark: normalizeText(row?.type_mark) || null,
+        unit: normalizeText(row?.unit) || null,
+        quantity: parseLocaleNumber(row?.quantity),
+        mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
+      }))
+      .filter((row) =>
+        row.position !== null ||
+        !!row.name ||
+        !!row.type_mark ||
+        !!row.unit ||
+        row.quantity !== null ||
+        row.mass_per_unit !== null
+      );
+
+    const mergedRows: ParsedRow[] = [];
+    let current: ParsedRow | null = null;
+
+    for (const row of normalizedRows) {
+      if (row.position !== null) {
+        if (!current) {
+          current = { ...row };
+          continue;
+        }
+
+        if (current.position === row.position) {
+          current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
+          current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+          if (!current.unit && row.unit) current.unit = row.unit;
+          if (current.quantity === null && row.quantity !== null) current.quantity = row.quantity;
+          if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
+          continue;
+        }
+
+        mergedRows.push(current);
+        current = { ...row };
+        continue;
+      }
+
+      const isContinuation = !!current && !row.unit && row.quantity === null;
+      if (isContinuation && current) {
+        current.name = [current.name, row.name].filter(Boolean).join(" ").trim();
+        current.type_mark = [current.type_mark || "", row.type_mark || ""].filter(Boolean).join(" ").trim() || null;
+        if (current.mass_per_unit === null && row.mass_per_unit !== null) current.mass_per_unit = row.mass_per_unit;
+        continue;
+      }
+
+      if (current) mergedRows.push(current);
+      current = { ...row, position: null };
+    }
+
+    if (current) mergedRows.push(current);
+
+    const materials = mergedRows.map(({ position, ...row }) => row);
+
+    const numericPositions = mergedRows
+      .map((r) => r.position)
+      .filter((p): p is number => p !== null);
+
+    const uniquePositions = [...new Set(numericPositions)];
+    let missingPositions: number[] = [];
+
+    if (uniquePositions.length > 0) {
+      const maxPos = Math.max(...uniquePositions);
+      if (maxPos <= 1000) {
+        const set = new Set(uniquePositions);
+        for (let i = 1; i <= maxPos; i++) {
+          if (!set.has(i)) missingPositions.push(i);
+        }
+      }
+
+      console.log("Recognition diagnostics:", JSON.stringify({
+        rawRows: rawRows.length,
+        normalizedRows: normalizedRows.length,
+        mergedRows: mergedRows.length,
+        uniquePositions: uniquePositions.length,
+        maxPos,
+        missingPositionsSample: missingPositions.slice(0, 20),
+      }));
+    } else {
+      console.log("Recognition diagnostics:", JSON.stringify({
+        rawRows: rawRows.length,
+        normalizedRows: normalizedRows.length,
+        mergedRows: mergedRows.length,
+        uniquePositions: 0,
+      }));
     }
 
     // Save to database
@@ -180,8 +300,8 @@ Deno.serve(async (req) => {
         name: m.name || "",
         type_mark: m.type_mark || null,
         unit: m.unit || null,
-        quantity: m.quantity != null ? Number(m.quantity) : null,
-        mass_per_unit: m.mass_per_unit != null ? Number(m.mass_per_unit) : null,
+        quantity: m.quantity,
+        mass_per_unit: m.mass_per_unit,
       }));
 
       const { error: insertError } = await supabase
