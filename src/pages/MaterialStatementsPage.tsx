@@ -148,30 +148,27 @@ export default function MaterialStatementsPage() {
     enabled: !!orgId && (!!selectedStatementId || (!!selectedObjectId && !!selectedYear)),
   });
 
-  // Build tree
+  // Build tree from material_objects (not from statements)
   const tree = useMemo((): TreeNode[] => {
-    const yearMap = new Map<number, Map<string, MaterialStatement[]>>();
-    for (const s of statements) {
-      if (!yearMap.has(s.year)) yearMap.set(s.year, new Map());
-      const objMap = yearMap.get(s.year)!;
-      const objKey = s.object_id || "__none__";
-      if (!objMap.has(objKey)) objMap.set(objKey, []);
-      objMap.get(objKey)!.push(s);
+    const yearMap = new Map<number, MaterialObject[]>();
+    for (const obj of objects) {
+      if (!yearMap.has(obj.year)) yearMap.set(obj.year, []);
+      yearMap.get(obj.year)!.push(obj);
     }
     const result: TreeNode[] = [];
     const sortedYears = [...yearMap.keys()].sort((a, b) => b - a);
     for (const year of sortedYears) {
-      const objMap = yearMap.get(year)!;
-      const objectEntries: TreeNode["objects"] = [];
-      for (const [objId, stmts] of objMap) {
-        const obj = objects.find(o => o.id === objId) || { id: objId, name: objId === "__none__" ? "Без объекта" : "Неизвестный" };
-        objectEntries.push({ object: obj, statements: stmts });
-      }
-      objectEntries.sort((a, b) => a.object.name.localeCompare(b.object.name));
+      const objs = yearMap.get(year)!;
+      const objectEntries: TreeNode["objects"] = objs
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(obj => ({
+          object: obj,
+          statements: statements.filter(s => s.object_id === obj.id),
+        }));
       result.push({ year, objects: objectEntries });
     }
     return result;
-  }, [statements, objects]);
+  }, [objects, statements]);
 
   // Auto-expand current year
   useEffect(() => {
