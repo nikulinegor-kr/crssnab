@@ -276,8 +276,8 @@ export default function MaterialStatementsPage() {
 
   // Delete statement
   const handleDeleteStatement = async (id: string) => {
-    await supabase.from("material_statement_items").delete().eq("statement_id", id);
-    await supabase.from("material_statements").delete().eq("id", id);
+    await (supabase.from("material_statement_items" as any).delete().eq("statement_id", id) as any);
+    await (supabase.from("material_statements" as any).delete().eq("id", id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     if (selectedStatementId === id) setSelectedStatementId(null);
