@@ -418,6 +418,16 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/material-statements"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MaterialStatementsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -64,6 +64,7 @@ const menuGroups = [
     items: [
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
       { title: "Техника", url: "/equipment", icon: Truck },
+      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
     ],
   },
   {
