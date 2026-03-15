@@ -509,7 +509,8 @@ export default function MaterialStatementsPage() {
                         for (const file of Array.from(e.target.files)) {
                           const ext = file.name.split(".").pop()?.toLowerCase();
                           const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${Date.now()}_${file.name}`;
+                          const safeFileName = `${Date.now()}_file.${ext || 'pdf'}`;
+                          const path = `${orgId}/${selectedYear}/${selectedObjectId}/${safeFileName}`;
                           const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
                           if (uploadError) { toast({ title: "Ошибка", description: uploadError.message, variant: "destructive" }); continue; }
                           const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
