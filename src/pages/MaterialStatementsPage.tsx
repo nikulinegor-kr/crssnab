@@ -768,9 +768,12 @@ export default function MaterialStatementsPage() {
               <Select value={uploadObjectId} onValueChange={setUploadObjectId}>
                 <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
                 <SelectContent>
-                  {objects.map(o => (
+                  {objects.filter(o => o.year === uploadYear).map(o => (
                     <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
                   ))}
+                  {objects.filter(o => o.year === uploadYear).length === 0 && (
+                    <div className="p-2 text-sm text-muted-foreground text-center">Нет объектов за {uploadYear} год</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
