@@ -618,7 +618,7 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                       setTimeout(() => setCopiedField(null), 2000);
                     }}
                   >
-                    {copiedField === "email" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedField === "email" ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
