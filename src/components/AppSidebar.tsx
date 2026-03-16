@@ -8,7 +8,6 @@ import {
   Percent,
   Sun,
   Moon,
-  Package,
   ChevronDown,
   Building2,
   BarChart3,
@@ -16,9 +15,9 @@ import {
   Wallet,
   Truck,
   Layers,
-  Boxes,
-  ClipboardList,
+  FolderOpen,
   FileSpreadsheet,
+  Files,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
@@ -59,26 +58,19 @@ const menuGroups = [
     ],
   },
   {
+    label: "Проект",
+    icon: FolderOpen,
+    items: [
+      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
+      { title: "Документы", url: "/documents", icon: Files },
+    ],
+  },
+  {
     label: "ERP",
-    icon: Package,
+    icon: Layers,
     items: [
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
-      { title: "Техника", url: "/equipment", icon: Truck },
-      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
-    ],
-  },
-  {
-    label: "Склад",
-    icon: Warehouse,
-    items: [
       { title: "Склад", url: "/warehouse", icon: Warehouse },
-      { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
-    ],
-  },
-  {
-    label: "Снабжение",
-    icon: Boxes,
-    items: [
       { title: "Поставщики", url: "/suppliers", icon: Users },
       { title: "Поставки", url: "/shipments", icon: Truck },
     ],
@@ -94,7 +86,6 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
-      { title: "Аналитика", url: "/analytics", icon: BarChart3 },
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
     ],
   },
@@ -231,40 +222,34 @@ export function AppSidebar() {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
+              {/* Отчёты внутри блока Аналитика */}
+              {group.label === "Аналитика" && !isDemoMode && isAdmin && (
+                <Collapsible defaultOpen={false} className="group/collapsible-reports">
+                  <SidebarGroup className="pt-0">
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
+                        <div className="flex items-center gap-2">
+                          <FileBarChart className="h-4 w-4" />
+                          {showText && <span>Отчёты</span>}
+                        </div>
+                        {showText && (
+                          <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-reports:rotate-180" />
+                        )}
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarGroupContent>
+                        <SidebarMenu className="pl-2">
+                          {renderMenuItems(reportMenuItems)}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+              )}
             </div>
           );
         })}
-
-        <SidebarSeparator />
-
-        {/* Отчеты - только для администраторов */}
-        {!isDemoMode && isAdmin && (
-          <>
-            <Collapsible defaultOpen={false} className="group/collapsible-reports">
-              <SidebarGroup>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
-                    <div className="flex items-center gap-2">
-                      <FileBarChart className="h-4 w-4" />
-                      {showText && <span>Отчёты</span>}
-                    </div>
-                    {showText && (
-                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-reports:rotate-180" />
-                    )}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="pl-2">
-                      {renderMenuItems(reportMenuItems)}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
-            <SidebarSeparator />
-          </>
-        )}
 
         {/* Настройки — скрыты для наблюдателей */}
         {!isViewer && (
