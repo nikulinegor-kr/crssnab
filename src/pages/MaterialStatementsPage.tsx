@@ -188,6 +188,8 @@ export default function MaterialStatementsPage() {
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
+  const [procurementDialogOpen, setProcurementDialogOpen] = useState(false);
+  const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
 
   // Queries
   const { data: objects = [] } = useQuery({
