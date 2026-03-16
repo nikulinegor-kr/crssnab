@@ -14,7 +14,7 @@ import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
 
 // Lazy load all pages with retry mechanism for code splitting
 const Index = lazyWithRetry(() => import("./pages/Index"));
-const Landing = lazyWithRetry(() => import("./pages/Landing"));
+const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
@@ -96,7 +96,7 @@ const App = () => {
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<Landing />} />
+            <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/employee-login" element={<EmployeeLogin />} />
             <Route path="/demo" element={<Demo />} />
