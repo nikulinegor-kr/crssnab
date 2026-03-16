@@ -783,11 +783,9 @@ export default function MaterialStatementsPage() {
                                 <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                 <span className="truncate flex-1 text-left text-xs font-medium">{secEntry.section.name}</span>
                                 <div className="flex gap-0.5 opacity-0 group-hover/sec:opacity-100 flex-shrink-0">
-                                  <Archive
-                                    className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
-                                    title="Скачать архив раздела"
-                                    onClick={e => { e.stopPropagation(); handleDownloadZip('section', secEntry.section.id); }}
-                                  />
+                                  <span title="Скачать архив раздела" onClick={e => { e.stopPropagation(); handleDownloadZip('section', secEntry.section.id); }}>
+                                    <Archive className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground" />
+                                  </span>
                                   <Pencil
                                     className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
                                     onClick={e => { e.stopPropagation(); setRenameSectionDialog(secEntry.section); setRenameSectionValue(secEntry.section.name); }}
