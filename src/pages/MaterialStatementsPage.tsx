@@ -6,7 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
-  FolderPlus, MoveRight, GripVertical, FileSpreadsheet,
+  FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,7 @@ interface MaterialFolder {
   organization_id: string;
   name: string;
   sort_order: number;
+  type: 'general_docs' | 'materials';
   created_at: string;
 }
 
@@ -322,10 +324,17 @@ export default function MaterialStatementsPage() {
   // CRUD: Objects
   const handleCreateObject = async () => {
     if (!orgId || !newObjName.trim()) return;
-    await (supabase.from("material_objects" as any).insert({
+    const { data: newObj } = await (supabase.from("material_objects" as any).insert({
       organization_id: orgId, name: newObjName.trim(), year: newObjYear, description: newObjDesc.trim() || null,
-    }) as any);
+    }).select("id").single() as any);
+    if (newObj?.id) {
+      await (supabase.from("material_folders" as any).insert([
+        { organization_id: orgId, object_id: newObj.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
+        { organization_id: orgId, object_id: newObj.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
+      ]) as any);
+    }
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
     setCreateObjectOpen(false); setNewObjName(""); setNewObjDesc("");
     toast({ title: "Объект создан" });
   };
@@ -751,6 +760,10 @@ export default function MaterialStatementsPage() {
     return val.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const isMaterialsFolder = selectedFolder?.type === 'materials';
+  const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
+
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
@@ -831,7 +844,7 @@ export default function MaterialStatementsPage() {
                                 onClick={() => selectFolder(node.year, entry.object.id, folder.id)}
                               >
                                 <GripVertical className="h-3 w-3 text-muted-foreground/50 cursor-grab flex-shrink-0" />
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
                                 <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                 <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
                                 <div className="flex gap-0.5 opacity-0 group-hover/folder:opacity-100 flex-shrink-0">
@@ -895,7 +908,7 @@ export default function MaterialStatementsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                {allItems.length > 0 && (
+                {isMaterialsFolder && allItems.length > 0 && (
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
@@ -908,12 +921,12 @@ export default function MaterialStatementsPage() {
                 <Button variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
                     <Plus className="h-4 w-4 mr-1" /> Добавить файлы
-                    <input type="file" accept=".pdf,.xlsx,.xls" multiple className="hidden"
+                    <input type="file" accept={isGeneralDocsFolder ? ".pdf,.doc,.docx,.dwg" : ".pdf,.xlsx,.xls"} multiple className="hidden"
                       onChange={e => { if (e.target.files) { handleQuickUpload(e.target.files); e.target.value = ""; } }}
                     />
                   </label>
                 </Button>
-                {mergedItems.length > 0 && (
+                {isMaterialsFolder && mergedItems.length > 0 && (
                   <Button size="sm" onClick={() => setExcelDialogOpen(true)}>
                     <Download className="h-4 w-4 mr-1" /> Скачать Excel
                   </Button>
@@ -925,7 +938,7 @@ export default function MaterialStatementsPage() {
             <Card>
               <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
-                {selectedFileIds.size > 0 && (
+                {isMaterialsFolder && selectedFileIds.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Выбрано: {selectedFileIds.size}</span>
                     <Button size="sm" variant="outline" onClick={handleBulkRecognize} disabled={bulkRecognizing}>
@@ -944,7 +957,7 @@ export default function MaterialStatementsPage() {
                       </TableHead>
                       <TableHead>Файл</TableHead>
                       <TableHead>Тип</TableHead>
-                      <TableHead>Статус</TableHead>
+                      {isMaterialsFolder && <TableHead>Статус</TableHead>}
                       <TableHead>Дата</TableHead>
                       <TableHead className="w-[240px]">Действия</TableHead>
                     </TableRow>
@@ -965,17 +978,19 @@ export default function MaterialStatementsPage() {
                         <TableCell>
                           <Badge variant={st.file_type === "pdf" ? "destructive" : "default"}>{st.file_type.toUpperCase()}</Badge>
                         </TableCell>
-                        <TableCell>
-                          {st.is_recognized
-                            ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
-                            : <Badge variant="secondary">Не распознано</Badge>}
-                        </TableCell>
+                        {isMaterialsFolder && (
+                          <TableCell>
+                            {st.is_recognized
+                              ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
+                              : <Badge variant="secondary">Не распознано</Badge>}
+                          </TableCell>
+                        )}
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(st.created_at).toLocaleDateString("ru-RU")}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            {st.file_type === "pdf" && (
+                            {isMaterialsFolder && st.file_type === "pdf" && (
                               <Button size="sm" variant="outline" onClick={() => handleRecognize(st)} disabled={recognizingId === st.id}>
                                 {recognizingId === st.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
                                 Распознать
@@ -1001,8 +1016,8 @@ export default function MaterialStatementsPage() {
               </CardContent>
             </Card>
 
-            {/* Per-file material sections */}
-            {selectedFolderId && (
+            {/* Per-file material sections - only for materials folders */}
+            {selectedFolderId && isMaterialsFolder && (
               <>
                 {itemsLoading ? (
                   <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
