@@ -994,6 +994,8 @@ export type Database = {
           name: string
           organization_id: string
           price: number | null
+          procurement_request_id: string | null
+          procurement_status: string
           quantity: number | null
           row_number: number
           statement_id: string
@@ -1010,6 +1012,8 @@ export type Database = {
           name?: string
           organization_id: string
           price?: number | null
+          procurement_request_id?: string | null
+          procurement_status?: string
           quantity?: number | null
           row_number?: number
           statement_id: string
@@ -1026,6 +1030,8 @@ export type Database = {
           name?: string
           organization_id?: string
           price?: number | null
+          procurement_request_id?: string | null
+          procurement_status?: string
           quantity?: number | null
           row_number?: number
           statement_id?: string
@@ -1041,6 +1047,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_statement_items_procurement_request_id_fkey"
+            columns: ["procurement_request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
             referencedColumns: ["id"]
           },
           {
