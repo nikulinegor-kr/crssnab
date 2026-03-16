@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Loader2, Eye, EyeOff, Sun, Moon, Shield, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
