@@ -844,7 +844,7 @@ export default function MaterialStatementsPage() {
                                 onClick={() => selectFolder(node.year, entry.object.id, folder.id)}
                               >
                                 <GripVertical className="h-3 w-3 text-muted-foreground/50 cursor-grab flex-shrink-0" />
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
                                 <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                 <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
                                 <div className="flex gap-0.5 opacity-0 group-hover/folder:opacity-100 flex-shrink-0">
