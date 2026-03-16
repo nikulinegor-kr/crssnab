@@ -393,6 +393,24 @@ export default function MaterialStatementsPage() {
     toast({ title: "Файл перемещён" });
   };
 
+  // Bulk move files
+  const handleBulkMove = async () => {
+    if (!bulkMoveTargetFolderId || selectedFileIds.size === 0) return;
+    const targetFolder = folders.find(f => f.id === bulkMoveTargetFolderId);
+    const targetSection = targetFolder ? sections.find(s => s.id === targetFolder.section_id) : null;
+    for (const fileId of selectedFileIds) {
+      await (supabase.from("material_statements" as any).update({
+        folder_id: bulkMoveTargetFolderId,
+        section_id: targetSection?.id || null,
+      }).eq("id", fileId) as any);
+    }
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setBulkMoveOpen(false); setBulkMoveTargetFolderId("");
+    toast({ title: `Перемещено файлов: ${selectedFileIds.size}` });
+    setSelectedFileIds(new Set());
+  };
+
   // Quick file upload (in folder view)
   const handleQuickUpload = async (fileList: FileList) => {
     if (!orgId || !selectedObjectId || !selectedFolderId || !selectedYear || !selectedSectionId) return;
