@@ -1127,6 +1127,7 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Масса (кг)</TableHead>
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
+                                <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1134,8 +1135,9 @@ export default function MaterialStatementsPage() {
                               {stItems.map((item, idx) => {
                                 const isEditing = editingItem?.id === item.id;
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
+                                const isProcured = item.procurement_status && item.procurement_status !== "none";
                                 return (
-                                  <TableRow key={item.id}>
+                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
