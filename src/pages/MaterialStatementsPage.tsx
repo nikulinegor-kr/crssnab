@@ -909,6 +909,11 @@ export default function MaterialStatementsPage() {
                     <Download className="h-4 w-4 mr-1" /> Скачать Excel
                   </Button>
                 )}
+                {isMaterialsFolder && allItems.length > 0 && (
+                  <Button size="sm" onClick={() => { setProcurementMode("all"); setProcurementDialogOpen(true); }}>
+                    <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
