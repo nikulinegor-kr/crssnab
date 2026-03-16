@@ -158,6 +158,8 @@ export default function MaterialStatementsPage() {
   const [renameSectionValue, setRenameSectionValue] = useState("");
   const [moveFileDialog, setMoveFileDialog] = useState<MaterialStatement | null>(null);
   const [moveTargetFolderId, setMoveTargetFolderId] = useState<string>("");
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState<string>("");
   const [excelDialogOpen, setExcelDialogOpen] = useState(false);
   const [excelName, setExcelName] = useState("");
 
@@ -389,6 +391,24 @@ export default function MaterialStatementsPage() {
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setMoveFileDialog(null); setMoveTargetFolderId("");
     toast({ title: "Файл перемещён" });
+  };
+
+  // Bulk move files
+  const handleBulkMove = async () => {
+    if (!bulkMoveTargetFolderId || selectedFileIds.size === 0) return;
+    const targetFolder = folders.find(f => f.id === bulkMoveTargetFolderId);
+    const targetSection = targetFolder ? sections.find(s => s.id === targetFolder.section_id) : null;
+    for (const fileId of selectedFileIds) {
+      await (supabase.from("material_statements" as any).update({
+        folder_id: bulkMoveTargetFolderId,
+        section_id: targetSection?.id || null,
+      }).eq("id", fileId) as any);
+    }
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setBulkMoveOpen(false); setBulkMoveTargetFolderId("");
+    toast({ title: `Перемещено файлов: ${selectedFileIds.size}` });
+    setSelectedFileIds(new Set());
   };
 
   // Quick file upload (in folder view)
@@ -894,13 +914,18 @@ export default function MaterialStatementsPage() {
             <Card>
               <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
-                {isMaterialsFolder && selectedFileIds.size > 0 && (
+                {selectedFileIds.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Выбрано: {selectedFileIds.size}</span>
-                    <Button size="sm" variant="outline" onClick={handleBulkRecognize} disabled={bulkRecognizing}>
-                      {bulkRecognizing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-                      Распознать заново
+                    <Button size="sm" variant="outline" onClick={() => { setBulkMoveOpen(true); setBulkMoveTargetFolderId(""); }}>
+                      <MoveRight className="h-4 w-4 mr-1" /> Переместить
                     </Button>
+                    {isMaterialsFolder && (
+                      <Button size="sm" variant="outline" onClick={handleBulkRecognize} disabled={bulkRecognizing}>
+                        {bulkRecognizing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                        Распознать заново
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardHeader>
@@ -1239,6 +1264,51 @@ export default function MaterialStatementsPage() {
           <DialogFooter>
             <Button onClick={handleMoveFile} disabled={!moveTargetFolderId}>
               <MoveRight className="h-4 w-4 mr-1" /> Переместить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Move Dialog */}
+      <Dialog open={bulkMoveOpen} onOpenChange={open => { if (!open) setBulkMoveOpen(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Массовый перенос файлов ({selectedFileIds.size})</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Выбрано файлов: <strong>{selectedFileIds.size}</strong>
+            </p>
+            <div>
+              <label className="text-sm font-medium">Целевая папка</label>
+              <Select value={bulkMoveTargetFolderId} onValueChange={setBulkMoveTargetFolderId}>
+                <SelectTrigger><SelectValue placeholder="Выберите папку" /></SelectTrigger>
+                <SelectContent>
+                  {sections
+                    .filter(s => objects.some(o => o.id === s.object_id))
+                    .map(sec => {
+                      const obj = objects.find(o => o.id === sec.object_id);
+                      const secFolders = folders.filter(f => f.section_id === sec.id && f.id !== selectedFolderId);
+                      if (secFolders.length === 0) return null;
+                      return (
+                        <div key={sec.id}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            {obj?.name} → {sec.name}
+                          </div>
+                          {secFolders.map(f => (
+                            <SelectItem key={f.id} value={f.id}>
+                              {f.type === 'general_docs' ? '📦' : '🔧'} {f.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkMoveOpen(false)}>Отмена</Button>
+            <Button onClick={handleBulkMove} disabled={!bulkMoveTargetFolderId}>
+              <MoveRight className="h-4 w-4 mr-1" /> Переместить ({selectedFileIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
