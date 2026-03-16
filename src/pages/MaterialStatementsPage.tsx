@@ -926,7 +926,7 @@ export default function MaterialStatementsPage() {
                     />
                   </label>
                 </Button>
-                {mergedItems.length > 0 && (
+                {isMaterialsFolder && mergedItems.length > 0 && (
                   <Button size="sm" onClick={() => setExcelDialogOpen(true)}>
                     <Download className="h-4 w-4 mr-1" /> Скачать Excel
                   </Button>
