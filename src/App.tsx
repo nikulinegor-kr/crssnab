@@ -55,6 +55,7 @@ const Demo = lazyWithRetry(() => import("./pages/Demo"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const Contact = lazyWithRetry(() => import("./pages/Contact"));
 const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
+const EmployeeLogin = lazyWithRetry(() => import("./pages/EmployeeLogin"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 // Loading fallback component
