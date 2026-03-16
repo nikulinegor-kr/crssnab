@@ -71,6 +71,7 @@ interface MaterialFolder {
   organization_id: string;
   name: string;
   sort_order: number;
+  type: 'general_docs' | 'materials';
   created_at: string;
 }
 
