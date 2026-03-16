@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.recognize-kp]
 verify_jwt = true
+
+[functions.download-zip]
+verify_jwt = true
