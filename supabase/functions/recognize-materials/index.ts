@@ -287,9 +287,20 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Determine if a null-position row is a standalone item vs a continuation of the previous row.
+    // A standalone item has its own name AND has unit or quantity (it's a complete material entry).
+    // A continuation row typically has only partial text and no unit/quantity.
+    const isStandaloneRow = (row: ParsedRow): boolean => {
+      if (!row.name) return false;
+      // If it has unit or quantity, it's a complete item
+      if (row.unit || row.quantity !== null) return true;
+      return false;
+    };
+
     const groupedRows: GroupedRow[] = [];
     const leadingRows: ParsedRow[] = [];
     let currentGroup: GroupedRow | null = null;
+    let autoPosition = 10000; // auto-assigned positions for standalone null-position rows
 
     for (const row of normalizedRows) {
       if (row.position !== null) {
@@ -303,8 +314,14 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      if (currentGroup) {
-        // Позиция N = все строки до позиции N+1
+      // Null-position row: check if it's a standalone item or a continuation
+      if (isStandaloneRow(row)) {
+        // This is a separate material item, not a continuation
+        if (currentGroup) groupedRows.push(currentGroup);
+        autoPosition++;
+        currentGroup = { ...row, position: autoPosition };
+      } else if (currentGroup) {
+        // True continuation — merge text into current group
         mergeIntoGroup(currentGroup, row);
       } else {
         leadingRows.push({ ...row });
