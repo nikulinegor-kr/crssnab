@@ -850,6 +850,7 @@ export type Database = {
           object_id: string
           organization_id: string
           sort_order: number
+          type: string
           updated_at: string
         }
         Insert: {
@@ -859,6 +860,7 @@ export type Database = {
           object_id: string
           organization_id: string
           sort_order?: number
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -868,6 +870,7 @@ export type Database = {
           object_id?: string
           organization_id?: string
           sort_order?: number
+          type?: string
           updated_at?: string
         }
         Relationships: [
