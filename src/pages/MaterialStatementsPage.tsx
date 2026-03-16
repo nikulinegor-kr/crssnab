@@ -158,6 +158,8 @@ export default function MaterialStatementsPage() {
   const [renameSectionValue, setRenameSectionValue] = useState("");
   const [moveFileDialog, setMoveFileDialog] = useState<MaterialStatement | null>(null);
   const [moveTargetFolderId, setMoveTargetFolderId] = useState<string>("");
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState<string>("");
   const [excelDialogOpen, setExcelDialogOpen] = useState(false);
   const [excelName, setExcelName] = useState("");
 
