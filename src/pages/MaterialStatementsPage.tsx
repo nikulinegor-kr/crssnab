@@ -1016,8 +1016,8 @@ export default function MaterialStatementsPage() {
               </CardContent>
             </Card>
 
-            {/* Per-file material sections */}
-            {selectedFolderId && (
+            {/* Per-file material sections - only for materials folders */}
+            {selectedFolderId && isMaterialsFolder && (
               <>
                 {itemsLoading ? (
                   <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
