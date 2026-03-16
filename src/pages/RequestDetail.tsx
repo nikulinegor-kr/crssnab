@@ -827,7 +827,7 @@ export default function RequestDetail() {
                               <FileText className="h-4 w-4 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">Документ {index + 1}</p>
+                              <p className="text-sm font-medium truncate">{request.description}{allDocuments.length > 1 ? ` (${index + 1})` : ''}</p>
                               <div className="flex gap-1 mt-1">
                                 <Button
                                   variant="ghost"
