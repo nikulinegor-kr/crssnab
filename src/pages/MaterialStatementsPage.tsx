@@ -914,13 +914,18 @@ export default function MaterialStatementsPage() {
             <Card>
               <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
-                {isMaterialsFolder && selectedFileIds.size > 0 && (
+                {selectedFileIds.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Выбрано: {selectedFileIds.size}</span>
-                    <Button size="sm" variant="outline" onClick={handleBulkRecognize} disabled={bulkRecognizing}>
-                      {bulkRecognizing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-                      Распознать заново
+                    <Button size="sm" variant="outline" onClick={() => { setBulkMoveOpen(true); setBulkMoveTargetFolderId(""); }}>
+                      <MoveRight className="h-4 w-4 mr-1" /> Переместить
                     </Button>
+                    {isMaterialsFolder && (
+                      <Button size="sm" variant="outline" onClick={handleBulkRecognize} disabled={bulkRecognizing}>
+                        {bulkRecognizing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                        Распознать заново
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardHeader>
