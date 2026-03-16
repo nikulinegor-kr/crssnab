@@ -482,9 +482,12 @@ export default function RequestDetail() {
       setIsUploadingDoc(true);
       try {
         const newUrls: string[] = [];
-        for (const file of docFiles) {
-          const sName = sanitizeFilename(file.name);
-          const fName = `${id}-${Date.now()}-${sName}`;
+        for (let i = 0; i < docFiles.length; i++) {
+          const file = docFiles[i];
+          const ext = file.name.split('.').pop() || '';
+          const base = sanitizeFilename(request.description);
+          const sfx = docFiles.length > 1 ? `_${i + 1}` : '';
+          const fName = `${id}-${Date.now()}-${base}${sfx}.${ext}`;
           const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file);
           if (ue) throw ue;
           const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fName);
