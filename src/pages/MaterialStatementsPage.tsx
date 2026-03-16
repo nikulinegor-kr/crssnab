@@ -1269,6 +1269,51 @@ export default function MaterialStatementsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Move Dialog */}
+      <Dialog open={bulkMoveOpen} onOpenChange={open => { if (!open) setBulkMoveOpen(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Массовый перенос файлов ({selectedFileIds.size})</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Выбрано файлов: <strong>{selectedFileIds.size}</strong>
+            </p>
+            <div>
+              <label className="text-sm font-medium">Целевая папка</label>
+              <Select value={bulkMoveTargetFolderId} onValueChange={setBulkMoveTargetFolderId}>
+                <SelectTrigger><SelectValue placeholder="Выберите папку" /></SelectTrigger>
+                <SelectContent>
+                  {sections
+                    .filter(s => objects.some(o => o.id === s.object_id))
+                    .map(sec => {
+                      const obj = objects.find(o => o.id === sec.object_id);
+                      const secFolders = folders.filter(f => f.section_id === sec.id && f.id !== selectedFolderId);
+                      if (secFolders.length === 0) return null;
+                      return (
+                        <div key={sec.id}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            {obj?.name} → {sec.name}
+                          </div>
+                          {secFolders.map(f => (
+                            <SelectItem key={f.id} value={f.id}>
+                              {f.type === 'general_docs' ? '📦' : '🔧'} {f.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkMoveOpen(false)}>Отмена</Button>
+            <Button onClick={handleBulkMove} disabled={!bulkMoveTargetFolderId}>
+              <MoveRight className="h-4 w-4 mr-1" /> Переместить ({selectedFileIds.size})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Excel Export Dialog */}
       <Dialog open={excelDialogOpen} onOpenChange={setExcelDialogOpen}>
         <DialogContent>
