@@ -957,7 +957,7 @@ export default function MaterialStatementsPage() {
                       </TableHead>
                       <TableHead>Файл</TableHead>
                       <TableHead>Тип</TableHead>
-                      <TableHead>Статус</TableHead>
+                      {isMaterialsFolder && <TableHead>Статус</TableHead>}
                       <TableHead>Дата</TableHead>
                       <TableHead className="w-[240px]">Действия</TableHead>
                     </TableRow>
