@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench,
+  Wrench, Archive, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ interface MaterialStatement {
   organization_id: string;
   object_id: string | null;
   folder_id: string | null;
+  section_id: string | null;
   year: number;
   file_name: string;
   file_url: string;
@@ -66,8 +67,18 @@ interface MaterialObject {
   created_at: string;
 }
 
+interface MaterialSection {
+  id: string;
+  object_id: string;
+  organization_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+}
+
 interface MaterialFolder {
   id: string;
+  section_id: string | null;
   object_id: string;
   organization_id: string;
   name: string;
@@ -76,19 +87,8 @@ interface MaterialFolder {
   created_at: string;
 }
 
-interface KpItem {
-  name: string;
-  unit: string | null;
-  price: number | null;
-}
-
-interface KpMatch {
-  kpItem: KpItem;
-  matchedItemId: string | null;
-  matchedItemName: string | null;
-  similarity: number;
-  autoMatched: boolean;
-}
+interface KpItem { name: string; unit: string | null; price: number | null; }
+interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; similarity: number; autoMatched: boolean; }
 
 // Fuzzy matching utility
 function levenshtein(a: string, b: string): number {
@@ -111,33 +111,23 @@ function similarity(a: string, b: string): number {
   const la = a.toLowerCase().trim();
   const lb = b.toLowerCase().trim();
   if (la === lb) return 1;
-  // Check if one contains the other
   if (la.includes(lb) || lb.includes(la)) return 0.85;
   const maxLen = Math.max(la.length, lb.length);
   if (maxLen === 0) return 1;
-  const dist = levenshtein(la, lb);
-  return 1 - dist / maxLen;
+  return 1 - levenshtein(la, lb) / maxLen;
 }
 
 function findBestMatch(kpName: string, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
   let bestItem: MaterialItem | null = null;
   let bestScore = 0;
   const kpWords = kpName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-
   for (const item of projectItems) {
-    // Direct similarity
     let score = similarity(kpName, item.name);
-
-    // Word overlap bonus
     const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const commonWords = kpWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
     const wordOverlap = kpWords.length > 0 ? commonWords.length / kpWords.length : 0;
     score = Math.max(score, wordOverlap * 0.9);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestItem = item;
-    }
+    if (score > bestScore) { bestScore = score; bestItem = item; }
   }
   return { item: bestItem, score: bestScore };
 }
@@ -150,24 +140,22 @@ export default function MaterialStatementsPage() {
   // Selection state
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // Dialog state
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [uploadYear, setUploadYear] = useState<number>(new Date().getFullYear());
-  const [uploadObjectId, setUploadObjectId] = useState<string>("");
-  const [uploadFolderId, setUploadFolderId] = useState<string>("");
   const [createObjectOpen, setCreateObjectOpen] = useState(false);
   const [newObjName, setNewObjName] = useState("");
   const [newObjYear, setNewObjYear] = useState<number>(new Date().getFullYear());
   const [newObjDesc, setNewObjDesc] = useState("");
-  const [createFolderOpen, setCreateFolderOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderObjectId, setNewFolderObjectId] = useState<string>("");
-  const [renameFolderDialog, setRenameFolderDialog] = useState<MaterialFolder | null>(null);
-  const [renameFolderValue, setRenameFolderValue] = useState("");
+  const [createSectionOpen, setCreateSectionOpen] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [newSectionObjectId, setNewSectionObjectId] = useState<string>("");
+  const [renameSectionDialog, setRenameSectionDialog] = useState<MaterialSection | null>(null);
+  const [renameSectionValue, setRenameSectionValue] = useState("");
   const [moveFileDialog, setMoveFileDialog] = useState<MaterialStatement | null>(null);
   const [moveTargetFolderId, setMoveTargetFolderId] = useState<string>("");
   const [excelDialogOpen, setExcelDialogOpen] = useState(false);
@@ -186,16 +174,15 @@ export default function MaterialStatementsPage() {
   const [editingStatementName, setEditingStatementName] = useState<string | null>(null);
   const [statementNameValue, setStatementNameValue] = useState("");
 
-  // Drag & drop folder state
-  const [dragFolderId, setDragFolderId] = useState<string | null>(null);
-  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
-
   // KP state
   const [kpDialogOpen, setKpDialogOpen] = useState(false);
   const [kpLoading, setKpLoading] = useState(false);
   const [kpMatches, setKpMatches] = useState<KpMatch[]>([]);
   const [kpSupplier, setKpSupplier] = useState<string | null>(null);
   const [kpApplying, setKpApplying] = useState(false);
+
+  // ZIP download state
+  const [downloadingZip, setDownloadingZip] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -206,6 +193,18 @@ export default function MaterialStatementsPage() {
         .from("material_objects" as any).select("*")
         .eq("organization_id", orgId).order("year", { ascending: false }) as any);
       return (data || []) as MaterialObject[];
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ["material-sections", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data } = await (supabase
+        .from("material_sections" as any).select("*")
+        .eq("organization_id", orgId).order("sort_order").order("name") as any);
+      return (data || []) as MaterialSection[];
     },
     enabled: !!orgId,
   });
@@ -246,14 +245,14 @@ export default function MaterialStatementsPage() {
 
   // Items for current folder's statements
   const currentStatements = useMemo(() =>
-    statements.filter(s => s.object_id === selectedObjectId && s.folder_id === selectedFolderId),
-    [statements, selectedObjectId, selectedFolderId]
+    statements.filter(s => s.folder_id === selectedFolderId),
+    [statements, selectedFolderId]
   );
 
   const { data: allItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["material-items", selectedObjectId, selectedFolderId, orgId],
+    queryKey: ["material-items", selectedFolderId, orgId],
     queryFn: async () => {
-      if (!orgId || !selectedObjectId || !selectedFolderId) return [];
+      if (!orgId || !selectedFolderId) return [];
       const stIds = currentStatements.map(s => s.id);
       if (stIds.length === 0) return [];
       const PAGE_SIZE = 1000;
@@ -271,7 +270,7 @@ export default function MaterialStatementsPage() {
       }
       return all;
     },
-    enabled: !!orgId && !!selectedObjectId && !!selectedFolderId && currentStatements.length > 0,
+    enabled: !!orgId && !!selectedFolderId && currentStatements.length > 0,
   });
 
   const itemsByStatement = useMemo(() => {
@@ -283,7 +282,7 @@ export default function MaterialStatementsPage() {
     return map;
   }, [allItems]);
 
-  // Build tree: Year → Objects → Folders
+  // Build tree: Year → Objects → Sections → Folders
   const tree = useMemo(() => {
     const yearMap = new Map<number, MaterialObject[]>();
     for (const obj of objects) {
@@ -294,27 +293,27 @@ export default function MaterialStatementsPage() {
       year,
       objects: yearMap.get(year)!.sort((a, b) => a.name.localeCompare(b.name)).map(obj => ({
         object: obj,
-        folders: folders.filter(f => f.object_id === obj.id).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name)),
-        statementCount: statements.filter(s => s.object_id === obj.id).length,
+        sections: sections.filter(s => s.object_id === obj.id).sort((a, b) => a.sort_order - b.sort_order).map(sec => ({
+          section: sec,
+          folders: folders.filter(f => f.section_id === sec.id).sort((a, b) => a.sort_order - b.sort_order),
+        })),
       })),
     }));
-  }, [objects, folders, statements]);
+  }, [objects, sections, folders]);
 
   // Auto-expand current year
   useEffect(() => {
     setExpandedYears(prev => new Set([...prev, new Date().getFullYear()]));
   }, []);
 
-  const toggleYear = (year: number) => {
-    setExpandedYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n; });
-  };
-  const toggleObject = (objId: string) => {
-    setExpandedObjects(prev => { const n = new Set(prev); n.has(objId) ? n.delete(objId) : n.add(objId); return n; });
-  };
+  const toggleYear = (year: number) => setExpandedYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n; });
+  const toggleObject = (objId: string) => setExpandedObjects(prev => { const n = new Set(prev); n.has(objId) ? n.delete(objId) : n.add(objId); return n; });
+  const toggleSection = (secId: string) => setExpandedSections(prev => { const n = new Set(prev); n.has(secId) ? n.delete(secId) : n.add(secId); return n; });
 
-  const selectFolder = (year: number, objectId: string, folderId: string) => {
+  const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string) => {
     setSelectedYear(year);
     setSelectedObjectId(objectId);
+    setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
@@ -328,12 +327,19 @@ export default function MaterialStatementsPage() {
       organization_id: orgId, name: newObjName.trim(), year: newObjYear, description: newObjDesc.trim() || null,
     }).select("id").single() as any);
     if (newObj?.id) {
-      await (supabase.from("material_folders" as any).insert([
-        { organization_id: orgId, object_id: newObj.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
-        { organization_id: orgId, object_id: newObj.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
-      ]) as any);
+      // Create a default section
+      const { data: newSec } = await (supabase.from("material_sections" as any).insert({
+        organization_id: orgId, object_id: newObj.id, name: "Основной раздел", sort_order: 0,
+      }).select("id").single() as any);
+      if (newSec?.id) {
+        await (supabase.from("material_folders" as any).insert([
+          { organization_id: orgId, object_id: newObj.id, section_id: newSec.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
+          { organization_id: orgId, object_id: newObj.id, section_id: newSec.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
+        ]) as any);
+      }
     }
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
     setCreateObjectOpen(false); setNewObjName(""); setNewObjDesc("");
     toast({ title: "Объект создан" });
@@ -342,81 +348,49 @@ export default function MaterialStatementsPage() {
   const handleDeleteObject = async (objId: string) => {
     await (supabase.from("material_objects" as any).delete().eq("id", objId) as any);
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
-    if (selectedObjectId === objId) { setSelectedObjectId(null); setSelectedYear(null); setSelectedFolderId(null); }
+    if (selectedObjectId === objId) { setSelectedObjectId(null); setSelectedYear(null); setSelectedFolderId(null); setSelectedSectionId(null); }
     toast({ title: "Объект удалён" });
   };
 
-  // CRUD: Folders
-  const handleCreateFolder = async () => {
-    if (!orgId || !newFolderName.trim() || !newFolderObjectId) return;
-    const objFolders = folders.filter(f => f.object_id === newFolderObjectId);
-    const maxOrder = objFolders.reduce((m, f) => Math.max(m, f.sort_order), 0);
-    await (supabase.from("material_folders" as any).insert({
-      organization_id: orgId, object_id: newFolderObjectId, name: newFolderName.trim(), sort_order: maxOrder + 1,
-    }) as any);
+  // CRUD: Sections
+  const handleCreateSection = async () => {
+    if (!orgId || !newSectionName.trim() || !newSectionObjectId) return;
+    const objSections = sections.filter(s => s.object_id === newSectionObjectId);
+    const maxOrder = objSections.reduce((m, s) => Math.max(m, s.sort_order), 0);
+    const { data: newSec } = await (supabase.from("material_sections" as any).insert({
+      organization_id: orgId, object_id: newSectionObjectId, name: newSectionName.trim(), sort_order: maxOrder + 1,
+    }).select("id").single() as any);
+    if (newSec?.id) {
+      await (supabase.from("material_folders" as any).insert([
+        { organization_id: orgId, object_id: newSectionObjectId, section_id: newSec.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
+        { organization_id: orgId, object_id: newSectionObjectId, section_id: newSec.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
+      ]) as any);
+    }
+    queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
-    setCreateFolderOpen(false); setNewFolderName("");
-    toast({ title: "Папка создана" });
+    setCreateSectionOpen(false); setNewSectionName("");
+    toast({ title: "Раздел создан" });
   };
 
-  const handleRenameFolder = async () => {
-    if (!renameFolderDialog || !renameFolderValue.trim()) return;
-    await (supabase.from("material_folders" as any).update({ name: renameFolderValue.trim() }).eq("id", renameFolderDialog.id) as any);
-    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
-    setRenameFolderDialog(null);
-    toast({ title: "Папка переименована" });
+  const handleRenameSection = async () => {
+    if (!renameSectionDialog || !renameSectionValue.trim()) return;
+    await (supabase.from("material_sections" as any).update({ name: renameSectionValue.trim() }).eq("id", renameSectionDialog.id) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-sections"] });
+    setRenameSectionDialog(null);
+    toast({ title: "Раздел переименован" });
   };
 
-  const handleDeleteFolder = async (folderId: string) => {
-    await (supabase.from("material_statements" as any).update({ folder_id: null }).eq("folder_id", folderId) as any);
-    await (supabase.from("material_folders" as any).delete().eq("id", folderId) as any);
+  const handleDeleteSection = async (sectionId: string) => {
+    // Delete folders, then section (cascade should handle it but be safe)
+    await (supabase.from("material_sections" as any).delete().eq("id", sectionId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
-    if (selectedFolderId === folderId) setSelectedFolderId(null);
-    toast({ title: "Папка удалена" });
+    if (selectedSectionId === sectionId) { setSelectedSectionId(null); setSelectedFolderId(null); }
+    toast({ title: "Раздел удалён" });
   };
-
-  // Drag & drop folders
-  const handleFolderDragStart = (e: React.DragEvent, folderId: string) => {
-    e.stopPropagation();
-    setDragFolderId(folderId);
-    e.dataTransfer.effectAllowed = "move";
-  };
-  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dragFolderId && dragFolderId !== folderId) {
-      setDragOverFolderId(folderId);
-    }
-  };
-  const handleFolderDragLeave = () => { setDragOverFolderId(null); };
-  const handleFolderDrop = async (e: React.DragEvent, targetFolderId: string, objectId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverFolderId(null);
-    if (!dragFolderId || dragFolderId === targetFolderId) { setDragFolderId(null); return; }
-
-    const objFolders = folders.filter(f => f.object_id === objectId).sort((a, b) => a.sort_order - b.sort_order);
-    const dragIndex = objFolders.findIndex(f => f.id === dragFolderId);
-    const targetIndex = objFolders.findIndex(f => f.id === targetFolderId);
-    if (dragIndex === -1 || targetIndex === -1) { setDragFolderId(null); return; }
-
-    const reordered = [...objFolders];
-    const [moved] = reordered.splice(dragIndex, 1);
-    reordered.splice(targetIndex, 0, moved);
-
-    // Update sort_order for all folders
-    for (let i = 0; i < reordered.length; i++) {
-      if (reordered[i].sort_order !== i) {
-        await (supabase.from("material_folders" as any).update({ sort_order: i }).eq("id", reordered[i].id) as any);
-      }
-    }
-
-    setDragFolderId(null);
-    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
-  };
-  const handleFolderDragEnd = () => { setDragFolderId(null); setDragOverFolderId(null); };
 
   // Move file to another folder
   const handleMoveFile = async () => {
@@ -428,31 +402,9 @@ export default function MaterialStatementsPage() {
     toast({ title: "Файл перемещён" });
   };
 
-  // File upload
-  const handleFileUpload = async (files: FileList) => {
-    if (!orgId || !uploadObjectId || !uploadFolderId) return;
-    for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-      const safeFileName = `${Date.now()}_file.${ext || 'pdf'}`;
-      const path = `${orgId}/${uploadYear}/${uploadObjectId}/${safeFileName}`;
-      const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
-      if (uploadError) { toast({ title: "Ошибка загрузки", description: uploadError.message, variant: "destructive" }); continue; }
-      const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-      await supabase.from("material_statements" as any).insert({
-        organization_id: orgId, object_id: uploadObjectId, folder_id: uploadFolderId,
-        year: uploadYear, file_name: file.name, file_url: urlData.publicUrl,
-        file_type: fileType, is_recognized: fileType === "xlsx",
-      });
-    }
-    toast({ title: "Файлы загружены" });
-    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
-    setUploadDialogOpen(false);
-  };
-
   // Quick file upload (in folder view)
   const handleQuickUpload = async (fileList: FileList) => {
-    if (!orgId || !selectedObjectId || !selectedFolderId || !selectedYear) return;
+    if (!orgId || !selectedObjectId || !selectedFolderId || !selectedYear || !selectedSectionId) return;
     for (const file of Array.from(fileList)) {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
@@ -463,6 +415,7 @@ export default function MaterialStatementsPage() {
       const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
       await supabase.from("material_statements" as any).insert({
         organization_id: orgId, object_id: selectedObjectId, folder_id: selectedFolderId,
+        section_id: selectedSectionId,
         year: selectedYear, file_name: file.name, file_url: urlData.publicUrl,
         file_type: fileType, is_recognized: fileType === "xlsx",
       });
@@ -598,58 +551,37 @@ export default function MaterialStatementsPage() {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
       return;
     }
-    setKpLoading(true);
-    setKpDialogOpen(true);
+    setKpLoading(true); setKpDialogOpen(true);
     try {
-      // Upload KP file temporarily
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
       const path = `${orgId}/kp/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-
       const { data, error } = await supabase.functions.invoke("recognize-kp", {
         body: { fileUrl: urlData.publicUrl, fileType },
       });
       if (error) throw error;
-
       const kpItems: KpItem[] = data.items || [];
-      const supplier = data.supplier || null;
-      setKpSupplier(supplier);
-
-      // Match KP items to project materials
+      setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
         const { item, score } = findBestMatch(kpItem.name, allItems);
         const autoMatched = score >= 0.6;
-        return {
-          kpItem,
-          matchedItemId: autoMatched && item ? item.id : null,
-          matchedItemName: autoMatched && item ? item.name : null,
-          similarity: score,
-          autoMatched,
-        };
+        return { kpItem, matchedItemId: autoMatched && item ? item.id : null, matchedItemName: autoMatched && item ? item.name : null, similarity: score, autoMatched };
       });
-
       setKpMatches(matches);
     } catch (e: any) {
       toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
       setKpDialogOpen(false);
-    } finally {
-      setKpLoading(false);
-    }
+    } finally { setKpLoading(false); }
   };
 
   const handleKpMatchChange = (index: number, itemId: string | null) => {
     setKpMatches(prev => {
       const updated = [...prev];
       const item = itemId ? allItems.find(i => i.id === itemId) : null;
-      updated[index] = {
-        ...updated[index],
-        matchedItemId: itemId,
-        matchedItemName: item ? item.name : null,
-        autoMatched: false,
-      };
+      updated[index] = { ...updated[index], matchedItemId: itemId, matchedItemName: item ? item.name : null, autoMatched: false };
       return updated;
     });
   };
@@ -664,21 +596,43 @@ export default function MaterialStatementsPage() {
         if (!item) continue;
         const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
         await (supabase.from("material_statement_items" as any).update({
-          price: match.kpItem.price,
-          total_price: totalPrice,
-          supplier: kpSupplier || match.kpItem.unit, // supplier from KP header
+          price: match.kpItem.price, total_price: totalPrice, supplier: kpSupplier || undefined,
         }).eq("id", match.matchedItemId) as any);
         applied++;
       }
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       toast({ title: `КП применено`, description: `Обновлено ${applied} позиций` });
-      setKpDialogOpen(false);
-      setKpMatches([]);
+      setKpDialogOpen(false); setKpMatches([]);
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
-    } finally {
-      setKpApplying(false);
-    }
+    } finally { setKpApplying(false); }
+  };
+
+  // ZIP Download
+  const handleDownloadZip = async (level: 'folder' | 'section' | 'object', id: string) => {
+    if (!orgId) return;
+    setDownloadingZip(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("download-zip", {
+        body: { level, id, organizationId: orgId },
+      });
+      if (error) throw error;
+
+      // data is a Blob
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      let name = "archive";
+      if (level === "folder") name = folders.find(f => f.id === id)?.name || "folder";
+      else if (level === "section") name = sections.find(s => s.id === id)?.name || "section";
+      else if (level === "object") name = objects.find(o => o.id === id)?.name || "object";
+      a.download = `${name}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Архив скачан" });
+    } catch (e: any) {
+      toast({ title: "Ошибка скачивания", description: e.message, variant: "destructive" });
+    } finally { setDownloadingZip(false); }
   };
 
   // Merged items for summary/export
@@ -706,11 +660,9 @@ export default function MaterialStatementsPage() {
 
   const handleExportExcel = () => {
     const data = mergedItems.map((m, i) => ({
-      "№": i + 1, "Наименование и техническая характеристика": m.name,
-      "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
-      "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
-      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
-      "Поставщик": m.supplier || "",
+      "№": i + 1, "Наименование": m.name, "Тип / марка": m.type_mark || "",
+      "Ед. изм.": m.unit || "", "Кол-во": m.quantity ?? "", "Масса (кг)": m.mass_per_unit ?? "",
+      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "", "Поставщик": m.supplier || "",
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     ws["!cols"] = [5, 50, 30, 15, 12, 15, 12, 15, 25].map(w => ({ wch: w }));
@@ -724,11 +676,9 @@ export default function MaterialStatementsPage() {
   const handleSaveExcelToStorage = async () => {
     if (!orgId || !selectedObjectId || !selectedYear || !selectedFolderId) return;
     const data = mergedItems.map((m, i) => ({
-      "№": i + 1, "Наименование и техническая характеристика": m.name,
-      "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
-      "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
-      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
-      "Поставщик": m.supplier || "",
+      "№": i + 1, "Наименование": m.name, "Тип / марка": m.type_mark || "",
+      "Ед. изм.": m.unit || "", "Кол-во": m.quantity ?? "", "Масса (кг)": m.mass_per_unit ?? "",
+      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "", "Поставщик": m.supplier || "",
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     ws["!cols"] = [5, 50, 30, 15, 12, 15, 12, 15, 25].map(w => ({ wch: w }));
@@ -743,6 +693,7 @@ export default function MaterialStatementsPage() {
     const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
     await (supabase.from("material_statements" as any).insert({
       organization_id: orgId, object_id: selectedObjectId, folder_id: selectedFolderId,
+      section_id: selectedSectionId,
       year: selectedYear, file_name: fileName, file_url: urlData.publicUrl,
       file_type: "xlsx", is_recognized: true,
     }) as any);
@@ -752,22 +703,21 @@ export default function MaterialStatementsPage() {
   };
 
   const selectedObj = objects.find(o => o.id === selectedObjectId);
+  const selectedSection = sections.find(s => s.id === selectedSectionId);
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
-  const foldersForCurrentObject = folders.filter(f => f.object_id === selectedObjectId);
+  const isMaterialsFolder = selectedFolder?.type === 'materials';
+  const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
+  const foldersForCurrentSection = folders.filter(f => f.section_id === selectedSectionId);
 
   const formatPrice = (val: number | null) => {
     if (val == null) return "—";
     return val.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const isMaterialsFolder = selectedFolder?.type === 'materials';
-  const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
-
-
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
       {/* Left Tree */}
-      <div className="w-72 border-r border-border bg-muted/30 overflow-y-auto flex-shrink-0">
+      <div className="w-80 border-r border-border bg-muted/30 overflow-y-auto flex-shrink-0">
         <div className="p-3 border-b border-border space-y-2">
           <h2 className="font-semibold text-sm">Ведомости материалов</h2>
           <div className="flex gap-1">
@@ -775,13 +725,10 @@ export default function MaterialStatementsPage() {
               <Plus className="h-3 w-3 mr-1" /> Объект
             </Button>
             <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => {
-              setCreateFolderOpen(true);
-              setNewFolderObjectId(selectedObjectId || "");
+              setCreateSectionOpen(true);
+              setNewSectionObjectId(selectedObjectId || "");
             }}>
-              <FolderPlus className="h-3 w-3 mr-1" /> Папка
-            </Button>
-            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setUploadDialogOpen(true)}>
-              <Upload className="h-3 w-3 mr-1" /> Файл
+              <Layers className="h-3 w-3 mr-1" /> Раздел
             </Button>
           </div>
         </div>
@@ -811,60 +758,81 @@ export default function MaterialStatementsPage() {
                         {expandedObjects.has(entry.object.id) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                         <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="truncate flex-1 text-left">{entry.object.name}</span>
-                        <Badge variant="outline" className="text-xs flex-shrink-0">{entry.folders.length}</Badge>
-                        <Trash2
-                          className="h-3 w-3 text-destructive opacity-0 group-hover:opacity-100 flex-shrink-0 cursor-pointer"
-                          onClick={e => { e.stopPropagation(); handleDeleteObject(entry.object.id); }}
-                        />
+                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 flex-shrink-0">
+                          <Archive
+                            className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
+                            title="Скачать архив объекта"
+                            onClick={e => { e.stopPropagation(); handleDownloadZip('object', entry.object.id); }}
+                          />
+                          <Trash2
+                            className="h-3 w-3 text-destructive cursor-pointer"
+                            onClick={e => { e.stopPropagation(); handleDeleteObject(entry.object.id); }}
+                          />
+                        </div>
                       </button>
                       {expandedObjects.has(entry.object.id) && (
                         <div className="ml-5">
-                          {entry.folders.length === 0 && (
-                            <p className="text-xs text-muted-foreground px-2 py-1">Нет папок</p>
+                          {entry.sections.length === 0 && (
+                            <p className="text-xs text-muted-foreground px-2 py-1">Нет разделов</p>
                           )}
-                          {entry.folders.map(folder => {
-                            const isActive = selectedFolderId === folder.id;
-                            const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
-                            const isDragOver = dragOverFolderId === folder.id;
-                            return (
+                          {entry.sections.map(secEntry => (
+                            <div key={secEntry.section.id}>
                               <button
-                                key={folder.id}
-                                draggable
-                                onDragStart={e => handleFolderDragStart(e, folder.id)}
-                                onDragOver={e => handleFolderDragOver(e, folder.id)}
-                                onDragLeave={handleFolderDragLeave}
-                                onDrop={e => handleFolderDrop(e, folder.id, entry.object.id)}
-                                onDragEnd={handleFolderDragEnd}
-                                className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors group/folder ${
-                                  isActive ? "bg-primary/10 text-primary font-medium" :
-                                  isDragOver ? "bg-accent border-2 border-dashed border-primary" :
-                                  dragFolderId === folder.id ? "opacity-50" :
-                                  "hover:bg-accent/50"
-                                }`}
-                                onClick={() => selectFolder(node.year, entry.object.id, folder.id)}
+                                className="w-full flex items-center gap-1.5 px-2 py-1 text-sm hover:bg-accent/50 rounded-md group/sec"
+                                onClick={() => toggleSection(secEntry.section.id)}
                               >
-                                <GripVertical className="h-3 w-3 text-muted-foreground/50 cursor-grab flex-shrink-0" />
-                                {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
-                                <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
-                                <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
-                                <div className="flex gap-0.5 opacity-0 group-hover/folder:opacity-100 flex-shrink-0">
+                                {expandedSections.has(secEntry.section.id) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate flex-1 text-left text-xs font-medium">{secEntry.section.name}</span>
+                                <div className="flex gap-0.5 opacity-0 group-hover/sec:opacity-100 flex-shrink-0">
+                                  <Archive
+                                    className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
+                                    title="Скачать архив раздела"
+                                    onClick={e => { e.stopPropagation(); handleDownloadZip('section', secEntry.section.id); }}
+                                  />
                                   <Pencil
                                     className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
-                                    onClick={e => { e.stopPropagation(); setRenameFolderDialog(folder); setRenameFolderValue(folder.name); }}
+                                    onClick={e => { e.stopPropagation(); setRenameSectionDialog(secEntry.section); setRenameSectionValue(secEntry.section.name); }}
                                   />
                                   <Trash2
                                     className="h-3 w-3 text-destructive cursor-pointer"
-                                    onClick={e => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                                    onClick={e => { e.stopPropagation(); handleDeleteSection(secEntry.section.id); }}
                                   />
                                 </div>
                               </button>
-                            );
-                          })}
+                              {expandedSections.has(secEntry.section.id) && (
+                                <div className="ml-5">
+                                  {secEntry.folders.map(folder => {
+                                    const isActive = selectedFolderId === folder.id;
+                                    const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
+                                    return (
+                                      <button
+                                        key={folder.id}
+                                        className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors group/folder ${
+                                          isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                                        }`}
+                                        onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id)}
+                                      >
+                                        {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+                                        <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
+                                        <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
+                                        <Archive
+                                          className="h-3 w-3 text-muted-foreground opacity-0 group-hover/folder:opacity-100 cursor-pointer hover:text-foreground flex-shrink-0"
+                                          title="Скачать архив папки"
+                                          onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}
+                                        />
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                           <button
                             className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md"
-                            onClick={() => { setCreateFolderOpen(true); setNewFolderObjectId(entry.object.id); }}
+                            onClick={() => { setCreateSectionOpen(true); setNewSectionObjectId(entry.object.id); }}
                           >
-                            <Plus className="h-3 w-3" /> Добавить папку
+                            <Plus className="h-3 w-3" /> Добавить раздел
                           </button>
                         </div>
                       )}
@@ -884,11 +852,11 @@ export default function MaterialStatementsPage() {
             <FileText className="h-12 w-12" />
             <p>Выберите папку из дерева слева</p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setCreateFolderOpen(true)}>
-                <FolderPlus className="h-4 w-4 mr-2" /> Создать папку
+              <Button variant="outline" onClick={() => setCreateObjectOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Создать объект
               </Button>
-              <Button variant="outline" onClick={() => setUploadDialogOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" /> Загрузить файл
+              <Button variant="outline" onClick={() => setCreateSectionOpen(true)}>
+                <Layers className="h-4 w-4 mr-2" /> Добавить раздел
               </Button>
             </div>
           </div>
@@ -899,8 +867,9 @@ export default function MaterialStatementsPage() {
               <div>
                 <h1 className="text-xl font-bold">{selectedObj?.name || "Объект"}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {selectedYear} год — <span className="font-medium text-foreground">{selectedFolder?.name}</span>
-                  {totalCost > 0 && (
+                  {selectedYear} год — <span className="font-medium text-foreground">{selectedSection?.name}</span>
+                  {" → "}<span className="font-medium text-foreground">{selectedFolder?.name}</span>
+                  {isMaterialsFolder && totalCost > 0 && (
                     <span className="ml-3 text-primary font-semibold">
                       Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
                     </span>
@@ -908,6 +877,7 @@ export default function MaterialStatementsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
+                {downloadingZip && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isMaterialsFolder && allItems.length > 0 && (
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
@@ -931,6 +901,9 @@ export default function MaterialStatementsPage() {
                     <Download className="h-4 w-4 mr-1" /> Скачать Excel
                   </Button>
                 )}
+                <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
+                  <Archive className="h-4 w-4 mr-1" /> ZIP
+                </Button>
               </div>
             </div>
 
@@ -1008,7 +981,7 @@ export default function MaterialStatementsPage() {
                     ))}
                     {currentStatements.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Нет загруженных файлов</TableCell>
+                        <TableCell colSpan={isMaterialsFolder ? 6 : 5} className="text-center text-muted-foreground py-8">Нет загруженных файлов</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -1063,9 +1036,8 @@ export default function MaterialStatementsPage() {
                             {stItems.length > 0 && (
                               <Button size="sm" variant="outline" onClick={() => {
                                 const d = stItems.map((m, i) => ({
-                                  "№": i + 1, "Наименование и техническая характеристика": m.name,
-                                  "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
-                                  "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
+                                  "№": i + 1, "Наименование": m.name, "Тип / марка": m.type_mark || "",
+                                  "Ед. изм.": m.unit || "", "Кол-во": m.quantity ?? "", "Масса (кг)": m.mass_per_unit ?? "",
                                   "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
                                 }));
                                 const ws = XLSX.utils.json_to_sheet(d);
@@ -1191,54 +1163,6 @@ export default function MaterialStatementsPage() {
         )}
       </div>
 
-      {/* Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Загрузить ведомость</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Год</label>
-              <Select value={String(uploadYear)} onValueChange={v => setUploadYear(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[2024, 2025, 2026, 2027].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Объект</label>
-              <Select value={uploadObjectId} onValueChange={v => { setUploadObjectId(v); setUploadFolderId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
-                <SelectContent>
-                  {objects.filter(o => o.year === uploadYear).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
-                  {objects.filter(o => o.year === uploadYear).length === 0 && (
-                    <div className="p-2 text-sm text-muted-foreground text-center">Нет объектов за {uploadYear} год</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Папка</label>
-              <Select value={uploadFolderId} onValueChange={setUploadFolderId}>
-                <SelectTrigger><SelectValue placeholder="Выберите папку" /></SelectTrigger>
-                <SelectContent>
-                  {folders.filter(f => f.object_id === uploadObjectId).map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-                  {folders.filter(f => f.object_id === uploadObjectId).length === 0 && (
-                    <div className="p-2 text-sm text-muted-foreground text-center">Нет папок в этом объекте</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Файлы (PDF или Excel, до 10)</label>
-              <Input type="file" accept=".pdf,.xlsx,.xls" multiple
-                onChange={e => e.target.files && handleFileUpload(e.target.files)}
-                disabled={!uploadObjectId || !uploadFolderId} />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Create Object Dialog */}
       <Dialog open={createObjectOpen} onOpenChange={setCreateObjectOpen}>
         <DialogContent>
@@ -1270,14 +1194,14 @@ export default function MaterialStatementsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Folder Dialog */}
-      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
+      {/* Create Section Dialog */}
+      <Dialog open={createSectionOpen} onOpenChange={setCreateSectionOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Создать папку</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Создать раздел</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Объект</label>
-              <Select value={newFolderObjectId} onValueChange={setNewFolderObjectId}>
+              <Select value={newSectionObjectId} onValueChange={setNewSectionObjectId}>
                 <SelectTrigger><SelectValue placeholder="Выберите объект" /></SelectTrigger>
                 <SelectContent>
                   {objects.map(o => <SelectItem key={o.id} value={o.id}>{o.name} ({o.year})</SelectItem>)}
@@ -1285,28 +1209,28 @@ export default function MaterialStatementsPage() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Название папки</label>
-              <Input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Например: ОВ, ВК, ЭОМ" />
+              <label className="text-sm font-medium">Название раздела</label>
+              <Input value={newSectionName} onChange={e => setNewSectionName(e.target.value)} placeholder="Например: ОВ, ВК, ЭОМ" />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim() || !newFolderObjectId}>
-              <FolderPlus className="h-4 w-4 mr-1" /> Создать
+            <Button onClick={handleCreateSection} disabled={!newSectionName.trim() || !newSectionObjectId}>
+              <Layers className="h-4 w-4 mr-1" /> Создать
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Rename Folder Dialog */}
-      <Dialog open={!!renameFolderDialog} onOpenChange={open => { if (!open) setRenameFolderDialog(null); }}>
+      {/* Rename Section Dialog */}
+      <Dialog open={!!renameSectionDialog} onOpenChange={open => { if (!open) setRenameSectionDialog(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Переименовать папку</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Переименовать раздел</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input value={renameFolderValue} onChange={e => setRenameFolderValue(e.target.value)} placeholder="Новое название"
-              onKeyDown={e => { if (e.key === "Enter") handleRenameFolder(); }} />
+            <Input value={renameSectionValue} onChange={e => setRenameSectionValue(e.target.value)} placeholder="Новое название"
+              onKeyDown={e => { if (e.key === "Enter") handleRenameSection(); }} />
           </div>
           <DialogFooter>
-            <Button onClick={handleRenameFolder} disabled={!renameFolderValue.trim()}>Сохранить</Button>
+            <Button onClick={handleRenameSection} disabled={!renameSectionValue.trim()}>Сохранить</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1322,7 +1246,7 @@ export default function MaterialStatementsPage() {
               <Select value={moveTargetFolderId} onValueChange={setMoveTargetFolderId}>
                 <SelectTrigger><SelectValue placeholder="Выберите папку" /></SelectTrigger>
                 <SelectContent>
-                  {foldersForCurrentObject
+                  {foldersForCurrentSection
                     .filter(f => f.id !== moveFileDialog?.folder_id)
                     .map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
                 </SelectContent>
@@ -1397,19 +1321,12 @@ export default function MaterialStatementsPage() {
                         <TableCell className="text-sm">{match.kpItem.name}</TableCell>
                         <TableCell className="font-medium">{match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}</TableCell>
                         <TableCell>
-                          <Select
-                            value={match.matchedItemId || "__none__"}
-                            onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="Не сопоставлено" />
-                            </SelectTrigger>
+                          <Select value={match.matchedItemId || "__none__"} onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Не сопоставлено" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
                               {allItems.map(item => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.name.substring(0, 80)}
-                                </SelectItem>
+                                <SelectItem key={item.id} value={item.id}>{item.name.substring(0, 80)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
