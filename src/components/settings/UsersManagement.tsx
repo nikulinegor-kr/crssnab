@@ -217,6 +217,14 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
         throw new Error(data.error || "Не удалось создать пользователя");
       }
 
+      // Show credentials dialog
+      setCreatedCredentials({
+        email: trimmedEmail,
+        password: newUserPassword,
+        fullName: newUserFullName.trim(),
+      });
+      setCredentialsDialogOpen(true);
+
       toast({
         title: "Успешно",
         description: "Пользователь добавлен",
