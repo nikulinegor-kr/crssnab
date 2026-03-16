@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 ]
 
 Если quantity или mass_per_unit отсутствуют, ставь null.
-Числа с запятой (напр. "1,5") передавай как есть, сервер нормализует.
+КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
     // Call Lovable AI (Gemini for PDF/vision)
@@ -137,11 +137,34 @@ Deno.serve(async (req) => {
     try {
       rawRows = JSON.parse(content);
     } catch {
-      console.error("Failed to parse AI response:", content);
-      return new Response(
-        JSON.stringify({ error: "Failed to parse AI response", raw: content }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Attempt to fix Russian-locale commas in numbers (e.g. "quantity": 2,03 → "quantity": 2.03)
+      let fixed = content.replace(/:\s*(\d+),(\d+)\s*([,\}\]])/g, ': $1.$2$3');
+      try {
+        rawRows = JSON.parse(fixed);
+        console.warn("Recovered JSON after fixing locale commas");
+      } catch {
+        // Attempt to recover truncated JSON
+        const lastBrace = fixed.lastIndexOf("}");
+        if (lastBrace > 0) {
+          const repaired = fixed.substring(0, lastBrace + 1) + "]";
+          try {
+            rawRows = JSON.parse(repaired);
+            console.warn(`Recovered ${rawRows.length} items from truncated response`);
+          } catch {
+            console.error("Failed to parse AI response:", content.substring(0, 500));
+            return new Response(
+              JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        } else {
+          console.error("Failed to parse AI response:", content.substring(0, 500));
+          return new Response(
+            JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
     }
 
     if (!Array.isArray(rawRows)) {
