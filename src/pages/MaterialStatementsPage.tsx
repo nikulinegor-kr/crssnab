@@ -759,11 +759,9 @@ export default function MaterialStatementsPage() {
                         <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="truncate flex-1 text-left">{entry.object.name}</span>
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 flex-shrink-0">
-                          <Archive
-                            className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground"
-                            title="Скачать архив объекта"
-                            onClick={e => { e.stopPropagation(); handleDownloadZip('object', entry.object.id); }}
-                          />
+                          <span title="Скачать архив объекта" onClick={e => { e.stopPropagation(); handleDownloadZip('object', entry.object.id); }}>
+                            <Archive className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground" />
+                          </span>
                           <Trash2
                             className="h-3 w-3 text-destructive cursor-pointer"
                             onClick={e => { e.stopPropagation(); handleDeleteObject(entry.object.id); }}
