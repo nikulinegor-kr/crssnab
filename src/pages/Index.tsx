@@ -216,15 +216,21 @@ export default function Index() {
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground">
-            Нет аккаунта?{" "}
-            <Link 
-              to="/auth" 
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              Зарегистрироваться
-            </Link>
+          <p className="text-xs text-muted-foreground">
+            Логин и пароль предоставляет администратор вашей организации
           </p>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              Вы руководитель?{" "}
+              <Link 
+                to="/auth" 
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                Зарегистрировать организацию
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
