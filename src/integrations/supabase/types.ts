@@ -849,6 +849,7 @@ export type Database = {
           name: string
           object_id: string
           organization_id: string
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -857,6 +858,7 @@ export type Database = {
           name: string
           object_id: string
           organization_id: string
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -865,6 +867,7 @@ export type Database = {
           name?: string
           object_id?: string
           organization_id?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: [
@@ -932,9 +935,12 @@ export type Database = {
           mass_per_unit: number | null
           name: string
           organization_id: string
+          price: number | null
           quantity: number | null
           row_number: number
           statement_id: string
+          supplier: string | null
+          total_price: number | null
           type_mark: string | null
           unit: string | null
           updated_at: string
@@ -945,9 +951,12 @@ export type Database = {
           mass_per_unit?: number | null
           name?: string
           organization_id: string
+          price?: number | null
           quantity?: number | null
           row_number?: number
           statement_id: string
+          supplier?: string | null
+          total_price?: number | null
           type_mark?: string | null
           unit?: string | null
           updated_at?: string
@@ -958,9 +967,12 @@ export type Database = {
           mass_per_unit?: number | null
           name?: string
           organization_id?: string
+          price?: number | null
           quantity?: number | null
           row_number?: number
           statement_id?: string
+          supplier?: string | null
+          total_price?: number | null
           type_mark?: string | null
           unit?: string | null
           updated_at?: string
