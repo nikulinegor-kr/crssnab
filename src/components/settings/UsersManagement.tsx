@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2, Users, Pencil } from "lucide-react";
+import { Plus, Trash2, Loader2, Users, Pencil, Copy, Mail, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -62,6 +62,11 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
   const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">("viewer");
   const [isCreating, setIsCreating] = useState(false);
   
+  // Credentials dialog state
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string; fullName: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   // Edit user state
   const [editingUser, setEditingUser] = useState<OrgMember | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -211,6 +216,14 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
       if (!data.success) {
         throw new Error(data.error || "Не удалось создать пользователя");
       }
+
+      // Show credentials dialog
+      setCreatedCredentials({
+        email: trimmedEmail,
+        password: newUserPassword,
+        fullName: newUserFullName.trim(),
+      });
+      setCredentialsDialogOpen(true);
 
       toast({
         title: "Успешно",
@@ -569,6 +582,89 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credentials Dialog */}
+      <Dialog open={credentialsDialogOpen} onOpenChange={(open) => {
+        setCredentialsDialogOpen(open);
+        if (!open) {
+          setCreatedCredentials(null);
+          setCopiedField(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Пользователь создан</DialogTitle>
+            <DialogDescription>
+              Данные для входа пользователя {createdCredentials?.fullName}. Отправьте их пользователю.
+            </DialogDescription>
+          </DialogHeader>
+          {createdCredentials && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Логин (Email)</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={createdCredentials.email} readOnly className="bg-muted" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.email);
+                      setCopiedField("email");
+                      setTimeout(() => setCopiedField(null), 2000);
+                    }}
+                  >
+                    {copiedField === "email" ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Пароль</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={createdCredentials.password} readOnly className="bg-muted" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.password);
+                      setCopiedField("password");
+                      setTimeout(() => setCopiedField(null), 2000);
+                    }}
+                  >
+                    {copiedField === "password" ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {createdCredentials && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  const subject = encodeURIComponent("Данные для входа в CRSS");
+                  const body = encodeURIComponent(
+                    `Здравствуйте, ${createdCredentials.fullName}!\n\nВам предоставлен доступ к системе CRSS.\n\nДанные для входа:\nЛогин: ${createdCredentials.email}\nПароль: ${createdCredentials.password}\n\nСсылка для входа: ${window.location.origin}\n\nРекомендуем сменить пароль после первого входа.`
+                  );
+                  window.open(`mailto:${createdCredentials.email}?subject=${subject}&body=${body}`, "_blank");
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Отправить на email
+              </Button>
+            )}
+            <Button onClick={() => {
+              setCredentialsDialogOpen(false);
+              setCreatedCredentials(null);
+              setCopiedField(null);
+            }}>
+              Готово
             </Button>
           </DialogFooter>
         </DialogContent>
