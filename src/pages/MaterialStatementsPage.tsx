@@ -988,7 +988,7 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            {st.file_type === "pdf" && (
+                            {isMaterialsFolder && st.file_type === "pdf" && (
                               <Button size="sm" variant="outline" onClick={() => handleRecognize(st)} disabled={recognizingId === st.id}>
                                 {recognizingId === st.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
                                 Распознать
