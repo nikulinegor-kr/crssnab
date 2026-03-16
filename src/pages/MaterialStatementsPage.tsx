@@ -1007,6 +1007,34 @@ export default function MaterialStatementsPage() {
               </CardContent>
             </Card>
 
+            {/* Procurement Summary */}
+            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
+              const totalMaterials = allItems.length;
+              const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
+              const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
+              const remainingCount = totalMaterials - procuredCount;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Всего материалов</p>
+                    <p className="text-xl font-bold">{totalMaterials}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">В закупке</p>
+                    <p className="text-xl font-bold text-amber-600">{procuredCount - deliveredCount}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Доставлено</p>
+                    <p className="text-xl font-bold text-emerald-600">{deliveredCount}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Осталось купить</p>
+                    <p className="text-xl font-bold text-primary">{remainingCount}</p>
+                  </Card>
+                </div>
+              );
+            })()}
+
             {/* Per-file material sections - only for materials folders */}
             {selectedFolderId && isMaterialsFolder && (
               <>
