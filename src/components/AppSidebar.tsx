@@ -58,26 +58,19 @@ const menuGroups = [
     ],
   },
   {
+    label: "Проект",
+    icon: FolderOpen,
+    items: [
+      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
+      { title: "Документы", url: "/documents", icon: Files },
+    ],
+  },
+  {
     label: "ERP",
-    icon: Package,
+    icon: Layers,
     items: [
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
-      { title: "Техника", url: "/equipment", icon: Truck },
-      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
-    ],
-  },
-  {
-    label: "Склад",
-    icon: Warehouse,
-    items: [
       { title: "Склад", url: "/warehouse", icon: Warehouse },
-      { title: "Журнал движений", url: "/warehouse/journal", icon: ClipboardList },
-    ],
-  },
-  {
-    label: "Снабжение",
-    icon: Boxes,
-    items: [
       { title: "Поставщики", url: "/suppliers", icon: Users },
       { title: "Поставки", url: "/shipments", icon: Truck },
     ],
@@ -93,7 +86,6 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
-      { title: "Аналитика", url: "/analytics", icon: BarChart3 },
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
     ],
   },
