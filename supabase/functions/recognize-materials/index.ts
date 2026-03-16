@@ -134,15 +134,20 @@ Deno.serve(async (req) => {
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     // Fix Russian-locale commas in numeric values BEFORE parsing
-    // Matches patterns like: 2,03  0,2  12,4  1,745 when used as JSON number values
-    // Only replaces comma between digits that appear after ":" (JSON value position)
+    // Uses capture groups instead of lookbehind for maximum compatibility
     const fixLocaleCommas = (text: string): string => {
-      // Replace commas used as decimal separators in JSON numeric values
-      // Pattern: after colon and optional whitespace, digits-comma-digits, followed by comma/}/]/whitespace
-      return text.replace(/(?<=:\s*-?)(\d+),(\d+)(?=\s*[,\}\]\n\r])/g, '$1.$2');
+      // Match: colon + optional whitespace + optional minus + digits,digits
+      // followed by comma/}/]/whitespace (JSON value context)
+      return text.replace(/(:\s*-?)(\d+),(\d+)(\s*[,\}\]\s\n\r])/g, '$1$2.$3$4');
     };
 
+    // Apply multiple passes to catch nested cases
+    let prev = content;
     content = fixLocaleCommas(content);
+    // Second pass in case first pass shifted positions
+    if (content !== prev) {
+      content = fixLocaleCommas(content);
+    }
 
     let rawRows: any[];
     try {
