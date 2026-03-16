@@ -299,9 +299,12 @@ export default function RequestDetail() {
     try {
       const newUrls: string[] = [];
       
-      for (const file of Array.from(files)) {
-        const sanitizedName = sanitizeFilename(file.name);
-        const fileName = `${id}-${Date.now()}-${sanitizedName}`;
+      for (let i = 0; i < Array.from(files).length; i++) {
+        const file = Array.from(files)[i];
+        const extension = file.name.split('.').pop() || '';
+        const baseName = sanitizeFilename(request.description);
+        const suffix = files.length > 1 ? `_${i + 1}` : '';
+        const fileName = `${id}-${Date.now()}-${baseName}${suffix}.${extension}`;
         
         const { error: uploadError } = await supabase.storage
           .from("request-documents")
