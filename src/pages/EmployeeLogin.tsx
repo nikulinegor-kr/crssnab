@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Sun, Moon, Users } from "lucide-react";
+import { Loader2, Eye, EyeOff, Sun, Moon, Users, Shield } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
@@ -129,11 +129,27 @@ export default function EmployeeLogin() {
             <div className="bg-primary/10 p-4 rounded-xl">
               <Users className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Вход для сотрудников</h2>
+          </div>
+
+          {/* Role Selector */}
+          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+            <Link
+              to="/"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              Администратор
+            </Link>
+            <div
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-background shadow-sm text-foreground text-sm font-medium cursor-default"
+            >
+              <Users className="h-4 w-4 text-primary" />
+              Сотрудник
+            </div>
           </div>
 
           <div className="space-y-0.5">
-            <h2 className="text-lg font-bold text-foreground lg:block hidden">Войти в систему</h2>
+            <h2 className="text-lg font-bold text-foreground">Вход для сотрудников</h2>
             <p className="text-xs text-muted-foreground">
               Введите данные, полученные от администратора
             </p>
@@ -190,18 +206,6 @@ export default function EmployeeLogin() {
               Войти
             </Button>
           </form>
-
-          <div className="pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              Вы руководитель?{" "}
-              <Link
-                to="/"
-                className="text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                Войти как администратор
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Loader2, Eye, EyeOff, Sun, Moon, Shield, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
@@ -138,8 +138,25 @@ export default function Index() {
             />
           </div>
 
+          {/* Role Selector */}
+          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+            <div
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-background shadow-sm text-foreground text-sm font-medium cursor-default"
+            >
+              <Sun className="h-4 w-4 text-primary" />
+              Администратор
+            </div>
+            <Link
+              to="/employee-login"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
+            >
+              <Users className="h-4 w-4" />
+              Сотрудник
+            </Link>
+          </div>
+
           <div className="space-y-0.5">
-            <h2 className="text-lg font-bold text-foreground">Вход в систему</h2>
+            <h2 className="text-lg font-bold text-foreground">Вход для администратора</h2>
             <p className="text-xs text-muted-foreground">
               Введите данные для доступа к панели управления
             </p>
@@ -225,18 +242,6 @@ export default function Index() {
               Зарегистрироваться
             </Link>
           </p>
-
-          <div className="pt-2 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              Вы сотрудник?{" "}
-              <Link 
-                to="/employee-login" 
-                className="text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                Вход для сотрудников
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
