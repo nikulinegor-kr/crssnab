@@ -7,11 +7,7 @@ const Footer = () => {
         {/* Brand Column */}
         <div className="md:col-span-1">
           <div className="flex items-center gap-2">
-            <div className="size-5 text-primary">
-              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
-              </svg>
-            </div>
+            <img src="/logo.png" alt="CRSS" className="h-5 w-5 object-contain" />
             <span className="text-foreground text-lg font-bold">CRSS</span>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed mt-3">

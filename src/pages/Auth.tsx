@@ -184,11 +184,7 @@ export default function Auth() {
         <Card className="glassmorphism border-border/50 shadow-2xl">
           <CardHeader className="space-y-2 text-center pb-4">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="size-8 text-primary">
-                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                  <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
-                </svg>
-              </div>
+              <img src="/logo.png" alt="CRSS" className="h-8 w-8 object-contain" />
               <span className="text-2xl font-bold text-foreground">CRSS</span>
             </div>
             <CardTitle className="text-2xl font-black text-foreground">
