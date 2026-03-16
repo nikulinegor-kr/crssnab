@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
+import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 
 // Types
 interface MaterialStatement {
