@@ -1464,6 +1464,19 @@ export default function MaterialStatementsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Procurement Dialog */}
+      <CreateProcurementDialog
+        open={procurementDialogOpen}
+        onOpenChange={setProcurementDialogOpen}
+        items={procurementMode === "selected"
+          ? allItems.filter(i => selectedItemIds.has(i.id))
+          : allItems
+        }
+        orgId={orgId || ""}
+        objectName={selectedObj?.name}
+        sectionName={selectedSection?.name}
+      />
     </div>
   );
 }
