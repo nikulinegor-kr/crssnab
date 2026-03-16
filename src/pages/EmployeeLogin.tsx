@@ -7,20 +7,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Loader2, Eye, EyeOff, Sun, Moon, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
   password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
-  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function Index() {
+export default function EmployeeLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -52,7 +50,6 @@ export default function Index() {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
 
@@ -71,7 +68,7 @@ export default function Index() {
         description: "Вы вошли в систему",
       });
     } catch (error: any) {
-      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch");
+      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch") || error.message === "Load failed";
       let errorMessage = error.message || "Не удалось войти";
       if (isNetworkError) {
         errorMessage = "Ошибка сети. Проверьте подключение к интернету.";
@@ -100,18 +97,16 @@ export default function Index() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Left Side - Logo */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <div className="flex flex-col items-center text-center gap-4">
-          <img 
-            src="/logo.png" 
-            alt="CRSS Logo" 
-            className="h-36 w-auto"
-          />
+          <div className="bg-primary/10 p-6 rounded-2xl">
+            <Users className="h-20 w-20 text-primary" />
+          </div>
           <div className="flex flex-col gap-1">
-            <h1 className="text-5xl font-bold text-foreground tracking-wide">CRSS</h1>
-            <p className="text-lg text-muted-foreground leading-tight">
-              Система управления заявками
+            <h1 className="text-4xl font-bold text-foreground tracking-wide">Вход для сотрудников</h1>
+            <p className="text-lg text-muted-foreground leading-tight mt-2">
+              Используйте логин и пароль,<br />предоставленные администратором
             </p>
           </div>
         </div>
@@ -129,19 +124,18 @@ export default function Index() {
         </button>
 
         <div className="w-full max-w-md space-y-6">
-          {/* Mobile Logo */}
-          <div className="flex lg:hidden items-center justify-center mb-8">
-            <img 
-              src="/logo.png" 
-              alt="CRSS Logo" 
-              className="h-16 w-auto"
-            />
+          {/* Mobile Header */}
+          <div className="flex lg:hidden flex-col items-center mb-8 gap-3">
+            <div className="bg-primary/10 p-4 rounded-xl">
+              <Users className="h-10 w-10 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Вход для сотрудников</h2>
           </div>
 
           <div className="space-y-0.5">
-            <h2 className="text-lg font-bold text-foreground">Вход в систему</h2>
+            <h2 className="text-lg font-bold text-foreground lg:block hidden">Войти в систему</h2>
             <p className="text-xs text-muted-foreground">
-              Введите данные для доступа к панели управления
+              Введите данные, полученные от администратора
             </p>
           </div>
 
@@ -187,25 +181,6 @@ export default function Index() {
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="rememberMe"
-                  className="h-4 w-4"
-                  onCheckedChange={(checked) => form.setValue("rememberMe", !!checked)}
-                />
-                <Label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer font-extralight">
-                  Запомнить меня
-                </Label>
-              </div>
-              <Link 
-                to="/auth" 
-                className="text-xs text-primary hover:text-primary/80 transition-colors"
-              >
-                Забыли пароль?
-              </Link>
-            </div>
-
             <Button
               type="submit"
               className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary/90"
@@ -216,24 +191,14 @@ export default function Index() {
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground">
-            Нет аккаунта?{" "}
-            <Link 
-              to="/auth" 
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              Зарегистрироваться
-            </Link>
-          </p>
-
-          <div className="pt-2 border-t border-border">
+          <div className="pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground text-center">
-              Вы сотрудник?{" "}
-              <Link 
-                to="/employee-login" 
+              Вы руководитель?{" "}
+              <Link
+                to="/"
                 className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Вход для сотрудников
+                Войти как администратор
               </Link>
             </p>
           </div>

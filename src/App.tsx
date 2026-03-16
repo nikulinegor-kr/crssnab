@@ -55,6 +55,7 @@ const Demo = lazyWithRetry(() => import("./pages/Demo"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const Contact = lazyWithRetry(() => import("./pages/Contact"));
 const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
+const EmployeeLogin = lazyWithRetry(() => import("./pages/EmployeeLogin"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -97,6 +98,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/employee-login" element={<EmployeeLogin />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
