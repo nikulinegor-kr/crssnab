@@ -8,7 +8,6 @@ import {
   Percent,
   Sun,
   Moon,
-  Package,
   ChevronDown,
   Building2,
   BarChart3,
@@ -16,9 +15,9 @@ import {
   Wallet,
   Truck,
   Layers,
-  Boxes,
-  ClipboardList,
+  FolderOpen,
   FileSpreadsheet,
+  Files,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
