@@ -921,7 +921,7 @@ export default function MaterialStatementsPage() {
                 <Button variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
                     <Plus className="h-4 w-4 mr-1" /> Добавить файлы
-                    <input type="file" accept=".pdf,.xlsx,.xls" multiple className="hidden"
+                    <input type="file" accept={isGeneralDocsFolder ? ".pdf,.doc,.docx,.dwg" : ".pdf,.xlsx,.xls"} multiple className="hidden"
                       onChange={e => { if (e.target.files) { handleQuickUpload(e.target.files); e.target.value = ""; } }}
                     />
                   </label>
