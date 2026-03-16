@@ -14,7 +14,7 @@ import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
 
 // Lazy load all pages with retry mechanism for code splitting
 const Index = lazyWithRetry(() => import("./pages/Index"));
-const Landing = lazyWithRetry(() => import("./pages/Landing"));
+const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
