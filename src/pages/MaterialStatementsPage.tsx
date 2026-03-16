@@ -763,8 +763,6 @@ export default function MaterialStatementsPage() {
   const isMaterialsFolder = selectedFolder?.type === 'materials';
   const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
 
-  return (
-  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
