@@ -978,11 +978,13 @@ export default function MaterialStatementsPage() {
                         <TableCell>
                           <Badge variant={st.file_type === "pdf" ? "destructive" : "default"}>{st.file_type.toUpperCase()}</Badge>
                         </TableCell>
-                        <TableCell>
-                          {st.is_recognized
-                            ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
-                            : <Badge variant="secondary">Не распознано</Badge>}
-                        </TableCell>
+                        {isMaterialsFolder && (
+                          <TableCell>
+                            {st.is_recognized
+                              ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
+                              : <Badge variant="secondary">Не распознано</Badge>}
+                          </TableCell>
+                        )}
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(st.created_at).toLocaleDateString("ru-RU")}
                         </TableCell>
