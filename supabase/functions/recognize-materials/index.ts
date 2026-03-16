@@ -133,37 +133,41 @@ Deno.serve(async (req) => {
     // Clean markdown wrapping if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
+    // Fix Russian-locale commas in numeric values BEFORE parsing
+    // Matches patterns like: 2,03  0,2  12,4  1,745 when used as JSON number values
+    // Only replaces comma between digits that appear after ":" (JSON value position)
+    const fixLocaleCommas = (text: string): string => {
+      // Replace commas used as decimal separators in JSON numeric values
+      // Pattern: after colon and optional whitespace, digits-comma-digits, followed by comma/}/]/whitespace
+      return text.replace(/(?<=:\s*-?)(\d+),(\d+)(?=\s*[,\}\]\n\r])/g, '$1.$2');
+    };
+
+    content = fixLocaleCommas(content);
+
     let rawRows: any[];
     try {
       rawRows = JSON.parse(content);
     } catch {
-      // Attempt to fix Russian-locale commas in numbers (e.g. "quantity": 2,03 → "quantity": 2.03)
-      let fixed = content.replace(/:\s*(\d+),(\d+)\s*([,\}\]])/g, ': $1.$2$3');
-      try {
-        rawRows = JSON.parse(fixed);
-        console.warn("Recovered JSON after fixing locale commas");
-      } catch {
-        // Attempt to recover truncated JSON
-        const lastBrace = fixed.lastIndexOf("}");
-        if (lastBrace > 0) {
-          const repaired = fixed.substring(0, lastBrace + 1) + "]";
-          try {
-            rawRows = JSON.parse(repaired);
-            console.warn(`Recovered ${rawRows.length} items from truncated response`);
-          } catch {
-            console.error("Failed to parse AI response:", content.substring(0, 500));
-            return new Response(
-              JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
-              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-        } else {
-          console.error("Failed to parse AI response:", content.substring(0, 500));
+      // Attempt to recover truncated JSON
+      const lastBrace = content.lastIndexOf("}");
+      if (lastBrace > 0) {
+        const repaired = content.substring(0, lastBrace + 1) + "]";
+        try {
+          rawRows = JSON.parse(repaired);
+          console.warn(`Recovered ${rawRows.length} items from truncated response`);
+        } catch {
+          console.error("Failed to parse AI response (after recovery attempt):", content.substring(0, 500));
           return new Response(
             JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
+      } else {
+        console.error("Failed to parse AI response:", content.substring(0, 500));
+        return new Response(
+          JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
 
