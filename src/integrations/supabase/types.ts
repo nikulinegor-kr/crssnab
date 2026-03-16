@@ -849,6 +849,7 @@ export type Database = {
           name: string
           object_id: string
           organization_id: string
+          section_id: string | null
           sort_order: number
           type: string
           updated_at: string
@@ -859,6 +860,7 @@ export type Database = {
           name: string
           object_id: string
           organization_id: string
+          section_id?: string | null
           sort_order?: number
           type?: string
           updated_at?: string
@@ -869,6 +871,7 @@ export type Database = {
           name?: string
           object_id?: string
           organization_id?: string
+          section_id?: string | null
           sort_order?: number
           type?: string
           updated_at?: string
@@ -886,6 +889,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_folders_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "material_sections"
             referencedColumns: ["id"]
           },
         ]
@@ -924,6 +934,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "material_objects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_sections: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          object_id: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          object_id: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          object_id?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_sections_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "material_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_sections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1010,6 +1065,7 @@ export type Database = {
           is_recognized: boolean
           object_id: string | null
           organization_id: string
+          section_id: string | null
           updated_at: string
           year: number
         }
@@ -1025,6 +1081,7 @@ export type Database = {
           is_recognized?: boolean
           object_id?: string | null
           organization_id: string
+          section_id?: string | null
           updated_at?: string
           year?: number
         }
@@ -1040,6 +1097,7 @@ export type Database = {
           is_recognized?: boolean
           object_id?: string | null
           organization_id?: string
+          section_id?: string | null
           updated_at?: string
           year?: number
         }
@@ -1063,6 +1121,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_statements_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "material_sections"
             referencedColumns: ["id"]
           },
         ]
