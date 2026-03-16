@@ -326,18 +326,7 @@ export default function MaterialStatementsPage() {
     const { data: newObj } = await (supabase.from("material_objects" as any).insert({
       organization_id: orgId, name: newObjName.trim(), year: newObjYear, description: newObjDesc.trim() || null,
     }).select("id").single() as any);
-    if (newObj?.id) {
-      // Create a default section
-      const { data: newSec } = await (supabase.from("material_sections" as any).insert({
-        organization_id: orgId, object_id: newObj.id, name: "Основной раздел", sort_order: 0,
-      }).select("id").single() as any);
-      if (newSec?.id) {
-        await (supabase.from("material_folders" as any).insert([
-          { organization_id: orgId, object_id: newObj.id, section_id: newSec.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
-          { organization_id: orgId, object_id: newObj.id, section_id: newSec.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
-        ]) as any);
-      }
-    }
+    // Object created — sections are added separately via "Добавить раздел"
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
     queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
