@@ -586,6 +586,89 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Credentials Dialog */}
+      <Dialog open={credentialsDialogOpen} onOpenChange={(open) => {
+        setCredentialsDialogOpen(open);
+        if (!open) {
+          setCreatedCredentials(null);
+          setCopiedField(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Пользователь создан</DialogTitle>
+            <DialogDescription>
+              Данные для входа пользователя {createdCredentials?.fullName}. Отправьте их пользователю.
+            </DialogDescription>
+          </DialogHeader>
+          {createdCredentials && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Логин (Email)</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={createdCredentials.email} readOnly className="bg-muted" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.email);
+                      setCopiedField("email");
+                      setTimeout(() => setCopiedField(null), 2000);
+                    }}
+                  >
+                    {copiedField === "email" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Пароль</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={createdCredentials.password} readOnly className="bg-muted" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.password);
+                      setCopiedField("password");
+                      setTimeout(() => setCopiedField(null), 2000);
+                    }}
+                  >
+                    {copiedField === "password" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {createdCredentials && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  const subject = encodeURIComponent("Данные для входа в CRSS");
+                  const body = encodeURIComponent(
+                    `Здравствуйте, ${createdCredentials.fullName}!\n\nВам предоставлен доступ к системе CRSS.\n\nДанные для входа:\nЛогин: ${createdCredentials.email}\nПароль: ${createdCredentials.password}\n\nСсылка для входа: ${window.location.origin}\n\nРекомендуем сменить пароль после первого входа.`
+                  );
+                  window.open(`mailto:${createdCredentials.email}?subject=${subject}&body=${body}`, "_blank");
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Отправить на email
+              </Button>
+            )}
+            <Button onClick={() => {
+              setCredentialsDialogOpen(false);
+              setCreatedCredentials(null);
+              setCopiedField(null);
+            }}>
+              Готово
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
