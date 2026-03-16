@@ -45,11 +45,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-border px-6 md:px-20 py-4 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-3 text-primary">
-          <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-              <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
-            </svg>
-          </div>
+          <img src="/logo.png" alt="CRSS CRM" className="h-8 w-8 rounded-lg object-contain" />
           <h2 className="text-foreground text-xl font-bold leading-tight tracking-tight">CRSS CRM</h2>
         </div>
         <div className="hidden lg:flex flex-1 justify-center gap-8">
@@ -281,11 +277,7 @@ export default function HomePage() {
         <div className="max-w-[1440px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
           <div className="col-span-2 lg:col-span-2">
             <div className="flex items-center gap-3 text-primary mb-6">
-              <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-                  <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
-                </svg>
-              </div>
+              <img src="/logo.png" alt="CRSS CRM" className="h-8 w-8 rounded-lg object-contain" />
               <h2 className="text-foreground text-xl font-bold">CRSS CRM</h2>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mb-8">

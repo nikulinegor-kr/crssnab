@@ -43,11 +43,7 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-border/30 px-4 md:px-6 py-3 glassmorphism rounded-xl mb-12">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-        <div className="size-5 text-primary">
-          <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd" />
-          </svg>
-        </div>
+        <img src="/logo.png" alt="CRSS" className="h-5 w-5 object-contain" />
         <h2 className="text-foreground text-lg font-bold leading-tight">CRSS</h2>
       </div>
 
