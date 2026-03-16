@@ -323,10 +323,17 @@ export default function MaterialStatementsPage() {
   // CRUD: Objects
   const handleCreateObject = async () => {
     if (!orgId || !newObjName.trim()) return;
-    await (supabase.from("material_objects" as any).insert({
+    const { data: newObj } = await (supabase.from("material_objects" as any).insert({
       organization_id: orgId, name: newObjName.trim(), year: newObjYear, description: newObjDesc.trim() || null,
-    }) as any);
+    }).select("id").single() as any);
+    if (newObj?.id) {
+      await (supabase.from("material_folders" as any).insert([
+        { organization_id: orgId, object_id: newObj.id, name: "Общие документы", sort_order: 0, type: "general_docs" },
+        { organization_id: orgId, object_id: newObj.id, name: "Работы и материалы", sort_order: 1, type: "materials" },
+      ]) as any);
+    }
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
+    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
     setCreateObjectOpen(false); setNewObjName(""); setNewObjDesc("");
     toast({ title: "Объект создан" });
   };
