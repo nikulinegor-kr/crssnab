@@ -62,6 +62,11 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
   const [newUserRole, setNewUserRole] = useState<"admin" | "editor" | "viewer">("viewer");
   const [isCreating, setIsCreating] = useState(false);
   
+  // Credentials dialog state
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string; fullName: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   // Edit user state
   const [editingUser, setEditingUser] = useState<OrgMember | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
