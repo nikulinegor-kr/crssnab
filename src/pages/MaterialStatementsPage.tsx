@@ -1152,6 +1152,17 @@ export default function MaterialStatementsPage() {
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : formatPrice(item.price)}</TableCell>
                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
                                     <TableCell>
+                                      {item.procurement_status === "in_procurement" && (
+                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
+                                      )}
+                                      {item.procurement_status === "ordered" && (
+                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
+                                      )}
+                                      {item.procurement_status === "delivered" && (
+                                        <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
                                           ? <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
