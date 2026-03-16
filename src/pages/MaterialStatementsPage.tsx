@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench, Archive, Layers,
+  Wrench, Archive, Layers, ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
+import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 
 // Types
 interface MaterialStatement {
@@ -56,6 +57,8 @@ interface MaterialItem {
   price: number | null;
   total_price: number | null;
   supplier: string | null;
+  procurement_request_id: string | null;
+  procurement_status: string;
 }
 
 interface MaterialObject {
@@ -185,6 +188,8 @@ export default function MaterialStatementsPage() {
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
+  const [procurementDialogOpen, setProcurementDialogOpen] = useState(false);
+  const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -904,6 +909,11 @@ export default function MaterialStatementsPage() {
                     <Download className="h-4 w-4 mr-1" /> Скачать Excel
                   </Button>
                 )}
+                {isMaterialsFolder && allItems.length > 0 && (
+                  <Button size="sm" onClick={() => { setProcurementMode("all"); setProcurementDialogOpen(true); }}>
+                    <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
@@ -997,6 +1007,34 @@ export default function MaterialStatementsPage() {
               </CardContent>
             </Card>
 
+            {/* Procurement Summary */}
+            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
+              const totalMaterials = allItems.length;
+              const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
+              const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
+              const remainingCount = totalMaterials - procuredCount;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Всего материалов</p>
+                    <p className="text-xl font-bold">{totalMaterials}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">В закупке</p>
+                    <p className="text-xl font-bold text-amber-600">{procuredCount - deliveredCount}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Доставлено</p>
+                    <p className="text-xl font-bold text-emerald-600">{deliveredCount}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Осталось купить</p>
+                    <p className="text-xl font-bold text-primary">{remainingCount}</p>
+                  </Card>
+                </div>
+              );
+            })()}
+
             {/* Per-file material sections - only for materials folders */}
             {selectedFolderId && isMaterialsFolder && (
               <>
@@ -1037,9 +1075,14 @@ export default function MaterialStatementsPage() {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
-                              <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
-                                <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
-                              </Button>
+                              <>
+                                <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
+                                  <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
+                                <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
+                              </>
                             )}
                             {stItems.length > 0 && (
                               <Button size="sm" variant="outline" onClick={() => {
@@ -1084,6 +1127,7 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Масса (кг)</TableHead>
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
+                                <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1091,8 +1135,9 @@ export default function MaterialStatementsPage() {
                               {stItems.map((item, idx) => {
                                 const isEditing = editingItem?.id === item.id;
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
+                                const isProcured = item.procurement_status && item.procurement_status !== "none";
                                 return (
-                                  <TableRow key={item.id}>
+                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
@@ -1106,6 +1151,17 @@ export default function MaterialStatementsPage() {
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : formatPrice(item.price)}</TableCell>
                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                    <TableCell>
+                                      {item.procurement_status === "in_procurement" && (
+                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
+                                      )}
+                                      {item.procurement_status === "ordered" && (
+                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
+                                      )}
+                                      {item.procurement_status === "delivered" && (
+                                        <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
+                                      )}
+                                    </TableCell>
                                     <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
@@ -1128,6 +1184,7 @@ export default function MaterialStatementsPage() {
                                   <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
                                   <TableCell>—</TableCell>
+                                  <TableCell></TableCell>
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -1138,7 +1195,7 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
                             </TableBody>
@@ -1407,6 +1464,19 @@ export default function MaterialStatementsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Procurement Dialog */}
+      <CreateProcurementDialog
+        open={procurementDialogOpen}
+        onOpenChange={setProcurementDialogOpen}
+        items={procurementMode === "selected"
+          ? allItems.filter(i => selectedItemIds.has(i.id))
+          : allItems
+        }
+        orgId={orgId || ""}
+        objectName={selectedObj?.name}
+        sectionName={selectedSection?.name}
+      />
     </div>
   );
 }
