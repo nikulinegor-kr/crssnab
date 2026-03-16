@@ -755,6 +755,11 @@ export default function MaterialStatementsPage() {
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
   const foldersForCurrentObject = folders.filter(f => f.object_id === selectedObjectId);
 
+  const formatPrice = (val: number | null) => {
+    if (val == null) return "—";
+    return val.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const isMaterialsFolder = selectedFolder?.type === 'materials';
   const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
 
