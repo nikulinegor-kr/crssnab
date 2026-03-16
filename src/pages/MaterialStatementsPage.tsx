@@ -812,11 +812,9 @@ export default function MaterialStatementsPage() {
                                         {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
                                         <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                         <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
-                                        <Archive
-                                          className="h-3 w-3 text-muted-foreground opacity-0 group-hover/folder:opacity-100 cursor-pointer hover:text-foreground flex-shrink-0"
-                                          title="Скачать архив папки"
-                                          onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}
-                                        />
+                                        <span title="Скачать архив папки" onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}>
+                                          <Archive className="h-3 w-3 text-muted-foreground opacity-0 group-hover/folder:opacity-100 cursor-pointer hover:text-foreground flex-shrink-0" />
+                                        </span>
                                       </button>
                                     );
                                   })}
