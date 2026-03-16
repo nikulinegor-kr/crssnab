@@ -6,7 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
-  FolderPlus, MoveRight, GripVertical, FileSpreadsheet,
+  FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
