@@ -908,7 +908,7 @@ export default function MaterialStatementsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                {allItems.length > 0 && (
+                {isMaterialsFolder && allItems.length > 0 && (
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
