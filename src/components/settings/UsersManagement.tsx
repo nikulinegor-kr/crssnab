@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2, Users, Pencil } from "lucide-react";
+import { Plus, Trash2, Loader2, Users, Pencil, Copy, Mail, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
