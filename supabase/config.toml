@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.resend-delivery-reminder]
 verify_jwt = false
+
+[functions.recognize-kp]
+verify_jwt = true

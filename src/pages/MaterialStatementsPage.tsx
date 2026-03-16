@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
-  FolderPlus, MoveRight,
+  FolderPlus, MoveRight, GripVertical, FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
 
 // Types
@@ -50,6 +51,9 @@ interface MaterialItem {
   unit: string | null;
   quantity: number | null;
   mass_per_unit: number | null;
+  price: number | null;
+  total_price: number | null;
+  supplier: string | null;
 }
 
 interface MaterialObject {
@@ -66,7 +70,74 @@ interface MaterialFolder {
   object_id: string;
   organization_id: string;
   name: string;
+  sort_order: number;
   created_at: string;
+}
+
+interface KpItem {
+  name: string;
+  unit: string | null;
+  price: number | null;
+}
+
+interface KpMatch {
+  kpItem: KpItem;
+  matchedItemId: string | null;
+  matchedItemName: string | null;
+  similarity: number;
+  autoMatched: boolean;
+}
+
+// Fuzzy matching utility
+function levenshtein(a: string, b: string): number {
+  const an = a.length, bn = b.length;
+  if (an === 0) return bn;
+  if (bn === 0) return an;
+  const matrix: number[][] = [];
+  for (let i = 0; i <= an; i++) { matrix[i] = [i]; }
+  for (let j = 0; j <= bn; j++) { matrix[0][j] = j; }
+  for (let i = 1; i <= an; i++) {
+    for (let j = 1; j <= bn; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+    }
+  }
+  return matrix[an][bn];
+}
+
+function similarity(a: string, b: string): number {
+  const la = a.toLowerCase().trim();
+  const lb = b.toLowerCase().trim();
+  if (la === lb) return 1;
+  // Check if one contains the other
+  if (la.includes(lb) || lb.includes(la)) return 0.85;
+  const maxLen = Math.max(la.length, lb.length);
+  if (maxLen === 0) return 1;
+  const dist = levenshtein(la, lb);
+  return 1 - dist / maxLen;
+}
+
+function findBestMatch(kpName: string, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
+  let bestItem: MaterialItem | null = null;
+  let bestScore = 0;
+  const kpWords = kpName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+  for (const item of projectItems) {
+    // Direct similarity
+    let score = similarity(kpName, item.name);
+
+    // Word overlap bonus
+    const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const commonWords = kpWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
+    const wordOverlap = kpWords.length > 0 ? commonWords.length / kpWords.length : 0;
+    score = Math.max(score, wordOverlap * 0.9);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestItem = item;
+    }
+  }
+  return { item: bestItem, score: bestScore };
 }
 
 export default function MaterialStatementsPage() {
@@ -105,13 +176,24 @@ export default function MaterialStatementsPage() {
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
   const [addingToStatementId, setAddingToStatementId] = useState<string | null>(null);
-  const [newItem, setNewItem] = useState({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "" });
+  const [newItem, setNewItem] = useState({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "", price: "" });
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [bulkRecognizing, setBulkRecognizing] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [editingStatementName, setEditingStatementName] = useState<string | null>(null);
   const [statementNameValue, setStatementNameValue] = useState("");
+
+  // Drag & drop folder state
+  const [dragFolderId, setDragFolderId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+
+  // KP state
+  const [kpDialogOpen, setKpDialogOpen] = useState(false);
+  const [kpLoading, setKpLoading] = useState(false);
+  const [kpMatches, setKpMatches] = useState<KpMatch[]>([]);
+  const [kpSupplier, setKpSupplier] = useState<string | null>(null);
+  const [kpApplying, setKpApplying] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -132,7 +214,7 @@ export default function MaterialStatementsPage() {
       if (!orgId) return [];
       const { data } = await (supabase
         .from("material_folders" as any).select("*")
-        .eq("organization_id", orgId).order("name") as any);
+        .eq("organization_id", orgId).order("sort_order").order("name") as any);
       return (data || []) as MaterialFolder[];
     },
     enabled: !!orgId,
@@ -210,7 +292,7 @@ export default function MaterialStatementsPage() {
       year,
       objects: yearMap.get(year)!.sort((a, b) => a.name.localeCompare(b.name)).map(obj => ({
         object: obj,
-        folders: folders.filter(f => f.object_id === obj.id),
+        folders: folders.filter(f => f.object_id === obj.id).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name)),
         statementCount: statements.filter(s => s.object_id === obj.id).length,
       })),
     }));
@@ -259,8 +341,10 @@ export default function MaterialStatementsPage() {
   // CRUD: Folders
   const handleCreateFolder = async () => {
     if (!orgId || !newFolderName.trim() || !newFolderObjectId) return;
+    const objFolders = folders.filter(f => f.object_id === newFolderObjectId);
+    const maxOrder = objFolders.reduce((m, f) => Math.max(m, f.sort_order), 0);
     await (supabase.from("material_folders" as any).insert({
-      organization_id: orgId, object_id: newFolderObjectId, name: newFolderName.trim(),
+      organization_id: orgId, object_id: newFolderObjectId, name: newFolderName.trim(), sort_order: maxOrder + 1,
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
     setCreateFolderOpen(false); setNewFolderName("");
@@ -276,7 +360,6 @@ export default function MaterialStatementsPage() {
   };
 
   const handleDeleteFolder = async (folderId: string) => {
-    // Move files out of folder first (set folder_id to null)
     await (supabase.from("material_statements" as any).update({ folder_id: null }).eq("folder_id", folderId) as any);
     await (supabase.from("material_folders" as any).delete().eq("id", folderId) as any);
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
@@ -284,6 +367,47 @@ export default function MaterialStatementsPage() {
     if (selectedFolderId === folderId) setSelectedFolderId(null);
     toast({ title: "Папка удалена" });
   };
+
+  // Drag & drop folders
+  const handleFolderDragStart = (e: React.DragEvent, folderId: string) => {
+    e.stopPropagation();
+    setDragFolderId(folderId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragFolderId && dragFolderId !== folderId) {
+      setDragOverFolderId(folderId);
+    }
+  };
+  const handleFolderDragLeave = () => { setDragOverFolderId(null); };
+  const handleFolderDrop = async (e: React.DragEvent, targetFolderId: string, objectId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolderId(null);
+    if (!dragFolderId || dragFolderId === targetFolderId) { setDragFolderId(null); return; }
+
+    const objFolders = folders.filter(f => f.object_id === objectId).sort((a, b) => a.sort_order - b.sort_order);
+    const dragIndex = objFolders.findIndex(f => f.id === dragFolderId);
+    const targetIndex = objFolders.findIndex(f => f.id === targetFolderId);
+    if (dragIndex === -1 || targetIndex === -1) { setDragFolderId(null); return; }
+
+    const reordered = [...objFolders];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    // Update sort_order for all folders
+    for (let i = 0; i < reordered.length; i++) {
+      if (reordered[i].sort_order !== i) {
+        await (supabase.from("material_folders" as any).update({ sort_order: i }).eq("id", reordered[i].id) as any);
+      }
+    }
+
+    setDragFolderId(null);
+    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
+  };
+  const handleFolderDragEnd = () => { setDragFolderId(null); setDragOverFolderId(null); };
 
   // Move file to another folder
   const handleMoveFile = async () => {
@@ -374,9 +498,11 @@ export default function MaterialStatementsPage() {
   };
 
   const handleUpdateItem = async (item: MaterialItem) => {
+    const totalPrice = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
     await (supabase.from("material_statement_items" as any).update({
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
+      price: item.price, total_price: totalPrice, supplier: item.supplier,
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
@@ -393,15 +519,18 @@ export default function MaterialStatementsPage() {
     if (!orgId || !targetStId) return;
     const stItems = itemsByStatement.get(targetStId) || [];
     const maxRow = stItems.reduce((m, i) => Math.max(m, i.row_number), 0);
+    const price = newItem.price ? Number(newItem.price) : null;
+    const qty = newItem.quantity ? Number(newItem.quantity) : null;
+    const totalPrice = (qty != null && price != null) ? qty * price : null;
     await (supabase.from("material_statement_items" as any).insert({
       statement_id: targetStId, organization_id: orgId, row_number: maxRow + 1,
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
-      quantity: newItem.quantity ? Number(newItem.quantity) : null,
-      mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
+      quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
+      price, total_price: totalPrice,
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
-    setNewItem({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "" });
+    setNewItem({ name: "", type_mark: "", unit: "шт", quantity: "", mass_per_unit: "", price: "" });
     toast({ title: "Материал добавлен" });
   };
 
@@ -454,6 +583,95 @@ export default function MaterialStatementsPage() {
     toast({ title: `Удалено: ${selectedItemIds.size} материалов` });
   };
 
+  // KP Upload & Matching
+  const handleKpUpload = async (file: File) => {
+    if (!orgId || allItems.length === 0) {
+      toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
+      return;
+    }
+    setKpLoading(true);
+    setKpDialogOpen(true);
+    try {
+      // Upload KP file temporarily
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
+      const path = `${orgId}/kp/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
+
+      const { data, error } = await supabase.functions.invoke("recognize-kp", {
+        body: { fileUrl: urlData.publicUrl, fileType },
+      });
+      if (error) throw error;
+
+      const kpItems: KpItem[] = data.items || [];
+      const supplier = data.supplier || null;
+      setKpSupplier(supplier);
+
+      // Match KP items to project materials
+      const matches: KpMatch[] = kpItems.map(kpItem => {
+        const { item, score } = findBestMatch(kpItem.name, allItems);
+        const autoMatched = score >= 0.6;
+        return {
+          kpItem,
+          matchedItemId: autoMatched && item ? item.id : null,
+          matchedItemName: autoMatched && item ? item.name : null,
+          similarity: score,
+          autoMatched,
+        };
+      });
+
+      setKpMatches(matches);
+    } catch (e: any) {
+      toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
+      setKpDialogOpen(false);
+    } finally {
+      setKpLoading(false);
+    }
+  };
+
+  const handleKpMatchChange = (index: number, itemId: string | null) => {
+    setKpMatches(prev => {
+      const updated = [...prev];
+      const item = itemId ? allItems.find(i => i.id === itemId) : null;
+      updated[index] = {
+        ...updated[index],
+        matchedItemId: itemId,
+        matchedItemName: item ? item.name : null,
+        autoMatched: false,
+      };
+      return updated;
+    });
+  };
+
+  const handleApplyKp = async () => {
+    setKpApplying(true);
+    let applied = 0;
+    try {
+      for (const match of kpMatches) {
+        if (!match.matchedItemId || match.kpItem.price == null) continue;
+        const item = allItems.find(i => i.id === match.matchedItemId);
+        if (!item) continue;
+        const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
+        await (supabase.from("material_statement_items" as any).update({
+          price: match.kpItem.price,
+          total_price: totalPrice,
+          supplier: kpSupplier || match.kpItem.unit, // supplier from KP header
+        }).eq("id", match.matchedItemId) as any);
+        applied++;
+      }
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      toast({ title: `КП применено`, description: `Обновлено ${applied} позиций` });
+      setKpDialogOpen(false);
+      setKpMatches([]);
+    } catch (e: any) {
+      toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
+    } finally {
+      setKpApplying(false);
+    }
+  };
+
   // Merged items for summary/export
   const mergedItems = useMemo(() => {
     const map = new Map<string, MaterialItem>();
@@ -462,6 +680,9 @@ export default function MaterialStatementsPage() {
       if (map.has(key)) {
         const existing = map.get(key)!;
         existing.quantity = (existing.quantity || 0) + (item.quantity || 0);
+        if (item.price != null && existing.price == null) existing.price = item.price;
+        if (item.supplier && !existing.supplier) existing.supplier = item.supplier;
+        existing.total_price = (existing.quantity || 0) * (existing.price || 0) || null;
       } else {
         map.set(key, { ...item });
       }
@@ -469,14 +690,21 @@ export default function MaterialStatementsPage() {
     return [...map.values()].sort((a, b) => a.row_number - b.row_number);
   }, [allItems]);
 
+  const totalCost = useMemo(() =>
+    allItems.reduce((sum, item) => sum + (item.total_price || 0), 0),
+    [allItems]
+  );
+
   const handleExportExcel = () => {
     const data = mergedItems.map((m, i) => ({
       "№": i + 1, "Наименование и техническая характеристика": m.name,
       "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
       "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
+      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
+      "Поставщик": m.supplier || "",
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = [5, 50, 30, 15, 12, 15].map(w => ({ wch: w }));
+    ws["!cols"] = [5, 50, 30, 15, 12, 15, 12, 15, 25].map(w => ({ wch: w }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Материалы");
     XLSX.writeFile(wb, `${excelName.trim() || "Ведомость материалов"}.xlsx`);
@@ -490,9 +718,11 @@ export default function MaterialStatementsPage() {
       "№": i + 1, "Наименование и техническая характеристика": m.name,
       "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
       "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
+      "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
+      "Поставщик": m.supplier || "",
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = [5, 50, 30, 15, 12, 15].map(w => ({ wch: w }));
+    ws["!cols"] = [5, 50, 30, 15, 12, 15, 12, 15, 25].map(w => ({ wch: w }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Материалы");
     const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -515,6 +745,11 @@ export default function MaterialStatementsPage() {
   const selectedObj = objects.find(o => o.id === selectedObjectId);
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
   const foldersForCurrentObject = folders.filter(f => f.object_id === selectedObjectId);
+
+  const formatPrice = (val: number | null) => {
+    if (val == null) return "—";
+    return val.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
@@ -577,14 +812,25 @@ export default function MaterialStatementsPage() {
                           {entry.folders.map(folder => {
                             const isActive = selectedFolderId === folder.id;
                             const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
+                            const isDragOver = dragOverFolderId === folder.id;
                             return (
                               <button
                                 key={folder.id}
+                                draggable
+                                onDragStart={e => handleFolderDragStart(e, folder.id)}
+                                onDragOver={e => handleFolderDragOver(e, folder.id)}
+                                onDragLeave={handleFolderDragLeave}
+                                onDrop={e => handleFolderDrop(e, folder.id, entry.object.id)}
+                                onDragEnd={handleFolderDragEnd}
                                 className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors group/folder ${
-                                  isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                                  isActive ? "bg-primary/10 text-primary font-medium" :
+                                  isDragOver ? "bg-accent border-2 border-dashed border-primary" :
+                                  dragFolderId === folder.id ? "opacity-50" :
+                                  "hover:bg-accent/50"
                                 }`}
                                 onClick={() => selectFolder(node.year, entry.object.id, folder.id)}
                               >
+                                <GripVertical className="h-3 w-3 text-muted-foreground/50 cursor-grab flex-shrink-0" />
                                 <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                 <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                 <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
@@ -641,9 +887,24 @@ export default function MaterialStatementsPage() {
                 <h1 className="text-xl font-bold">{selectedObj?.name || "Объект"}</h1>
                 <p className="text-sm text-muted-foreground">
                   {selectedYear} год — <span className="font-medium text-foreground">{selectedFolder?.name}</span>
+                  {totalCost > 0 && (
+                    <span className="ml-3 text-primary font-semibold">
+                      Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="flex gap-2">
+                {allItems.length > 0 && (
+                  <Button variant="outline" size="sm" asChild>
+                    <label className="cursor-pointer">
+                      <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
+                      <input type="file" accept=".pdf,.xlsx,.xls" className="hidden"
+                        onChange={e => { if (e.target.files?.[0]) { handleKpUpload(e.target.files[0]); e.target.value = ""; } }}
+                      />
+                    </label>
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
                     <Plus className="h-4 w-4 mr-1" /> Добавить файлы
@@ -751,6 +1012,7 @@ export default function MaterialStatementsPage() {
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
+                    const sectionTotal = stItems.reduce((s, i) => s + (i.total_price || 0), 0);
                     return (
                       <Card key={st.id}>
                         <CardHeader className="py-3 flex-row items-center justify-between gap-2">
@@ -768,6 +1030,11 @@ export default function MaterialStatementsPage() {
                                 title="Нажмите для переименования">
                                 {sectionName}
                                 <span className="text-muted-foreground font-normal ml-2">({stItems.length})</span>
+                                {sectionTotal > 0 && (
+                                  <span className="text-primary font-normal ml-2">
+                                    {sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
+                                  </span>
+                                )}
                                 <Pencil className="h-3 w-3 inline ml-1 text-muted-foreground" />
                               </CardTitle>
                             )}
@@ -784,9 +1051,10 @@ export default function MaterialStatementsPage() {
                                   "№": i + 1, "Наименование и техническая характеристика": m.name,
                                   "Тип / марка / обозначение": m.type_mark || "", "Единица измерения": m.unit || "",
                                   "Количество": m.quantity ?? "", "Масса единицы (кг)": m.mass_per_unit ?? "",
+                                  "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
                                 }));
                                 const ws = XLSX.utils.json_to_sheet(d);
-                                ws["!cols"] = [5, 50, 30, 15, 12, 15].map(w => ({ wch: w }));
+                                ws["!cols"] = [5, 50, 30, 15, 12, 15, 12, 15].map(w => ({ wch: w }));
                                 const wb = XLSX.utils.book_new();
                                 XLSX.utils.book_append_sheet(wb, ws, "Материалы");
                                 XLSX.writeFile(wb, `${sectionName}.xlsx`);
@@ -819,33 +1087,41 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-20">Ед. изм.</TableHead>
                                 <TableHead className="w-24">Кол-во</TableHead>
                                 <TableHead className="w-24">Масса (кг)</TableHead>
+                                <TableHead className="w-24">Цена</TableHead>
+                                <TableHead className="w-28">Стоимость</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {stItems.map((item, idx) => (
-                                <TableRow key={item.id}>
-                                  <TableCell>
-                                    <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
-                                      setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
-                                    }} />
-                                  </TableCell>
-                                  <TableCell>{idx + 1}</TableCell>
-                                  <TableCell>{editingItem?.id === item.id ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : item.name}</TableCell>
-                                  <TableCell>{editingItem?.id === item.id ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : item.type_mark || "—"}</TableCell>
-                                  <TableCell>{editingItem?.id === item.id ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
-                                  <TableCell>{editingItem?.id === item.id ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
-                                  <TableCell>{editingItem?.id === item.id ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
-                                  <TableCell>
-                                    <div className="flex gap-1">
-                                      {editingItem?.id === item.id
-                                        ? <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
-                                        : <Button size="sm" variant="ghost" onClick={() => setEditingItem({ ...item })}><Pencil className="h-3 w-3" /></Button>}
-                                      <Button size="sm" variant="ghost" onClick={() => handleDeleteItem(item.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                              {stItems.map((item, idx) => {
+                                const isEditing = editingItem?.id === item.id;
+                                const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
+                                return (
+                                  <TableRow key={item.id}>
+                                    <TableCell>
+                                      <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
+                                        setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
+                                      }} />
+                                    </TableCell>
+                                    <TableCell>{idx + 1}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : item.name}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : item.type_mark || "—"}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
+                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
+                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
+                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : formatPrice(item.price)}</TableCell>
+                                    <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                    <TableCell>
+                                      <div className="flex gap-1">
+                                        {isEditing
+                                          ? <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
+                                          : <Button size="sm" variant="ghost" onClick={() => setEditingItem({ ...item })}><Pencil className="h-3 w-3" /></Button>}
+                                        <Button size="sm" variant="ghost" onClick={() => handleDeleteItem(item.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
                               {addingItem && addingToStatementId === st.id && (
                                 <TableRow>
                                   <TableCell />
@@ -855,6 +1131,8 @@ export default function MaterialStatementsPage() {
                                   <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
+                                  <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
+                                  <TableCell>—</TableCell>
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -865,7 +1143,7 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
                             </TableBody>
@@ -882,6 +1160,11 @@ export default function MaterialStatementsPage() {
                         Сводная ({mergedItems.length})
                         {allItems.length !== mergedItems.length && (
                           <span className="text-muted-foreground font-normal ml-2">(объединено из {allItems.length})</span>
+                        )}
+                        {totalCost > 0 && (
+                          <span className="text-primary font-normal ml-3">
+                            Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
+                          </span>
                         )}
                       </CardTitle>
                     </CardHeader>
@@ -1057,6 +1340,86 @@ export default function MaterialStatementsPage() {
               <Upload className="h-4 w-4 mr-1" /> Сохранить в папку
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* KP Matching Dialog */}
+      <Dialog open={kpDialogOpen} onOpenChange={open => { if (!open && !kpLoading && !kpApplying) { setKpDialogOpen(false); setKpMatches([]); } }}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Сопоставление КП с материалами
+              {kpSupplier && <span className="text-sm font-normal text-muted-foreground ml-2">— {kpSupplier}</span>}
+            </DialogTitle>
+          </DialogHeader>
+          {kpLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Распознавание коммерческого предложения...</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>Всего позиций КП: <strong>{kpMatches.length}</strong></span>
+                <span>Автоматически: <strong className="text-green-600">{kpMatches.filter(m => m.matchedItemId).length}</strong></span>
+                <span>Не найдено: <strong className="text-destructive">{kpMatches.filter(m => !m.matchedItemId).length}</strong></span>
+              </div>
+              <ScrollArea className="flex-1 max-h-[55vh]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">№</TableHead>
+                      <TableHead>Позиция КП</TableHead>
+                      <TableHead className="w-24">Цена</TableHead>
+                      <TableHead>Материал проекта</TableHead>
+                      <TableHead className="w-20">Точность</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {kpMatches.map((match, idx) => (
+                      <TableRow key={idx} className={!match.matchedItemId ? "bg-destructive/5" : ""}>
+                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell className="text-sm">{match.kpItem.name}</TableCell>
+                        <TableCell className="font-medium">{match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={match.matchedItemId || "__none__"}
+                            onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Не сопоставлено" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
+                              {allItems.map(item => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.name.substring(0, 80)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          {match.matchedItemId && (
+                            <Badge variant={match.similarity >= 0.8 ? "default" : match.similarity >= 0.6 ? "secondary" : "outline"}>
+                              {Math.round(match.similarity * 100)}%
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setKpDialogOpen(false); setKpMatches([]); }}>Отмена</Button>
+                <Button onClick={handleApplyKp} disabled={kpApplying || kpMatches.filter(m => m.matchedItemId).length === 0}>
+                  {kpApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
+                  Применить ({kpMatches.filter(m => m.matchedItemId && m.kpItem.price != null).length})
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
