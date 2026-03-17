@@ -393,6 +393,20 @@ export default function MaterialStatementsPage() {
     toast({ title: "Раздел удалён" });
   };
 
+  // CRUD: Folders
+  const handleCreateFolder = async () => {
+    if (!orgId || !newFolderName.trim() || !newFolderSectionId || !newFolderObjectId) return;
+    const sectionFolders = folders.filter(f => f.section_id === newFolderSectionId);
+    const maxOrder = sectionFolders.reduce((m, f) => Math.max(m, f.sort_order), 0);
+    await (supabase.from("material_folders" as any).insert({
+      organization_id: orgId, object_id: newFolderObjectId, section_id: newFolderSectionId,
+      name: newFolderName.trim(), sort_order: maxOrder + 1, type: newFolderType,
+    }) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
+    setCreateFolderOpen(false); setNewFolderName(""); setNewFolderType("materials");
+    toast({ title: "Папка создана" });
+  };
+
   // Move file to another folder
   const handleMoveFile = async () => {
     if (!moveFileDialog || !moveTargetFolderId) return;
