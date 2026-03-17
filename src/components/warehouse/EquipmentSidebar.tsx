@@ -2,11 +2,9 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Search, Truck, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface EquipmentSidebarProps {
@@ -16,14 +14,13 @@ interface EquipmentSidebarProps {
 export const EquipmentSidebar = ({ organizationId }: EquipmentSidebarProps) => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment", organizationId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("equipment")
-        .select("id, brand, model, year, vin, plate_number")
+        .select("id, brand, model, year, vin, plate_number, comment")
         .eq("organization_id", organizationId!)
         .order("brand")
         .order("model");
@@ -45,101 +42,64 @@ export const EquipmentSidebar = ({ organizationId }: EquipmentSidebarProps) => {
     });
   }, [equipment, search]);
 
-  // Group by brand
-  const grouped = useMemo(() => {
-    const map = new Map<string, typeof filtered>();
-    for (const e of filtered) {
-      const brand = e.brand || "Без марки";
-      if (!map.has(brand)) map.set(brand, []);
-      map.get(brand)!.push(e);
-    }
-    return map;
-  }, [filtered]);
-
-  if (collapsed) {
-    return (
-      <div className="w-10 border-r bg-muted/30 flex flex-col items-center pt-3 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setCollapsed(false)}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <div className="mt-2 writing-mode-vertical text-xs text-muted-foreground font-medium [writing-mode:vertical-lr] rotate-180">
-          Техника ({equipment.length})
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-64 border-r bg-muted/20 flex flex-col shrink-0">
-      <div className="p-3 border-b flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-sm font-semibold">
-          <Truck className="h-4 w-4 text-primary" />
-          Техника
-          <Badge variant="secondary" className="text-xs h-5 px-1.5">{equipment.length}</Badge>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => setCollapsed(true)}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="p-2 border-b">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск..."
+            placeholder="Поиск по марке, модели, VIN, гос. номеру..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 pl-8 text-sm"
+            className="pl-9"
           />
         </div>
+        <Badge variant="secondary">{filtered.length} из {equipment.length}</Badge>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-1">
-          {filtered.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-6">Не найдено</p>
-          ) : (
-            Array.from(grouped.entries()).map(([brand, items]) => (
-              <div key={brand} className="mb-1">
-                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {brand} <span className="text-muted-foreground/60">({items.length})</span>
-                </div>
-                {items.map((e: any) => (
-                  <button
-                    key={e.id}
-                    type="button"
-                    className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-accent cursor-pointer flex flex-col gap-0.5 transition-colors"
-                    onClick={() => navigate(`/equipment/${e.id}`)}
-                  >
-                    <span className="font-medium truncate">
-                      {e.model || "—"}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {[
-                        e.year,
-                        e.plate_number,
-                        e.vin ? `VIN ${e.vin.slice(-6)}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" • ")}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ))
-          )}
-        </div>
-      </ScrollArea>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Марка</TableHead>
+              <TableHead>Модель</TableHead>
+              <TableHead>Год</TableHead>
+              <TableHead>VIN</TableHead>
+              <TableHead>Гос. номер</TableHead>
+              <TableHead>Комментарий</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <Truck className="h-8 w-8 text-muted-foreground/40" />
+                    <span>Техника не найдена</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((e: any) => (
+                <TableRow
+                  key={e.id}
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => navigate(`/equipment/${e.id}`)}
+                >
+                  <TableCell className="font-medium">{e.brand || "—"}</TableCell>
+                  <TableCell>{e.model || "—"}</TableCell>
+                  <TableCell>{e.year || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
+                  <TableCell>{e.plate_number || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                    {e.comment || "—"}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
