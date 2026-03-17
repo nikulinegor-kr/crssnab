@@ -33,6 +33,7 @@ export function CreateProcurementDialog({
 }: CreateProcurementDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   const [contractor, setContractor] = useState("");
