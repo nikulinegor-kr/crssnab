@@ -858,7 +858,6 @@ export default function WarehousePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   );
 }
