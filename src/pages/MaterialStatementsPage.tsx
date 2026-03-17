@@ -850,8 +850,14 @@ export default function MaterialStatementsPage() {
                                         </span>
                                       </button>
                                     );
-                                  })}
-                                </div>
+                                   })}
+                                   <button
+                                     className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md mt-0.5"
+                                     onClick={(e) => { e.stopPropagation(); setCreateFolderOpen(true); setNewFolderSectionId(secEntry.section.id); setNewFolderObjectId(entry.object.id); }}
+                                   >
+                                     <FolderPlus className="h-3 w-3" /> Добавить папку
+                                   </button>
+                                 </div>
                               )}
                             </div>
                           ))}
