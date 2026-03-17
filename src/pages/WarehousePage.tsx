@@ -522,6 +522,9 @@ export default function WarehousePage() {
             </Table>
           </div>
         </TabsContent>
+        <TabsContent value="equipment">
+          <EquipmentSidebar organizationId={currentOrgId} />
+        </TabsContent>
       </Tabs>
 
       {/* Create Warehouse Dialog */}
