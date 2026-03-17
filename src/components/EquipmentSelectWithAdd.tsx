@@ -51,9 +51,8 @@ export const EquipmentSelectWithAdd = ({
 
   const formatEquipment = (e: any) => {
     const parts = [
-      [e.brand, e.model].filter(Boolean).join(" "),
-      e.year,
-      e.vin ? `VIN ${e.vin}` : null,
+      e.plate_number,
+      e.model,
     ].filter(Boolean);
     return parts.join(" • ");
   };
