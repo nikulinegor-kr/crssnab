@@ -349,9 +349,7 @@ export default function WarehousePage() {
   };
 
   return (
-    <div className="flex h-full">
-      <EquipmentSidebar organizationId={currentOrgId} />
-      <div className="flex-1 min-w-0 p-4 md:p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Warehouse className="h-6 w-6 text-primary" />
@@ -371,6 +369,7 @@ export default function WarehousePage() {
         <TabsList>
           <TabsTrigger value="stock">Остатки</TabsTrigger>
           <TabsTrigger value="movements">Журнал движений</TabsTrigger>
+          <TabsTrigger value="equipment">Техника</TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="space-y-4">
@@ -522,6 +521,9 @@ export default function WarehousePage() {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+        <TabsContent value="equipment">
+          <EquipmentSidebar organizationId={currentOrgId} />
         </TabsContent>
       </Tabs>
 
@@ -860,7 +862,6 @@ export default function WarehousePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   );
 }
