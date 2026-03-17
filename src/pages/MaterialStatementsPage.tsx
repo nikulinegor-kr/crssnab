@@ -1223,6 +1223,18 @@ export default function MaterialStatementsPage() {
                                   <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
+                              {stItems.length > 0 && (
+                                <TableRow className="bg-muted/50 font-semibold">
+                                  <TableCell />
+                                  <TableCell />
+                                  <TableCell colSpan={4} className="text-right text-sm">Итого по файлу:</TableCell>
+                                  <TableCell />
+                                  <TableCell />
+                                  <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                  <TableCell />
+                                  <TableCell />
+                                </TableRow>
+                              )}
                             </TableBody>
                           </Table>
                         </CardContent>
@@ -1230,20 +1242,19 @@ export default function MaterialStatementsPage() {
                     );
                   })
                 )}
-                {mergedItems.length > 0 && (
-                  <Card>
-                    <CardHeader className="py-3 flex-row items-center justify-between">
-                      <CardTitle className="text-sm">
-                        Сводная ({mergedItems.length})
+                {allItems.length > 0 && (
+                  <Card className="border-primary/30 bg-primary/5">
+                    <CardHeader className="py-4 flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-3">
+                        <span>Итого по разделу</span>
+                        <Badge variant="secondary">{allItems.length} позиций</Badge>
                         {allItems.length !== mergedItems.length && (
-                          <span className="text-muted-foreground font-normal ml-2">(объединено из {allItems.length})</span>
-                        )}
-                        {totalCost > 0 && (
-                          <span className="text-primary font-normal ml-3">
-                            Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
-                          </span>
+                          <Badge variant="outline">{mergedItems.length} уникальных</Badge>
                         )}
                       </CardTitle>
+                      <span className="text-lg font-bold text-primary">
+                        {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
+                      </span>
                     </CardHeader>
                   </Card>
                 )}
