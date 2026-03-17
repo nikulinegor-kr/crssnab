@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { EquipmentSidebar } from "@/components/warehouse/EquipmentSidebar";
 
 type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT" | "INVENTORY";
 
