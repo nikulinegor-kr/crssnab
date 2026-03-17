@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +33,7 @@ export function CreateProcurementDialog({
 }: CreateProcurementDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   const [contractor, setContractor] = useState("");
@@ -100,9 +102,7 @@ export function CreateProcurementDialog({
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast({ title: "Заявка создана", description: `${requestNumber}: ${availableItems.length} материалов` });
       onOpenChange(false);
-      setDescription("");
-      setContractor("");
-      setComment("");
+      navigate(`/requests/${newRequest.id}`);
     } catch (e: any) {
       toast({ title: "Ошибка", description: e.message, variant: "destructive" });
     } finally {
