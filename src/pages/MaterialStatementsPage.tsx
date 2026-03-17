@@ -1325,6 +1325,35 @@ export default function MaterialStatementsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Create Folder Dialog */}
+      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Создать папку</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Название папки</label>
+              <Input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Например: Спецификации, Чертежи"
+                onKeyDown={e => { if (e.key === "Enter" && newFolderName.trim()) handleCreateFolder(); }} autoFocus />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Тип папки</label>
+              <Select value={newFolderType} onValueChange={setNewFolderType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="materials">Работы и материалы</SelectItem>
+                  <SelectItem value="general_docs">Общие документы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+              <FolderPlus className="h-4 w-4 mr-1" /> Создать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Move File Dialog */}
       <Dialog open={!!moveFileDialog} onOpenChange={open => { if (!open) setMoveFileDialog(null); }}>
         <DialogContent>
