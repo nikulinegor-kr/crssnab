@@ -17,6 +17,7 @@ export interface ColumnWidths {
   amount: number;
   applicant: number;
   comments: number;
+  equipment: number;
 }
 
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
@@ -34,6 +35,7 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   amount: 110,
   applicant: 110,
   comments: 150,
+  equipment: 120,
 };
 
 export const MIN_COLUMN_WIDTH = 50;

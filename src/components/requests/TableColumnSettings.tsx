@@ -23,6 +23,7 @@ export interface ColumnVisibility {
   amount: boolean;
   applicant: boolean;
   comments: boolean;
+  equipment: boolean;
 }
 
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
@@ -40,6 +41,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   amount: true,
   applicant: true,
   comments: true,
+  equipment: true,
 };
 
 const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
@@ -57,6 +59,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   amount: "Стоимость",
   applicant: "Заявитель",
   comments: "Комментарий",
+  equipment: "Техника",
 };
 
 interface TableColumnSettingsProps {

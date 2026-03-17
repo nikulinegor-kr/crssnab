@@ -45,7 +45,7 @@ export const useRequests = (showArchived: boolean = false) => {
       while (hasMore) {
         const { data, error } = await supabase
           .from("requests")
-          .select("*, request_objects(id, name)")
+          .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)")
           .eq("archived", showArchived)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
@@ -59,7 +59,11 @@ export const useRequests = (showArchived: boolean = false) => {
       return allData.map((r: any) => ({
         ...r,
         object_name: r.request_objects?.name || null,
-      })) as (Request & { object_name: string | null })[];
+        equipment_display: r.equipment
+          ? [r.equipment.brand, r.equipment.model].filter(Boolean).join(" ")
+          : null,
+        equipment_plate: r.equipment?.plate_number || null,
+      })) as (Request & { object_name: string | null; equipment_display: string | null; equipment_plate: string | null })[];
     },
   });
 };

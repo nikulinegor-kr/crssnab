@@ -119,6 +119,8 @@ const matchesFullTextSearch = (request: Request, query: string): boolean => {
     request.status,
     request.priority,
     request.availability_delivery_time,
+    (request as any).equipment_display,
+    (request as any).equipment_plate,
   ];
   
   return searchableFields.some(field => 

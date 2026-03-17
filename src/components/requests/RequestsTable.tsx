@@ -492,6 +492,9 @@ export const RequestsTable = ({
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
+              {visibility.equipment && (
+                <ResizableTableHeader column="equipment" label="Техника" width={widths.equipment} onResize={handleColumnResize} />
+              )}
               {visibility.comments && (
                 <ResizableTableHeader column="comments" label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
@@ -744,6 +747,24 @@ export const RequestsTable = ({
                           )
                         }
                       />
+                    </TableCell>
+                  )}
+                  {visibility.equipment && (
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.equipment }}>
+                      {(request as any).equipment_plate || (request as any).equipment_display ? (
+                        <div className="leading-tight truncate text-sm">
+                          <div className="font-medium">
+                            <HighlightText text={(request as any).equipment_plate || ""} searchQuery={searchQuery} />
+                          </div>
+                          {(request as any).equipment_display && (
+                            <div className="text-xs text-muted-foreground truncate">
+                              <HighlightText text={(request as any).equipment_display} searchQuery={searchQuery} />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.comments && (
