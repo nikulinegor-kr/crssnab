@@ -59,6 +59,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   amount: "Стоимость",
   applicant: "Заявитель",
   comments: "Комментарий",
+  equipment: "Техника",
 };
 
 interface TableColumnSettingsProps {
