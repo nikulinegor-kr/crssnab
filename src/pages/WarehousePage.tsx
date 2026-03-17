@@ -369,6 +369,7 @@ export default function WarehousePage() {
         <TabsList>
           <TabsTrigger value="stock">Остатки</TabsTrigger>
           <TabsTrigger value="movements">Журнал движений</TabsTrigger>
+          <TabsTrigger value="equipment">Техника</TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="space-y-4">
