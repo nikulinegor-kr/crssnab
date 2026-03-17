@@ -159,6 +159,11 @@ export default function MaterialStatementsPage() {
   const [newSectionObjectId, setNewSectionObjectId] = useState<string>("");
   const [renameSectionDialog, setRenameSectionDialog] = useState<MaterialSection | null>(null);
   const [renameSectionValue, setRenameSectionValue] = useState("");
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderSectionId, setNewFolderSectionId] = useState<string>("");
+  const [newFolderObjectId, setNewFolderObjectId] = useState<string>("");
+  const [newFolderType, setNewFolderType] = useState<string>("materials");
   const [moveFileDialog, setMoveFileDialog] = useState<MaterialStatement | null>(null);
   const [moveTargetFolderId, setMoveTargetFolderId] = useState<string>("");
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
