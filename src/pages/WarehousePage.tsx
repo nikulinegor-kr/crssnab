@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { EquipmentSidebar } from "@/components/warehouse/EquipmentSidebar";
 
 type MovementType = "IN" | "OUT" | "RESERVE" | "UNRESERVE" | "MOVE_IN" | "MOVE_OUT" | "INVENTORY";
 
@@ -348,7 +349,9 @@ export default function WarehousePage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="flex h-full">
+      <EquipmentSidebar organizationId={currentOrgId} />
+      <div className="flex-1 min-w-0 p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Warehouse className="h-6 w-6 text-primary" />
@@ -857,6 +860,7 @@ export default function WarehousePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
