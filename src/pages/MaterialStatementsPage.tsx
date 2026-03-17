@@ -159,6 +159,11 @@ export default function MaterialStatementsPage() {
   const [newSectionObjectId, setNewSectionObjectId] = useState<string>("");
   const [renameSectionDialog, setRenameSectionDialog] = useState<MaterialSection | null>(null);
   const [renameSectionValue, setRenameSectionValue] = useState("");
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderSectionId, setNewFolderSectionId] = useState<string>("");
+  const [newFolderObjectId, setNewFolderObjectId] = useState<string>("");
+  const [newFolderType, setNewFolderType] = useState<string>("materials");
   const [moveFileDialog, setMoveFileDialog] = useState<MaterialStatement | null>(null);
   const [moveTargetFolderId, setMoveTargetFolderId] = useState<string>("");
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
@@ -386,6 +391,20 @@ export default function MaterialStatementsPage() {
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
     if (selectedSectionId === sectionId) { setSelectedSectionId(null); setSelectedFolderId(null); }
     toast({ title: "Раздел удалён" });
+  };
+
+  // CRUD: Folders
+  const handleCreateFolder = async () => {
+    if (!orgId || !newFolderName.trim() || !newFolderSectionId || !newFolderObjectId) return;
+    const sectionFolders = folders.filter(f => f.section_id === newFolderSectionId);
+    const maxOrder = sectionFolders.reduce((m, f) => Math.max(m, f.sort_order), 0);
+    await (supabase.from("material_folders" as any).insert({
+      organization_id: orgId, object_id: newFolderObjectId, section_id: newFolderSectionId,
+      name: newFolderName.trim(), sort_order: maxOrder + 1, type: newFolderType,
+    }) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-folders"] });
+    setCreateFolderOpen(false); setNewFolderName(""); setNewFolderType("materials");
+    toast({ title: "Папка создана" });
   };
 
   // Move file to another folder
@@ -831,8 +850,14 @@ export default function MaterialStatementsPage() {
                                         </span>
                                       </button>
                                     );
-                                  })}
-                                </div>
+                                   })}
+                                   <button
+                                     className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md mt-0.5"
+                                     onClick={(e) => { e.stopPropagation(); setCreateFolderOpen(true); setNewFolderSectionId(secEntry.section.id); setNewFolderObjectId(entry.object.id); }}
+                                   >
+                                     <FolderPlus className="h-3 w-3" /> Добавить папку
+                                   </button>
+                                 </div>
                               )}
                             </div>
                           ))}
@@ -1296,6 +1321,35 @@ export default function MaterialStatementsPage() {
           </div>
           <DialogFooter>
             <Button onClick={handleRenameSection} disabled={!renameSectionValue.trim()}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Folder Dialog */}
+      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Создать папку</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Название папки</label>
+              <Input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Например: Спецификации, Чертежи"
+                onKeyDown={e => { if (e.key === "Enter" && newFolderName.trim()) handleCreateFolder(); }} autoFocus />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Тип папки</label>
+              <Select value={newFolderType} onValueChange={setNewFolderType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="materials">Работы и материалы</SelectItem>
+                  <SelectItem value="general_docs">Общие документы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+              <FolderPlus className="h-4 w-4 mr-1" /> Создать
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
