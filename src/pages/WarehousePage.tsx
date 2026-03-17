@@ -349,7 +349,9 @@ export default function WarehousePage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="flex h-full">
+      <EquipmentSidebar organizationId={currentOrgId} />
+      <div className="flex-1 min-w-0 p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Warehouse className="h-6 w-6 text-primary" />
