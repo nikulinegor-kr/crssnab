@@ -1223,6 +1223,18 @@ export default function MaterialStatementsPage() {
                                   <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
+                              {stItems.length > 0 && (
+                                <TableRow className="bg-muted/50 font-semibold">
+                                  <TableCell />
+                                  <TableCell />
+                                  <TableCell colSpan={4} className="text-right text-sm">Итого по файлу:</TableCell>
+                                  <TableCell />
+                                  <TableCell />
+                                  <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                  <TableCell />
+                                  <TableCell />
+                                </TableRow>
+                              )}
                             </TableBody>
                           </Table>
                         </CardContent>
