@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, type DragEvent } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -456,6 +456,27 @@ export default function MaterialStatementsPage() {
     toast({ title: "Файлы добавлены" });
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
   };
+
+  // Drag and drop for file upload
+  const [isDragOverFiles, setIsDragOverFiles] = useState(false);
+  const handleFileDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(true);
+  }, []);
+  const handleFileDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(false);
+  }, []);
+  const handleFileDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(false);
+    if (e.dataTransfer.files?.length) {
+      handleQuickUpload(e.dataTransfer.files);
+    }
+  }, [orgId, selectedObjectId, selectedFolderId, selectedYear, selectedSectionId]);
 
   // Recognize
   const handleRecognize = async (statement: MaterialStatement) => {
@@ -946,6 +967,20 @@ export default function MaterialStatementsPage() {
             </div>
 
             {/* Files table */}
+            <div
+              className="relative"
+              onDragOver={handleFileDragOver}
+              onDragLeave={handleFileDragLeave}
+              onDrop={handleFileDrop}
+            >
+            {isDragOverFiles && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/5 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="h-10 w-10 text-primary" />
+                  <p className="text-sm font-medium text-primary">Отпустите файлы для загрузки</p>
+                </div>
+              </div>
+            )}
             <Card>
               <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
@@ -1031,6 +1066,7 @@ export default function MaterialStatementsPage() {
                 </Table>
               </CardContent>
             </Card>
+            </div>
 
             {/* Procurement Summary */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
