@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
+import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 
 // Types
 interface MaterialStatement {
@@ -963,6 +964,13 @@ export default function MaterialStatementsPage() {
                 <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
+                {selectedObjectId && orgId && selectedObj && (
+                  <ConsolidatedExcelExportButton
+                    objectId={selectedObjectId}
+                    objectName={selectedObj.name}
+                    organizationId={orgId}
+                  />
+                )}
               </div>
             </div>
 
