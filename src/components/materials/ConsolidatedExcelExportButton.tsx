@@ -178,7 +178,6 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
           // Flat: each item as separate row
           rows = items.map((item, i) => ({
             "№": i + 1,
-            "Позиция": item.row_number ?? "",
             "Наименование": item.name || "",
             "Тип / марка": item.type_mark || "",
             "Ед. изм.": item.unit || "",
@@ -207,7 +206,6 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
         } else {
           rows.push({
             "№": "" as any,
-            "Позиция": "" as any,
             "Наименование": `Итого по разделу: ${rows.length} поз.`,
             "Тип / марка": "",
             "Ед. изм.": "",
@@ -221,7 +219,7 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
         const ws = XLSX.utils.json_to_sheet(rows);
         ws["!cols"] = mergeEnabled
           ? [{ wch: 5 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }]
-          : [{ wch: 5 }, { wch: 8 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }];
+          : [{ wch: 5 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }];
 
         // Bold header + totals row
         const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
