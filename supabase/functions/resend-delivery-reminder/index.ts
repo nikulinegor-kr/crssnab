@@ -173,7 +173,20 @@ serve(async (req) => {
       const org = (request as any).organizations;
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) continue;
 
-      // Check if already confirmed (received_confirmed activity exists)
+      // Check if already fully accepted (accepted_no_issues = final "Доставлено" status)
+      const { data: acceptedActivity } = await supabase
+        .from("request_activities")
+        .select("id")
+        .eq("request_id", request.id)
+        .eq("action", "accepted_no_issues")
+        .limit(1);
+
+      if (acceptedActivity && acceptedActivity.length > 0) {
+        // Fully accepted, no reminder needed
+        continue;
+      }
+
+      // Check if received_confirmed exists
       const { data: confirmedActivity } = await supabase
         .from("request_activities")
         .select("id")
@@ -181,21 +194,23 @@ serve(async (req) => {
         .eq("action", "received_confirmed")
         .limit(1);
 
-      if (confirmedActivity && confirmedActivity.length > 0) {
-        continue;
-      }
+      const hasReceivedConfirmed = confirmedActivity && confirmedActivity.length > 0;
 
-      // Check if reminder was already sent for this exact slot today (avoid duplicates)
+      // Determine reminder stage
+      const stage = hasReceivedConfirmed ? "acceptance" : "receive";
+      const dedupKey = `${dedupDescription}_${stage}`;
+
+      // Check if reminder was already sent for this exact slot + stage today
       const { data: existingReminder } = await supabase
         .from("request_activities")
         .select("id")
         .eq("request_id", request.id)
         .eq("action", "delivery_reminder_sent")
-        .eq("description", dedupDescription)
+        .eq("description", dedupKey)
         .limit(1);
 
       if (existingReminder && existingReminder.length > 0) {
-        console.log(`Reminder already sent for ${request.request_number} at slot ${reminderSlot}:00 today`);
+        console.log(`Reminder (${stage}) already sent for ${request.request_number} at slot ${reminderSlot}:00 today`);
         continue;
       }
 
@@ -206,13 +221,24 @@ serve(async (req) => {
         .eq("organization_id", request.organization_id)
         .eq("is_active", true);
 
-      const message = formatReminderMessage(request, participants || []);
+      const message = formatReminderMessage(request, participants || [], stage);
 
-      const keyboard = {
-        inline_keyboard: [
-          [{ text: "📦 Получение подтверждено", callback_data: "received" }],
-        ],
-      };
+      // Different buttons depending on stage
+      let keyboard: any;
+      if (stage === "receive") {
+        keyboard = {
+          inline_keyboard: [
+            [{ text: "📦 Получение подтверждено", callback_data: "received" }],
+          ],
+        };
+      } else {
+        keyboard = {
+          inline_keyboard: [
+            [{ text: "🟢 Принято без замечаний", callback_data: "accepted_ok" }],
+            [{ text: "🔴 Обнаружено несоответствие", callback_data: "discrepancy" }],
+          ],
+        };
+      }
 
       // Delete previous messages for this request
       const existingMessageIds = request.telegram_message_ids || [];
