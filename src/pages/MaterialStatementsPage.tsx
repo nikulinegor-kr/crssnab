@@ -1066,6 +1066,7 @@ export default function MaterialStatementsPage() {
                 </Table>
               </CardContent>
             </Card>
+            </div>
 
             {/* Procurement Summary */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
