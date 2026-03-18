@@ -30,7 +30,7 @@ function getPriorityEmoji(priority: string): string {
   return "⭐";
 }
 
-function formatReminderMessage(request: any, participants: any[] = []): string {
+function formatReminderMessage(request: any, participants: any[] = [], stage: "receive" | "acceptance"): string {
   const lines: string[] = [];
 
   const getApplicantTelegram = (name: string): string | null => {
@@ -41,7 +41,11 @@ function formatReminderMessage(request: any, participants: any[] = []): string {
     return participant?.telegram_username ? `@${participant.telegram_username}` : null;
   };
 
-  lines.push(`🔔 Напоминание: подтвердите получение!`);
+  if (stage === "receive") {
+    lines.push(`🔔 Напоминание: подтвердите получение!`);
+  } else {
+    lines.push(`🔔 Напоминание: подтвердите приёмку!`);
+  }
   lines.push("");
   lines.push(`🧾 Заявка — ${request.description}`);
 
