@@ -219,7 +219,7 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
         const ws = XLSX.utils.json_to_sheet(rows);
         ws["!cols"] = mergeEnabled
           ? [{ wch: 5 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }]
-          : [{ wch: 5 }, { wch: 8 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }];
+          : [{ wch: 5 }, { wch: 50 }, { wch: 25 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 18 }];
 
         // Bold header + totals row
         const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
