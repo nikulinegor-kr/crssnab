@@ -206,7 +206,6 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
         } else {
           rows.push({
             "№": "" as any,
-            "Позиция": "" as any,
             "Наименование": `Итого по разделу: ${rows.length} поз.`,
             "Тип / марка": "",
             "Ед. изм.": "",
