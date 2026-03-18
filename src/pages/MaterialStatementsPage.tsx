@@ -457,6 +457,27 @@ export default function MaterialStatementsPage() {
     queryClient.invalidateQueries({ queryKey: ["material-statements"] });
   };
 
+  // Drag and drop for file upload
+  const [isDragOverFiles, setIsDragOverFiles] = useState(false);
+  const handleFileDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(true);
+  }, []);
+  const handleFileDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(false);
+  }, []);
+  const handleFileDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverFiles(false);
+    if (e.dataTransfer.files?.length) {
+      handleQuickUpload(e.dataTransfer.files);
+    }
+  }, [orgId, selectedObjectId, selectedFolderId, selectedYear, selectedSectionId]);
+
   // Recognize
   const handleRecognize = async (statement: MaterialStatement) => {
     if (!orgId) return;
