@@ -178,8 +178,6 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
           // Flat: each item as separate row
           rows = items.map((item, i) => ({
             "№": i + 1,
-            "Раздел": sec.name,
-            "Файл": stmtToName.get(item.statement_id) || "—",
             "Позиция": item.row_number ?? "",
             "Наименование": item.name || "",
             "Тип / марка": item.type_mark || "",
