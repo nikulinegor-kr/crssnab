@@ -11,6 +11,9 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Yakutsk timezone offset: UTC+9
+const YAKUTSK_OFFSET_HOURS = 9;
+
 async function sendTelegramRequest(botToken: string, method: string, body: any) {
   const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
     method: "POST",
@@ -74,15 +77,58 @@ function formatReminderMessage(request: any, participants: any[] = []): string {
   return lines.join("\n");
 }
 
+/**
+ * Get current hour in Yakutsk timezone (UTC+9)
+ */
+function getYakutskHour(): number {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  return (utcHour + YAKUTSK_OFFSET_HOURS) % 24;
+}
+
+/**
+ * Check if current Yakutsk time is within a reminder window (10:00 or 13:00).
+ * We allow a ±30 min window to account for cron scheduling.
+ */
+function isReminderWindow(): boolean {
+  const now = new Date();
+  const yakutskMinutes = (now.getUTCHours() * 60 + now.getUTCMinutes() + YAKUTSK_OFFSET_HOURS * 60) % (24 * 60);
+  // 10:00 = 600 min, 13:00 = 780 min. Allow window of [target-30, target+30]
+  const windows = [600, 780];
+  return windows.some(w => Math.abs(yakutskMinutes - w) <= 30);
+}
+
+/**
+ * Get a key for the current reminder slot to prevent duplicates within the same window.
+ * Returns "10" or "13" based on which window we're in.
+ */
+function getReminderSlot(): string {
+  const now = new Date();
+  const yakutskMinutes = (now.getUTCHours() * 60 + now.getUTCMinutes() + YAKUTSK_OFFSET_HOURS * 60) % (24 * 60);
+  if (Math.abs(yakutskMinutes - 600) <= 30) return "10";
+  if (Math.abs(yakutskMinutes - 780) <= 30) return "13";
+  return "other";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Checking for unconfirmed 'Доставлено в ТК' requests older than 24h...");
+    const yakutskHour = getYakutskHour();
+    console.log(`Current Yakutsk hour: ${yakutskHour}:00`);
 
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Only send reminders during the 10:00 and 13:00 windows (Yakutsk time)
+    if (!isReminderWindow()) {
+      console.log("Not in a reminder window (10:00 or 13:00 Yakutsk time). Skipping.");
+      return new Response(JSON.stringify({ sent: 0, reason: "outside_reminder_window" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const reminderSlot = getReminderSlot();
+    console.log(`Reminder slot: ${reminderSlot}:00 Yakutsk time`);
 
     // Find requests still in "Доставлено в ТК" status
     const { data: requests, error: reqError } = await supabase
@@ -111,29 +157,17 @@ serve(async (req) => {
       });
     }
 
+    // Today's date string in Yakutsk timezone for dedup key
+    const nowUtc = new Date();
+    const yakutskDate = new Date(nowUtc.getTime() + YAKUTSK_OFFSET_HOURS * 60 * 60 * 1000);
+    const todayKey = yakutskDate.toISOString().slice(0, 10); // YYYY-MM-DD
+    const dedupDescription = `reminder_${todayKey}_${reminderSlot}`;
+
     let sentCount = 0;
 
     for (const request of requests) {
       const org = (request as any).organizations;
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) continue;
-
-      // Check when status was changed to "Доставлено в ТК"
-      const { data: statusActivity } = await supabase
-        .from("request_activities")
-        .select("created_at")
-        .eq("request_id", request.id)
-        .eq("action", "status_changed")
-        .eq("new_value", "Доставлено в ТК")
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (!statusActivity || statusActivity.length === 0) continue;
-
-      const statusChangedAt = new Date(statusActivity[0].created_at);
-      if (statusChangedAt.toISOString() > twentyFourHoursAgo) {
-        // Less than 24 hours have passed
-        continue;
-      }
 
       // Check if already confirmed (received_confirmed activity exists)
       const { data: confirmedActivity } = await supabase
@@ -144,21 +178,20 @@ serve(async (req) => {
         .limit(1);
 
       if (confirmedActivity && confirmedActivity.length > 0) {
-        // Already confirmed, skip
         continue;
       }
 
-      // Check if reminder was already sent within last 24h (avoid spamming)
-      const { data: reminderActivity } = await supabase
+      // Check if reminder was already sent for this exact slot today (avoid duplicates)
+      const { data: existingReminder } = await supabase
         .from("request_activities")
         .select("id")
         .eq("request_id", request.id)
         .eq("action", "delivery_reminder_sent")
-        .gte("created_at", twentyFourHoursAgo)
+        .eq("description", dedupDescription)
         .limit(1);
 
-      if (reminderActivity && reminderActivity.length > 0) {
-        // Reminder already sent within last 24h
+      if (existingReminder && existingReminder.length > 0) {
+        console.log(`Reminder already sent for ${request.request_number} at slot ${reminderSlot}:00 today`);
         continue;
       }
 
@@ -209,16 +242,16 @@ serve(async (req) => {
           })
           .eq("id", request.id);
 
-        // Log activity to prevent duplicate reminders
+        // Log activity with dedup key in description
         await supabase.from("request_activities").insert({
           request_id: request.id,
           organization_id: request.organization_id,
           action: "delivery_reminder_sent",
-          description: "Повторное уведомление о подтверждении получения (24ч)",
+          description: dedupDescription,
         });
 
         sentCount++;
-        console.log(`Reminder sent for request ${request.request_number}`);
+        console.log(`Reminder sent for request ${request.request_number} (slot ${reminderSlot}:00)`);
       } else {
         console.error(`Failed to send reminder for ${request.request_number}:`, result);
       }
