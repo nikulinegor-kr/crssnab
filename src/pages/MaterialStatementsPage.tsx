@@ -964,6 +964,13 @@ export default function MaterialStatementsPage() {
                 <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
+                {selectedObjectId && orgId && selectedObj && (
+                  <ConsolidatedExcelExportButton
+                    objectId={selectedObjectId}
+                    objectName={selectedObj.name}
+                    organizationId={orgId}
+                  />
+                )}
               </div>
             </div>
 
