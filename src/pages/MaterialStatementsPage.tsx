@@ -967,6 +967,20 @@ export default function MaterialStatementsPage() {
             </div>
 
             {/* Files table */}
+            <div
+              className="relative"
+              onDragOver={handleFileDragOver}
+              onDragLeave={handleFileDragLeave}
+              onDrop={handleFileDrop}
+            >
+            {isDragOverFiles && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/5 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="h-10 w-10 text-primary" />
+                  <p className="text-sm font-medium text-primary">Отпустите файлы для загрузки</p>
+                </div>
+              </div>
+            )}
             <Card>
               <CardHeader className="py-3 flex-row items-center justify-between">
                 <CardTitle className="text-sm">Файлы ({currentStatements.length})</CardTitle>
