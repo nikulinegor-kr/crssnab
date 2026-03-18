@@ -277,11 +277,11 @@ serve(async (req) => {
           request_id: request.id,
           organization_id: request.organization_id,
           action: "delivery_reminder_sent",
-          description: dedupDescription,
+          description: dedupKey,
         });
 
         sentCount++;
-        console.log(`Reminder sent for request ${request.request_number} (slot ${reminderSlot}:00)`);
+        console.log(`Reminder (${stage}) sent for request ${request.request_number} (slot ${reminderSlot}:00)`);
       } else {
         console.error(`Failed to send reminder for ${request.request_number}:`, result);
       }
