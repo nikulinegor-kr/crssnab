@@ -116,6 +116,7 @@ export function parseMaterialParams(name: string): MaterialParams {
   const raw = normalizeForSearch(name);
   const type = extractType(name);
   const { diameter, thickness } = extractDimensions(name);
+  console.log(`[MaterialParams] "${name}" → type=${type}, diameter=${diameter}, thickness=${thickness}`);
   return { type, diameter, thickness, raw };
 }
 
