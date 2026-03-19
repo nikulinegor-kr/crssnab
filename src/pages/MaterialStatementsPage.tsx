@@ -1431,9 +1431,9 @@ export default function MaterialStatementsPage() {
                                           title="Нажмите для редактирования цены"
                                         >
                                           {formatPrice(item.price)}
-                                          {item.price_source === "manual" && <Hand className="h-3 w-3 text-amber-500" title="Ручной ввод" />}
-                                          {item.price_source === "kp" && <FileCheck className="h-3 w-3 text-blue-500" title="Из КП" />}
-                                          {item.price_source === "file" && item.price != null && <FileUp className="h-3 w-3 text-muted-foreground" title="Из файла" />}
+                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
+                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
+                                          {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
                                         </span>
                                       )}
                                     </TableCell>
