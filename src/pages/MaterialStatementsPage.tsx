@@ -7,9 +7,10 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench, Archive, Layers, ShoppingCart,
+  Wrench, Archive, Layers, ShoppingCart, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -94,7 +95,8 @@ interface MaterialFolder {
 }
 
 interface KpItem { name: string; unit: string | null; price: number | null; }
-interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; similarity: number; autoMatched: boolean; }
+interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; }
+interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; }
 
 // Fuzzy matching utility
 function levenshtein(a: string, b: string): number {
@@ -123,16 +125,23 @@ function similarity(a: string, b: string): number {
   return 1 - levenshtein(la, lb) / maxLen;
 }
 
-function findBestMatch(kpName: string, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
+function findBestMatch(kpName: string, kpUnit: string | null, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
   let bestItem: MaterialItem | null = null;
   let bestScore = 0;
   const kpWords = kpName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const normalizedKpUnit = (kpUnit || "").toLowerCase().trim();
   for (const item of projectItems) {
     let score = similarity(kpName, item.name);
     const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const commonWords = kpWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
     const wordOverlap = kpWords.length > 0 ? commonWords.length / kpWords.length : 0;
     score = Math.max(score, wordOverlap * 0.9);
+    // Boost score if units match
+    if (normalizedKpUnit && item.unit) {
+      const normalizedItemUnit = item.unit.toLowerCase().trim();
+      if (normalizedKpUnit === normalizedItemUnit) score = Math.min(1, score + 0.05);
+      else if (score > 0.5) score -= 0.05;
+    }
     if (score > bestScore) { bestScore = score; bestItem = item; }
   }
   return { item: bestItem, score: bestScore };
@@ -195,6 +204,8 @@ export default function MaterialStatementsPage() {
   const [kpMatches, setKpMatches] = useState<KpMatch[]>([]);
   const [kpSupplier, setKpSupplier] = useState<string | null>(null);
   const [kpApplying, setKpApplying] = useState(false);
+  const [kpFileName, setKpFileName] = useState<string>("");
+  const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
@@ -636,7 +647,7 @@ export default function MaterialStatementsPage() {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
       return;
     }
-    setKpLoading(true); setKpDialogOpen(true);
+    setKpLoading(true); setKpDialogOpen(true); setKpFileName(file.name);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
@@ -651,9 +662,17 @@ export default function MaterialStatementsPage() {
       const kpItems: KpItem[] = data.items || [];
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
-        const { item, score } = findBestMatch(kpItem.name, allItems);
+        const { item, score } = findBestMatch(kpItem.name, kpItem.unit, allItems);
         const autoMatched = score >= 0.6;
-        return { kpItem, matchedItemId: autoMatched && item ? item.id : null, matchedItemName: autoMatched && item ? item.name : null, similarity: score, autoMatched };
+        return {
+          kpItem,
+          matchedItemId: autoMatched && item ? item.id : null,
+          matchedItemName: autoMatched && item ? item.name : null,
+          oldPrice: autoMatched && item ? item.price : null,
+          similarity: score,
+          autoMatched,
+          status: (autoMatched && item ? "updated" : "not_found") as "updated" | "not_found",
+        };
       });
       setKpMatches(matches);
     } catch (e: any) {
@@ -666,7 +685,14 @@ export default function MaterialStatementsPage() {
     setKpMatches(prev => {
       const updated = [...prev];
       const item = itemId ? allItems.find(i => i.id === itemId) : null;
-      updated[index] = { ...updated[index], matchedItemId: itemId, matchedItemName: item ? item.name : null, autoMatched: false };
+      updated[index] = {
+        ...updated[index],
+        matchedItemId: itemId,
+        matchedItemName: item ? item.name : null,
+        oldPrice: item ? item.price : null,
+        autoMatched: false,
+        status: itemId ? "updated" : "not_found",
+      };
       return updated;
     });
   };
@@ -674,20 +700,31 @@ export default function MaterialStatementsPage() {
   const handleApplyKp = async () => {
     setKpApplying(true);
     let applied = 0;
+    const log: KpApplyLog[] = [];
     try {
       for (const match of kpMatches) {
-        if (!match.matchedItemId || match.kpItem.price == null) continue;
+        if (!match.matchedItemId || match.kpItem.price == null) {
+          log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const item = allItems.find(i => i.id === match.matchedItemId);
-        if (!item) continue;
+        if (!item) {
+          log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
         await (supabase.from("material_statement_items" as any).update({
           price: match.kpItem.price, total_price: totalPrice, supplier: kpSupplier || undefined,
         }).eq("id", match.matchedItemId) as any);
+        log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "updated", fileName: kpFileName });
         applied++;
       }
+      const notFound = log.filter(l => l.status === "not_found").length;
+      setKpApplyLog(log);
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
-      toast({ title: `КП применено`, description: `Обновлено ${applied} позиций` });
+      toast({ title: `КП применено`, description: `Обновлено: ${applied}, Не найдено: ${notFound}` });
       setKpDialogOpen(false); setKpMatches([]);
+      console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
     } finally { setKpApplying(false); }
@@ -1570,11 +1607,12 @@ export default function MaterialStatementsPage() {
 
       {/* KP Matching Dialog */}
       <Dialog open={kpDialogOpen} onOpenChange={open => { if (!open && !kpLoading && !kpApplying) { setKpDialogOpen(false); setKpMatches([]); } }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Сопоставление КП с материалами
               {kpSupplier && <span className="text-sm font-normal text-muted-foreground ml-2">— {kpSupplier}</span>}
+              {kpFileName && <span className="text-xs font-normal text-muted-foreground ml-2">({kpFileName})</span>}
             </DialogTitle>
           </DialogHeader>
           {kpLoading ? (
@@ -1584,56 +1622,75 @@ export default function MaterialStatementsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Всего позиций КП: <strong>{kpMatches.length}</strong></span>
-                <span>Автоматически: <strong className="text-green-600">{kpMatches.filter(m => m.matchedItemId).length}</strong></span>
-                <span>Не найдено: <strong className="text-destructive">{kpMatches.filter(m => !m.matchedItemId).length}</strong></span>
+              <div className="flex items-center gap-4 text-sm">
+                <Badge variant="outline" className="gap-1">
+                  Всего: <strong>{kpMatches.length}</strong>
+                </Badge>
+                <Badge variant="default" className="gap-1 bg-emerald-600">
+                  Обновлено: <strong>{kpMatches.filter(m => m.matchedItemId).length}</strong>
+                </Badge>
+                <Badge variant="destructive" className="gap-1">
+                  Не найдено: <strong>{kpMatches.filter(m => !m.matchedItemId).length}</strong>
+                </Badge>
               </div>
               <ScrollArea className="flex-1 max-h-[55vh]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">№</TableHead>
-                      <TableHead>Позиция КП</TableHead>
-                      <TableHead className="w-24">Цена</TableHead>
-                      <TableHead>Материал проекта</TableHead>
-                      <TableHead className="w-20">Точность</TableHead>
+                      <TableHead className="w-10">№</TableHead>
+                      <TableHead>Материал</TableHead>
+                      <TableHead className="w-24">Было</TableHead>
+                      <TableHead className="w-24">Стало</TableHead>
+                      <TableHead>Сопоставление</TableHead>
+                      <TableHead className="w-28">Статус</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {kpMatches.map((match, idx) => (
-                      <TableRow key={idx} className={!match.matchedItemId ? "bg-destructive/5" : ""}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell className="text-sm">{match.kpItem.name}</TableCell>
-                        <TableCell className="font-medium">{match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}</TableCell>
-                        <TableCell>
-                          <Select value={match.matchedItemId || "__none__"} onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Не сопоставлено" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
-                              {allItems.map(item => (
-                                <SelectItem key={item.id} value={item.id}>{item.name.substring(0, 80)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          {match.matchedItemId && (
-                            <Badge variant={match.similarity >= 0.8 ? "default" : match.similarity >= 0.6 ? "secondary" : "outline"}>
-                              {Math.round(match.similarity * 100)}%
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {kpMatches.map((match, idx) => {
+                      const isMatched = !!match.matchedItemId;
+                      const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;
+                      return (
+                        <TableRow key={idx} className={cn(
+                          !isMatched && "bg-destructive/5",
+                          isMatched && priceChanged && "bg-emerald-50 dark:bg-emerald-950/20",
+                        )}>
+                          <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell className="text-sm font-medium">{match.kpItem.name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {isMatched && match.oldPrice != null ? formatPrice(match.oldPrice) : "—"}
+                          </TableCell>
+                          <TableCell className={cn("text-sm font-medium", priceChanged && "text-emerald-600 dark:text-emerald-400")}>
+                            {match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Select value={match.matchedItemId || "__none__"} onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Не сопоставлено" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
+                                {allItems.map(item => (
+                                  <SelectItem key={item.id} value={item.id}>{item.name.substring(0, 80)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            {isMatched ? (
+                              <Badge variant="default" className="bg-emerald-600 text-xs">обновлено</Badge>
+                            ) : (
+                              <Badge variant="destructive" className="text-xs">не найден</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </ScrollArea>
               <DialogFooter>
                 <Button variant="outline" onClick={() => { setKpDialogOpen(false); setKpMatches([]); }}>Отмена</Button>
                 <Button onClick={handleApplyKp} disabled={kpApplying || kpMatches.filter(m => m.matchedItemId).length === 0}>
-                  {kpApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
-                  Применить ({kpMatches.filter(m => m.matchedItemId && m.kpItem.price != null).length})
+                  {kpApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                  Применить изменения ({kpMatches.filter(m => m.matchedItemId && m.kpItem.price != null).length})
                 </Button>
               </DialogFooter>
             </>
