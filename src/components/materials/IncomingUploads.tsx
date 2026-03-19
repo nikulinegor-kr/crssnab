@@ -444,8 +444,12 @@ export function IncomingUploads({
 
       if (extractedRows.length === 0) {
         updateFile(statementId, { status: "error", error: "Не удалось извлечь строки из файла" });
+        await (supabase.from("material_statements" as any).update({ classification_status: "error" }).eq("id", statementId) as any);
         return;
       }
+
+      // Mark as recognized in DB
+      await (supabase.from("material_statements" as any).update({ is_recognized: true }).eq("id", statementId) as any);
 
       // 4. CLASSIFY — determine section
       updateFile(statementId, { status: "classifying" });
