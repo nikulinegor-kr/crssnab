@@ -1392,9 +1392,10 @@ export default function MaterialStatementsPage() {
                 ) : (
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
                     const rawStItems = itemsByStatement.get(st.id) || [];
+                    const filteredByType = itemTypeFilter === "all" ? rawStItems : rawStItems.filter(i => (i.item_type || "material") === itemTypeFilter);
                     const stItems = materialsSearch.trim()
-                      ? rawStItems.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
-                      : rawStItems;
+                      ? filteredByType.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
+                      : filteredByType;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
