@@ -817,9 +817,17 @@ export function IncomingUploads({
                               <Button
                                 size="sm"
                                 variant="default"
-                                onClick={() => setReviewFile(file)}
+                                onClick={() => { setReviewFile(file); setReviewSearch(""); }}
                               >
                                 <ArrowRight className="h-3 w-3 mr-1" /> Просмотр
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3" />
                               </Button>
                               {!file.sectionName && (
                                 <Button
@@ -835,19 +843,42 @@ export function IncomingUploads({
                               )}
                             </>
                           )}
-                          {file.status === "error" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeFile(file.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
                           {file.status === "done" && (
-                            <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => { setReviewFile(file); setReviewSearch(""); }}>
+                                <ArrowRight className="h-3 w-3 mr-1" /> Просмотр
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          {file.status === "error" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" /> Повторить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeFile(file.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>
