@@ -1,0 +1,1 @@
+ALTER TABLE public.material_statement_items ADD COLUMN IF NOT EXISTS source_file_id uuid REFERENCES public.material_statements(id) ON DELETE SET NULL;
