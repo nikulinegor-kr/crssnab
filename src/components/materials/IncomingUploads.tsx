@@ -46,6 +46,8 @@ interface MatchResult {
   oldQuantity: number | null;
   similarity: number;
   status: "updated" | "not_found";
+  matchType?: "exact" | "fuzzy" | "parametric" | "not_found";
+  matchDescription?: string | null;
 }
 
 interface ExistingItem {
