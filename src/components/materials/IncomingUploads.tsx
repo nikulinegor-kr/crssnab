@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
+import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,8 @@ interface MatchResult {
   oldQuantity: number | null;
   similarity: number;
   status: "updated" | "not_found";
+  matchType?: "exact" | "fuzzy" | "parametric" | "not_found";
+  matchDescription?: string | null;
 }
 
 interface ExistingItem {
@@ -104,33 +107,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; vari
   error: { label: "Ошибка", icon: <AlertTriangle className="h-3 w-3" />, variant: "destructive" },
 };
 
-// ── Fuzzy matching ──
-
-function levenshtein(a: string, b: string): number {
-  const an = a.length, bn = b.length;
-  if (an === 0) return bn;
-  if (bn === 0) return an;
-  const matrix: number[][] = [];
-  for (let i = 0; i <= an; i++) matrix[i] = [i];
-  for (let j = 0; j <= bn; j++) matrix[0][j] = j;
-  for (let i = 1; i <= an; i++) {
-    for (let j = 1; j <= bn; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
-    }
-  }
-  return matrix[an][bn];
-}
-
-function textSimilarity(a: string, b: string): number {
-  const la = a.toLowerCase().trim();
-  const lb = b.toLowerCase().trim();
-  if (la === lb) return 1;
-  if (la.includes(lb) || lb.includes(la)) return 0.85;
-  const maxLen = Math.max(la.length, lb.length);
-  if (maxLen === 0) return 1;
-  return 1 - levenshtein(la, lb) / maxLen;
-}
+// ── Material matching: exact → parametric (ignoring ГОСТ/ОСТ/ТУ/СТО) → fuzzy ──
 
 const UNIT_ALIASES: Record<string, string> = {
   "шт": "шт", "шт.": "шт", "штук": "шт", "штука": "шт",
@@ -153,29 +130,33 @@ function normalizeUnit(unit: string | null): string {
 function findBestMatch(
   extracted: ExtractedRow,
   existingItems: ExistingItem[]
-): { item: ExistingItem | null; score: number } {
-  let bestItem: ExistingItem | null = null;
-  let bestScore = 0;
-  const extWords = extracted.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  const extUnit = normalizeUnit(extracted.unit);
+): { item: ExistingItem | null; score: number; matchType: "exact" | "fuzzy" | "parametric" | "not_found"; matchDescription: string | null } {
+  const result = findBestParametricMatch(
+    extracted.name,
+    normalizeUnit(extracted.unit),
+    existingItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      unit: normalizeUnit(item.unit),
+      price: item.price,
+    }))
+  );
 
-  for (const item of existingItems) {
-    let score = textSimilarity(extracted.name, item.name);
-    const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    const commonWords = extWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
-    const wordOverlap = extWords.length > 0 ? commonWords.length / extWords.length : 0;
-    score = Math.max(score, wordOverlap * 0.9);
-
-    // Unit matching
-    if (extUnit && item.unit) {
-      const itemUnit = normalizeUnit(item.unit);
-      if (extUnit === itemUnit) score = Math.min(1, score + 0.05);
-      else if (score > 0.5) score -= 0.1;
-    }
-
-    if (score > bestScore) { bestScore = score; bestItem = item; }
+  if (!result) {
+    return { item: null, score: 0, matchType: "not_found", matchDescription: null };
   }
-  return { item: bestItem, score: bestScore };
+
+  const matchedItem = existingItems.find((item) => item.id === result.itemId) ?? null;
+  if (!matchedItem) {
+    return { item: null, score: 0, matchType: "not_found", matchDescription: null };
+  }
+
+  return {
+    item: matchedItem,
+    score: result.score,
+    matchType: result.matchType,
+    matchDescription: result.matchDescription,
+  };
 }
 
 // ── Excel parsing ──
@@ -503,8 +484,9 @@ export function IncomingUploads({
           // since we already filtered by object
         }
 
-        const { item, score } = findBestMatch(row, targetItems);
-        const matched = score >= 0.6 && item;
+        const { item, score, matchType, matchDescription } = findBestMatch(row, targetItems);
+        const matched = !!item;
+        console.log(`[IncomingUploads] MATCH TYPE: ${matchType}`);
         return {
           extracted: row,
           matchedItemId: matched ? item!.id : null,
@@ -513,6 +495,8 @@ export function IncomingUploads({
           oldQuantity: matched ? item!.quantity : null,
           similarity: score,
           status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+          matchType,
+          matchDescription,
         };
       });
 
@@ -652,17 +636,20 @@ export function IncomingUploads({
 
       // Re-match
       const matches: MatchResult[] = extractedRows.map(row => {
-        const { item, score } = findBestMatch(row, existingItems);
-        const matched = score >= 0.6 && item;
-        return {
-          extracted: row,
-          matchedItemId: matched ? item!.id : null,
-          matchedItemName: matched ? item!.name : null,
-          oldPrice: matched ? item!.price : null,
-          oldQuantity: matched ? item!.quantity : null,
-          similarity: score,
-          status: (matched ? "updated" : "not_found") as "updated" | "not_found",
-        };
+      const { item, score, matchType, matchDescription } = findBestMatch(row, existingItems);
+      const matched = !!item;
+      console.log(`[IncomingUploads] MATCH TYPE: ${matchType}`);
+      return {
+        extracted: row,
+        matchedItemId: matched ? item!.id : null,
+        matchedItemName: matched ? item!.name : null,
+        oldPrice: matched ? item!.price : null,
+        oldQuantity: matched ? item!.quantity : null,
+        similarity: score,
+        status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+        matchType,
+        matchDescription,
+      };
       });
 
       updateFile(file.id, { status: "ready", extractedRows, matches });
@@ -687,17 +674,20 @@ export function IncomingUploads({
 
     // Update file section info and re-match
     const matches = (file.extractedRows || []).map(row => {
-      const { item, score } = findBestMatch(row, existingItems);
-      const matched = score >= 0.6 && item;
-      return {
-        extracted: row,
-        matchedItemId: matched ? item!.id : null,
-        matchedItemName: matched ? item!.name : null,
-        oldPrice: matched ? item!.price : null,
-        oldQuantity: matched ? item!.quantity : null,
-        similarity: score,
-        status: (matched ? "updated" : "not_found") as "updated" | "not_found",
-      };
+        const { item, score, matchType, matchDescription } = findBestMatch(row, existingItems);
+        const matched = !!item;
+        console.log(`[IncomingUploads] MATCH TYPE: ${matchType}`);
+        return {
+          extracted: row,
+          matchedItemId: matched ? item!.id : null,
+          matchedItemName: matched ? item!.name : null,
+          oldPrice: matched ? item!.price : null,
+          oldQuantity: matched ? item!.quantity : null,
+          similarity: score,
+          status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+          matchType,
+          matchDescription,
+        };
     });
 
     // Update DB
@@ -1092,7 +1082,19 @@ export function IncomingUploads({
                     </TableCell>
                     <TableCell>
                       {match.status === "updated" && match.extracted.price != null ? (
-                        <Badge variant="default" className="text-xs">обновлено</Badge>
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="default" className="text-xs">обновлено</Badge>
+                          {match.matchType === "parametric" && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {`MATCH TYPE: parametric`}
+                            </span>
+                          )}
+                          {match.matchType === "parametric" && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {`Совпадение по параметрам (игнорируя ГОСТ)${match.matchDescription ? ` (${match.matchDescription})` : ""}`}
+                            </span>
+                          )}
+                        </div>
                       ) : match.status === "not_found" ? (
                         <Badge variant="destructive" className="text-xs">не найден</Badge>
                       ) : (
