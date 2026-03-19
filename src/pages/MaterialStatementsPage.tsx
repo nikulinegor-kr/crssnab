@@ -33,6 +33,7 @@ import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
+import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 
 // Types
 interface MaterialStatement {
@@ -99,57 +100,8 @@ interface MaterialFolder {
 }
 
 interface KpItem { name: string; unit: string | null; price: number | null; }
-interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; }
-interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; }
-
-// Fuzzy matching utility
-function levenshtein(a: string, b: string): number {
-  const an = a.length, bn = b.length;
-  if (an === 0) return bn;
-  if (bn === 0) return an;
-  const matrix: number[][] = [];
-  for (let i = 0; i <= an; i++) { matrix[i] = [i]; }
-  for (let j = 0; j <= bn; j++) { matrix[0][j] = j; }
-  for (let i = 1; i <= an; i++) {
-    for (let j = 1; j <= bn; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
-    }
-  }
-  return matrix[an][bn];
-}
-
-function similarity(a: string, b: string): number {
-  const la = a.toLowerCase().trim();
-  const lb = b.toLowerCase().trim();
-  if (la === lb) return 1;
-  if (la.includes(lb) || lb.includes(la)) return 0.85;
-  const maxLen = Math.max(la.length, lb.length);
-  if (maxLen === 0) return 1;
-  return 1 - levenshtein(la, lb) / maxLen;
-}
-
-function findBestMatch(kpName: string, kpUnit: string | null, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
-  let bestItem: MaterialItem | null = null;
-  let bestScore = 0;
-  const kpWords = kpName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  const normalizedKpUnit = (kpUnit || "").toLowerCase().trim();
-  for (const item of projectItems) {
-    let score = similarity(kpName, item.name);
-    const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    const commonWords = kpWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
-    const wordOverlap = kpWords.length > 0 ? commonWords.length / kpWords.length : 0;
-    score = Math.max(score, wordOverlap * 0.9);
-    // Boost score if units match
-    if (normalizedKpUnit && item.unit) {
-      const normalizedItemUnit = item.unit.toLowerCase().trim();
-      if (normalizedKpUnit === normalizedItemUnit) score = Math.min(1, score + 0.05);
-      else if (score > 0.5) score -= 0.05;
-    }
-    if (score > bestScore) { bestScore = score; bestItem = item; }
-  }
-  return { item: bestItem, score: bestScore };
-}
+interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; matchType?: "exact" | "fuzzy" | "parametric"; matchDescription?: string | null; }
+interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; matchDescription?: string | null; }
 
 export default function MaterialStatementsPage() {
   const { currentOrgId: orgId } = useCurrentOrganization();
@@ -711,16 +663,22 @@ export default function MaterialStatementsPage() {
       const kpItems: KpItem[] = data.items || [];
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
-        const { item, score } = findBestMatch(kpItem.name, kpItem.unit, allItems);
-        const autoMatched = score >= 0.6;
+        const result = findBestParametricMatch(kpItem.name, kpItem.unit, allItems);
+        const autoMatched = result != null && result.score >= 0.6;
+        const item = autoMatched && result ? allItems.find(i => i.id === result.itemId) : null;
+        if (result && autoMatched) {
+          console.log(`[KP Match] "${kpItem.name}" → "${result.itemName}" (${result.matchType}, score=${result.score.toFixed(2)}${result.matchDescription ? `, ${result.matchDescription}` : ""})`);
+        }
         return {
           kpItem,
-          matchedItemId: autoMatched && item ? item.id : null,
-          matchedItemName: autoMatched && item ? item.name : null,
-          oldPrice: autoMatched && item ? item.price : null,
-          similarity: score,
+          matchedItemId: item ? item.id : null,
+          matchedItemName: item ? item.name : null,
+          oldPrice: item ? item.price : null,
+          similarity: result?.score ?? 0,
           autoMatched,
           status: (autoMatched && item ? "updated" : "not_found") as "updated" | "not_found",
+          matchType: result?.matchType,
+          matchDescription: result?.matchDescription,
         };
       });
       setKpMatches(matches);
@@ -1804,7 +1762,14 @@ export default function MaterialStatementsPage() {
                           </TableCell>
                           <TableCell>
                             {isMatched ? (
-                              <Badge variant="default" className="bg-emerald-600 text-xs">обновлено</Badge>
+                              <div className="flex flex-col gap-0.5">
+                                <Badge variant="default" className="bg-emerald-600 text-xs w-fit">
+                                  {match.matchType === "parametric" ? "по параметрам" : match.matchType === "fuzzy" ? "нечёткое" : "точное"}
+                                </Badge>
+                                {match.matchDescription && (
+                                  <span className="text-[10px] text-muted-foreground">{match.matchDescription}</span>
+                                )}
+                              </div>
                             ) : (
                               <Badge variant="destructive" className="text-xs">не найден</Badge>
                             )}
