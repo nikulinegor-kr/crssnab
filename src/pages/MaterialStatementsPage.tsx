@@ -1411,7 +1411,32 @@ export default function MaterialStatementsPage() {
                                     <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
-                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : formatPrice(item.price)}</TableCell>
+                                    <TableCell>
+                                      {isEditing ? (
+                                        <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
+                                      ) : inlinePriceEditId === item.id ? (
+                                        <Input
+                                          autoFocus
+                                          value={inlinePriceValue}
+                                          onChange={e => setInlinePriceValue(e.target.value)}
+                                          onBlur={() => handleInlinePriceSave(item.id)}
+                                          onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
+                                          className="h-8 w-24"
+                                          placeholder="Цена"
+                                        />
+                                      ) : (
+                                        <span
+                                          className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
+                                          onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
+                                          title="Нажмите для редактирования цены"
+                                        >
+                                          {formatPrice(item.price)}
+                                          {item.price_source === "manual" && <Hand className="h-3 w-3 text-amber-500" title="Ручной ввод" />}
+                                          {item.price_source === "kp" && <FileCheck className="h-3 w-3 text-blue-500" title="Из КП" />}
+                                          {item.price_source === "file" && item.price != null && <FileUp className="h-3 w-3 text-muted-foreground" title="Из файла" />}
+                                        </span>
+                                      )}
+                                    </TableCell>
                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
                                     <TableCell>
                                       {item.procurement_status === "in_procurement" && (
