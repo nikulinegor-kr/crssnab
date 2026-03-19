@@ -37,16 +37,27 @@ const TYPE_KEYWORDS: Record<string, string[]> = {
 
 /**
  * Normalize dimension separators to 'x'
- * Handles: x, х (Russian), *, ×, spaces between numbers
+ * Handles: x, х (Russian), *, ×, inch marks (", "), spaces between numbers
  */
 function normalizeDimSeparators(s: string): string {
   return s
     .replace(/х/gi, "x")
     .replace(/[*×]/g, "x")
+    // Replace inch marks (" and ") followed by space+digit as dimension separator
+    .replace(/(\d)[""]\s*(\d)/g, "$1x$2")
+    // Remove standalone inch marks after numbers
+    .replace(/(\d)[""]/g, "$1")
+    // Replace comma with dot in numbers
+    .replace(/(\d),(\d)/g, "$1.$2")
+    // Normalize "NUMBER x NUMBER"
     .replace(/(\d)\s+x\s+(\d)/g, "$1x$2")
-    .replace(/(\d)\s+(\d)/g, (_, a, b) => {
-      // Don't join if not likely dimensions (e.g. "ГОСТ 1234")
-      return `${a} ${b}`;
+    // Two numbers separated only by whitespace (after type word context) → treat as dimensions
+    .replace(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/g, (match, a, b, offset, str) => {
+      // Only join if preceded by a type keyword or 'x'-like context
+      const before = str.substring(Math.max(0, offset - 20), offset).toLowerCase();
+      const hasType = Object.values(TYPE_KEYWORDS).flat().some(v => before.includes(v));
+      if (hasType) return `${a}x${b}`;
+      return match;
     });
 }
 
@@ -71,13 +82,13 @@ function extractType(name: string): string | null {
 
 /**
  * Extract dimension parameters from material name.
- * Patterns: "159x4.5", "159х4,5", "25 x 2.5", "Ø159x4.5", "d=159*4.5"
+ * Patterns: "159x4.5", "159х4,5", "25 x 2.5", "Ø159x4.5", '159" 5,0'
  */
 function extractDimensions(name: string): { diameter: number | null; thickness: number | null } {
   const norm = normalizeDimSeparators(name);
   
   // Pattern: NUMBERxNUMBER (e.g. 159x4.5)
-  const dimMatch = norm.match(/(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)/i);
+  const dimMatch = norm.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i);
   if (dimMatch) {
     return {
       diameter: parseNum(dimMatch[1]),
@@ -86,9 +97,9 @@ function extractDimensions(name: string): { diameter: number | null; thickness: 
   }
 
   // Pattern: Ø NUMBER or d=NUMBER followed by optional xNUMBER
-  const diaMatch = norm.match(/[Øø]\s*(\d+(?:[.,]\d+)?)/);
+  const diaMatch = norm.match(/[Øø]\s*(\d+(?:\.\d+)?)/);
   if (diaMatch) {
-    const thickMatch = norm.match(/[Øø]\s*\d+(?:[.,]\d+)?\s*x\s*(\d+(?:[.,]\d+)?)/i);
+    const thickMatch = norm.match(/[Øø]\s*\d+(?:\.\d+)?\s*x\s*(\d+(?:\.\d+)?)/i);
     return {
       diameter: parseNum(diaMatch[1]),
       thickness: thickMatch ? parseNum(thickMatch[1]) : null,
