@@ -187,8 +187,7 @@ export function IncomingUploads({
         await (supabase.from("material_statements" as any)
           .update({ classification_status: "unclassified" })
           .eq("id", statementId) as any);
-        updateFile(tempId, {
-          id: statementId,
+        updateFile(statementId, {
           status: "unclassified",
           error: classifyErr.message,
         });
@@ -198,8 +197,7 @@ export function IncomingUploads({
       const result = classifyData as any;
 
       if (result.classificationStatus === "classified" && result.folderId) {
-        updateFile(tempId, {
-          id: statementId,
+        updateFile(statementId, {
           status: "classified",
           sectionName: result.sectionName,
           sectionId: result.sectionId,
@@ -210,28 +208,27 @@ export function IncomingUploads({
 
         // Auto-process: trigger recognition for PDF statements
         if (result.docType === "statement" && fileType === "pdf") {
-          updateFile(tempId, { status: "processing" });
+          updateFile(statementId, { status: "processing" });
           try {
             await supabase.functions.invoke("recognize-materials", {
               body: { fileUrl, statementId, organizationId: orgId },
             });
-            updateFile(tempId, { status: "done" });
+            updateFile(statementId, { status: "done" });
           } catch (recErr: any) {
             console.error(`[IncomingUploads] Recognition failed for "${file.name}":`, recErr.message);
-            updateFile(tempId, { status: "done" }); // file placed, recognition failed
+            updateFile(statementId, { status: "done" }); // file placed, recognition failed
           }
         } else if (fileType === "xlsx") {
           // Excel files are already marked as recognized — just mark done
-          updateFile(tempId, { status: "done" });
+          updateFile(statementId, { status: "done" });
         } else {
-          updateFile(tempId, { status: "done" });
+          updateFile(statementId, { status: "done" });
         }
 
         queryClient.invalidateQueries({ queryKey: ["material-statements"] });
         queryClient.invalidateQueries({ queryKey: ["material-items"] });
       } else {
-        updateFile(tempId, {
-          id: statementId,
+        updateFile(statementId, {
           status: "unclassified",
           sectionName: result.sectionName,
           docType: result.docType,
