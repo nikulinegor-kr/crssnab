@@ -1789,13 +1789,18 @@ export default function MaterialStatementsPage() {
                                 <Badge variant="default" className="bg-emerald-600 text-xs w-fit">
                                   {match.matchType === "parametric" ? "по параметрам" : match.matchType === "fuzzy" ? "нечёткое" : "точное"}
                                 </Badge>
-                                {match.matchType === "parametric" ? (
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {`Совпадение по параметрам${match.matchDescription ? ` (${match.matchDescription})` : " (с допуском)"}`}
-                                  </span>
-                                ) : match.matchDescription ? (
-                                  <span className="text-[10px] text-muted-foreground">{match.matchDescription}</span>
-                                ) : null}
+{match.matchType === "parametric" ? (
+  <div className="flex flex-col gap-0.5">
+    <span className="text-[10px] text-muted-foreground">
+      {`MATCH TYPE: parametric`}
+    </span>
+    <span className="text-[10px] text-muted-foreground">
+      {`Совпадение по параметрам (игнорируя ГОСТ)${match.matchDescription ? ` (${match.matchDescription})` : " (с допуском)"}`}
+    </span>
+  </div>
+) : match.matchDescription ? (
+  <span className="text-[10px] text-muted-foreground">{match.matchDescription}</span>
+) : null}
                               </div>
                             ) : (
                               <Badge variant="destructive" className="text-xs">не найден</Badge>
