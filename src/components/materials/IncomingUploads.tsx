@@ -948,7 +948,18 @@ export function IncomingUploads({
             )}
           </div>
 
-          <ScrollArea className="max-h-[55vh]">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="🔎 Найти материал..."
+              value={reviewSearch}
+              onChange={e => setReviewSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+
+          <ScrollArea className="max-h-[50vh]">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -962,7 +973,7 @@ export function IncomingUploads({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reviewMatches.map((match, idx) => (
+                {filteredReviewMatches.map((match, idx) => (
                   <TableRow
                     key={idx}
                     className={cn(
@@ -971,13 +982,19 @@ export function IncomingUploads({
                     )}
                   >
                     <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-sm">{match.extracted.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm">
+                      <HighlightText text={match.extracted.name} searchQuery={reviewSearch} />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{match.extracted.unit || "—"}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {match.extracted.price != null ? match.extracted.price.toLocaleString("ru-RU") : "—"}
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm">
-                      {match.matchedItemName || <span className="text-muted-foreground italic">—</span>}
+                      {match.matchedItemName ? (
+                        <HighlightText text={match.matchedItemName} searchQuery={reviewSearch} />
+                      ) : (
+                        <span className="text-muted-foreground italic">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm text-muted-foreground">
                       {match.oldPrice != null ? match.oldPrice.toLocaleString("ru-RU") : "—"}
@@ -993,6 +1010,13 @@ export function IncomingUploads({
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredReviewMatches.length === 0 && reviewSearch && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                      Ничего не найдено по запросу «{reviewSearch}»
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </ScrollArea>
