@@ -1658,7 +1658,17 @@ export default function MaterialStatementsPage() {
                   Не найдено: <strong>{kpMatches.filter(m => !m.matchedItemId).length}</strong>
                 </Badge>
               </div>
-              <ScrollArea className="flex-1 max-h-[55vh]">
+              {/* KP Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="🔎 Найти материал..."
+                  value={kpSearch}
+                  onChange={e => setKpSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              <ScrollArea className="flex-1 max-h-[50vh]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1671,7 +1681,12 @@ export default function MaterialStatementsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {kpMatches.map((match, idx) => {
+                    {kpMatches.filter(match => {
+                      if (!kpSearch.trim()) return true;
+                      const words = kpSearch.toLowerCase().trim().split(/\s+/);
+                      const text = `${match.kpItem.name} ${match.matchedItemName || ""}`.toLowerCase();
+                      return words.every(w => text.includes(w));
+                    }).map((match, idx) => {
                       const isMatched = !!match.matchedItemId;
                       const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;
                       return (
@@ -1680,7 +1695,9 @@ export default function MaterialStatementsPage() {
                           isMatched && priceChanged && "bg-emerald-50 dark:bg-emerald-950/20",
                         )}>
                           <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                          <TableCell className="text-sm font-medium">{match.kpItem.name}</TableCell>
+                          <TableCell className="text-sm font-medium">
+                            <HighlightText text={match.kpItem.name} searchQuery={kpSearch} />
+                          </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {isMatched && match.oldPrice != null ? formatPrice(match.oldPrice) : "—"}
                           </TableCell>
