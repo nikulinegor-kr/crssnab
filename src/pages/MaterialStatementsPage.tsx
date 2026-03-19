@@ -204,6 +204,8 @@ export default function MaterialStatementsPage() {
   const [kpMatches, setKpMatches] = useState<KpMatch[]>([]);
   const [kpSupplier, setKpSupplier] = useState<string | null>(null);
   const [kpApplying, setKpApplying] = useState(false);
+  const [kpFileName, setKpFileName] = useState<string>("");
+  const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
