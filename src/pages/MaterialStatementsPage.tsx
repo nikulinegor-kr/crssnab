@@ -33,6 +33,7 @@ import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
+import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 
 // Types
 interface MaterialStatement {
