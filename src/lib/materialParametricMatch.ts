@@ -142,7 +142,8 @@ export interface MatchTolerance {
 const DEFAULT_TOLERANCE: MatchTolerance = { thicknessMm: 1 };
 
 /**
- * Enhanced matching: exact → fuzzy → parametric
+ * Enhanced matching: exact → parametric → fuzzy
+ * Parametric match is preferred over fuzzy to avoid false positives on numbers.
  */
 export function findBestParametricMatch(
   kpName: string,
@@ -177,7 +178,58 @@ export function findBestParametricMatch(
   }
   if (bestExact) return bestExact;
 
-  // 2) Fuzzy match
+  // 2) Parametric match (preferred over fuzzy)
+  if (kpParams.type && kpParams.diameter != null) {
+    const effectiveTolerance = Math.max(tolerance.thicknessMm, 0.0001);
+    let bestParametric: ParametricMatchResult | null = null;
+
+    for (const item of projectItems) {
+      const itemParams = parseMaterialParams(item.name);
+
+      if (itemParams.type !== kpParams.type) continue;
+      if (itemParams.diameter !== kpParams.diameter) continue;
+
+      let thicknessMatch = false;
+      let paramScore = 0.7;
+
+      if (kpParams.thickness != null && itemParams.thickness != null) {
+        const diff = Math.abs(kpParams.thickness - itemParams.thickness);
+        if (diff === 0) {
+          thicknessMatch = true;
+          paramScore = 0.85;
+        } else if (diff <= effectiveTolerance) {
+          thicknessMatch = true;
+          paramScore = 0.75 - (diff / effectiveTolerance) * 0.05;
+        }
+      } else if (kpParams.thickness == null && itemParams.thickness == null) {
+        thicknessMatch = true;
+        paramScore = 0.72;
+      } else {
+        // One side has thickness and the other doesn't — still accept but with lower confidence.
+        thicknessMatch = true;
+        paramScore = 0.65;
+      }
+
+      if (thicknessMatch && (!bestParametric || paramScore > bestParametric.score)) {
+        const desc = `${formatDims(kpParams.diameter, kpParams.thickness)} → ${formatDims(itemParams.diameter, itemParams.thickness)}`;
+        bestParametric = {
+          itemId: item.id,
+          itemName: item.name,
+          score: paramScore,
+          matchType: "parametric",
+          matchDescription: kpParams.thickness !== itemParams.thickness ? desc : null,
+          price: item.price,
+        };
+      }
+    }
+
+    if (bestParametric) {
+      console.log(`[MaterialParams] PARAM MATCH: ${bestParametric.matchDescription ?? `${formatDims(kpParams.diameter, kpParams.thickness)} → ${bestParametric.itemName}`} → matched`);
+      return bestParametric;
+    }
+  }
+
+  // 3) Fuzzy match (only if exact/parametric not found)
   let bestFuzzy: ParametricMatchResult | null = null;
   for (const item of projectItems) {
     const itemNorm = normalizeForSearch(item.name);
@@ -210,58 +262,8 @@ export function findBestParametricMatch(
       };
     }
   }
-  if (bestFuzzy) return bestFuzzy;
 
-  // 3) Parametric match (mandatory fallback when exact/fuzzy not found)
-  if (!kpParams.type || kpParams.diameter == null) return null;
-
-  const effectiveTolerance = Math.max(tolerance.thicknessMm, 0.0001);
-  let bestParametric: ParametricMatchResult | null = null;
-
-  for (const item of projectItems) {
-    const itemParams = parseMaterialParams(item.name);
-
-    if (itemParams.type !== kpParams.type) continue;
-    if (itemParams.diameter !== kpParams.diameter) continue;
-
-    let thicknessMatch = false;
-    let paramScore = 0.7;
-
-    if (kpParams.thickness != null && itemParams.thickness != null) {
-      const diff = Math.abs(kpParams.thickness - itemParams.thickness);
-      if (diff === 0) {
-        thicknessMatch = true;
-        paramScore = 0.85;
-      } else if (diff <= effectiveTolerance) {
-        thicknessMatch = true;
-        paramScore = 0.75 - (diff / effectiveTolerance) * 0.05;
-      }
-    } else if (kpParams.thickness == null && itemParams.thickness == null) {
-      thicknessMatch = true;
-      paramScore = 0.72;
-    } else {
-      thicknessMatch = true;
-      paramScore = 0.65;
-    }
-
-    if (thicknessMatch && (!bestParametric || paramScore > bestParametric.score)) {
-      const desc = `${formatDims(kpParams.diameter, kpParams.thickness)} → ${formatDims(itemParams.diameter, itemParams.thickness)}`;
-      bestParametric = {
-        itemId: item.id,
-        itemName: item.name,
-        score: paramScore,
-        matchType: "parametric",
-        matchDescription: kpParams.thickness !== itemParams.thickness ? desc : null,
-        price: item.price,
-      };
-    }
-  }
-
-  if (bestParametric) {
-    console.log(`[MaterialParams] PARAM MATCH: ${bestParametric.matchDescription ?? `${formatDims(kpParams.diameter, kpParams.thickness)} → ${bestParametric.itemName}`} → matched`);
-  }
-
-  return bestParametric;
+  return bestFuzzy;
 }
 
 /**
