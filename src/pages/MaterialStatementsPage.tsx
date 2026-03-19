@@ -1083,8 +1083,53 @@ export default function MaterialStatementsPage() {
                               {expandedSections.has(secEntry.section.id) && (
                                 <div className="ml-5">
                                   {secEntry.folders.map(folder => {
-                                    const isActive = selectedFolderId === folder.id;
                                     const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
+                                    if (folder.type === 'materials') {
+                                      // Materials folder: show expandable with Материалы / Работы sub-nodes
+                                      const isFolderExpanded = expandedFolders.has(folder.id);
+                                      const isMaterialsActive = selectedFolderId === folder.id && selectedItemTypeFilter === "material";
+                                      const isWorksActive = selectedFolderId === folder.id && selectedItemTypeFilter === "work";
+                                      return (
+                                        <div key={folder.id}>
+                                          <button
+                                            className="w-full flex items-center gap-1.5 px-2 py-1 text-sm hover:bg-accent/50 rounded-md group/folder"
+                                            onClick={() => toggleFolder(folder.id)}
+                                          >
+                                            {isFolderExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                            <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                            <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
+                                            <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
+                                            <span title="Скачать архив папки" onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}>
+                                              <Archive className="h-3 w-3 text-muted-foreground opacity-0 group-hover/folder:opacity-100 cursor-pointer hover:text-foreground flex-shrink-0" />
+                                            </span>
+                                          </button>
+                                          {isFolderExpanded && (
+                                            <div className="ml-5">
+                                              <button
+                                                className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors ${
+                                                  isMaterialsActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                                                }`}
+                                                onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id, "material")}
+                                              >
+                                                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                                                <span className="truncate flex-1 text-left text-xs">Материалы</span>
+                                              </button>
+                                              <button
+                                                className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors ${
+                                                  isWorksActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                                                }`}
+                                                onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id, "work")}
+                                              >
+                                                <Wrench className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+                                                <span className="truncate flex-1 text-left text-xs">Работы</span>
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+                                    // General docs folder: direct click
+                                    const isActive = selectedFolderId === folder.id;
                                     return (
                                       <button
                                         key={folder.id}
@@ -1093,7 +1138,7 @@ export default function MaterialStatementsPage() {
                                         }`}
                                         onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id)}
                                       >
-                                        {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+                                        <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                         <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                         <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
                                         <span title="Скачать архив папки" onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}>
