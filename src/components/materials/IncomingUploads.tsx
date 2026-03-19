@@ -864,6 +864,9 @@ export function IncomingUploads({
 
                   return (
                     <TableRow key={file.id}>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Checkbox checked={selectedIncomingIds.has(file.id)} onCheckedChange={() => toggleIncomingSelection(file.id)} />
+                      </TableCell>
                       <TableCell className="flex items-center gap-2">
                         {file.fileType === "pdf" ? (
                           <FileText className="h-4 w-4 text-destructive flex-shrink-0" />
