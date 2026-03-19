@@ -636,17 +636,20 @@ export function IncomingUploads({
 
       // Re-match
       const matches: MatchResult[] = extractedRows.map(row => {
-        const { item, score } = findBestMatch(row, existingItems);
-        const matched = score >= 0.6 && item;
-        return {
-          extracted: row,
-          matchedItemId: matched ? item!.id : null,
-          matchedItemName: matched ? item!.name : null,
-          oldPrice: matched ? item!.price : null,
-          oldQuantity: matched ? item!.quantity : null,
-          similarity: score,
-          status: (matched ? "updated" : "not_found") as "updated" | "not_found",
-        };
+      const { item, score, matchType, matchDescription } = findBestMatch(row, existingItems);
+      const matched = !!item;
+      console.log(`[IncomingUploads] MATCH TYPE: ${matchType}`);
+      return {
+        extracted: row,
+        matchedItemId: matched ? item!.id : null,
+        matchedItemName: matched ? item!.name : null,
+        oldPrice: matched ? item!.price : null,
+        oldQuantity: matched ? item!.quantity : null,
+        similarity: score,
+        status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+        matchType,
+        matchDescription,
+      };
       });
 
       updateFile(file.id, { status: "ready", extractedRows, matches });
