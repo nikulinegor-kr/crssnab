@@ -865,6 +865,16 @@ export default function MaterialStatementsPage() {
                             <Upload className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                             <span className="truncate flex-1 text-left text-xs font-medium">Входящие</span>
                           </button>
+                          {/* Финальная ведомость */}
+                          <button
+                            className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                              selectedFinalObjectId === entry.object.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                            }`}
+                            onClick={() => selectFinal(node.year, entry.object.id)}
+                          >
+                            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                            <span className="truncate flex-1 text-left text-xs font-medium">Финальная ведомость</span>
+                          </button>
                           {entry.sections.length === 0 && (
                             <p className="text-xs text-muted-foreground px-2 py-1">Нет разделов</p>
                           )}
