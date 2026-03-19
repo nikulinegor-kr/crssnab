@@ -330,6 +330,18 @@ export default function MaterialStatementsPage() {
     setSelectedObjectId(objectId);
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
+    setSelectedIncomingObjectId(null);
+    setSelectedStatementId(null);
+    setSelectedFileIds(new Set());
+    setSelectedItemIds(new Set());
+  };
+
+  const selectIncoming = (year: number, objectId: string) => {
+    setSelectedYear(year);
+    setSelectedObjectId(objectId);
+    setSelectedSectionId(null);
+    setSelectedFolderId(null);
+    setSelectedIncomingObjectId(objectId);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
