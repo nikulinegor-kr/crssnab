@@ -382,6 +382,7 @@ export default function MaterialStatementsPage() {
   const toggleYear = (year: number) => setExpandedYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n; });
   const toggleObject = (objId: string) => setExpandedObjects(prev => { const n = new Set(prev); n.has(objId) ? n.delete(objId) : n.add(objId); return n; });
   const toggleSection = (secId: string) => setExpandedSections(prev => { const n = new Set(prev); n.has(secId) ? n.delete(secId) : n.add(secId); return n; });
+  const toggleFolder = (folderId: string) => setExpandedFolders(prev => { const n = new Set(prev); n.has(folderId) ? n.delete(folderId) : n.add(folderId); return n; });
 
   const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string) => {
     setSelectedYear(year);
