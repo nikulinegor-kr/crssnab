@@ -1215,7 +1215,8 @@ export default function MaterialStatementsPage() {
                 <p className="text-sm text-muted-foreground">
                   {selectedYear} год — <span className="font-medium text-foreground">{selectedSection?.name}</span>
                   {" → "}<span className="font-medium text-foreground">{selectedFolder?.name}</span>
-                  {isMaterialsFolder && totalCost > 0 && (
+                  {" → "}<span className="font-medium text-foreground">{selectedItemTypeFilter === "work" ? "Работы" : "Материалы"}</span>
+                  {isMaterialsFolder && selectedItemTypeFilter === "material" && totalCost > 0 && (
                     <span className="ml-3 text-primary font-semibold">
                       Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
                     </span>
