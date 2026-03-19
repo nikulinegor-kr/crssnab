@@ -1642,14 +1642,24 @@ export default function MaterialStatementsPage() {
                                   <TableCell />
                                   <TableCell>+</TableCell>
                                   <TableCell><Input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className="h-8" placeholder="Наименование" /></TableCell>
-                                  <TableCell><Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" /></TableCell>
-                                  <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
+                                  {selectedItemTypeFilter === "material" && (
+                                    <>
+                                      <TableCell><Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" /></TableCell>
+                                      <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
+                                    </>
+                                  )}
                                   <TableCell><Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" /></TableCell>
-                                  <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
-                                  <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
-                                  <TableCell>—</TableCell>
-                                  <TableCell></TableCell>
-                                  <TableCell></TableCell>
+                                  {selectedItemTypeFilter === "material" && (
+                                    <>
+                                      <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
+                                      <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
+                                      <TableCell>—</TableCell>
+                                      <TableCell></TableCell>
+                                    </>
+                                  )}
+                                  {selectedItemTypeFilter === "work" && (
+                                    <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" placeholder="Ед." /></TableCell>
+                                  )}
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -1660,10 +1670,12 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={selectedItemTypeFilter === "work" ? 6 : 11} className="text-center text-muted-foreground py-8">
+                                    {selectedItemTypeFilter === "work" ? "Нет работ" : "Нет распознанных материалов"}
+                                  </TableCell>
                                 </TableRow>
                               )}
-                              {stItems.length > 0 && (
+                              {stItems.length > 0 && selectedItemTypeFilter === "material" && (
                                 <TableRow className="bg-muted/50 font-semibold">
                                   <TableCell />
                                   <TableCell />
@@ -1671,6 +1683,15 @@ export default function MaterialStatementsPage() {
                                   <TableCell />
                                   <TableCell />
                                   <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                  <TableCell />
+                                  <TableCell />
+                                </TableRow>
+                              )}
+                              {stItems.length > 0 && selectedItemTypeFilter === "work" && (
+                                <TableRow className="bg-muted/50 font-semibold">
+                                  <TableCell />
+                                  <TableCell />
+                                  <TableCell className="text-right text-sm">Всего работ: {stItems.length}</TableCell>
                                   <TableCell />
                                   <TableCell />
                                   <TableCell />
