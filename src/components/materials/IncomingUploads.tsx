@@ -5,9 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Upload, Loader2, Check, AlertTriangle, File, Trash2,
   MoveRight, Sparkles, FileText, FileSpreadsheet, RefreshCw,
-  ArrowRight, X,
+  ArrowRight, X, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { HighlightText } from "@/components/HighlightText";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
