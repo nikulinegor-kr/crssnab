@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -743,6 +744,20 @@ export function IncomingUploads({
 
   const removeFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
+    setSelectedIncomingIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+  };
+
+  const [selectedIncomingIds, setSelectedIncomingIds] = useState<Set<string>>(new Set());
+  const toggleIncomingSelection = (id: string) => {
+    setSelectedIncomingIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const toggleSelectAllIncoming = () => {
+    if (selectedIncomingIds.size === files.length) setSelectedIncomingIds(new Set());
+    else setSelectedIncomingIds(new Set(files.map(f => f.id)));
+  };
+  const handleBulkDeleteIncoming = () => {
+    setFiles(prev => prev.filter(f => !selectedIncomingIds.has(f.id)));
+    setSelectedIncomingIds(new Set());
   };
 
   const hasActiveFiles = files.length > 0;
@@ -813,16 +828,27 @@ export function IncomingUploads({
       {/* Files Status Table */}
       {hasActiveFiles && (
         <Card>
-          <CardHeader className="py-3">
+          <CardHeader className="py-3 flex-row items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               Загруженные файлы ({files.length})
             </CardTitle>
+            {selectedIncomingIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Выбрано: {selectedIncomingIds.size}</span>
+                <Button size="sm" variant="destructive" onClick={handleBulkDeleteIncoming}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Удалить ({selectedIncomingIds.size})
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={files.length > 0 && selectedIncomingIds.size === files.length} onCheckedChange={toggleSelectAllIncoming} />
+                  </TableHead>
                   <TableHead>Файл</TableHead>
                   <TableHead>Извлечено строк</TableHead>
                   <TableHead>Раздел</TableHead>
@@ -838,6 +864,9 @@ export function IncomingUploads({
 
                   return (
                     <TableRow key={file.id}>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Checkbox checked={selectedIncomingIds.has(file.id)} onCheckedChange={() => toggleIncomingSelection(file.id)} />
+                      </TableCell>
                       <TableCell className="flex items-center gap-2">
                         {file.fileType === "pdf" ? (
                           <FileText className="h-4 w-4 text-destructive flex-shrink-0" />
