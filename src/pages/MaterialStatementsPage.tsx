@@ -212,6 +212,8 @@ export default function MaterialStatementsPage() {
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [procurementDialogOpen, setProcurementDialogOpen] = useState(false);
   const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
+  const [materialsSearch, setMaterialsSearch] = useState("");
+  const [kpSearch, setKpSearch] = useState("");
 
   // Queries
   const { data: objects = [] } = useQuery({
