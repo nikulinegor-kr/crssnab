@@ -663,16 +663,22 @@ export default function MaterialStatementsPage() {
       const kpItems: KpItem[] = data.items || [];
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
-        const { item, score } = findBestMatch(kpItem.name, kpItem.unit, allItems);
-        const autoMatched = score >= 0.6;
+        const result = findBestParametricMatch(kpItem.name, kpItem.unit, allItems);
+        const autoMatched = result != null && result.score >= 0.6;
+        const item = autoMatched && result ? allItems.find(i => i.id === result.itemId) : null;
+        if (result && autoMatched) {
+          console.log(`[KP Match] "${kpItem.name}" → "${result.itemName}" (${result.matchType}, score=${result.score.toFixed(2)}${result.matchDescription ? `, ${result.matchDescription}` : ""})`);
+        }
         return {
           kpItem,
-          matchedItemId: autoMatched && item ? item.id : null,
-          matchedItemName: autoMatched && item ? item.name : null,
-          oldPrice: autoMatched && item ? item.price : null,
-          similarity: score,
+          matchedItemId: item ? item.id : null,
+          matchedItemName: item ? item.name : null,
+          oldPrice: item ? item.price : null,
+          similarity: result?.score ?? 0,
           autoMatched,
           status: (autoMatched && item ? "updated" : "not_found") as "updated" | "not_found",
+          matchType: result?.matchType,
+          matchDescription: result?.matchDescription,
         };
       });
       setKpMatches(matches);
