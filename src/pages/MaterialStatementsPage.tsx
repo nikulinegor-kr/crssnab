@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
