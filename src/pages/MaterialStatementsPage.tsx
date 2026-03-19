@@ -28,6 +28,7 @@ import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
+import { FinalStatement } from "@/components/materials/FinalStatement";
 
 // Types
 interface MaterialStatement {
@@ -148,6 +149,7 @@ export default function MaterialStatementsPage() {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedIncomingObjectId, setSelectedIncomingObjectId] = useState<string | null>(null);
+  const [selectedFinalObjectId, setSelectedFinalObjectId] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -331,6 +333,7 @@ export default function MaterialStatementsPage() {
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
     setSelectedIncomingObjectId(null);
+    setSelectedFinalObjectId(null);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
@@ -342,6 +345,19 @@ export default function MaterialStatementsPage() {
     setSelectedSectionId(null);
     setSelectedFolderId(null);
     setSelectedIncomingObjectId(objectId);
+    setSelectedFinalObjectId(null);
+    setSelectedStatementId(null);
+    setSelectedFileIds(new Set());
+    setSelectedItemIds(new Set());
+  };
+
+  const selectFinal = (year: number, objectId: string) => {
+    setSelectedYear(year);
+    setSelectedObjectId(objectId);
+    setSelectedSectionId(null);
+    setSelectedFolderId(null);
+    setSelectedIncomingObjectId(null);
+    setSelectedFinalObjectId(objectId);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
@@ -849,6 +865,16 @@ export default function MaterialStatementsPage() {
                             <Upload className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                             <span className="truncate flex-1 text-left text-xs font-medium">Входящие</span>
                           </button>
+                          {/* Финальная ведомость */}
+                          <button
+                            className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                              selectedFinalObjectId === entry.object.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                            }`}
+                            onClick={() => selectFinal(node.year, entry.object.id)}
+                          >
+                            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                            <span className="truncate flex-1 text-left text-xs font-medium">Финальная ведомость</span>
+                          </button>
                           {entry.sections.length === 0 && (
                             <p className="text-xs text-muted-foreground px-2 py-1">Нет разделов</p>
                           )}
@@ -932,6 +958,14 @@ export default function MaterialStatementsPage() {
             objectId={selectedIncomingObjectId}
             objectName={objects.find(o => o.id === selectedIncomingObjectId)?.name || "Объект"}
             year={selectedYear}
+            sections={sections as any}
+            folders={folders as any}
+          />
+        ) : selectedFinalObjectId ? (
+          <FinalStatement
+            orgId={orgId!}
+            objectId={selectedFinalObjectId}
+            objectName={objects.find(o => o.id === selectedFinalObjectId)?.name || "Объект"}
             sections={sections as any}
             folders={folders as any}
           />
