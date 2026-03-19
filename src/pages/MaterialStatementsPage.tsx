@@ -10,6 +10,7 @@ import {
   Wrench, Archive, Layers, ShoppingCart, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
