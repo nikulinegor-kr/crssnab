@@ -31,6 +31,7 @@ import { ConsolidatedExcelExportButton } from "@/components/materials/Consolidat
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
+import { matchesMaterialSearch } from "@/lib/materialSearch";
 
 // Types
 interface MaterialStatement {
