@@ -806,7 +806,7 @@ export function IncomingUploads({
             <Badge variant="outline" className="gap-1">
               Всего: {reviewMatches.length}
             </Badge>
-            <Badge variant="default" className="gap-1 bg-emerald-600">
+            <Badge variant="default" className="gap-1">
               <Check className="h-3 w-3" /> Обновлено: {updatedCount}
             </Badge>
             <Badge variant="destructive" className="gap-1">
