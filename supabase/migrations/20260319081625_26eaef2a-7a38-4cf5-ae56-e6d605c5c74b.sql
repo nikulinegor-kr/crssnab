@@ -1,0 +1,1 @@
+ALTER TABLE public.material_statement_items ADD COLUMN IF NOT EXISTS price_source text NOT NULL DEFAULT 'file';

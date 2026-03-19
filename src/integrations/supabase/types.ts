@@ -1029,6 +1029,7 @@ export type Database = {
           name: string
           organization_id: string
           price: number | null
+          price_source: string
           procurement_request_id: string | null
           procurement_status: string
           quantity: number | null
@@ -1048,6 +1049,7 @@ export type Database = {
           name?: string
           organization_id: string
           price?: number | null
+          price_source?: string
           procurement_request_id?: string | null
           procurement_status?: string
           quantity?: number | null
@@ -1067,6 +1069,7 @@ export type Database = {
           name?: string
           organization_id?: string
           price?: number | null
+          price_source?: string
           procurement_request_id?: string | null
           procurement_status?: string
           quantity?: number | null

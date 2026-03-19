@@ -7,7 +7,8 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench, Archive, Layers, ShoppingCart, Check, Search,
+  Wrench, Archive, Layers, ShoppingCart, Check, Search, DollarSign,
+  Hand, FileUp, FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ interface MaterialItem {
   supplier: string | null;
   procurement_request_id: string | null;
   procurement_status: string;
+  price_source: string;
 }
 
 interface MaterialObject {
@@ -215,6 +217,12 @@ export default function MaterialStatementsPage() {
   const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
   const [materialsSearch, setMaterialsSearch] = useState("");
   const [kpSearch, setKpSearch] = useState("");
+  const [inlinePriceEditId, setInlinePriceEditId] = useState<string | null>(null);
+  const [inlinePriceValue, setInlinePriceValue] = useState("");
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkPriceValue, setBulkPriceValue] = useState("");
+  const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
+  const [kpManualItems, setKpManualItems] = useState<string[]>([]);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -565,10 +573,47 @@ export default function MaterialStatementsPage() {
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
       price: item.price, total_price: totalPrice, supplier: item.supplier,
+      price_source: item.price_source || "file",
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
     toast({ title: "Обновлено" });
+  };
+
+  // Inline price edit — click on price cell to edit quickly
+  const handleInlinePriceSave = async (itemId: string) => {
+    const parsed = parseFloat(inlinePriceValue.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(parsed)) {
+      setInlinePriceEditId(null);
+      return;
+    }
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return;
+    const totalPrice = item.quantity != null ? item.quantity * parsed : null;
+    await (supabase.from("material_statement_items" as any).update({
+      price: parsed, total_price: totalPrice, price_source: "manual",
+    }).eq("id", itemId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setInlinePriceEditId(null);
+    toast({ title: "Цена обновлена" });
+  };
+
+  // Bulk price set for selected items
+  const handleBulkPriceSet = async () => {
+    const parsed = parseFloat(bulkPriceValue.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(parsed) || selectedItemIds.size === 0) return;
+    for (const id of selectedItemIds) {
+      const item = allItems.find(i => i.id === id);
+      if (!item) continue;
+      const totalPrice = item.quantity != null ? item.quantity * parsed : null;
+      await (supabase.from("material_statement_items" as any).update({
+        price: parsed, total_price: totalPrice, price_source: "manual",
+      }).eq("id", id) as any);
+    }
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setBulkPriceOpen(false);
+    setBulkPriceValue("");
+    toast({ title: `Цена обновлена для ${selectedItemIds.size} позиций` });
   };
 
   const handleDeleteItem = async (id: string) => {
@@ -588,7 +633,7 @@ export default function MaterialStatementsPage() {
       statement_id: targetStId, organization_id: orgId, row_number: maxRow + 1,
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
       quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
-      price, total_price: totalPrice,
+      price, total_price: totalPrice, price_source: price != null ? "manual" : "file",
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
@@ -702,6 +747,20 @@ export default function MaterialStatementsPage() {
   };
 
   const handleApplyKp = async () => {
+    // Check if any matched items have manual prices
+    const manualPriceItemIds = kpMatches
+      .filter(m => m.matchedItemId && m.kpItem.price != null)
+      .filter(m => {
+        const item = allItems.find(i => i.id === m.matchedItemId);
+        return item?.price_source === "manual";
+      })
+      .map(m => m.matchedItemId!);
+
+    if (manualPriceItemIds.length > 0 && !kpOverwriteManual) {
+      setKpManualItems(manualPriceItemIds);
+      return; // Show confirmation dialog
+    }
+
     setKpApplying(true);
     let applied = 0;
     const log: KpApplyLog[] = [];
@@ -716,9 +775,15 @@ export default function MaterialStatementsPage() {
           log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
           continue;
         }
+        // Skip manual price items if user declined overwrite
+        if (item.price_source === "manual" && !kpOverwriteManual && kpManualItems.length > 0) {
+          log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
         await (supabase.from("material_statement_items" as any).update({
           price: match.kpItem.price, total_price: totalPrice, supplier: kpSupplier || undefined,
+          price_source: "kp",
         }).eq("id", match.matchedItemId) as any);
         log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "updated", fileName: kpFileName });
         applied++;
@@ -728,6 +793,7 @@ export default function MaterialStatementsPage() {
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       toast({ title: `КП применено`, description: `Обновлено: ${applied}, Не найдено: ${notFound}` });
       setKpDialogOpen(false); setKpMatches([]);
+      setKpOverwriteManual(false); setKpManualItems([]);
       console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
@@ -1269,6 +1335,9 @@ export default function MaterialStatementsPage() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
                               <>
+                                <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
+                                  <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
                                   <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                                 </Button>
@@ -1342,7 +1411,32 @@ export default function MaterialStatementsPage() {
                                     <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
-                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : formatPrice(item.price)}</TableCell>
+                                    <TableCell>
+                                      {isEditing ? (
+                                        <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
+                                      ) : inlinePriceEditId === item.id ? (
+                                        <Input
+                                          autoFocus
+                                          value={inlinePriceValue}
+                                          onChange={e => setInlinePriceValue(e.target.value)}
+                                          onBlur={() => handleInlinePriceSave(item.id)}
+                                          onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
+                                          className="h-8 w-24"
+                                          placeholder="Цена"
+                                        />
+                                      ) : (
+                                        <span
+                                          className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
+                                          onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
+                                          title="Нажмите для редактирования цены"
+                                        >
+                                          {formatPrice(item.price)}
+                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
+                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
+                                          {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
+                                        </span>
+                                      )}
+                                    </TableCell>
                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
                                     <TableCell>
                                       {item.procurement_status === "in_procurement" && (
@@ -1745,6 +1839,56 @@ export default function MaterialStatementsPage() {
         objectName={selectedObj?.name}
         sectionName={selectedSection?.name}
       />
+
+      {/* Bulk Price Dialog */}
+      <Dialog open={bulkPriceOpen} onOpenChange={open => { if (!open) setBulkPriceOpen(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Задать цену для {selectedItemIds.size} позиций</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              autoFocus
+              placeholder="Введите цену (например: 1500.50)"
+              value={bulkPriceValue}
+              onChange={e => setBulkPriceValue(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleBulkPriceSet(); }}
+            />
+            <p className="text-xs text-muted-foreground">Цена будет установлена для всех выбранных позиций. Стоимость пересчитается автоматически.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkPriceOpen(false)}>Отмена</Button>
+            <Button onClick={handleBulkPriceSet} disabled={!bulkPriceValue.trim()}>
+              <DollarSign className="h-4 w-4 mr-1" /> Применить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* KP Manual Price Overwrite Confirmation */}
+      <Dialog open={kpManualItems.length > 0 && !kpOverwriteManual} onOpenChange={open => { if (!open) setKpManualItems([]); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Перезаписать вручную заданные цены?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              В КП найдено {kpManualItems.length} позиций, для которых цена была задана вручную. Перезаписать их ценами из КП?
+            </p>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Hand className="h-3 w-3 text-amber-500" /> Ручные цены будут заменены
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setKpManualItems([]); /* apply without manual items */ setKpOverwriteManual(false); handleApplyKp(); }}>
+              Не перезаписывать
+            </Button>
+            <Button onClick={() => { setKpOverwriteManual(true); setTimeout(() => handleApplyKp(), 0); }}>
+              Перезаписать все
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
