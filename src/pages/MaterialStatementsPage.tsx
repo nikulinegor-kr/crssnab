@@ -1545,6 +1545,27 @@ export default function MaterialStatementsPage() {
                                       )}
                                     </TableCell>
                                     <TableCell>
+                                      <Select
+                                        value={isEditing ? (editingItem.item_type || "material") : (item.item_type || "material")}
+                                        onValueChange={async (val) => {
+                                          if (isEditing) {
+                                            setEditingItem({ ...editingItem, item_type: val });
+                                          } else {
+                                            await (supabase.from("material_statement_items" as any).update({ item_type: val }).eq("id", item.id) as any);
+                                            queryClient.invalidateQueries({ queryKey: ["material-items"] });
+                                          }
+                                        }}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs w-[100px]">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="material">Материал</SelectItem>
+                                          <SelectItem value="work">Работа</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </TableCell>
+                                    <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
                                           ? <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
