@@ -35,6 +35,8 @@ import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
+import { classifyItemType } from "@/lib/classifyItemType";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Types
 interface MaterialStatement {
@@ -69,6 +71,7 @@ interface MaterialItem {
   procurement_request_id: string | null;
   procurement_status: string;
   price_source: string;
+  item_type: string;
 }
 
 interface MaterialObject {
@@ -176,6 +179,7 @@ export default function MaterialStatementsPage() {
   const [bulkPriceValue, setBulkPriceValue] = useState("");
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
+  const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "work" | "material">("all");
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -615,7 +619,7 @@ export default function MaterialStatementsPage() {
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
       price: item.price, total_price: totalPrice, supplier: item.supplier,
-      price_source: item.price_source || "file",
+      price_source: item.price_source || "file", item_type: item.item_type || "material",
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
@@ -676,6 +680,7 @@ export default function MaterialStatementsPage() {
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
       quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
       price, total_price: totalPrice, price_source: price != null ? "manual" : "file",
+      item_type: classifyItemType(newItem.name),
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
@@ -1331,15 +1336,21 @@ export default function MaterialStatementsPage() {
 
             {/* Procurement Summary */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
-              const totalMaterials = allItems.length;
-              const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
-              const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
+              const materialsOnly = allItems.filter(i => (i.item_type || "material") === "material");
+              const worksOnly = allItems.filter(i => i.item_type === "work");
+              const totalMaterials = materialsOnly.length;
+              const procuredCount = materialsOnly.filter(i => i.procurement_status && i.procurement_status !== "none").length;
+              const deliveredCount = materialsOnly.filter(i => i.procurement_status === "delivered").length;
               const remainingCount = totalMaterials - procuredCount;
               return (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <Card className="p-3">
-                    <p className="text-xs text-muted-foreground">Всего материалов</p>
+                    <p className="text-xs text-muted-foreground">Материалов</p>
                     <p className="text-xl font-bold">{totalMaterials}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground">Работ</p>
+                    <p className="text-xl font-bold">{worksOnly.length}</p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">В закупке</p>
@@ -1357,16 +1368,25 @@ export default function MaterialStatementsPage() {
               );
             })()}
 
-            {/* Search bar for materials */}
+            {/* Search bar and type filter for materials */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="🔎 Найти материал..."
-                  value={materialsSearch}
-                  onChange={e => setMaterialsSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="🔎 Найти материал..."
+                    value={materialsSearch}
+                    onChange={e => setMaterialsSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
+                <Tabs value={itemTypeFilter} onValueChange={v => setItemTypeFilter(v as any)} className="flex-shrink-0">
+                  <TabsList className="h-9">
+                    <TabsTrigger value="all" className="text-xs px-3">Все</TabsTrigger>
+                    <TabsTrigger value="material" className="text-xs px-3">Материалы</TabsTrigger>
+                    <TabsTrigger value="work" className="text-xs px-3">Работы</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
             )}
 
@@ -1378,9 +1398,10 @@ export default function MaterialStatementsPage() {
                 ) : (
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
                     const rawStItems = itemsByStatement.get(st.id) || [];
+                    const filteredByType = itemTypeFilter === "all" ? rawStItems : rawStItems.filter(i => (i.item_type || "material") === itemTypeFilter);
                     const stItems = materialsSearch.trim()
-                      ? rawStItems.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
-                      : rawStItems;
+                      ? filteredByType.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
+                      : filteredByType;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
@@ -1469,6 +1490,7 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
                                 <TableHead className="w-28">Закупка</TableHead>
+                                <TableHead className="w-24">Вид</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1529,6 +1551,27 @@ export default function MaterialStatementsPage() {
                                       )}
                                     </TableCell>
                                     <TableCell>
+                                      <Select
+                                        value={isEditing ? (editingItem.item_type || "material") : (item.item_type || "material")}
+                                        onValueChange={async (val) => {
+                                          if (isEditing) {
+                                            setEditingItem({ ...editingItem, item_type: val });
+                                          } else {
+                                            await (supabase.from("material_statement_items" as any).update({ item_type: val }).eq("id", item.id) as any);
+                                            queryClient.invalidateQueries({ queryKey: ["material-items"] });
+                                          }
+                                        }}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs w-[100px]">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="material">Материал</SelectItem>
+                                          <SelectItem value="work">Работа</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </TableCell>
+                                    <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
                                           ? <Button size="sm" variant="ghost" onClick={() => handleUpdateItem(editingItem)}>✓</Button>
@@ -1551,6 +1594,7 @@ export default function MaterialStatementsPage() {
                                   <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
                                   <TableCell>—</TableCell>
                                   <TableCell></TableCell>
+                                  <TableCell></TableCell>
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -1561,7 +1605,7 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
                               {stItems.length > 0 && (
@@ -1572,6 +1616,7 @@ export default function MaterialStatementsPage() {
                                   <TableCell />
                                   <TableCell />
                                   <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                  <TableCell />
                                   <TableCell />
                                   <TableCell />
                                 </TableRow>
