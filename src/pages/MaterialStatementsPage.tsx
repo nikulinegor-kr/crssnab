@@ -1234,13 +1234,7 @@ export default function MaterialStatementsPage() {
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
                     const rawStItems = itemsByStatement.get(st.id) || [];
                     const stItems = materialsSearch.trim()
-                      ? (() => {
-                          const words = materialsSearch.toLowerCase().trim().split(/\s+/);
-                          return rawStItems.filter(i => {
-                            const text = `${i.name} ${i.type_mark || ""}`.toLowerCase();
-                            return words.every(w => text.includes(w));
-                          });
-                        })()
+                      ? rawStItems.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
                       : rawStItems;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
