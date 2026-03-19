@@ -1480,7 +1480,7 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
                                 <TableHead className="w-28">Закупка</TableHead>
-                                <TableHead className="w-24">Вид</TableHead>
+                                
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
