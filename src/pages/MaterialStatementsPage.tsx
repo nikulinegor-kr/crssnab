@@ -1607,11 +1607,12 @@ export default function MaterialStatementsPage() {
 
       {/* KP Matching Dialog */}
       <Dialog open={kpDialogOpen} onOpenChange={open => { if (!open && !kpLoading && !kpApplying) { setKpDialogOpen(false); setKpMatches([]); } }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Сопоставление КП с материалами
               {kpSupplier && <span className="text-sm font-normal text-muted-foreground ml-2">— {kpSupplier}</span>}
+              {kpFileName && <span className="text-xs font-normal text-muted-foreground ml-2">({kpFileName})</span>}
             </DialogTitle>
           </DialogHeader>
           {kpLoading ? (
@@ -1621,56 +1622,75 @@ export default function MaterialStatementsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Всего позиций КП: <strong>{kpMatches.length}</strong></span>
-                <span>Автоматически: <strong className="text-green-600">{kpMatches.filter(m => m.matchedItemId).length}</strong></span>
-                <span>Не найдено: <strong className="text-destructive">{kpMatches.filter(m => !m.matchedItemId).length}</strong></span>
+              <div className="flex items-center gap-4 text-sm">
+                <Badge variant="outline" className="gap-1">
+                  Всего: <strong>{kpMatches.length}</strong>
+                </Badge>
+                <Badge variant="default" className="gap-1 bg-emerald-600">
+                  Обновлено: <strong>{kpMatches.filter(m => m.matchedItemId).length}</strong>
+                </Badge>
+                <Badge variant="destructive" className="gap-1">
+                  Не найдено: <strong>{kpMatches.filter(m => !m.matchedItemId).length}</strong>
+                </Badge>
               </div>
               <ScrollArea className="flex-1 max-h-[55vh]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">№</TableHead>
-                      <TableHead>Позиция КП</TableHead>
-                      <TableHead className="w-24">Цена</TableHead>
-                      <TableHead>Материал проекта</TableHead>
-                      <TableHead className="w-20">Точность</TableHead>
+                      <TableHead className="w-10">№</TableHead>
+                      <TableHead>Материал</TableHead>
+                      <TableHead className="w-24">Было</TableHead>
+                      <TableHead className="w-24">Стало</TableHead>
+                      <TableHead>Сопоставление</TableHead>
+                      <TableHead className="w-28">Статус</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {kpMatches.map((match, idx) => (
-                      <TableRow key={idx} className={!match.matchedItemId ? "bg-destructive/5" : ""}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell className="text-sm">{match.kpItem.name}</TableCell>
-                        <TableCell className="font-medium">{match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}</TableCell>
-                        <TableCell>
-                          <Select value={match.matchedItemId || "__none__"} onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Не сопоставлено" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
-                              {allItems.map(item => (
-                                <SelectItem key={item.id} value={item.id}>{item.name.substring(0, 80)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          {match.matchedItemId && (
-                            <Badge variant={match.similarity >= 0.8 ? "default" : match.similarity >= 0.6 ? "secondary" : "outline"}>
-                              {Math.round(match.similarity * 100)}%
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {kpMatches.map((match, idx) => {
+                      const isMatched = !!match.matchedItemId;
+                      const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;
+                      return (
+                        <TableRow key={idx} className={cn(
+                          !isMatched && "bg-destructive/5",
+                          isMatched && priceChanged && "bg-emerald-50 dark:bg-emerald-950/20",
+                        )}>
+                          <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell className="text-sm font-medium">{match.kpItem.name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {isMatched && match.oldPrice != null ? formatPrice(match.oldPrice) : "—"}
+                          </TableCell>
+                          <TableCell className={cn("text-sm font-medium", priceChanged && "text-emerald-600 dark:text-emerald-400")}>
+                            {match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Select value={match.matchedItemId || "__none__"} onValueChange={v => handleKpMatchChange(idx, v === "__none__" ? null : v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Не сопоставлено" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">— Не сопоставлено —</SelectItem>
+                                {allItems.map(item => (
+                                  <SelectItem key={item.id} value={item.id}>{item.name.substring(0, 80)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            {isMatched ? (
+                              <Badge variant="default" className="bg-emerald-600 text-xs">обновлено</Badge>
+                            ) : (
+                              <Badge variant="destructive" className="text-xs">не найден</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </ScrollArea>
               <DialogFooter>
                 <Button variant="outline" onClick={() => { setKpDialogOpen(false); setKpMatches([]); }}>Отмена</Button>
                 <Button onClick={handleApplyKp} disabled={kpApplying || kpMatches.filter(m => m.matchedItemId).length === 0}>
-                  {kpApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileSpreadsheet className="h-4 w-4 mr-1" />}
-                  Применить ({kpMatches.filter(m => m.matchedItemId && m.kpItem.price != null).length})
+                  {kpApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                  Применить изменения ({kpMatches.filter(m => m.matchedItemId && m.kpItem.price != null).length})
                 </Button>
               </DialogFooter>
             </>
