@@ -1704,11 +1704,11 @@ export default function MaterialStatementsPage() {
                     );
                   })
                 )}
-                {allItems.length > 0 && (
+                {allItems.length > 0 && selectedItemTypeFilter === "material" && (
                   <Card className="border-primary/30 bg-primary/5">
                     <CardHeader className="py-4 flex-row items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-3">
-                        <span>Итого по разделу</span>
+                        <span>Итого по разделу (материалы)</span>
                         <Badge variant="secondary">{allItems.length} позиций</Badge>
                         {allItems.length !== mergedItems.length && (
                           <Badge variant="outline">{mergedItems.length} уникальных</Badge>
@@ -1717,6 +1717,16 @@ export default function MaterialStatementsPage() {
                       <span className="text-lg font-bold text-primary">
                         {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
                       </span>
+                    </CardHeader>
+                  </Card>
+                )}
+                {allItems.length > 0 && selectedItemTypeFilter === "work" && (
+                  <Card className="border-amber-300/30 bg-amber-50/5">
+                    <CardHeader className="py-4 flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-3">
+                        <span>Итого по разделу (работы)</span>
+                        <Badge variant="secondary">{allItems.length} позиций</Badge>
+                      </CardTitle>
                     </CardHeader>
                   </Card>
                 )}
