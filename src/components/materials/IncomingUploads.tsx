@@ -575,6 +575,7 @@ export function IncomingUploads({
       updateFile(file.id, { status: "error", error: err.message });
       toast({ title: "Ошибка перераспознавания", description: err.message, variant: "destructive" });
     }
+  };
 
   // ── Manual section assignment ──
   const handleManualAssign = async () => {
