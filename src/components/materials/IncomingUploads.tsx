@@ -499,6 +499,7 @@ export function IncomingUploads({
         await (supabase.from("material_statement_items" as any).update({
           price: match.extracted.price,
           total_price: totalPrice,
+          source_file_id: file.id,
         }).eq("id", match.matchedItemId) as any);
 
         updated++;
