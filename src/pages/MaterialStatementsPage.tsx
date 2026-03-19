@@ -1384,7 +1384,7 @@ export default function MaterialStatementsPage() {
             </div>
 
             {/* Procurement Summary */}
-            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
+            {selectedFolderId && isMaterialsFolder && selectedItemTypeFilter === "material" && allItems.length > 0 && (() => {
               const totalMaterials = allItems.length;
               const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
               const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
@@ -1410,6 +1410,18 @@ export default function MaterialStatementsPage() {
                 </div>
               );
             })()}
+            {selectedFolderId && isMaterialsFolder && selectedItemTypeFilter === "work" && allItems.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Всего работ</p>
+                  <p className="text-xl font-bold">{allItems.length}</p>
+                </Card>
+                <Card className="p-3">
+                  <p className="text-xs text-muted-foreground">Общая стоимость</p>
+                  <p className="text-xl font-bold text-primary">{totalCost > 0 ? formatPrice(totalCost) + " ₽" : "—"}</p>
+                </Card>
+              </div>
+            )}
 
             {/* Search bar */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
