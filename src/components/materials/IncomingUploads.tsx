@@ -1099,7 +1099,7 @@ export function IncomingUploads({
                         <Badge variant="destructive" className="text-xs">не найден</Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">без цены</Badge>
-                      )
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
