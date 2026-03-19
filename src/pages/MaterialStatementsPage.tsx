@@ -1612,6 +1612,7 @@ export default function MaterialStatementsPage() {
                                   <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
                                   <TableCell />
                                   <TableCell />
+                                  <TableCell />
                                 </TableRow>
                               )}
                             </TableBody>
