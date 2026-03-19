@@ -30,6 +30,7 @@ import { CreateProcurementDialog } from "@/components/materials/CreateProcuremen
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
+import { HighlightText } from "@/components/HighlightText";
 
 // Types
 interface MaterialStatement {
