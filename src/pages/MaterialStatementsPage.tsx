@@ -27,6 +27,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
+import { IncomingUploads } from "@/components/materials/IncomingUploads";
 
 // Types
 interface MaterialStatement {
@@ -146,6 +147,7 @@ export default function MaterialStatementsPage() {
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedIncomingObjectId, setSelectedIncomingObjectId] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -328,6 +330,18 @@ export default function MaterialStatementsPage() {
     setSelectedObjectId(objectId);
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
+    setSelectedIncomingObjectId(null);
+    setSelectedStatementId(null);
+    setSelectedFileIds(new Set());
+    setSelectedItemIds(new Set());
+  };
+
+  const selectIncoming = (year: number, objectId: string) => {
+    setSelectedYear(year);
+    setSelectedObjectId(objectId);
+    setSelectedSectionId(null);
+    setSelectedFolderId(null);
+    setSelectedIncomingObjectId(objectId);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
@@ -825,6 +839,16 @@ export default function MaterialStatementsPage() {
                       </button>
                       {expandedObjects.has(entry.object.id) && (
                         <div className="ml-5">
+                          {/* Входящие */}
+                          <button
+                            className={`w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                              selectedIncomingObjectId === entry.object.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
+                            }`}
+                            onClick={() => selectIncoming(node.year, entry.object.id)}
+                          >
+                            <Upload className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                            <span className="truncate flex-1 text-left text-xs font-medium">Входящие</span>
+                          </button>
                           {entry.sections.length === 0 && (
                             <p className="text-xs text-muted-foreground px-2 py-1">Нет разделов</p>
                           )}
@@ -902,7 +926,16 @@ export default function MaterialStatementsPage() {
 
       {/* Right Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {!selectedFolderId ? (
+        {selectedIncomingObjectId && selectedYear ? (
+          <IncomingUploads
+            orgId={orgId!}
+            objectId={selectedIncomingObjectId}
+            objectName={objects.find(o => o.id === selectedIncomingObjectId)?.name || "Объект"}
+            year={selectedYear}
+            sections={sections as any}
+            folders={folders as any}
+          />
+        ) : !selectedFolderId ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <FileText className="h-12 w-12" />
             <p>Выберите папку из дерева слева</p>

@@ -471,6 +471,41 @@ export type Database = {
           },
         ]
       }
+      classification_rules: {
+        Row: {
+          created_at: string | null
+          doc_type: string | null
+          id: string
+          organization_id: string
+          pattern: string
+          section_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          doc_type?: string | null
+          id?: string
+          organization_id: string
+          pattern: string
+          section_name: string
+        }
+        Update: {
+          created_at?: string | null
+          doc_type?: string | null
+          id?: string
+          organization_id?: string
+          pattern?: string
+          section_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classification_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invitations: {
         Row: {
           created_at: string
@@ -1067,8 +1102,10 @@ export type Database = {
       }
       material_statements: {
         Row: {
+          classification_status: string | null
           created_at: string
           created_by: string | null
+          detected_doc_type: string | null
           display_name: string | null
           file_name: string
           file_type: string
@@ -1083,8 +1120,10 @@ export type Database = {
           year: number
         }
         Insert: {
+          classification_status?: string | null
           created_at?: string
           created_by?: string | null
+          detected_doc_type?: string | null
           display_name?: string | null
           file_name: string
           file_type?: string
@@ -1099,8 +1138,10 @@ export type Database = {
           year?: number
         }
         Update: {
+          classification_status?: string | null
           created_at?: string
           created_by?: string | null
+          detected_doc_type?: string | null
           display_name?: string | null
           file_name?: string
           file_type?: string
