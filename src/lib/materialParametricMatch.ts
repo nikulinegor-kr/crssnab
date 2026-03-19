@@ -114,9 +114,10 @@ function extractDimensions(name: string): { diameter: number | null; thickness: 
 export function parseMaterialParams(name: string): MaterialParams {
   const raw = normalizeForSearch(name);
   const type = extractType(name);
-  // Strip ГОСТ/ОСТ/ТУ/СТО and their numbers before extracting dimensions
+  // Strip ГОСТ/ОСТ/ТУ/СТО and everything after them (standard numbers, grades, etc.)
+  // This ensures dimensions are extracted purely from the material description
   const nameWithoutStandards = name
-    .replace(/\b(ГОСТ|гост|ОСТ|ост|ТУ|ту|СТО|сто)\s*[\d.\-]*/gi, " ")
+    .replace(/(ГОСТ|ОСТ|ТУ|СТО)\s*[\d.\-/а-яА-ЯёЁa-zA-Z]*/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
   const { diameter, thickness } = extractDimensions(nameWithoutStandards);
