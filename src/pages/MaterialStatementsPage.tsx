@@ -1335,6 +1335,9 @@ export default function MaterialStatementsPage() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
                               <>
+                                <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
+                                  <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
                                   <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                                 </Button>
