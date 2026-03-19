@@ -1762,7 +1762,14 @@ export default function MaterialStatementsPage() {
                           </TableCell>
                           <TableCell>
                             {isMatched ? (
-                              <Badge variant="default" className="bg-emerald-600 text-xs">обновлено</Badge>
+                              <div className="flex flex-col gap-0.5">
+                                <Badge variant="default" className="bg-emerald-600 text-xs w-fit">
+                                  {match.matchType === "parametric" ? "по параметрам" : match.matchType === "fuzzy" ? "нечёткое" : "точное"}
+                                </Badge>
+                                {match.matchDescription && (
+                                  <span className="text-[10px] text-muted-foreground">{match.matchDescription}</span>
+                                )}
+                              </div>
                             ) : (
                               <Badge variant="destructive" className="text-xs">не найден</Badge>
                             )}
