@@ -828,7 +828,7 @@ export function IncomingUploads({
       {/* Files Status Table */}
       {hasActiveFiles && (
         <Card>
-          <CardHeader className="py-3">
+          <CardHeader className="py-3 flex-row items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               Загруженные файлы ({files.length})
