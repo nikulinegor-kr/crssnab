@@ -40,13 +40,18 @@ const TYPE_KEYWORDS: Record<string, string[]> = {
  * Handles: x, х (Russian), *, ×, inch marks (", "), spaces between numbers
  */
 function normalizeDimSeparators(s: string): string {
+  const inchMarks = /["'“”„‟″′]/g;
+
   return s
     .replace(/х/gi, "x")
     .replace(/[*×]/g, "x")
-    // Replace inch marks (ASCII ", curly " ", and ″) followed by space+digit as dimension separator
-    .replace(/(\d)["""″]\s*(\d)/g, "$1x$2")
-    // Remove standalone inch marks after numbers
-    .replace(/(\d)["""″]/g, "$1")
+    // Replace inch-like marks between numbers as a dimension separator
+    // e.g. 159” 5,0 -> 159x5,0
+    .replace(/(\d)\s*["'“”„‟″′]\s*(\d)/g, "$1x$2")
+    // Remove standalone inch-like marks right after numbers
+    .replace(/(\d)\s*["'“”„‟″′]/g, "$1")
+    // Cleanup any leftover quote symbols
+    .replace(inchMarks, "")
     // Replace comma with dot in numbers
     .replace(/(\d),(\d)/g, "$1.$2")
     // Normalize "NUMBER x NUMBER"
