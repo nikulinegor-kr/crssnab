@@ -1410,22 +1410,21 @@ export default function MaterialStatementsPage() {
               );
             })()}
 
-            {/* Search bar and type filter for materials */}
+            {/* Search bar */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="🔎 Найти материал..."
+                    placeholder={selectedItemTypeFilter === "work" ? "🔎 Найти работу..." : "🔎 Найти материал..."}
                     value={materialsSearch}
                     onChange={e => setMaterialsSearch(e.target.value)}
                     className="pl-9 h-9"
                   />
                 </div>
-                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer flex-shrink-0">
-                  <Checkbox checked={showAllItemTypes} onCheckedChange={v => setShowAllItemTypes(!!v)} />
-                  Показать работы
-                </label>
+                <Badge variant="outline" className="text-xs flex-shrink-0">
+                  {selectedItemTypeFilter === "work" ? "Работы" : "Материалы"}
+                </Badge>
               </div>
             )}
 
