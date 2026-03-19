@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench, Archive, Layers, ShoppingCart, Check,
+  Wrench, Archive, Layers, ShoppingCart, Check, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
