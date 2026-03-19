@@ -36,7 +36,6 @@ import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 import { classifyItemType } from "@/lib/classifyItemType";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Types
 interface MaterialStatement {
@@ -179,7 +178,7 @@ export default function MaterialStatementsPage() {
   const [bulkPriceValue, setBulkPriceValue] = useState("");
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
-  const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "work" | "material">("all");
+  const [showAllItemTypes, setShowAllItemTypes] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -247,7 +246,7 @@ export default function MaterialStatementsPage() {
   );
 
   const { data: allItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["material-items", selectedFolderId, orgId],
+    queryKey: ["material-items", selectedFolderId, orgId, showAllItemTypes],
     queryFn: async () => {
       if (!orgId || !selectedFolderId) return [];
       const stIds = currentStatements.map(s => s.id);
@@ -265,7 +264,8 @@ export default function MaterialStatementsPage() {
         if (chunk.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
-      return all;
+      if (showAllItemTypes) return all;
+      return all.filter(i => (i.item_type || "material") === "material");
     },
     enabled: !!orgId && !!selectedFolderId && currentStatements.length > 0,
   });
@@ -1336,21 +1336,15 @@ export default function MaterialStatementsPage() {
 
             {/* Procurement Summary */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
-              const materialsOnly = allItems.filter(i => (i.item_type || "material") === "material");
-              const worksOnly = allItems.filter(i => i.item_type === "work");
-              const totalMaterials = materialsOnly.length;
-              const procuredCount = materialsOnly.filter(i => i.procurement_status && i.procurement_status !== "none").length;
-              const deliveredCount = materialsOnly.filter(i => i.procurement_status === "delivered").length;
+              const totalMaterials = allItems.length;
+              const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
+              const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
               const remainingCount = totalMaterials - procuredCount;
               return (
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <Card className="p-3">
-                    <p className="text-xs text-muted-foreground">Материалов</p>
+                    <p className="text-xs text-muted-foreground">Всего материалов</p>
                     <p className="text-xl font-bold">{totalMaterials}</p>
-                  </Card>
-                  <Card className="p-3">
-                    <p className="text-xs text-muted-foreground">Работ</p>
-                    <p className="text-xl font-bold">{worksOnly.length}</p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">В закупке</p>
@@ -1380,13 +1374,10 @@ export default function MaterialStatementsPage() {
                     className="pl-9 h-9"
                   />
                 </div>
-                <Tabs value={itemTypeFilter} onValueChange={v => setItemTypeFilter(v as any)} className="flex-shrink-0">
-                  <TabsList className="h-9">
-                    <TabsTrigger value="all" className="text-xs px-3">Все</TabsTrigger>
-                    <TabsTrigger value="material" className="text-xs px-3">Материалы</TabsTrigger>
-                    <TabsTrigger value="work" className="text-xs px-3">Работы</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer flex-shrink-0">
+                  <Checkbox checked={showAllItemTypes} onCheckedChange={v => setShowAllItemTypes(!!v)} />
+                  Показать работы
+                </label>
               </div>
             )}
 
@@ -1398,10 +1389,9 @@ export default function MaterialStatementsPage() {
                 ) : (
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
                     const rawStItems = itemsByStatement.get(st.id) || [];
-                    const filteredByType = itemTypeFilter === "all" ? rawStItems : rawStItems.filter(i => (i.item_type || "material") === itemTypeFilter);
                     const stItems = materialsSearch.trim()
-                      ? filteredByType.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
-                      : filteredByType;
+                      ? rawStItems.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
+                      : rawStItems;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
