@@ -1336,9 +1336,11 @@ export default function MaterialStatementsPage() {
 
             {/* Procurement Summary */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
-              const totalMaterials = allItems.length;
-              const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
-              const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
+              const materialsOnly = allItems.filter(i => (i.item_type || "material") === "material");
+              const worksOnly = allItems.filter(i => i.item_type === "work");
+              const totalMaterials = materialsOnly.length;
+              const procuredCount = materialsOnly.filter(i => i.procurement_status && i.procurement_status !== "none").length;
+              const deliveredCount = materialsOnly.filter(i => i.procurement_status === "delivered").length;
               const remainingCount = totalMaterials - procuredCount;
               return (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
