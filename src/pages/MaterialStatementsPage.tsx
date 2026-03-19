@@ -179,6 +179,7 @@ export default function MaterialStatementsPage() {
   const [bulkPriceValue, setBulkPriceValue] = useState("");
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
+  const [itemTypeFilter, setItemTypeFilter] = useState<"all" | "work" | "material">("all");
 
   // Queries
   const { data: objects = [] } = useQuery({
