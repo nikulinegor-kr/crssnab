@@ -1381,13 +1381,10 @@ export default function MaterialStatementsPage() {
                     className="pl-9 h-9"
                   />
                 </div>
-                <Tabs value={itemTypeFilter} onValueChange={v => setItemTypeFilter(v as any)} className="flex-shrink-0">
-                  <TabsList className="h-9">
-                    <TabsTrigger value="all" className="text-xs px-3">Все</TabsTrigger>
-                    <TabsTrigger value="material" className="text-xs px-3">Материалы</TabsTrigger>
-                    <TabsTrigger value="work" className="text-xs px-3">Работы</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer flex-shrink-0">
+                  <Checkbox checked={showAllItemTypes} onCheckedChange={v => setShowAllItemTypes(!!v)} />
+                  Показать работы
+                </label>
               </div>
             )}
 
