@@ -744,6 +744,20 @@ export function IncomingUploads({
 
   const removeFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
+    setSelectedIncomingIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+  };
+
+  const [selectedIncomingIds, setSelectedIncomingIds] = useState<Set<string>>(new Set());
+  const toggleIncomingSelection = (id: string) => {
+    setSelectedIncomingIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const toggleSelectAllIncoming = () => {
+    if (selectedIncomingIds.size === files.length) setSelectedIncomingIds(new Set());
+    else setSelectedIncomingIds(new Set(files.map(f => f.id)));
+  };
+  const handleBulkDeleteIncoming = () => {
+    setFiles(prev => prev.filter(f => !selectedIncomingIds.has(f.id)));
+    setSelectedIncomingIds(new Set());
   };
 
   const hasActiveFiles = files.length > 0;
