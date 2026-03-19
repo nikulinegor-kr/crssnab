@@ -564,8 +564,11 @@ export function IncomingUploads({
       }
 
       updateFile(file.id, { status: "done" });
+      // Persist done status to DB
+      await (supabase.from("material_statements" as any).update({ classification_status: "done" }).eq("id", file.id) as any);
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       queryClient.invalidateQueries({ queryKey: ["incoming-existing-items"] });
+      queryClient.invalidateQueries({ queryKey: ["incoming-files-history"] });
 
       toast({
         title: "Изменения применены",
