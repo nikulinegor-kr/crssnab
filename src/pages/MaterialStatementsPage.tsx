@@ -27,6 +27,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
+import { IncomingUploads } from "@/components/materials/IncomingUploads";
 
 // Types
 interface MaterialStatement {
