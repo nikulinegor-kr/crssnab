@@ -519,6 +519,20 @@ export default function MaterialStatementsPage() {
     toast({ title: "Файл удалён" });
   };
 
+  const handleBulkDeleteStatements = async () => {
+    if (selectedFileIds.size === 0) return;
+    const count = selectedFileIds.size;
+    for (const id of selectedFileIds) {
+      await (supabase.from("material_statement_items" as any).delete().eq("statement_id", id) as any);
+      await (supabase.from("material_statements" as any).delete().eq("id", id) as any);
+      if (selectedStatementId === id) setSelectedStatementId(null);
+    }
+    setSelectedFileIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    toast({ title: `Удалено файлов: ${count}` });
+  };
+
   const handleUpdateItem = async (item: MaterialItem) => {
     const totalPrice = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
     await (supabase.from("material_statement_items" as any).update({
