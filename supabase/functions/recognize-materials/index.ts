@@ -405,18 +405,6 @@ Deno.serve(async (req) => {
 
     // Insert new items
     if (materials.length > 0) {
-      const { data: statementMeta } = await supabase
-        .from("material_statements")
-        .select("file_name, display_name")
-        .eq("id", statementId)
-        .single();
-
-      const statementText = `${statementMeta?.display_name || ""} ${statementMeta?.file_name || ""}`.toLowerCase();
-      const forceWorkByStatementName =
-        statementText.includes(".вр") ||
-        statementText.includes("ведомость работ") ||
-        statementText.includes("в.р.");
-
       const WORK_KEYWORDS = [
         "монтаж", "устройство", "установка", "сборка", "укладка", "демонтаж",
         "прокладка", "подключение", "наладка", "испытание", "пуск",
@@ -432,19 +420,29 @@ Deno.serve(async (req) => {
       ];
 
       const classifyType = (name: string, index: number, rows: any[]) => {
-        if (forceWorkByStatementName) return "work";
-
         const lower = (name || "").toLowerCase().trim();
         const prev = (rows[index - 1]?.name || "").toLowerCase();
 
+        // Check full phrases first
         if (WORK_PHRASES.some((phrase) => lower.includes(phrase))) {
           return "work";
         }
 
-        if (prev.includes("в том числе") && /(сталь|гост|ту)/.test(lower)) {
+        // Sub-items of work entries (e.g. "сталь С245-4" after "Монтаж козырьков, в том числе по маркам стали:")
+        if (prev.includes("в том числе") && /(сталь|гост|ту\s)/.test(lower)) {
           return "work";
         }
 
+        // Check if previous row was classified as work and current is a bare material sub-item
+        // (e.g. "сталь С245-4" listed as a component of a work item like "Монтаж колонн")
+        if (index > 0) {
+          const prevType = classifyType(rows[index - 1]?.name || "", index - 1, rows);
+          if (prevType === "work" && /^сталь\s/i.test(lower)) {
+            return "work";
+          }
+        }
+
+        // Check keywords
         for (const kw of WORK_KEYWORDS) {
           if (lower.includes(kw)) return "work";
         }
