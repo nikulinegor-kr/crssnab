@@ -247,7 +247,7 @@ export default function MaterialStatementsPage() {
   );
 
   const { data: allItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["material-items", selectedFolderId, orgId],
+    queryKey: ["material-items", selectedFolderId, orgId, showAllItemTypes],
     queryFn: async () => {
       if (!orgId || !selectedFolderId) return [];
       const stIds = currentStatements.map(s => s.id);
@@ -265,7 +265,7 @@ export default function MaterialStatementsPage() {
         if (chunk.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
-      // Filter out works — this is a materials statement page
+      if (showAllItemTypes) return all;
       return all.filter(i => (i.item_type || "material") === "material");
     },
     enabled: !!orgId && !!selectedFolderId && currentStatements.length > 0,
