@@ -36,7 +36,6 @@ import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 import { classifyItemType } from "@/lib/classifyItemType";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Types
 interface MaterialStatement {
