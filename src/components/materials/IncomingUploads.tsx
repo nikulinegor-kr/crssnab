@@ -476,6 +476,13 @@ export function IncomingUploads({
           folderId = classifyData.folderId;
           docType = classifyData.docType;
           confidence = classifyData.confidence || 0;
+          // Persist classification results
+          await (supabase.from("material_statements" as any).update({
+            section_id: sectionId,
+            folder_id: folderId,
+            detected_doc_type: docType,
+            classification_status: "classified",
+          }).eq("id", statementId) as any);
         }
       } catch (classifyErr: any) {
         console.warn(`[IncomingUploads] Classification failed for "${file.name}":`, classifyErr.message);
