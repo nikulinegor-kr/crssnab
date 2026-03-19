@@ -275,6 +275,81 @@ export default function MaterialStatementsPage() {
     return map;
   }, [allItems]);
 
+  // Section progress: fetch items for all material folders across all sections
+  const materialFolderIds = useMemo(() =>
+    folders.filter(f => f.type === 'materials').map(f => f.id),
+    [folders]
+  );
+
+  const materialStatementsBySectionFolder = useMemo(() => {
+    const map = new Map<string, string[]>(); // folderId -> statementIds
+    for (const fId of materialFolderIds) {
+      const stIds = statements.filter(s => s.folder_id === fId).map(s => s.id);
+      if (stIds.length > 0) map.set(fId, stIds);
+    }
+    return map;
+  }, [statements, materialFolderIds]);
+
+  const allMaterialStatementIds = useMemo(() => {
+    const ids: string[] = [];
+    materialStatementsBySectionFolder.forEach(stIds => ids.push(...stIds));
+    return ids;
+  }, [materialStatementsBySectionFolder]);
+
+  const { data: sectionProgressItems = [] } = useQuery({
+    queryKey: ["section-progress-items", orgId, allMaterialStatementIds.join(",")],
+    queryFn: async () => {
+      if (!orgId || allMaterialStatementIds.length === 0) return [];
+      const PAGE_SIZE = 1000;
+      let all: { id: string; statement_id: string; price: number | null }[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
+          .select("id, statement_id, price")
+          .in("statement_id", allMaterialStatementIds.slice(from === 0 ? 0 : 0, undefined))
+          .range(from, from + PAGE_SIZE - 1) as any);
+        const chunk = (data || []) as { id: string; statement_id: string; price: number | null }[];
+        all = all.concat(chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all;
+    },
+    enabled: !!orgId && allMaterialStatementIds.length > 0,
+  });
+
+  // Compute progress per section
+  const sectionProgress = useMemo(() => {
+    const map = new Map<string, { total: number; priced: number; percent: number }>();
+    for (const folder of folders.filter(f => f.type === 'materials' && f.section_id)) {
+      const sectionId = folder.section_id!;
+      const stIds = statements.filter(s => s.folder_id === folder.id).map(s => s.id);
+      const items = sectionProgressItems.filter(i => stIds.includes(i.statement_id));
+      const existing = map.get(sectionId) || { total: 0, priced: 0, percent: 0 };
+      existing.total += items.length;
+      existing.priced += items.filter(i => i.price != null && i.price > 0).length;
+      map.set(sectionId, existing);
+    }
+    map.forEach((val, key) => {
+      val.percent = val.total > 0 ? Math.round((val.priced / val.total) * 100) : 0;
+      map.set(key, val);
+    });
+    return map;
+  }, [folders, statements, sectionProgressItems]);
+
+  const getProgressColor = (percent: number) => {
+    if (percent >= 70) return "text-green-600";
+    if (percent >= 30) return "text-yellow-600";
+    return "text-red-500";
+  };
+
+  const getProgressBarClass = (percent: number) => {
+    if (percent >= 70) return "[&>div]:bg-green-500";
+    if (percent >= 30) return "[&>div]:bg-yellow-500";
+    return "[&>div]:bg-red-500";
+  };
+
   // Build tree: Year → Objects → Sections → Folders
   const tree = useMemo(() => {
     const yearMap = new Map<number, MaterialObject[]>();
