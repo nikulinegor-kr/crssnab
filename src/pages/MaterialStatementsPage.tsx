@@ -1563,8 +1563,9 @@ export default function MaterialStatementsPage() {
                                 const isEditing = editingItem?.id === item.id;
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
                                 const isProcured = item.procurement_status && item.procurement_status !== "none";
+                                const isWorksView = selectedItemTypeFilter === "work";
                                 return (
-                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
+                                  <TableRow key={item.id} className={!isWorksView && isProcured ? "bg-muted/40" : ""}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
@@ -1572,48 +1573,59 @@ export default function MaterialStatementsPage() {
                                     </TableCell>
                                     <TableCell>{idx + 1}</TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}</TableCell>
-                                    <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
-                                    <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
+                                    {!isWorksView && (
+                                      <>
+                                        <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
+                                        <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
+                                      </>
+                                    )}
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
-                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
-                                    <TableCell>
-                                      {isEditing ? (
-                                        <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
-                                      ) : inlinePriceEditId === item.id ? (
-                                        <Input
-                                          autoFocus
-                                          value={inlinePriceValue}
-                                          onChange={e => setInlinePriceValue(e.target.value)}
-                                          onBlur={() => handleInlinePriceSave(item.id)}
-                                          onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
-                                          className="h-8 w-24"
-                                          placeholder="Цена"
-                                        />
-                                      ) : (
-                                        <span
-                                          className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
-                                          onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
-                                          title="Нажмите для редактирования цены"
-                                        >
-                                          {formatPrice(item.price)}
-                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
-                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
-                                          {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
-                                        </span>
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
-                                    <TableCell>
-                                      {item.procurement_status === "in_procurement" && (
-                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
-                                      )}
-                                      {item.procurement_status === "ordered" && (
-                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
-                                      )}
-                                      {item.procurement_status === "delivered" && (
-                                        <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
-                                      )}
-                                    </TableCell>
+                                    {!isWorksView && (
+                                      <>
+                                        <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
+                                        <TableCell>
+                                          {isEditing ? (
+                                            <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
+                                          ) : inlinePriceEditId === item.id ? (
+                                            <Input
+                                              autoFocus
+                                              value={inlinePriceValue}
+                                              onChange={e => setInlinePriceValue(e.target.value)}
+                                              onBlur={() => handleInlinePriceSave(item.id)}
+                                              onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
+                                              className="h-8 w-24"
+                                              placeholder="Цена"
+                                            />
+                                          ) : (
+                                            <span
+                                              className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
+                                              onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
+                                              title="Нажмите для редактирования цены"
+                                            >
+                                              {formatPrice(item.price)}
+                                              {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
+                                              {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
+                                              {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
+                                            </span>
+                                          )}
+                                        </TableCell>
+                                        <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                        <TableCell>
+                                          {item.procurement_status === "in_procurement" && (
+                                            <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
+                                          )}
+                                          {item.procurement_status === "ordered" && (
+                                            <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
+                                          )}
+                                          {item.procurement_status === "delivered" && (
+                                            <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
+                                          )}
+                                        </TableCell>
+                                      </>
+                                    )}
+                                    {isWorksView && (
+                                      <TableCell>{item.unit || "—"}</TableCell>
+                                    )}
                                     <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
