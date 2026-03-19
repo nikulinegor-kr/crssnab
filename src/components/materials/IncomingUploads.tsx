@@ -855,7 +855,7 @@ export function IncomingUploads({
                     </TableCell>
                     <TableCell>
                       {match.status === "updated" && match.extracted.price != null ? (
-                        <Badge variant="default" className="text-xs bg-emerald-600">обновлено</Badge>
+                        <Badge variant="default" className="text-xs">обновлено</Badge>
                       ) : match.status === "not_found" ? (
                         <Badge variant="destructive" className="text-xs">не найден</Badge>
                       ) : (
