@@ -642,9 +642,6 @@ export default function MaterialStatementsPage() {
   };
 
   // KP Upload & Matching
-  const [kpFileName, setKpFileName] = useState<string>("");
-  const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
-
   const handleKpUpload = async (file: File) => {
     if (!orgId || allItems.length === 0) {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
