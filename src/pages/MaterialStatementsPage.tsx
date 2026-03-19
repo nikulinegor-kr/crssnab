@@ -217,6 +217,12 @@ export default function MaterialStatementsPage() {
   const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
   const [materialsSearch, setMaterialsSearch] = useState("");
   const [kpSearch, setKpSearch] = useState("");
+  const [inlinePriceEditId, setInlinePriceEditId] = useState<string | null>(null);
+  const [inlinePriceValue, setInlinePriceValue] = useState("");
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkPriceValue, setBulkPriceValue] = useState("");
+  const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
+  const [kpManualItems, setKpManualItems] = useState<string[]>([]);
 
   // Queries
   const { data: objects = [] } = useQuery({
