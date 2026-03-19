@@ -1678,9 +1678,7 @@ export default function MaterialStatementsPage() {
                   <TableBody>
                     {kpMatches.filter(match => {
                       if (!kpSearch.trim()) return true;
-                      const words = kpSearch.toLowerCase().trim().split(/\s+/);
-                      const text = `${match.kpItem.name} ${match.matchedItemName || ""}`.toLowerCase();
-                      return words.every(w => text.includes(w));
+                      return matchesMaterialSearch(kpSearch, match.kpItem.name, match.matchedItemName);
                     }).map((match, idx) => {
                       const isMatched = !!match.matchedItemId;
                       const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;

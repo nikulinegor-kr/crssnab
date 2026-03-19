@@ -1,4 +1,5 @@
 import React from "react";
+import { findHighlightRanges } from "@/lib/materialSearch";
 
 interface HighlightTextProps {
   text: string;
@@ -15,25 +16,30 @@ export const HighlightText: React.FC<HighlightTextProps> = ({
     return <span className={className}>{text}</span>;
   }
 
-  const query = searchQuery.toLowerCase();
-  const lowerText = text.toLowerCase();
-  const index = lowerText.indexOf(query);
+  const ranges = findHighlightRanges(text, searchQuery);
 
-  if (index === -1) {
+  if (ranges.length === 0) {
     return <span className={className}>{text}</span>;
   }
 
-  const before = text.slice(0, index);
-  const match = text.slice(index, index + searchQuery.length);
-  const after = text.slice(index + searchQuery.length);
+  const parts: React.ReactNode[] = [];
+  let lastEnd = 0;
 
-  return (
-    <span className={className}>
-      {before}
-      <mark className="bg-yellow-300 dark:bg-yellow-600 text-foreground px-0.5 rounded-sm">
-        {match}
+  for (const [start, end] of ranges) {
+    if (start > lastEnd) {
+      parts.push(text.slice(lastEnd, start));
+    }
+    parts.push(
+      <mark key={start} className="bg-yellow-300 dark:bg-yellow-600 text-foreground px-0.5 rounded-sm">
+        {text.slice(start, end)}
       </mark>
-      {after}
-    </span>
-  );
+    );
+    lastEnd = end;
+  }
+
+  if (lastEnd < text.length) {
+    parts.push(text.slice(lastEnd));
+  }
+
+  return <span className={className}>{parts}</span>;
 };
