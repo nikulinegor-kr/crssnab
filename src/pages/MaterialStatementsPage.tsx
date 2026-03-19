@@ -639,12 +639,15 @@ export default function MaterialStatementsPage() {
   };
 
   // KP Upload & Matching
+  const [kpFileName, setKpFileName] = useState<string>("");
+  const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
+
   const handleKpUpload = async (file: File) => {
     if (!orgId || allItems.length === 0) {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
       return;
     }
-    setKpLoading(true); setKpDialogOpen(true);
+    setKpLoading(true); setKpDialogOpen(true); setKpFileName(file.name);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
@@ -659,9 +662,17 @@ export default function MaterialStatementsPage() {
       const kpItems: KpItem[] = data.items || [];
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
-        const { item, score } = findBestMatch(kpItem.name, allItems);
+        const { item, score } = findBestMatch(kpItem.name, kpItem.unit, allItems);
         const autoMatched = score >= 0.6;
-        return { kpItem, matchedItemId: autoMatched && item ? item.id : null, matchedItemName: autoMatched && item ? item.name : null, similarity: score, autoMatched };
+        return {
+          kpItem,
+          matchedItemId: autoMatched && item ? item.id : null,
+          matchedItemName: autoMatched && item ? item.name : null,
+          oldPrice: autoMatched && item ? item.price : null,
+          similarity: score,
+          autoMatched,
+          status: (autoMatched && item ? "updated" : "not_found") as "updated" | "not_found",
+        };
       });
       setKpMatches(matches);
     } catch (e: any) {
@@ -674,7 +685,14 @@ export default function MaterialStatementsPage() {
     setKpMatches(prev => {
       const updated = [...prev];
       const item = itemId ? allItems.find(i => i.id === itemId) : null;
-      updated[index] = { ...updated[index], matchedItemId: itemId, matchedItemName: item ? item.name : null, autoMatched: false };
+      updated[index] = {
+        ...updated[index],
+        matchedItemId: itemId,
+        matchedItemName: item ? item.name : null,
+        oldPrice: item ? item.price : null,
+        autoMatched: false,
+        status: itemId ? "updated" : "not_found",
+      };
       return updated;
     });
   };
@@ -682,20 +700,31 @@ export default function MaterialStatementsPage() {
   const handleApplyKp = async () => {
     setKpApplying(true);
     let applied = 0;
+    const log: KpApplyLog[] = [];
     try {
       for (const match of kpMatches) {
-        if (!match.matchedItemId || match.kpItem.price == null) continue;
+        if (!match.matchedItemId || match.kpItem.price == null) {
+          log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const item = allItems.find(i => i.id === match.matchedItemId);
-        if (!item) continue;
+        if (!item) {
+          log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
         await (supabase.from("material_statement_items" as any).update({
           price: match.kpItem.price, total_price: totalPrice, supplier: kpSupplier || undefined,
         }).eq("id", match.matchedItemId) as any);
+        log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "updated", fileName: kpFileName });
         applied++;
       }
+      const notFound = log.filter(l => l.status === "not_found").length;
+      setKpApplyLog(log);
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
-      toast({ title: `КП применено`, description: `Обновлено ${applied} позиций` });
+      toast({ title: `КП применено`, description: `Обновлено: ${applied}, Не найдено: ${notFound}` });
       setKpDialogOpen(false); setKpMatches([]);
+      console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
     } finally { setKpApplying(false); }
