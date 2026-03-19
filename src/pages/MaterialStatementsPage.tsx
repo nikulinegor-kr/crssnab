@@ -1237,7 +1237,7 @@ export default function MaterialStatementsPage() {
               </div>
               <div className="flex gap-2">
                 {downloadingZip && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isMaterialsFolder && allItems.length > 0 && (
+                {isMaterialsFolder && selectedItemTypeFilter === "material" && allItems.length > 0 && (
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
