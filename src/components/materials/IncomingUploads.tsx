@@ -484,8 +484,9 @@ export function IncomingUploads({
           // since we already filtered by object
         }
 
-        const { item, score } = findBestMatch(row, targetItems);
-        const matched = score >= 0.6 && item;
+        const { item, score, matchType, matchDescription } = findBestMatch(row, targetItems);
+        const matched = !!item;
+        console.log(`[IncomingUploads] MATCH TYPE: ${matchType}`);
         return {
           extracted: row,
           matchedItemId: matched ? item!.id : null,
@@ -494,6 +495,8 @@ export function IncomingUploads({
           oldQuantity: matched ? item!.quantity : null,
           similarity: score,
           status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+          matchType,
+          matchDescription,
         };
       });
 
