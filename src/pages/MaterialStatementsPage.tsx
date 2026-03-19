@@ -124,19 +124,27 @@ function similarity(a: string, b: string): number {
   return 1 - levenshtein(la, lb) / maxLen;
 }
 
-function findBestMatch(kpName: string, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
+function findBestMatch(kpName: string, kpUnit: string | null, projectItems: MaterialItem[]): { item: MaterialItem | null; score: number } {
   let bestItem: MaterialItem | null = null;
   let bestScore = 0;
   const kpWords = kpName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const normalizedKpUnit = (kpUnit || "").toLowerCase().trim();
   for (const item of projectItems) {
     let score = similarity(kpName, item.name);
     const itemWords = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const commonWords = kpWords.filter(w => itemWords.some(iw => iw.includes(w) || w.includes(iw)));
     const wordOverlap = kpWords.length > 0 ? commonWords.length / kpWords.length : 0;
     score = Math.max(score, wordOverlap * 0.9);
+    // Boost score if units match
+    if (normalizedKpUnit && item.unit) {
+      const normalizedItemUnit = item.unit.toLowerCase().trim();
+      if (normalizedKpUnit === normalizedItemUnit) score = Math.min(1, score + 0.05);
+      else if (score > 0.5) score -= 0.05;
+    }
     if (score > bestScore) { bestScore = score; bestItem = item; }
   }
   return { item: bestItem, score: bestScore };
+}
 }
 
 export default function MaterialStatementsPage() {
