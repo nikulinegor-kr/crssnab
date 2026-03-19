@@ -619,7 +619,7 @@ export default function MaterialStatementsPage() {
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
       price: item.price, total_price: totalPrice, supplier: item.supplier,
-      price_source: item.price_source || "file",
+      price_source: item.price_source || "file", item_type: item.item_type || "material",
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
