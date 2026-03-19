@@ -262,6 +262,7 @@ export function IncomingUploads({
   const [isDragOver, setIsDragOver] = useState(false);
   const [files, setFiles] = useState<IncomingFile[]>([]);
   const [reviewFile, setReviewFile] = useState<IncomingFile | null>(null);
+  const [reviewSearch, setReviewSearch] = useState("");
   const [manualSectionDialog, setManualSectionDialog] = useState<IncomingFile | null>(null);
   const [manualSectionId, setManualSectionId] = useState<string>("");
 
