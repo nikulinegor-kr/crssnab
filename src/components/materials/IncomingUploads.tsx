@@ -521,6 +521,61 @@ export function IncomingUploads({
     }
   };
 
+  // ── Re-process file — re-extract data from file ──
+  const handleReprocess = async (file: IncomingFile) => {
+    updateFile(file.id, { status: "recognizing", extractedRows: undefined, matches: undefined, error: undefined });
+
+    try {
+      let extractedRows: ExtractedRow[] = [];
+
+      if (file.fileType === "xlsx") {
+        // Re-fetch file and parse
+        const response = await fetch(file.fileUrl);
+        const blob = await response.blob();
+        const f = new File([blob], file.fileName);
+        extractedRows = await parseExcelFile(f);
+      } else {
+        const { data: recData, error: recError } = await supabase.functions.invoke("recognize-materials", {
+          body: { fileUrl: file.fileUrl, statementId: file.id, organizationId: orgId },
+        });
+        if (recError) throw recError;
+        const materials = recData?.materials || [];
+        extractedRows = materials.map((m: any) => ({
+          name: m.name || "",
+          unit: m.unit || null,
+          quantity: m.quantity ?? null,
+          price: null,
+          total_price: null,
+        }));
+      }
+
+      if (extractedRows.length === 0) {
+        updateFile(file.id, { status: "error", error: "Не удалось извлечь строки из файла" });
+        return;
+      }
+
+      // Re-match
+      const matches: MatchResult[] = extractedRows.map(row => {
+        const { item, score } = findBestMatch(row, existingItems);
+        const matched = score >= 0.6 && item;
+        return {
+          extracted: row,
+          matchedItemId: matched ? item!.id : null,
+          matchedItemName: matched ? item!.name : null,
+          oldPrice: matched ? item!.price : null,
+          oldQuantity: matched ? item!.quantity : null,
+          similarity: score,
+          status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+        };
+      });
+
+      updateFile(file.id, { status: "ready", extractedRows, matches });
+      toast({ title: "Перераспознано", description: `Извлечено ${extractedRows.length} строк` });
+    } catch (err: any) {
+      updateFile(file.id, { status: "error", error: err.message });
+      toast({ title: "Ошибка перераспознавания", description: err.message, variant: "destructive" });
+    }
+
   // ── Manual section assignment ──
   const handleManualAssign = async () => {
     if (!manualSectionDialog || !manualSectionId) return;
