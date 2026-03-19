@@ -1150,6 +1150,9 @@ export default function MaterialStatementsPage() {
                         Распознать заново
                       </Button>
                     )}
+                    <Button size="sm" variant="destructive" onClick={handleBulkDeleteStatements}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Удалить ({selectedFileIds.size})
+                    </Button>
                   </div>
                 )}
               </CardHeader>
