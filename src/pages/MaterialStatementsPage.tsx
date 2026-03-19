@@ -678,11 +678,17 @@ export default function MaterialStatementsPage() {
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
         const result = findBestParametricMatch(kpItem.name, kpItem.unit, allItems);
-        const autoMatched = result != null && result.score >= 0.6;
+        const autoMatched = result != null && (result.matchType === "parametric" || result.score >= 0.6);
         const item = autoMatched && result ? allItems.find(i => i.id === result.itemId) : null;
-        if (result && autoMatched) {
-          console.log(`[KP Match] "${kpItem.name}" → "${result.itemName}" (${result.matchType}, score=${result.score.toFixed(2)}${result.matchDescription ? `, ${result.matchDescription}` : ""})`);
+        const finalMatchType: "exact" | "fuzzy" | "parametric" | "not_found" = autoMatched && result && item
+          ? result.matchType
+          : "not_found";
+
+        if (finalMatchType === "parametric" && result && item) {
+          console.log(`[KP Match] PARAM MATCH: ${result.matchDescription ?? `${kpItem.name} → ${item.name}`} → matched`);
         }
+        console.log(`[KP Match] MATCH TYPE: ${finalMatchType}`);
+
         return {
           kpItem,
           matchedItemId: item ? item.id : null,
