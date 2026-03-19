@@ -1082,12 +1082,24 @@ export function IncomingUploads({
                     </TableCell>
                     <TableCell>
                       {match.status === "updated" && match.extracted.price != null ? (
-                        <Badge variant="default" className="text-xs">обновлено</Badge>
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="default" className="text-xs">обновлено</Badge>
+                          {match.matchType === "parametric" && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {`MATCH TYPE: parametric`}
+                            </span>
+                          )}
+                          {match.matchType === "parametric" && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {`Совпадение по параметрам (игнорируя ГОСТ)${match.matchDescription ? ` (${match.matchDescription})` : ""}`}
+                            </span>
+                          )}
+                        </div>
                       ) : match.status === "not_found" ? (
                         <Badge variant="destructive" className="text-xs">не найден</Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">без цены</Badge>
-                      )}
+                      )
                     </TableCell>
                   </TableRow>
                 ))}
