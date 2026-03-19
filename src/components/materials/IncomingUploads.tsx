@@ -837,8 +837,8 @@ export function IncomingUploads({
                   <TableRow
                     key={idx}
                     className={cn(
-                      match.status === "updated" && match.extracted.price != null && "bg-emerald-50 dark:bg-emerald-950/20",
-                      match.status === "not_found" && "bg-red-50 dark:bg-red-950/20"
+                      match.status === "updated" && match.extracted.price != null && "bg-primary/5",
+                      match.status === "not_found" && "bg-destructive/5"
                     )}
                   >
                     <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
