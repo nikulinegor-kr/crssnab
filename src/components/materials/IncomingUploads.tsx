@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Upload, Loader2, Check, AlertTriangle, File, Trash2,
-  MoveRight, Sparkles, FileText, FileSpreadsheet,
+  MoveRight, Sparkles, FileText, FileSpreadsheet, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,12 +68,14 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; vari
   uploading: { label: "Загрузка...", icon: <Loader2 className="h-3 w-3 animate-spin" />, variant: "secondary" },
   classifying: { label: "Определение...", icon: <Loader2 className="h-3 w-3 animate-spin" />, variant: "secondary" },
   classified: { label: "Определён", icon: <Check className="h-3 w-3" />, variant: "default" },
-  unclassified: { label: "Не определён", icon: <AlertTriangle className="h-3 w-3" />, variant: "destructive" },
+  unclassified: { label: "Не распределено", icon: <AlertTriangle className="h-3 w-3" />, variant: "destructive" },
   moving: { label: "Перемещение...", icon: <Loader2 className="h-3 w-3 animate-spin" />, variant: "secondary" },
   processing: { label: "Обработка...", icon: <Loader2 className="h-3 w-3 animate-spin" />, variant: "secondary" },
   done: { label: "Готово", icon: <Check className="h-3 w-3" />, variant: "default" },
   error: { label: "Ошибка", icon: <AlertTriangle className="h-3 w-3" />, variant: "destructive" },
 };
+
+const CLASSIFY_TIMEOUT_MS = 15000;
 
 export function IncomingUploads({
   orgId,
@@ -95,6 +97,26 @@ export function IncomingUploads({
 
   const updateFile = (id: string, updates: Partial<IncomingFile>) => {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
+  };
+
+  const classifyWithTimeout = async (body: Record<string, any>): Promise<any> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CLASSIFY_TIMEOUT_MS);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("classify-document", {
+        body,
+      });
+      clearTimeout(timeoutId);
+      if (error) throw error;
+      return data;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError" || err.message?.includes("abort")) {
+        throw new Error("Таймаут определения (>15с)");
+      }
+      throw err;
+    }
   };
 
   const processFile = async (file: File) => {
@@ -122,12 +144,10 @@ export function IncomingUploads({
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("material-statements")
-        .getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
       const fileUrl = urlData.publicUrl;
 
-      // 2. Create statement record (no section/folder yet)
+      // 2. Create statement record
       const { data: stData, error: stError } = await (supabase
         .from("material_statements" as any)
         .insert({
@@ -139,7 +159,7 @@ export function IncomingUploads({
           file_name: file.name,
           file_url: fileUrl,
           file_type: fileType,
-          is_recognized: false,
+          is_recognized: fileType === "xlsx",
           classification_status: "pending",
         })
         .select("id")
@@ -150,21 +170,30 @@ export function IncomingUploads({
       const statementId = stData.id;
       updateFile(tempId, { id: statementId, fileUrl, status: "classifying" });
 
-      // 3. Classify
-      const { data: classifyData, error: classifyError } = await supabase.functions.invoke(
-        "classify-document",
-        {
-          body: {
-            statementId,
-            organizationId: orgId,
-            objectId,
-            fileName: file.name,
-            fileUrl,
-          },
-        }
-      );
-
-      if (classifyError) throw classifyError;
+      // 3. Classify with timeout
+      let classifyData: any;
+      try {
+        classifyData = await classifyWithTimeout({
+          statementId,
+          organizationId: orgId,
+          objectId,
+          fileName: file.name,
+          fileUrl,
+          fileType,
+        });
+      } catch (classifyErr: any) {
+        console.error(`[IncomingUploads] Classification failed for "${file.name}":`, classifyErr.message);
+        // Update DB status
+        await (supabase.from("material_statements" as any)
+          .update({ classification_status: "unclassified" })
+          .eq("id", statementId) as any);
+        updateFile(tempId, {
+          id: statementId,
+          status: "unclassified",
+          error: classifyErr.message,
+        });
+        return;
+      }
 
       const result = classifyData as any;
 
@@ -179,7 +208,7 @@ export function IncomingUploads({
           confidence: result.confidence,
         });
 
-        // Auto-process: trigger recognition for statements
+        // Auto-process: trigger recognition for PDF statements
         if (result.docType === "statement" && fileType === "pdf") {
           updateFile(tempId, { status: "processing" });
           try {
@@ -187,9 +216,13 @@ export function IncomingUploads({
               body: { fileUrl, statementId, organizationId: orgId },
             });
             updateFile(tempId, { status: "done" });
-          } catch {
-            updateFile(tempId, { status: "done" }); // file is placed, recognition failed
+          } catch (recErr: any) {
+            console.error(`[IncomingUploads] Recognition failed for "${file.name}":`, recErr.message);
+            updateFile(tempId, { status: "done" }); // file placed, recognition failed
           }
+        } else if (fileType === "xlsx") {
+          // Excel files are already marked as recognized — just mark done
+          updateFile(tempId, { status: "done" });
         } else {
           updateFile(tempId, { status: "done" });
         }
@@ -206,8 +239,63 @@ export function IncomingUploads({
         });
       }
     } catch (err: any) {
+      console.error(`[IncomingUploads] Error processing "${file.name}":`, err.message);
       updateFile(tempId, { status: "error", error: err.message });
       toast({ title: "Ошибка загрузки", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const retryFile = async (file: IncomingFile) => {
+    if (!file.fileUrl || !file.id) return;
+    updateFile(file.id, { status: "classifying", error: undefined });
+
+    try {
+      const classifyData = await classifyWithTimeout({
+        statementId: file.id,
+        organizationId: orgId,
+        objectId,
+        fileName: file.fileName,
+        fileUrl: file.fileUrl,
+        fileType: file.fileType,
+      });
+
+      const result = classifyData as any;
+
+      if (result.classificationStatus === "classified" && result.folderId) {
+        updateFile(file.id, {
+          status: "classified",
+          sectionName: result.sectionName,
+          sectionId: result.sectionId,
+          folderId: result.folderId,
+          docType: result.docType,
+          confidence: result.confidence,
+          error: undefined,
+        });
+
+        // Auto-process
+        if (result.docType === "statement" && file.fileType === "pdf") {
+          updateFile(file.id, { status: "processing" });
+          try {
+            await supabase.functions.invoke("recognize-materials", {
+              body: { fileUrl: file.fileUrl, statementId: file.id, organizationId: orgId },
+            });
+          } catch {}
+        }
+        updateFile(file.id, { status: "done" });
+        queryClient.invalidateQueries({ queryKey: ["material-statements"] });
+        queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      } else {
+        updateFile(file.id, {
+          status: "unclassified",
+          sectionName: result.sectionName,
+          docType: result.docType,
+          confidence: result.confidence,
+          error: undefined,
+        });
+      }
+    } catch (err: any) {
+      console.error(`[IncomingUploads] Retry failed for "${file.fileName}":`, err.message);
+      updateFile(file.id, { status: "error", error: err.message });
     }
   };
 
@@ -238,7 +326,6 @@ export function IncomingUploads({
     if (!manualSectionDialog || !manualSectionId) return;
     const file = manualSectionDialog;
 
-    // Find "Работы и материалы" folder for this section
     const docType = file.docType || "statement";
     const folderType = docType === "statement" || docType === "kp" ? "materials" : "general_docs";
     const targetFolder = folders.find(
@@ -256,7 +343,6 @@ export function IncomingUploads({
     setManualSectionDialog(null);
 
     try {
-      // Update statement
       await (supabase.from("material_statements" as any).update({
         folder_id: targetFolder.id,
         section_id: manualSectionId,
@@ -265,7 +351,6 @@ export function IncomingUploads({
 
       // Save learned rule
       const baseName = file.fileName.replace(/\.[^.]+$/, "").toLowerCase();
-      // Extract meaningful pattern (first word or abbreviation)
       const words = baseName.split(/[\s_\-\.]+/).filter((w) => w.length > 1);
       if (words.length > 0 && section) {
         const pattern = words.slice(0, 3).join(" ");
@@ -277,15 +362,15 @@ export function IncomingUploads({
         }, { onConflict: "organization_id,pattern" }) as any);
       }
 
-      // Trigger recognition if it's a statement PDF
+      // Trigger recognition for PDF statements
       if ((file.docType === "statement" || !file.docType) && file.fileType === "pdf") {
         updateFile(file.id, { status: "processing", sectionName: section?.name, sectionId: manualSectionId, folderId: targetFolder.id });
         try {
           await supabase.functions.invoke("recognize-materials", {
             body: { fileUrl: file.fileUrl, statementId: file.id, organizationId: orgId },
           });
-        } catch {
-          // Recognition failed but file is placed
+        } catch (recErr: any) {
+          console.error(`[IncomingUploads] Recognition after manual assign failed:`, recErr.message);
         }
       }
 
@@ -294,6 +379,7 @@ export function IncomingUploads({
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       toast({ title: "Файл распределён" });
     } catch (err: any) {
+      console.error(`[IncomingUploads] Manual assign error:`, err.message);
       updateFile(file.id, { status: "error", error: err.message });
     }
   };
@@ -339,18 +425,8 @@ export function IncomingUploads({
             }
           }}
         />
-        <div
-          className={cn(
-            "p-3 rounded-full transition-colors",
-            isDragOver ? "bg-primary/10" : "bg-muted"
-          )}
-        >
-          <Upload
-            className={cn(
-              "h-8 w-8 transition-colors",
-              isDragOver ? "text-primary" : "text-muted-foreground"
-            )}
-          />
+        <div className={cn("p-3 rounded-full transition-colors", isDragOver ? "bg-primary/10" : "bg-muted")}>
+          <Upload className={cn("h-8 w-8 transition-colors", isDragOver ? "text-primary" : "text-muted-foreground")} />
         </div>
         <div className="text-center">
           <p className="text-base font-medium">
@@ -382,7 +458,7 @@ export function IncomingUploads({
                   <TableHead>Раздел</TableHead>
                   <TableHead>Тип документа</TableHead>
                   <TableHead>Статус</TableHead>
-                  <TableHead className="w-[120px]">Действия</TableHead>
+                  <TableHead className="w-[180px]">Действия</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -396,7 +472,12 @@ export function IncomingUploads({
                         ) : (
                           <FileSpreadsheet className="h-4 w-4 text-primary flex-shrink-0" />
                         )}
-                        <span className="truncate max-w-[300px]">{file.fileName}</span>
+                        <div className="truncate max-w-[300px]">
+                          <span>{file.fileName}</span>
+                          {file.error && (
+                            <p className="text-xs text-destructive truncate">{file.error}</p>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {file.sectionName ? (
@@ -424,24 +505,30 @@ export function IncomingUploads({
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {file.status === "unclassified" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setManualSectionDialog(file);
-                                setManualSectionId("");
-                              }}
-                            >
-                              <MoveRight className="h-3 w-3 mr-1" /> Раздел
-                            </Button>
+                          {(file.status === "unclassified" || file.status === "error") && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => retryFile(file)}
+                                title="Повторить определение"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setManualSectionDialog(file);
+                                  setManualSectionId("");
+                                }}
+                              >
+                                <MoveRight className="h-3 w-3 mr-1" /> Раздел
+                              </Button>
+                            </>
                           )}
                           {(file.status === "done" || file.status === "error") && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFile(file.id)}
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           )}

@@ -3,10 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Standard construction section abbreviations
 const SECTION_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /\bЭОМ\b/i, name: "ЭОМ" },
   { pattern: /\bЭС\b/i, name: "ЭС" },
@@ -28,11 +27,9 @@ const SECTION_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /\bСКС\b/i, name: "СКС" },
   { pattern: /\bГП\b/i, name: "ГП" },
   { pattern: /\bТХ\b/i, name: "ТХ" },
-  // "Раздел N" pattern
   { pattern: /раздел\s*(\d{1,3})/i, name: "Раздел $1" },
 ];
 
-// Document type patterns
 const DOC_TYPE_PATTERNS: Array<{ pattern: RegExp; type: string }> = [
   { pattern: /(?:коммерческ|КП|предложен)/i, type: "kp" },
   { pattern: /(?:смет|локальн|сводн.*смет)/i, type: "estimate" },
@@ -50,14 +47,12 @@ function matchSectionByFilename(
 ): { sectionId: string | null; sectionName: string | null; confidence: number } {
   const baseName = fileName.replace(/\.[^.]+$/, "");
 
-  // Step 1: Check standard abbreviations
   for (const sp of SECTION_PATTERNS) {
     const match = baseName.match(sp.pattern);
     if (match) {
       let detectedName = sp.name;
       if (match[1]) detectedName = detectedName.replace("$1", match[1]);
 
-      // Find matching existing section
       const existing = existingSections.find(
         (s) => s.name.toLowerCase().includes(detectedName.toLowerCase()) ||
                detectedName.toLowerCase().includes(s.name.toLowerCase())
@@ -69,7 +64,6 @@ function matchSectionByFilename(
     }
   }
 
-  // Step 2: Fuzzy match against existing section names
   const normalizedFile = baseName.toLowerCase().replace(/[_\-\s.]+/g, " ");
   for (const sec of existingSections) {
     const secWords = sec.name.toLowerCase().split(/\s+/);
@@ -89,7 +83,7 @@ function detectDocType(fileName: string): string {
   for (const dt of DOC_TYPE_PATTERNS) {
     if (dt.pattern.test(baseName)) return dt.type;
   }
-  return "statement"; // default
+  return "statement";
 }
 
 Deno.serve(async (req) => {
@@ -98,7 +92,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { statementId, organizationId, objectId, fileName, fileUrl } = await req.json();
+    const { statementId, organizationId, objectId, fileName, fileUrl, fileType } = await req.json();
 
     if (!statementId || !organizationId || !objectId) {
       return new Response(
@@ -107,11 +101,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log(`[classify-document] Start: file="${fileName}", type="${fileType}", id=${statementId}`);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get existing sections for this object
     const { data: sectionsData } = await supabase
       .from("material_sections")
       .select("id, name")
@@ -119,7 +114,7 @@ Deno.serve(async (req) => {
 
     const existingSections: ExistingSection[] = (sectionsData || []) as ExistingSection[];
 
-    // Check learned rules first
+    // Check learned rules
     const { data: rulesData } = await supabase
       .from("classification_rules")
       .select("pattern, section_name, doc_type")
@@ -134,6 +129,13 @@ Deno.serve(async (req) => {
     let confidence = 0;
     let method = "none";
 
+    const isExcel = fileType === "xlsx" || (fileName || "").toLowerCase().endsWith(".xlsx") || (fileName || "").toLowerCase().endsWith(".xls");
+
+    // For Excel files, default doc type to "statement" (most common for xlsx in this context)
+    if (isExcel && docType === "statement") {
+      console.log(`[classify-document] Excel file detected, will skip AI analysis`);
+    }
+
     // Step 0: Check learned rules
     for (const rule of rules) {
       if (baseName.includes(rule.pattern.toLowerCase())) {
@@ -146,6 +148,7 @@ Deno.serve(async (req) => {
           docType = rule.doc_type || docType;
           confidence = 0.95;
           method = "learned_rule";
+          console.log(`[classify-document] Matched by learned rule: section="${sectionName}", docType="${docType}"`);
           break;
         }
       }
@@ -159,25 +162,25 @@ Deno.serve(async (req) => {
         sectionName = fileResult.sectionName;
         confidence = fileResult.confidence;
         method = "filename";
+        console.log(`[classify-document] Matched by filename: section="${sectionName}", confidence=${confidence}`);
       }
     }
 
-    // Step 2: AI classification (if confidence still low and PDF available)
-    if (confidence < 0.5 && fileUrl) {
+    // Step 2: AI classification — ONLY for PDFs with low confidence
+    if (confidence < 0.5 && fileUrl && !isExcel) {
       const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
       if (lovableApiKey) {
         try {
-          // Download first few KB of PDF for analysis
+          console.log(`[classify-document] Attempting AI classification for PDF`);
           const pdfResponse = await fetch(fileUrl, {
-            headers: { Range: "bytes=0-524288" }, // First 512KB
+            headers: { Range: "bytes=0-524288" },
           });
 
           if (pdfResponse.ok) {
             const pdfArrayBuffer = await pdfResponse.arrayBuffer();
             const pdfBase64 = btoa(
               new Uint8Array(pdfArrayBuffer).reduce(
-                (data, byte) => data + String.fromCharCode(byte),
-                ""
+                (data, byte) => data + String.fromCharCode(byte), ""
               )
             );
 
@@ -214,9 +217,7 @@ Deno.serve(async (req) => {
                         { type: "text", text: prompt },
                         {
                           type: "image_url",
-                          image_url: {
-                            url: `data:application/pdf;base64,${pdfBase64}`,
-                          },
+                          image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
                         },
                       ],
                     },
@@ -229,59 +230,50 @@ Deno.serve(async (req) => {
 
             if (aiResponse.ok) {
               const aiData = await aiResponse.json();
-              let content =
-                aiData.choices?.[0]?.message?.content || "{}";
-              content = content
-                .replace(/```json\s*/g, "")
-                .replace(/```\s*/g, "")
-                .trim();
+              let content = aiData.choices?.[0]?.message?.content || "{}";
+              content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
               try {
                 const aiResult = JSON.parse(content);
+                console.log(`[classify-document] AI result: section="${aiResult.section_name}", docType="${aiResult.doc_type}", confidence=${aiResult.confidence}`);
                 if (aiResult.section_name && aiResult.confidence > 0.5) {
                   const matchedSection = existingSections.find(
                     (s) =>
-                      s.name.toLowerCase() ===
-                        aiResult.section_name.toLowerCase() ||
-                      s.name
-                        .toLowerCase()
-                        .includes(aiResult.section_name.toLowerCase()) ||
-                      aiResult.section_name
-                        .toLowerCase()
-                        .includes(s.name.toLowerCase())
+                      s.name.toLowerCase() === aiResult.section_name.toLowerCase() ||
+                      s.name.toLowerCase().includes(aiResult.section_name.toLowerCase()) ||
+                      aiResult.section_name.toLowerCase().includes(s.name.toLowerCase())
                   );
                   sectionId = matchedSection?.id || null;
                   sectionName = aiResult.section_name;
                   docType = aiResult.doc_type || docType;
-                  confidence = aiResult.confidence * 0.8; // discount AI confidence
+                  confidence = aiResult.confidence * 0.8;
                   method = "ai";
                 }
-              } catch {
-                console.warn("Failed to parse AI response:", content);
+              } catch (parseErr) {
+                console.error("[classify-document] Failed to parse AI response:", content, parseErr);
               }
+            } else {
+              const errText = await aiResponse.text();
+              console.error(`[classify-document] AI request failed: ${aiResponse.status} ${errText}`);
             }
+          } else {
+            console.error(`[classify-document] Failed to fetch PDF: ${pdfResponse.status}`);
           }
         } catch (aiErr) {
-          console.warn("AI classification failed:", aiErr);
+          console.error("[classify-document] AI classification error:", aiErr);
         }
+      } else {
+        console.warn("[classify-document] No LOVABLE_API_KEY, skipping AI");
       }
     }
 
-    // Determine classification status
-    const classificationStatus =
-      confidence >= 0.5 ? "classified" : "unclassified";
+    const classificationStatus = confidence >= 0.5 ? "classified" : "unclassified";
 
-    // If classified with high confidence, find the target folder
     let targetFolderId: string | null = null;
     let targetSectionId = sectionId;
 
     if (sectionId && confidence >= 0.5) {
-      // Find the "Работы и материалы" folder for this section (for statements)
-      // or "Общие документы" for other types
-      const folderType =
-        docType === "statement" || docType === "kp"
-          ? "materials"
-          : "general_docs";
+      const folderType = docType === "statement" || docType === "kp" ? "materials" : "general_docs";
 
       const { data: foldersData } = await supabase
         .from("material_folders")
@@ -295,7 +287,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the statement with classification results
     const updateData: Record<string, any> = {
       classification_status: classificationStatus,
       detected_doc_type: docType,
@@ -306,10 +297,9 @@ Deno.serve(async (req) => {
       updateData.section_id = targetSectionId;
     }
 
-    await supabase
-      .from("material_statements")
-      .update(updateData)
-      .eq("id", statementId);
+    await supabase.from("material_statements").update(updateData).eq("id", statementId);
+
+    console.log(`[classify-document] Done: status="${classificationStatus}", section="${sectionName}", method="${method}", confidence=${confidence}`);
 
     return new Response(
       JSON.stringify({
@@ -325,13 +315,10 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[classify-document] Fatal error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
