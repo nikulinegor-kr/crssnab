@@ -392,9 +392,9 @@ export function IncomingUploads({
                     <TableRow key={file.id}>
                       <TableCell className="flex items-center gap-2">
                         {file.fileType === "pdf" ? (
-                          <FileText className="h-4 w-4 text-red-500 flex-shrink-0" />
+                          <FileText className="h-4 w-4 text-destructive flex-shrink-0" />
                         ) : (
-                          <FileSpreadsheet className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <FileSpreadsheet className="h-4 w-4 text-primary flex-shrink-0" />
                         )}
                         <span className="truncate max-w-[300px]">{file.fileName}</span>
                       </TableCell>
