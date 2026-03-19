@@ -265,8 +265,55 @@ export function IncomingUploads({
   const [reviewSearch, setReviewSearch] = useState("");
   const [manualSectionDialog, setManualSectionDialog] = useState<IncomingFile | null>(null);
   const [manualSectionId, setManualSectionId] = useState<string>("");
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const objectSections = sections.filter((s) => s.object_id === objectId);
+
+  // ── Load previously uploaded files from DB ──
+  const { data: savedFiles } = useQuery({
+    queryKey: ["incoming-files-history", orgId, objectId, year],
+    queryFn: async () => {
+      const { data, error } = await (supabase
+        .from("material_statements" as any)
+        .select("id, file_name, file_url, file_type, is_recognized, classification_status, section_id, folder_id, detected_doc_type")
+        .eq("organization_id", orgId)
+        .eq("object_id", objectId)
+        .eq("year", year)
+        .is("folder_id", null)
+        .order("created_at", { ascending: false }) as any);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!orgId && !!objectId,
+  });
+
+  // Merge saved files into local state (only once on load)
+  useMemo(() => {
+    if (!savedFiles || savedFiles.length === 0 || historyLoaded) return;
+    const existingIds = new Set(files.map(f => f.id));
+    const newFiles: IncomingFile[] = savedFiles
+      .filter((sf: any) => !existingIds.has(sf.id))
+      .map((sf: any) => {
+        const section = sections.find(s => s.id === sf.section_id);
+        return {
+          id: sf.id,
+          fileName: sf.file_name,
+          fileUrl: sf.file_url,
+          fileType: sf.file_type,
+          status: sf.classification_status === "done" ? "done" as const
+            : sf.is_recognized ? "ready" as const
+            : "error" as const,
+          sectionId: sf.section_id,
+          sectionName: section?.name || null,
+          folderId: sf.folder_id,
+          docType: sf.detected_doc_type,
+        };
+      });
+    if (newFiles.length > 0) {
+      setFiles(prev => [...newFiles, ...prev]);
+    }
+    setHistoryLoaded(true);
+  }, [savedFiles, historyLoaded]);
 
   const updateFile = useCallback((id: string, updates: Partial<IncomingFile>) => {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
@@ -397,8 +444,12 @@ export function IncomingUploads({
 
       if (extractedRows.length === 0) {
         updateFile(statementId, { status: "error", error: "Не удалось извлечь строки из файла" });
+        await (supabase.from("material_statements" as any).update({ classification_status: "error" }).eq("id", statementId) as any);
         return;
       }
+
+      // Mark as recognized in DB
+      await (supabase.from("material_statements" as any).update({ is_recognized: true }).eq("id", statementId) as any);
 
       // 4. CLASSIFY — determine section
       updateFile(statementId, { status: "classifying" });
@@ -425,6 +476,13 @@ export function IncomingUploads({
           folderId = classifyData.folderId;
           docType = classifyData.docType;
           confidence = classifyData.confidence || 0;
+          // Persist classification results
+          await (supabase.from("material_statements" as any).update({
+            section_id: sectionId,
+            folder_id: folderId,
+            detected_doc_type: docType,
+            classification_status: "classified",
+          }).eq("id", statementId) as any);
         }
       } catch (classifyErr: any) {
         console.warn(`[IncomingUploads] Classification failed for "${file.name}":`, classifyErr.message);
@@ -506,8 +564,11 @@ export function IncomingUploads({
       }
 
       updateFile(file.id, { status: "done" });
+      // Persist done status to DB
+      await (supabase.from("material_statements" as any).update({ classification_status: "done" }).eq("id", file.id) as any);
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       queryClient.invalidateQueries({ queryKey: ["incoming-existing-items"] });
+      queryClient.invalidateQueries({ queryKey: ["incoming-files-history"] });
 
       toast({
         title: "Изменения применены",
