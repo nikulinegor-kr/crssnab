@@ -405,6 +405,21 @@ Deno.serve(async (req) => {
 
     // Insert new items
     if (materials.length > 0) {
+      const WORK_KEYWORDS = [
+        "монтаж", "устройство", "установка", "сборка", "укладка", "демонтаж",
+        "прокладка", "подключение", "наладка", "испытание", "пуск",
+        "разборка", "ремонт", "замена", "окраска", "грунтовка",
+        "штукатурка", "бетонирование", "армирование", "сварка",
+        "изоляция", "утепление", "облицовка", "отделка",
+      ];
+      const classifyType = (name: string) => {
+        const lower = (name || "").toLowerCase();
+        for (const kw of WORK_KEYWORDS) {
+          if (lower.includes(kw)) return "work";
+        }
+        return "material";
+      };
+
       const items = materials.map((m: any, idx: number) => ({
         statement_id: statementId,
         organization_id: organizationId,
@@ -414,6 +429,7 @@ Deno.serve(async (req) => {
         unit: m.unit || null,
         quantity: m.quantity,
         mass_per_unit: m.mass_per_unit,
+        item_type: classifyType(m.name),
       }));
 
       const { error: insertError } = await supabase
