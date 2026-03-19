@@ -145,7 +145,6 @@ function findBestMatch(kpName: string, kpUnit: string | null, projectItems: Mate
   }
   return { item: bestItem, score: bestScore };
 }
-}
 
 export default function MaterialStatementsPage() {
   const { currentOrgId: orgId } = useCurrentOrganization();
