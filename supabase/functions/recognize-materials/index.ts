@@ -405,15 +405,46 @@ Deno.serve(async (req) => {
 
     // Insert new items
     if (materials.length > 0) {
+      const { data: statementMeta } = await supabase
+        .from("material_statements")
+        .select("file_name, display_name")
+        .eq("id", statementId)
+        .single();
+
+      const statementText = `${statementMeta?.display_name || ""} ${statementMeta?.file_name || ""}`.toLowerCase();
+      const forceWorkByStatementName =
+        statementText.includes(".вр") ||
+        statementText.includes("ведомость работ") ||
+        statementText.includes("в.р.");
+
       const WORK_KEYWORDS = [
         "монтаж", "устройство", "установка", "сборка", "укладка", "демонтаж",
         "прокладка", "подключение", "наладка", "испытание", "пуск",
         "разборка", "ремонт", "замена", "окраска", "грунтовка",
-        "штукатурка", "бетонирование", "армирование", "сварка",
+        "штукатурка", "бетонирование", "обетонирование", "армирование", "сварка",
         "изоляция", "утепление", "облицовка", "отделка",
       ];
-      const classifyType = (name: string) => {
-        const lower = (name || "").toLowerCase();
+
+      const WORK_PHRASES = [
+        "площадь фактическая",
+        "площадь приведенная",
+        "в том числе по маркам",
+      ];
+
+      const classifyType = (name: string, index: number, rows: any[]) => {
+        if (forceWorkByStatementName) return "work";
+
+        const lower = (name || "").toLowerCase().trim();
+        const prev = (rows[index - 1]?.name || "").toLowerCase();
+
+        if (WORK_PHRASES.some((phrase) => lower.includes(phrase))) {
+          return "work";
+        }
+
+        if (prev.includes("в том числе") && /(сталь|гост|ту)/.test(lower)) {
+          return "work";
+        }
+
         for (const kw of WORK_KEYWORDS) {
           if (lower.includes(kw)) return "work";
         }
@@ -429,7 +460,7 @@ Deno.serve(async (req) => {
         unit: m.unit || null,
         quantity: m.quantity,
         mass_per_unit: m.mass_per_unit,
-        item_type: classifyType(m.name),
+        item_type: classifyType(m.name, idx, materials),
       }));
 
       const { error: insertError } = await supabase

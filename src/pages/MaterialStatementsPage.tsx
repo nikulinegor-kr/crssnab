@@ -683,7 +683,7 @@ export default function MaterialStatementsPage() {
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
       quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
       price, total_price: totalPrice, price_source: price != null ? "manual" : "file",
-      item_type: classifyItemType(newItem.name),
+      item_type: selectedItemTypeFilter === "work" ? "work" : classifyItemType(newItem.name),
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
