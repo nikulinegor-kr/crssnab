@@ -633,7 +633,7 @@ export default function MaterialStatementsPage() {
       statement_id: targetStId, organization_id: orgId, row_number: maxRow + 1,
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
       quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
-      price, total_price: totalPrice,
+      price, total_price: totalPrice, price_source: price != null ? "manual" : "file",
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
