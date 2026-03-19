@@ -28,6 +28,7 @@ import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
+import { FinalStatement } from "@/components/materials/FinalStatement";
 
 // Types
 interface MaterialStatement {
