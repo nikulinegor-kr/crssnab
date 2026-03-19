@@ -926,7 +926,16 @@ export default function MaterialStatementsPage() {
 
       {/* Right Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {!selectedFolderId ? (
+        {selectedIncomingObjectId && selectedYear ? (
+          <IncomingUploads
+            orgId={orgId!}
+            objectId={selectedIncomingObjectId}
+            objectName={objects.find(o => o.id === selectedIncomingObjectId)?.name || "Объект"}
+            year={selectedYear}
+            sections={sections as any}
+            folders={folders as any}
+          />
+        ) : !selectedFolderId ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <FileText className="h-12 w-12" />
             <p>Выберите папку из дерева слева</p>
