@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronDown, FolderOpen, FileText, Upload, Sparkles,
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
-  Wrench, Archive, Layers, ShoppingCart, Check,
+  Wrench, Archive, Layers, ShoppingCart, Check, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ import { CreateProcurementDialog } from "@/components/materials/CreateProcuremen
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
+import { HighlightText } from "@/components/HighlightText";
 
 // Types
 interface MaterialStatement {
@@ -211,6 +212,8 @@ export default function MaterialStatementsPage() {
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [procurementDialogOpen, setProcurementDialogOpen] = useState(false);
   const [procurementMode, setProcurementMode] = useState<"selected" | "all">("all");
+  const [materialsSearch, setMaterialsSearch] = useState("");
+  const [kpSearch, setKpSearch] = useState("");
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -1208,6 +1211,19 @@ export default function MaterialStatementsPage() {
               );
             })()}
 
+            {/* Search bar for materials */}
+            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="🔎 Найти материал..."
+                  value={materialsSearch}
+                  onChange={e => setMaterialsSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            )}
+
             {/* Per-file material sections - only for materials folders */}
             {selectedFolderId && isMaterialsFolder && (
               <>
@@ -1215,7 +1231,16 @@ export default function MaterialStatementsPage() {
                   <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                 ) : (
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
-                    const stItems = itemsByStatement.get(st.id) || [];
+                    const rawStItems = itemsByStatement.get(st.id) || [];
+                    const stItems = materialsSearch.trim()
+                      ? (() => {
+                          const words = materialsSearch.toLowerCase().trim().split(/\s+/);
+                          return rawStItems.filter(i => {
+                            const text = `${i.name} ${i.type_mark || ""}`.toLowerCase();
+                            return words.every(w => text.includes(w));
+                          });
+                        })()
+                      : rawStItems;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
@@ -1317,8 +1342,8 @@ export default function MaterialStatementsPage() {
                                       }} />
                                     </TableCell>
                                     <TableCell>{idx + 1}</TableCell>
-                                    <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : item.name}</TableCell>
-                                    <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : item.type_mark || "—"}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
@@ -1633,7 +1658,17 @@ export default function MaterialStatementsPage() {
                   Не найдено: <strong>{kpMatches.filter(m => !m.matchedItemId).length}</strong>
                 </Badge>
               </div>
-              <ScrollArea className="flex-1 max-h-[55vh]">
+              {/* KP Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="🔎 Найти материал..."
+                  value={kpSearch}
+                  onChange={e => setKpSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              <ScrollArea className="flex-1 max-h-[50vh]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1646,7 +1681,12 @@ export default function MaterialStatementsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {kpMatches.map((match, idx) => {
+                    {kpMatches.filter(match => {
+                      if (!kpSearch.trim()) return true;
+                      const words = kpSearch.toLowerCase().trim().split(/\s+/);
+                      const text = `${match.kpItem.name} ${match.matchedItemName || ""}`.toLowerCase();
+                      return words.every(w => text.includes(w));
+                    }).map((match, idx) => {
                       const isMatched = !!match.matchedItemId;
                       const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;
                       return (
@@ -1655,7 +1695,9 @@ export default function MaterialStatementsPage() {
                           isMatched && priceChanged && "bg-emerald-50 dark:bg-emerald-950/20",
                         )}>
                           <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                          <TableCell className="text-sm font-medium">{match.kpItem.name}</TableCell>
+                          <TableCell className="text-sm font-medium">
+                            <HighlightText text={match.kpItem.name} searchQuery={kpSearch} />
+                          </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {isMatched && match.oldPrice != null ? formatPrice(match.oldPrice) : "—"}
                           </TableCell>

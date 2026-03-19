@@ -5,9 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Upload, Loader2, Check, AlertTriangle, File, Trash2,
   MoveRight, Sparkles, FileText, FileSpreadsheet, RefreshCw,
-  ArrowRight, X,
+  ArrowRight, X, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { HighlightText } from "@/components/HighlightText";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -260,6 +262,7 @@ export function IncomingUploads({
   const [isDragOver, setIsDragOver] = useState(false);
   const [files, setFiles] = useState<IncomingFile[]>([]);
   const [reviewFile, setReviewFile] = useState<IncomingFile | null>(null);
+  const [reviewSearch, setReviewSearch] = useState("");
   const [manualSectionDialog, setManualSectionDialog] = useState<IncomingFile | null>(null);
   const [manualSectionId, setManualSectionId] = useState<string>("");
 
@@ -496,6 +499,7 @@ export function IncomingUploads({
         await (supabase.from("material_statement_items" as any).update({
           price: match.extracted.price,
           total_price: totalPrice,
+          source_file_id: file.id,
         }).eq("id", match.matchedItemId) as any);
 
         updated++;
@@ -515,6 +519,93 @@ export function IncomingUploads({
       console.error(`[IncomingUploads] Apply error:`, err.message);
       updateFile(file.id, { status: "error", error: err.message });
       toast({ title: "Ошибка применения", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // ── Re-process file — re-extract data from file ──
+  const handleReprocess = async (file: IncomingFile) => {
+    updateFile(file.id, { status: "recognizing", extractedRows: undefined, matches: undefined, error: undefined });
+
+    try {
+      let extractedRows: ExtractedRow[] = [];
+
+      if (file.fileType === "xlsx") {
+        // Re-fetch file and parse
+        const response = await fetch(file.fileUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = (await import("xlsx")).read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json: any[] = (await import("xlsx")).utils.sheet_to_json(sheet, { defval: "" });
+
+        const cols = Object.keys(json[0] || {});
+        const findCol = (patterns: string[]): string | null => {
+          for (const col of cols) { const lc = col.toLowerCase(); for (const p of patterns) { if (lc.includes(p)) return col; } } return null;
+        };
+        const nameCol = findCol(["наименование", "название", "name", "материал", "товар", "позиция"]);
+        const unitCol = findCol(["ед", "unit", "единица", "изм"]);
+        const qtyCol = findCol(["кол", "quantity", "количество"]);
+        const priceCol = findCol(["цена", "price", "стоимость за ед", "цена за ед"]);
+        const totalCol = findCol(["сумма", "стоимость", "total", "итого", "всего"]);
+        const parseNum = (val: any): number | null => {
+          if (val === null || val === undefined || val === "") return null;
+          if (typeof val === "number") return Number.isFinite(val) ? val : null;
+          const s = String(val).replace(/\s/g, "").replace(",", ".");
+          const n = Number(s);
+          return Number.isFinite(n) ? n : null;
+        };
+        if (nameCol) {
+          extractedRows = json
+            .map(row => ({
+              name: String(row[nameCol] || "").trim(),
+              unit: unitCol ? (String(row[unitCol] || "").trim() || null) : null,
+              quantity: qtyCol ? parseNum(row[qtyCol]) : null,
+              price: priceCol ? parseNum(row[priceCol]) : null,
+              total_price: totalCol ? parseNum(row[totalCol]) : null,
+            }))
+            .filter(r => r.name.length > 0);
+        }
+      } else {
+        const { data: recData, error: recError } = await supabase.functions.invoke("recognize-materials", {
+          body: { fileUrl: file.fileUrl, statementId: file.id, organizationId: orgId },
+        });
+        if (recError) throw recError;
+        const materials = recData?.materials || [];
+        extractedRows = materials.map((m: any) => ({
+          name: m.name || "",
+          unit: m.unit || null,
+          quantity: m.quantity ?? null,
+          price: null,
+          total_price: null,
+        }));
+      }
+
+      if (extractedRows.length === 0) {
+        updateFile(file.id, { status: "error", error: "Не удалось извлечь строки из файла" });
+        return;
+      }
+
+      // Re-match
+      const matches: MatchResult[] = extractedRows.map(row => {
+        const { item, score } = findBestMatch(row, existingItems);
+        const matched = score >= 0.6 && item;
+        return {
+          extracted: row,
+          matchedItemId: matched ? item!.id : null,
+          matchedItemName: matched ? item!.name : null,
+          oldPrice: matched ? item!.price : null,
+          oldQuantity: matched ? item!.quantity : null,
+          similarity: score,
+          status: (matched ? "updated" : "not_found") as "updated" | "not_found",
+        };
+      });
+
+      updateFile(file.id, { status: "ready", extractedRows, matches });
+      toast({ title: "Перераспознано", description: `Извлечено ${extractedRows.length} строк` });
+    } catch (err: any) {
+      updateFile(file.id, { status: "error", error: err.message });
+      toast({ title: "Ошибка перераспознавания", description: err.message, variant: "destructive" });
     }
   };
 
@@ -593,8 +684,16 @@ export function IncomingUploads({
 
   const hasActiveFiles = files.length > 0;
 
-  // Stats for review dialog
+  // Stats and filtered matches for review dialog
   const reviewMatches = reviewFile?.matches || [];
+  const filteredReviewMatches = useMemo(() => {
+    if (!reviewSearch.trim()) return reviewMatches;
+    const words = reviewSearch.toLowerCase().trim().split(/\s+/);
+    return reviewMatches.filter(m => {
+      const text = `${m.extracted.name} ${m.extracted.unit || ""} ${m.matchedItemName || ""}`.toLowerCase();
+      return words.every(w => text.includes(w));
+    });
+  }, [reviewMatches, reviewSearch]);
   const updatedCount = reviewMatches.filter(m => m.matchedItemId && m.extracted.price != null).length;
   const notFoundCount = reviewMatches.filter(m => !m.matchedItemId).length;
   const noPriceCount = reviewMatches.filter(m => m.matchedItemId && m.extracted.price == null).length;
@@ -727,9 +826,17 @@ export function IncomingUploads({
                               <Button
                                 size="sm"
                                 variant="default"
-                                onClick={() => setReviewFile(file)}
+                                onClick={() => { setReviewFile(file); setReviewSearch(""); }}
                               >
                                 <ArrowRight className="h-3 w-3 mr-1" /> Просмотр
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3" />
                               </Button>
                               {!file.sectionName && (
                                 <Button
@@ -745,19 +852,42 @@ export function IncomingUploads({
                               )}
                             </>
                           )}
-                          {file.status === "error" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeFile(file.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
                           {file.status === "done" && (
-                            <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => { setReviewFile(file); setReviewSearch(""); }}>
+                                <ArrowRight className="h-3 w-3 mr-1" /> Просмотр
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => removeFile(file.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          {file.status === "error" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleReprocess(file)}
+                                title="Перераспознать"
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" /> Повторить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeFile(file.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -819,7 +949,18 @@ export function IncomingUploads({
             )}
           </div>
 
-          <ScrollArea className="max-h-[55vh]">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="🔎 Найти материал..."
+              value={reviewSearch}
+              onChange={e => setReviewSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+
+          <ScrollArea className="max-h-[50vh]">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -833,7 +974,7 @@ export function IncomingUploads({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reviewMatches.map((match, idx) => (
+                {filteredReviewMatches.map((match, idx) => (
                   <TableRow
                     key={idx}
                     className={cn(
@@ -842,13 +983,19 @@ export function IncomingUploads({
                     )}
                   >
                     <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-sm">{match.extracted.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm">
+                      <HighlightText text={match.extracted.name} searchQuery={reviewSearch} />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{match.extracted.unit || "—"}</TableCell>
                     <TableCell className="text-right font-mono text-sm">
                       {match.extracted.price != null ? match.extracted.price.toLocaleString("ru-RU") : "—"}
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm">
-                      {match.matchedItemName || <span className="text-muted-foreground italic">—</span>}
+                      {match.matchedItemName ? (
+                        <HighlightText text={match.matchedItemName} searchQuery={reviewSearch} />
+                      ) : (
+                        <span className="text-muted-foreground italic">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm text-muted-foreground">
                       {match.oldPrice != null ? match.oldPrice.toLocaleString("ru-RU") : "—"}
@@ -864,6 +1011,13 @@ export function IncomingUploads({
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredReviewMatches.length === 0 && reviewSearch && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                      Ничего не найдено по запросу «{reviewSearch}»
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </ScrollArea>

@@ -1033,6 +1033,7 @@ export type Database = {
           procurement_status: string
           quantity: number | null
           row_number: number
+          source_file_id: string | null
           statement_id: string
           supplier: string | null
           total_price: number | null
@@ -1051,6 +1052,7 @@ export type Database = {
           procurement_status?: string
           quantity?: number | null
           row_number?: number
+          source_file_id?: string | null
           statement_id: string
           supplier?: string | null
           total_price?: number | null
@@ -1069,6 +1071,7 @@ export type Database = {
           procurement_status?: string
           quantity?: number | null
           row_number?: number
+          source_file_id?: string | null
           statement_id?: string
           supplier?: string | null
           total_price?: number | null
@@ -1089,6 +1092,13 @@ export type Database = {
             columns: ["procurement_request_id"]
             isOneToOne: false
             referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_statement_items_source_file_id_fkey"
+            columns: ["source_file_id"]
+            isOneToOne: false
+            referencedRelation: "material_statements"
             referencedColumns: ["id"]
           },
           {
