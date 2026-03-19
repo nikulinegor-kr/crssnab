@@ -1839,6 +1839,56 @@ export default function MaterialStatementsPage() {
         objectName={selectedObj?.name}
         sectionName={selectedSection?.name}
       />
+
+      {/* Bulk Price Dialog */}
+      <Dialog open={bulkPriceOpen} onOpenChange={open => { if (!open) setBulkPriceOpen(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Задать цену для {selectedItemIds.size} позиций</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              autoFocus
+              placeholder="Введите цену (например: 1500.50)"
+              value={bulkPriceValue}
+              onChange={e => setBulkPriceValue(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleBulkPriceSet(); }}
+            />
+            <p className="text-xs text-muted-foreground">Цена будет установлена для всех выбранных позиций. Стоимость пересчитается автоматически.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkPriceOpen(false)}>Отмена</Button>
+            <Button onClick={handleBulkPriceSet} disabled={!bulkPriceValue.trim()}>
+              <DollarSign className="h-4 w-4 mr-1" /> Применить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* KP Manual Price Overwrite Confirmation */}
+      <Dialog open={kpManualItems.length > 0 && !kpOverwriteManual} onOpenChange={open => { if (!open) setKpManualItems([]); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Перезаписать вручную заданные цены?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              В КП найдено {kpManualItems.length} позиций, для которых цена была задана вручную. Перезаписать их ценами из КП?
+            </p>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Hand className="h-3 w-3 text-amber-500" /> Ручные цены будут заменены
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setKpManualItems([]); /* apply without manual items */ setKpOverwriteManual(false); handleApplyKp(); }}>
+              Не перезаписывать
+            </Button>
+            <Button onClick={() => { setKpOverwriteManual(true); setTimeout(() => handleApplyKp(), 0); }}>
+              Перезаписать все
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
