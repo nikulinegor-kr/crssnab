@@ -573,10 +573,47 @@ export default function MaterialStatementsPage() {
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
       price: item.price, total_price: totalPrice, supplier: item.supplier,
+      price_source: item.price_source || "file",
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
     toast({ title: "Обновлено" });
+  };
+
+  // Inline price edit — click on price cell to edit quickly
+  const handleInlinePriceSave = async (itemId: string) => {
+    const parsed = parseFloat(inlinePriceValue.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(parsed)) {
+      setInlinePriceEditId(null);
+      return;
+    }
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) return;
+    const totalPrice = item.quantity != null ? item.quantity * parsed : null;
+    await (supabase.from("material_statement_items" as any).update({
+      price: parsed, total_price: totalPrice, price_source: "manual",
+    }).eq("id", itemId) as any);
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setInlinePriceEditId(null);
+    toast({ title: "Цена обновлена" });
+  };
+
+  // Bulk price set for selected items
+  const handleBulkPriceSet = async () => {
+    const parsed = parseFloat(bulkPriceValue.replace(/\s/g, "").replace(",", "."));
+    if (isNaN(parsed) || selectedItemIds.size === 0) return;
+    for (const id of selectedItemIds) {
+      const item = allItems.find(i => i.id === id);
+      if (!item) continue;
+      const totalPrice = item.quantity != null ? item.quantity * parsed : null;
+      await (supabase.from("material_statement_items" as any).update({
+        price: parsed, total_price: totalPrice, price_source: "manual",
+      }).eq("id", id) as any);
+    }
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    setBulkPriceOpen(false);
+    setBulkPriceValue("");
+    toast({ title: `Цена обновлена для ${selectedItemIds.size} позиций` });
   };
 
   const handleDeleteItem = async (id: string) => {
