@@ -747,6 +747,20 @@ export default function MaterialStatementsPage() {
   };
 
   const handleApplyKp = async () => {
+    // Check if any matched items have manual prices
+    const manualPriceItemIds = kpMatches
+      .filter(m => m.matchedItemId && m.kpItem.price != null)
+      .filter(m => {
+        const item = allItems.find(i => i.id === m.matchedItemId);
+        return item?.price_source === "manual";
+      })
+      .map(m => m.matchedItemId!);
+
+    if (manualPriceItemIds.length > 0 && !kpOverwriteManual) {
+      setKpManualItems(manualPriceItemIds);
+      return; // Show confirmation dialog
+    }
+
     setKpApplying(true);
     let applied = 0;
     const log: KpApplyLog[] = [];
@@ -761,9 +775,15 @@ export default function MaterialStatementsPage() {
           log.push({ materialName: match.kpItem.name, oldPrice: null, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
           continue;
         }
+        // Skip manual price items if user declined overwrite
+        if (item.price_source === "manual" && !kpOverwriteManual && kpManualItems.length > 0) {
+          log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "not_found", fileName: kpFileName });
+          continue;
+        }
         const totalPrice = item.quantity != null ? item.quantity * match.kpItem.price : null;
         await (supabase.from("material_statement_items" as any).update({
           price: match.kpItem.price, total_price: totalPrice, supplier: kpSupplier || undefined,
+          price_source: "kp",
         }).eq("id", match.matchedItemId) as any);
         log.push({ materialName: item.name, oldPrice: item.price, newPrice: match.kpItem.price, status: "updated", fileName: kpFileName });
         applied++;
@@ -773,6 +793,7 @@ export default function MaterialStatementsPage() {
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       toast({ title: `КП применено`, description: `Обновлено: ${applied}, Не найдено: ${notFound}` });
       setKpDialogOpen(false); setKpMatches([]);
+      setKpOverwriteManual(false); setKpManualItems([]);
       console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
