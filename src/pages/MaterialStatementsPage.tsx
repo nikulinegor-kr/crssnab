@@ -1211,6 +1211,19 @@ export default function MaterialStatementsPage() {
               );
             })()}
 
+            {/* Search bar for materials */}
+            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="🔎 Найти материал..."
+                  value={materialsSearch}
+                  onChange={e => setMaterialsSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            )}
+
             {/* Per-file material sections - only for materials folders */}
             {selectedFolderId && isMaterialsFolder && (
               <>
@@ -1218,7 +1231,16 @@ export default function MaterialStatementsPage() {
                   <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                 ) : (
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
-                    const stItems = itemsByStatement.get(st.id) || [];
+                    const rawStItems = itemsByStatement.get(st.id) || [];
+                    const stItems = materialsSearch.trim()
+                      ? (() => {
+                          const words = materialsSearch.toLowerCase().trim().split(/\s+/);
+                          return rawStItems.filter(i => {
+                            const text = `${i.name} ${i.type_mark || ""}`.toLowerCase();
+                            return words.every(w => text.includes(w));
+                          });
+                        })()
+                      : rawStItems;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
