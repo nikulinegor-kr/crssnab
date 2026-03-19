@@ -833,11 +833,22 @@ export function IncomingUploads({
               <Sparkles className="h-4 w-4 text-primary" />
               Загруженные файлы ({files.length})
             </CardTitle>
+            {selectedIncomingIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Выбрано: {selectedIncomingIds.size}</span>
+                <Button size="sm" variant="destructive" onClick={handleBulkDeleteIncoming}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Удалить ({selectedIncomingIds.size})
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={files.length > 0 && selectedIncomingIds.size === files.length} onCheckedChange={toggleSelectAllIncoming} />
+                  </TableHead>
                   <TableHead>Файл</TableHead>
                   <TableHead>Извлечено строк</TableHead>
                   <TableHead>Раздел</TableHead>
