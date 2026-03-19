@@ -1480,7 +1480,7 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
                                 <TableHead className="w-28">Закупка</TableHead>
-                                <TableHead className="w-24">Вид</TableHead>
+                                
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1539,27 +1539,6 @@ export default function MaterialStatementsPage() {
                                       {item.procurement_status === "delivered" && (
                                         <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
                                       )}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Select
-                                        value={isEditing ? (editingItem.item_type || "material") : (item.item_type || "material")}
-                                        onValueChange={async (val) => {
-                                          if (isEditing) {
-                                            setEditingItem({ ...editingItem, item_type: val });
-                                          } else {
-                                            await (supabase.from("material_statement_items" as any).update({ item_type: val }).eq("id", item.id) as any);
-                                            queryClient.invalidateQueries({ queryKey: ["material-items"] });
-                                          }
-                                        }}
-                                      >
-                                        <SelectTrigger className="h-7 text-xs w-[100px]">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="material">Материал</SelectItem>
-                                          <SelectItem value="work">Работа</SelectItem>
-                                        </SelectContent>
-                                      </Select>
                                     </TableCell>
                                     <TableCell>
                                       <div className="flex gap-1">
