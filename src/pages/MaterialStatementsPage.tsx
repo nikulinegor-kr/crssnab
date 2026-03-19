@@ -961,6 +961,14 @@ export default function MaterialStatementsPage() {
             sections={sections as any}
             folders={folders as any}
           />
+        ) : selectedFinalObjectId ? (
+          <FinalStatement
+            orgId={orgId!}
+            objectId={selectedFinalObjectId}
+            objectName={objects.find(o => o.id === selectedFinalObjectId)?.name || "Объект"}
+            sections={sections as any}
+            folders={folders as any}
+          />
         ) : !selectedFolderId ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <FileText className="h-12 w-12" />
