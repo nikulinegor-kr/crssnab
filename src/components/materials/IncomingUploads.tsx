@@ -559,6 +559,7 @@ export function IncomingUploads({
           price: match.extracted.price,
           total_price: totalPrice,
           source_file_id: file.id,
+          price_source: "kp",
         }).eq("id", match.matchedItemId) as any);
 
         updated++;
