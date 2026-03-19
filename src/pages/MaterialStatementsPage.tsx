@@ -384,11 +384,12 @@ export default function MaterialStatementsPage() {
   const toggleSection = (secId: string) => setExpandedSections(prev => { const n = new Set(prev); n.has(secId) ? n.delete(secId) : n.add(secId); return n; });
   const toggleFolder = (folderId: string) => setExpandedFolders(prev => { const n = new Set(prev); n.has(folderId) ? n.delete(folderId) : n.add(folderId); return n; });
 
-  const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string) => {
+  const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string, itemType: "material" | "work" = "material") => {
     setSelectedYear(year);
     setSelectedObjectId(objectId);
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
+    setSelectedItemTypeFilter(itemType);
     setSelectedIncomingObjectId(null);
     setSelectedFinalObjectId(null);
     setSelectedStatementId(null);
