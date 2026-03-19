@@ -1168,6 +1168,18 @@ export default function MaterialStatementsPage() {
                     </span>
                   )}
                 </p>
+                {isMaterialsFolder && selectedSectionId && (() => {
+                  const prog = sectionProgress.get(selectedSectionId);
+                  if (!prog || prog.total === 0) return null;
+                  return (
+                    <div className="flex items-center gap-3 mt-2">
+                      <Progress value={prog.percent} className={cn("h-2 w-48", getProgressBarClass(prog.percent))} />
+                      <span className={cn("text-sm font-medium", getProgressColor(prog.percent))}>
+                        {prog.percent}% ({prog.priced} / {prog.total})
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex gap-2">
                 {downloadingZip && <Loader2 className="h-4 w-4 animate-spin" />}
