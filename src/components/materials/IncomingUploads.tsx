@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HighlightText } from "@/components/HighlightText";
+import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -749,11 +750,9 @@ export function IncomingUploads({
   const reviewMatches = reviewFile?.matches || [];
   const filteredReviewMatches = useMemo(() => {
     if (!reviewSearch.trim()) return reviewMatches;
-    const words = reviewSearch.toLowerCase().trim().split(/\s+/);
-    return reviewMatches.filter(m => {
-      const text = `${m.extracted.name} ${m.extracted.unit || ""} ${m.matchedItemName || ""}`.toLowerCase();
-      return words.every(w => text.includes(w));
-    });
+    return reviewMatches.filter(m =>
+      matchesMaterialSearch(reviewSearch, m.extracted.name, m.extracted.unit, m.matchedItemName)
+    );
   }, [reviewMatches, reviewSearch]);
   const updatedCount = reviewMatches.filter(m => m.matchedItemId && m.extracted.price != null).length;
   const notFoundCount = reviewMatches.filter(m => !m.matchedItemId).length;

@@ -31,6 +31,7 @@ import { ConsolidatedExcelExportButton } from "@/components/materials/Consolidat
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
+import { matchesMaterialSearch } from "@/lib/materialSearch";
 
 // Types
 interface MaterialStatement {
@@ -1233,13 +1234,7 @@ export default function MaterialStatementsPage() {
                   currentStatements.filter(st => st.is_recognized || (itemsByStatement.get(st.id) || []).length > 0).map(st => {
                     const rawStItems = itemsByStatement.get(st.id) || [];
                     const stItems = materialsSearch.trim()
-                      ? (() => {
-                          const words = materialsSearch.toLowerCase().trim().split(/\s+/);
-                          return rawStItems.filter(i => {
-                            const text = `${i.name} ${i.type_mark || ""}`.toLowerCase();
-                            return words.every(w => text.includes(w));
-                          });
-                        })()
+                      ? rawStItems.filter(i => matchesMaterialSearch(materialsSearch, i.name, i.type_mark))
                       : rawStItems;
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
@@ -1683,9 +1678,7 @@ export default function MaterialStatementsPage() {
                   <TableBody>
                     {kpMatches.filter(match => {
                       if (!kpSearch.trim()) return true;
-                      const words = kpSearch.toLowerCase().trim().split(/\s+/);
-                      const text = `${match.kpItem.name} ${match.matchedItemName || ""}`.toLowerCase();
-                      return words.every(w => text.includes(w));
+                      return matchesMaterialSearch(kpSearch, match.kpItem.name, match.matchedItemName);
                     }).map((match, idx) => {
                       const isMatched = !!match.matchedItemId;
                       const priceChanged = isMatched && match.kpItem.price != null && match.oldPrice !== match.kpItem.price;
