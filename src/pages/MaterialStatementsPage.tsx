@@ -1222,7 +1222,7 @@ export default function MaterialStatementsPage() {
                     </span>
                   )}
                 </p>
-                {isMaterialsFolder && selectedSectionId && (() => {
+                {isMaterialsFolder && selectedItemTypeFilter === "material" && selectedSectionId && (() => {
                   const prog = sectionProgress.get(selectedSectionId);
                   if (!prog || prog.total === 0) return null;
                   return (
