@@ -65,6 +65,7 @@ interface MaterialItem {
   supplier: string | null;
   procurement_request_id: string | null;
   procurement_status: string;
+  price_source: string;
 }
 
 interface MaterialObject {
