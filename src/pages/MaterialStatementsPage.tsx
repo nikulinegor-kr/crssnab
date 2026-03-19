@@ -333,6 +333,7 @@ export default function MaterialStatementsPage() {
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
     setSelectedIncomingObjectId(null);
+    setSelectedFinalObjectId(null);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
@@ -344,6 +345,19 @@ export default function MaterialStatementsPage() {
     setSelectedSectionId(null);
     setSelectedFolderId(null);
     setSelectedIncomingObjectId(objectId);
+    setSelectedFinalObjectId(null);
+    setSelectedStatementId(null);
+    setSelectedFileIds(new Set());
+    setSelectedItemIds(new Set());
+  };
+
+  const selectFinal = (year: number, objectId: string) => {
+    setSelectedYear(year);
+    setSelectedObjectId(objectId);
+    setSelectedSectionId(null);
+    setSelectedFolderId(null);
+    setSelectedIncomingObjectId(null);
+    setSelectedFinalObjectId(objectId);
     setSelectedStatementId(null);
     setSelectedFileIds(new Set());
     setSelectedItemIds(new Set());
