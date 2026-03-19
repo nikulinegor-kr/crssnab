@@ -94,7 +94,8 @@ interface MaterialFolder {
 }
 
 interface KpItem { name: string; unit: string | null; price: number | null; }
-interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; similarity: number; autoMatched: boolean; }
+interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; }
+interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; }
 
 // Fuzzy matching utility
 function levenshtein(a: string, b: string): number {
