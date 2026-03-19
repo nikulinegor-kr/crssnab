@@ -1537,14 +1537,24 @@ export default function MaterialStatementsPage() {
                                 </TableHead>
                                 <TableHead className="w-12">№</TableHead>
                                 <TableHead>Наименование</TableHead>
-                                <TableHead>Тип / марка</TableHead>
-                                <TableHead className="w-20">Ед. изм.</TableHead>
+                                {selectedItemTypeFilter === "material" && (
+                                  <>
+                                    <TableHead>Тип / марка</TableHead>
+                                    <TableHead className="w-20">Ед. изм.</TableHead>
+                                  </>
+                                )}
                                 <TableHead className="w-24">Кол-во</TableHead>
-                                <TableHead className="w-24">Масса (кг)</TableHead>
-                                <TableHead className="w-24">Цена</TableHead>
-                                <TableHead className="w-28">Стоимость</TableHead>
-                                <TableHead className="w-28">Закупка</TableHead>
-                                
+                                {selectedItemTypeFilter === "material" && (
+                                  <>
+                                    <TableHead className="w-24">Масса (кг)</TableHead>
+                                    <TableHead className="w-24">Цена</TableHead>
+                                    <TableHead className="w-28">Стоимость</TableHead>
+                                    <TableHead className="w-28">Закупка</TableHead>
+                                  </>
+                                )}
+                                {selectedItemTypeFilter === "work" && (
+                                  <TableHead className="w-20">Ед. изм.</TableHead>
+                                )}
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
