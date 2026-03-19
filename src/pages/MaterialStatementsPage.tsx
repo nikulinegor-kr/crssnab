@@ -433,7 +433,7 @@ export default function MaterialStatementsPage() {
     queryClient.invalidateQueries({ queryKey: ["material-objects"] });
     queryClient.invalidateQueries({ queryKey: ["material-sections"] });
     queryClient.invalidateQueries({ queryKey: ["material-folders"] });
-    if (selectedObjectId === objId) { setSelectedObjectId(null); setSelectedYear(null); setSelectedFolderId(null); setSelectedSectionId(null); }
+    if (selectedObjectId === objId || selectedIncomingObjectId === objId || selectedFinalObjectId === objId) { setSelectedObjectId(null); setSelectedYear(null); setSelectedFolderId(null); setSelectedSectionId(null); setSelectedIncomingObjectId(null); setSelectedFinalObjectId(null); setSelectedStatementId(null); }
     toast({ title: "Объект удалён" });
   };
 
