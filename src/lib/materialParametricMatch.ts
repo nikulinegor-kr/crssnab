@@ -43,17 +43,16 @@ function normalizeDimSeparators(s: string): string {
   return s
     .replace(/х/gi, "x")
     .replace(/[*×]/g, "x")
-    // Replace inch marks (" and ") followed by space+digit as dimension separator
-    .replace(/(\d)[""]\s*(\d)/g, "$1x$2")
+    // Replace inch marks (ASCII ", curly " ", and ″) followed by space+digit as dimension separator
+    .replace(/(\d)["""″]\s*(\d)/g, "$1x$2")
     // Remove standalone inch marks after numbers
-    .replace(/(\d)[""]/g, "$1")
+    .replace(/(\d)["""″]/g, "$1")
     // Replace comma with dot in numbers
     .replace(/(\d),(\d)/g, "$1.$2")
     // Normalize "NUMBER x NUMBER"
     .replace(/(\d)\s+x\s+(\d)/g, "$1x$2")
     // Two numbers separated only by whitespace (after type word context) → treat as dimensions
     .replace(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/g, (match, a, b, offset, str) => {
-      // Only join if preceded by a type keyword or 'x'-like context
       const before = str.substring(Math.max(0, offset - 20), offset).toLowerCase();
       const hasType = Object.values(TYPE_KEYWORDS).flat().some(v => before.includes(v));
       if (hasType) return `${a}x${b}`;
