@@ -1362,16 +1362,25 @@ export default function MaterialStatementsPage() {
               );
             })()}
 
-            {/* Search bar for materials */}
+            {/* Search bar and type filter for materials */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="🔎 Найти материал..."
-                  value={materialsSearch}
-                  onChange={e => setMaterialsSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="🔎 Найти материал..."
+                    value={materialsSearch}
+                    onChange={e => setMaterialsSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
+                <Tabs value={itemTypeFilter} onValueChange={v => setItemTypeFilter(v as any)} className="flex-shrink-0">
+                  <TabsList className="h-9">
+                    <TabsTrigger value="all" className="text-xs px-3">Все</TabsTrigger>
+                    <TabsTrigger value="material" className="text-xs px-3">Материалы</TabsTrigger>
+                    <TabsTrigger value="work" className="text-xs px-3">Работы</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
             )}
 
