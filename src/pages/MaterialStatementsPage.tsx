@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
@@ -273,6 +274,81 @@ export default function MaterialStatementsPage() {
     }
     return map;
   }, [allItems]);
+
+  // Section progress: fetch items for all material folders across all sections
+  const materialFolderIds = useMemo(() =>
+    folders.filter(f => f.type === 'materials').map(f => f.id),
+    [folders]
+  );
+
+  const materialStatementsBySectionFolder = useMemo(() => {
+    const map = new Map<string, string[]>(); // folderId -> statementIds
+    for (const fId of materialFolderIds) {
+      const stIds = statements.filter(s => s.folder_id === fId).map(s => s.id);
+      if (stIds.length > 0) map.set(fId, stIds);
+    }
+    return map;
+  }, [statements, materialFolderIds]);
+
+  const allMaterialStatementIds = useMemo(() => {
+    const ids: string[] = [];
+    materialStatementsBySectionFolder.forEach(stIds => ids.push(...stIds));
+    return ids;
+  }, [materialStatementsBySectionFolder]);
+
+  const { data: sectionProgressItems = [] } = useQuery({
+    queryKey: ["section-progress-items", orgId, allMaterialStatementIds.join(",")],
+    queryFn: async () => {
+      if (!orgId || allMaterialStatementIds.length === 0) return [];
+      const PAGE_SIZE = 1000;
+      let all: { id: string; statement_id: string; price: number | null }[] = [];
+      let from = 0;
+      while (true) {
+        const { data } = await (supabase
+          .from("material_statement_items" as any)
+          .select("id, statement_id, price")
+          .in("statement_id", allMaterialStatementIds.slice(from === 0 ? 0 : 0, undefined))
+          .range(from, from + PAGE_SIZE - 1) as any);
+        const chunk = (data || []) as { id: string; statement_id: string; price: number | null }[];
+        all = all.concat(chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all;
+    },
+    enabled: !!orgId && allMaterialStatementIds.length > 0,
+  });
+
+  // Compute progress per section
+  const sectionProgress = useMemo(() => {
+    const map = new Map<string, { total: number; priced: number; percent: number }>();
+    for (const folder of folders.filter(f => f.type === 'materials' && f.section_id)) {
+      const sectionId = folder.section_id!;
+      const stIds = statements.filter(s => s.folder_id === folder.id).map(s => s.id);
+      const items = sectionProgressItems.filter(i => stIds.includes(i.statement_id));
+      const existing = map.get(sectionId) || { total: 0, priced: 0, percent: 0 };
+      existing.total += items.length;
+      existing.priced += items.filter(i => i.price != null && i.price > 0).length;
+      map.set(sectionId, existing);
+    }
+    map.forEach((val, key) => {
+      val.percent = val.total > 0 ? Math.round((val.priced / val.total) * 100) : 0;
+      map.set(key, val);
+    });
+    return map;
+  }, [folders, statements, sectionProgressItems]);
+
+  const getProgressColor = (percent: number) => {
+    if (percent >= 70) return "text-green-600";
+    if (percent >= 30) return "text-yellow-600";
+    return "text-red-500";
+  };
+
+  const getProgressBarClass = (percent: number) => {
+    if (percent >= 70) return "[&>div]:bg-green-500";
+    if (percent >= 30) return "[&>div]:bg-yellow-500";
+    return "[&>div]:bg-red-500";
+  };
 
   // Build tree: Year → Objects → Sections → Folders
   const tree = useMemo(() => {
@@ -971,7 +1047,17 @@ export default function MaterialStatementsPage() {
                               >
                                 {expandedSections.has(secEntry.section.id) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                                 <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                <span className="truncate flex-1 text-left text-xs font-medium">{secEntry.section.name}</span>
+                                <span className="truncate flex-1 text-left text-xs font-medium">
+                                  {secEntry.section.name}
+                                  {(() => {
+                                    const prog = sectionProgress.get(secEntry.section.id);
+                                    return prog && prog.total > 0 ? (
+                                      <span className={cn("ml-1", getProgressColor(prog.percent))}>
+                                        ({prog.percent}%)
+                                      </span>
+                                    ) : null;
+                                  })()}
+                                </span>
                                 <div className="flex gap-0.5 opacity-0 group-hover/sec:opacity-100 flex-shrink-0">
                                   <span title="Скачать архив раздела" onClick={e => { e.stopPropagation(); handleDownloadZip('section', secEntry.section.id); }}>
                                     <Archive className="h-3 w-3 text-muted-foreground cursor-pointer hover:text-foreground" />
@@ -1082,6 +1168,18 @@ export default function MaterialStatementsPage() {
                     </span>
                   )}
                 </p>
+                {isMaterialsFolder && selectedSectionId && (() => {
+                  const prog = sectionProgress.get(selectedSectionId);
+                  if (!prog || prog.total === 0) return null;
+                  return (
+                    <div className="flex items-center gap-3 mt-2">
+                      <Progress value={prog.percent} className={cn("h-2 w-48", getProgressBarClass(prog.percent))} />
+                      <span className={cn("text-sm font-medium", getProgressColor(prog.percent))}>
+                        {prog.percent}% ({prog.priced} / {prog.total})
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex gap-2">
                 {downloadingZip && <Loader2 className="h-4 w-4 animate-spin" />}
