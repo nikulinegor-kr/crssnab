@@ -265,7 +265,8 @@ export default function MaterialStatementsPage() {
         if (chunk.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
-      return all;
+      // Filter out works — this is a materials statement page
+      return all.filter(i => (i.item_type || "material") === "material");
     },
     enabled: !!orgId && !!selectedFolderId && currentStatements.length > 0,
   });
