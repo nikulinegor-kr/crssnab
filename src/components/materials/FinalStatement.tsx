@@ -379,7 +379,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             <CardHeader className="py-4 flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-3">
                 <span>Общий итог по объекту</span>
-                <Badge variant="secondary">{allItems.length} позиций</Badge>
+                <Badge variant="secondary">{materialItems.length} позиций</Badge>
                 <Badge variant="outline">
                   {objectSections.filter(s => (itemsBySection.get(s.id) || []).length > 0).length} разделов
                 </Badge>
