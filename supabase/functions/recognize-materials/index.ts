@@ -29,9 +29,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fast-fail by size without downloading file into function memory.
-    // This prevents WORKER_LIMIT crashes on large PDFs.
-    const MAX_PDF_BYTES = 300 * 1024 * 1024;
+    // Hard cap for inline PDF recognition to prevent edge worker OOM.
+    // Gemini via OpenAI-compatible endpoint requires PDF as base64 data URL.
+    const MAX_PDF_BYTES = 15 * 1024 * 1024;
     let fileSize: number | null = null;
 
     try {
@@ -41,15 +41,61 @@ Deno.serve(async (req) => {
         fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
       }
     } catch {
-      // Some origins block HEAD; continue without hard size pre-check.
+      // Some hosts can block HEAD; we'll enforce limit while streaming download.
     }
 
     if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 300 МБ). Сожмите или разбейте PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 15 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Stream download with byte cap so we never allocate oversized buffers in memory.
+    const pdfResponse = await fetch(fileUrl);
+    if (!pdfResponse.ok || !pdfResponse.body) {
+      return new Response(
+        JSON.stringify({ error: "Failed to download PDF" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const reader = pdfResponse.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      totalBytes += value.length;
+      if (totalBytes > MAX_PDF_BYTES) {
+        await reader.cancel();
+        return new Response(
+          JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 15 МБ). Сожмите или разбейте PDF." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      chunks.push(value);
+    }
+
+    const pdfBytes = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      pdfBytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    // Convert to base64 in chunks to avoid call-stack overflow on very large arrays.
+    const CHUNK = 4096;
+    const parts: string[] = [];
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
+      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
+    }
+    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
@@ -82,7 +128,7 @@ Deno.serve(async (req) => {
 
 ВАЖНО:
 - Если в документе НЕСКОЛЬКО таблиц (например «Спецификация металла» и «Спецификация бетонных блоков»), извлеки материалы из ВСЕХ таблиц.
-- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м", то name = «Труба 3 — Средняя секция трубы L=5,50м».
+- Строки-заголовки подтаблиц (например «Труба 3") записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м", то name = «Труба 3 — Средняя секция трубы L=5,50м».
 - НЕ объединяй строки самостоятельно (кроме подзаголовков выше).
 - Верни СЫРЫЕ строки в том же порядке, как в таблице.
 - СНАЧАЛА извлеки номер позиции из столбца «Позиция» / «№ п.п.» для КАЖДОЙ строки.
@@ -112,7 +158,6 @@ Deno.serve(async (req) => {
 КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
-    // Cloud-to-cloud: pass PDF URL directly to AI gateway to avoid loading PDF into edge memory.
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -128,7 +173,7 @@ Deno.serve(async (req) => {
               { type: "text", text: prompt },
               {
                 type: "image_url",
-                image_url: { url: fileUrl },
+                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
               },
             ],
           },
