@@ -27,6 +27,7 @@ interface AggItem {
   total_price: number | null;
   procurement_status: string;
   supplier: string | null;
+  item_type: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
