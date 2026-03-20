@@ -86,6 +86,19 @@ function extractType(name: string): string | null {
 }
 
 /**
+ * Extract material grade/class from name (e.g. A400, A240, A500, С235, 25Г2С)
+ */
+function extractGrade(name: string): string | null {
+  // Rebar classes: A240, A400, A500, A600, etc.
+  const rebarMatch = name.match(/\b(A[-]?\d{3,4}[СC]?)\b/i);
+  if (rebarMatch) return rebarMatch[1].toUpperCase();
+  // Steel grades: С235, С245, С345, 09Г2С, 25Г2С
+  const steelMatch = name.match(/\b([СC]\d{3})\b/i);
+  if (steelMatch) return steelMatch[1].toUpperCase();
+  return null;
+}
+
+/**
  * Extract dimension parameters from material name.
  * Patterns: "159x4.5", "159х4,5", "25 x 2.5", "Ø159x4.5", '159" 5,0'
  */
