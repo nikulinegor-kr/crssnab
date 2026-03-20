@@ -1501,7 +1501,7 @@ export default function MaterialStatementsPage() {
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
                                 const isProcured = item.procurement_status && item.procurement_status !== "none";
                                 return (
-                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
+                                  <TableRow key={item.id} className={cn(isProcured && "bg-muted/40", item.item_type === "work" && "opacity-60", item.item_type === "customer_supply" && "opacity-60")}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
