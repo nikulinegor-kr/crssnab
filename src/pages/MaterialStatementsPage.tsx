@@ -1450,7 +1450,8 @@ export default function MaterialStatementsPage() {
                             )}
                             {stItems.length > 0 && (
                               <Button size="sm" variant="outline" onClick={() => {
-                                const d = stItems.map((m, i) => ({
+                                const exportItems = stItems.filter(m => m.item_type === "material" || !m.item_type);
+                                const d = exportItems.map((m, i) => ({
                                   "№": i + 1, "Наименование": m.name, "Тип / марка": m.type_mark || "",
                                   "Ед. изм.": m.unit || "", "Кол-во": m.quantity ?? "", "Масса (кг)": m.mass_per_unit ?? "",
                                   "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
