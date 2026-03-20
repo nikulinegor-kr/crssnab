@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
               { type: "text", text: prompt },
               {
                 type: "image_url",
-                image_url: { url: fileUrl },
+                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
               },
             ],
           },
