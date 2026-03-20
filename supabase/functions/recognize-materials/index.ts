@@ -29,7 +29,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Pass URL directly to avoid memory limits from base64 conversion
+    // Download PDF and convert to base64 data URL (gateway requires data URL for PDFs)
+    const pdfResponse = await fetch(fileUrl);
+    if (!pdfResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Failed to download PDF" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const pdfBytes = new Uint8Array(await pdfResponse.arrayBuffer());
+    
+    // Encode to base64 in chunks to avoid stack overflow on large files
+    let pdfBase64 = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
+      pdfBase64 += String.fromCharCode(...slice);
+    }
+    pdfBase64 = btoa(pdfBase64);
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
@@ -93,7 +111,7 @@ Deno.serve(async (req) => {
               { type: "text", text: prompt },
               {
                 type: "image_url",
-                image_url: { url: fileUrl },
+                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
               },
             ],
           },
