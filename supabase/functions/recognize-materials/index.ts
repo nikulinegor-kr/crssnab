@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PDFDocument } from "npm:pdf-lib@1.17.1";
+import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,73 +31,212 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Hard cap for inline PDF recognition to prevent edge worker OOM.
-    // Gemini via OpenAI-compatible endpoint requires PDF as base64 data URL.
-    const MAX_PDF_BYTES = 15 * 1024 * 1024;
-    let fileSize: number | null = null;
+    const MAX_SOURCE_PDF_BYTES = 45 * 1024 * 1024;
+    const AI_TARGET_CHUNK_BYTES = 10 * 1024 * 1024;
+    const AI_HARD_CHUNK_BYTES = 12 * 1024 * 1024;
 
-    try {
-      const headResponse = await fetch(fileUrl, { method: "HEAD" });
-      if (headResponse.ok) {
-        const contentLengthHeader = headResponse.headers.get("content-length");
-        fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
-      }
-    } catch {
-      // Some hosts can block HEAD; we'll enforce limit while streaming download.
-    }
+    const sourceTooLargeError = "Файл слишком большой для распознавания в облаке (макс. 45 МБ). Сожмите или разбейте PDF.";
 
-    if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
-      return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 15 МБ). Сожмите или разбейте PDF." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const downloadPdfWithCap = async (url: string, maxBytes: number): Promise<Uint8Array> => {
+      let headSize: number | null = null;
 
-    // Stream download with byte cap so we never allocate oversized buffers in memory.
-    const pdfResponse = await fetch(fileUrl);
-    if (!pdfResponse.ok || !pdfResponse.body) {
-      return new Response(
-        JSON.stringify({ error: "Failed to download PDF" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const reader = pdfResponse.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let totalBytes = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-
-      totalBytes += value.length;
-      if (totalBytes > MAX_PDF_BYTES) {
-        await reader.cancel();
-        return new Response(
-          JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 15 МБ). Сожмите или разбейте PDF." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      try {
+        const headResponse = await fetch(url, { method: "HEAD" });
+        if (headResponse.ok) {
+          const header = headResponse.headers.get("content-length");
+          headSize = header ? Number(header) : null;
+        }
+      } catch {
+        // Some hosts can block HEAD.
       }
 
-      chunks.push(value);
-    }
+      if (headSize !== null && Number.isFinite(headSize) && headSize > maxBytes) {
+        throw new Error(sourceTooLargeError);
+      }
 
-    const pdfBytes = new Uint8Array(totalBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      pdfBytes.set(chunk, offset);
-      offset += chunk.length;
-    }
+      const pdfResponse = await fetch(url);
+      if (!pdfResponse.ok || !pdfResponse.body) {
+        throw new Error("Failed to download PDF");
+      }
 
-    // Convert to base64 in chunks to avoid call-stack overflow on very large arrays.
-    const CHUNK = 4096;
-    const parts: string[] = [];
-    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
-      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
-      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
-    }
-    const pdfBase64 = btoa(parts.join(""));
+      const lengthHeader = pdfResponse.headers.get("content-length");
+      const declaredSize = lengthHeader ? Number(lengthHeader) : null;
+      if (declaredSize !== null && Number.isFinite(declaredSize) && declaredSize > maxBytes) {
+        throw new Error(sourceTooLargeError);
+      }
+
+      const reader = pdfResponse.body.getReader();
+
+      if (declaredSize !== null && Number.isFinite(declaredSize) && declaredSize > 0) {
+        const bytes = new Uint8Array(declaredSize);
+        let offset = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!value) continue;
+
+          offset += value.length;
+          if (offset > maxBytes) {
+            await reader.cancel();
+            throw new Error(sourceTooLargeError);
+          }
+          bytes.set(value, offset - value.length);
+        }
+
+        return offset === bytes.length ? bytes : bytes.slice(0, offset);
+      }
+
+      const chunks: Uint8Array[] = [];
+      let totalBytes = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+
+        totalBytes += value.length;
+        if (totalBytes > maxBytes) {
+          await reader.cancel();
+          throw new Error(sourceTooLargeError);
+        }
+
+        chunks.push(value);
+      }
+
+      const pdfBytes = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        pdfBytes.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return pdfBytes;
+    };
+
+    const splitPdfForAi = async (pdfBytes: Uint8Array): Promise<Uint8Array[]> => {
+      if (pdfBytes.byteLength <= AI_HARD_CHUNK_BYTES) {
+        return [pdfBytes];
+      }
+
+      const sourceDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const totalPages = sourceDoc.getPageCount();
+
+      if (totalPages <= 1) {
+        throw new Error("PDF содержит слишком тяжёлую страницу для распознавания в облаке. Сожмите файл.");
+      }
+
+      const estimatedChunks = Math.max(2, Math.ceil(pdfBytes.byteLength / AI_TARGET_CHUNK_BYTES));
+      const initialPagesPerChunk = Math.max(1, Math.ceil(totalPages / estimatedChunks));
+      const chunks: Uint8Array[] = [];
+
+      let pageCursor = 0;
+      while (pageCursor < totalPages) {
+        const remaining = totalPages - pageCursor;
+        let candidatePages = Math.min(initialPagesPerChunk, remaining);
+
+        let selectedBytes: Uint8Array | null = null;
+        let selectedPageCount = 0;
+
+        while (candidatePages > 0) {
+          const chunkDoc = await PDFDocument.create();
+          const pageIndexes = Array.from({ length: candidatePages }, (_, i) => pageCursor + i);
+          const pages = await chunkDoc.copyPages(sourceDoc, pageIndexes);
+          for (const page of pages) chunkDoc.addPage(page);
+
+          const candidateBytes = await chunkDoc.save({ useObjectStreams: true });
+          if (candidateBytes.byteLength <= AI_HARD_CHUNK_BYTES) {
+            selectedBytes = candidateBytes;
+            selectedPageCount = candidatePages;
+            break;
+          }
+
+          candidatePages -= 1;
+        }
+
+        if (!selectedBytes || selectedPageCount === 0) {
+          throw new Error("Не удалось безопасно разбить PDF для распознавания. Сожмите файл и повторите.");
+        }
+
+        chunks.push(selectedBytes);
+        pageCursor += selectedPageCount;
+      }
+
+      return chunks;
+    };
+
+    const parseRowsWithRecovery = (text: string): any[] | null => {
+      const start = text.indexOf("[");
+      if (start === -1) return null;
+      const fromArray = text.slice(start);
+
+      const lastBracket = fromArray.lastIndexOf("]");
+      if (lastBracket > 0) {
+        const fullCandidate = fromArray.slice(0, lastBracket + 1);
+        try {
+          const parsed = JSON.parse(fullCandidate);
+          return Array.isArray(parsed) ? parsed : null;
+        } catch {
+          // Continue to recovery.
+        }
+      }
+
+      let inString = false;
+      let escaped = false;
+      let objectDepth = 0;
+      const completeObjectEndIndices: number[] = [];
+
+      for (let i = 0; i < fromArray.length; i++) {
+        const ch = fromArray[i];
+
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (ch === "\\") {
+            escaped = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
+          continue;
+        }
+
+        if (ch === '"') {
+          inString = true;
+          continue;
+        }
+
+        if (ch === "{") {
+          objectDepth++;
+        } else if (ch === "}" && objectDepth > 0) {
+          objectDepth--;
+          if (objectDepth === 0) completeObjectEndIndices.push(i);
+        }
+      }
+
+      for (let idx = completeObjectEndIndices.length - 1; idx >= 0; idx--) {
+        const end = completeObjectEndIndices[idx];
+        const candidate = `${fromArray.slice(0, end + 1).replace(/,\s*$/, "")}]`;
+        try {
+          const parsed = JSON.parse(candidate);
+          return Array.isArray(parsed) ? parsed : null;
+        } catch {
+          // Try earlier object boundary.
+        }
+      }
+
+      return null;
+    };
+
+    const normalizeAiJson = (text: string): string => {
+      let normalized = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+      const fixLocaleCommas = (value: string): string =>
+        value.replace(/(:\s*-?)(\d+),(\d+)(\s*[,\}\]\s\n\r])/g, "$1$2.$3$4");
+
+      const firstPass = fixLocaleCommas(normalized);
+      normalized = firstPass === normalized ? normalized : fixLocaleCommas(firstPass);
+
+      return normalized;
+    };
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
@@ -158,145 +299,78 @@ Deno.serve(async (req) => {
 КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
-              },
-            ],
-          },
-        ],
-        temperature: 0.1,
-        max_tokens: 64000,
-      }),
-    });
+    const recognizeChunk = async (
+      chunkBytes: Uint8Array,
+      chunkIndex: number,
+      totalChunks: number,
+    ): Promise<any[]> => {
+      const pdfBase64 = encodeBase64(chunkBytes);
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI API error:", errText);
-      return new Response(
-        JSON.stringify({ error: "AI recognition failed", details: errText }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const aiData = await aiResponse.json();
-    const finishReason = aiData.choices?.[0]?.finish_reason;
-    let content = aiData.choices?.[0]?.message?.content || "[]";
-
-    // Clean markdown wrapping if present
-    content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-
-    // Fix Russian-locale commas in numeric values BEFORE parsing
-    // Uses capture groups instead of lookbehind for maximum compatibility
-    const fixLocaleCommas = (text: string): string => {
-      // Match: colon + optional whitespace + optional minus + digits,digits
-      // followed by comma/}/]/whitespace (JSON value context)
-      return text.replace(/(:\s*-?)(\d+),(\d+)(\s*[,\}\]\s\n\r])/g, '$1$2.$3$4');
-    };
-
-    // Apply multiple passes to catch nested cases
-    let prev = content;
-    content = fixLocaleCommas(content);
-    if (content !== prev) {
-      content = fixLocaleCommas(content);
-    }
-
-    const parseRowsWithRecovery = (text: string): any[] | null => {
-      const start = text.indexOf("[");
-      if (start === -1) return null;
-      const fromArray = text.slice(start);
-
-      // 1) Direct parse if complete array exists
-      const lastBracket = fromArray.lastIndexOf("]");
-      if (lastBracket > 0) {
-        const fullCandidate = fromArray.slice(0, lastBracket + 1);
-        try {
-          const parsed = JSON.parse(fullCandidate);
-          return Array.isArray(parsed) ? parsed : null;
-        } catch {
-          // continue to recovery
-        }
-      }
-
-      // 2) Recover by cutting to last complete top-level object in array
-      let inString = false;
-      let escaped = false;
-      let objectDepth = 0;
-      const completeObjectEndIndices: number[] = [];
-
-      for (let i = 0; i < fromArray.length; i++) {
-        const ch = fromArray[i];
-
-        if (inString) {
-          if (escaped) {
-            escaped = false;
-          } else if (ch === "\\") {
-            escaped = true;
-          } else if (ch === '"') {
-            inString = false;
-          }
-          continue;
-        }
-
-        if (ch === '"') {
-          inString = true;
-          continue;
-        }
-
-        if (ch === "{") {
-          objectDepth++;
-        } else if (ch === "}" && objectDepth > 0) {
-          objectDepth--;
-          if (objectDepth === 0) completeObjectEndIndices.push(i);
-        }
-      }
-
-      for (let idx = completeObjectEndIndices.length - 1; idx >= 0; idx--) {
-        const end = completeObjectEndIndices[idx];
-        const candidate = `${fromArray.slice(0, end + 1).replace(/,\s*$/, "")}]`;
-        try {
-          const parsed = JSON.parse(candidate);
-          return Array.isArray(parsed) ? parsed : null;
-        } catch {
-          // try an earlier object boundary
-        }
-      }
-
-      return null;
-    };
-
-    const parsedRows = parseRowsWithRecovery(content);
-    if (!parsedRows) {
-      console.error("Failed to parse AI response:", content.substring(0, 500), { finishReason });
-      return new Response(
-        JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000), finishReason }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const rawRows: any[] = parsedRows;
-    if (finishReason && finishReason !== "stop") {
-      console.warn("AI response may be truncated, recovered partial JSON", {
-        finishReason,
-        recoveredCount: rawRows.length,
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${lovableApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
+                },
+              ],
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 64000,
+        }),
       });
-    }
 
-    if (!Array.isArray(rawRows)) {
-      rawRows = [];
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error("AI API error:", errText, { chunkIndex, totalChunks });
+        throw new Error(`AI recognition failed on part ${chunkIndex}/${totalChunks}`);
+      }
+
+      const aiData = await aiResponse.json();
+      const finishReason = aiData.choices?.[0]?.finish_reason;
+      const normalizedContent = normalizeAiJson(aiData.choices?.[0]?.message?.content || "[]");
+      const parsedRows = parseRowsWithRecovery(normalizedContent);
+
+      if (!parsedRows) {
+        console.error("Failed to parse AI response", {
+          chunkIndex,
+          totalChunks,
+          finishReason,
+          preview: normalizedContent.substring(0, 500),
+        });
+        throw new Error(`Failed to parse AI response on part ${chunkIndex}/${totalChunks}`);
+      }
+
+      if (finishReason && finishReason !== "stop") {
+        console.warn("AI response may be truncated, recovered partial JSON", {
+          chunkIndex,
+          totalChunks,
+          finishReason,
+          recoveredCount: parsedRows.length,
+        });
+      }
+
+      return parsedRows;
+    };
+
+    const pdfBytes = await downloadPdfWithCap(fileUrl, MAX_SOURCE_PDF_BYTES);
+    const pdfChunks = await splitPdfForAi(pdfBytes);
+
+    const rawRows: any[] = [];
+    for (let i = 0; i < pdfChunks.length; i++) {
+      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length);
+      rawRows.push(...chunkRows);
     }
 
     const normalizeText = (value: any): string => {
