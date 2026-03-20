@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     if (pdfBytes.length > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 50 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
