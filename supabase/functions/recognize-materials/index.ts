@@ -343,11 +343,24 @@ Deno.serve(async (req) => {
       const parsedRows = parseRowsWithRecovery(normalizedContent);
 
       if (!parsedRows) {
+        const preview = normalizedContent.substring(0, 500);
+        const noStructuredData = !normalizedContent.includes("[");
+
+        if (noStructuredData) {
+          console.warn("Chunk returned no material rows", {
+            chunkIndex,
+            totalChunks,
+            finishReason,
+            preview,
+          });
+          return [];
+        }
+
         console.error("Failed to parse AI response", {
           chunkIndex,
           totalChunks,
           finishReason,
-          preview: normalizedContent.substring(0, 500),
+          preview,
         });
         throw new Error(`Failed to parse AI response on part ${chunkIndex}/${totalChunks}`);
       }
