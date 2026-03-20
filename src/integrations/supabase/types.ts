@@ -838,6 +838,108 @@ export type Database = {
           },
         ]
       }
+      kp_supplier_prices: {
+        Row: {
+          created_at: string
+          id: string
+          kp_supplier_id: string
+          match_type: string | null
+          material_item_id: string
+          price: number | null
+          total_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kp_supplier_id: string
+          match_type?: string | null
+          material_item_id: string
+          price?: number | null
+          total_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kp_supplier_id?: string
+          match_type?: string | null
+          material_item_id?: string
+          price?: number | null
+          total_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kp_supplier_prices_kp_supplier_id_fkey"
+            columns: ["kp_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "kp_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kp_supplier_prices_material_item_id_fkey"
+            columns: ["material_item_id"]
+            isOneToOne: false
+            referencedRelation: "material_statement_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kp_suppliers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_type: string
+          file_url: string | null
+          folder_id: string
+          id: string
+          organization_id: string
+          status: string
+          supplier_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_type?: string
+          file_url?: string | null
+          folder_id: string
+          id?: string
+          organization_id: string
+          status?: string
+          supplier_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_type?: string
+          file_url?: string | null
+          folder_id?: string
+          id?: string
+          organization_id?: string
+          status?: string
+          supplier_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kp_suppliers_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "material_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kp_suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linked_requests: {
         Row: {
           created_at: string

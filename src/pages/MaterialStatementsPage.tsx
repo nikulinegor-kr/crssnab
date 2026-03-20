@@ -35,6 +35,7 @@ import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch, parseMaterialParams, isExactStructuralMatch } from "@/lib/materialParametricMatch";
+import { KpComparisonPanel } from "@/components/materials/KpComparisonPanel";
 
 // Types
 interface MaterialStatement {
@@ -1494,6 +1495,11 @@ export default function MaterialStatementsPage() {
                   className="pl-9 h-9"
                 />
               </div>
+            )}
+
+            {/* KP Comparison Panel */}
+            {selectedFolderId && isMaterialsFolder && orgId && allItems.length > 0 && (
+              <KpComparisonPanel orgId={orgId} folderId={selectedFolderId} allItems={allItems} />
             )}
 
             {/* Per-file material sections - only for materials folders */}
