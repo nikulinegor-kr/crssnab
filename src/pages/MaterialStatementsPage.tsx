@@ -177,6 +177,7 @@ export default function MaterialStatementsPage() {
   const [bulkPriceValue, setBulkPriceValue] = useState("");
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
+  const [autoFillPricesLoading, setAutoFillPricesLoading] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -891,6 +892,55 @@ export default function MaterialStatementsPage() {
     } finally { setKpApplying(false); }
   };
 
+  // Auto-fill prices from similar materials
+  const handleAutoFillPrices = async () => {
+    if (!orgId || allItems.length === 0) return;
+    setAutoFillPricesLoading(true);
+    try {
+      // Items with prices — source pool
+      const pricedItems = allItems.filter(i => i.price != null && i.price > 0 && (i.item_type === "material" || !i.item_type));
+      // Items without prices
+      const unpricedItems = allItems.filter(i => (i.price == null || i.price <= 0) && (i.item_type === "material" || !i.item_type));
+
+      if (pricedItems.length === 0) {
+        toast({ title: "Нет материалов с ценами", description: "Сначала добавьте цены вручную или через КП", variant: "destructive" });
+        return;
+      }
+      if (unpricedItems.length === 0) {
+        toast({ title: "Все материалы уже с ценами" });
+        return;
+      }
+
+      const pool = pricedItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
+      let filled = 0;
+
+      for (const item of unpricedItems) {
+        const match = findBestParametricMatch(item.name, item.unit, pool);
+        if (match && match.price != null && match.score >= 0.6) {
+          const totalPrice = item.quantity != null ? item.quantity * match.price : null;
+          await (supabase.from("material_statement_items" as any).update({
+            price: match.price,
+            total_price: totalPrice,
+            price_source: "similar",
+            supplier: pricedItems.find(p => p.id === match.itemId)?.supplier || undefined,
+          }).eq("id", item.id) as any);
+          filled++;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+      toast({
+        title: `Подтянуто цен: ${filled}`,
+        description: `Из ${unpricedItems.length} без цены. Не найдено аналогов: ${unpricedItems.length - filled}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setAutoFillPricesLoading(false);
+    }
+  };
+
   // ZIP Download
   const handleDownloadZip = async (level: 'folder' | 'section' | 'object', id: string) => {
     if (!orgId) return;
@@ -1230,6 +1280,12 @@ export default function MaterialStatementsPage() {
                     </label>
                   </Button>
                 )}
+                {isMaterialsFolder && allItems.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={handleAutoFillPrices} disabled={autoFillPricesLoading}>
+                    {autoFillPricesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                    Подтянуть цены
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
                     <Plus className="h-4 w-4 mr-1" /> Добавить файлы
@@ -1566,6 +1622,7 @@ export default function MaterialStatementsPage() {
                                           {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
                                           {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
                                           {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
+                                          {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-purple-500" /></span>}
                                         </span>
                                       )}
                                     </TableCell>
