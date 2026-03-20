@@ -275,7 +275,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">С ценами</p>
-              <p className="text-xl font-bold text-emerald-600">{allItems.filter(i => i.price != null).length}</p>
+              <p className="text-xl font-bold text-emerald-600">{materialItems.filter(i => i.price != null).length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Общая стоимость</p>
