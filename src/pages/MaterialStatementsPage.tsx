@@ -755,15 +755,39 @@ export default function MaterialStatementsPage() {
     setKpLoading(true); setKpDialogOpen(true); setKpFileName(file.name);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase();
-      const fileType = ext === "xlsx" || ext === "xls" ? "xlsx" : "pdf";
-      const path = `${orgId}/kp/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-      const { data, error } = await supabase.functions.invoke("recognize-kp", {
-        body: { fileUrl: urlData.publicUrl, fileType },
-      });
-      if (error) throw error;
+      const isExcel = ext === "xlsx" || ext === "xls";
+
+      let data: any;
+
+      if (isExcel) {
+        // Parse Excel client-side and send text to edge function
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const sheetsText: string[] = [];
+        for (const sheetName of workbook.SheetNames) {
+          const sheet = workbook.Sheets[sheetName];
+          const csv = XLSX.utils.sheet_to_csv(sheet, { FS: "\t", RS: "\n" });
+          if (csv.trim()) sheetsText.push(`=== Лист: ${sheetName} ===\n${csv}`);
+        }
+        const textContent = sheetsText.join("\n\n");
+        const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
+          body: { textContent, fileType: "xlsx" },
+        });
+        if (error) throw error;
+        data = result;
+      } else {
+        // PDF — upload and send URL
+        const path = `${orgId}/kp/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
+        const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
+          body: { fileUrl: urlData.publicUrl, fileType: "pdf" },
+        });
+        if (error) throw error;
+        data = result;
+      }
+
       const kpItems: KpItem[] = data.items || [];
       setKpSupplier(data.supplier || null);
       const matches: KpMatch[] = kpItems.map(kpItem => {
@@ -777,7 +801,6 @@ export default function MaterialStatementsPage() {
         if (finalMatchType === "parametric" && result && item) {
           console.log(`[KP Match] PARAM MATCH: ${result.matchDescription ?? `${kpItem.name} → ${item.name}`} → matched`);
         }
-        console.log(`[KP Match] MATCH TYPE: ${finalMatchType}`);
 
         return {
           kpItem,
