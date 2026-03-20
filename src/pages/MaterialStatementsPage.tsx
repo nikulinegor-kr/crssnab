@@ -892,6 +892,55 @@ export default function MaterialStatementsPage() {
     } finally { setKpApplying(false); }
   };
 
+  // Auto-fill prices from similar materials
+  const handleAutoFillPrices = async () => {
+    if (!orgId || allItems.length === 0) return;
+    setAutoFillPricesLoading(true);
+    try {
+      // Items with prices — source pool
+      const pricedItems = allItems.filter(i => i.price != null && i.price > 0 && (i.item_type === "material" || !i.item_type));
+      // Items without prices
+      const unpricedItems = allItems.filter(i => (i.price == null || i.price <= 0) && (i.item_type === "material" || !i.item_type));
+
+      if (pricedItems.length === 0) {
+        toast({ title: "Нет материалов с ценами", description: "Сначала добавьте цены вручную или через КП", variant: "destructive" });
+        return;
+      }
+      if (unpricedItems.length === 0) {
+        toast({ title: "Все материалы уже с ценами" });
+        return;
+      }
+
+      const pool = pricedItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
+      let filled = 0;
+
+      for (const item of unpricedItems) {
+        const match = findBestParametricMatch(item.name, item.unit, pool);
+        if (match && match.price != null && match.score >= 0.6) {
+          const totalPrice = item.quantity != null ? item.quantity * match.price : null;
+          await (supabase.from("material_statement_items" as any).update({
+            price: match.price,
+            total_price: totalPrice,
+            price_source: "similar",
+            supplier: pricedItems.find(p => p.id === match.itemId)?.supplier || undefined,
+          }).eq("id", item.id) as any);
+          filled++;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+      toast({
+        title: `Подтянуто цен: ${filled}`,
+        description: `Из ${unpricedItems.length} без цены. Не найдено аналогов: ${unpricedItems.length - filled}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setAutoFillPricesLoading(false);
+    }
+  };
+
   // ZIP Download
   const handleDownloadZip = async (level: 'folder' | 'section' | 'object', id: string) => {
     if (!orgId) return;
