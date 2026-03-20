@@ -29,7 +29,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Download the PDF file
+    // Fast-fail large files before downloading to avoid worker memory crashes
+    const headResponse = await fetch(fileUrl, { method: "HEAD" });
+    if (!headResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Failed to access PDF" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const MAX_PDF_BYTES = 20 * 1024 * 1024;
+    const contentLengthHeader = headResponse.headers.get("content-length");
+    const fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
+    if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Download the PDF file (safe after HEAD size check)
     const pdfResponse = await fetch(fileUrl);
     if (!pdfResponse.ok) {
       return new Response(
@@ -40,15 +59,14 @@ Deno.serve(async (req) => {
 
     const pdfArrayBuffer = await pdfResponse.arrayBuffer();
     const pdfBytes = new Uint8Array(pdfArrayBuffer);
-    
-    // Reject files over 300MB
-    if (pdfBytes.length > 300 * 1024 * 1024) {
+
+    if (pdfBytes.length > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой (макс. 300 МБ). Попробуйте сжать PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     // Convert to base64 in chunks to avoid stack overflow on spread
     const CHUNK = 4096;
     const parts: string[] = [];
@@ -89,7 +107,7 @@ Deno.serve(async (req) => {
 
 ВАЖНО:
 - Если в документе НЕСКОЛЬКО таблиц (например «Спецификация металла» и «Спецификация бетонных блоков»), извлеки материалы из ВСЕХ таблиц.
-- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м», то name = «Труба 3 — Средняя секция трубы L=5,50м».
+- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м", то name = «Труба 3 — Средняя секция трубы L=5,50м».
 - НЕ объединяй строки самостоятельно (кроме подзаголовков выше).
 - Верни СЫРЫЕ строки в том же порядке, как в таблице.
 - СНАЧАЛА извлеки номер позиции из столбца «Позиция» / «№ п.п.» для КАЖДОЙ строки.
@@ -119,7 +137,7 @@ Deno.serve(async (req) => {
 КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
-    // Call Lovable AI (Gemini for PDF/vision)
+    // Call Lovable AI (Gemini for PDF/vision) with direct URL to avoid RAM spikes
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
