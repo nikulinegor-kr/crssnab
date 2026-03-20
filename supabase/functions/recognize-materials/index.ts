@@ -247,17 +247,20 @@ Deno.serve(async (req) => {
 
     const sanitizePosition = (pos: number | null): number | null => {
       if (pos === null) return null;
-      if (!Number.isInteger(pos) || pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
-      return pos;
+      if (pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
+      // Accept decimal positions like 1.1, 2.3 — floor to integer for grouping
+      return Math.floor(pos);
     };
 
     const parsePosition = (value: any): number | null => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === "number") return sanitizePosition(value);
       const s = normalizeText(value).replace(/\u00A0/g, " ");
       if (!s) return null;
 
-      const direct = s.match(/^(\d{1,4})(?:[.)])?$/);
+      const direct = s.match(/^(\d{1,4}(?:[.,]\d+)?)(?:[.)])?$/);
       if (direct) {
-        return sanitizePosition(Number(direct[1]));
+        return sanitizePosition(parseFloat(direct[1].replace(",", ".")));
       }
 
       const embedded = s.match(/(?:^|\D)(\d{1,4})(?:\D|$)/);
