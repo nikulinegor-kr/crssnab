@@ -245,7 +245,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={exportFullExcel} disabled={allItems.length === 0}>
+          <Button onClick={exportFullExcel} disabled={materialItems.length === 0}>
             <Download className="h-4 w-4 mr-1" /> Скачать общий Excel
           </Button>
         </div>
