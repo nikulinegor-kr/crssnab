@@ -1497,6 +1497,11 @@ export default function MaterialStatementsPage() {
               </div>
             )}
 
+            {/* KP Comparison Panel */}
+            {selectedFolderId && isMaterialsFolder && orgId && allItems.length > 0 && (
+              <KpComparisonPanel orgId={orgId} folderId={selectedFolderId} allItems={allItems} />
+            )}
+
             {/* Per-file material sections - only for materials folders */}
             {selectedFolderId && isMaterialsFolder && (
               <>
