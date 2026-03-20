@@ -35,6 +35,7 @@ import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch, parseMaterialParams, isExactStructuralMatch } from "@/lib/materialParametricMatch";
+import { KpComparisonPanel } from "@/components/materials/KpComparisonPanel";
 
 // Types
 interface MaterialStatement {
