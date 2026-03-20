@@ -38,12 +38,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const MAX_PDF_BYTES = 20 * 1024 * 1024;
+    const MAX_PDF_BYTES = 50 * 1024 * 1024;
     const contentLengthHeader = headResponse.headers.get("content-length");
     const fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
     if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 50 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
