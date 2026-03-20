@@ -1622,6 +1622,7 @@ export default function MaterialStatementsPage() {
                                           {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
                                           {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
                                           {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
+                                          {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-purple-500" /></span>}
                                         </span>
                                       )}
                                     </TableCell>
