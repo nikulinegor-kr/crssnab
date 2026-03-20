@@ -39,12 +39,24 @@ Deno.serve(async (req) => {
     }
 
     const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(
-      new Uint8Array(pdfArrayBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ""
-      )
-    );
+    const pdfBytes = new Uint8Array(pdfArrayBuffer);
+    
+    // Reject files over 15MB to avoid memory issues
+    if (pdfBytes.length > 15 * 1024 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "Файл слишком большой (макс. 15 МБ). Попробуйте сжать PDF." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Convert to base64 in chunks to avoid stack overflow on spread
+    const CHUNK = 4096;
+    const parts: string[] = [];
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
+      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
+    }
+    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
