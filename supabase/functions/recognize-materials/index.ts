@@ -291,9 +291,8 @@ Deno.serve(async (req) => {
 
     const sanitizePosition = (pos: number | null): number | null => {
       if (pos === null) return null;
-      if (pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
-      // Accept decimal positions like 1.1, 2.3 — floor to integer for grouping
-      return Math.floor(pos);
+      if (!Number.isFinite(pos) || pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
+      return pos;
     };
 
     const parsePosition = (value: any): number | null => {
