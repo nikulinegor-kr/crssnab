@@ -1428,14 +1428,23 @@ export default function MaterialStatementsPage() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
                               <>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("work")}>
+                                  <Wrench className="h-4 w-4 mr-1" /> Работы
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("customer_supply")}>
+                                  <Package className="h-4 w-4 mr-1" /> Пост. заказчика
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("material")}>
+                                  <Layers className="h-4 w-4 mr-1" /> Материал
+                                </Button>
                                 <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
-                                  <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <DollarSign className="h-4 w-4 mr-1" /> Цена ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                                 </Button>
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
-                                  <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <Trash2 className="h-4 w-4 mr-1" /> Удалить
                                 </Button>
                                 <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
-                                  <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Заявка
                                 </Button>
                               </>
                             )}
