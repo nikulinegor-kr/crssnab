@@ -29,34 +29,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Download the PDF file
-    const pdfResponse = await fetch(fileUrl);
-    if (!pdfResponse.ok) {
+    // Check file metadata without loading the full PDF into memory
+    const headResponse = await fetch(fileUrl, { method: "HEAD" });
+    if (!headResponse.ok) {
       return new Response(
-        JSON.stringify({ error: "Failed to download PDF" }),
+        JSON.stringify({ error: "Failed to access PDF" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    const pdfBytes = new Uint8Array(pdfArrayBuffer);
-    
-    // Reject files over 300MB
-    if (pdfBytes.length > 300 * 1024 * 1024) {
+    const contentLengthHeader = headResponse.headers.get("content-length");
+    const fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
+
+    // Hard safety cap for extremely large files
+    if (fileSize !== null && Number.isFinite(fileSize) && fileSize > 300 * 1024 * 1024) {
       return new Response(
         JSON.stringify({ error: "Файл слишком большой (макс. 300 МБ). Попробуйте сжать PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    // Convert to base64 in chunks to avoid stack overflow on spread
-    const CHUNK = 4096;
-    const parts: string[] = [];
-    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
-      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
-      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
-    }
-    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
@@ -89,7 +80,7 @@ Deno.serve(async (req) => {
 
 ВАЖНО:
 - Если в документе НЕСКОЛЬКО таблиц (например «Спецификация металла» и «Спецификация бетонных блоков»), извлеки материалы из ВСЕХ таблиц.
-- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м», то name = «Труба 3 — Средняя секция трубы L=5,50м».
+- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м", то name = «Труба 3 — Средняя секция трубы L=5,50м».
 - НЕ объединяй строки самостоятельно (кроме подзаголовков выше).
 - Верни СЫРЫЕ строки в том же порядке, как в таблице.
 - СНАЧАЛА извлеки номер позиции из столбца «Позиция» / «№ п.п.» для КАЖДОЙ строки.
@@ -119,7 +110,7 @@ Deno.serve(async (req) => {
 КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
 Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
 
-    // Call Lovable AI (Gemini for PDF/vision)
+    // Call Lovable AI (Gemini for PDF/vision) with direct URL to avoid RAM spikes
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -135,7 +126,7 @@ Deno.serve(async (req) => {
               { type: "text", text: prompt },
               {
                 type: "image_url",
-                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
+                image_url: { url: fileUrl },
               },
             ],
           },
