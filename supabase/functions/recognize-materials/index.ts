@@ -49,14 +49,14 @@ Deno.serve(async (req) => {
       );
     }
     
-    // Convert to base64 in chunks to reduce peak memory
-    const CHUNK = 8192;
-    let binaryStr = "";
+    // Convert to base64 in chunks to avoid stack overflow on spread
+    const CHUNK = 4096;
+    const parts: string[] = [];
     for (let i = 0; i < pdfBytes.length; i += CHUNK) {
       const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
-      binaryStr += String.fromCharCode(...slice);
+      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
     }
-    const pdfBase64 = btoa(binaryStr);
+    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
