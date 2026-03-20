@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check file metadata without loading the full PDF into memory
+    // Fast-fail large files before downloading to avoid worker memory crashes
     const headResponse = await fetch(fileUrl, { method: "HEAD" });
     if (!headResponse.ok) {
       return new Response(
@@ -38,16 +38,43 @@ Deno.serve(async (req) => {
       );
     }
 
+    const MAX_PDF_BYTES = 20 * 1024 * 1024;
     const contentLengthHeader = headResponse.headers.get("content-length");
     const fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
-
-    // Hard safety cap for extremely large files
-    if (fileSize !== null && Number.isFinite(fileSize) && fileSize > 300 * 1024 * 1024) {
+    if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой (макс. 300 МБ). Попробуйте сжать PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Download the PDF file (safe after HEAD size check)
+    const pdfResponse = await fetch(fileUrl);
+    if (!pdfResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Failed to download PDF" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
+    const pdfBytes = new Uint8Array(pdfArrayBuffer);
+
+    if (pdfBytes.length > MAX_PDF_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 20 МБ). Сожмите или разбейте PDF." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Convert to base64 in chunks to avoid stack overflow on spread
+    const CHUNK = 4096;
+    const parts: string[] = [];
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
+      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
+    }
+    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
