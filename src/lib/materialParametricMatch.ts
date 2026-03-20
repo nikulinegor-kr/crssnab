@@ -133,15 +133,33 @@ function extractDimensions(name: string): { diameter: number | null; thickness: 
 export function parseMaterialParams(name: string): MaterialParams {
   const raw = normalizeForSearch(name);
   const type = extractType(name);
-  // Strip ГОСТ/ОСТ/ТУ/СТО and everything after them (standard numbers, grades, etc.)
-  // This ensures dimensions are extracted purely from the material description
+  const grade = extractGrade(name);
   const nameWithoutStandards = name
     .replace(/(ГОСТ|ОСТ|ТУ|СТО)\s*[\d.\-/а-яА-ЯёЁa-zA-Z]*/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
   const { diameter, thickness } = extractDimensions(nameWithoutStandards);
-  console.log(`[MaterialParams] "${name}" → type=${type}, diameter=${diameter}, thickness=${thickness} (standards stripped)`);
-  return { type, diameter, thickness, raw };
+  console.log(`[MaterialParams] "${name}" → type=${type}, grade=${grade}, diameter=${diameter}, thickness=${thickness}`);
+  return { type, grade, diameter, thickness, raw };
+}
+
+/**
+ * Check if two materials are structurally identical (exact structural match).
+ * Matches on type + grade + diameter + thickness.
+ */
+export function isExactStructuralMatch(a: MaterialParams, b: MaterialParams): boolean {
+  if (!a.type || !b.type || a.type !== b.type) return false;
+  if (a.diameter !== b.diameter) return false;
+  // For rebar: grade must match
+  if (a.type === "арматура") {
+    if (!a.grade || !b.grade || a.grade !== b.grade) return false;
+  }
+  // For pipes/steel: thickness must also match
+  if (a.type === "труба" || a.type === "лист" || a.type === "полоса") {
+    if (a.thickness !== b.thickness) return false;
+    if (a.grade && b.grade && a.grade !== b.grade) return false;
+  }
+  return true;
 }
 
 /**
