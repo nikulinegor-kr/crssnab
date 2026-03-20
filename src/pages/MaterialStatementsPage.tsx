@@ -1398,7 +1398,7 @@ export default function MaterialStatementsPage() {
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
-                    const sectionTotal = stItems.reduce((s, i) => s + (i.total_price || 0), 0);
+                    const sectionTotal = stItems.filter(i => i.item_type === "material" || !i.item_type).reduce((s, i) => s + (i.total_price || 0), 0);
                     return (
                       <Card key={st.id}>
                         <CardHeader className="py-3 flex-row items-center justify-between gap-2">
