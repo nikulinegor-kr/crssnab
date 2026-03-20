@@ -271,7 +271,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Всего позиций</p>
-              <p className="text-xl font-bold">{allItems.length}</p>
+              <p className="text-xl font-bold">{materialItems.length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">С ценами</p>
