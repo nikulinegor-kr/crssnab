@@ -7,6 +7,7 @@ import { normalizeForSearch } from "./materialSearch";
 
 export interface MaterialParams {
   type: string | null;       // e.g. "труба", "лист", "арматура"
+  grade: string | null;      // e.g. "A400", "A240", "С235"
   diameter: number | null;   // first number (e.g. 159)
   thickness: number | null;  // second number (e.g. 4.5)
   raw: string;               // original normalized name
