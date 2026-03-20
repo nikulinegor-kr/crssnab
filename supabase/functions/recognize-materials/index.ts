@@ -41,10 +41,10 @@ Deno.serve(async (req) => {
     const pdfArrayBuffer = await pdfResponse.arrayBuffer();
     const pdfBytes = new Uint8Array(pdfArrayBuffer);
     
-    // Reject files over 15MB to avoid memory issues
-    if (pdfBytes.length > 15 * 1024 * 1024) {
+    // Reject files over 30MB to avoid memory issues
+    if (pdfBytes.length > 30 * 1024 * 1024) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой (макс. 15 МБ). Попробуйте сжать PDF." }),
+        JSON.stringify({ error: "Файл слишком большой (макс. 30 МБ). Попробуйте сжать PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
