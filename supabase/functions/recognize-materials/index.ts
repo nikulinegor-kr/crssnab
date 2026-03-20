@@ -29,22 +29,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Download the PDF file
-    const pdfResponse = await fetch(fileUrl);
-    if (!pdfResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to download PDF" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(
-      new Uint8Array(pdfArrayBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ""
-      )
-    );
+    // Pass URL directly to avoid memory limits from base64 conversion
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
