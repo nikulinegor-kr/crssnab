@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Download PDF and convert to base64 data URL (gateway requires data URL for PDFs)
+    // Download the PDF file
     const pdfResponse = await fetch(fileUrl);
     if (!pdfResponse.ok) {
       return new Response(
@@ -38,16 +38,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const pdfBytes = new Uint8Array(await pdfResponse.arrayBuffer());
-    
-    // Encode to base64 in chunks to avoid stack overflow on large files
-    let pdfBase64 = "";
-    const CHUNK = 32768;
-    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
-      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
-      pdfBase64 += String.fromCharCode(...slice);
-    }
-    pdfBase64 = btoa(pdfBase64);
+    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
+    const pdfBase64 = btoa(
+      new Uint8Array(pdfArrayBuffer).reduce(
+        (data, byte) => data + String.fromCharCode(byte),
+        ""
+      )
+    );
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
 
@@ -408,65 +405,6 @@ Deno.serve(async (req) => {
 
     // Insert new items
     if (materials.length > 0) {
-      const WORK_KEYWORDS = [
-        "монтаж", "устройство", "установка", "сборка", "укладка", "демонтаж",
-        "прокладка", "подключение", "наладка", "испытание", "пуск",
-        "разборка", "ремонт", "замена", "окраска", "грунтовка",
-        "штукатурка", "бетонирование", "обетонирование", "армирование", "сварка",
-        "изоляция", "утепление", "облицовка", "отделка",
-        "резка", "сверление", "нарезка", "обшивка", "обрамление",
-        "нанесение", "покраска", "бурение", "вырезка", "гибка",
-        "промывка", "очистка", "засыпка", "планировка", "выравнивание",
-        "затирка", "шлифовка", "расшивка", "герметизация",
-        "гидроизоляция", "пароизоляция", "огнезащита", "огрунтовка",
-        "торкретирование", "трамбовка", "уплотнение", "полировка",
-        "зачистка", "раскрой", "вальцовка", "прогрев", "сушка",
-        "пробивка", "антикорроз",
-      ];
-
-      const WORK_PHRASES = [
-        "площадь фактическая",
-        "площадь приведенная",
-        "в том числе по маркам",
-        "заделка стыков",
-        "заделка швов",
-        "заделка мест",
-        "заделка отверстий",
-        "заделка проёмов",
-        "заделка проемов",
-        "зачеканка",
-      ];
-
-      const classifyType = (name: string, index: number, rows: any[]) => {
-        const lower = (name || "").toLowerCase().trim();
-        const prev = (rows[index - 1]?.name || "").toLowerCase();
-
-        // Check full phrases first
-        if (WORK_PHRASES.some((phrase) => lower.includes(phrase))) {
-          return "work";
-        }
-
-        // Sub-items of work entries (e.g. "сталь С245-4" after "Монтаж козырьков, в том числе по маркам стали:")
-        if (prev.includes("в том числе") && /(сталь|гост|ту\s)/.test(lower)) {
-          return "work";
-        }
-
-        // Check if previous row was classified as work and current is a bare material sub-item
-        // (e.g. "сталь С245-4" listed as a component of a work item like "Монтаж колонн")
-        if (index > 0) {
-          const prevType = classifyType(rows[index - 1]?.name || "", index - 1, rows);
-          if (prevType === "work" && /^сталь\s/i.test(lower)) {
-            return "work";
-          }
-        }
-
-        // Check keywords
-        for (const kw of WORK_KEYWORDS) {
-          if (lower.includes(kw)) return "work";
-        }
-        return "material";
-      };
-
       const items = materials.map((m: any, idx: number) => ({
         statement_id: statementId,
         organization_id: organizationId,
@@ -476,7 +414,6 @@ Deno.serve(async (req) => {
         unit: m.unit || null,
         quantity: m.quantity,
         mass_per_unit: m.mass_per_unit,
-        item_type: classifyType(m.name, idx, materials),
       }));
 
       const { error: insertError } = await supabase

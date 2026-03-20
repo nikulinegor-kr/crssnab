@@ -35,7 +35,6 @@ import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
-import { classifyItemType } from "@/lib/classifyItemType";
 
 // Types
 interface MaterialStatement {
@@ -70,7 +69,6 @@ interface MaterialItem {
   procurement_request_id: string | null;
   procurement_status: string;
   price_source: string;
-  item_type: string;
 }
 
 interface MaterialObject {
@@ -116,13 +114,11 @@ export default function MaterialStatementsPage() {
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [selectedItemTypeFilter, setSelectedItemTypeFilter] = useState<"material" | "work">("material");
   const [selectedIncomingObjectId, setSelectedIncomingObjectId] = useState<string | null>(null);
   const [selectedFinalObjectId, setSelectedFinalObjectId] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Dialog state
   const [createObjectOpen, setCreateObjectOpen] = useState(false);
@@ -180,7 +176,6 @@ export default function MaterialStatementsPage() {
   const [bulkPriceValue, setBulkPriceValue] = useState("");
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
-  
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -248,7 +243,7 @@ export default function MaterialStatementsPage() {
   );
 
   const { data: allItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["material-items", selectedFolderId, orgId, selectedItemTypeFilter],
+    queryKey: ["material-items", selectedFolderId, orgId],
     queryFn: async () => {
       if (!orgId || !selectedFolderId) return [];
       const stIds = currentStatements.map(s => s.id);
@@ -266,7 +261,7 @@ export default function MaterialStatementsPage() {
         if (chunk.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
-      return all.filter(i => (i.item_type || "material") === selectedItemTypeFilter);
+      return all;
     },
     enabled: !!orgId && !!selectedFolderId && currentStatements.length > 0,
   });
@@ -382,14 +377,12 @@ export default function MaterialStatementsPage() {
   const toggleYear = (year: number) => setExpandedYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n; });
   const toggleObject = (objId: string) => setExpandedObjects(prev => { const n = new Set(prev); n.has(objId) ? n.delete(objId) : n.add(objId); return n; });
   const toggleSection = (secId: string) => setExpandedSections(prev => { const n = new Set(prev); n.has(secId) ? n.delete(secId) : n.add(secId); return n; });
-  const toggleFolder = (folderId: string) => setExpandedFolders(prev => { const n = new Set(prev); n.has(folderId) ? n.delete(folderId) : n.add(folderId); return n; });
 
-  const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string, itemType: "material" | "work" = "material") => {
+  const selectFolder = (year: number, objectId: string, sectionId: string, folderId: string) => {
     setSelectedYear(year);
     setSelectedObjectId(objectId);
     setSelectedSectionId(sectionId);
     setSelectedFolderId(folderId);
-    setSelectedItemTypeFilter(itemType);
     setSelectedIncomingObjectId(null);
     setSelectedFinalObjectId(null);
     setSelectedStatementId(null);
@@ -622,7 +615,7 @@ export default function MaterialStatementsPage() {
       name: item.name, type_mark: item.type_mark, unit: item.unit,
       quantity: item.quantity, mass_per_unit: item.mass_per_unit,
       price: item.price, total_price: totalPrice, supplier: item.supplier,
-      price_source: item.price_source || "file", item_type: item.item_type || "material",
+      price_source: item.price_source || "file",
     }).eq("id", item.id) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setEditingItem(null);
@@ -683,7 +676,6 @@ export default function MaterialStatementsPage() {
       name: newItem.name, type_mark: newItem.type_mark || null, unit: newItem.unit || null,
       quantity: qty, mass_per_unit: newItem.mass_per_unit ? Number(newItem.mass_per_unit) : null,
       price, total_price: totalPrice, price_source: price != null ? "manual" : "file",
-      item_type: selectedItemTypeFilter === "work" ? "work" : classifyItemType(newItem.name),
     }) as any);
     queryClient.invalidateQueries({ queryKey: ["material-items"] });
     setAddingItem(false); setAddingToStatementId(null);
@@ -1083,53 +1075,8 @@ export default function MaterialStatementsPage() {
                               {expandedSections.has(secEntry.section.id) && (
                                 <div className="ml-5">
                                   {secEntry.folders.map(folder => {
-                                    const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
-                                    if (folder.type === 'materials') {
-                                      // Materials folder: show expandable with Материалы / Работы sub-nodes
-                                      const isFolderExpanded = expandedFolders.has(folder.id);
-                                      const isMaterialsActive = selectedFolderId === folder.id && selectedItemTypeFilter === "material";
-                                      const isWorksActive = selectedFolderId === folder.id && selectedItemTypeFilter === "work";
-                                      return (
-                                        <div key={folder.id}>
-                                          <button
-                                            className="w-full flex items-center gap-1.5 px-2 py-1 text-sm hover:bg-accent/50 rounded-md group/folder"
-                                            onClick={() => toggleFolder(folder.id)}
-                                          >
-                                            {isFolderExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                                            <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                            <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
-                                            <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
-                                            <span title="Скачать архив папки" onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}>
-                                              <Archive className="h-3 w-3 text-muted-foreground opacity-0 group-hover/folder:opacity-100 cursor-pointer hover:text-foreground flex-shrink-0" />
-                                            </span>
-                                          </button>
-                                          {isFolderExpanded && (
-                                            <div className="ml-5">
-                                              <button
-                                                className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors ${
-                                                  isMaterialsActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
-                                                }`}
-                                                onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id, "material")}
-                                              >
-                                                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                                                <span className="truncate flex-1 text-left text-xs">Материалы</span>
-                                              </button>
-                                              <button
-                                                className={`w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors ${
-                                                  isWorksActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50"
-                                                }`}
-                                                onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id, "work")}
-                                              >
-                                                <Wrench className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
-                                                <span className="truncate flex-1 text-left text-xs">Работы</span>
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    }
-                                    // General docs folder: direct click
                                     const isActive = selectedFolderId === folder.id;
+                                    const folderFileCount = statements.filter(s => s.folder_id === folder.id).length;
                                     return (
                                       <button
                                         key={folder.id}
@@ -1138,7 +1085,7 @@ export default function MaterialStatementsPage() {
                                         }`}
                                         onClick={() => selectFolder(node.year, entry.object.id, secEntry.section.id, folder.id)}
                                       >
-                                        <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                        {folder.type === 'general_docs' ? <FileArchive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
                                         <span className="truncate flex-1 text-left text-xs">{folder.name}</span>
                                         <Badge variant="outline" className="text-[10px] flex-shrink-0">{folderFileCount}</Badge>
                                         <span title="Скачать архив папки" onClick={e => { e.stopPropagation(); handleDownloadZip('folder', folder.id); }}>
@@ -1215,14 +1162,13 @@ export default function MaterialStatementsPage() {
                 <p className="text-sm text-muted-foreground">
                   {selectedYear} год — <span className="font-medium text-foreground">{selectedSection?.name}</span>
                   {" → "}<span className="font-medium text-foreground">{selectedFolder?.name}</span>
-                  {" → "}<span className="font-medium text-foreground">{selectedItemTypeFilter === "work" ? "Работы" : "Материалы"}</span>
-                  {isMaterialsFolder && selectedItemTypeFilter === "material" && totalCost > 0 && (
+                  {isMaterialsFolder && totalCost > 0 && (
                     <span className="ml-3 text-primary font-semibold">
                       Итого: {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
                     </span>
                   )}
                 </p>
-                {isMaterialsFolder && selectedItemTypeFilter === "material" && selectedSectionId && (() => {
+                {isMaterialsFolder && selectedSectionId && (() => {
                   const prog = sectionProgress.get(selectedSectionId);
                   if (!prog || prog.total === 0) return null;
                   return (
@@ -1237,7 +1183,7 @@ export default function MaterialStatementsPage() {
               </div>
               <div className="flex gap-2">
                 {downloadingZip && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isMaterialsFolder && selectedItemTypeFilter === "material" && allItems.length > 0 && (
+                {isMaterialsFolder && allItems.length > 0 && (
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
@@ -1384,7 +1330,7 @@ export default function MaterialStatementsPage() {
             </div>
 
             {/* Procurement Summary */}
-            {selectedFolderId && isMaterialsFolder && selectedItemTypeFilter === "material" && allItems.length > 0 && (() => {
+            {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (() => {
               const totalMaterials = allItems.length;
               const procuredCount = allItems.filter(i => i.procurement_status && i.procurement_status !== "none").length;
               const deliveredCount = allItems.filter(i => i.procurement_status === "delivered").length;
@@ -1410,34 +1356,17 @@ export default function MaterialStatementsPage() {
                 </div>
               );
             })()}
-            {selectedFolderId && isMaterialsFolder && selectedItemTypeFilter === "work" && allItems.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="p-3">
-                  <p className="text-xs text-muted-foreground">Всего работ</p>
-                  <p className="text-xl font-bold">{allItems.length}</p>
-                </Card>
-                <Card className="p-3">
-                  <p className="text-xs text-muted-foreground">Общая стоимость</p>
-                  <p className="text-xl font-bold text-primary">{totalCost > 0 ? formatPrice(totalCost) + " ₽" : "—"}</p>
-                </Card>
-              </div>
-            )}
 
-            {/* Search bar */}
+            {/* Search bar for materials */}
             {selectedFolderId && isMaterialsFolder && allItems.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={selectedItemTypeFilter === "work" ? "🔎 Найти работу..." : "🔎 Найти материал..."}
-                    value={materialsSearch}
-                    onChange={e => setMaterialsSearch(e.target.value)}
-                    className="pl-9 h-9"
-                  />
-                </div>
-                <Badge variant="outline" className="text-xs flex-shrink-0">
-                  {selectedItemTypeFilter === "work" ? "Работы" : "Материалы"}
-                </Badge>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="🔎 Найти материал..."
+                  value={materialsSearch}
+                  onChange={e => setMaterialsSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
               </div>
             )}
 
@@ -1485,19 +1414,15 @@ export default function MaterialStatementsPage() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
                               <>
-                                {selectedItemTypeFilter === "material" && (
-                                  <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
-                                    <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
-                                  </Button>
-                                )}
+                                <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
+                                  <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
                                   <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                                 </Button>
-                                {selectedItemTypeFilter === "material" && (
-                                  <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
-                                    <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
-                                  </Button>
-                                )}
+                                <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                </Button>
                               </>
                             )}
                             {stItems.length > 0 && (
@@ -1537,24 +1462,13 @@ export default function MaterialStatementsPage() {
                                 </TableHead>
                                 <TableHead className="w-12">№</TableHead>
                                 <TableHead>Наименование</TableHead>
-                                {selectedItemTypeFilter === "material" && (
-                                  <>
-                                    <TableHead>Тип / марка</TableHead>
-                                    <TableHead className="w-20">Ед. изм.</TableHead>
-                                  </>
-                                )}
+                                <TableHead>Тип / марка</TableHead>
+                                <TableHead className="w-20">Ед. изм.</TableHead>
                                 <TableHead className="w-24">Кол-во</TableHead>
-                                {selectedItemTypeFilter === "material" && (
-                                  <>
-                                    <TableHead className="w-24">Масса (кг)</TableHead>
-                                    <TableHead className="w-24">Цена</TableHead>
-                                    <TableHead className="w-28">Стоимость</TableHead>
-                                    <TableHead className="w-28">Закупка</TableHead>
-                                  </>
-                                )}
-                                {selectedItemTypeFilter === "work" && (
-                                  <TableHead className="w-20">Ед. изм.</TableHead>
-                                )}
+                                <TableHead className="w-24">Масса (кг)</TableHead>
+                                <TableHead className="w-24">Цена</TableHead>
+                                <TableHead className="w-28">Стоимость</TableHead>
+                                <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1563,9 +1477,8 @@ export default function MaterialStatementsPage() {
                                 const isEditing = editingItem?.id === item.id;
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
                                 const isProcured = item.procurement_status && item.procurement_status !== "none";
-                                const isWorksView = selectedItemTypeFilter === "work";
                                 return (
-                                  <TableRow key={item.id} className={!isWorksView && isProcured ? "bg-muted/40" : ""}>
+                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
@@ -1573,59 +1486,48 @@ export default function MaterialStatementsPage() {
                                     </TableCell>
                                     <TableCell>{idx + 1}</TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}</TableCell>
-                                    {!isWorksView && (
-                                      <>
-                                        <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
-                                        <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
-                                      </>
-                                    )}
+                                    <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
+                                    <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>
-                                    {!isWorksView && (
-                                      <>
-                                        <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
-                                        <TableCell>
-                                          {isEditing ? (
-                                            <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
-                                          ) : inlinePriceEditId === item.id ? (
-                                            <Input
-                                              autoFocus
-                                              value={inlinePriceValue}
-                                              onChange={e => setInlinePriceValue(e.target.value)}
-                                              onBlur={() => handleInlinePriceSave(item.id)}
-                                              onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
-                                              className="h-8 w-24"
-                                              placeholder="Цена"
-                                            />
-                                          ) : (
-                                            <span
-                                              className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
-                                              onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
-                                              title="Нажмите для редактирования цены"
-                                            >
-                                              {formatPrice(item.price)}
-                                              {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
-                                              {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
-                                              {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
-                                            </span>
-                                          )}
-                                        </TableCell>
-                                        <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
-                                        <TableCell>
-                                          {item.procurement_status === "in_procurement" && (
-                                            <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
-                                          )}
-                                          {item.procurement_status === "ordered" && (
-                                            <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
-                                          )}
-                                          {item.procurement_status === "delivered" && (
-                                            <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
-                                          )}
-                                        </TableCell>
-                                      </>
-                                    )}
-                                    {isWorksView && (
-                                      <TableCell>{item.unit || "—"}</TableCell>
-                                    )}
+                                    <TableCell>{isEditing ? <Input type="number" value={editingItem.mass_per_unit ?? ""} onChange={e => setEditingItem({ ...editingItem, mass_per_unit: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.mass_per_unit ?? "—"}</TableCell>
+                                    <TableCell>
+                                      {isEditing ? (
+                                        <Input type="number" value={editingItem.price ?? ""} onChange={e => setEditingItem({ ...editingItem, price: e.target.value ? Number(e.target.value) : null, price_source: "manual" })} className="h-8 w-20" />
+                                      ) : inlinePriceEditId === item.id ? (
+                                        <Input
+                                          autoFocus
+                                          value={inlinePriceValue}
+                                          onChange={e => setInlinePriceValue(e.target.value)}
+                                          onBlur={() => handleInlinePriceSave(item.id)}
+                                          onKeyDown={e => { if (e.key === "Enter") handleInlinePriceSave(item.id); if (e.key === "Escape") setInlinePriceEditId(null); }}
+                                          className="h-8 w-24"
+                                          placeholder="Цена"
+                                        />
+                                      ) : (
+                                        <span
+                                          className="cursor-pointer hover:text-primary inline-flex items-center gap-1"
+                                          onClick={() => { setInlinePriceEditId(item.id); setInlinePriceValue(item.price != null ? String(item.price) : ""); }}
+                                          title="Нажмите для редактирования цены"
+                                        >
+                                          {formatPrice(item.price)}
+                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
+                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
+                                          {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                    <TableCell>
+                                      {item.procurement_status === "in_procurement" && (
+                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
+                                      )}
+                                      {item.procurement_status === "ordered" && (
+                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
+                                      )}
+                                      {item.procurement_status === "delivered" && (
+                                        <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
+                                      )}
+                                    </TableCell>
                                     <TableCell>
                                       <div className="flex gap-1">
                                         {isEditing
@@ -1642,24 +1544,13 @@ export default function MaterialStatementsPage() {
                                   <TableCell />
                                   <TableCell>+</TableCell>
                                   <TableCell><Input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className="h-8" placeholder="Наименование" /></TableCell>
-                                  {selectedItemTypeFilter === "material" && (
-                                    <>
-                                      <TableCell><Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" /></TableCell>
-                                      <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
-                                    </>
-                                  )}
+                                  <TableCell><Input value={newItem.type_mark} onChange={e => setNewItem({ ...newItem, type_mark: e.target.value })} className="h-8" placeholder="Тип/марка" /></TableCell>
+                                  <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" /></TableCell>
-                                  {selectedItemTypeFilter === "material" && (
-                                    <>
-                                      <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
-                                      <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
-                                      <TableCell>—</TableCell>
-                                      <TableCell></TableCell>
-                                    </>
-                                  )}
-                                  {selectedItemTypeFilter === "work" && (
-                                    <TableCell><Input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="h-8 w-16" placeholder="Ед." /></TableCell>
-                                  )}
+                                  <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
+                                  <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
+                                  <TableCell>—</TableCell>
+                                  <TableCell></TableCell>
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -1670,12 +1561,10 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={selectedItemTypeFilter === "work" ? 6 : 11} className="text-center text-muted-foreground py-8">
-                                    {selectedItemTypeFilter === "work" ? "Нет работ" : "Нет распознанных материалов"}
-                                  </TableCell>
+                                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
-                              {stItems.length > 0 && selectedItemTypeFilter === "material" && (
+                              {stItems.length > 0 && (
                                 <TableRow className="bg-muted/50 font-semibold">
                                   <TableCell />
                                   <TableCell />
@@ -1687,16 +1576,6 @@ export default function MaterialStatementsPage() {
                                   <TableCell />
                                 </TableRow>
                               )}
-                              {stItems.length > 0 && selectedItemTypeFilter === "work" && (
-                                <TableRow className="bg-muted/50 font-semibold">
-                                  <TableCell />
-                                  <TableCell />
-                                  <TableCell className="text-right text-sm">Всего работ: {stItems.length}</TableCell>
-                                  <TableCell />
-                                  <TableCell />
-                                  <TableCell />
-                                </TableRow>
-                              )}
                             </TableBody>
                           </Table>
                         </CardContent>
@@ -1704,11 +1583,11 @@ export default function MaterialStatementsPage() {
                     );
                   })
                 )}
-                {allItems.length > 0 && selectedItemTypeFilter === "material" && (
+                {allItems.length > 0 && (
                   <Card className="border-primary/30 bg-primary/5">
                     <CardHeader className="py-4 flex-row items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-3">
-                        <span>Итого по разделу (материалы)</span>
+                        <span>Итого по разделу</span>
                         <Badge variant="secondary">{allItems.length} позиций</Badge>
                         {allItems.length !== mergedItems.length && (
                           <Badge variant="outline">{mergedItems.length} уникальных</Badge>
@@ -1717,16 +1596,6 @@ export default function MaterialStatementsPage() {
                       <span className="text-lg font-bold text-primary">
                         {totalCost.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽
                       </span>
-                    </CardHeader>
-                  </Card>
-                )}
-                {allItems.length > 0 && selectedItemTypeFilter === "work" && (
-                  <Card className="border-amber-300/30 bg-amber-50/5">
-                    <CardHeader className="py-4 flex-row items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-3">
-                        <span>Итого по разделу (работы)</span>
-                        <Badge variant="secondary">{allItems.length} позиций</Badge>
-                      </CardTitle>
                     </CardHeader>
                   </Card>
                 )}
