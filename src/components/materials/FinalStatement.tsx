@@ -109,7 +109,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
       while (true) {
         const { data } = await (supabase
           .from("material_statement_items" as any)
-          .select("id, statement_id, name, type_mark, unit, quantity, price, total_price, procurement_status, supplier")
+          .select("id, statement_id, name, type_mark, unit, quantity, price, total_price, procurement_status, supplier, item_type")
           .in("statement_id", stmtIds)
           .order("row_number")
           .range(from, from + PAGE_SIZE - 1) as any);
