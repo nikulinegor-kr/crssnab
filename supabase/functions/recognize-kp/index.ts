@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -12,11 +10,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { fileUrl, fileType } = await req.json();
+    const { fileUrl, fileType, textContent } = await req.json();
 
-    if (!fileUrl) {
+    if (!fileUrl && !textContent) {
       return new Response(
-        JSON.stringify({ error: "fileUrl required" }),
+        JSON.stringify({ error: "fileUrl or textContent required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -28,27 +26,6 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Download the file
-    const fileResponse = await fetch(fileUrl);
-    if (!fileResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to download file" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const fileArrayBuffer = await fileResponse.arrayBuffer();
-    const fileBase64 = btoa(
-      new Uint8Array(fileArrayBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ""
-      )
-    );
-
-    const mimeType = fileType === "xlsx" 
-      ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      : "application/pdf";
 
     const prompt = `Ты эксперт по распознаванию коммерческих предложений (КП) от поставщиков строительных материалов.
 
@@ -81,6 +58,50 @@ Deno.serve(async (req) => {
 
 Не добавляй никакого текста кроме JSON. Не оборачивай в markdown.`;
 
+    let messages: any[];
+
+    if (textContent) {
+      // Excel was parsed client-side, send as text
+      messages = [
+        {
+          role: "user",
+          content: `${prompt}\n\nСодержимое файла (таблица):\n\n${textContent}`,
+        },
+      ];
+    } else {
+      // PDF — download and send as image
+      const fileResponse = await fetch(fileUrl);
+      if (!fileResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to download file" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const fileArrayBuffer = await fileResponse.arrayBuffer();
+      const fileBase64 = btoa(
+        new Uint8Array(fileArrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
+      const mimeType = "application/pdf";
+
+      messages = [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${fileBase64}` },
+            },
+          ],
+        },
+      ];
+    }
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -89,18 +110,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:${mimeType};base64,${fileBase64}` },
-              },
-            ],
-          },
-        ],
+        messages,
         temperature: 0.1,
         max_tokens: 32000,
       }),
