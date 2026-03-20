@@ -8,7 +8,7 @@ import {
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
   Wrench, Archive, Layers, ShoppingCart, Check, Search, DollarSign,
-  Hand, FileUp, FileCheck,
+  Hand, FileUp, FileCheck, Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,7 @@ interface MaterialItem {
   procurement_request_id: string | null;
   procurement_status: string;
   price_source: string;
+  item_type: string;
 }
 
 interface MaterialObject {
@@ -732,6 +733,19 @@ export default function MaterialStatementsPage() {
     toast({ title: `Удалено: ${selectedItemIds.size} материалов` });
   };
 
+  const handleBulkSetItemType = async (itemType: string) => {
+    if (selectedItemIds.size === 0) return;
+    const count = selectedItemIds.size;
+    for (const id of selectedItemIds) {
+      await (supabase.from("material_statement_items" as any).update({ item_type: itemType }).eq("id", id) as any);
+    }
+    setSelectedItemIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+    const label = itemType === "work" ? "Работы" : itemType === "customer_supply" ? "Поставка заказчика" : "Материал";
+    toast({ title: `${count} поз. помечены как «${label}»` });
+  };
+
   // KP Upload & Matching
   const handleKpUpload = async (file: File) => {
     if (!orgId || allItems.length === 0) {
@@ -1384,7 +1398,7 @@ export default function MaterialStatementsPage() {
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
-                    const sectionTotal = stItems.reduce((s, i) => s + (i.total_price || 0), 0);
+                    const sectionTotal = stItems.filter(i => i.item_type === "material" || !i.item_type).reduce((s, i) => s + (i.total_price || 0), 0);
                     return (
                       <Card key={st.id}>
                         <CardHeader className="py-3 flex-row items-center justify-between gap-2">
@@ -1414,20 +1428,30 @@ export default function MaterialStatementsPage() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {someSelected && (
                               <>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("work")}>
+                                  <Wrench className="h-4 w-4 mr-1" /> Работы
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("customer_supply")}>
+                                  <Package className="h-4 w-4 mr-1" /> Пост. заказчика
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkSetItemType("material")}>
+                                  <Layers className="h-4 w-4 mr-1" /> Материал
+                                </Button>
                                 <Button size="sm" variant="outline" onClick={() => { setBulkPriceOpen(true); setBulkPriceValue(""); }}>
-                                  <DollarSign className="h-4 w-4 mr-1" /> Задать цену ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <DollarSign className="h-4 w-4 mr-1" /> Цена ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
                                 </Button>
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
-                                  <Trash2 className="h-4 w-4 mr-1" /> Удалить ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <Trash2 className="h-4 w-4 mr-1" /> Удалить
                                 </Button>
                                 <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
-                                  <ShoppingCart className="h-4 w-4 mr-1" /> Создать заявку ({[...selectedItemIds].filter(id => stItems.some(i => i.id === id)).length})
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Заявка
                                 </Button>
                               </>
                             )}
                             {stItems.length > 0 && (
                               <Button size="sm" variant="outline" onClick={() => {
-                                const d = stItems.map((m, i) => ({
+                                const exportItems = stItems.filter(m => m.item_type === "material" || !m.item_type);
+                                const d = exportItems.map((m, i) => ({
                                   "№": i + 1, "Наименование": m.name, "Тип / марка": m.type_mark || "",
                                   "Ед. изм.": m.unit || "", "Кол-во": m.quantity ?? "", "Масса (кг)": m.mass_per_unit ?? "",
                                   "Цена": m.price ?? "", "Стоимость": m.total_price ?? "",
@@ -1478,14 +1502,20 @@ export default function MaterialStatementsPage() {
                                 const computedTotal = (item.quantity != null && item.price != null) ? item.quantity * item.price : null;
                                 const isProcured = item.procurement_status && item.procurement_status !== "none";
                                 return (
-                                  <TableRow key={item.id} className={isProcured ? "bg-muted/40" : ""}>
+                                  <TableRow key={item.id} className={cn(isProcured && "bg-muted/40", item.item_type === "work" && "opacity-60", item.item_type === "customer_supply" && "opacity-60")}>
                                     <TableCell>
                                       <Checkbox checked={selectedItemIds.has(item.id)} onCheckedChange={() => {
                                         setSelectedItemIds(prev => { const n = new Set(prev); n.has(item.id) ? n.delete(item.id) : n.add(item.id); return n; });
                                       }} />
                                     </TableCell>
                                     <TableCell>{idx + 1}</TableCell>
-                                    <TableCell>{isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}</TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-1.5">
+                                        {isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}
+                                        {item.item_type === "work" && <Badge variant="outline" className="text-xs shrink-0 border-orange-300 text-orange-600">Работы</Badge>}
+                                        {item.item_type === "customer_supply" && <Badge variant="outline" className="text-xs shrink-0 border-violet-300 text-violet-600">Пост. зак.</Badge>}
+                                      </div>
+                                    </TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.unit || ""} onChange={e => setEditingItem({ ...editingItem, unit: e.target.value })} className="h-8 w-16" /> : item.unit || "—"}</TableCell>
                                     <TableCell>{isEditing ? <Input type="number" value={editingItem.quantity ?? ""} onChange={e => setEditingItem({ ...editingItem, quantity: e.target.value ? Number(e.target.value) : null })} className="h-8 w-20" /> : item.quantity ?? "—"}</TableCell>

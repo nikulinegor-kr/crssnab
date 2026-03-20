@@ -110,6 +110,9 @@ export function ConsolidatedExcelExportButton({ objectId, objectName, organizati
         from += PAGE_SIZE;
       }
 
+      // Filter out works and customer supply items
+      allItems = allItems.filter((i: any) => !i.item_type || i.item_type === "material");
+
       if (!allItems.length) {
         toast({ title: "Нет позиций для экспорта", variant: "destructive" });
         setLoading(false);

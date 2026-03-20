@@ -27,6 +27,7 @@ interface AggItem {
   total_price: number | null;
   procurement_status: string;
   supplier: string | null;
+  item_type: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -108,7 +109,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
       while (true) {
         const { data } = await (supabase
           .from("material_statement_items" as any)
-          .select("id, statement_id, name, type_mark, unit, quantity, price, total_price, procurement_status, supplier")
+          .select("id, statement_id, name, type_mark, unit, quantity, price, total_price, procurement_status, supplier, item_type")
           .in("statement_id", stmtIds)
           .order("row_number")
           .range(from, from + PAGE_SIZE - 1) as any);
@@ -122,19 +123,21 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
     enabled: stmtIds.length > 0,
   });
 
-  // Group items by section
+  // Filter only material items, group by section
+  const materialItems = useMemo(() => allItems.filter(i => !i.item_type || i.item_type === "material"), [allItems]);
+
   const itemsBySection = useMemo(() => {
     const map = new Map<string, AggItem[]>();
-    for (const item of allItems) {
+    for (const item of materialItems) {
       const secId = stmtToSection.get(item.statement_id);
       if (!secId) continue;
       if (!map.has(secId)) map.set(secId, []);
       map.get(secId)!.push(item);
     }
     return map;
-  }, [allItems, stmtToSection]);
+  }, [materialItems, stmtToSection]);
 
-  const grandTotal = useMemo(() => allItems.reduce((s, i) => s + (i.total_price || 0), 0), [allItems]);
+  const grandTotal = useMemo(() => materialItems.reduce((s, i) => s + (i.total_price || 0), 0), [materialItems]);
 
   const isLoading = stmtsLoading || itemsLoading;
 
@@ -242,7 +245,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={exportFullExcel} disabled={allItems.length === 0}>
+          <Button onClick={exportFullExcel} disabled={materialItems.length === 0}>
             <Download className="h-4 w-4 mr-1" /> Скачать общий Excel
           </Button>
         </div>
@@ -252,7 +255,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : allItems.length === 0 ? (
+      ) : materialItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
           <FileSpreadsheet className="h-12 w-12" />
           <p>Нет распознанных материалов</p>
@@ -268,11 +271,11 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Всего позиций</p>
-              <p className="text-xl font-bold">{allItems.length}</p>
+              <p className="text-xl font-bold">{materialItems.length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">С ценами</p>
-              <p className="text-xl font-bold text-emerald-600">{allItems.filter(i => i.price != null).length}</p>
+              <p className="text-xl font-bold text-emerald-600">{materialItems.filter(i => i.price != null).length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Общая стоимость</p>
@@ -376,7 +379,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             <CardHeader className="py-4 flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-3">
                 <span>Общий итог по объекту</span>
-                <Badge variant="secondary">{allItems.length} позиций</Badge>
+                <Badge variant="secondary">{materialItems.length} позиций</Badge>
                 <Badge variant="outline">
                   {objectSections.filter(s => (itemsBySection.get(s.id) || []).length > 0).length} разделов
                 </Badge>
