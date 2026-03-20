@@ -123,19 +123,21 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
     enabled: stmtIds.length > 0,
   });
 
-  // Group items by section
+  // Filter only material items, group by section
+  const materialItems = useMemo(() => allItems.filter(i => !i.item_type || i.item_type === "material"), [allItems]);
+
   const itemsBySection = useMemo(() => {
     const map = new Map<string, AggItem[]>();
-    for (const item of allItems) {
+    for (const item of materialItems) {
       const secId = stmtToSection.get(item.statement_id);
       if (!secId) continue;
       if (!map.has(secId)) map.set(secId, []);
       map.get(secId)!.push(item);
     }
     return map;
-  }, [allItems, stmtToSection]);
+  }, [materialItems, stmtToSection]);
 
-  const grandTotal = useMemo(() => allItems.reduce((s, i) => s + (i.total_price || 0), 0), [allItems]);
+  const grandTotal = useMemo(() => materialItems.reduce((s, i) => s + (i.total_price || 0), 0), [materialItems]);
 
   const isLoading = stmtsLoading || itemsLoading;
 
