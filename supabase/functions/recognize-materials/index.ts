@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
+    const finishReason = aiData.choices?.[0]?.finish_reason;
     let content = aiData.choices?.[0]?.message?.content || "[]";
 
     // Clean markdown wrapping if present
@@ -171,46 +172,89 @@ Deno.serve(async (req) => {
     // Apply multiple passes to catch nested cases
     let prev = content;
     content = fixLocaleCommas(content);
-    // Second pass in case first pass shifted positions
     if (content !== prev) {
       content = fixLocaleCommas(content);
     }
 
-    let rawRows: any[];
-    try {
-      rawRows = JSON.parse(content);
-    } catch {
-      // Attempt to recover truncated JSON array of objects
-      let recovered = false;
-      // Strategy 1: cut at last complete object boundary "},"
-      const lastCompleteObj = content.lastIndexOf("},");
-      if (lastCompleteObj > 0) {
-        const repaired = content.substring(0, lastCompleteObj + 1) + "]";
+    const parseRowsWithRecovery = (text: string): any[] | null => {
+      const start = text.indexOf("[");
+      if (start === -1) return null;
+      const fromArray = text.slice(start);
+
+      // 1) Direct parse if complete array exists
+      const lastBracket = fromArray.lastIndexOf("]");
+      if (lastBracket > 0) {
+        const fullCandidate = fromArray.slice(0, lastBracket + 1);
         try {
-          rawRows = JSON.parse(repaired);
-          console.warn(`Recovered ${rawRows.length} items from truncated response (cut at },)`);
-          recovered = true;
-        } catch { /* fall through */ }
-      }
-      // Strategy 2: cut at last "}"
-      if (!recovered) {
-        const lastBrace = content.lastIndexOf("}");
-        if (lastBrace > 0) {
-          const repaired = content.substring(0, lastBrace + 1) + "]";
-          try {
-            rawRows = JSON.parse(repaired);
-            console.warn(`Recovered ${rawRows.length} items from truncated response (cut at })`);
-            recovered = true;
-          } catch { /* fall through */ }
+          const parsed = JSON.parse(fullCandidate);
+          return Array.isArray(parsed) ? parsed : null;
+        } catch {
+          // continue to recovery
         }
       }
-      if (!recovered) {
-        console.error("Failed to parse AI response:", content.substring(0, 500));
-        return new Response(
-          JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000) }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+
+      // 2) Recover by cutting to last complete top-level object in array
+      let inString = false;
+      let escaped = false;
+      let objectDepth = 0;
+      const completeObjectEndIndices: number[] = [];
+
+      for (let i = 0; i < fromArray.length; i++) {
+        const ch = fromArray[i];
+
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (ch === "\\") {
+            escaped = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
+          continue;
+        }
+
+        if (ch === '"') {
+          inString = true;
+          continue;
+        }
+
+        if (ch === "{") {
+          objectDepth++;
+        } else if (ch === "}" && objectDepth > 0) {
+          objectDepth--;
+          if (objectDepth === 0) completeObjectEndIndices.push(i);
+        }
       }
+
+      for (let idx = completeObjectEndIndices.length - 1; idx >= 0; idx--) {
+        const end = completeObjectEndIndices[idx];
+        const candidate = `${fromArray.slice(0, end + 1).replace(/,\s*$/, "")}]`;
+        try {
+          const parsed = JSON.parse(candidate);
+          return Array.isArray(parsed) ? parsed : null;
+        } catch {
+          // try an earlier object boundary
+        }
+      }
+
+      return null;
+    };
+
+    const parsedRows = parseRowsWithRecovery(content);
+    if (!parsedRows) {
+      console.error("Failed to parse AI response:", content.substring(0, 500), { finishReason });
+      return new Response(
+        JSON.stringify({ error: "Failed to parse AI response", raw: content.substring(0, 1000), finishReason }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const rawRows: any[] = parsedRows;
+    if (finishReason && finishReason !== "stop") {
+      console.warn("AI response may be truncated, recovered partial JSON", {
+        finishReason,
+        recoveredCount: rawRows.length,
+      });
     }
 
     if (!Array.isArray(rawRows)) {
