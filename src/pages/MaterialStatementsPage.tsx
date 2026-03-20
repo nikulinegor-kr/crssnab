@@ -733,6 +733,19 @@ export default function MaterialStatementsPage() {
     toast({ title: `Удалено: ${selectedItemIds.size} материалов` });
   };
 
+  const handleBulkSetItemType = async (itemType: string) => {
+    if (selectedItemIds.size === 0) return;
+    const count = selectedItemIds.size;
+    for (const id of selectedItemIds) {
+      await (supabase.from("material_statement_items" as any).update({ item_type: itemType }).eq("id", id) as any);
+    }
+    setSelectedItemIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["material-items"] });
+    queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+    const label = itemType === "work" ? "Работы" : itemType === "customer_supply" ? "Поставка заказчика" : "Материал";
+    toast({ title: `${count} поз. помечены как «${label}»` });
+  };
+
   // KP Upload & Matching
   const handleKpUpload = async (file: File) => {
     if (!orgId || allItems.length === 0) {
