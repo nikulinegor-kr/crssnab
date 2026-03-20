@@ -29,115 +29,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fast-fail large files before downloading to avoid worker memory crashes
-    const headResponse = await fetch(fileUrl, { method: "HEAD" });
-    if (!headResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to access PDF" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Fast-fail by size without downloading file into function memory.
+    // This prevents WORKER_LIMIT crashes on large PDFs.
+    const MAX_PDF_BYTES = 300 * 1024 * 1024;
+    let fileSize: number | null = null;
+
+    try {
+      const headResponse = await fetch(fileUrl, { method: "HEAD" });
+      if (headResponse.ok) {
+        const contentLengthHeader = headResponse.headers.get("content-length");
+        fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
+      }
+    } catch {
+      // Some origins block HEAD; continue without hard size pre-check.
     }
 
-    const MAX_PDF_BYTES = 50 * 1024 * 1024;
-    const contentLengthHeader = headResponse.headers.get("content-length");
-    const fileSize = contentLengthHeader ? Number(contentLengthHeader) : null;
     if (fileSize !== null && Number.isFinite(fileSize) && fileSize > MAX_PDF_BYTES) {
       return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 50 МБ). Сожмите или разбейте PDF." }),
+        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 300 МБ). Сожмите или разбейте PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Download the PDF file (safe after HEAD size check)
-    const pdfResponse = await fetch(fileUrl);
-    if (!pdfResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to download PDF" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
-    const pdfBytes = new Uint8Array(pdfArrayBuffer);
-
-    if (pdfBytes.length > MAX_PDF_BYTES) {
-      return new Response(
-        JSON.stringify({ error: "Файл слишком большой для распознавания в облаке (макс. 50 МБ). Сожмите или разбейте PDF." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Convert to base64 in chunks to avoid stack overflow on spread
-    const CHUNK = 4096;
-    const parts: string[] = [];
-    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
-      const slice = pdfBytes.subarray(i, Math.min(i + CHUNK, pdfBytes.length));
-      parts.push(String.fromCharCode.apply(null, slice as unknown as number[]));
-    }
-    const pdfBase64 = btoa(parts.join(""));
 
     const prompt = `Ты эксперт по распознаванию ведомостей материалов из строительных и промышленных PDF-документов.
-
-Проанализируй этот PDF документ и извлеки строки таблицы материалов.
-
-Документ может содержать РАЗНЫЕ форматы таблиц. Вот основные:
-
-ФОРМАТ 1 — Ведомость материалов (8 столбцов):
-1 — Позиция → "position"
-2 — Наименование и техническая характеристика → "name"
-3 — Тип, марка, обозначение документа → "type_mark"
-4 — Код оборудования (ИГНОРИРОВАТЬ)
-5 — Единица измерения → "unit"
-6 — Количество → "quantity"
-7 — Масса единицы, кг → "mass_per_unit"
-8 — Примечания (ИГНОРИРОВАТЬ)
-
-ФОРМАТ 2 — Спецификация (например «Спецификация металла», «Спецификация бетонных блоков» и т.п.):
-Столбцы могут включать: № п.п., Марка, Обозначение, Наименование, Масса ед. кг, кол-во шт, масса кг, Объем м³
-Сопоставляй так:
-- "№ п.п." → "position"
-- "Наименование" → "name"
-- "Марка" и/или "Обозначение" → "type_mark" (объедини через пробел если оба есть)
-- "Масса ед." → "mass_per_unit"
-- "кол-во" или "Кол-во, шт" → "quantity"
-- "Ед. изм." → "unit" (если нет отдельного столбца, определи из заголовка таблицы: шт, м³, кг, т, м.п. и т.д.)
-
-ФОРМАТ 3 — Любая другая табличная структура с материалами:
-Адаптируйся к заголовкам. Главное — извлечь name, type_mark, unit, quantity, mass_per_unit.
-
-ВАЖНО:
-- Если в документе НЕСКОЛЬКО таблиц (например «Спецификация металла» и «Спецификация бетонных блоков»), извлеки материалы из ВСЕХ таблиц.
-- Строки-заголовки подтаблиц (например «Труба 3») записывай НЕ как отдельные позиции, а добавляй как префикс к name следующих строк. Пример: если заголовок «Труба 3» и позиция «Средняя секция трубы L=5,50м", то name = «Труба 3 — Средняя секция трубы L=5,50м».
-- НЕ объединяй строки самостоятельно (кроме подзаголовков выше).
-- Верни СЫРЫЕ строки в том же порядке, как в таблице.
-- СНАЧАЛА извлеки номер позиции из столбца «Позиция» / «№ п.п.» для КАЖДОЙ строки.
-- Для строк-продолжений position может быть null/пусто.
-- Игнорируй полностью пустые строки и строки-заголовки таблиц (не подзаголовки групп).
-
-Гибкое сопоставление заголовков:
-- "Наименование" или "Наименование и техническая характеристика" → name
-- "Тип" или "Тип, марка" или "Обозначение" или "Марка" → type_mark
-- "Ед. изм." или "Единица измерения" → unit
-- "Кол-во" или "Количество" или "кол-во, шт" → quantity
-- "Масса ед." или "Масса единицы" или "Масса единицы, кг" → mass_per_unit
-
-Верни результат СТРОГО в формате JSON массива:
-[
-  {
-    "position": 1,
-    "name": "Полное наименование материала",
-    "type_mark": "Тип/марка/обозначение или null",
-    "unit": "шт",
-    "quantity": 10,
-    "mass_per_unit": 0.5
-  }
-]
-
-Если quantity или mass_per_unit отсутствуют, ставь null.
-КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03). Это касается quantity и mass_per_unit. Иначе JSON будет невалидным.
-Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
-
-    // Call Lovable AI (Gemini for PDF/vision) with direct URL to avoid RAM spikes
+...
+    // Cloud-to-cloud: pass PDF URL directly to AI gateway to avoid loading PDF into edge memory.
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -153,7 +69,7 @@ Deno.serve(async (req) => {
               { type: "text", text: prompt },
               {
                 type: "image_url",
-                image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
+                image_url: { url: fileUrl },
               },
             ],
           },
