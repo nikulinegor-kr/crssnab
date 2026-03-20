@@ -8,7 +8,7 @@ import {
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
   Wrench, Archive, Layers, ShoppingCart, Check, Search, DollarSign,
-  Hand, FileUp, FileCheck,
+  Hand, FileUp, FileCheck, Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
