@@ -34,7 +34,7 @@ import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
-import { findBestParametricMatch } from "@/lib/materialParametricMatch";
+import { findBestParametricMatch, parseMaterialParams, isExactStructuralMatch } from "@/lib/materialParametricMatch";
 
 // Types
 interface MaterialStatement {
@@ -892,15 +892,14 @@ export default function MaterialStatementsPage() {
     } finally { setKpApplying(false); }
   };
 
-  // Auto-fill prices from similar materials
+  // Auto-fill prices from similar materials (EXACT structural → parametric/fuzzy)
   const handleAutoFillPrices = async () => {
     if (!orgId || allItems.length === 0) return;
     setAutoFillPricesLoading(true);
     try {
-      // Items with prices — source pool
-      const pricedItems = allItems.filter(i => i.price != null && i.price > 0 && (i.item_type === "material" || !i.item_type));
-      // Items without prices
-      const unpricedItems = allItems.filter(i => (i.price == null || i.price <= 0) && (i.item_type === "material" || !i.item_type));
+      const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
+      const pricedItems = materialItems.filter(i => i.price != null && i.price > 0);
+      const unpricedItems = materialItems.filter(i => i.price == null || i.price <= 0);
 
       if (pricedItems.length === 0) {
         toast({ title: "Нет материалов с ценами", description: "Сначала добавьте цены вручную или через КП", variant: "destructive" });
@@ -911,10 +910,43 @@ export default function MaterialStatementsPage() {
         return;
       }
 
+      // Pre-parse params for all priced items
+      const pricedWithParams = pricedItems.map(i => ({
+        ...i,
+        params: parseMaterialParams(i.name),
+      }));
+
       const pool = pricedItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
-      let filled = 0;
+      let exactFilled = 0;
+      let similarFilled = 0;
 
       for (const item of unpricedItems) {
+        const itemParams = parseMaterialParams(item.name);
+
+        // 1) EXACT structural match: type + grade + diameter + thickness
+        let exactMatch: typeof pricedWithParams[0] | null = null;
+        if (itemParams.type && itemParams.diameter != null) {
+          for (const p of pricedWithParams) {
+            if (isExactStructuralMatch(itemParams, p.params)) {
+              exactMatch = p;
+              break;
+            }
+          }
+        }
+
+        if (exactMatch && exactMatch.price != null) {
+          const totalPrice = item.quantity != null ? item.quantity * exactMatch.price : null;
+          await (supabase.from("material_statement_items" as any).update({
+            price: exactMatch.price,
+            total_price: totalPrice,
+            price_source: "exact",
+            supplier: exactMatch.supplier || undefined,
+          }).eq("id", item.id) as any);
+          exactFilled++;
+          continue;
+        }
+
+        // 2) Fallback: parametric + fuzzy matching
         const match = findBestParametricMatch(item.name, item.unit, pool);
         if (match && match.price != null && match.score >= 0.6) {
           const totalPrice = item.quantity != null ? item.quantity * match.price : null;
@@ -924,15 +956,16 @@ export default function MaterialStatementsPage() {
             price_source: "similar",
             supplier: pricedItems.find(p => p.id === match.itemId)?.supplier || undefined,
           }).eq("id", item.id) as any);
-          filled++;
+          similarFilled++;
         }
       }
 
+      const filled = exactFilled + similarFilled;
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
       toast({
         title: `Подтянуто цен: ${filled}`,
-        description: `Из ${unpricedItems.length} без цены. Не найдено аналогов: ${unpricedItems.length - filled}`,
+        description: `Точных: ${exactFilled}, по аналогу: ${similarFilled}, не найдено: ${unpricedItems.length - filled}`,
       });
     } catch (e: any) {
       toast({ title: "Ошибка", description: e.message, variant: "destructive" });
@@ -1623,6 +1656,7 @@ export default function MaterialStatementsPage() {
                                           {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
                                           {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
                                           {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-purple-500" /></span>}
+                                          {item.price_source === "exact" && <span title="Точное совпадение"><Check className="h-3 w-3 text-emerald-500" /></span>}
                                         </span>
                                       )}
                                     </TableCell>
