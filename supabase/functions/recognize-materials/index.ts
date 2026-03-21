@@ -876,6 +876,15 @@ ${buildPromptForType(docType)}
 
         // If the max quantity is close to sum of the rest (within 15% or equal),
         // it means MASTER = sum(DETAILS) → keep only MASTER
+        // If exactly 2 items with identical quantity — exact duplicate from different tables
+        if (group.length === 2 && maxQty > 0 && Math.abs(withQty[0].qty - withQty[1].qty) / maxQty < 0.01) {
+          // Pick the one with longer/more descriptive name
+          const pick = withQty[0].row.name?.length >= withQty[1].row.name?.length ? withQty[0].row : withQty[1].row;
+          console.log(`[Dedup] ${key}: exact duplicate (qty=${maxQty}) — keeping "${pick.name}"`);
+          deduplicated.push(pick);
+          continue;
+        }
+
         if (maxQty > 0 && sumOfRest > 0) {
           const ratio = Math.abs(maxQty - sumOfRest) / maxQty;
           if (ratio < 0.15) {
@@ -883,8 +892,6 @@ ${buildPromptForType(docType)}
             deduplicated.push(withQty[0].row);
             continue;
           }
-          // If max > sum of rest significantly, could be MASTER + some DETAILS
-          // Keep only MASTER if it's the dominant entry (>60% of total)
           const totalQty = maxQty + sumOfRest;
           if (maxQty / totalQty > 0.6) {
             console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates total ${totalQty} — keeping MASTER only`);
