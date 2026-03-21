@@ -833,7 +833,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       return deduplicated;
     };
 
-    const deduplicatedRows = deduplicateRows(rawRows);
+    const deduplicatedRows = deduplicateRows(splitRows);
 
     // ═══════════════════════════════════════════════
     // POST-PROCESSING: normalize, group, score
