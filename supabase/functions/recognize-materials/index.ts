@@ -1066,12 +1066,55 @@ ${buildPromptForType(docType)}
       ? [...leadingRows, ...groupedRows.map(({ position, ...row }) => row)]
       : normalizedRows.map(({ position, ...row }) => row);
 
-    // Name integrity check
+    // Name integrity check + confidence scoring
     const truncationSuffixes = /\b(марки|типа|на|из|класса|марке|типу)\s*$/i;
     const workKeywords = /\b(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|работы)\b/i;
-    
+    const workStartKeywords = /^\s*(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|засыпка|срезка|выемка)/i;
+    const materialKeywords = /\b(бетон|щебень|арматур|песок|геотекстиль|асфальтобетон|грунт|плит[аы]|кирпич|цемент|раствор|труб[аы]|кабел|провод|балк[аи]|швеллер|уголок|лист|профиль|сетк[аи]|гвозд|болт|гайк|шайб|анкер|пенопласт|минват|утеплител|гидроизоляц|мембран|рубероид|битум|мастик|краск|грунтовк|эмаль|лак|клей|герметик|пена|саморез|дюбел|хомут|муфт|фланец|задвижк|вентил|кран|насос|радиатор|конвектор|воздуховод|лоток|короб|подрозетник|выключател|розетк|светильник|лампа|автомат|УЗО|контактор|реле|счётчик|счетчик|трансформатор)\b/i;
+    const paramKeywords = /(\bØ\s*\d|\bd\s*\d|\bфр\.?\s*\d|\bфракци[яи]|\bкласс\s+[A-ZА-Я]|\bмарк[аи]\s+[A-ZА-Я0-9]|\bC\d{2,3}|\bB\d{2,3}|\bM\d{2,3})/i;
+    const gostKeywords = /\b(ГОСТ|ТУ|СТО|ОСТ)\s*\d/i;
+    const validUnits = /^(т|кг|м|м²|м³|м2|м3|мп|м\.п\.|шт|шт\.|компл|комплект|л|рул|упак|пачк|бухт)$/i;
+    const unitMismatchRules: Array<{ material: RegExp; badUnits: RegExp }> = [
+      { material: /арматур/i, badUnits: /^(м²|м2|л|рул)$/i },
+      { material: /бетон/i, badUnits: /^(т|кг|шт|м|мп)$/i },
+      { material: /щебень|песок|грунт/i, badUnits: /^(шт|м|мп|м²|м2)$/i },
+    ];
+
+    const calculateConfidence = (row: any): { confidence: number; confidence_level: string } => {
+      const name: string = (row.name || "").trim();
+      const unit: string = (row.unit || "").trim();
+      let score = 50; // base
+
+      // Bonuses
+      if (materialKeywords.test(name)) score += 20;
+      if (paramKeywords.test(name) || paramKeywords.test(row.type_mark || "")) score += 15;
+      if (gostKeywords.test(name) || gostKeywords.test(row.type_mark || "")) score += 10;
+      if (unit && validUnits.test(unit)) score += 10;
+
+      // Penalties
+      if (workStartKeywords.test(name)) score -= 40;
+      if (/\bработы\b/i.test(name)) score -= 30;
+      if (name.length > 0 && name.length < 20) score -= 25;
+      if (truncationSuffixes.test(name)) score -= 20;
+      if (workKeywords.test(name) && materialKeywords.test(name)) score -= 20;
+      for (const rule of unitMismatchRules) {
+        if (rule.material.test(name) && unit && rule.badUnits.test(unit)) {
+          score -= 15;
+          break;
+        }
+      }
+
+      const confidence = Math.max(0, Math.min(100, score));
+      const confidence_level = confidence >= 70 ? "HIGH" : confidence >= 40 ? "MEDIUM" : "LOW";
+      return { confidence, confidence_level };
+    };
+
     for (const m of materials) {
       const name = (m as any).name || "";
+      const conf = calculateConfidence(m);
+      (m as any).confidence = conf.confidence;
+      (m as any).confidence_level = conf.confidence_level;
+
       if (name.length > 0 && name.length < 20) {
         warnings.push(`Позиция "${name}" — короткое наименование (${name.length} симв.), возможна обрезка.`);
       }
@@ -1080,6 +1123,9 @@ ${buildPromptForType(docType)}
       }
       if (workKeywords.test(name)) {
         warnings.push(`Позиция "${name}" — возможно это работа, а не материал.`);
+      }
+      if (conf.confidence_level === "LOW") {
+        warnings.push(`Позиция "${name}" — низкий confidence (${conf.confidence}%), проверьте вручную.`);
       }
     }
 
@@ -1120,6 +1166,8 @@ ${buildPromptForType(docType)}
         unit: m.unit || null,
         quantity: m.quantity,
         mass_per_unit: m.mass_per_unit,
+        confidence: m.confidence ?? null,
+        confidence_level: m.confidence_level ?? null,
       }));
 
       const { error: insertError } = await supabase

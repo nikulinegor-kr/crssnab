@@ -1125,6 +1125,8 @@ export type Database = {
       }
       material_statement_items: {
         Row: {
+          confidence: number | null
+          confidence_level: string | null
           created_at: string
           id: string
           item_type: string
@@ -1146,6 +1148,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          confidence?: number | null
+          confidence_level?: string | null
           created_at?: string
           id?: string
           item_type?: string
@@ -1167,6 +1171,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          confidence?: number | null
+          confidence_level?: string | null
           created_at?: string
           id?: string
           item_type?: string
