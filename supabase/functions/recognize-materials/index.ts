@@ -1166,6 +1166,8 @@ ${buildPromptForType(docType)}
         unit: m.unit || null,
         quantity: m.quantity,
         mass_per_unit: m.mass_per_unit,
+        confidence: m.confidence ?? null,
+        confidence_level: m.confidence_level ?? null,
       }));
 
       const { error: insertError } = await supabase
