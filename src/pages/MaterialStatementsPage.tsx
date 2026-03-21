@@ -1970,6 +1970,17 @@ export default function MaterialStatementsPage() {
                                        );
                                      })}
                                      <TableCell>
+                                      {item.confidence != null ? (
+                                        <Badge variant="outline" className={cn("text-xs",
+                                          item.confidence_level === "HIGH" && "border-emerald-300 text-emerald-600",
+                                          item.confidence_level === "MEDIUM" && "border-amber-300 text-amber-600",
+                                          item.confidence_level === "LOW" && "border-red-300 text-red-600",
+                                        )}>
+                                          {item.confidence}%
+                                        </Badge>
+                                      ) : "—"}
+                                     </TableCell>
+                                     <TableCell>
                                       {item.procurement_status === "in_procurement" && (
                                         <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
                                       )}
