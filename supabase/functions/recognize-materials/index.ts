@@ -1096,7 +1096,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 
     // Post-dedup check
     const finalKeyCheck = new Map<string, string>();
-    for (const m of materials) {
+    for (const m of validMaterials) {
       const key = getStructuralKey(m);
       if (key) {
         if (finalKeyCheck.has(key)) {
