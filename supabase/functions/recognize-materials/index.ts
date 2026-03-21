@@ -575,67 +575,90 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
     // POST-PROCESSING: SPLIT CONCATENATED MATERIALS
     // ═══════════════════════════════════════════════
     const materialBoundaryKeywords = [
+      'изделия из арматур', 'изделия строительные', 'полотно бетонное',
+      'мат полиамидн', 'мат противоэрозионн', 'щебеночно-песчан',
       'арматур', 'щебень', 'щебен', 'бетон', 'песок', 'геотекстиль', 'геомат',
-      'геосетк', 'георешетк', 'труб', 'асфальтобетон', 'мембран', 'XPS',
+      'геосетк', 'георешетк', 'труб', 'асфальтобетон', 'мембран',
       'пенополистирол', 'эмульси', 'битум', 'мастик', 'плитк', 'кирпич',
-      'цемент', 'раствор', 'кабел', 'профиль', 'сетк', 'утеплител',
-      'гидроизоляц', 'рубероид', 'краск', 'грунтовк', 'пена', 'лоток',
-      'бордюр', 'поребрик', 'полотно бетонное', 'полотно', 'мат полиамидн',
-      'мат противоэрозионн', 'энкамат', 'габион', 'изделия строительные',
-      'изделия из арматур', 'анкер', 'ПГС',
+      'цемент', 'раствор', 'кабел', 'профиль', 'утеплител',
+      'гидроизоляц', 'рубероид', 'краск', 'грунтовк', 'лоток',
+      'бордюр', 'поребрик', 'энкамат', 'габион', 'анкер',
+      'нагель', 'блок лотка', 'блок упора', 'бандаж', 'пригрузка',
+      'растительный грунт', 'железобетонн', 'полотно',
+      'антисептированн', 'доск',
     ];
+
+    // Sort by length DESC so longer keywords match first
+    materialBoundaryKeywords.sort((a, b) => b.length - a.length);
 
     const splitConcatenatedRow = (row: any): any[] => {
       const name = String(row?.name || "").trim();
-      if (!name || name.length < 60) return [row]; // short names are unlikely concatenated
+      if (!name || name.length < 40) return [row];
 
-      // Count how many distinct material keywords appear in the name
       const lowerName = name.toLowerCase();
-      const foundKeywords: { keyword: string; index: number }[] = [];
+
+      // Find all material keyword boundaries
+      const boundaries: { keyword: string; index: number; length: number }[] = [];
       for (const kw of materialBoundaryKeywords) {
+        const kwLower = kw.toLowerCase();
         let searchFrom = 0;
         while (true) {
-          const idx = lowerName.indexOf(kw.toLowerCase(), searchFrom);
+          const idx = lowerName.indexOf(kwLower, searchFrom);
           if (idx === -1) break;
-          // Check it's not a substring of something already found at same position
-          const alreadyFound = foundKeywords.some(f => Math.abs(f.index - idx) < 3);
-          if (!alreadyFound) {
-            foundKeywords.push({ keyword: kw, index: idx });
+          // Skip if this position is already covered by a longer keyword
+          const alreadyCovered = boundaries.some(b =>
+            idx >= b.index && idx < b.index + b.length
+          );
+          if (!alreadyCovered) {
+            boundaries.push({ keyword: kw, index: idx, length: kwLower.length });
           }
-          searchFrom = idx + kw.length;
+          searchFrom = idx + 1;
         }
       }
 
-      // If fewer than 2 distinct material keywords found, no split needed
-      if (foundKeywords.length < 2) return [row];
+      if (boundaries.length < 2) return [row];
 
-      // Sort by position in string
-      foundKeywords.sort((a, b) => a.index - b.index);
+      // Sort by position
+      boundaries.sort((a, b) => a.index - b.index);
 
-      // Split the name at each material keyword boundary
+      // Deduplicate overlapping boundaries (keep the one that starts earliest, or longest)
+      const deduped: typeof boundaries = [];
+      for (const b of boundaries) {
+        const overlap = deduped.some(d =>
+          (b.index >= d.index && b.index < d.index + d.length + 3)
+        );
+        if (!overlap) deduped.push(b);
+      }
+
+      if (deduped.length < 2) return [row];
+
+      // Split at each boundary
       const parts: string[] = [];
-      for (let i = 0; i < foundKeywords.length; i++) {
-        const start = foundKeywords[i].index;
-        const end = i + 1 < foundKeywords.length ? foundKeywords[i + 1].index : name.length;
-        const part = name.substring(start, end).trim();
-        if (part.length > 2) {
-          // Clean trailing junk
-          const cleaned = part.replace(/[\s,;]+$/, '').trim();
-          if (cleaned.length > 2) parts.push(cleaned);
+      for (let i = 0; i < deduped.length; i++) {
+        const start = deduped[i].index;
+        const end = i + 1 < deduped.length ? deduped[i + 1].index : name.length;
+        let part = name.substring(start, end).trim().replace(/[\s,;]+$/, '').trim();
+        if (part.length > 2) parts.push(part);
+      }
+
+      // Also capture text before the first keyword if it's meaningful
+      if (deduped[0].index > 3) {
+        const prefix = name.substring(0, deduped[0].index).trim().replace(/[\s,;]+$/, '').trim();
+        if (prefix.length > 3) {
+          parts.unshift(prefix);
         }
       }
 
       if (parts.length <= 1) return [row];
 
-      console.log(`[SplitConcat] Split "${name.substring(0, 80)}..." into ${parts.length} materials`);
+      console.log(`[SplitConcat] "${name.substring(0, 60)}..." → ${parts.length} parts: ${parts.map(p => p.substring(0, 30)).join(' | ')}`);
 
       return parts.map((part, idx) => ({
         ...row,
         name: part,
-        position: row.position ? row.position + idx * 0.1 : null,
-        // Don't carry quantity/unit to split parts — they likely apply to the whole
-        quantity: idx === 0 ? row.quantity : null,
-        unit: idx === 0 ? row.unit : null,
+        position: null, // will be re-assigned later
+        quantity: null, // each split part needs its own quantity from the document
+        unit: null,
       }));
     };
 
