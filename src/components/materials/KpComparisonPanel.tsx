@@ -74,6 +74,9 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [supplierName, setSupplierName] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [recognizedFile, setRecognizedFile] = useState<File | null>(null);
+  const [recognizedData, setRecognizedData] = useState<{ supplier: string | null; items: any[] } | null>(null);
+  const [recognizeStep, setRecognizeStep] = useState<"select" | "recognizing" | "confirm">("select");
   const [matchReviewOpen, setMatchReviewOpen] = useState(false);
   const [currentMatches, setCurrentMatches] = useState<KpMatch[]>([]);
   const [currentSupplierId, setCurrentSupplierId] = useState<string | null>(null);
