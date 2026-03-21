@@ -1726,8 +1726,22 @@ export default function MaterialStatementsPage() {
                                         </span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
-                                    <TableCell>
+                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                     {folderKpSuppliers.map(kp => {
+                                       const sp = kpPriceMap.get(item.id)?.get(kp.id);
+                                       const isMin = getMinKpSupplier(item.id) === kp.id && sp?.price != null;
+                                       return (
+                                         <React.Fragment key={kp.id}>
+                                           <TableCell className={cn("text-sm text-center border-l", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                             {sp?.price != null ? formatPrice(sp.price) : "—"}
+                                           </TableCell>
+                                           <TableCell className={cn("text-sm text-center", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                             {sp?.total_price != null ? formatPrice(sp.total_price) : "—"}
+                                           </TableCell>
+                                         </React.Fragment>
+                                       );
+                                     })}
+                                     <TableCell>
                                       {item.procurement_status === "in_procurement" && (
                                         <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
                                       )}
