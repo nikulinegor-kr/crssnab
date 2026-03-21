@@ -1460,6 +1460,12 @@ export default function MaterialStatementsPage() {
                     Подтянуть цены
                   </Button>
                 )}
+                {isMaterialsFolder && allItems.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={handleMergeDuplicates} disabled={mergeDuplicatesLoading}>
+                    {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
+                    Объединить дубли
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
                     <Plus className="h-4 w-4 mr-1" /> Добавить файлы
