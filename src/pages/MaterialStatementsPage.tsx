@@ -52,6 +52,7 @@ interface MaterialStatement {
   display_name: string | null;
   created_by: string | null;
   created_at: string;
+  detected_source_type: string | null;
 }
 
 interface MaterialItem {
@@ -1669,9 +1670,26 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         {isMaterialsFolder && (
                           <TableCell>
-                            {st.is_recognized
-                              ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
-                              : <Badge variant="secondary">Не распознано</Badge>}
+                            <div className="flex gap-1 flex-wrap">
+                              {st.is_recognized
+                                ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
+                                : <Badge variant="secondary">Не распознано</Badge>}
+                              {st.detected_source_type && (
+                                <Badge variant="outline" className={
+                                  st.detected_source_type === "RC" ? "text-blue-600 border-blue-300" :
+                                  st.detected_source_type === "GL" ? "text-emerald-600 border-emerald-300" :
+                                  st.detected_source_type === "MR" ? "text-purple-600 border-purple-300" :
+                                  st.detected_source_type === "SPEC" ? "text-orange-600 border-orange-300" :
+                                  "text-muted-foreground"
+                                }>
+                                  {st.detected_source_type === "RC" ? "Конструкции" :
+                                   st.detected_source_type === "GL" ? "Генплан" :
+                                   st.detected_source_type === "MR" ? "Ведомость" :
+                                   st.detected_source_type === "SPEC" ? "Спецификация" :
+                                   st.detected_source_type}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                         )}
                         <TableCell className="text-sm text-muted-foreground">

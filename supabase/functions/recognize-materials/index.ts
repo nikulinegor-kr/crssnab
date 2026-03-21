@@ -238,7 +238,111 @@ Deno.serve(async (req) => {
       return normalized;
     };
 
-    const prompt = `Ты — инженер ПТО, а не парсер текста. Твоя задача — извлечь список материалов для ЗАКУПКИ из строительного PDF-документа.
+    // ═══════════════════════════════════════════════
+    // PRE-SCAN: Detect document source type (RC/GL/MR/SPEC)
+    // ═══════════════════════════════════════════════
+    const classifyDocumentType = async (firstChunkBytes: Uint8Array): Promise<{ type: string; scores: Record<string, number> }> => {
+      const pdfBase64 = encodeBase64(firstChunkBytes);
+
+      const classifyPrompt = `Проанализируй этот строительный PDF-документ и определи его тип.
+
+Просканируй ВЕСЬ документ: заголовки, названия таблиц, ключевые слова, структуру колонок.
+
+Оцени каждый тип по баллам:
+
+RC (конструкции — ведомость расхода стали, арматура):
++2 если есть "Ведомость расхода стали"
++1 если есть A240/A400/A500
++1 если есть Ø / диаметры арматуры
++1 если есть "Итого" в контексте стали
+
+GL (генплан — благоустройство, озеленение):
++2 если есть "Генеральный план"
++1 если есть "Экспликация"
++1 если есть "Условные обозначения"
++1 если есть "План благоустройства"
+
+MR (ведомость материалов — таблица с материалами):
++2 если есть таблица с колонками: Наименование | Ед. изм. | Количество
++1 если есть "Ведомость материалов"
+
+SPEC (спецификация — перечень материалов в спецификации):
++2 если есть "Спецификация" (как заголовок таблицы)
++1 если есть разделы: "Озеленение", "Покрытия", "Тротуары"
++1 если есть конкретные материалы внутри (бетон, щебень, плитка и т.д.)
+
+Ответь СТРОГО в JSON:
+{"type": "RC", "scores": {"RC": 4, "GL": 0, "MR": 1, "SPEC": 0}}
+
+Правила:
+- Выбери тип с максимальным score
+- При равенстве приоритет: MR > RC > SPEC > GL
+- Не добавляй текст кроме JSON`;
+
+      try {
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${lovableApiKey}`,
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [{
+              role: "user",
+              content: [
+                { type: "text", text: classifyPrompt },
+                { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
+              ],
+            }],
+            temperature: 0.1,
+            max_tokens: 500,
+          }),
+        });
+
+        if (!aiResponse.ok) {
+          console.error("[classify] AI failed:", await aiResponse.text());
+          return { type: "RC", scores: { RC: 0, GL: 0, MR: 0, SPEC: 0 } };
+        }
+
+        const aiData = await aiResponse.json();
+        let content = (aiData.choices?.[0]?.message?.content || "{}").replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        const result = JSON.parse(content);
+        const validTypes = ["RC", "GL", "MR", "SPEC"];
+        const detectedType = validTypes.includes(result.type) ? result.type : "RC";
+        console.log(`[classify] Document type: ${detectedType}, scores:`, result.scores);
+        return { type: detectedType, scores: result.scores || {} };
+      } catch (err) {
+        console.error("[classify] Error:", err);
+        return { type: "RC", scores: { RC: 0, GL: 0, MR: 0, SPEC: 0 } };
+      }
+    };
+
+    const buildPromptForType = (docType: string): string => {
+      const typeLabel = { RC: "КОНСТРУКЦИИ (RC)", GL: "ГЕНПЛАН (GL)", MR: "ВЕДОМОСТЬ МАТЕРИАЛОВ (MR)", SPEC: "СПЕЦИФИКАЦИЯ (SPEC)" }[docType] || docType;
+
+      const typeInstructions = docType === "GL"
+        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
+Это генплан/благоустройство. Извлекай ТОЛЬКО явно указанные материалы из таблиц (если они есть).
+Если в документе только чертежи, экспликации и условные обозначения без таблиц материалов — верни пустой массив [].
+Применяй режим SPECIFICATION_AS_MATERIALS если есть спецификация с материалами.\n`
+        : docType === "SPEC"
+        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
+Применяй режим SPECIFICATION_AS_MATERIALS — извлекай ВСЕ материалы из спецификации.
+Разделы типа "Озеленение", "Покрытия", "Тротуары" — это группировка, НЕ работы.
+Наименования сохраняй КАК ЕСТЬ. Единицы измерения КАК ЕСТЬ.\n`
+        : docType === "MR"
+        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
+Извлекай ВСЕ строки из ведомости материалов. Не фильтруй по типу (металл/неметалл).
+Используй формат таблицы как есть.\n`
+        : `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
+Извлекай металлопрокат по стандартным правилам: MASTER > DETAILS, дедупликация.\n`;
+
+      return typeInstructions;
+    };
+
+    const prompt = (docType: string) => `Ты — инженер ПТО, а не парсер текста. Твоя задача — извлечь список материалов для ЗАКУПКИ из строительного PDF-документа.
+${buildPromptForType(docType)}
 
 ═══════════════════════════════════════════════
 ЭТАП 1 — АНАЛИЗ СТРУКТУРЫ ДОКУМЕНТА
@@ -514,6 +618,7 @@ Deno.serve(async (req) => {
       chunkBytes: Uint8Array,
       chunkIndex: number,
       totalChunks: number,
+      docType: string,
     ): Promise<any[]> => {
       const pdfBase64 = encodeBase64(chunkBytes);
 
@@ -529,7 +634,7 @@ Deno.serve(async (req) => {
             {
               role: "user",
               content: [
-                { type: "text", text: prompt },
+                { type: "text", text: prompt(docType) },
                 {
                   type: "image_url",
                   image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
@@ -591,9 +696,15 @@ Deno.serve(async (req) => {
     const pdfBytes = await downloadPdfWithCap(fileUrl, MAX_SOURCE_PDF_BYTES);
     const pdfChunks = await splitPdfForAi(pdfBytes);
 
+    // Step 1: Classify document type using first chunk
+    console.log("[recognize] Starting document type classification...");
+    const { type: detectedSourceType, scores: typeScores } = await classifyDocumentType(pdfChunks[0]);
+    console.log(`[recognize] Detected source type: ${detectedSourceType}`, typeScores);
+
+    // For GL documents with no material tables, we may get empty results — that's expected
     const rawRows: any[] = [];
     for (let i = 0; i < pdfChunks.length; i++) {
-      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length);
+      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
       rawRows.push(...chunkRows);
     }
 
@@ -883,6 +994,8 @@ Deno.serve(async (req) => {
 
     console.log("Recognition diagnostics:", JSON.stringify({
       strategy: "position_ranges",
+      detectedSourceType,
+      typeScores,
       rawRows: rawRows.length,
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
@@ -931,10 +1044,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Mark statement as recognized
+    // Mark statement as recognized + save detected source type
     await supabase
       .from("material_statements")
-      .update({ is_recognized: true })
+      .update({ is_recognized: true, detected_source_type: detectedSourceType })
       .eq("id", statementId);
 
     return new Response(
@@ -944,6 +1057,8 @@ Deno.serve(async (req) => {
         materials,
         warnings,
         missingPositions,
+        detectedSourceType,
+        typeScores,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
