@@ -571,47 +571,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         </Card>
       )}
 
-      {/* Upload KP Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) { setUploadDialogOpen(false); setSupplierName(""); } }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Название поставщика *</label>
-              <Input
-                placeholder='Например: ООО "Альянс"'
-                value={supplierName}
-                onChange={e => setSupplierName(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Файл КП (Excel или PDF)</label>
-              <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary/50 transition-colors mt-1">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
-                <input
-                  type="file"
-                  accept=".pdf,.xlsx,.xls"
-                  className="hidden"
-                  disabled={!supplierName.trim() || uploading}
-                  onChange={e => {
-                    if (e.target.files?.[0]) {
-                      handleUploadKp(e.target.files[0]);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Загружено: {kpSuppliers.length} из {MAX_KP}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {renderUploadDialog()}
 
       {/* Match Review Dialog */}
       <Dialog open={matchReviewOpen} onOpenChange={open => { if (!open && !applyingMatches) { setMatchReviewOpen(false); setCurrentMatches([]); } }}>
