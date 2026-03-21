@@ -1478,10 +1478,16 @@ export default function MaterialStatementsPage() {
                     Подтянуть цены
                   </Button>
                 )}
-                {isMaterialsFolder && allItems.length > 0 && (
+                {isMaterialsFolder && allItems.length > 0 && (!mergeSnapshot || mergeSnapshot.folderId !== (selectedFolderId || "")) && (
                   <Button variant="outline" size="sm" onClick={handleMergeDuplicates} disabled={mergeDuplicatesLoading}>
                     {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
                     Объединить дубли
+                  </Button>
+                )}
+                {mergeSnapshot && mergeSnapshot.folderId === (selectedFolderId || "") && (
+                  <Button variant="outline" size="sm" onClick={handleUndoMerge} disabled={mergeDuplicatesLoading} className="border-orange-300 text-orange-600 hover:bg-orange-50">
+                    {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Undo2 className="h-4 w-4 mr-1" />}
+                    Разъединить дубли
                   </Button>
                 )}
                 <Button variant="outline" size="sm" asChild>
