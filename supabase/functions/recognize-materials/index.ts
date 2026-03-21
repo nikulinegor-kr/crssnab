@@ -1132,8 +1132,8 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 
     await supabase.from("material_statement_items").delete().eq("statement_id", statementId);
 
-    if (materials.length > 0) {
-      const items = materials.map((m: any, idx: number) => ({
+    if (validMaterials.length > 0) {
+      const items = validMaterials.map((m: any, idx: number) => ({
         statement_id: statementId,
         organization_id: organizationId,
         row_number: idx + 1,
