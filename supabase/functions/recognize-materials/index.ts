@@ -483,6 +483,89 @@ Deno.serve(async (req) => {
       rawRows.push(...chunkRows);
     }
 
+    // ═══════════════════════════════════════════════
+    // DEDUPLICATION: prevent double-counting from MASTER + DETAILS tables
+    // ═══════════════════════════════════════════════
+    const deduplicateMasterDetails = (rows: any[]): any[] => {
+      if (rows.length <= 1) return rows;
+
+      // Build structural key for grouping
+      const getStructuralKey = (row: any): string | null => {
+        const name = String(row?.name || "").toLowerCase();
+        // Арматура: extract class + diameter
+        const rebarMatch = name.match(/арматур[аыи]?\s+([aа][-]?\d{3,4}[сc]?)\s+[øø]?\s*(\d+)/i);
+        if (rebarMatch) {
+          const cls = rebarMatch[1].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase();
+          return `rebar|${cls}|${rebarMatch[2]}`;
+        }
+        // Труба: extract diameter x thickness
+        const pipeMatch = name.match(/труб[аыи]?\s+[øø]?\s*(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
+        if (pipeMatch) return `pipe|${pipeMatch[1]}|${pipeMatch[2]}`;
+        // Прокат: extract dimensions
+        const steelMatch = name.match(/прокат.*?(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
+        if (steelMatch) return `steel|${steelMatch[1]}|${steelMatch[2]}`;
+        return null;
+      };
+
+      // Group by structural key
+      const groups = new Map<string, any[]>();
+      const ungrouped: any[] = [];
+      for (const row of rows) {
+        const key = getStructuralKey(row);
+        if (key) {
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(row);
+        } else {
+          ungrouped.push(row);
+        }
+      }
+
+      const deduplicated: any[] = [...ungrouped];
+
+      for (const [key, group] of groups) {
+        if (group.length <= 1) {
+          deduplicated.push(...group);
+          continue;
+        }
+
+        // Sort by quantity descending — the largest is likely the MASTER value
+        const withQty = group
+          .map(r => ({ row: r, qty: typeof r.quantity === "number" ? r.quantity : 0 }))
+          .sort((a, b) => b.qty - a.qty);
+
+        const maxQty = withQty[0].qty;
+        const sumOfRest = withQty.slice(1).reduce((s, r) => s + r.qty, 0);
+
+        // If the max quantity is close to sum of the rest (within 15% or equal),
+        // it means MASTER = sum(DETAILS) → keep only MASTER
+        if (maxQty > 0 && sumOfRest > 0) {
+          const ratio = Math.abs(maxQty - sumOfRest) / maxQty;
+          if (ratio < 0.15) {
+            console.log(`[Dedup] ${key}: MASTER ${maxQty} ≈ sum(DETAILS) ${sumOfRest} — keeping MASTER only`);
+            deduplicated.push(withQty[0].row);
+            continue;
+          }
+          // If max > sum of rest significantly, could be MASTER + some DETAILS
+          // Keep only MASTER if it's the dominant entry (>60% of total)
+          const totalQty = maxQty + sumOfRest;
+          if (maxQty / totalQty > 0.6) {
+            console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates total ${totalQty} — keeping MASTER only`);
+            deduplicated.push(withQty[0].row);
+            continue;
+          }
+        }
+
+        // No clear MASTER/DETAILS pattern — keep all entries
+        deduplicated.push(...group);
+      }
+
+      console.log(`[Dedup] Input: ${rows.length} rows, Output: ${deduplicated.length} rows, Removed: ${rows.length - deduplicated.length}`);
+      return deduplicated;
+    };
+
+    // Apply deduplication only for multi-chunk PDFs (where cross-table duplication is likely)
+    const deduplicatedRows = pdfChunks.length > 1 ? deduplicateMasterDetails(rawRows) : rawRows;
+
     const normalizeText = (value: any): string => {
       if (value === null || value === undefined) return "";
       return String(value).replace(/\s+/g, " ").trim();
@@ -553,7 +636,7 @@ Deno.serve(async (req) => {
 
     type GroupedRow = ParsedRow & { position: number };
 
-    const normalizedRows: ParsedRow[] = rawRows
+    const normalizedRows: ParsedRow[] = deduplicatedRows
       .map((row: any) => {
         const rawName = normalizeText(row?.name);
         const columnPosition = parsePosition(row?.position);
