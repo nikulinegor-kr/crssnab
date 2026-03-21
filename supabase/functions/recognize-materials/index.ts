@@ -1161,7 +1161,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       .eq("id", statementId);
 
     return new Response(
-      JSON.stringify({ success: true, count: materials.length, materials, warnings, missingPositions, detectedSourceType, typeScores }),
+      JSON.stringify({ success: true, count: validMaterials.length, materials: validMaterials, warnings, missingPositions, detectedSourceType, typeScores }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
