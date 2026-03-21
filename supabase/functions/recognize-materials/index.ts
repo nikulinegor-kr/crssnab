@@ -1061,6 +1061,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       detectedSourceType,
       typeScores,
       rawRows: rawRows.length,
+      afterSplit: splitRows.length,
       afterDedup: deduplicatedRows.length,
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
