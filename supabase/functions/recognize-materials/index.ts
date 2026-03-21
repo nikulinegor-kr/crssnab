@@ -994,6 +994,8 @@ ${buildPromptForType(docType)}
 
     console.log("Recognition diagnostics:", JSON.stringify({
       strategy: "position_ranges",
+      detectedSourceType,
+      typeScores,
       rawRows: rawRows.length,
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
