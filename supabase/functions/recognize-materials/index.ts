@@ -37,27 +37,25 @@ Deno.serve(async (req) => {
 
     const sourceTooLargeError = "Файл слишком большой для распознавания в облаке (макс. 45 МБ). Сожмите или разбейте PDF.";
 
+    // ═══════════════════════════════════════════════
+    // PDF DOWNLOAD & SPLIT (unchanged infrastructure)
+    // ═══════════════════════════════════════════════
     const downloadPdfWithCap = async (url: string, maxBytes: number): Promise<Uint8Array> => {
       let headSize: number | null = null;
-
       try {
         const headResponse = await fetch(url, { method: "HEAD" });
         if (headResponse.ok) {
           const header = headResponse.headers.get("content-length");
           headSize = header ? Number(header) : null;
         }
-      } catch {
-        // Some hosts can block HEAD.
-      }
+      } catch { /* Some hosts block HEAD */ }
 
       if (headSize !== null && Number.isFinite(headSize) && headSize > maxBytes) {
         throw new Error(sourceTooLargeError);
       }
 
       const pdfResponse = await fetch(url);
-      if (!pdfResponse.ok || !pdfResponse.body) {
-        throw new Error("Failed to download PDF");
-      }
+      if (!pdfResponse.ok || !pdfResponse.body) throw new Error("Failed to download PDF");
 
       const lengthHeader = pdfResponse.headers.get("content-length");
       const declaredSize = lengthHeader ? Number(lengthHeader) : null;
@@ -66,74 +64,51 @@ Deno.serve(async (req) => {
       }
 
       const reader = pdfResponse.body.getReader();
-
       if (declaredSize !== null && Number.isFinite(declaredSize) && declaredSize > 0) {
         const bytes = new Uint8Array(declaredSize);
         let offset = 0;
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           if (!value) continue;
-
           offset += value.length;
-          if (offset > maxBytes) {
-            await reader.cancel();
-            throw new Error(sourceTooLargeError);
-          }
+          if (offset > maxBytes) { await reader.cancel(); throw new Error(sourceTooLargeError); }
           bytes.set(value, offset - value.length);
         }
-
         return offset === bytes.length ? bytes : bytes.slice(0, offset);
       }
 
       const chunks: Uint8Array[] = [];
       let totalBytes = 0;
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (!value) continue;
-
         totalBytes += value.length;
-        if (totalBytes > maxBytes) {
-          await reader.cancel();
-          throw new Error(sourceTooLargeError);
-        }
-
+        if (totalBytes > maxBytes) { await reader.cancel(); throw new Error(sourceTooLargeError); }
         chunks.push(value);
       }
-
       const pdfBytes = new Uint8Array(totalBytes);
       let offset = 0;
-      for (const chunk of chunks) {
-        pdfBytes.set(chunk, offset);
-        offset += chunk.length;
-      }
+      for (const chunk of chunks) { pdfBytes.set(chunk, offset); offset += chunk.length; }
       return pdfBytes;
     };
 
     const splitPdfForAi = async (pdfBytes: Uint8Array): Promise<Uint8Array[]> => {
-      if (pdfBytes.byteLength <= AI_HARD_CHUNK_BYTES) {
-        return [pdfBytes];
-      }
+      if (pdfBytes.byteLength <= AI_HARD_CHUNK_BYTES) return [pdfBytes];
 
       const sourceDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const totalPages = sourceDoc.getPageCount();
-
-      if (totalPages <= 1) {
-        throw new Error("PDF содержит слишком тяжёлую страницу для распознавания в облаке. Сожмите файл.");
-      }
+      if (totalPages <= 1) throw new Error("PDF содержит слишком тяжёлую страницу. Сожмите файл.");
 
       const estimatedChunks = Math.max(2, Math.ceil(pdfBytes.byteLength / AI_TARGET_CHUNK_BYTES));
       const initialPagesPerChunk = Math.max(1, Math.ceil(totalPages / estimatedChunks));
       const chunks: Uint8Array[] = [];
-
       let pageCursor = 0;
+
       while (pageCursor < totalPages) {
         const remaining = totalPages - pageCursor;
         let candidatePages = Math.min(initialPagesPerChunk, remaining);
-
         let selectedBytes: Uint8Array | null = null;
         let selectedPageCount = 0;
 
@@ -142,108 +117,67 @@ Deno.serve(async (req) => {
           const pageIndexes = Array.from({ length: candidatePages }, (_, i) => pageCursor + i);
           const pages = await chunkDoc.copyPages(sourceDoc, pageIndexes);
           for (const page of pages) chunkDoc.addPage(page);
-
           const candidateBytes = await chunkDoc.save({ useObjectStreams: true });
           if (candidateBytes.byteLength <= AI_HARD_CHUNK_BYTES) {
             selectedBytes = candidateBytes;
             selectedPageCount = candidatePages;
             break;
           }
-
           candidatePages -= 1;
         }
 
         if (!selectedBytes || selectedPageCount === 0) {
-          throw new Error("Не удалось безопасно разбить PDF для распознавания. Сожмите файл и повторите.");
+          throw new Error("Не удалось безопасно разбить PDF. Сожмите файл.");
         }
-
         chunks.push(selectedBytes);
         pageCursor += selectedPageCount;
       }
-
       return chunks;
     };
 
+    // ═══════════════════════════════════════════════
+    // JSON PARSING HELPERS (unchanged)
+    // ═══════════════════════════════════════════════
     const parseRowsWithRecovery = (text: string): any[] | null => {
       const start = text.indexOf("[");
       if (start === -1) return null;
       const fromArray = text.slice(start);
-
       const lastBracket = fromArray.lastIndexOf("]");
       if (lastBracket > 0) {
         const fullCandidate = fromArray.slice(0, lastBracket + 1);
-        try {
-          const parsed = JSON.parse(fullCandidate);
-          return Array.isArray(parsed) ? parsed : null;
-        } catch {
-          // Continue to recovery.
-        }
+        try { const parsed = JSON.parse(fullCandidate); return Array.isArray(parsed) ? parsed : null; } catch { /* recovery */ }
       }
-
-      let inString = false;
-      let escaped = false;
-      let objectDepth = 0;
+      let inString = false, escaped = false, objectDepth = 0;
       const completeObjectEndIndices: number[] = [];
-
       for (let i = 0; i < fromArray.length; i++) {
         const ch = fromArray[i];
-
-        if (inString) {
-          if (escaped) {
-            escaped = false;
-          } else if (ch === "\\") {
-            escaped = true;
-          } else if (ch === '"') {
-            inString = false;
-          }
-          continue;
-        }
-
-        if (ch === '"') {
-          inString = true;
-          continue;
-        }
-
-        if (ch === "{") {
-          objectDepth++;
-        } else if (ch === "}" && objectDepth > 0) {
-          objectDepth--;
-          if (objectDepth === 0) completeObjectEndIndices.push(i);
-        }
+        if (inString) { if (escaped) escaped = false; else if (ch === "\\") escaped = true; else if (ch === '"') inString = false; continue; }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === "{") objectDepth++;
+        else if (ch === "}" && objectDepth > 0) { objectDepth--; if (objectDepth === 0) completeObjectEndIndices.push(i); }
       }
-
       for (let idx = completeObjectEndIndices.length - 1; idx >= 0; idx--) {
         const end = completeObjectEndIndices[idx];
         const candidate = `${fromArray.slice(0, end + 1).replace(/,\s*$/, "")}]`;
-        try {
-          const parsed = JSON.parse(candidate);
-          return Array.isArray(parsed) ? parsed : null;
-        } catch {
-          // Try earlier object boundary.
-        }
+        try { const parsed = JSON.parse(candidate); return Array.isArray(parsed) ? parsed : null; } catch { /* earlier */ }
       }
-
       return null;
     };
 
     const normalizeAiJson = (text: string): string => {
       let normalized = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-
       const fixLocaleCommas = (value: string): string =>
         value.replace(/(:\s*-?)(\d+),(\d+)(\s*[,\}\]\s\n\r])/g, "$1$2.$3$4");
-
       const firstPass = fixLocaleCommas(normalized);
       normalized = firstPass === normalized ? normalized : fixLocaleCommas(firstPass);
-
       return normalized;
     };
 
     // ═══════════════════════════════════════════════
-    // PRE-SCAN: Detect document source type (RC/GL/MR/SPEC)
+    // DOCUMENT TYPE CLASSIFICATION
     // ═══════════════════════════════════════════════
     const classifyDocumentType = async (firstChunkBytes: Uint8Array): Promise<{ type: string; scores: Record<string, number> }> => {
       const pdfBase64 = encodeBase64(firstChunkBytes);
-
       const classifyPrompt = `Проанализируй этот строительный PDF-документ и определи его тип.
 
 Просканируй ВЕСЬ документ: заголовки, названия таблиц, ключевые слова, структуру колонок.
@@ -282,421 +216,185 @@ SPEC (спецификация — перечень материалов в сп
       try {
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${lovableApiKey}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableApiKey}` },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
-            messages: [{
-              role: "user",
-              content: [
-                { type: "text", text: classifyPrompt },
-                { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
-              ],
-            }],
-            temperature: 0.1,
-            max_tokens: 500,
+            messages: [{ role: "user", content: [
+              { type: "text", text: classifyPrompt },
+              { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
+            ]}],
+            temperature: 0.1, max_tokens: 500,
           }),
         });
-
-        if (!aiResponse.ok) {
-          console.error("[classify] AI failed:", await aiResponse.text());
-          return { type: "RC", scores: { RC: 0, GL: 0, MR: 0, SPEC: 0 } };
-        }
-
+        if (!aiResponse.ok) { console.error("[classify] AI failed:", await aiResponse.text()); return { type: "RC", scores: {} }; }
         const aiData = await aiResponse.json();
         let content = (aiData.choices?.[0]?.message?.content || "{}").replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
         const result = JSON.parse(content);
         const validTypes = ["RC", "GL", "MR", "SPEC"];
         const detectedType = validTypes.includes(result.type) ? result.type : "RC";
-        console.log(`[classify] Document type: ${detectedType}, scores:`, result.scores);
+        console.log(`[classify] Document type: ${detectedType}`, result.scores);
         return { type: detectedType, scores: result.scores || {} };
       } catch (err) {
         console.error("[classify] Error:", err);
-        return { type: "RC", scores: { RC: 0, GL: 0, MR: 0, SPEC: 0 } };
+        return { type: "RC", scores: {} };
       }
     };
 
-    const engineeringReasoningBlock = `
-═══════════════════════════════════════════════
-ИНЖЕНЕРНОЕ РАССУЖДЕНИЕ (обязательно для КАЖДОЙ строки)
-═══════════════════════════════════════════════
-
-Для КАЖДОЙ строки таблицы выполни 6 шагов мысленно, прежде чем принять решение:
-
-ШАГ 1 — КЛАССИФИКАЦИЯ: Определи тип строки по СМЫСЛУ (не только по ключевым словам):
-  - MATERIAL = физическое вещество или изделие (щебень, бетон, труба, геотекстиль, арматура)
-  - WORK = процесс, действие, услуга (устройство, монтаж, разработка, укладка)
-  - GROUP = заголовок раздела, описание конструкции ("Конструкция дороги", "Тип 1")
-
-ШАГ 2 — ПРОВЕРКА СМЫСЛА: Задай себе два вопроса:
-  1. "Есть ли тут ФИЗИЧЕСКИЙ материал, который можно потрогать?"
-  2. "Можно ли это КУПИТЬ у поставщика как товар?"
-  Если ОБА ответа ДА → MATERIAL. Если хотя бы один НЕТ → WORK или GROUP.
-
-ШАГ 3 — АНАЛИЗ НАЧАЛА СТРОКИ:
-  Если строка НАЧИНАЕТСЯ с глагола/действия (устройство, разработка, восстановление,
-  планировка, уплотнение, нарезка, монтаж, демонтаж, разборка, укладка, установка,
-  подготовка, срезка, засыпка, прокладка, пробивка, заделка, окраска, грунтование,
-  выравнивание, армирование, бетонирование, расчистка, вырубка, корчёвка, снятие,
-  удаление, очистка):
-  → WORK, даже если дальше упоминаются материалы
-  → "Устройство основания из щебня фр. 20-40" — это РАБОТА, а не щебень!
-
-ШАГ 4 — ПРОВЕРКА КОНТЕКСТА:
-  - Если строка содержит "работы", "подготовительные", "земляные", "обратная засыпка" → WORK
-  - Если строка содержит "Конструкция", "Тип 1/2/3" → GROUP
-  - Если строка длинная и описывает процесс с упоминанием материалов → WORK
-  - Если строка короткая и называет конкретный материал с параметрами → MATERIAL
-
-ШАГ 5 — САМОПРОВЕРКА перед добавлением:
-  Спроси себя: "Я бы позвонил поставщику и заказал ЭТО как товар?"
-  - "Щебень фр. 20-40" — ДА → MATERIAL ✅
-  - "Арматура A500C Ø12" — ДА → MATERIAL ✅
-  - "Устройство основания из щебня" — НЕТ, это услуга → WORK ❌
-  - "Конструкция автодороги" — НЕТ, это описание → GROUP ❌
-
-ШАГ 6 — РЕШЕНИЕ:
-  MATERIAL → добавить в результат с полным наименованием
-  WORK → НЕ добавлять (игнорировать полностью)
-  GROUP → НЕ добавлять (но проверить вложенные строки)
-
-═══════════════════════════════════════════════
-ПРАВИЛА ИЗВЛЕЧЕНИЯ НАИМЕНОВАНИЙ
-═══════════════════════════════════════════════
-
-Наименование материала = ВЕСЬ текст из колонки "Наименование" до колонки "Ед. изм."
-- НЕ обрезать текст, даже если он длинный
-- Если текст разбит на несколько строк (перенос) → объединить через пробел
-- "тип", "типа", "марка", "марки", "на битуме", "класс" — ЧАСТЬ наименования
-- Единицы измерения (м², м³, т, кг, шт) → в отдельное поле unit
-- ГОСТ/ТУ/СТО → в поле type_mark
-Если наименование заканчивается на: "марки", "типа", "на", "из", "класса" → ОШИБКА обрезки. Восстанови полный текст.
-
-═══════════════════════════════════════════════
-ФИНАЛЬНАЯ ПРОВЕРКА (обязательна)
-═══════════════════════════════════════════════
-
-После формирования результата пройди по КАЖДОМУ элементу и задай вопрос:
-"Это физический материал, который можно купить?"
-Если name содержит: устройство, разработка, планировка, восстановление,
-уплотнение, нарезка, монтаж, работы, демонтаж, укладка, установка, подготовка
-→ УДАЛИ. Это работа, пропущенная фильтром.
-`;
-
+    // ═══════════════════════════════════════════════
+    // MAIN PROMPT — полностью переработанный
+    // ═══════════════════════════════════════════════
     const buildPromptForType = (docType: string): string => {
-      const typeLabel = { RC: "КОНСТРУКЦИИ (RC)", GL: "ГЕНПЛАН (GL)", MR: "ВЕДОМОСТЬ МАТЕРИАЛОВ (MR)", SPEC: "СПЕЦИФИКАЦИЯ (SPEC)" }[docType] || docType;
+      const typeSpecific: Record<string, string> = {
+        GL: `⚠️ ТИП: ГЕНПЛАН. Извлекай ТОЛЬКО явные материалы из таблиц. Если только чертежи — верни [].`,
+        SPEC: `⚠️ ТИП: СПЕЦИФИКАЦИЯ. Извлекай ВСЕ материалы. Разделы "Озеленение", "Покрытия" — это группировка, НЕ работы. Вложенные позиции (1.1, 1.2) — отдельные материалы.`,
+        MR: `⚠️ ТИП: ВЕДОМОСТЬ МАТЕРИАЛОВ. Извлекай ВСЕ строки-материалы. Строки с "Конструкция", "Тип 1/2/3" → GROUP, не добавлять. Подпункты проверяй отдельно.`,
+        RC: `⚠️ ТИП: КОНСТРУКЦИИ (RC).
+ДВУХЭТАПНОЕ ИЗВЛЕЧЕНИЕ:
+ЭТАП A — МЕТАЛЛ: Найди "Ведомость расхода стали" (MASTER, не DETAILS). Извлеки арматуру, трубы, прокат.
+ЭТАП B — ВСЕ ПРОЧИЕ МАТЕРИАЛЫ: Просканируй ВЕСЬ документ на другие таблицы ("Спецификация", "Ведомость материалов"). Извлеки бетон, щебень, песок, геотекстиль, геомат, мембрану, XPS и т.д.
+НЕ ограничивайся только сталью — нужны ВСЕ материалы документа.`,
+      };
 
-      const typeInstructions = docType === "GL"
-        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
-Это генплан/благоустройство. Извлекай ТОЛЬКО явно указанные материалы из таблиц (если они есть).
-Если в документе только чертежи, экспликации и условные обозначения без таблиц материалов — верни пустой массив [].
-Применяй режим SPECIFICATION_AS_MATERIALS если есть спецификация с материалами.
-${engineeringReasoningBlock}\n`
-        : docType === "SPEC"
-        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
-Применяй режим SPECIFICATION_AS_MATERIALS — извлекай ВСЕ материалы из спецификации.
-Разделы типа "Озеленение", "Покрытия", "Тротуары" — это группировка, НЕ работы.
-Наименования сохраняй КАК ЕСТЬ. Единицы измерения КАК ЕСТЬ.
-${engineeringReasoningBlock}\n`
-        : docType === "MR"
-        ? `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
-Извлекай строки из ведомости материалов. Не фильтруй по типу (металл/неметалл).
-${engineeringReasoningBlock}
-ВЛОЖЕННЫЕ КОНСТРУКЦИИ:
-Строки с "Конструкция", "Тип 1/2/3" → GROUP, НЕ добавлять.
-Подпункты после них (1.1, 1.2) → проверить через ШАГ 1-6.
-Если нет вложенности (плоская таблица) → каждую строку через ШАГ 1-6.\n`
-        : `\n⚠️ ТИП ДОКУМЕНТА: ${typeLabel}
-
-ДВУХЭТАПНАЯ СТРАТЕГИЯ ИЗВЛЕЧЕНИЯ ДЛЯ RC:
-
-ЭТАП A — МЕТАЛЛ (из "Ведомость расхода стали"):
-- Найди "Ведомость расхода стали" (MASTER — итоговую, не DETAILS)
-- Извлеки: арматуру, трубы, прокат, металлоизделия
-- Применяй правила MASTER > DETAILS, дедупликацию
-- Форматируй наименования по стандартным правилам (Этап 5)
-
-ЭТАП B — ВСЕ ПРОЧИЕ МАТЕРИАЛЫ (из остальных таблиц документа):
-- Просканируй ВЕСЬ документ на наличие других таблиц:
-  • "Спецификация" (общая)
-  • "Ведомость материалов"
-  • "Материалы"
-  • Любые таблицы с колонками "Наименование | Ед. изм. | Количество"
-- Из них извлеки ВСЕ неметаллические материалы:
-  бетон, щебень, песок, грунт, геотекстиль, геомат, геосетка,
-  гидроизоляция, мембрана, утеплитель, пенополистирол,
-  трубы ПВХ/ПНД, краска, мастика, битум, асфальтобетон,
-  плитка, кирпич, раствор, цемент и т.д.
-- Наименования брать КАК ЕСТЬ из документа (не переименовывать)
-- type_mark = ГОСТ/ТУ/СТО если указан в таблице, иначе null
-
-ПРАВИЛА ДЕДУПЛИКАЦИИ:
-- Если материал уже извлечён из ведомости стали (ЭТАП A) — НЕ добавлять повторно
-- Если одна и та же позиция есть в нескольких таблицах — оставить одну с бОльшим количеством
-
-ИСКЛЮЧИТЬ:
-- Работы (устройство, монтаж, разработка и т.д.) — применяй ИНЖЕНЕРНОЕ РАССУЖДЕНИЕ
-- Детализацию элементов (УМ1, УМ2) если есть MASTER
-- Строки "Итого", "Всего"
-
-ИТОГО RC должен вернуть:
-✅ Металл (арматура, трубы, прокат) из ведомости стали
-✅ Все прочие материалы (бетон, щебень, геотекстиль и т.д.) из остальных таблиц
-❌ Работы
-❌ Дубли
-
-${engineeringReasoningBlock}\n`;
-
-      return typeInstructions;
+      return typeSpecific[docType] || typeSpecific.RC;
     };
 
-    const prompt = (docType: string) => `Ты — инженер ПТО, а не парсер текста. Твоя задача — извлечь список материалов для ЗАКУПКИ из строительного PDF-документа.
+    const prompt = (docType: string) => `Ты — инженер ПТО. Задача: извлечь ЕДИНУЮ ведомость материалов для ЗАКУПКИ из строительного PDF.
+
 ${buildPromptForType(docType)}
 
 ═══════════════════════════════════════════════
-ЭТАП 1 — АНАЛИЗ СТРУКТУРЫ ДОКУМЕНТА
+ГЛАВНОЕ ПРАВИЛО: МАТЕРИАЛ ОПРЕДЕЛЯЕТСЯ ПО СМЫСЛУ
 ═══════════════════════════════════════════════
 
-Перед извлечением материалов СНАЧАЛА просканируй ВЕСЬ документ и найди все таблицы. Определи их типы:
-- "Ведомость расхода стали"
-- "Спецификация деталей"
-- "Спецификация арматуры"
-- "Ведомость материалов"
-- "Спецификация" (общая)
-- "Объемы работ"
-- Любые другие таблицы с материалами
+Материал = физический объект, который можно КУПИТЬ у поставщика:
+✅ арматура, бетон, щебень, песок, геотекстиль, геомат, трубы, асфальтобетон, XPS, мембрана, плитка, кирпич, цемент, раствор, кабель, профиль, сетка, утеплитель, гидроизоляция, мастика, битум, краска
+
+НЕ материалы (РАБОТЫ — никогда не добавлять):
+❌ устройство, разработка, планировка, уплотнение, монтаж, демонтаж, укладка, установка, подготовка, засыпка, обратная засыпка, срезка, прокладка, заделка, окраска, бетонирование, армирование, расчистка, вырубка, снятие, удаление, очистка, нарезка, выемка, восстановление, грунтование, выравнивание, корчёвка
 
 ═══════════════════════════════════════════════
-ЭТАП 2 — ОПРЕДЕЛЕНИЕ РОЛЕЙ ТАБЛИЦ
+КЛАССИФИКАЦИЯ КАЖДОЙ СТРОКИ (обязательно)
 ═══════════════════════════════════════════════
 
-Каждой найденной таблице присвой одну из ролей:
+Для КАЖДОЙ строки определи тип:
+- MATERIAL — физический объект, можно купить → ДОБАВИТЬ
+- WORK — действие, процесс, услуга → ИГНОРИРОВАТЬ
+- GROUP — заголовок раздела, описание конструкции → ИГНОРИРОВАТЬ
 
-🟢 MASTER (главная итоговая ведомость):
-- "Ведомость расхода стали" БЕЗ привязки к конкретному элементу
-- Содержит слово "Всего" и агрегированные итоговые значения
-- Содержит классы арматуры (A240, A400) и диаметры (Ø8, Ø10, Ø12...)
-- Это ИТОГОВАЯ ведомость для закупки
+КЛЮЧЕВОЙ ТЕСТ: "Я могу позвонить поставщику и заказать ЭТО как товар?"
+- "Щебень фр. 20-40" → ДА → MATERIAL ✅
+- "Арматура A500C Ø12" → ДА → MATERIAL ✅
+- "Устройство основания из щебня" → НЕТ, это услуга → WORK ❌
+- "Обратная засыпка" → НЕТ → WORK ❌
+- "Конструкция автодороги" → НЕТ → GROUP ❌
 
-🟡 DETAILS (детализация — НЕ добавлять в итог если есть MASTER):
-- "Спецификация арматуры на 1 элемент"
-- "Спецификация" внутри конкретного элемента
-- "Ведомость расхода стали" с привязкой к элементу (УМ1, УМ2, УМ3, УМ4 и т.д.)
-- Любые таблицы с указанием конкретного элемента/конструкции
-
-🟣 SPECIFICATION_AS_MATERIALS (спецификация как источник материалов):
-- Применяется ТОЛЬКО если в документе НЕТ ни "Ведомости материалов", ни "Ведомости расхода стали"
-- НО есть таблица "Спецификация" (общая спецификация проекта/раздела)
-- В этом случае спецификация становится ОСНОВНЫМ и ЕДИНСТВЕННЫМ источником материалов
-- НЕ искать дополнительные материалы в других разделах файла — всё уже здесь
-- Извлекать: Наименование, Ед. изм., Количество
-- Разделы в спецификации типа "Озеленение территории", "Устройство покрытий", "Тротуар", "Благоустройство" — это ГРУППИРОВКА, а НЕ работы. НЕ игнорировать содержимое этих разделов!
-- Вложенные позиции (1.1, 1.2, 3.1 и т.д.) — считать ОТДЕЛЬНЫМИ материалами
-
-🔴 IGNORE (НЕ извлекать):
-- Объемы работ без привязки к материалу
-- Схемы и чертежи
-- Строки "Итого", "Всего", суммарные строки
-
-⚠️ ВАЖНО: В режиме SPECIFICATION_AS_MATERIALS и RC правила IGNORE расширены только на работы и итоги.
-В этих режимах извлекай ВСЕ материалы (бетон, щебень, геотекстиль, трубы ПВХ и т.д.) — 
-они содержат полный перечень материалов для закупки.
-
-В режиме GL без явных таблиц материалов — не извлекай ничего.
-В режиме MR — извлекай все строки через инженерное рассуждение (фильтруй работы).
+ПРАВИЛО НАЧАЛА СТРОКИ: Если строка НАЧИНАЕТСЯ с глагола/действия → WORK, даже если дальше есть материалы.
 
 ═══════════════════════════════════════════════
-ЭТАП 3 — ПРАВИЛО ПРИОРИТЕТА (КРИТИЧЕСКИ ВАЖНО!)
+НОРМАЛИЗАЦИЯ И ДЕДУПЛИКАЦИЯ (КРИТИЧНО!)
 ═══════════════════════════════════════════════
 
-ЕСЛИ найдена таблица с ролью MASTER:
-→ Извлекай материалы ТОЛЬКО из неё
-→ Таблицы DETAILS полностью ИГНОРИРУЙ
-→ НЕ суммируй MASTER + DETAILS
-→ НЕ дублируй материалы из детализации
+ОДИН МАТЕРИАЛ = ОДИН КЛЮЧ. Если ключ совпадает — это ОДИН материал, НЕЛЬЗЯ создавать вторую строку.
 
-ЕСЛИ таблицы MASTER НЕТ, НО есть "Ведомость материалов":
-→ Собирай материалы из таблиц DETAILS
-→ Используй "Спецификацию деталей" как основной источник
+КЛЮЧИ МАТЕРИАЛОВ:
+- Арматура: rebar|{class}|{diameter}
+  "Арматура 10 A500C" = "Изделия из арматуры A500C Ø10" = "Ø10 A500C" → rebar|A500C|10
+- Труба: pipe|{diameter}|{thickness}
+- Бетон: concrete|{class}
+  "Бетон В25" = "Бетон класса В25" → concrete|B25
+- Щебень: crushed_stone|{fraction}
+  "Щебень фр. 20-40" = "Щебень фракции 20-40 мм" → crushed_stone|20-40
 
-ЕСЛИ НЕТ ни MASTER, ни "Ведомости материалов", НО ЕСТЬ "Спецификация":
-→ Режим SPECIFICATION_AS_MATERIALS
-→ Используй спецификацию как ПОЛНЫЙ и ЕДИНСТВЕННЫЙ источник материалов
-→ Извлекай ВСЕ позиции (не только металл)
-→ НЕ ищи материалы в других разделах/таблицах документа
+ЕСЛИ два материала дают ОДИНАКОВЫЙ ключ:
+→ это ОДИН материал
+→ суммировать количество
+→ использовать стандартное наименование
+→ ЗАПРЕЩЕНО выводить две строки
 
-Если есть НЕСКОЛЬКО "Ведомость расхода стали":
-→ Выбирай ту, где есть "Всего" и агрегированные значения
-→ Таблицы с привязкой к элементам (УМ1, УМ2...) — это DETAILS, не MASTER
-
-═══════════════════════════════════════════════
-ЭТАП 3.1 — СПЕЦИАЛЬНЫЕ ПРАВИЛА КЛАССИФИКАЦИИ
-═══════════════════════════════════════════════
-
-ПРАВИЛО: "анкера из арматуры" (в ЛЮБОМ режиме):
-- Если встречается формулировка "анкера из арматуры", "анкер из арматуры", "анкера арматурные":
-  → ТИП: арматура (НЕ работа, НЕ крепёж!)
-  → Извлечь диаметр: d10, Ø10, ∅10 → диаметр 10
-  → name = "Изделия из арматуры {Класс} Ø{Диаметр}"
-  → Даже если формулировка похожа на работу — это МАТЕРИАЛ
-  → НЕ игнорировать, НЕ относить к крепежу
+СТАНДАРТНЫЕ НАИМЕНОВАНИЯ:
+- Арматура: "Изделия из арматуры {Класс} Ø{Диаметр}"
+- Труба: "Труба Ø{Диаметр}×{Толщина} {Марка}"
+- Прокат: "Прокат полоса {Ширина}×{Толщина} {Марка}"
+- Остальные материалы: наименование КАК ЕСТЬ из документа
 
 ═══════════════════════════════════════════════
-ЭТАП 4 — ФОРМАТЫ ТАБЛИЦ
+АНАЛИЗ СТРУКТУРЫ ДОКУМЕНТА
+═══════════════════════════════════════════════
+
+Просканируй ВЕСЬ документ. Определи роли таблиц:
+
+🟢 MASTER — итоговая ведомость (содержит "Всего", агрегированные значения)
+→ Если есть MASTER — извлекай ТОЛЬКО из неё, DETAILS игнорируй
+
+🟡 DETAILS — детализация элементов (УМ1, УМ2...)
+→ Используй ТОЛЬКО если нет MASTER
+
+🟣 SPECIFICATION_AS_MATERIALS — если нет ни "Ведомости материалов", ни "Ведомости стали", но есть "Спецификация"
+→ Спецификация = основной источник
+
+🔴 IGNORE — чертежи, схемы, строки "Итого"/"Всего"
+
+═══════════════════════════════════════════════
+ФОРМАТЫ ТАБЛИЦ
 ═══════════════════════════════════════════════
 
 ФОРМАТ 1 — Ведомость материалов (8 столбцов):
-1 — Позиция → "position"
-2 — Наименование и техническая характеристика → "name"
-3 — Тип, марка, обозначение документа → "type_mark"
-4 — Код оборудования (ИГНОРИРОВАТЬ)
-5 — Единица измерения → "unit"
-6 — Количество → "quantity"
-7 — Масса единицы, кг → "mass_per_unit"
-8 — Примечания (ИГНОРИРОВАТЬ)
+Позиция | Наименование | Тип, марка | Код | Ед. изм. | Количество | Масса ед. | Примечания
 
-ФОРМАТ 2 — Спецификация (например «Спецификация металла»):
-- "№ п.п." → "position"
-- "Наименование" → "name"
-- "Марка" и/или "Обозначение" → "type_mark"
-- "Масса ед." → "mass_per_unit"
-- "кол-во" → "quantity"
-- "Ед. изм." → "unit"
+ФОРМАТ 2 — Спецификация:
+№ п.п. | Наименование | Марка/Обозначение | Масса ед. | Кол-во | Ед. изм.
 
-ФОРМАТ 3 — Любая другая табличная структура:
-Адаптируйся к заголовкам. Извлеки name, type_mark, unit, quantity, mass_per_unit.
+ФОРМАТ 3 — Сводная матричная (Ведомость расхода стали):
+Колонки = параметры (класс, диаметр), строки = элементы, ячейки = кг
 
-ФОРМАТ 4 — Сводная матричная таблица (Ведомость расхода стали):
-Заголовки колонок содержат параметры (класс, диаметр), строки — элементы/конструкции.
-Ячейки содержат количество в кг.
-Каждая ячейка с числом > 0 = ОТДЕЛЬНАЯ позиция.
-
-ФОРМАТ 5 — Спецификация деталей (чертёж с таблицей):
-Колонки: "Сечение", "ГОСТ", "Длина", "Кол-во", "Масса ед.", "Масса всего"
-- quantity = "Масса всего"
-- unit = "кг"
-- mass_per_unit = "Масса ед."
-- type_mark = "ГОСТ"
-- name формируется по правилам ниже
-
-ФОРМАТ 6 — Спецификация как источник материалов (SPECIFICATION_AS_MATERIALS):
-Колонки: "№ п/п" или "Поз.", "Наименование", "Ед. изм.", "Кол-во"/"Количество"
-- position = номер позиции (включая вложенные: 1.1, 1.2, 3.1)
-- name = наименование материала КАК ЕСТЬ (не переименовывать)
-- unit = единица измерения КАК ЕСТЬ (м², м³, шт, кг, пог.м, т и т.д.)
-- quantity = количество
-- type_mark = ГОСТ/ТУ/СТО если указан, иначе null
-- mass_per_unit = null (обычно отсутствует в спецификациях)
+ФОРМАТ 4 — Любая другая: адаптируйся к заголовкам.
 
 ═══════════════════════════════════════════════
-ЭТАП 5 — ПРАВИЛА ФОРМИРОВАНИЯ НАИМЕНОВАНИЙ
+ПРАВИЛА НАИМЕНОВАНИЙ
 ═══════════════════════════════════════════════
 
-⚠️ В режиме SPECIFICATION_AS_MATERIALS — НЕ переименовывать! Использовать наименование КАК ЕСТЬ из документа.
-
-СОКРАЩЕНИЯ (для режима металлопроката):
-- "Тр." ВСЕГДА означает "Труба"
-- "φ", "Ø" = диаметр
-- "×" после диаметра = толщина стенки (для труб)
-- "δ" = толщина (для проката/полосы)
-
-1. АРМАТУРА (содержит "A240", "A400", "A500", "Ø" без "×", или "анкера из арматуры"):
-   name = "Изделия из арматуры {Класс} Ø{Диаметр}"
-   Примеры: "Изделия из арматуры A240 Ø8", "Изделия из арматуры A400 Ø12"
-   type_mark = ГОСТ арматуры (например "ГОСТ 34028-2016") + марка стали если указана (например "25Г2С")
-   ⚠️ Для A240 обычно ГОСТ 34028-2016, сталь Ст3сп/Ст3пс
-   ⚠️ Для A400/A500 обычно ГОСТ 34028-2016, сталь 25Г2С или 35ГС
-
-2. ТРУБЫ (содержит "Тр.", "Труба", или "Ø{число}×{число}"):
-   name = "Труба Ø{Диаметр}×{Толщина} {Марка стали}"
-   Примеры: "Труба Ø32×3.2 С235", "Труба Ø820×8 С235"
-   type_mark = ГОСТ трубы (например "ГОСТ 10704-91" или "ГОСТ 3262-75") + марка стали
-   ⚠️ Электросварные трубы → ГОСТ 10704-91
-   ⚠️ ВГП трубы → ГОСТ 3262-75
-
-3. ПРОКАТ / ПОЛОСА (содержит "Прокат", "Полоса", "δ", размеры "80×4"):
-   name = "Прокат полоса {Ширина}×{Толщина} {Марка стали}"
-   Примеры: "Прокат полоса 80×4 С235"
-   type_mark = ГОСТ (например "ГОСТ 103-2006") + марка стали
+- Наименование = ВЕСЬ текст до колонки "Ед. изм." (НЕ обрезать!)
+- Переносы строк → объединять через пробел
+- "тип", "марка", "класс", "на битуме" — ЧАСТЬ наименования
+- Единицы (м², м³, т, кг) → в поле unit
+- ГОСТ/ТУ/СТО → в поле type_mark
+- Если наименование заканчивается на "марки", "типа", "на", "из" → ОШИБКА обрезки, восстанови
 
 ═══════════════════════════════════════════════
-ЭТАП 6 — ПРИВЯЗКА ГОСТ И МАРКИ СТАЛИ
+ПРИВЯЗКА ГОСТ (для металлопроката)
 ═══════════════════════════════════════════════
 
-⚠️ В режиме SPECIFICATION_AS_MATERIALS: если ГОСТ/ТУ/СТО указан в таблице — используй его. 
-Если НЕ указан — оставь type_mark = null. НЕ подставляй стандартные ГОСТы для неметаллических материалов.
+1. Ищи ГОСТ внутри таблицы (колонка "ГОСТ"/"Обозначение"/"Тип, марка")
+2. Ищи вне таблицы (примечания, штамп, общие указания)
+3. Если не нашёл — используй стандартный:
+   - Арматура A240/A400/A500 → "ГОСТ 34028-2016"
+   - Труба электросварная → "ГОСТ 10704-91"
+   - Труба ВГП → "ГОСТ 3262-75"
+4. Марку стали (25Г2С, С235, Ст3сп) ищи рядом с ГОСТом
+5. type_mark = "{ГОСТ} {марка стали}"
 
-Для металлопроката (режим без SPECIFICATION_AS_MATERIALS):
-
-Для КАЖДОГО извлечённого материала ты ОБЯЗАН найти его ГОСТ и марку стали.
-Поиск должен охватывать ВЕСЬ документ — не только таблицу, в которой найден материал.
-
-АЛГОРИТМ ПОИСКА (выполняй для каждого материала):
-
-1. Ищи ГОСТ ВНУТРИ таблицы:
-   - в колонке "ГОСТ" / "Обозначение" / "Тип, марка"
-   - в заголовке группы/секции таблицы (например: "Арматура класса A400 по ГОСТ 34028-2016")
-   - в строке с параметрами материала
-
-2. Если НЕ нашёл в таблице — ищи ВНЕ таблицы:
-   - в примечаниях под таблицей ("Примечание:", "Прим.:")
-   - в текстовых блоках рядом с таблицей
-   - в штампе чертежа (нижний правый угол)
-   - в заголовке/титуле документа
-   - в общих указаниях ("Общие указания", "Материалы")
-   - в любом текстовом абзаце на ЛЮБОЙ странице документа
-
-3. Если точный ГОСТ НЕ найден нигде в документе — используй стандартный по типу:
-   - Арматура A240 → "ГОСТ 34028-2016 Ст3сп"
-   - Арматура A400 → "ГОСТ 34028-2016 25Г2С"
-   - Арматура A500 → "ГОСТ 34028-2016 25Г2С"
-   - Труба электросварная (Ø > 57мм) → "ГОСТ 10704-91"
-   - Труба ВГП (Ø ≤ 50мм) → "ГОСТ 3262-75"
-   - Полоса → "ГОСТ 103-2006"
-   - Швеллер → "ГОСТ 8240-97"
-   - Уголок равнополочный → "ГОСТ 8509-93"
-   - Уголок неравнополочный → "ГОСТ 8510-86"
-   - Лист → "ГОСТ 19903-2015"
-   - Круг → "ГОСТ 2590-2006"
-
-4. Марка стали:
-   - Ищи рядом с ГОСТом: "сталь 25Г2С", "Ст3сп", "С235", "С245", "09Г2С"
-   - Ищи в примечаниях: "Сталь — С235 по ГОСТ 27772"
-   - Ищи в общих указаниях документа
-   - Если в документе есть марка стали — ОБЯЗАТЕЛЬНО добавь её
-
-5. Формат type_mark:
-   - "{ГОСТ} {марка стали}" — например: "ГОСТ 34028-2016 25Г2С"
-   - Если ГОСТ найден, но марка стали нет: "ГОСТ 34028-2016"
-   - В режиме металлопроката НИКОГДА не оставляй type_mark пустым
-
-6. Если ГОСТ указан в шапке таблицы для группы — применяй ко ВСЕМ материалам этой группы
-7. Если в документе несколько ГОСТов для разных материалов — привязывай КАЖДЫЙ к СВОЕМУ
+Для неметаллических материалов: type_mark = ГОСТ если указан в документе, иначе null.
 
 ═══════════════════════════════════════════════
-ОБЩИЕ ПРАВИЛА
+СПЕЦИАЛЬНЫЕ ПРАВИЛА
 ═══════════════════════════════════════════════
 
-- Каждая ячейка/строка с числом > 0 = ОТДЕЛЬНАЯ позиция материала
-- НЕ используй название строки (Водосброс, Плита и т.п.) как наименование — это НЕ материал (кроме режима SPECIFICATION_AS_MATERIALS)
-- unit = "кг" для арматуры/труб/проката (в режиме металлопроката)
-- ПОЛНОСТЬЮ ИГНОРИРУЙ строки и колонки "Итого", "Всего", любые суммарные
-- Если одинаковый материал встречается в нескольких строках — ОТДЕЛЬНАЯ позиция для каждой
-- Если в таблице несколько ГОСТов — привязывай КАЖДЫЙ материал к СВОЕМУ ГОСТу по контексту колонки/группы
-- Колонку "Марка" (ОГ1, М1 и т.п.) НЕ использовать как материал
-- ИГНОРИРУЙ чертежи, схемы, размеры на рисунках
-- Если единицы м²/м³/пог.м без признаков металла — в режиме металлопроката это работы, ИГНОРИРУЙ. В режиме SPECIFICATION_AS_MATERIALS — извлекай.
+- "анкера из арматуры" → МАТЕРИАЛ (тип: арматура), извлечь диаметр
+- unit = "кг" для арматуры/труб/проката
+- ПОЛНОСТЬЮ ИГНОРИРУЙ строки "Итого", "Всего"
+- Колонку "Марка" (ОГ1, М1) НЕ использовать как материал
 
-Гибкое сопоставление заголовков:
-- "Наименование" / "Наименование и техническая характеристика" → name
-- "Тип" / "Тип, марка" / "Обозначение" → type_mark
-- "Ед. изм." / "Единица измерения" → unit
-- "Кол-во" / "Количество" → quantity
-- "Масса ед." / "Масса единицы" → mass_per_unit
-- "Сечение" → определяй name по правилам выше
-- "Масса всего" → quantity (в кг)
+═══════════════════════════════════════════════
+ФИНАЛЬНАЯ САМОПРОВЕРКА (обязательна!)
+═══════════════════════════════════════════════
+
+Перед выводом результата проверь КАЖДЫЙ элемент:
+
+1. "Это физический материал, который можно купить?" → Если НЕТ → УДАЛИ
+2. "Есть ли дубль с таким же ключом?" → Если ДА → ОБЪЕДИНИ (суммируй quantity)
+3. "Наименование полное?" → Если обрезано → ВОССТАНОВИ
+4. Если найдено < 3 материалов → добавь warning "Подозрительно мало материалов"
+5. Если есть 2 строки с одинаковым типом+классом+диаметром → ОШИБКА, объедини
 
 Верни результат СТРОГО в формате JSON массива:
 [
@@ -710,42 +408,23 @@ ${buildPromptForType(docType)}
   }
 ]
 
-Если quantity или mass_per_unit отсутствуют, ставь null.
-КРИТИЧЕСКИ ВАЖНО: Все числа ОБЯЗАТЕЛЬНО записывай через ТОЧКУ (например 2.03, а НЕ 2,03).
-В режиме металлопроката: type_mark НИКОГДА не должен быть null или пустым — всегда указывай ГОСТ.
-В режиме SPECIFICATION_AS_MATERIALS: type_mark может быть null если ГОСТ/ТУ не указан в документе.
-Не добавляй никакого текста кроме JSON массива. Не оборачивай в markdown.`;
+Все числа через ТОЧКУ (2.03, НЕ 2,03). Не добавляй текст кроме JSON.`;
 
-    const recognizeChunk = async (
-      chunkBytes: Uint8Array,
-      chunkIndex: number,
-      totalChunks: number,
-      docType: string,
-    ): Promise<any[]> => {
+    // ═══════════════════════════════════════════════
+    // RECOGNIZE CHUNK
+    // ═══════════════════════════════════════════════
+    const recognizeChunk = async (chunkBytes: Uint8Array, chunkIndex: number, totalChunks: number, docType: string): Promise<any[]> => {
       const pdfBase64 = encodeBase64(chunkBytes);
-
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${lovableApiKey}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableApiKey}` },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: prompt(docType) },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
-                },
-              ],
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 64000,
+          messages: [{ role: "user", content: [
+            { type: "text", text: prompt(docType) },
+            { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
+          ]}],
+          temperature: 0.1, max_tokens: 64000,
         }),
       });
 
@@ -762,48 +441,30 @@ ${buildPromptForType(docType)}
 
       if (!parsedRows) {
         const preview = normalizedContent.substring(0, 500);
-        const noStructuredData = !normalizedContent.includes("[");
-
-        if (noStructuredData) {
-          console.warn("Chunk returned no material rows", {
-            chunkIndex,
-            totalChunks,
-            finishReason,
-            preview,
-          });
+        if (!normalizedContent.includes("[")) {
+          console.warn("Chunk returned no material rows", { chunkIndex, totalChunks, finishReason, preview });
           return [];
         }
-
-        console.error("Failed to parse AI response", {
-          chunkIndex,
-          totalChunks,
-          finishReason,
-          preview,
-        });
+        console.error("Failed to parse AI response", { chunkIndex, totalChunks, finishReason, preview });
         throw new Error(`Failed to parse AI response on part ${chunkIndex}/${totalChunks}`);
       }
 
       if (finishReason && finishReason !== "stop") {
-        console.warn("AI response may be truncated, recovered partial JSON", {
-          chunkIndex,
-          totalChunks,
-          finishReason,
-          recoveredCount: parsedRows.length,
-        });
+        console.warn("AI response may be truncated, recovered partial JSON", { chunkIndex, totalChunks, finishReason, recoveredCount: parsedRows.length });
       }
-
       return parsedRows;
     };
 
+    // ═══════════════════════════════════════════════
+    // EXECUTE: download, classify, recognize
+    // ═══════════════════════════════════════════════
     const pdfBytes = await downloadPdfWithCap(fileUrl, MAX_SOURCE_PDF_BYTES);
     const pdfChunks = await splitPdfForAi(pdfBytes);
 
-    // Step 1: Classify document type using first chunk
     console.log("[recognize] Starting document type classification...");
     const { type: detectedSourceType, scores: typeScores } = await classifyDocumentType(pdfChunks[0]);
     console.log(`[recognize] Detected source type: ${detectedSourceType}`, typeScores);
 
-    // For GL documents with no material tables, we may get empty results — that's expected
     const rawRows: any[] = [];
     for (let i = 0; i < pdfChunks.length; i++) {
       const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
@@ -811,106 +472,203 @@ ${buildPromptForType(docType)}
     }
 
     // ═══════════════════════════════════════════════
-    // DEDUPLICATION: prevent double-counting from MASTER + DETAILS tables
+    // STRUCTURAL KEY EXTRACTION — universal for all material types
     // ═══════════════════════════════════════════════
-    const deduplicateMasterDetails = (rows: any[]): any[] => {
+    const getStructuralKey = (row: any): string | null => {
+      const rawName = String(row?.name || "");
+      const name = rawName.toLowerCase().replace(/ё/g, "е");
+
+      // Арматура / Изделия из арматуры
+      const isRebar = /(?:арматур|изделия\s+из\s+арматур|анкер[аы]?\s+из\s+арматур)/i.test(name);
+      if (isRebar) {
+        const classMatch = name.match(/[aа][-]?\d{3,4}[cс]?/i);
+        const cls = classMatch
+          ? classMatch[0].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase()
+          : "";
+        // Diameter: Ø10, ø 12, d10, or standalone number before/after class
+        const diaMatch =
+          name.match(/[øøΦφ∅]\s*(\d+)/i) ||
+          name.match(/d\s*(\d+)/i) ||
+          name.match(/(?:^|[\s])(\d{1,2})(?:\s*[aа][-]?\d{3}|\s*мм)/i);
+        const dia = diaMatch ? diaMatch[1] : "";
+        if (cls || dia) return `rebar|${cls}|${dia}`;
+      }
+
+      // Труба
+      const pipeMatch = name.match(/труб[аыие]?\s*[øøΦφ∅]?\s*(\d+(?:[.,]\d+)?)\s*[×xх]\s*(\d+(?:[.,]\d+)?)/i);
+      if (pipeMatch) return `pipe|${pipeMatch[1].replace(",", ".")}|${pipeMatch[2].replace(",", ".")}`;
+
+      // Прокат / Полоса
+      const steelMatch = name.match(/(?:прокат|полоса).*?(\d+(?:[.,]\d+)?)\s*[×xх]\s*(\d+(?:[.,]\d+)?)/i);
+      if (steelMatch) return `steel|${steelMatch[1].replace(",", ".")}|${steelMatch[2].replace(",", ".")}`;
+
+      // Бетон
+      const concreteMatch = name.match(/бетон[а-я]*\s+.*?[вb]\s*(\d+)/i);
+      if (concreteMatch) return `concrete|B${concreteMatch[1]}`;
+
+      // Щебень
+      const crushedMatch = name.match(/щебен[ьи].*?(?:фр\.?\s*|фракци[яию]\s*)(\d+)\s*[-–]\s*(\d+)/i);
+      if (crushedMatch) return `crushed_stone|${crushedMatch[1]}-${crushedMatch[2]}`;
+
+      // Песок
+      if (/\bпесо[кч]/i.test(name)) {
+        const sandType = name.match(/(крупнозернист|среднезернист|мелкозернист|намывн|карьерн|речн)/i);
+        return `sand|${sandType ? sandType[1].toLowerCase().slice(0, 6) : "generic"}`;
+      }
+
+      // Геотекстиль
+      const geoMatch = name.match(/геотекстил[ьея].*?(\d+)/i);
+      if (geoMatch) return `geotextile|${geoMatch[1]}`;
+
+      // Геомат
+      if (/геомат/i.test(name)) {
+        const geoMatType = name.match(/(\d+)/);
+        return `geomat|${geoMatType ? geoMatType[1] : "generic"}`;
+      }
+
+      return null;
+    };
+
+    // ═══════════════════════════════════════════════
+    // TEXT-BASED NORMALIZATION for non-parametric dedup
+    // ═══════════════════════════════════════════════
+    const normalizeNameForDedup = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .replace(/\s+/g, " ")
+        .replace(/[«»"']/g, "")
+        .replace(/\b(гост|ту|сто|ост)\s*[\d.-]+\S*/gi, "")  // strip GOST
+        .replace(/\b(по|в соответствии с|согласно)\b/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
+    // ═══════════════════════════════════════════════
+    // DEDUPLICATION — key-based + text-based
+    // ═══════════════════════════════════════════════
+    const deduplicateRows = (rows: any[]): any[] => {
       if (rows.length <= 1) return rows;
 
-      // Build structural key for grouping
-      const getStructuralKey = (row: any): string | null => {
-        const name = String(row?.name || "").toLowerCase()
-          .replace(/[аА]/g, "a").replace(/[сС]/g, "c")
-          .replace(/ё/g, "е");
-        
-        // Арматура / Изделия из арматуры: extract class + diameter
-        // Handles: "арматура a500c ø10", "изделия из арматуры a500c ø10", "арматура 10a500c", "арматура 10 a500c"
-        const isRebar = /(?:арматур|изделия\s+из\s+арматур)/i.test(name);
-        if (isRebar) {
-          // Try to extract class (A400, A500C, etc.) and diameter
-          const classMatch = name.match(/[aа][-]?\d{3,4}[cс]?/i);
-          const cls = classMatch ? classMatch[0].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase() : "";
-          // Diameter: look for Ø followed by number, or standalone number near class
-          const diaMatch = name.match(/[øø]\s*(\d+)/i) || name.match(/(?:^|[\s])(\d{1,2})(?:\s*[aа]|\s+мм)/i);
-          const dia = diaMatch ? diaMatch[1] : "";
-          if (cls || dia) {
-            return `rebar|${cls}|${dia}`;
-          }
-        }
-        // Труба: extract diameter x thickness
-        const pipeMatch = name.match(/труб[аыи]?\s+[øø]?\s*(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
-        if (pipeMatch) return `pipe|${pipeMatch[1]}|${pipeMatch[2]}`;
-        // Прокат: extract dimensions
-        const steelMatch = name.match(/прокат.*?(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
-        if (steelMatch) return `steel|${steelMatch[1]}|${steelMatch[2]}`;
-        return null;
-      };
-
       // Group by structural key
-      const groups = new Map<string, any[]>();
+      const keyGroups = new Map<string, any[]>();
       const ungrouped: any[] = [];
+
       for (const row of rows) {
         const key = getStructuralKey(row);
         if (key) {
-          if (!groups.has(key)) groups.set(key, []);
-          groups.get(key)!.push(row);
+          if (!keyGroups.has(key)) keyGroups.set(key, []);
+          keyGroups.get(key)!.push(row);
         } else {
           ungrouped.push(row);
         }
       }
 
-      const deduplicated: any[] = [...ungrouped];
+      const deduplicated: any[] = [];
 
-      for (const [key, group] of groups) {
-        if (group.length <= 1) {
-          deduplicated.push(...group);
+      // Process key-based groups
+      for (const [key, group] of keyGroups) {
+        if (group.length === 1) {
+          deduplicated.push(group[0]);
           continue;
         }
 
-        // Sort by quantity descending — the largest is likely the MASTER value
-        const withQty = group
-          .map(r => ({ row: r, qty: typeof r.quantity === "number" ? r.quantity : 0 }))
-          .sort((a, b) => b.qty - a.qty);
+        // Multiple items with same key → merge into one
+        // Pick the best name (longest/most descriptive), sum quantities
+        const sorted = group.sort((a: any, b: any) => (String(b.name || "").length - String(a.name || "").length));
+        const best = { ...sorted[0] };
+        let totalQty = 0;
+        let hasQty = false;
 
-        const maxQty = withQty[0].qty;
-        const sumOfRest = withQty.slice(1).reduce((s, r) => s + r.qty, 0);
-
-        // If the max quantity is close to sum of the rest (within 15% or equal),
-        // it means MASTER = sum(DETAILS) → keep only MASTER
-        // If exactly 2 items with identical quantity — exact duplicate from different tables
-        if (group.length === 2 && maxQty > 0 && Math.abs(withQty[0].qty - withQty[1].qty) / maxQty < 0.01) {
-          // Pick the one with longer/more descriptive name
-          const pick = withQty[0].row.name?.length >= withQty[1].row.name?.length ? withQty[0].row : withQty[1].row;
-          console.log(`[Dedup] ${key}: exact duplicate (qty=${maxQty}) — keeping "${pick.name}"`);
-          deduplicated.push(pick);
-          continue;
-        }
-
-        if (maxQty > 0 && sumOfRest > 0) {
-          const ratio = Math.abs(maxQty - sumOfRest) / maxQty;
-          if (ratio < 0.15) {
-            console.log(`[Dedup] ${key}: MASTER ${maxQty} ≈ sum(DETAILS) ${sumOfRest} — keeping MASTER only`);
-            deduplicated.push(withQty[0].row);
-            continue;
-          }
-          const totalQty = maxQty + sumOfRest;
-          if (maxQty / totalQty > 0.6) {
-            console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates total ${totalQty} — keeping MASTER only`);
-            deduplicated.push(withQty[0].row);
-            continue;
+        for (const item of group) {
+          const qty = typeof item.quantity === "number" ? item.quantity : 0;
+          if (typeof item.quantity === "number") hasQty = true;
+          totalQty += qty;
+          // Pick best type_mark (longest)
+          if ((item.type_mark || "").length > (best.type_mark || "").length) {
+            best.type_mark = item.type_mark;
           }
         }
 
-        // No clear MASTER/DETAILS pattern — keep all entries
-        deduplicated.push(...group);
+        // If all items have identical quantity → it's a duplicate, keep one quantity
+        const allSameQty = group.every((item: any) =>
+          typeof item.quantity === "number" &&
+          typeof group[0].quantity === "number" &&
+          Math.abs(item.quantity - group[0].quantity) / Math.max(1, group[0].quantity) < 0.01
+        );
+
+        if (allSameQty) {
+          best.quantity = group[0].quantity;
+          console.log(`[Dedup] ${key}: ${group.length} exact duplicates (qty=${group[0].quantity}) → keeping one`);
+        } else {
+          // Check MASTER/DETAILS pattern
+          const withQty = group
+            .map((r: any) => ({ row: r, qty: typeof r.quantity === "number" ? r.quantity : 0 }))
+            .sort((a: any, b: any) => b.qty - a.qty);
+          const maxQty = withQty[0].qty;
+          const sumOfRest = withQty.slice(1).reduce((s: number, r: any) => s + r.qty, 0);
+
+          if (maxQty > 0 && sumOfRest > 0 && Math.abs(maxQty - sumOfRest) / maxQty < 0.15) {
+            best.quantity = maxQty;
+            console.log(`[Dedup] ${key}: MASTER ${maxQty} ≈ sum(DETAILS) ${sumOfRest} → keeping MASTER`);
+          } else if (maxQty > 0 && sumOfRest > 0 && maxQty / (maxQty + sumOfRest) > 0.6) {
+            best.quantity = maxQty;
+            console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates → keeping MASTER`);
+          } else {
+            best.quantity = hasQty ? totalQty : null;
+            console.log(`[Dedup] ${key}: summing ${group.length} items → total ${totalQty}`);
+          }
+        }
+
+        deduplicated.push(best);
       }
 
-      console.log(`[Dedup] Input: ${rows.length} rows, Output: ${deduplicated.length} rows, Removed: ${rows.length - deduplicated.length}`);
+      // Text-based dedup for ungrouped items
+      const textGroups = new Map<string, any[]>();
+      for (const row of ungrouped) {
+        const normName = normalizeNameForDedup(row.name || "");
+        if (!normName) { deduplicated.push(row); continue; }
+
+        // Sort words for order-insensitive matching
+        const sortedWords = normName.split(" ").filter(Boolean).sort().join(" ");
+        if (!textGroups.has(sortedWords)) textGroups.set(sortedWords, []);
+        textGroups.get(sortedWords)!.push(row);
+      }
+
+      for (const [normKey, group] of textGroups) {
+        if (group.length === 1) {
+          deduplicated.push(group[0]);
+          continue;
+        }
+
+        // Check if all have identical quantities (exact duplicate)
+        const allSameQty = group.every((item: any) =>
+          typeof item.quantity === "number" &&
+          typeof group[0].quantity === "number" &&
+          Math.abs(item.quantity - group[0].quantity) / Math.max(1, group[0].quantity) < 0.01
+        );
+
+        const sorted = group.sort((a: any, b: any) => (String(b.name || "").length - String(a.name || "").length));
+        const best = { ...sorted[0] };
+
+        if (allSameQty) {
+          console.log(`[Dedup-text] "${normKey}": ${group.length} duplicates → keeping one`);
+        } else {
+          best.quantity = group.reduce((s: number, item: any) => s + (typeof item.quantity === "number" ? item.quantity : 0), 0);
+          console.log(`[Dedup-text] "${normKey}": merging ${group.length} items → total ${best.quantity}`);
+        }
+        deduplicated.push(best);
+      }
+
+      console.log(`[Dedup] Input: ${rows.length}, Output: ${deduplicated.length}, Removed: ${rows.length - deduplicated.length}`);
       return deduplicated;
     };
 
-    // Apply deduplication for ALL PDFs — cross-table duplication can happen even in single chunk
-    const deduplicatedRows = deduplicateMasterDetails(rawRows);
+    const deduplicatedRows = deduplicateRows(rawRows);
 
+    // ═══════════════════════════════════════════════
+    // POST-PROCESSING: normalize, group, score
+    // ═══════════════════════════════════════════════
     const normalizeText = (value: any): string => {
       if (value === null || value === undefined) return "";
       return String(value).replace(/\s+/g, " ").trim();
@@ -919,29 +677,19 @@ ${buildPromptForType(docType)}
     const parseLocaleNumber = (value: any): number | null => {
       if (value === null || value === undefined || value === "") return null;
       if (typeof value === "number") return Number.isFinite(value) ? value : null;
-
       let s = String(value).trim().replace(/\u00A0/g, "").replace(/\s+/g, "");
       if (!s) return null;
-
       if (s.includes(",") && s.includes(".")) {
-        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
-          s = s.replace(/\./g, "").replace(",", ".");
-        } else {
-          s = s.replace(/,/g, "");
-        }
-      } else if (s.includes(",")) {
-        s = s.replace(",", ".");
-      }
-
+        if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+        else s = s.replace(/,/g, "");
+      } else if (s.includes(",")) s = s.replace(",", ".");
       const n = Number(s);
       return Number.isFinite(n) ? n : null;
     };
 
     const MAX_REASONABLE_POSITION = 500;
-
     const sanitizePosition = (pos: number | null): number | null => {
-      if (pos === null) return null;
-      if (!Number.isFinite(pos) || pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
+      if (pos === null || !Number.isFinite(pos) || pos <= 0 || pos > MAX_REASONABLE_POSITION) return null;
       return pos;
     };
 
@@ -950,12 +698,8 @@ ${buildPromptForType(docType)}
       if (typeof value === "number") return sanitizePosition(value);
       const s = normalizeText(value).replace(/\u00A0/g, " ");
       if (!s) return null;
-
       const direct = s.match(/^(\d{1,4}(?:[.,]\d+)?)(?:[.)])?$/);
-      if (direct) {
-        return sanitizePosition(parseFloat(direct[1].replace(",", ".")));
-      }
-
+      if (direct) return sanitizePosition(parseFloat(direct[1].replace(",", ".")));
       const embedded = s.match(/(?:^|\D)(\d{1,4})(?:\D|$)/);
       if (!embedded) return null;
       return sanitizePosition(Number(embedded[1]));
@@ -964,21 +708,10 @@ ${buildPromptForType(docType)}
     const extractLeadingPositionFromName = (name: string): { position: number | null; cleanName: string } => {
       const match = name.match(/^(\d{1,4})(?:\s*[.)-])?\s+(.+)$/);
       if (!match) return { position: null, cleanName: name };
-      return {
-        position: sanitizePosition(Number(match[1])),
-        cleanName: match[2].trim(),
-      };
+      return { position: sanitizePosition(Number(match[1])), cleanName: match[2].trim() };
     };
 
-    type ParsedRow = {
-      position: number | null;
-      name: string;
-      type_mark: string | null;
-      unit: string | null;
-      quantity: number | null;
-      mass_per_unit: number | null;
-    };
-
+    type ParsedRow = { position: number | null; name: string; type_mark: string | null; unit: string | null; quantity: number | null; mass_per_unit: number | null };
     type GroupedRow = ParsedRow & { position: number };
 
     const normalizedRows: ParsedRow[] = deduplicatedRows
@@ -988,7 +721,6 @@ ${buildPromptForType(docType)}
         const fallbackFromName = columnPosition === null
           ? extractLeadingPositionFromName(rawName)
           : { position: null, cleanName: rawName };
-
         return {
           position: columnPosition ?? fallbackFromName.position,
           name: fallbackFromName.cleanName,
@@ -998,14 +730,7 @@ ${buildPromptForType(docType)}
           mass_per_unit: parseLocaleNumber(row?.mass_per_unit),
         };
       })
-      .filter((row) =>
-        row.position !== null ||
-        !!row.name ||
-        !!row.type_mark ||
-        !!row.unit ||
-        row.quantity !== null ||
-        row.mass_per_unit !== null
-      );
+      .filter((row) => row.position !== null || !!row.name || !!row.type_mark || !!row.unit || row.quantity !== null || row.mass_per_unit !== null);
 
     const mergeText = (left: string | null | undefined, right: string | null | undefined): string =>
       [left || "", right || ""].filter(Boolean).join(" ").trim();
@@ -1015,17 +740,11 @@ ${buildPromptForType(docType)}
       target.type_mark = mergeText(target.type_mark, source.type_mark) || null;
       if (!target.unit && source.unit) target.unit = source.unit;
       if (target.quantity === null && source.quantity !== null) target.quantity = source.quantity;
-      if (target.mass_per_unit === null && source.mass_per_unit !== null) {
-        target.mass_per_unit = source.mass_per_unit;
-      }
+      if (target.mass_per_unit === null && source.mass_per_unit !== null) target.mass_per_unit = source.mass_per_unit;
     };
 
-    // Determine if a null-position row is a standalone item vs a continuation of the previous row.
-    // A standalone item has its own name AND has unit or quantity (it's a complete material entry).
-    // A continuation row typically has only partial text and no unit/quantity.
     const isStandaloneRow = (row: ParsedRow): boolean => {
       if (!row.name) return false;
-      // If it has unit or quantity, it's a complete item
       if (row.unit || row.quantity !== null) return true;
       return false;
     };
@@ -1033,36 +752,28 @@ ${buildPromptForType(docType)}
     const groupedRows: GroupedRow[] = [];
     const leadingRows: ParsedRow[] = [];
     let currentGroup: GroupedRow | null = null;
-    let autoPosition = 10000; // auto-assigned positions for standalone null-position rows
+    let autoPosition = 10000;
 
     for (const row of normalizedRows) {
       if (row.position !== null) {
-        if (currentGroup && row.position === currentGroup.position) {
-          mergeIntoGroup(currentGroup, row);
-          continue;
-        }
-
+        if (currentGroup && row.position === currentGroup.position) { mergeIntoGroup(currentGroup, row); continue; }
         if (currentGroup) groupedRows.push(currentGroup);
         currentGroup = { ...row, position: row.position };
         continue;
       }
-
-      // Null-position row: check if it's a standalone item or a continuation
       if (isStandaloneRow(row)) {
-        // This is a separate material item, not a continuation
         if (currentGroup) groupedRows.push(currentGroup);
         autoPosition++;
         currentGroup = { ...row, position: autoPosition };
       } else if (currentGroup) {
-        // True continuation — merge text into current group
         mergeIntoGroup(currentGroup, row);
       } else {
         leadingRows.push({ ...row });
       }
     }
-
     if (currentGroup) groupedRows.push(currentGroup);
 
+    // Warnings
     const positionSequence = groupedRows.map((row) => row.position);
     const missingPositions: number[] = [];
     const outOfOrderTransitions: Array<{ from: number; to: number }> = [];
@@ -1070,53 +781,37 @@ ${buildPromptForType(docType)}
     for (let i = 1; i < positionSequence.length; i++) {
       const prev = positionSequence[i - 1];
       const next = positionSequence[i];
-
-      if (next > prev + 1) {
-        for (let p = prev + 1; p < next; p++) {
-          missingPositions.push(p);
-          if (missingPositions.length >= 5000) break;
-        }
-      } else if (next < prev) {
-        outOfOrderTransitions.push({ from: prev, to: next });
-      }
+      if (next > prev + 1) { for (let p = prev + 1; p < next && missingPositions.length < 5000; p++) missingPositions.push(p); }
+      else if (next < prev) outOfOrderTransitions.push({ from: prev, to: next });
     }
 
     const warnings: string[] = [];
     if (missingPositions.length > 0) {
       const sample = missingPositions.slice(0, 25).join(", ");
-      const tail = missingPositions.length > 25 ? ", ..." : "";
-      warnings.push(
-        `Обнаружены пропущенные позиции: ${sample}${tail} (всего: ${missingPositions.length}).`
-      );
+      warnings.push(`Обнаружены пропущенные позиции: ${sample}${missingPositions.length > 25 ? ", ..." : ""} (всего: ${missingPositions.length}).`);
     }
-
     if (outOfOrderTransitions.length > 0) {
-      const sample = outOfOrderTransitions
-        .slice(0, 10)
-        .map((t) => `${t.from}→${t.to}`)
-        .join(", ");
+      const sample = outOfOrderTransitions.slice(0, 10).map((t) => `${t.from}→${t.to}`).join(", ");
       warnings.push(`Обнаружены непоследовательные переходы позиций: ${sample}.`);
     }
-
     if (leadingRows.length > 0) {
-      warnings.push(
-        `Есть ${leadingRows.length} строк(и) до первой распознанной позиции — проверьте колонку «Позиция».`
-      );
+      warnings.push(`Есть ${leadingRows.length} строк(и) до первой распознанной позиции.`);
     }
-
     if (groupedRows.length === 0 && normalizedRows.length > 0) {
-      warnings.push("Не удалось извлечь номера позиций из колонки «Позиция». Проверьте качество исходного файла.");
+      warnings.push("Не удалось извлечь номера позиций.");
     }
 
     const materials = groupedRows.length > 0
       ? [...leadingRows, ...groupedRows.map(({ position, ...row }) => row)]
       : normalizedRows.map(({ position, ...row }) => row);
 
-    // Name integrity check + confidence scoring
+    // ═══════════════════════════════════════════════
+    // CONFIDENCE SCORING
+    // ═══════════════════════════════════════════════
     const truncationSuffixes = /\b(марки|типа|на|из|класса|марке|типу)\s*$/i;
-    const workKeywords = /\b(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|работы|обратная\s+засыпка|окраска|бетонирование|армирование)\b/i;
+    const workKeywords = /\b(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|работы|обратная\s+засыпка|окраска|бетонирование|армирование|засыпка|выемка|срезка)\b/i;
     const workStartKeywords = /^\s*(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|засыпка|обратная\s+засыпка|срезка|выемка|окраска|грунтование|бетонирование|армирование|расчистка|вырубка|корчёвка|снятие|удаление|очистка|прокладка|пробивка|заделка|выравнивание)/i;
-    const materialKeywords = /\b(бетон|щебень|арматур|песок|геотекстиль|асфальтобетон|грунт|плит[аы]|кирпич|цемент|раствор|труб[аы]|кабел|провод|балк[аи]|швеллер|уголок|лист|профиль|сетк[аи]|гвозд|болт|гайк|шайб|анкер|пенопласт|минват|утеплител|гидроизоляц|мембран|рубероид|битум|мастик|краск|грунтовк|эмаль|лак|клей|герметик|пена|саморез|дюбел|хомут|муфт|фланец|задвижк|вентил|кран|насос|радиатор|конвектор|воздуховод|лоток|короб|подрозетник|выключател|розетк|светильник|лампа|автомат|УЗО|контактор|реле|счётчик|счетчик|трансформатор)\b/i;
+    const materialKeywords = /\b(бетон|щебень|арматур|песок|геотекстиль|асфальтобетон|грунт|плит[аы]|кирпич|цемент|раствор|труб[аыие]|кабел|провод|балк[аи]|швеллер|уголок|лист|профиль|сетк[аи]|гвозд|болт|гайк|шайб|анкер|пенопласт|минват|утеплител|гидроизоляц|мембран|рубероид|битум|мастик|краск|грунтовк|эмаль|лак|клей|герметик|пена|саморез|дюбел|хомут|муфт|фланец|задвижк|вентил|кран|насос|радиатор|конвектор|воздуховод|лоток|короб|подрозетник|выключател|розетк|светильник|лампа|автомат|УЗО|контактор|реле|счётчик|счетчик|трансформатор|геомат|геосетк|пенополистирол|XPS)\b/i;
     const paramKeywords = /(\bØ\s*\d|\bd\s*\d|\bфр\.?\s*\d|\bфракци[яи]|\bкласс\s+[A-ZА-Я]|\bмарк[аи]\s+[A-ZА-Я0-9]|\bC\d{2,3}|\bB\d{2,3}|\bM\d{2,3})/i;
     const gostKeywords = /\b(ГОСТ|ТУ|СТО|ОСТ)\s*\d/i;
     const validUnits = /^(т|кг|м|м²|м³|м2|м3|мп|м\.п\.|шт|шт\.|компл|комплект|л|рул|упак|пачк|бухт)$/i;
@@ -1129,13 +824,15 @@ ${buildPromptForType(docType)}
     const calculateConfidence = (row: any): { confidence: number; confidence_level: string } => {
       const name: string = (row.name || "").trim();
       const unit: string = (row.unit || "").trim();
-      let score = 50; // base
+      let score = 50;
 
       // Bonuses
       if (materialKeywords.test(name)) score += 20;
       if (paramKeywords.test(name) || paramKeywords.test(row.type_mark || "")) score += 15;
       if (gostKeywords.test(name) || gostKeywords.test(row.type_mark || "")) score += 10;
       if (unit && validUnits.test(unit)) score += 10;
+      // Bonus: if structural key exists (class+diameter identified) → high confidence
+      if (getStructuralKey(row)) score += 10;
 
       // Penalties
       if (workStartKeywords.test(name)) score -= 40;
@@ -1143,14 +840,10 @@ ${buildPromptForType(docType)}
       if (name.length > 0 && name.length < 20) score -= 25;
       if (truncationSuffixes.test(name)) score -= 20;
       if (workKeywords.test(name) && materialKeywords.test(name)) score -= 20;
-      // Penalty for missing or zero quantity
-      const qty = parseFloat(row.quantity);
+      const qty = parseLocaleNumber(row.quantity);
       if (!qty || qty <= 0) score -= 15;
       for (const rule of unitMismatchRules) {
-        if (rule.material.test(name) && unit && rule.badUnits.test(unit)) {
-          score -= 15;
-          break;
-        }
+        if (rule.material.test(name) && unit && rule.badUnits.test(unit)) { score -= 15; break; }
       }
 
       const confidence = Math.max(0, Math.min(100, score));
@@ -1168,43 +861,57 @@ ${buildPromptForType(docType)}
         warnings.push(`Позиция "${name}" — короткое наименование (${name.length} симв.), возможна обрезка.`);
       }
       if (truncationSuffixes.test(name)) {
-        warnings.push(`Позиция "${name}" — наименование обрезано (заканчивается на служебное слово).`);
+        warnings.push(`Позиция "${name}" — наименование обрезано.`);
       }
       if (workKeywords.test(name)) {
         warnings.push(`Позиция "${name}" — возможно это работа, а не материал.`);
       }
       if (conf.confidence_level === "LOW") {
-        warnings.push(`Позиция "${name}" — низкий confidence (${conf.confidence}%), проверьте вручную.`);
+        warnings.push(`Позиция "${name}" — низкий confidence (${conf.confidence}%).`);
+      }
+    }
+
+    // Check for suspiciously few materials
+    if (materials.length > 0 && materials.length < 3) {
+      warnings.push(`Подозрительно мало материалов (${materials.length}). Проверьте результат.`);
+    }
+
+    // Post-dedup check: verify no duplicate keys remain
+    const finalKeyCheck = new Map<string, string>();
+    for (const m of materials) {
+      const key = getStructuralKey(m);
+      if (key) {
+        if (finalKeyCheck.has(key)) {
+          warnings.push(`Обнаружен дубль: "${(m as any).name}" и "${finalKeyCheck.get(key)}" имеют одинаковый ключ ${key}.`);
+        } else {
+          finalKeyCheck.set(key, (m as any).name || "");
+        }
       }
     }
 
     console.log("Recognition diagnostics:", JSON.stringify({
-      strategy: "position_ranges",
+      strategy: "unified_v2",
       detectedSourceType,
       typeScores,
       rawRows: rawRows.length,
+      afterDedup: deduplicatedRows.length,
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
       leadingRows: leadingRows.length,
       finalRows: materials.length,
       positionSequenceSample: positionSequence.slice(0, 20),
-      missingPositionsSample: missingPositions.slice(0, 20),
-      outOfOrderTransitions: outOfOrderTransitions.slice(0, 10),
       warningsCount: warnings.length,
     }));
 
-    // Save to database
+    // ═══════════════════════════════════════════════
+    // SAVE TO DATABASE
+    // ═══════════════════════════════════════════════
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Delete old items for this statement
-    await supabase
-      .from("material_statement_items")
-      .delete()
-      .eq("statement_id", statementId);
+    await supabase.from("material_statement_items").delete().eq("statement_id", statementId);
 
-    // Insert new items
     if (materials.length > 0) {
       const items = materials.map((m: any, idx: number) => ({
         statement_id: statementId,
@@ -1219,10 +926,7 @@ ${buildPromptForType(docType)}
         confidence_level: m.confidence_level ?? null,
       }));
 
-      const { error: insertError } = await supabase
-        .from("material_statement_items")
-        .insert(items);
-
+      const { error: insertError } = await supabase.from("material_statement_items").insert(items);
       if (insertError) {
         console.error("Insert error:", insertError);
         return new Response(
@@ -1232,22 +936,12 @@ ${buildPromptForType(docType)}
       }
     }
 
-    // Mark statement as recognized + save detected source type
-    await supabase
-      .from("material_statements")
+    await supabase.from("material_statements")
       .update({ is_recognized: true, detected_source_type: detectedSourceType })
       .eq("id", statementId);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        count: materials.length,
-        materials,
-        warnings,
-        missingPositions,
-        detectedSourceType,
-        typeScores,
-      }),
+      JSON.stringify({ success: true, count: materials.length, materials, warnings, missingPositions, detectedSourceType, typeScores }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
