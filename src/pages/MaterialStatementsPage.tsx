@@ -52,6 +52,7 @@ interface MaterialStatement {
   display_name: string | null;
   created_by: string | null;
   created_at: string;
+  detected_source_type: string | null;
 }
 
 interface MaterialItem {
