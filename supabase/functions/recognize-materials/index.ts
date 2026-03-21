@@ -1072,8 +1072,26 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       }
     }
 
-    if (materials.length > 0 && materials.length < 3) {
-      warnings.push(`Подозрительно мало материалов (${materials.length}). Проверьте результат.`);
+    // ═══════════════════════════════════════════════
+    // QUANTITY VALIDATION — remove items without quantity
+    // ═══════════════════════════════════════════════
+    const skippedNoQty: string[] = [];
+
+    const validMaterials = materials.filter((m: any) => {
+      const qty = parseLocaleNumber(m.quantity);
+      if (qty !== null && Number.isFinite(qty) && qty > 0) return true;
+      skippedNoQty.push(m.name || "(без названия)");
+      return false;
+    });
+
+    if (skippedNoQty.length > 0) {
+      const sample = skippedNoQty.slice(0, 10).join("; ");
+      warnings.push(`Пропущено ${skippedNoQty.length} позиций без количества: ${sample}${skippedNoQty.length > 10 ? "..." : ""}`);
+      console.log(`[QtyFilter] Removed ${skippedNoQty.length} items without quantity:`, skippedNoQty);
+    }
+
+    if (validMaterials.length > 0 && validMaterials.length < 3) {
+      warnings.push(`Подозрительно мало материалов (${validMaterials.length}). Проверьте результат.`);
     }
 
     // Post-dedup check
