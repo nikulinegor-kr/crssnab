@@ -74,6 +74,9 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [supplierName, setSupplierName] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [recognizedFile, setRecognizedFile] = useState<File | null>(null);
+  const [recognizedData, setRecognizedData] = useState<{ supplier: string | null; items: any[] } | null>(null);
+  const [recognizeStep, setRecognizeStep] = useState<"select" | "recognizing" | "confirm">("select");
   const [matchReviewOpen, setMatchReviewOpen] = useState(false);
   const [currentMatches, setCurrentMatches] = useState<KpMatch[]>([]);
   const [currentSupplierId, setCurrentSupplierId] = useState<string | null>(null);
@@ -119,37 +122,21 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return map;
   }, [supplierPrices]);
 
-  const handleUploadKp = async (file: File) => {
-    if (!supplierName.trim()) {
-      toast({ title: "Укажите имя поставщика", variant: "destructive" });
-      return;
-    }
+  // Step 1: Select file and recognize
+  const handleFileSelected = async (file: File) => {
     if (kpSuppliers.length >= MAX_KP) {
       toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
       return;
     }
 
+    setRecognizedFile(file);
+    setRecognizeStep("recognizing");
     setUploading(true);
+
     try {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const isExcel = ext === "xlsx" || ext === "xls";
 
-      // 1. Create KP supplier record
-      const { data: supplier, error: insertError } = await (supabase
-        .from("kp_suppliers" as any).insert({
-          organization_id: orgId,
-          folder_id: folderId,
-          supplier_name: supplierName.trim(),
-          file_name: file.name,
-          file_type: isExcel ? "xlsx" : "pdf",
-          status: "recognizing",
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        }).select().single() as any);
-
-      if (insertError) throw insertError;
-      const supplierId = (supplier as any).id;
-
-      // 2. Recognize KP
       let kpData: any;
       if (isExcel) {
         const arrayBuffer = await file.arrayBuffer();
@@ -170,8 +157,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-        // Save URL
-        await (supabase.from("kp_suppliers" as any).update({ file_url: urlData.publicUrl }).eq("id", supplierId) as any);
         const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
           body: { fileUrl: urlData.publicUrl, fileType: "pdf" },
         });
@@ -179,9 +164,53 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         kpData = result;
       }
 
-      const kpItems: { name: string; unit: string | null; price: number | null }[] = kpData.items || [];
+      setRecognizedData({ supplier: kpData.supplier || null, items: kpData.items || [] });
+      // Auto-fill supplier name from recognized data
+      if (kpData.supplier) {
+        setSupplierName(kpData.supplier);
+      }
+      setRecognizeStep("confirm");
+    } catch (e: any) {
+      toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
+      setRecognizeStep("select");
+      setRecognizedFile(null);
+      setRecognizedData(null);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      // 3. Match KP items to materials
+  // Step 2: Confirm supplier name and apply
+  const handleConfirmKp = async () => {
+    if (!supplierName.trim()) {
+      toast({ title: "Укажите имя поставщика", variant: "destructive" });
+      return;
+    }
+    if (!recognizedData || !recognizedFile) return;
+
+    setUploading(true);
+    try {
+      const ext = recognizedFile.name.split(".").pop()?.toLowerCase();
+      const isExcel = ext === "xlsx" || ext === "xls";
+
+      // Create KP supplier record
+      const { data: supplier, error: insertError } = await (supabase
+        .from("kp_suppliers" as any).insert({
+          organization_id: orgId,
+          folder_id: folderId,
+          supplier_name: supplierName.trim(),
+          file_name: recognizedFile.name,
+          file_type: isExcel ? "xlsx" : "pdf",
+          status: "recognized",
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        }).select().single() as any);
+
+      if (insertError) throw insertError;
+      const supplierId = (supplier as any).id;
+
+      const kpItems: { name: string; unit: string | null; price: number | null }[] = recognizedData.items;
+
+      // Match KP items to materials
       const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
       const pricedPool = materialItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
       const materialWithParams = materialItems.map(i => ({ ...i, params: parseMaterialParams(i.name) }));
@@ -189,7 +218,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
       const matches: KpMatch[] = kpItems.map(kpItem => {
         const kpParams = parseMaterialParams(kpItem.name);
 
-        // Exact structural match first
         if (kpParams.type && kpParams.diameter != null) {
           for (const m of materialWithParams) {
             if (isExactStructuralMatch(kpParams, m.params)) {
@@ -198,7 +226,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
           }
         }
 
-        // Parametric/fuzzy
         const result = findBestParametricMatch(kpItem.name, kpItem.unit, pricedPool);
         if (result && (result.matchType === "parametric" || result.score >= 0.6)) {
           return { kpItemName: kpItem.name, kpPrice: kpItem.price, matchedItemId: result.itemId, matchType: result.matchType, similarity: result.score };
@@ -211,16 +238,18 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
       setCurrentSupplierId(supplierId);
       setMatchReviewOpen(true);
 
-      // Update status
-      await (supabase.from("kp_suppliers" as any).update({ status: "recognized" }).eq("id", supplierId) as any);
       queryClient.invalidateQueries({ queryKey: ["kp-suppliers"] });
 
+      // Reset upload dialog
+      setUploadDialogOpen(false);
+      setRecognizeStep("select");
+      setRecognizedFile(null);
+      setRecognizedData(null);
+      setSupplierName("");
     } catch (e: any) {
-      toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
     } finally {
       setUploading(false);
-      setUploadDialogOpen(false);
-      setSupplierName("");
     }
   };
 
@@ -300,8 +329,97 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return minSupplierId;
   };
 
+  const renderUploadDialog = () => (
+    <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) resetUploadDialog(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {recognizeStep === "select" && (
+            <>
+              <div>
+                <label className="text-sm font-medium">1. Выберите файл КП (Excel или PDF)</label>
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary/50 transition-colors mt-1">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
+                  <span className="text-xs text-muted-foreground">Поставщик определится автоматически из КП</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.xlsx,.xls"
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files?.[0]) {
+                        handleFileSelected(e.target.files[0]);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Загружено: {kpSuppliers.length} из {MAX_KP}
+              </p>
+            </>
+          )}
+
+          {recognizeStep === "recognizing" && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Распознаём КП...</p>
+              <p className="text-xs text-muted-foreground">{recognizedFile?.name}</p>
+            </div>
+          )}
+
+          {recognizeStep === "confirm" && (
+            <>
+              <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50">
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate">{recognizedFile?.name}</span>
+                <Badge variant="outline" className="ml-auto shrink-0">
+                  {recognizedData?.items?.length || 0} позиций
+                </Badge>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Название поставщика *</label>
+                {recognizedData?.supplier && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Распознано из КП: <strong>{recognizedData.supplier}</strong>
+                  </p>
+                )}
+                <Input
+                  placeholder='Например: ООО "Альянс"'
+                  value={supplierName}
+                  onChange={e => setSupplierName(e.target.value)}
+                  className="mt-1"
+                  autoFocus
+                />
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={resetUploadDialog}>Отмена</Button>
+                <Button onClick={handleConfirmKp} disabled={!supplierName.trim() || uploading}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                  Применить
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const resetUploadDialog = () => {
+    setUploadDialogOpen(false);
+    setSupplierName("");
+    setRecognizedFile(null);
+    setRecognizedData(null);
+    setRecognizeStep("select");
+  };
+
   if (kpSuppliers.length === 0 && allItems.length === 0) {
-    // Still show upload button even with no items
     return (
       <>
         <Card>
@@ -310,59 +428,13 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
               <FileSpreadsheet className="h-4 w-4" />
               Коммерческие предложения (0/{MAX_KP})
             </CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setUploadDialogOpen(true)}
-              disabled={uploading}
-            >
+            <Button size="sm" variant="outline" onClick={() => { resetUploadDialog(); setUploadDialogOpen(true); }} disabled={uploading}>
               {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
               Загрузить КП
             </Button>
           </CardHeader>
         </Card>
-
-        {/* Upload KP Dialog */}
-        <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) { setUploadDialogOpen(false); setSupplierName(""); } }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Название поставщика *</label>
-                <Input
-                  placeholder='Например: ООО "Альянс"'
-                  value={supplierName}
-                  onChange={e => setSupplierName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Файл КП (Excel или PDF)</label>
-                <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary/50 transition-colors mt-1">
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.xlsx,.xls"
-                    className="hidden"
-                    disabled={!supplierName.trim() || uploading}
-                    onChange={e => {
-                      if (e.target.files?.[0]) {
-                        handleUploadKp(e.target.files[0]);
-                        e.target.value = "";
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Загружено: 0 из {MAX_KP}
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {renderUploadDialog()}
       </>
     );
   }
@@ -386,6 +458,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                 toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
                 return;
               }
+              resetUploadDialog();
               setUploadDialogOpen(true);
             }}
             disabled={uploading}
@@ -499,47 +572,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         </Card>
       )}
 
-      {/* Upload KP Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) { setUploadDialogOpen(false); setSupplierName(""); } }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Название поставщика *</label>
-              <Input
-                placeholder='Например: ООО "Альянс"'
-                value={supplierName}
-                onChange={e => setSupplierName(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Файл КП (Excel или PDF)</label>
-              <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary/50 transition-colors mt-1">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
-                <input
-                  type="file"
-                  accept=".pdf,.xlsx,.xls"
-                  className="hidden"
-                  disabled={!supplierName.trim() || uploading}
-                  onChange={e => {
-                    if (e.target.files?.[0]) {
-                      handleUploadKp(e.target.files[0]);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Загружено: {kpSuppliers.length} из {MAX_KP}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {renderUploadDialog()}
 
       {/* Match Review Dialog */}
       <Dialog open={matchReviewOpen} onOpenChange={open => { if (!open && !applyingMatches) { setMatchReviewOpen(false); setCurrentMatches([]); } }}>
