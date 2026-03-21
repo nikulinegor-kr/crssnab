@@ -1117,7 +1117,8 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
       leadingRows: leadingRows.length,
-      finalRows: materials.length,
+      finalRows: validMaterials.length,
+      skippedNoQuantity: skippedNoQty.length,
       positionSequenceSample: positionSequence.slice(0, 20),
       warningsCount: warnings.length,
     }));
