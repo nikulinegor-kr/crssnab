@@ -1042,10 +1042,10 @@ ${buildPromptForType(docType)}
       }
     }
 
-    // Mark statement as recognized
+    // Mark statement as recognized + save detected source type
     await supabase
       .from("material_statements")
-      .update({ is_recognized: true })
+      .update({ is_recognized: true, detected_source_type: detectedSourceType })
       .eq("id", statementId);
 
     return new Response(
@@ -1055,6 +1055,8 @@ ${buildPromptForType(docType)}
         materials,
         warnings,
         missingPositions,
+        detectedSourceType,
+        typeScores,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
