@@ -8,7 +8,7 @@ import {
   Download, Plus, Trash2, Pencil, File, Loader2, Calendar, RefreshCw,
   FolderPlus, MoveRight, GripVertical, FileSpreadsheet, FileArchive,
   Wrench, Archive, Layers, ShoppingCart, Check, Search, DollarSign,
-  Hand, FileUp, FileCheck, Package,
+  Hand, FileUp, FileCheck, Package, Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -180,6 +180,7 @@ export default function MaterialStatementsPage() {
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
   const [autoFillPricesLoading, setAutoFillPricesLoading] = useState(false);
   const [mergeDuplicatesLoading, setMergeDuplicatesLoading] = useState(false);
+  const [mergeSnapshot, setMergeSnapshot] = useState<{folderId: string; items: any[]; deletedIds: string[]; updates: {id: string; data: any}[]} | null>(null);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -1034,11 +1035,9 @@ export default function MaterialStatementsPage() {
     setMergeDuplicatesLoading(true);
     try {
       const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
-      // Group by normalized name + type_mark (structural key)
       const groups = new Map<string, MaterialItem[]>();
       for (const item of materialItems) {
         const params = parseMaterialParams(item.name);
-        // Build structural key: type|grade|diameter|thickness
         const key = [
           params.type || "",
           params.grade || "",
@@ -1046,7 +1045,6 @@ export default function MaterialStatementsPage() {
           params.thickness != null ? String(params.thickness) : "",
           (item.unit || "").toLowerCase().trim(),
         ].join("|");
-        // Also fallback: if no structural params, use normalized name
         const effectiveKey = (params.type || params.diameter != null)
           ? key
           : item.name.trim().toLowerCase() + "|" + (item.type_mark || "").trim().toLowerCase();
@@ -1054,49 +1052,40 @@ export default function MaterialStatementsPage() {
         groups.get(effectiveKey)!.push(item);
       }
 
+      const snapshotItems: any[] = [];
+      const snapshotUpdates: {id: string; data: any}[] = [];
       let mergedCount = 0;
       let deletedCount = 0;
 
       for (const [, group] of groups) {
         if (group.length <= 1) continue;
-
-        // Keep the first item, merge others into it
         const primary = group[0];
         const rest = group.slice(1);
 
+        snapshotUpdates.push({
+          id: primary.id,
+          data: { quantity: primary.quantity, price: primary.price, total_price: primary.total_price, supplier: primary.supplier, type_mark: primary.type_mark },
+        });
+        for (const r of rest) {
+          snapshotItems.push({ ...r });
+        }
+
         const totalQty = group.reduce((s, i) => s + (i.quantity || 0), 0);
-        // Use the best price available
         const bestPrice = group.find(i => i.price != null)?.price ?? null;
         const bestSupplier = group.find(i => i.supplier)?.supplier ?? null;
         const bestTypeMark = group.find(i => i.type_mark)?.type_mark ?? primary.type_mark;
         const totalPrice = bestPrice != null ? totalQty * bestPrice : null;
 
-        // Update primary item
         await supabase
           .from("material_statement_items" as any)
-          .update({
-            quantity: totalQty,
-            price: bestPrice,
-            total_price: totalPrice,
-            supplier: bestSupplier || primary.supplier,
-            type_mark: bestTypeMark,
-          } as any)
+          .update({ quantity: totalQty, price: bestPrice, total_price: totalPrice, supplier: bestSupplier || primary.supplier, type_mark: bestTypeMark } as any)
           .eq("id", primary.id);
 
-        // Delete duplicate items
         const deleteIds = rest.map(r => r.id);
         if (deleteIds.length > 0) {
-          await supabase
-            .from("material_statement_items" as any)
-            .delete()
-            .in("id", deleteIds);
-          // Also delete their KP prices
-          await supabase
-            .from("kp_supplier_prices" as any)
-            .delete()
-            .in("material_item_id", deleteIds);
+          await supabase.from("material_statement_items" as any).delete().in("id", deleteIds);
+          await supabase.from("kp_supplier_prices" as any).delete().in("material_item_id", deleteIds);
         }
-
         mergedCount++;
         deletedCount += rest.length;
       }
@@ -1104,12 +1093,41 @@ export default function MaterialStatementsPage() {
       if (deletedCount === 0) {
         toast({ title: "Дубликаты не найдены", description: "Все позиции уникальны" });
       } else {
+        setMergeSnapshot({ folderId: selectedFolderId || "", items: snapshotItems, deletedIds: snapshotItems.map(i => i.id), updates: snapshotUpdates });
         toast({ title: "Дубли объединены", description: `Объединено ${mergedCount} групп, удалено ${deletedCount} дублей` });
       }
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       queryClient.invalidateQueries({ queryKey: ["kp-supplier-prices-table"] });
     } catch (e: any) {
       toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setMergeDuplicatesLoading(false);
+    }
+  };
+
+  const handleUndoMerge = async () => {
+    if (!mergeSnapshot) return;
+    setMergeDuplicatesLoading(true);
+    try {
+      for (const upd of mergeSnapshot.updates) {
+        await supabase.from("material_statement_items" as any).update(upd.data as any).eq("id", upd.id);
+      }
+      for (const item of mergeSnapshot.items) {
+        const insertData = {
+          id: item.id, name: item.name, statement_id: item.statement_id, organization_id: item.organization_id,
+          row_number: item.row_number, quantity: item.quantity, unit: item.unit, type_mark: item.type_mark,
+          price: item.price, total_price: item.total_price, supplier: item.supplier, item_type: item.item_type,
+          price_source: item.price_source, procurement_status: item.procurement_status,
+          mass_per_unit: item.mass_per_unit, source_file_id: item.source_file_id,
+        };
+        await supabase.from("material_statement_items" as any).insert(insertData as any);
+      }
+      setMergeSnapshot(null);
+      toast({ title: "Объединение отменено", description: "Позиции восстановлены" });
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["kp-supplier-prices-table"] });
+    } catch (e: any) {
+      toast({ title: "Ошибка отмены", description: e.message, variant: "destructive" });
     } finally {
       setMergeDuplicatesLoading(false);
     }
@@ -1460,10 +1478,16 @@ export default function MaterialStatementsPage() {
                     Подтянуть цены
                   </Button>
                 )}
-                {isMaterialsFolder && allItems.length > 0 && (
+                {isMaterialsFolder && allItems.length > 0 && (!mergeSnapshot || mergeSnapshot.folderId !== (selectedFolderId || "")) && (
                   <Button variant="outline" size="sm" onClick={handleMergeDuplicates} disabled={mergeDuplicatesLoading}>
                     {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
                     Объединить дубли
+                  </Button>
+                )}
+                {mergeSnapshot && mergeSnapshot.folderId === (selectedFolderId || "") && (
+                  <Button variant="outline" size="sm" onClick={handleUndoMerge} disabled={mergeDuplicatesLoading} className="border-orange-300 text-orange-600 hover:bg-orange-50">
+                    {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Undo2 className="h-4 w-4 mr-1" />}
+                    Разъединить дубли
                   </Button>
                 )}
                 <Button variant="outline" size="sm" asChild>
