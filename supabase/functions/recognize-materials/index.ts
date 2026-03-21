@@ -1125,6 +1125,9 @@ ${buildPromptForType(docType)}
       if (name.length > 0 && name.length < 20) score -= 25;
       if (truncationSuffixes.test(name)) score -= 20;
       if (workKeywords.test(name) && materialKeywords.test(name)) score -= 20;
+      // Penalty for missing or zero quantity
+      const qty = parseFloat(row.quantity);
+      if (!qty || qty <= 0) score -= 15;
       for (const rule of unitMismatchRules) {
         if (rule.material.test(name) && unit && rule.badUnits.test(unit)) {
           score -= 15;
