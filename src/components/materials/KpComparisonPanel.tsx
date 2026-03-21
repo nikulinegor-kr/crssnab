@@ -122,37 +122,21 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return map;
   }, [supplierPrices]);
 
-  const handleUploadKp = async (file: File) => {
-    if (!supplierName.trim()) {
-      toast({ title: "Укажите имя поставщика", variant: "destructive" });
-      return;
-    }
+  // Step 1: Select file and recognize
+  const handleFileSelected = async (file: File) => {
     if (kpSuppliers.length >= MAX_KP) {
       toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
       return;
     }
 
+    setRecognizedFile(file);
+    setRecognizeStep("recognizing");
     setUploading(true);
+
     try {
       const ext = file.name.split(".").pop()?.toLowerCase();
       const isExcel = ext === "xlsx" || ext === "xls";
 
-      // 1. Create KP supplier record
-      const { data: supplier, error: insertError } = await (supabase
-        .from("kp_suppliers" as any).insert({
-          organization_id: orgId,
-          folder_id: folderId,
-          supplier_name: supplierName.trim(),
-          file_name: file.name,
-          file_type: isExcel ? "xlsx" : "pdf",
-          status: "recognizing",
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        }).select().single() as any);
-
-      if (insertError) throw insertError;
-      const supplierId = (supplier as any).id;
-
-      // 2. Recognize KP
       let kpData: any;
       if (isExcel) {
         const arrayBuffer = await file.arrayBuffer();
@@ -173,8 +157,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-        // Save URL
-        await (supabase.from("kp_suppliers" as any).update({ file_url: urlData.publicUrl }).eq("id", supplierId) as any);
         const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
           body: { fileUrl: urlData.publicUrl, fileType: "pdf" },
         });
@@ -182,9 +164,53 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
         kpData = result;
       }
 
-      const kpItems: { name: string; unit: string | null; price: number | null }[] = kpData.items || [];
+      setRecognizedData({ supplier: kpData.supplier || null, items: kpData.items || [] });
+      // Auto-fill supplier name from recognized data
+      if (kpData.supplier) {
+        setSupplierName(kpData.supplier);
+      }
+      setRecognizeStep("confirm");
+    } catch (e: any) {
+      toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
+      setRecognizeStep("select");
+      setRecognizedFile(null);
+      setRecognizedData(null);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      // 3. Match KP items to materials
+  // Step 2: Confirm supplier name and apply
+  const handleConfirmKp = async () => {
+    if (!supplierName.trim()) {
+      toast({ title: "Укажите имя поставщика", variant: "destructive" });
+      return;
+    }
+    if (!recognizedData || !recognizedFile) return;
+
+    setUploading(true);
+    try {
+      const ext = recognizedFile.name.split(".").pop()?.toLowerCase();
+      const isExcel = ext === "xlsx" || ext === "xls";
+
+      // Create KP supplier record
+      const { data: supplier, error: insertError } = await (supabase
+        .from("kp_suppliers" as any).insert({
+          organization_id: orgId,
+          folder_id: folderId,
+          supplier_name: supplierName.trim(),
+          file_name: recognizedFile.name,
+          file_type: isExcel ? "xlsx" : "pdf",
+          status: "recognized",
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        }).select().single() as any);
+
+      if (insertError) throw insertError;
+      const supplierId = (supplier as any).id;
+
+      const kpItems: { name: string; unit: string | null; price: number | null }[] = recognizedData.items;
+
+      // Match KP items to materials
       const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
       const pricedPool = materialItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
       const materialWithParams = materialItems.map(i => ({ ...i, params: parseMaterialParams(i.name) }));
@@ -192,7 +218,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
       const matches: KpMatch[] = kpItems.map(kpItem => {
         const kpParams = parseMaterialParams(kpItem.name);
 
-        // Exact structural match first
         if (kpParams.type && kpParams.diameter != null) {
           for (const m of materialWithParams) {
             if (isExactStructuralMatch(kpParams, m.params)) {
@@ -201,7 +226,6 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
           }
         }
 
-        // Parametric/fuzzy
         const result = findBestParametricMatch(kpItem.name, kpItem.unit, pricedPool);
         if (result && (result.matchType === "parametric" || result.score >= 0.6)) {
           return { kpItemName: kpItem.name, kpPrice: kpItem.price, matchedItemId: result.itemId, matchType: result.matchType, similarity: result.score };
@@ -214,16 +238,18 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
       setCurrentSupplierId(supplierId);
       setMatchReviewOpen(true);
 
-      // Update status
-      await (supabase.from("kp_suppliers" as any).update({ status: "recognized" }).eq("id", supplierId) as any);
       queryClient.invalidateQueries({ queryKey: ["kp-suppliers"] });
 
+      // Reset upload dialog
+      setUploadDialogOpen(false);
+      setRecognizeStep("select");
+      setRecognizedFile(null);
+      setRecognizedData(null);
+      setSupplierName("");
     } catch (e: any) {
-      toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
     } finally {
       setUploading(false);
-      setUploadDialogOpen(false);
-      setSupplierName("");
     }
   };
 
