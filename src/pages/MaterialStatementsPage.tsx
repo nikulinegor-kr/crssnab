@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, type DragEvent } from "react";
+import React, { useState, useEffect, useMemo, useCallback, type DragEvent } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -278,7 +278,56 @@ export default function MaterialStatementsPage() {
     return map;
   }, [allItems]);
 
-  // Section progress: fetch items for all material folders across all sections
+  // KP suppliers & prices for current folder
+  const { data: folderKpSuppliers = [] } = useQuery({
+    queryKey: ["kp-suppliers-table", selectedFolderId],
+    queryFn: async () => {
+      if (!orgId || !selectedFolderId) return [];
+      const { data } = await (supabase
+        .from("kp_suppliers" as any).select("*")
+        .eq("folder_id", selectedFolderId)
+        .eq("organization_id", orgId)
+        .order("created_at") as any);
+      return (data || []) as { id: string; supplier_name: string; status: string }[];
+    },
+    enabled: !!orgId && !!selectedFolderId,
+  });
+
+  const folderKpSupplierIds = useMemo(() => folderKpSuppliers.map(s => s.id), [folderKpSuppliers]);
+
+  const { data: folderKpPrices = [] } = useQuery({
+    queryKey: ["kp-supplier-prices-table", folderKpSupplierIds.join(",")],
+    queryFn: async () => {
+      if (folderKpSupplierIds.length === 0) return [];
+      const { data } = await (supabase
+        .from("kp_supplier_prices" as any).select("*")
+        .in("kp_supplier_id", folderKpSupplierIds) as any);
+      return (data || []) as { kp_supplier_id: string; material_item_id: string; price: number | null; total_price: number | null }[];
+    },
+    enabled: folderKpSupplierIds.length > 0,
+  });
+
+  const kpPriceMap = useMemo(() => {
+    const map = new Map<string, Map<string, { price: number | null; total_price: number | null }>>();
+    for (const sp of folderKpPrices) {
+      if (!map.has(sp.material_item_id)) map.set(sp.material_item_id, new Map());
+      map.get(sp.material_item_id)!.set(sp.kp_supplier_id, { price: sp.price, total_price: sp.total_price });
+    }
+    return map;
+  }, [folderKpPrices]);
+
+  const getMinKpSupplier = useCallback((itemId: string): string | null => {
+    const prices = kpPriceMap.get(itemId);
+    if (!prices || prices.size === 0) return null;
+    let minPrice = Infinity;
+    let minId: string | null = null;
+    prices.forEach((sp, suppId) => {
+      if (sp.price != null && sp.price < minPrice) { minPrice = sp.price; minId = suppId; }
+    });
+    return minId;
+  }, [kpPriceMap]);
+
+
   const materialFolderIds = useMemo(() =>
     folders.filter(f => f.type === 'materials').map(f => f.id),
     [folders]
@@ -1616,6 +1665,15 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Масса (кг)</TableHead>
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
+                                {folderKpSuppliers.map(kp => (
+                                  <TableHead key={kp.id} colSpan={2} className="text-center border-l">
+                                    <div className="text-xs leading-tight font-semibold">{kp.supplier_name}</div>
+                                    <div className="flex text-[10px] text-muted-foreground mt-0.5 gap-0">
+                                      <span className="flex-1 text-center">Цена</span>
+                                      <span className="flex-1 text-center">Стоимость</span>
+                                    </div>
+                                  </TableHead>
+                                ))}
                                 <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
@@ -1672,8 +1730,22 @@ export default function MaterialStatementsPage() {
                                         </span>
                                       )}
                                     </TableCell>
-                                    <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
-                                    <TableCell>
+                                     <TableCell className="font-medium">{formatPrice(computedTotal)}</TableCell>
+                                     {folderKpSuppliers.map(kp => {
+                                       const sp = kpPriceMap.get(item.id)?.get(kp.id);
+                                       const isMin = getMinKpSupplier(item.id) === kp.id && sp?.price != null;
+                                       return (
+                                         <React.Fragment key={kp.id}>
+                                           <TableCell className={cn("text-sm text-center border-l", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                             {sp?.price != null ? formatPrice(sp.price) : "—"}
+                                           </TableCell>
+                                           <TableCell className={cn("text-sm text-center", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                             {sp?.total_price != null ? formatPrice(sp.total_price) : "—"}
+                                           </TableCell>
+                                         </React.Fragment>
+                                       );
+                                     })}
+                                     <TableCell>
                                       {item.procurement_status === "in_procurement" && (
                                         <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
                                       )}
@@ -1705,8 +1777,11 @@ export default function MaterialStatementsPage() {
                                   <TableCell><Input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="h-8 w-20" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.mass_per_unit} onChange={e => setNewItem({ ...newItem, mass_per_unit: e.target.value })} className="h-8 w-20" /></TableCell>
                                   <TableCell><Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} className="h-8 w-20" placeholder="Цена" /></TableCell>
-                                  <TableCell>—</TableCell>
-                                  <TableCell></TableCell>
+                                   <TableCell>—</TableCell>
+                                   {folderKpSuppliers.map(kp => (
+                                     <React.Fragment key={kp.id}><TableCell /><TableCell /></React.Fragment>
+                                   ))}
+                                   <TableCell></TableCell>
                                   <TableCell>
                                     <div className="flex gap-1">
                                       <Button size="sm" variant="ghost" onClick={handleAddItem} disabled={!newItem.name}>✓</Button>
@@ -1715,9 +1790,9 @@ export default function MaterialStatementsPage() {
                                   </TableCell>
                                 </TableRow>
                               )}
-                              {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
+                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={11 + folderKpSuppliers.length * 2} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
                               {stItems.length > 0 && (
@@ -1730,6 +1805,18 @@ export default function MaterialStatementsPage() {
                                    <TableCell />
                                    <TableCell />
                                    <TableCell className="text-sm font-semibold">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                   {folderKpSuppliers.map(kp => {
+                                     const kpTotal = materialItems.reduce((sum, item) => {
+                                       const sp = kpPriceMap.get(item.id)?.get(kp.id);
+                                       return sum + (sp?.total_price || 0);
+                                     }, 0);
+                                     return (
+                                       <React.Fragment key={kp.id}>
+                                         <TableCell className="text-center border-l" />
+                                         <TableCell className="text-sm text-center font-semibold">{kpTotal > 0 ? formatPrice(kpTotal) + " ₽" : "—"}</TableCell>
+                                       </React.Fragment>
+                                     );
+                                   })}
                                    <TableCell />
                                    <TableCell />
                                  </TableRow>
