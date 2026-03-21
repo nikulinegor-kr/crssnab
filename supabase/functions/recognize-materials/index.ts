@@ -593,9 +593,41 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
     console.log(`[recognize] Detected source type: ${detectedSourceType}`, typeScores);
 
     const rawRows: any[] = [];
-    for (let i = 0; i < pdfChunks.length; i++) {
-      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
-      rawRows.push(...chunkRows);
+
+    // For RC documents: process chunks in REVERSE order (last pages first)
+    // because MASTER tables (ведомость материалов) are typically at the END of the document
+    if (detectedSourceType === "RC" && pdfChunks.length > 1) {
+      console.log(`[recognize] RC document with ${pdfChunks.length} chunks — processing LAST chunk first to find MASTER tables`);
+
+      // Process last chunk first
+      const lastIdx = pdfChunks.length - 1;
+      const lastChunkRows = await recognizeChunk(pdfChunks[lastIdx], lastIdx + 1, pdfChunks.length, detectedSourceType);
+      rawRows.push(...lastChunkRows);
+
+      const hasMasterTable = lastChunkRows.length >= 5;
+      console.log(`[recognize] Last chunk returned ${lastChunkRows.length} materials. MASTER found: ${hasMasterTable}`);
+
+      if (!hasMasterTable) {
+        // No MASTER in last chunk — process remaining chunks (reverse order still)
+        for (let i = lastIdx - 1; i >= 0; i--) {
+          const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
+          rawRows.push(...chunkRows);
+        }
+        console.log(`[recognize] No MASTER in last chunk — processed all ${pdfChunks.length} chunks, total rows: ${rawRows.length}`);
+      } else {
+        // MASTER found in last chunk — also process second-to-last for steel schedules etc
+        if (lastIdx > 0) {
+          const prevChunkRows = await recognizeChunk(pdfChunks[lastIdx - 1], lastIdx, pdfChunks.length, detectedSourceType);
+          rawRows.push(...prevChunkRows);
+          console.log(`[recognize] MASTER found — also processed chunk ${lastIdx} (${prevChunkRows.length} rows). Skipping earlier chunks to avoid duplicates.`);
+        }
+      }
+    } else {
+      // Non-RC or single chunk: process sequentially
+      for (let i = 0; i < pdfChunks.length; i++) {
+        const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
+        rawRows.push(...chunkRows);
+      }
     }
 
     // ═══════════════════════════════════════════════
