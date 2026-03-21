@@ -924,14 +924,17 @@ export default function MaterialStatementsPage() {
       for (const item of unpricedItems) {
         const itemParams = parseMaterialParams(item.name);
 
-        // 1) EXACT structural match: type + grade + diameter + thickness
+        // 1) EXACT structural match: type + grade + diameter (+ thickness for pipes)
         let exactMatch: typeof pricedWithParams[0] | null = null;
-        if (itemParams.type && itemParams.diameter != null) {
+        if (itemParams.type) {
           for (const p of pricedWithParams) {
             if (isExactStructuralMatch(itemParams, p.params)) {
               exactMatch = p;
               break;
             }
+          }
+          if (!exactMatch) {
+            console.log(`[AutoFill] No exact match for "${item.name}" → type=${itemParams.type}, grade=${itemParams.grade}, dia=${itemParams.diameter}, thick=${itemParams.thickness}`);
           }
         }
 
