@@ -1498,7 +1498,7 @@ export default function MaterialStatementsPage() {
             )}
 
             {/* KP Comparison Panel */}
-            {selectedFolderId && isMaterialsFolder && orgId && allItems.length > 0 && (
+            {selectedFolderId && isMaterialsFolder && orgId && (
               <KpComparisonPanel orgId={orgId} folderId={selectedFolderId} allItems={allItems} />
             )}
 
