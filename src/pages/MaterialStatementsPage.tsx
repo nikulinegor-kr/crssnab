@@ -1048,24 +1048,8 @@ export default function MaterialStatementsPage() {
           .trim();
 
       for (const item of materialItems) {
-        const params = parseMaterialParams(item.name);
-        let effectiveKey: string;
-
-        if (params.type && params.diameter != null) {
-          // Structural key: type + grade + diameter + thickness (NO unit — same material = same key)
-          effectiveKey = [
-            params.type,
-            params.grade || "",
-            String(params.diameter),
-            params.thickness != null ? String(params.thickness) : "",
-          ].join("|");
-        } else if (params.type) {
-          // Has type but no diameter — use type + normalized name
-          effectiveKey = params.type + "|" + normName(item.name);
-        } else {
-          // No structural params — fallback to normalized name only
-          effectiveKey = "raw|" + normName(item.name);
-        }
+        // Group by normalized name only — exact name match after normalization
+        const effectiveKey = normName(item.name);
 
         if (!groups.has(effectiveKey)) groups.set(effectiveKey, []);
         groups.get(effectiveKey)!.push(item);
