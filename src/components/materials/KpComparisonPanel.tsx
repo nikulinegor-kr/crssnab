@@ -300,7 +300,72 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return minSupplierId;
   };
 
-  if (kpSuppliers.length === 0 && allItems.length === 0) return null;
+  if (kpSuppliers.length === 0 && allItems.length === 0) {
+    // Still show upload button even with no items
+    return (
+      <>
+        <Card>
+          <CardHeader className="py-3 flex-row items-center justify-between gap-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Коммерческие предложения (0/{MAX_KP})
+            </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setUploadDialogOpen(true)}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+              Загрузить КП
+            </Button>
+          </CardHeader>
+        </Card>
+
+        {/* Upload KP Dialog */}
+        <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) { setUploadDialogOpen(false); setSupplierName(""); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Название поставщика *</label>
+                <Input
+                  placeholder='Например: ООО "Альянс"'
+                  value={supplierName}
+                  onChange={e => setSupplierName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Файл КП (Excel или PDF)</label>
+                <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary/50 transition-colors mt-1">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.xlsx,.xls"
+                    className="hidden"
+                    disabled={!supplierName.trim() || uploading}
+                    onChange={e => {
+                      if (e.target.files?.[0]) {
+                        handleUploadKp(e.target.files[0]);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Загружено: 0 из {MAX_KP}
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
 
