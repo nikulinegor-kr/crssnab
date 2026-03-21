@@ -1101,7 +1101,7 @@ export default function MaterialStatementsPage() {
         }, primary.type_mark);
         const totalPrice = bestPrice != null ? totalQty * bestPrice : null;
         // Keep the longest/most descriptive name
-        const bestName = group.reduce((best, i) => i.name.length > best.length ? i : best, primary).name;
+        const bestName = group.reduce((best: string, i) => i.name.length > best.length ? i.name : best, primary.name);
 
         await supabase
           .from("material_statement_items" as any)
