@@ -818,20 +818,23 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
           continue;
         }
 
-        const allSameQty = group.every((item: any) =>
-          typeof item.quantity === "number" &&
-          typeof group[0].quantity === "number" &&
-          Math.abs(item.quantity - group[0].quantity) / Math.max(1, group[0].quantity) < 0.01
-        );
+        const withQtyItems = group.filter((item: any) => typeof item.quantity === "number" && item.quantity > 0);
+        const allEffectivelySameQty = withQtyItems.length > 0 && withQtyItems.every((item: any) => {
+          const ref = withQtyItems[0].quantity;
+          return Math.abs(item.quantity - ref) / Math.max(1, ref) < 0.02;
+        });
 
         const sorted = group.sort((a: any, b: any) => (String(b.name || "").length - String(a.name || "").length));
         const best = { ...sorted[0] };
 
-        if (allSameQty) {
-          console.log(`[Dedup-text] "${normKey}": ${group.length} duplicates → keeping one`);
+        if (allEffectivelySameQty) {
+          best.quantity = withQtyItems[0].quantity;
+          console.log(`[Dedup-text] "${normKey}": ${group.length} duplicates with same qty → keeping one`);
         } else {
-          best.quantity = group.reduce((s: number, item: any) => s + (typeof item.quantity === "number" ? item.quantity : 0), 0);
-          console.log(`[Dedup-text] "${normKey}": merging ${group.length} items → total ${best.quantity}`);
+          // Take max quantity instead of summing to avoid doubling
+          const maxQty = Math.max(...withQtyItems.map((r: any) => r.quantity), 0);
+          best.quantity = maxQty > 0 ? maxQty : group.reduce((s: number, item: any) => s + (typeof item.quantity === "number" ? item.quantity : 0), 0);
+          console.log(`[Dedup-text] "${normKey}": ${group.length} items, taking max qty ${best.quantity}`);
         }
         deduplicated.push(best);
       }
