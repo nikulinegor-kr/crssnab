@@ -180,6 +180,7 @@ export default function MaterialStatementsPage() {
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
   const [autoFillPricesLoading, setAutoFillPricesLoading] = useState(false);
   const [mergeDuplicatesLoading, setMergeDuplicatesLoading] = useState(false);
+  const [mergeSnapshot, setMergeSnapshot] = useState<{folderId: string; items: any[]; deletedIds: string[]; updates: {id: string; data: any}[]} | null>(null);
 
   // Queries
   const { data: objects = [] } = useQuery({
