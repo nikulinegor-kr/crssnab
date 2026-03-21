@@ -278,7 +278,56 @@ export default function MaterialStatementsPage() {
     return map;
   }, [allItems]);
 
-  // Section progress: fetch items for all material folders across all sections
+  // KP suppliers & prices for current folder
+  const { data: folderKpSuppliers = [] } = useQuery({
+    queryKey: ["kp-suppliers-table", selectedFolderId],
+    queryFn: async () => {
+      if (!orgId || !selectedFolderId) return [];
+      const { data } = await (supabase
+        .from("kp_suppliers" as any).select("*")
+        .eq("folder_id", selectedFolderId)
+        .eq("organization_id", orgId)
+        .order("created_at") as any);
+      return (data || []) as { id: string; supplier_name: string; status: string }[];
+    },
+    enabled: !!orgId && !!selectedFolderId,
+  });
+
+  const folderKpSupplierIds = useMemo(() => folderKpSuppliers.map(s => s.id), [folderKpSuppliers]);
+
+  const { data: folderKpPrices = [] } = useQuery({
+    queryKey: ["kp-supplier-prices-table", folderKpSupplierIds.join(",")],
+    queryFn: async () => {
+      if (folderKpSupplierIds.length === 0) return [];
+      const { data } = await (supabase
+        .from("kp_supplier_prices" as any).select("*")
+        .in("kp_supplier_id", folderKpSupplierIds) as any);
+      return (data || []) as { kp_supplier_id: string; material_item_id: string; price: number | null; total_price: number | null }[];
+    },
+    enabled: folderKpSupplierIds.length > 0,
+  });
+
+  const kpPriceMap = useMemo(() => {
+    const map = new Map<string, Map<string, { price: number | null; total_price: number | null }>>();
+    for (const sp of folderKpPrices) {
+      if (!map.has(sp.material_item_id)) map.set(sp.material_item_id, new Map());
+      map.get(sp.material_item_id)!.set(sp.kp_supplier_id, { price: sp.price, total_price: sp.total_price });
+    }
+    return map;
+  }, [folderKpPrices]);
+
+  const getMinKpSupplier = useCallback((itemId: string): string | null => {
+    const prices = kpPriceMap.get(itemId);
+    if (!prices || prices.size === 0) return null;
+    let minPrice = Infinity;
+    let minId: string | null = null;
+    prices.forEach((sp, suppId) => {
+      if (sp.price != null && sp.price < minPrice) { minPrice = sp.price; minId = suppId; }
+    });
+    return minId;
+  }, [kpPriceMap]);
+
+
   const materialFolderIds = useMemo(() =>
     folders.filter(f => f.type === 'materials').map(f => f.id),
     [folders]
