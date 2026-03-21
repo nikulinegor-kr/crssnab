@@ -179,6 +179,7 @@ export default function MaterialStatementsPage() {
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
   const [autoFillPricesLoading, setAutoFillPricesLoading] = useState(false);
+  const [mergeDuplicatesLoading, setMergeDuplicatesLoading] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
@@ -1027,6 +1028,93 @@ export default function MaterialStatementsPage() {
     }
   };
 
+  // Merge duplicate materials by structural parameters
+  const handleMergeDuplicates = async () => {
+    if (!orgId || allItems.length === 0) return;
+    setMergeDuplicatesLoading(true);
+    try {
+      const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
+      // Group by normalized name + type_mark (structural key)
+      const groups = new Map<string, MaterialItem[]>();
+      for (const item of materialItems) {
+        const params = parseMaterialParams(item.name);
+        // Build structural key: type|grade|diameter|thickness
+        const key = [
+          params.type || "",
+          params.grade || "",
+          params.diameter != null ? String(params.diameter) : "",
+          params.thickness != null ? String(params.thickness) : "",
+          (item.unit || "").toLowerCase().trim(),
+        ].join("|");
+        // Also fallback: if no structural params, use normalized name
+        const effectiveKey = (params.type || params.diameter != null)
+          ? key
+          : item.name.trim().toLowerCase() + "|" + (item.type_mark || "").trim().toLowerCase();
+        if (!groups.has(effectiveKey)) groups.set(effectiveKey, []);
+        groups.get(effectiveKey)!.push(item);
+      }
+
+      let mergedCount = 0;
+      let deletedCount = 0;
+
+      for (const [, group] of groups) {
+        if (group.length <= 1) continue;
+
+        // Keep the first item, merge others into it
+        const primary = group[0];
+        const rest = group.slice(1);
+
+        const totalQty = group.reduce((s, i) => s + (i.quantity || 0), 0);
+        // Use the best price available
+        const bestPrice = group.find(i => i.price != null)?.price ?? null;
+        const bestSupplier = group.find(i => i.supplier)?.supplier ?? null;
+        const bestTypeMark = group.find(i => i.type_mark)?.type_mark ?? primary.type_mark;
+        const totalPrice = bestPrice != null ? totalQty * bestPrice : null;
+
+        // Update primary item
+        await supabase
+          .from("material_statement_items" as any)
+          .update({
+            quantity: totalQty,
+            price: bestPrice,
+            total_price: totalPrice,
+            supplier: bestSupplier || primary.supplier,
+            type_mark: bestTypeMark,
+          } as any)
+          .eq("id", primary.id);
+
+        // Delete duplicate items
+        const deleteIds = rest.map(r => r.id);
+        if (deleteIds.length > 0) {
+          await supabase
+            .from("material_statement_items" as any)
+            .delete()
+            .in("id", deleteIds);
+          // Also delete their KP prices
+          await supabase
+            .from("kp_supplier_prices" as any)
+            .delete()
+            .in("material_item_id", deleteIds);
+        }
+
+        mergedCount++;
+        deletedCount += rest.length;
+      }
+
+      if (deletedCount === 0) {
+        toast({ title: "Дубликаты не найдены", description: "Все позиции уникальны" });
+      } else {
+        toast({ title: "Дубли объединены", description: `Объединено ${mergedCount} групп, удалено ${deletedCount} дублей` });
+      }
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["kp-supplier-prices-table"] });
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setMergeDuplicatesLoading(false);
+    }
+  };
+
   // ZIP Download
   const handleDownloadZip = async (level: 'folder' | 'section' | 'object', id: string) => {
     if (!orgId) return;
@@ -1370,6 +1458,12 @@ export default function MaterialStatementsPage() {
                   <Button variant="outline" size="sm" onClick={handleAutoFillPrices} disabled={autoFillPricesLoading}>
                     {autoFillPricesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
                     Подтянуть цены
+                  </Button>
+                )}
+                {isMaterialsFolder && allItems.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={handleMergeDuplicates} disabled={mergeDuplicatesLoading}>
+                    {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
+                    Объединить дубли
                   </Button>
                 )}
                 <Button variant="outline" size="sm" asChild>
