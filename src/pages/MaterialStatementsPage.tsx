@@ -1973,6 +1973,17 @@ export default function MaterialStatementsPage() {
             </div>
           ) : (
             <>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Поставщик</label>
+                <Input
+                  placeholder='Например: ООО "Альянс"'
+                  value={kpSupplier ?? ""}
+                  onChange={(e) => setKpSupplier(e.target.value || null)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Можно вручную изменить имя поставщика или оставить распознанное из КП.
+                </p>
+              </div>
               <div className="flex items-center gap-4 text-sm">
                 <Badge variant="outline" className="gap-1">
                   Всего: <strong>{kpMatches.length}</strong>
