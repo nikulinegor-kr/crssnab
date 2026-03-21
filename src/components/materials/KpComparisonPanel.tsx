@@ -458,6 +458,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                 toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
                 return;
               }
+              resetUploadDialog();
               setUploadDialogOpen(true);
             }}
             disabled={uploading}
