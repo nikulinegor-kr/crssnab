@@ -1072,13 +1072,31 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       }
     }
 
-    if (materials.length > 0 && materials.length < 3) {
-      warnings.push(`Подозрительно мало материалов (${materials.length}). Проверьте результат.`);
+    // ═══════════════════════════════════════════════
+    // QUANTITY VALIDATION — remove items without quantity
+    // ═══════════════════════════════════════════════
+    const skippedNoQty: string[] = [];
+
+    const validMaterials = materials.filter((m: any) => {
+      const qty = parseLocaleNumber(m.quantity);
+      if (qty !== null && Number.isFinite(qty) && qty > 0) return true;
+      skippedNoQty.push(m.name || "(без названия)");
+      return false;
+    });
+
+    if (skippedNoQty.length > 0) {
+      const sample = skippedNoQty.slice(0, 10).join("; ");
+      warnings.push(`Пропущено ${skippedNoQty.length} позиций без количества: ${sample}${skippedNoQty.length > 10 ? "..." : ""}`);
+      console.log(`[QtyFilter] Removed ${skippedNoQty.length} items without quantity:`, skippedNoQty);
+    }
+
+    if (validMaterials.length > 0 && validMaterials.length < 3) {
+      warnings.push(`Подозрительно мало материалов (${validMaterials.length}). Проверьте результат.`);
     }
 
     // Post-dedup check
     const finalKeyCheck = new Map<string, string>();
-    for (const m of materials) {
+    for (const m of validMaterials) {
       const key = getStructuralKey(m);
       if (key) {
         if (finalKeyCheck.has(key)) {
@@ -1099,7 +1117,8 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
       leadingRows: leadingRows.length,
-      finalRows: materials.length,
+      finalRows: validMaterials.length,
+      skippedNoQuantity: skippedNoQty.length,
       positionSequenceSample: positionSequence.slice(0, 20),
       warningsCount: warnings.length,
     }));
@@ -1113,8 +1132,8 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 
     await supabase.from("material_statement_items").delete().eq("statement_id", statementId);
 
-    if (materials.length > 0) {
-      const items = materials.map((m: any, idx: number) => ({
+    if (validMaterials.length > 0) {
+      const items = validMaterials.map((m: any, idx: number) => ({
         statement_id: statementId,
         organization_id: organizationId,
         row_number: idx + 1,
@@ -1142,7 +1161,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       .eq("id", statementId);
 
     return new Response(
-      JSON.stringify({ success: true, count: materials.length, materials, warnings, missingPositions, detectedSourceType, typeScores }),
+      JSON.stringify({ success: true, count: validMaterials.length, materials: validMaterials, warnings, missingPositions, detectedSourceType, typeScores }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
