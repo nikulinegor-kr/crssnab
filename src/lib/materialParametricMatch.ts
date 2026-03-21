@@ -89,12 +89,20 @@ function extractType(name: string): string | null {
  * Extract material grade/class from name (e.g. A400, A240, A500, С235, 25Г2С)
  */
 function extractGrade(name: string): string | null {
-  // Rebar classes: A240, A400, A500, A600, etc.
-  const rebarMatch = name.match(/\b(A[-]?\d{3,4}[СC]?)\b/i);
-  if (rebarMatch) return rebarMatch[1].toUpperCase();
-  // Steel grades: С235, С245, С345, 09Г2С, 25Г2С
-  const steelMatch = name.match(/\b([СC]\d{3})\b/i);
-  if (steelMatch) return steelMatch[1].toUpperCase();
+  // Rebar classes: A240, A400, A500, A600, etc. — also handle А (Cyrillic) and A (Latin)
+  const rebarMatch = name.match(/\b([AА][-]?\d{3,4}[СCсc]?)\b/i);
+  if (rebarMatch) {
+    // Normalize: replace Cyrillic А→A, С→C, uppercase
+    return rebarMatch[1]
+      .replace(/[Аа]/g, "A")
+      .replace(/[Сс]/g, "C")
+      .toUpperCase();
+  }
+  // Steel grades: С235, С245, С345
+  const steelMatch = name.match(/\b([СCсc]\d{3})\b/i);
+  if (steelMatch) {
+    return steelMatch[1].replace(/[Сс]/g, "C").toUpperCase();
+  }
   return null;
 }
 
@@ -148,13 +156,25 @@ export function parseMaterialParams(name: string): MaterialParams {
  * Matches on type + grade + diameter + thickness.
  */
 export function isExactStructuralMatch(a: MaterialParams, b: MaterialParams): boolean {
-  if (!a.type || !b.type || a.type !== b.type) return false;
-  if (a.diameter !== b.diameter) return false;
-  // For rebar: grade must match
-  if (a.type === "арматура") {
-    if (!a.grade || !b.grade || a.grade !== b.grade) return false;
+  // Both must have type
+  if (!a.type || !b.type || a.type !== b.type) {
+    return false;
   }
-  // For pipes/steel: thickness must also match
+  
+  // For rebar: match on grade + diameter only (thickness irrelevant)
+  if (a.type === "арматура") {
+    const gradeMatch = (a.grade || "") === (b.grade || "");
+    const diameterMatch = a.diameter != null && b.diameter != null && a.diameter === b.diameter;
+    if (!gradeMatch || !diameterMatch) {
+      console.log(`[ExactMatch] FAIL арматура: grade ${a.grade}=${b.grade}(${gradeMatch}), dia ${a.diameter}=${b.diameter}(${diameterMatch})`);
+      return false;
+    }
+    console.log(`[ExactMatch] OK арматура: ${a.grade} Ø${a.diameter}`);
+    return true;
+  }
+  
+  // For pipes/steel: diameter + thickness + grade
+  if (a.diameter !== b.diameter) return false;
   if (a.type === "труба" || a.type === "лист" || a.type === "полоса") {
     if (a.thickness !== b.thickness) return false;
     if (a.grade && b.grade && a.grade !== b.grade) return false;
