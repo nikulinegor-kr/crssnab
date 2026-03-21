@@ -1519,7 +1519,10 @@ export default function MaterialStatementsPage() {
                     const allSelected = stItems.length > 0 && stItems.every(i => selectedItemIds.has(i.id));
                     const someSelected = stItems.some(i => selectedItemIds.has(i.id));
                     const sectionName = st.display_name || st.file_name;
-                    const sectionTotal = stItems.filter(i => i.item_type === "material" || !i.item_type).reduce((s, i) => s + (i.total_price || 0), 0);
+                    const materialItems = stItems.filter(i => i.item_type === "material" || !i.item_type);
+                    const sectionTotal = materialItems.reduce((s, i) => s + (i.total_price || 0), 0);
+                    const sectionWeight = materialItems.reduce((s, i) => s + (i.quantity || 0), 0);
+                    const sectionPositions = materialItems.length;
                     return (
                       <Card key={st.id}>
                         <CardHeader className="py-3 flex-row items-center justify-between gap-2">
