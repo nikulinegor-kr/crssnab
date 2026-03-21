@@ -1665,6 +1665,11 @@ export default function MaterialStatementsPage() {
                                 <TableHead className="w-24">Масса (кг)</TableHead>
                                 <TableHead className="w-24">Цена</TableHead>
                                 <TableHead className="w-28">Стоимость</TableHead>
+                                {folderKpSuppliers.map(kp => (
+                                  <TableHead key={kp.id} colSpan={2} className="text-center border-l">
+                                    <div className="text-xs leading-tight">{kp.supplier_name}</div>
+                                  </TableHead>
+                                ))}
                                 <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
