@@ -1,0 +1,1 @@
+ALTER TABLE public.material_statements ADD COLUMN IF NOT EXISTS detected_source_type text DEFAULT null;

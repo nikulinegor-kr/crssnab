@@ -1224,6 +1224,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           detected_doc_type: string | null
+          detected_source_type: string | null
           display_name: string | null
           file_name: string
           file_type: string
@@ -1242,6 +1243,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           detected_doc_type?: string | null
+          detected_source_type?: string | null
           display_name?: string | null
           file_name: string
           file_type?: string
@@ -1260,6 +1262,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           detected_doc_type?: string | null
+          detected_source_type?: string | null
           display_name?: string | null
           file_name?: string
           file_type?: string
