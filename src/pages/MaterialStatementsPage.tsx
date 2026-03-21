@@ -1897,6 +1897,7 @@ export default function MaterialStatementsPage() {
                                     </div>
                                   </TableHead>
                                 ))}
+                                <TableHead className="w-20">Confidence</TableHead>
                                 <TableHead className="w-28">Закупка</TableHead>
                                 <TableHead className="w-20"></TableHead>
                               </TableRow>
