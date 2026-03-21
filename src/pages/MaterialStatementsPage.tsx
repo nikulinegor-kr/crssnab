@@ -1053,7 +1053,22 @@ export default function MaterialStatementsPage() {
           .trim();
 
       // Sort words so "полотно бетонное" == "бетонное полотно"
-      const normKey = (s: string) => normName(s).split(" ").sort().join(" ");
+      // But preserve numeric dimensions as a suffix to prevent merging different sizes
+      const extractDimKey = (s: string): string => {
+        const norm = normName(s);
+        // Extract all numbers (diameters, sizes) to use as dimension signature
+        const numbers = norm.match(/\d+(?:\.\d+)?/g) || [];
+        return numbers.sort().join("|");
+      };
+      const normKey = (s: string) => {
+        const norm = normName(s);
+        // Remove all numbers for word-based grouping
+        const wordsOnly = norm.replace(/\d+(?:\.\d+)?/g, "").replace(/[x×*]/g, "").replace(/\s+/g, " ").trim();
+        const sortedWords = wordsOnly.split(" ").filter(Boolean).sort().join(" ");
+        // Append dimension signature so "арматура 10" ≠ "арматура 12"
+        const dims = extractDimKey(s);
+        return dims ? `${sortedWords}::${dims}` : sortedWords;
+      };
 
       // Dice coefficient for fuzzy grouping
       const bigrams = (s: string): Set<string> => {
