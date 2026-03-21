@@ -572,7 +572,80 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
     }
 
     // ═══════════════════════════════════════════════
-    // STRUCTURAL KEY EXTRACTION
+    // POST-PROCESSING: SPLIT CONCATENATED MATERIALS
+    // ═══════════════════════════════════════════════
+    const materialBoundaryKeywords = [
+      'арматур', 'щебень', 'щебен', 'бетон', 'песок', 'геотекстиль', 'геомат',
+      'геосетк', 'георешетк', 'труб', 'асфальтобетон', 'мембран', 'XPS',
+      'пенополистирол', 'эмульси', 'битум', 'мастик', 'плитк', 'кирпич',
+      'цемент', 'раствор', 'кабел', 'профиль', 'сетк', 'утеплител',
+      'гидроизоляц', 'рубероид', 'краск', 'грунтовк', 'пена', 'лоток',
+      'бордюр', 'поребрик', 'полотно бетонное', 'полотно', 'мат полиамидн',
+      'мат противоэрозионн', 'энкамат', 'габион', 'изделия строительные',
+      'изделия из арматур', 'анкер', 'ПГС',
+    ];
+
+    const splitConcatenatedRow = (row: any): any[] => {
+      const name = String(row?.name || "").trim();
+      if (!name || name.length < 60) return [row]; // short names are unlikely concatenated
+
+      // Count how many distinct material keywords appear in the name
+      const lowerName = name.toLowerCase();
+      const foundKeywords: { keyword: string; index: number }[] = [];
+      for (const kw of materialBoundaryKeywords) {
+        let searchFrom = 0;
+        while (true) {
+          const idx = lowerName.indexOf(kw.toLowerCase(), searchFrom);
+          if (idx === -1) break;
+          // Check it's not a substring of something already found at same position
+          const alreadyFound = foundKeywords.some(f => Math.abs(f.index - idx) < 3);
+          if (!alreadyFound) {
+            foundKeywords.push({ keyword: kw, index: idx });
+          }
+          searchFrom = idx + kw.length;
+        }
+      }
+
+      // If fewer than 2 distinct material keywords found, no split needed
+      if (foundKeywords.length < 2) return [row];
+
+      // Sort by position in string
+      foundKeywords.sort((a, b) => a.index - b.index);
+
+      // Split the name at each material keyword boundary
+      const parts: string[] = [];
+      for (let i = 0; i < foundKeywords.length; i++) {
+        const start = foundKeywords[i].index;
+        const end = i + 1 < foundKeywords.length ? foundKeywords[i + 1].index : name.length;
+        const part = name.substring(start, end).trim();
+        if (part.length > 2) {
+          // Clean trailing junk
+          const cleaned = part.replace(/[\s,;]+$/, '').trim();
+          if (cleaned.length > 2) parts.push(cleaned);
+        }
+      }
+
+      if (parts.length <= 1) return [row];
+
+      console.log(`[SplitConcat] Split "${name.substring(0, 80)}..." into ${parts.length} materials`);
+
+      return parts.map((part, idx) => ({
+        ...row,
+        name: part,
+        position: row.position ? row.position + idx * 0.1 : null,
+        // Don't carry quantity/unit to split parts — they likely apply to the whole
+        quantity: idx === 0 ? row.quantity : null,
+        unit: idx === 0 ? row.unit : null,
+      }));
+    };
+
+    const splitRows: any[] = [];
+    for (const row of rawRows) {
+      splitRows.push(...splitConcatenatedRow(row));
+    }
+    console.log(`[SplitConcat] Before: ${rawRows.length}, After: ${splitRows.length}`);
+
+    //
     // ═══════════════════════════════════════════════
     const getStructuralKey = (row: any): string | null => {
       const rawName = String(row?.name || "");
