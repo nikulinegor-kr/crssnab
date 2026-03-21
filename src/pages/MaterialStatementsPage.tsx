@@ -1092,21 +1092,35 @@ export default function MaterialStatementsPage() {
         keyGroups.get(key)!.push(item);
       }
 
-      // Second pass: merge groups with high similarity (>=0.85)
+      // Second pass: merge groups with high similarity (>=0.85),
+      // but NEVER merge when numeric dimensions differ (e.g. Ø10 vs Ø12 vs Ø14)
       const groupKeys = Array.from(keyGroups.keys());
       const mergedKeys = new Set<string>();
+      const splitGroupKey = (key: string) => {
+        const [base, dims = ""] = key.split("::");
+        return { base, dims };
+      };
 
       for (let i = 0; i < groupKeys.length; i++) {
         if (mergedKeys.has(groupKeys[i])) continue;
         const canonical = groupKeys[i];
+        const canonicalParts = splitGroupKey(canonical);
         const items = [...keyGroups.get(canonical)!];
+
         for (let j = i + 1; j < groupKeys.length; j++) {
           if (mergedKeys.has(groupKeys[j])) continue;
-          if (diceSimilarity(canonical, groupKeys[j]) >= 0.85) {
-            items.push(...keyGroups.get(groupKeys[j])!);
-            mergedKeys.add(groupKeys[j]);
+          const candidate = groupKeys[j];
+          const candidateParts = splitGroupKey(candidate);
+
+          // Critical guard: different numeric signatures must stay separate
+          if (canonicalParts.dims !== candidateParts.dims) continue;
+
+          if (diceSimilarity(canonicalParts.base, candidateParts.base) >= 0.85) {
+            items.push(...keyGroups.get(candidate)!);
+            mergedKeys.add(candidate);
           }
         }
+
         groups.set(canonical, items);
       }
 
