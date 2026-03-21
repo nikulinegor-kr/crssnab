@@ -1073,6 +1073,23 @@ ${buildPromptForType(docType)}
       ? [...leadingRows, ...groupedRows.map(({ position, ...row }) => row)]
       : normalizedRows.map(({ position, ...row }) => row);
 
+    // Name integrity check
+    const truncationSuffixes = /\b(марки|типа|на|из|класса|марке|типу)\s*$/i;
+    const workKeywords = /\b(устройство|разработка|планировка|восстановление|уплотнение|нарезка|монтаж|демонтаж|укладка|установка|подготовка|работы)\b/i;
+    
+    for (const m of materials) {
+      const name = (m as any).name || "";
+      if (name.length > 0 && name.length < 20) {
+        warnings.push(`Позиция "${name}" — короткое наименование (${name.length} симв.), возможна обрезка.`);
+      }
+      if (truncationSuffixes.test(name)) {
+        warnings.push(`Позиция "${name}" — наименование обрезано (заканчивается на служебное слово).`);
+      }
+      if (workKeywords.test(name)) {
+        warnings.push(`Позиция "${name}" — возможно это работа, а не материал.`);
+      }
+    }
+
     console.log("Recognition diagnostics:", JSON.stringify({
       strategy: "position_ranges",
       detectedSourceType,
