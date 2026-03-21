@@ -249,11 +249,38 @@ SPEC (спецификация — перечень материалов в сп
         SPEC: `⚠️ ТИП: СПЕЦИФИКАЦИЯ. Извлекай ВСЕ материалы. Разделы "Озеленение", "Покрытия" — это группировка, НЕ работы. Вложенные позиции (1.1, 1.2) — отдельные материалы.`,
         MR: `⚠️ ТИП: ВЕДОМОСТЬ МАТЕРИАЛОВ. Извлекай материалы из КАЖДОЙ строки. Строки с "Конструкция", "Тип 1/2/3" → GROUP (пропустить). Но если строка содержит материал внутри → ИЗВЛЕЧЬ материал.`,
         RC: `⚠️ ТИП: КОНСТРУКЦИИ (RC).
-ДВУХЭТАПНОЕ ИЗВЛЕЧЕНИЕ:
-ЭТАП A — МЕТАЛЛ: Найди "Ведомость расхода стали" (MASTER, не DETAILS). Извлеки арматуру, трубы, прокат.
-ЭТАП B — ВСЕ ПРОЧИЕ МАТЕРИАЛЫ: Просканируй ВЕСЬ документ на другие таблицы ("Спецификация", "Ведомость материалов"). Извлеки бетон, щебень, песок, геотекстиль, геомат, мембрану, XPS и т.д.
-НЕ ограничивайся только сталью — нужны ВСЕ материалы документа.
-Если строка описывает работу но содержит материал — извлеки МАТЕРИАЛ.`,
+
+⚠️ КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ОБРАБОТКИ:
+Документ читается НЕ сверху вниз, а С ПОИСКОМ ИТОГОВЫХ ТАБЛИЦ.
+
+ЭТАП 1 — ПОИСК MASTER-ТАБЛИЦ (ПРИОРИТЕТ 100%):
+Сначала найди в документе (особенно в КОНЦЕ / на последних страницах):
+- "Ведомость материалов"
+- "Спецификация"  
+- "Ведомость расхода стали"
+- "Материалы"
+- Любые итоговые таблицы с колонками: Наименование | Ед.изм. | Количество
+
+Если MASTER-таблица найдена:
+→ Извлекай материалы ТОЛЬКО из неё
+→ ИГНОРИРУЙ чертежи, разрезы, описания, промежуточные таблицы
+→ Это предотвращает дубли
+
+ЭТАП 2 — ЕСЛИ MASTER НЕ НАЙДЕН:
+Только тогда извлекай материалы из:
+- Описаний работ (извлекая МАТЕРИАЛ, не работу)
+- Промежуточных спецификаций
+- Чертежей с экспликациями
+
+ПРИОРИТЕТЫ ИСТОЧНИКОВ:
+- MASTER (итоговая ведомость) → 100%
+- Ведомость расхода стали → 90%  
+- SPEC (спецификация) → 80%
+- Чертежи/описания → 50% (только если нет MASTER)
+
+КОНТРОЛЬ: Если найдено < 5 материалов → добавь warning "Возможно, не найдена ведомость материалов в конце документа"
+
+НЕ ограничивайся только сталью — нужны ВСЕ материалы: бетон, щебень, песок, геотекстиль, геомат, мембрану, XPS и т.д.`,
       };
 
       return typeSpecific[docType] || typeSpecific.RC;
@@ -566,9 +593,41 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
     console.log(`[recognize] Detected source type: ${detectedSourceType}`, typeScores);
 
     const rawRows: any[] = [];
-    for (let i = 0; i < pdfChunks.length; i++) {
-      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
-      rawRows.push(...chunkRows);
+
+    // For RC documents: process chunks in REVERSE order (last pages first)
+    // because MASTER tables (ведомость материалов) are typically at the END of the document
+    if (detectedSourceType === "RC" && pdfChunks.length > 1) {
+      console.log(`[recognize] RC document with ${pdfChunks.length} chunks — processing LAST chunk first to find MASTER tables`);
+
+      // Process last chunk first
+      const lastIdx = pdfChunks.length - 1;
+      const lastChunkRows = await recognizeChunk(pdfChunks[lastIdx], lastIdx + 1, pdfChunks.length, detectedSourceType);
+      rawRows.push(...lastChunkRows);
+
+      const hasMasterTable = lastChunkRows.length >= 5;
+      console.log(`[recognize] Last chunk returned ${lastChunkRows.length} materials. MASTER found: ${hasMasterTable}`);
+
+      if (!hasMasterTable) {
+        // No MASTER in last chunk — process remaining chunks (reverse order still)
+        for (let i = lastIdx - 1; i >= 0; i--) {
+          const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
+          rawRows.push(...chunkRows);
+        }
+        console.log(`[recognize] No MASTER in last chunk — processed all ${pdfChunks.length} chunks, total rows: ${rawRows.length}`);
+      } else {
+        // MASTER found in last chunk — also process second-to-last for steel schedules etc
+        if (lastIdx > 0) {
+          const prevChunkRows = await recognizeChunk(pdfChunks[lastIdx - 1], lastIdx, pdfChunks.length, detectedSourceType);
+          rawRows.push(...prevChunkRows);
+          console.log(`[recognize] MASTER found — also processed chunk ${lastIdx} (${prevChunkRows.length} rows). Skipping earlier chunks to avoid duplicates.`);
+        }
+      }
+    } else {
+      // Non-RC or single chunk: process sequentially
+      for (let i = 0; i < pdfChunks.length; i++) {
+        const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
+        rawRows.push(...chunkRows);
+      }
     }
 
     // ═══════════════════════════════════════════════
