@@ -636,7 +636,7 @@ Deno.serve(async (req) => {
 
     type GroupedRow = ParsedRow & { position: number };
 
-    const normalizedRows: ParsedRow[] = rawRows
+    const normalizedRows: ParsedRow[] = deduplicatedRows
       .map((row: any) => {
         const rawName = normalizeText(row?.name);
         const columnPosition = parsePosition(row?.position);
