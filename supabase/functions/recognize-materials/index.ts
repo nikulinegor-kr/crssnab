@@ -764,32 +764,39 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
           }
         }
 
-        const allSameQty = group.every((item: any) =>
-          typeof item.quantity === "number" &&
-          typeof group[0].quantity === "number" &&
-          Math.abs(item.quantity - group[0].quantity) / Math.max(1, group[0].quantity) < 0.01
-        );
+        // Check if all quantities are effectively the same (within 2% tolerance for float imprecision)
+        const withQtyItems = group.filter((item: any) => typeof item.quantity === "number" && item.quantity > 0);
+        const allEffectivelySameQty = withQtyItems.length > 0 && withQtyItems.every((item: any) => {
+          const ref = withQtyItems[0].quantity;
+          return Math.abs(item.quantity - ref) / Math.max(1, ref) < 0.02;
+        });
 
-        if (allSameQty) {
-          best.quantity = group[0].quantity;
-          console.log(`[Dedup] ${key}: ${group.length} exact duplicates (qty=${group[0].quantity}) → keeping one`);
-        } else {
-          const withQty = group
-            .map((r: any) => ({ row: r, qty: typeof r.quantity === "number" ? r.quantity : 0 }))
-            .sort((a: any, b: any) => b.qty - a.qty);
-          const maxQty = withQty[0].qty;
-          const sumOfRest = withQty.slice(1).reduce((s: number, r: any) => s + r.qty, 0);
+        if (allEffectivelySameQty) {
+          best.quantity = withQtyItems[0].quantity;
+          console.log(`[Dedup] ${key}: ${group.length} duplicates with same qty (${withQtyItems[0].quantity}) → keeping one`);
+        } else if (withQtyItems.length >= 2) {
+          // Different quantities: take the LARGEST as MASTER (not sum)
+          const sortedByQty = withQtyItems.sort((a: any, b: any) => b.quantity - a.quantity);
+          const maxQty = sortedByQty[0].quantity;
+          const secondQty = sortedByQty[1].quantity;
+          const sumOfRest = sortedByQty.slice(1).reduce((s: number, r: any) => s + r.quantity, 0);
 
-          if (maxQty > 0 && sumOfRest > 0 && Math.abs(maxQty - sumOfRest) / maxQty < 0.15) {
+          // If max ≈ sum of rest → MASTER/DETAILS pattern, take max
+          if (Math.abs(maxQty - sumOfRest) / maxQty < 0.15) {
             best.quantity = maxQty;
             console.log(`[Dedup] ${key}: MASTER ${maxQty} ≈ sum(DETAILS) ${sumOfRest} → keeping MASTER`);
-          } else if (maxQty > 0 && sumOfRest > 0 && maxQty / (maxQty + sumOfRest) > 0.6) {
+          } else if (maxQty >= secondQty * 1.5) {
+            // Max clearly dominates → take max (likely MASTER)
             best.quantity = maxQty;
-            console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates → keeping MASTER`);
+            console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates (2nd: ${secondQty}) → keeping MASTER`);
           } else {
-            best.quantity = hasQty ? totalQty : null;
-            console.log(`[Dedup] ${key}: summing ${group.length} items → total ${totalQty}`);
+            // Unclear relationship — take max as safest bet (avoid doubling)
+            best.quantity = maxQty;
+            console.log(`[Dedup] ${key}: ambiguous (${withQtyItems.map((r: any) => r.quantity).join(', ')}) → taking max ${maxQty}`);
           }
+        } else {
+          best.quantity = hasQty ? totalQty : null;
+          console.log(`[Dedup] ${key}: ${group.length} items → total ${totalQty}`);
         }
 
         deduplicated.push(best);
