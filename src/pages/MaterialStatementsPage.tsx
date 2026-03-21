@@ -1036,21 +1036,42 @@ export default function MaterialStatementsPage() {
     try {
       const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
       const groups = new Map<string, MaterialItem[]>();
+
+      // Helper: normalize name for grouping (strip GOST, whitespace, case)
+      const normName = (s: string) =>
+        s.toLowerCase()
+          .replace(/[хx]/gi, "x")
+          .replace(/,/g, ".")
+          .replace(/(гост|ост|ту|сто)\s*[\d.\-/а-яА-ЯёЁa-zA-Z]*/gi, "")
+          .replace(/[()«»"']/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
       for (const item of materialItems) {
         const params = parseMaterialParams(item.name);
-        const key = [
-          params.type || "",
-          params.grade || "",
-          params.diameter != null ? String(params.diameter) : "",
-          params.thickness != null ? String(params.thickness) : "",
-          (item.unit || "").toLowerCase().trim(),
-        ].join("|");
-        const effectiveKey = (params.type || params.diameter != null)
-          ? key
-          : item.name.trim().toLowerCase() + "|" + (item.type_mark || "").trim().toLowerCase();
+        let effectiveKey: string;
+
+        if (params.type && params.diameter != null) {
+          // Structural key: type + grade + diameter + thickness (NO unit — same material = same key)
+          effectiveKey = [
+            params.type,
+            params.grade || "",
+            String(params.diameter),
+            params.thickness != null ? String(params.thickness) : "",
+          ].join("|");
+        } else if (params.type) {
+          // Has type but no diameter — use type + normalized name
+          effectiveKey = params.type + "|" + normName(item.name);
+        } else {
+          // No structural params — fallback to normalized name only
+          effectiveKey = "raw|" + normName(item.name);
+        }
+
         if (!groups.has(effectiveKey)) groups.set(effectiveKey, []);
         groups.get(effectiveKey)!.push(item);
       }
+
+      console.log("[MergeDuplicates] Groups found:", Array.from(groups.entries()).filter(([,v]) => v.length > 1).map(([k,v]) => `${k}: ${v.length} items`));
 
       const snapshotItems: any[] = [];
       const snapshotUpdates: {id: string; data: any}[] = [];
@@ -1073,12 +1094,18 @@ export default function MaterialStatementsPage() {
         const totalQty = group.reduce((s, i) => s + (i.quantity || 0), 0);
         const bestPrice = group.find(i => i.price != null)?.price ?? null;
         const bestSupplier = group.find(i => i.supplier)?.supplier ?? null;
-        const bestTypeMark = group.find(i => i.type_mark)?.type_mark ?? primary.type_mark;
+        const bestTypeMark = group.reduce((best: string | null, i) => {
+          if (!i.type_mark) return best;
+          if (!best || i.type_mark.length > best.length) return i.type_mark;
+          return best;
+        }, primary.type_mark);
         const totalPrice = bestPrice != null ? totalQty * bestPrice : null;
+        // Keep the longest/most descriptive name
+        const bestName = group.reduce((best: string, i) => i.name.length > best.length ? i.name : best, primary.name);
 
         await supabase
           .from("material_statement_items" as any)
-          .update({ quantity: totalQty, price: bestPrice, total_price: totalPrice, supplier: bestSupplier || primary.supplier, type_mark: bestTypeMark } as any)
+          .update({ name: bestName, quantity: totalQty, price: bestPrice, total_price: totalPrice, supplier: bestSupplier || primary.supplier, type_mark: bestTypeMark } as any)
           .eq("id", primary.id);
 
         const deleteIds = rest.map(r => r.id);
