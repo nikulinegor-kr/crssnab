@@ -156,13 +156,25 @@ export function parseMaterialParams(name: string): MaterialParams {
  * Matches on type + grade + diameter + thickness.
  */
 export function isExactStructuralMatch(a: MaterialParams, b: MaterialParams): boolean {
-  if (!a.type || !b.type || a.type !== b.type) return false;
-  if (a.diameter !== b.diameter) return false;
-  // For rebar: grade must match
-  if (a.type === "арматура") {
-    if (!a.grade || !b.grade || a.grade !== b.grade) return false;
+  // Both must have type
+  if (!a.type || !b.type || a.type !== b.type) {
+    return false;
   }
-  // For pipes/steel: thickness must also match
+  
+  // For rebar: match on grade + diameter only (thickness irrelevant)
+  if (a.type === "арматура") {
+    const gradeMatch = (a.grade || "") === (b.grade || "");
+    const diameterMatch = a.diameter != null && b.diameter != null && a.diameter === b.diameter;
+    if (!gradeMatch || !diameterMatch) {
+      console.log(`[ExactMatch] FAIL арматура: grade ${a.grade}=${b.grade}(${gradeMatch}), dia ${a.diameter}=${b.diameter}(${diameterMatch})`);
+      return false;
+    }
+    console.log(`[ExactMatch] OK арматура: ${a.grade} Ø${a.diameter}`);
+    return true;
+  }
+  
+  // For pipes/steel: diameter + thickness + grade
+  if (a.diameter !== b.diameter) return false;
   if (a.type === "труба" || a.type === "лист" || a.type === "полоса") {
     if (a.thickness !== b.thickness) return false;
     if (a.grade && b.grade && a.grade !== b.grade) return false;
