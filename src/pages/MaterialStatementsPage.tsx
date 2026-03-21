@@ -72,6 +72,8 @@ interface MaterialItem {
   procurement_status: string;
   price_source: string;
   item_type: string;
+  confidence: number | null;
+  confidence_level: string | null;
 }
 
 interface MaterialObject {
