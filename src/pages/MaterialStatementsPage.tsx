@@ -1722,15 +1722,17 @@ export default function MaterialStatementsPage() {
                               )}
                               {stItems.length > 0 && (
                                 <TableRow className="bg-muted/50 font-semibold">
-                                  <TableCell />
-                                  <TableCell />
-                                  <TableCell colSpan={4} className="text-right text-sm">Итого по файлу:</TableCell>
-                                  <TableCell />
-                                  <TableCell />
-                                  <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
-                                  <TableCell />
-                                  <TableCell />
-                                </TableRow>
+                                   <TableCell />
+                                   <TableCell />
+                                   <TableCell colSpan={2} className="text-right text-sm">Итого по файлу:</TableCell>
+                                   <TableCell className="text-sm">{sectionPositions} поз.</TableCell>
+                                   <TableCell className="text-sm">{sectionWeight.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} кг</TableCell>
+                                   <TableCell className="text-sm">{sectionWeight.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}</TableCell>
+                                   <TableCell />
+                                   <TableCell className="text-sm">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                   <TableCell />
+                                   <TableCell />
+                                 </TableRow>
                               )}
                             </TableBody>
                           </Table>
