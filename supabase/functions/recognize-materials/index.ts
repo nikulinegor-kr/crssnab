@@ -618,6 +618,7 @@ ${buildPromptForType(docType)}
       chunkBytes: Uint8Array,
       chunkIndex: number,
       totalChunks: number,
+      docType: string,
     ): Promise<any[]> => {
       const pdfBase64 = encodeBase64(chunkBytes);
 
@@ -633,7 +634,7 @@ ${buildPromptForType(docType)}
             {
               role: "user",
               content: [
-                { type: "text", text: prompt },
+                { type: "text", text: prompt(docType) },
                 {
                   type: "image_url",
                   image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
@@ -695,9 +696,15 @@ ${buildPromptForType(docType)}
     const pdfBytes = await downloadPdfWithCap(fileUrl, MAX_SOURCE_PDF_BYTES);
     const pdfChunks = await splitPdfForAi(pdfBytes);
 
+    // Step 1: Classify document type using first chunk
+    console.log("[recognize] Starting document type classification...");
+    const { type: detectedSourceType, scores: typeScores } = await classifyDocumentType(pdfChunks[0]);
+    console.log(`[recognize] Detected source type: ${detectedSourceType}`, typeScores);
+
+    // For GL documents with no material tables, we may get empty results — that's expected
     const rawRows: any[] = [];
     for (let i = 0; i < pdfChunks.length; i++) {
-      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length);
+      const chunkRows = await recognizeChunk(pdfChunks[i], i + 1, pdfChunks.length, detectedSourceType);
       rawRows.push(...chunkRows);
     }
 
