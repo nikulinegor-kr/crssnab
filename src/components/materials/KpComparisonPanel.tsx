@@ -329,6 +329,88 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return minSupplierId;
   };
 
+  const renderUploadDialog = () => (
+    <Dialog open={uploadDialogOpen} onOpenChange={open => { if (!open && !uploading) resetUploadDialog(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Загрузить коммерческое предложение</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {recognizeStep === "select" && (
+            <>
+              <div>
+                <label className="text-sm font-medium">1. Выберите файл КП (Excel или PDF)</label>
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary/50 transition-colors mt-1">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
+                  <span className="text-xs text-muted-foreground">Поставщик определится автоматически из КП</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.xlsx,.xls"
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files?.[0]) {
+                        handleFileSelected(e.target.files[0]);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Загружено: {kpSuppliers.length} из {MAX_KP}
+              </p>
+            </>
+          )}
+
+          {recognizeStep === "recognizing" && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Распознаём КП...</p>
+              <p className="text-xs text-muted-foreground">{recognizedFile?.name}</p>
+            </div>
+          )}
+
+          {recognizeStep === "confirm" && (
+            <>
+              <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50">
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm truncate">{recognizedFile?.name}</span>
+                <Badge variant="outline" className="ml-auto shrink-0">
+                  {recognizedData?.items?.length || 0} позиций
+                </Badge>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Название поставщика *</label>
+                {recognizedData?.supplier && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Распознано из КП: <strong>{recognizedData.supplier}</strong>
+                  </p>
+                )}
+                <Input
+                  placeholder='Например: ООО "Альянс"'
+                  value={supplierName}
+                  onChange={e => setSupplierName(e.target.value)}
+                  className="mt-1"
+                  autoFocus
+                />
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={resetUploadDialog}>Отмена</Button>
+                <Button onClick={handleConfirmKp} disabled={!supplierName.trim() || uploading}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
+                  Применить
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   const resetUploadDialog = () => {
     setUploadDialogOpen(false);
     setSupplierName("");
