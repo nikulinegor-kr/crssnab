@@ -1786,9 +1786,9 @@ export default function MaterialStatementsPage() {
                                   </TableCell>
                                 </TableRow>
                               )}
-                              {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
+                               {stItems.length === 0 && !(addingItem && addingToStatementId === st.id) && (
                                 <TableRow>
-                                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
+                                  <TableCell colSpan={11 + folderKpSuppliers.length * 2} className="text-center text-muted-foreground py-8">Нет распознанных материалов</TableCell>
                                 </TableRow>
                               )}
                               {stItems.length > 0 && (
@@ -1801,6 +1801,18 @@ export default function MaterialStatementsPage() {
                                    <TableCell />
                                    <TableCell />
                                    <TableCell className="text-sm font-semibold">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
+                                   {folderKpSuppliers.map(kp => {
+                                     const kpTotal = materialItems.reduce((sum, item) => {
+                                       const sp = kpPriceMap.get(item.id)?.get(kp.id);
+                                       return sum + (sp?.total_price || 0);
+                                     }, 0);
+                                     return (
+                                       <React.Fragment key={kp.id}>
+                                         <TableCell className="text-center border-l" />
+                                         <TableCell className="text-sm text-center font-semibold">{kpTotal > 0 ? formatPrice(kpTotal) + " ₽" : "—"}</TableCell>
+                                       </React.Fragment>
+                                     );
+                                   })}
                                    <TableCell />
                                    <TableCell />
                                  </TableRow>
