@@ -267,6 +267,25 @@ SPEC (спецификация — перечень материалов в сп
 ${buildPromptForType(docType)}
 
 ═══════════════════════════════════════════════
+КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО: ОДИН МАТЕРИАЛ = ОДИН JSON-ОБЪЕКТ
+═══════════════════════════════════════════════
+
+⚠️ АБСОЛЮТНО ЗАПРЕЩЕНО объединять несколько материалов в одну строку!
+Каждый физический материал ОБЯЗАН быть отдельным JSON-объектом.
+
+НЕПРАВИЛЬНО (ВСЁ в одной строке):
+[{"position": 1, "name": "Арматура A500C Ø14 Щебень гидротехнический Бетон тяжелый Песок Георешетка", ...}]
+
+ПРАВИЛЬНО (каждый материал отдельно):
+[
+  {"position": 1, "name": "Изделия из арматуры A500C Ø14", "unit": "кг", "quantity": 100},
+  {"position": 2, "name": "Щебень гидротехнический из изверженных пород марки не ниже 900", "unit": "м³", "quantity": 50},
+  {"position": 3, "name": "Бетон тяжёлый", "unit": "м³", "quantity": 30},
+  {"position": 4, "name": "Песок", "unit": "м³", "quantity": 20},
+  {"position": 5, "name": "Георешетка ГСД 50/50", "unit": "м²", "quantity": 100}
+]
+
+═══════════════════════════════════════════════
 ГЛАВНОЕ ПРАВИЛО: ИЗВЛЕКАТЬ МАТЕРИАЛЫ, А НЕ СТРОКИ
 ═══════════════════════════════════════════════
 
@@ -275,6 +294,9 @@ ${buildPromptForType(docType)}
 Строка-работа может СОДЕРЖАТЬ материал → материал ОБЯЗАТЕЛЬНО извлечь.
 
 WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
+
+Если в таблице ОДНА ЯЧЕЙКА содержит перечисление нескольких материалов
+(через запятую, перенос строки, или просто подряд) — РАЗБЕЙ их на отдельные JSON-объекты.
 
 ═══════════════════════════════════════════════
 АЛГОРИТМ ДЛЯ КАЖДОЙ СТРОКИ
@@ -288,11 +310,13 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 грунт (привозной), трубы, арматура, XPS, пенополистирол, эмульсия, битум,
 мастика, мембрана, плитка, кирпич, цемент, раствор, кабель, профиль,
 сетка, утеплитель, гидроизоляция, рубероид, краска, грунтовка, пена,
-лоток, бордюр, поребрик
+лоток, бордюр, поребрик, георешетка, полотно бетонное, мат противоэрозионный,
+габионные конструкции, изделия строительные металлические
 
 ШАГ 3: РЕШЕНИЕ
-- Если материал НАЙДЕН → ИЗВЛЕЧЬ его (даже если строка описывает работу)
+- Если материал НАЙДЕН → ИЗВЛЕЧЬ его как ОТДЕЛЬНЫЙ JSON-объект
 - Если материала НЕТ (чистое действие) → ПРОПУСТИТЬ
+- Если в строке НЕСКОЛЬКО материалов → создать ОТДЕЛЬНЫЙ JSON-объект для КАЖДОГО
 
 ═══════════════════════════════════════════════
 ПРИМЕРЫ (ОБЯЗАТЕЛЬНО СЛЕДОВАТЬ)
@@ -333,6 +357,22 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 → GROUP/заголовок → ПРОПУСТИТЬ ✅
 
 ═══════════════════════════════════════════════
+ЕСЛИ В ЯЧЕЙКЕ НЕСКОЛЬКО МАТЕРИАЛОВ — ПРИМЕР
+═══════════════════════════════════════════════
+
+Если в одной ячейке таблицы написано:
+"Арматура A500C Ø14 Щебень фр. 20-40 Бетон B25 Песок Георешетка 50/50"
+
+→ ОБЯЗАТЕЛЬНО разбить на 5 отдельных JSON-объектов:
+1. "Изделия из арматуры A500C Ø14"
+2. "Щебень фр. 20-40"
+3. "Бетон B25"
+4. "Песок"
+5. "Георешетка 50/50"
+
+ЗАПРЕЩЕНО возвращать это одной строкой!
+
+═══════════════════════════════════════════════
 ПАТТЕРНЫ ИЗВЛЕЧЕНИЯ МАТЕРИАЛА ИЗ СТРОКИ
 ═══════════════════════════════════════════════
 
@@ -346,15 +386,6 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 
 ВАЖНО: извлекай ТОЛЬКО материал с его параметрами, БЕЗ глаголов/действий.
 "Устройство основания из щебня фр. 20-40" → name = "Щебень фр. 20-40", НЕ "Устройство основания из щебня"
-
-═══════════════════════════════════════════════
-ЕСЛИ СТРОКА СОДЕРЖИТ НЕСКОЛЬКО МАТЕРИАЛОВ
-═══════════════════════════════════════════════
-
-Разбить на отдельные позиции.
-"Устройство основания: щебень фр. 40-80 - 200мм, песок - 100мм"
-→ Позиция 1: "Щебень фр. 40-80"
-→ Позиция 2: "Песок"
 
 ═══════════════════════════════════════════════
 НОРМАЛИЗАЦИЯ И ДЕДУПЛИКАЦИЯ (КРИТИЧНО!)
@@ -461,18 +492,21 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
 4. "Наименование полное?" → Если обрезано → ВОССТАНОВИ
 5. Если найдено < 3 материалов → добавь warning "Подозрительно мало материалов"
 6. Если есть 2 строки с одинаковым типом+классом+диаметром → ОШИБКА, объедини
+7. ⚠️ Если в поле "name" содержится БОЛЬШЕ ОДНОГО материала → ОШИБКА, разбей на отдельные объекты
 
 Верни результат СТРОГО в формате JSON массива:
 [
   {
     "position": 1,
-    "name": "Полное наименование МАТЕРИАЛА (без глаголов!)",
+    "name": "Полное наименование ОДНОГО МАТЕРИАЛА (без глаголов!)",
     "type_mark": "ГОСТ XXXXX-XXXX марка_стали",
     "unit": "кг",
     "quantity": 10,
     "mass_per_unit": 0.5
   }
 ]
+
+⚠️ КАЖДЫЙ JSON-объект = РОВНО ОДИН МАТЕРИАЛ. Никогда не объединяй несколько материалов в одно поле name!
 
 Все числа через ТОЧКУ (2.03, НЕ 2,03). Не добавляй текст кроме JSON.`;
 
@@ -538,7 +572,80 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
     }
 
     // ═══════════════════════════════════════════════
-    // STRUCTURAL KEY EXTRACTION
+    // POST-PROCESSING: SPLIT CONCATENATED MATERIALS
+    // ═══════════════════════════════════════════════
+    const materialBoundaryKeywords = [
+      'арматур', 'щебень', 'щебен', 'бетон', 'песок', 'геотекстиль', 'геомат',
+      'геосетк', 'георешетк', 'труб', 'асфальтобетон', 'мембран', 'XPS',
+      'пенополистирол', 'эмульси', 'битум', 'мастик', 'плитк', 'кирпич',
+      'цемент', 'раствор', 'кабел', 'профиль', 'сетк', 'утеплител',
+      'гидроизоляц', 'рубероид', 'краск', 'грунтовк', 'пена', 'лоток',
+      'бордюр', 'поребрик', 'полотно бетонное', 'полотно', 'мат полиамидн',
+      'мат противоэрозионн', 'энкамат', 'габион', 'изделия строительные',
+      'изделия из арматур', 'анкер', 'ПГС',
+    ];
+
+    const splitConcatenatedRow = (row: any): any[] => {
+      const name = String(row?.name || "").trim();
+      if (!name || name.length < 60) return [row]; // short names are unlikely concatenated
+
+      // Count how many distinct material keywords appear in the name
+      const lowerName = name.toLowerCase();
+      const foundKeywords: { keyword: string; index: number }[] = [];
+      for (const kw of materialBoundaryKeywords) {
+        let searchFrom = 0;
+        while (true) {
+          const idx = lowerName.indexOf(kw.toLowerCase(), searchFrom);
+          if (idx === -1) break;
+          // Check it's not a substring of something already found at same position
+          const alreadyFound = foundKeywords.some(f => Math.abs(f.index - idx) < 3);
+          if (!alreadyFound) {
+            foundKeywords.push({ keyword: kw, index: idx });
+          }
+          searchFrom = idx + kw.length;
+        }
+      }
+
+      // If fewer than 2 distinct material keywords found, no split needed
+      if (foundKeywords.length < 2) return [row];
+
+      // Sort by position in string
+      foundKeywords.sort((a, b) => a.index - b.index);
+
+      // Split the name at each material keyword boundary
+      const parts: string[] = [];
+      for (let i = 0; i < foundKeywords.length; i++) {
+        const start = foundKeywords[i].index;
+        const end = i + 1 < foundKeywords.length ? foundKeywords[i + 1].index : name.length;
+        const part = name.substring(start, end).trim();
+        if (part.length > 2) {
+          // Clean trailing junk
+          const cleaned = part.replace(/[\s,;]+$/, '').trim();
+          if (cleaned.length > 2) parts.push(cleaned);
+        }
+      }
+
+      if (parts.length <= 1) return [row];
+
+      console.log(`[SplitConcat] Split "${name.substring(0, 80)}..." into ${parts.length} materials`);
+
+      return parts.map((part, idx) => ({
+        ...row,
+        name: part,
+        position: row.position ? row.position + idx * 0.1 : null,
+        // Don't carry quantity/unit to split parts — they likely apply to the whole
+        quantity: idx === 0 ? row.quantity : null,
+        unit: idx === 0 ? row.unit : null,
+      }));
+    };
+
+    const splitRows: any[] = [];
+    for (const row of rawRows) {
+      splitRows.push(...splitConcatenatedRow(row));
+    }
+    console.log(`[SplitConcat] Before: ${rawRows.length}, After: ${splitRows.length}`);
+
+    //
     // ═══════════════════════════════════════════════
     const getStructuralKey = (row: any): string | null => {
       const rawName = String(row?.name || "");
@@ -726,7 +833,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       return deduplicated;
     };
 
-    const deduplicatedRows = deduplicateRows(rawRows);
+    const deduplicatedRows = deduplicateRows(splitRows);
 
     // ═══════════════════════════════════════════════
     // POST-PROCESSING: normalize, group, score
@@ -954,6 +1061,7 @@ WORK ≠ ИГНОРИРОВАТЬ. WORK = ИСТОЧНИК МАТЕРИАЛОВ.
       detectedSourceType,
       typeScores,
       rawRows: rawRows.length,
+      afterSplit: splitRows.length,
       afterDedup: deduplicatedRows.length,
       normalizedRows: normalizedRows.length,
       groupedRows: groupedRows.length,
