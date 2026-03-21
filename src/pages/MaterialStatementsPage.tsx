@@ -179,6 +179,7 @@ export default function MaterialStatementsPage() {
   const [kpOverwriteManual, setKpOverwriteManual] = useState(false);
   const [kpManualItems, setKpManualItems] = useState<string[]>([]);
   const [autoFillPricesLoading, setAutoFillPricesLoading] = useState(false);
+  const [mergeDuplicatesLoading, setMergeDuplicatesLoading] = useState(false);
 
   // Queries
   const { data: objects = [] } = useQuery({
