@@ -1037,22 +1037,62 @@ export default function MaterialStatementsPage() {
       const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
       const groups = new Map<string, MaterialItem[]>();
 
-      // Helper: normalize name for grouping (strip GOST, whitespace, case)
+      // Helper: normalize name for grouping — deep normalization
       const normName = (s: string) =>
         s.toLowerCase()
           .replace(/[хx]/gi, "x")
           .replace(/,/g, ".")
           .replace(/(гост|ост|ту|сто)\s*[\d.\-/а-яА-ЯёЁa-zA-Z]*/gi, "")
           .replace(/[()«»"']/g, "")
+          .replace(/([а-яёa-z])\.(\d)/gi, "$1 $2")
+          .replace(/(\d)\s*(мм|м²|м³|м2|м3|кг|т)\b/gi, "$1 $2")
+          .replace(/тканн/g, "ткан")
+          .replace(/пенополистерол/g, "пенополистирол")
+          .replace(/\+=/g, "")
           .replace(/\s+/g, " ")
           .trim();
 
-      for (const item of materialItems) {
-        // Group by normalized name only — exact name match after normalization
-        const effectiveKey = normName(item.name);
+      // Sort words so "полотно бетонное" == "бетонное полотно"
+      const normKey = (s: string) => normName(s).split(" ").sort().join(" ");
 
-        if (!groups.has(effectiveKey)) groups.set(effectiveKey, []);
-        groups.get(effectiveKey)!.push(item);
+      // Dice coefficient for fuzzy grouping
+      const bigrams = (s: string): Set<string> => {
+        const set = new Set<string>();
+        for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2));
+        return set;
+      };
+      const diceSimilarity = (a: string, b: string): number => {
+        const ba = bigrams(a), bb = bigrams(b);
+        if (ba.size === 0 && bb.size === 0) return 1;
+        let intersection = 0;
+        for (const bg of ba) if (bb.has(bg)) intersection++;
+        return (2 * intersection) / (ba.size + bb.size);
+      };
+
+      // First pass: group by sorted-word key
+      const keyGroups = new Map<string, MaterialItem[]>();
+      for (const item of materialItems) {
+        const key = normKey(item.name);
+        if (!keyGroups.has(key)) keyGroups.set(key, []);
+        keyGroups.get(key)!.push(item);
+      }
+
+      // Second pass: merge groups with high similarity (>=0.85)
+      const groupKeys = Array.from(keyGroups.keys());
+      const mergedKeys = new Set<string>();
+
+      for (let i = 0; i < groupKeys.length; i++) {
+        if (mergedKeys.has(groupKeys[i])) continue;
+        const canonical = groupKeys[i];
+        const items = [...keyGroups.get(canonical)!];
+        for (let j = i + 1; j < groupKeys.length; j++) {
+          if (mergedKeys.has(groupKeys[j])) continue;
+          if (diceSimilarity(canonical, groupKeys[j]) >= 0.85) {
+            items.push(...keyGroups.get(groupKeys[j])!);
+            mergedKeys.add(groupKeys[j]);
+          }
+        }
+        groups.set(canonical, items);
       }
 
       console.log("[MergeDuplicates] Groups found:", Array.from(groups.entries()).filter(([,v]) => v.length > 1).map(([k,v]) => `${k}: ${v.length} items`));
