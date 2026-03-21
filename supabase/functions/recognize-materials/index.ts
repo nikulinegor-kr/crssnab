@@ -818,12 +818,23 @@ ${buildPromptForType(docType)}
 
       // Build structural key for grouping
       const getStructuralKey = (row: any): string | null => {
-        const name = String(row?.name || "").toLowerCase();
-        // Арматура: extract class + diameter
-        const rebarMatch = name.match(/арматур[аыи]?\s+([aа][-]?\d{3,4}[сc]?)\s+[øø]?\s*(\d+)/i);
-        if (rebarMatch) {
-          const cls = rebarMatch[1].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase();
-          return `rebar|${cls}|${rebarMatch[2]}`;
+        const name = String(row?.name || "").toLowerCase()
+          .replace(/[аА]/g, "a").replace(/[сС]/g, "c")
+          .replace(/ё/g, "е");
+        
+        // Арматура / Изделия из арматуры: extract class + diameter
+        // Handles: "арматура a500c ø10", "изделия из арматуры a500c ø10", "арматура 10a500c", "арматура 10 a500c"
+        const isRebar = /(?:арматур|изделия\s+из\s+арматур)/i.test(name);
+        if (isRebar) {
+          // Try to extract class (A400, A500C, etc.) and diameter
+          const classMatch = name.match(/[aа][-]?\d{3,4}[cс]?/i);
+          const cls = classMatch ? classMatch[0].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase() : "";
+          // Diameter: look for Ø followed by number, or standalone number near class
+          const diaMatch = name.match(/[øø]\s*(\d+)/i) || name.match(/(?:^|[\s])(\d{1,2})(?:\s*[aа]|\s+мм)/i);
+          const dia = diaMatch ? diaMatch[1] : "";
+          if (cls || dia) {
+            return `rebar|${cls}|${dia}`;
+          }
         }
         // Труба: extract diameter x thickness
         const pipeMatch = name.match(/труб[аыи]?\s+[øø]?\s*(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
@@ -865,6 +876,15 @@ ${buildPromptForType(docType)}
 
         // If the max quantity is close to sum of the rest (within 15% or equal),
         // it means MASTER = sum(DETAILS) → keep only MASTER
+        // If exactly 2 items with identical quantity — exact duplicate from different tables
+        if (group.length === 2 && maxQty > 0 && Math.abs(withQty[0].qty - withQty[1].qty) / maxQty < 0.01) {
+          // Pick the one with longer/more descriptive name
+          const pick = withQty[0].row.name?.length >= withQty[1].row.name?.length ? withQty[0].row : withQty[1].row;
+          console.log(`[Dedup] ${key}: exact duplicate (qty=${maxQty}) — keeping "${pick.name}"`);
+          deduplicated.push(pick);
+          continue;
+        }
+
         if (maxQty > 0 && sumOfRest > 0) {
           const ratio = Math.abs(maxQty - sumOfRest) / maxQty;
           if (ratio < 0.15) {
@@ -872,8 +892,6 @@ ${buildPromptForType(docType)}
             deduplicated.push(withQty[0].row);
             continue;
           }
-          // If max > sum of rest significantly, could be MASTER + some DETAILS
-          // Keep only MASTER if it's the dominant entry (>60% of total)
           const totalQty = maxQty + sumOfRest;
           if (maxQty / totalQty > 0.6) {
             console.log(`[Dedup] ${key}: MASTER ${maxQty} dominates total ${totalQty} — keeping MASTER only`);
