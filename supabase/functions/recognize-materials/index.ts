@@ -617,8 +617,8 @@ Deno.serve(async (req) => {
       return deduplicated;
     };
 
-    // Apply deduplication only for multi-chunk PDFs (where cross-table duplication is likely)
-    const deduplicatedRows = pdfChunks.length > 1 ? deduplicateMasterDetails(rawRows) : rawRows;
+    // Apply deduplication for ALL PDFs — cross-table duplication can happen even in single chunk
+    const deduplicatedRows = deduplicateMasterDetails(rawRows);
 
     const normalizeText = (value: any): string => {
       if (value === null || value === undefined) return "";
