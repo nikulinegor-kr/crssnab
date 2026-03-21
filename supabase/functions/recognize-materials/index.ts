@@ -818,12 +818,23 @@ ${buildPromptForType(docType)}
 
       // Build structural key for grouping
       const getStructuralKey = (row: any): string | null => {
-        const name = String(row?.name || "").toLowerCase();
-        // Арматура: extract class + diameter
-        const rebarMatch = name.match(/арматур[аыи]?\s+([aа][-]?\d{3,4}[сc]?)\s+[øø]?\s*(\d+)/i);
-        if (rebarMatch) {
-          const cls = rebarMatch[1].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase();
-          return `rebar|${cls}|${rebarMatch[2]}`;
+        const name = String(row?.name || "").toLowerCase()
+          .replace(/[аА]/g, "a").replace(/[сС]/g, "c")
+          .replace(/ё/g, "е");
+        
+        // Арматура / Изделия из арматуры: extract class + diameter
+        // Handles: "арматура a500c ø10", "изделия из арматуры a500c ø10", "арматура 10a500c", "арматура 10 a500c"
+        const isRebar = /(?:арматур|изделия\s+из\s+арматур)/i.test(name);
+        if (isRebar) {
+          // Try to extract class (A400, A500C, etc.) and diameter
+          const classMatch = name.match(/[aа][-]?\d{3,4}[cс]?/i);
+          const cls = classMatch ? classMatch[0].replace(/[аА]/g, "A").replace(/[сС]/g, "C").toUpperCase() : "";
+          // Diameter: look for Ø followed by number, or standalone number near class
+          const diaMatch = name.match(/[øø]\s*(\d+)/i) || name.match(/(?:^|[\s])(\d{1,2})(?:\s*[aа]|\s+мм)/i);
+          const dia = diaMatch ? diaMatch[1] : "";
+          if (cls || dia) {
+            return `rebar|${cls}|${dia}`;
+          }
         }
         // Труба: extract diameter x thickness
         const pipeMatch = name.match(/труб[аыи]?\s+[øø]?\s*(\d+(?:\.\d+)?)\s*[×x×х]\s*(\d+(?:\.\d+)?)/i);
