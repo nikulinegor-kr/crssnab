@@ -1317,6 +1317,11 @@ export default function MaterialStatementsPage() {
   const isGeneralDocsFolder = selectedFolder?.type === 'general_docs';
   const foldersForCurrentSection = folders.filter(f => f.section_id === selectedSectionId);
 
+  const formatNum = (val: number | null) => {
+    if (val == null) return "—";
+    return val.toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+  };
+
   const formatPrice = (val: number | null) => {
     if (val == null) return "—";
     return val.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
