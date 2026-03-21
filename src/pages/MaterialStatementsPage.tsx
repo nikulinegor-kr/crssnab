@@ -1924,7 +1924,11 @@ export default function MaterialStatementsPage() {
                                    <TableCell />
                                    <TableCell colSpan={2} className="text-right text-sm font-semibold">Итого по файлу:</TableCell>
                                    <TableCell className="text-sm">{sectionPositions} поз.</TableCell>
-                                   <TableCell className="text-sm">{sectionWeight.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}</TableCell>
+                                   <TableCell className="text-sm">
+                                     {Array.from(qtyByUnit.entries()).map(([unit, qty], idx) => (
+                                       <span key={unit}>{idx > 0 ? ", " : ""}{qty.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} {unit}</span>
+                                     ))}
+                                   </TableCell>
                                    <TableCell />
                                    <TableCell />
                                    <TableCell className="text-sm font-semibold">{sectionTotal.toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</TableCell>
