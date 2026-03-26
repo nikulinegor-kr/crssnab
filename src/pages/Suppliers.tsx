@@ -772,6 +772,25 @@ export default function Suppliers() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="reliability">Благонадёжность</Label>
+                <Select
+                  value={formData.reliability}
+                  onValueChange={(value) => setFormData({ ...formData, reliability: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reliabilities.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="inn">ИНН</Label>
