@@ -424,6 +424,16 @@ export default function Suppliers() {
     }
   };
 
+  const getReliabilityColor = (reliability: string) => {
+    switch (reliability) {
+      case "Надёжный": return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+      case "На проверке": return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+      case "Риск": return "bg-orange-500/15 text-orange-600 dark:text-orange-400";
+      case "Заблокирован": return "bg-destructive/15 text-destructive";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
