@@ -534,32 +534,37 @@ export default function Suppliers() {
                     return (
                     <div
                       key={supplier.id}
-                      className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                      className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
                     >
-                      <div className="col-span-2">
+                      <div>
                         <div className="font-medium text-foreground">{supplier.name}</div>
                         {supplier.contact_person && (
                           <div className="text-xs text-muted-foreground mt-0.5">{supplier.contact_person}</div>
                         )}
                       </div>
-                      <div className="col-span-1 text-sm text-muted-foreground font-mono">
+                      <div className="text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="col-span-2 text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         <div>{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
-                      <div className="col-span-1">
+                      <div>
                         <Badge variant="outline" className="font-normal text-xs">
                           {supplier.category}
                         </Badge>
                       </div>
-                      <div className="col-span-1">
+                      <div>
                         <Badge className={getStatusColor(supplier.status)}>
                           {supplier.status}
                         </Badge>
                       </div>
-                      <div className="col-span-1 text-center">
+                      <div>
+                        <Badge className={getReliabilityColor(supplier.reliability)}>
+                          {supplier.reliability}
+                        </Badge>
+                      </div>
+                      <div className="text-center">
                         {stats?.count ? (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="h-3 w-3" />
@@ -569,7 +574,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="col-span-2 text-right text-sm font-medium">
+                      <div className="text-right text-sm font-medium">
                         {stats?.totalAmount ? (
                           <span className="text-foreground">
                             {stats.totalAmount.toLocaleString("ru-RU")} ₽
@@ -578,7 +583,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="col-span-2 text-right">
+                      <div className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
