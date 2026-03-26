@@ -78,6 +78,7 @@ export default function Suppliers() {
     phone: "",
     category: "Другое",
     status: "Активный",
+    reliability: "Не проверен",
     address: "",
     inn: "",
     kpp: "",
