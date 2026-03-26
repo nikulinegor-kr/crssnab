@@ -44,6 +44,7 @@ interface Supplier {
   phone: string | null;
   category: string;
   status: string;
+  reliability: string;
   address: string | null;
   inn: string | null;
   kpp: string | null;
@@ -55,6 +56,8 @@ interface Supplier {
   created_at: string;
   organization_id: string;
 }
+
+const reliabilities = ["Надёжный", "На проверке", "Не проверен", "Риск", "Заблокирован"];
 
 const categories = ["Запасные части", "Материалы", "Услуги", "Оборудование", "Другое"];
 const statuses = ["Активный", "В ожидании", "Неактивный"];
