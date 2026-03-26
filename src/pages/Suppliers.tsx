@@ -510,15 +510,16 @@ export default function Suppliers() {
         {/* Таблица поставщиков */}
         <Card className="bg-card border-border/40">
           <CardHeader className="border-b border-border/40">
-            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
-              <div className="col-span-2">Название</div>
-              <div className="col-span-1">ИНН</div>
-              <div className="col-span-2">Телефон / Email</div>
-              <div className="col-span-1">Категория</div>
-              <div className="col-span-1">Статус</div>
-              <div className="col-span-1 text-center">Заявки</div>
-              <div className="col-span-2 text-right">Сумма закупок</div>
-              <div className="col-span-2 text-right">Действия</div>
+            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
+              <div>Название</div>
+              <div>ИНН</div>
+              <div>Телефон / Email</div>
+              <div>Категория</div>
+              <div>Статус</div>
+              <div>Благонадёжность</div>
+              <div className="text-center">Заявки</div>
+              <div className="text-right">Сумма закупок</div>
+              <div className="text-right">Действия</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
