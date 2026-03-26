@@ -1,0 +1,1 @@
+ALTER TABLE public.suppliers ADD COLUMN reliability text NOT NULL DEFAULT 'Не проверен';
