@@ -207,6 +207,7 @@ export default function Suppliers() {
         phone: supplier.phone || "",
         category: supplier.category,
         status: supplier.status,
+        reliability: supplier.reliability || "Не проверен",
         address: supplier.address || "",
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
