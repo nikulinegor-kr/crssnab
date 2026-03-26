@@ -2541,6 +2541,7 @@ export type Database = {
           ogrn: string | null
           organization_id: string
           phone: string | null
+          reliability: string
           status: string
           updated_at: string
         }
@@ -2562,6 +2563,7 @@ export type Database = {
           ogrn?: string | null
           organization_id: string
           phone?: string | null
+          reliability?: string
           status?: string
           updated_at?: string
         }
@@ -2583,6 +2585,7 @@ export type Database = {
           ogrn?: string | null
           organization_id?: string
           phone?: string | null
+          reliability?: string
           status?: string
           updated_at?: string
         }

@@ -44,6 +44,7 @@ interface Supplier {
   phone: string | null;
   category: string;
   status: string;
+  reliability: string;
   address: string | null;
   inn: string | null;
   kpp: string | null;
@@ -55,6 +56,8 @@ interface Supplier {
   created_at: string;
   organization_id: string;
 }
+
+const reliabilities = ["Надёжный", "На проверке", "Не проверен", "Риск", "Заблокирован"];
 
 const categories = ["Запасные части", "Материалы", "Услуги", "Оборудование", "Другое"];
 const statuses = ["Активный", "В ожидании", "Неактивный"];
@@ -75,6 +78,7 @@ export default function Suppliers() {
     phone: "",
     category: "Другое",
     status: "Активный",
+    reliability: "Не проверен",
     address: "",
     inn: "",
     kpp: "",
@@ -203,6 +207,7 @@ export default function Suppliers() {
         phone: supplier.phone || "",
         category: supplier.category,
         status: supplier.status,
+        reliability: supplier.reliability || "Не проверен",
         address: supplier.address || "",
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
@@ -226,6 +231,7 @@ export default function Suppliers() {
       phone: "",
       category: "Другое",
       status: "Активный",
+      reliability: "Не проверен",
       address: "",
       inn: "",
       kpp: "",
@@ -418,6 +424,16 @@ export default function Suppliers() {
     }
   };
 
+  const getReliabilityColor = (reliability: string) => {
+    switch (reliability) {
+      case "Надёжный": return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+      case "На проверке": return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+      case "Риск": return "bg-orange-500/15 text-orange-600 dark:text-orange-400";
+      case "Заблокирован": return "bg-destructive/15 text-destructive";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
@@ -494,15 +510,16 @@ export default function Suppliers() {
         {/* Таблица поставщиков */}
         <Card className="bg-card border-border/40">
           <CardHeader className="border-b border-border/40">
-            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground uppercase">
-              <div className="col-span-2">Название</div>
-              <div className="col-span-1">ИНН</div>
-              <div className="col-span-2">Телефон / Email</div>
-              <div className="col-span-1">Категория</div>
-              <div className="col-span-1">Статус</div>
-              <div className="col-span-1 text-center">Заявки</div>
-              <div className="col-span-2 text-right">Сумма закупок</div>
-              <div className="col-span-2 text-right">Действия</div>
+            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
+              <div>Название</div>
+              <div>ИНН</div>
+              <div>Телефон / Email</div>
+              <div>Категория</div>
+              <div>Статус</div>
+              <div>Благонадёжность</div>
+              <div className="text-center">Заявки</div>
+              <div className="text-right">Сумма закупок</div>
+              <div className="text-right">Действия</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -517,32 +534,37 @@ export default function Suppliers() {
                     return (
                     <div
                       key={supplier.id}
-                      className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                      className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
                     >
-                      <div className="col-span-2">
+                      <div>
                         <div className="font-medium text-foreground">{supplier.name}</div>
                         {supplier.contact_person && (
                           <div className="text-xs text-muted-foreground mt-0.5">{supplier.contact_person}</div>
                         )}
                       </div>
-                      <div className="col-span-1 text-sm text-muted-foreground font-mono">
+                      <div className="text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="col-span-2 text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         <div>{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
-                      <div className="col-span-1">
+                      <div>
                         <Badge variant="outline" className="font-normal text-xs">
                           {supplier.category}
                         </Badge>
                       </div>
-                      <div className="col-span-1">
+                      <div>
                         <Badge className={getStatusColor(supplier.status)}>
                           {supplier.status}
                         </Badge>
                       </div>
-                      <div className="col-span-1 text-center">
+                      <div>
+                        <Badge className={getReliabilityColor(supplier.reliability)}>
+                          {supplier.reliability}
+                        </Badge>
+                      </div>
+                      <div className="text-center">
                         {stats?.count ? (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="h-3 w-3" />
@@ -552,7 +574,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="col-span-2 text-right text-sm font-medium">
+                      <div className="text-right text-sm font-medium">
                         {stats?.totalAmount ? (
                           <span className="text-foreground">
                             {stats.totalAmount.toLocaleString("ru-RU")} ₽
@@ -561,7 +583,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="col-span-2 text-right">
+                      <div className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -748,6 +770,25 @@ export default function Suppliers() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reliability">Благонадёжность</Label>
+                <Select
+                  value={formData.reliability}
+                  onValueChange={(value) => setFormData({ ...formData, reliability: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reliabilities.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
