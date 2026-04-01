@@ -28,6 +28,7 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useUserPermissions, ROUTE_PERMISSION_MAP } from "@/hooks/useUserPermissions";
 import {
   Sidebar,
   SidebarContent,
