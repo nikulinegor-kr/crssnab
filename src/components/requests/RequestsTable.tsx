@@ -567,7 +567,7 @@ export const RequestsTable = ({
                     </button>
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-xs text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
@@ -584,7 +584,7 @@ export const RequestsTable = ({
                             getPriorityColor={getPriorityColor}
                             onEdit={onEditClick}
                           >
-                            <div className="line-clamp-1 hover:text-primary transition-colors font-medium leading-tight truncate" title={request.description}>
+                            <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
                               <HighlightText text={request.description} searchQuery={searchQuery} />
                             </div>
                           </RequestQuickPreview>
@@ -645,7 +645,7 @@ export const RequestsTable = ({
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-tight truncate">
+                            <div className="line-clamp-2 leading-tight truncate text-xs text-muted-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -741,7 +741,7 @@ export const RequestsTable = ({
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-tight truncate">
+                            <div className="line-clamp-2 leading-tight truncate text-xs text-muted-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (

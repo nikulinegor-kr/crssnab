@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -510,11 +511,10 @@ export default function Suppliers() {
         {/* Таблица поставщиков */}
         <Card className="bg-card border-border/40">
           <CardHeader className="border-b border-border/40">
-            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
+            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
               <div>Название</div>
               <div>ИНН</div>
               <div>Телефон / Email</div>
-              <div>Категория</div>
               <div>Статус</div>
               <div>Благонадёжность</div>
               <div className="text-center">Заявки</div>
@@ -529,12 +529,15 @@ export default function Suppliers() {
               </div>
             ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
               <div className="divide-y divide-border/40">
-                 {filteredSuppliers.map((supplier) => {
+                 {filteredSuppliers.map((supplier, index) => {
                     const stats = contractorStats.get(supplier.name.toLowerCase().trim());
                     return (
                     <div
                       key={supplier.id}
-                      className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                      className={cn(
+                        "grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center",
+                        index % 2 === 1 && "bg-muted/20"
+                      )}
                     >
                       <div>
                         <div className="font-medium text-foreground">{supplier.name}</div>
@@ -548,11 +551,6 @@ export default function Suppliers() {
                       <div className="text-sm text-muted-foreground">
                         <div>{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
-                      </div>
-                      <div>
-                        <Badge variant="outline" className="font-normal text-xs">
-                          {supplier.category}
-                        </Badge>
                       </div>
                       <div>
                         <Badge className={getStatusColor(supplier.status)}>
