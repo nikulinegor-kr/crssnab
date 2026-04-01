@@ -184,7 +184,11 @@ const ShipmentsPage = () => {
                       })() : "—"}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {r.delivery_date ? format(new Date(r.delivery_date), "dd.MM.yyyy") : "—"}
+                      {r.delivery_date ? (() => {
+                        const d = new Date(r.delivery_date);
+                        const y = d.getFullYear();
+                        return y >= 2000 && y <= 2100 ? format(d, "dd.MM.yyyy") : "—";
+                      })() : "—"}
                     </TableCell>
                     <TableCell className="text-sm">{r.contractor || "—"}</TableCell>
                     <TableCell className="text-sm">{r.transport_company || "—"}</TableCell>

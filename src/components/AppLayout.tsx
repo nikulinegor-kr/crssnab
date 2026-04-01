@@ -54,7 +54,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
             <NotificationBell />
           </header>
 
-          <main className={cn(
+          <main id="main-content" className={cn(
             "flex-1 min-w-0 overflow-x-hidden",
             fullBleed ? "overflow-y-hidden" : "overflow-y-auto"
           )}>

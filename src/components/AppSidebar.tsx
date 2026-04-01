@@ -155,41 +155,60 @@ export function AppSidebar() {
     }
   };
 
-  const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }> }[]) => {
+  const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[]) => {
     return items.filter(item => hasRouteAccess(item.url)).map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
-      const showBadge = item.url === "/chat" && totalUnread > 0;
+      const showUnread = item.url === "/chat" && totalUnread > 0;
+
+      const menuButton = (
+        <SidebarMenuButton asChild isActive={isActive}>
+          <NavLink 
+            to={url} 
+            end 
+            className="hover:bg-accent/50 transition-colors rounded-md relative"
+            activeClassName="bg-primary/20 text-primary font-medium"
+            aria-label={!showText ? item.title : undefined}
+          >
+            <div className="relative">
+              <item.icon className="h-4 w-4" />
+              {showUnread && (
+                <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                  {totalUnread > 9 ? "9+" : totalUnread}
+                </div>
+              )}
+            </div>
+            {showText && (
+              <span className="flex items-center gap-2">
+                {item.title}
+                {item.badge && (
+                  <span className="text-[9px] bg-muted text-muted-foreground rounded px-1 py-0.5 leading-none font-medium uppercase tracking-wide">
+                    {item.badge}
+                  </span>
+                )}
+                {showUnread && (
+                  <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-2 py-0.5 font-semibold">
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
+              </span>
+            )}
+          </NavLink>
+        </SidebarMenuButton>
+      );
       
       return (
         <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild isActive={isActive}>
-            <NavLink 
-              to={url} 
-              end 
-              className="hover:bg-accent/50 transition-colors rounded-md relative"
-              activeClassName="bg-primary/20 text-primary font-medium"
-            >
-              <div className="relative">
-                <item.icon className="h-4 w-4" />
-                {showBadge && (
-                  <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
-                    {totalUnread > 9 ? "9+" : totalUnread}
-                  </div>
-                )}
-              </div>
-              {showText && (
-                <span className="flex items-center gap-2">
-                  {item.title}
-                  {showBadge && (
-                    <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-2 py-0.5 font-semibold">
-                      {totalUnread > 99 ? "99+" : totalUnread}
-                    </span>
-                  )}
-                </span>
-              )}
-            </NavLink>
-          </SidebarMenuButton>
+          {collapsed && !isMobile ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {menuButton}
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.title}</TooltipContent>
+            </Tooltip>
+          ) : (
+            menuButton
+          )}
         </SidebarMenuItem>
       );
     });

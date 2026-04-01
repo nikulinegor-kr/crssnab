@@ -167,6 +167,7 @@ const MobileRequestCard = memo(({
         size="icon"
         className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
         onClick={onDelete}
+        aria-label="Архивировать заявку"
       >
         <Trash2 className="h-3 w-3" />
       </Button>

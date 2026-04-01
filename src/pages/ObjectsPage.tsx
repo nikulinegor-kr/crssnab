@@ -246,6 +246,7 @@ const ObjectsPage = () => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
+                            aria-label="Удалить объект"
                             onClick={() => setDeleteTarget(obj)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

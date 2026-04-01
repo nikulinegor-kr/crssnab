@@ -101,6 +101,7 @@ export const QuickFilters = ({
               variant="outline"
               size="sm"
               onClick={() => toggleFilter(filter)}
+              aria-pressed={isActive}
               className={cn(
                 "h-7 sm:h-8 text-xs gap-1.5 px-2.5 sm:px-3 transition-all shrink-0 whitespace-nowrap font-medium shadow-none",
                 isActive

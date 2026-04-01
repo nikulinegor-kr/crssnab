@@ -319,8 +319,8 @@ const Requests = () => {
       </div>
 
       {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex gap-1 border-b border-border">
-        {tabs.map((tab) => (
+      <nav className="flex gap-1 border-b border-border items-end">
+        {mainTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
@@ -339,6 +339,26 @@ const Requests = () => {
                 {(tab as any).count}
               </span>
             )}
+            {activeTab === tab.value && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+            )}
+          </button>
+        ))}
+        <div className="mx-2 h-5 w-px bg-border self-center" />
+        {analyticsTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={cn(
+              "relative px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5",
+              "hover:text-foreground",
+              activeTab === tab.value
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {tab.icon}
+            {tab.label}
             {activeTab === tab.value && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
             )}
