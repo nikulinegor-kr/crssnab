@@ -382,11 +382,12 @@ export const RequestsFilters = ({
             variant="destructive"
             size="sm"
             onClick={() => { resetFilters(); clearSmartSearch(); }}
+            aria-label="Сбросить все фильтры"
             title="Сбросить все фильтры"
             className="shrink-0 h-9 sm:h-10 px-2 sm:px-3 gap-1.5"
           >
-            <RotateCcw className="h-4 w-4" />
-            <span className="hidden sm:inline">Сбросить</span>
+            <X className="h-4 w-4" />
+            <span className="hidden sm:inline">Сбросить всё</span>
           </Button>
         )}
       </div>

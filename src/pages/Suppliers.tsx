@@ -528,7 +528,7 @@ export default function Suppliers() {
               </div>
             ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
               <div className="divide-y divide-border/40">
-                 {filteredSuppliers.map((supplier) => {
+                 {filteredSuppliers.map((supplier, index) => {
                     const stats = contractorStats.get(supplier.name.toLowerCase().trim());
                     return (
                     <div

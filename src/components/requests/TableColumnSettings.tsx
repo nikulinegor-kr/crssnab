@@ -33,15 +33,15 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   status: true,
   availability: false,
   contractor: true,
-  invoice_number: true,
+  invoice_number: false,
   payment_percentage: true,
-  shipment_date: true,
+  shipment_date: false,
   delivery_date: true,
-  transport_company: true,
+  transport_company: false,
   amount: true,
-  applicant: true,
-  comments: true,
-  equipment: true,
+  applicant: false,
+  comments: false,
+  equipment: false,
 };
 
 const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
