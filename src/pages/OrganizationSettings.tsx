@@ -36,7 +36,7 @@ const OrganizationSettings = () => {
   // Determine which tabs are visible based on role
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "participants", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
+    ? ["profile", "general", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"]; // viewer / member
@@ -116,11 +116,6 @@ const OrganizationSettings = () => {
                 <Settings className="h-4 w-4" /><span className="hidden sm:inline">Общие</span>
               </TabsTrigger>
             )}
-            {visibleTabs.includes("participants") && (
-              <TabsTrigger value="participants" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
-                <UserCheck className="h-4 w-4" /><span className="hidden sm:inline">Участники</span>
-              </TabsTrigger>
-            )}
             {visibleTabs.includes("access") && (
               <TabsTrigger value="access" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <Shield className="h-4 w-4" /><span className="hidden sm:inline">Пользователи и доступ</span>
@@ -176,18 +171,13 @@ const OrganizationSettings = () => {
         )}
 
 
-        {visibleTabs.includes("participants") && (
-          <TabsContent value="participants">
-            <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
-              <ParticipantsManagement />
-            </SettingsSection>
-          </TabsContent>
-        )}
-
         {visibleTabs.includes("access") && (
-          <TabsContent value="access">
+          <TabsContent value="access" className="space-y-8">
             <SettingsSection title="Пользователи и доступ" description="Управление командой, ролями и правами доступа к разделам" icon={Shield}>
               <AccessManagement organizationId={currentOrgId!} />
+            </SettingsSection>
+            <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
+              <ParticipantsManagement />
             </SettingsSection>
           </TabsContent>
         )}
