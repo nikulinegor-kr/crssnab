@@ -545,6 +545,7 @@ export const RequestsTable = ({
                       <button
                         onClick={() => onToggleFavorite(request.id)}
                         className="hover:scale-110 transition-transform"
+                        aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
                       >
                         <Star
                           className={`h-4 w-4 ${
