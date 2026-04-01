@@ -2728,6 +2728,44 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          allowed: boolean
+          created_at: string
+          id: string
+          organization_id: string
+          permission_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          organization_id: string
+          permission_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          organization_id?: string
+          permission_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_products: {
         Row: {
           article: string | null
@@ -2922,6 +2960,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["organization_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { _org_id: string; _permission_key: string; _user_id: string }
         Returns: boolean
       }
       user_is_org_admin: {
