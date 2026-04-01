@@ -533,7 +533,10 @@ export default function Suppliers() {
                     return (
                     <div
                       key={supplier.id}
-                      className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                      className={cn(
+                        "grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center",
+                        index % 2 === 1 && "bg-muted/20"
+                      )}
                     >
                       <div>
                         <div className="font-medium text-foreground">{supplier.name}</div>
