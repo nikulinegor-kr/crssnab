@@ -175,13 +175,6 @@ const OrganizationSettings = () => {
           </TabsContent>
         )}
 
-        {visibleTabs.includes("users") && (
-          <TabsContent value="users">
-            <SettingsSection title="Управление пользователями" description="Добавление и управление доступом пользователей" icon={Users}>
-              <UsersManagement organizationId={currentOrgId!} isAdmin={isAdmin} />
-            </SettingsSection>
-          </TabsContent>
-        )}
 
         {visibleTabs.includes("participants") && (
           <TabsContent value="participants">
