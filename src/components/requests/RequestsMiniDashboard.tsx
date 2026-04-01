@@ -206,20 +206,18 @@ export const RequestsMiniDashboard = ({
               {card.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-1.5">
-                <span className={cn("text-xl font-semibold leading-none tracking-tight", card.color)}>
-                  {getMetricValue(card.id)}
-                </span>
-                {dynamicVal !== 0 && (
-                  <span className={cn(
-                    "text-[10px] font-medium leading-none ml-1",
-                    dynamicVal > 0 ? "text-red-500" : "text-green-500"
-                  )}>
-                    {dynamicVal > 0 ? `+${dynamicVal}` : dynamicVal}
-                  </span>
-                )}
+              <div className="text-xl font-semibold leading-none tracking-tight">
+                <span className={card.color}>{getMetricValue(card.id)}</span>
               </div>
-              <div className="text-[10px] sm:text-[11px] text-muted-foreground/70 mt-1 leading-tight truncate">
+              {dynamicVal !== 0 && (
+                <div className={cn(
+                  "text-[11px] font-medium mt-1",
+                  dynamicVal > 0 ? "text-red-500" : "text-green-500"
+                )}>
+                  {dynamicVal > 0 ? `+${dynamicVal}` : dynamicVal} за нед.
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground/70 mt-1 leading-tight truncate">
                 {card.label}
               </div>
             </div>
