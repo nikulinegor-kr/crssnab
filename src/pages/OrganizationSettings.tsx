@@ -186,7 +186,7 @@ const OrganizationSettings = () => {
 
         {visibleTabs.includes("access") && (
           <TabsContent value="access">
-            <SettingsSection title="Права доступа" description="Управление доступом к разделам системы" icon={Shield}>
+            <SettingsSection title="Пользователи и доступ" description="Управление командой, ролями и правами доступа к разделам" icon={Shield}>
               <AccessManagement organizationId={currentOrgId!} />
             </SettingsSection>
           </TabsContent>
