@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2 } from "lucide-react";
+import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
@@ -14,6 +14,7 @@ import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { AuditLog } from "@/components/settings/AuditLog";
+import { AccessManagement } from "@/components/settings/AccessManagement";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
@@ -35,7 +36,7 @@ const OrganizationSettings = () => {
   // Determine which tabs are visible based on role
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "users", "participants", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
+    ? ["profile", "general", "users", "participants", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"]; // viewer / member
@@ -125,6 +126,11 @@ const OrganizationSettings = () => {
                 <UserCheck className="h-4 w-4" /><span className="hidden sm:inline">Участники</span>
               </TabsTrigger>
             )}
+            {visibleTabs.includes("access") && (
+              <TabsTrigger value="access" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Shield className="h-4 w-4" /><span className="hidden sm:inline">Права доступа</span>
+              </TabsTrigger>
+            )}
             {visibleTabs.includes("notifications") && (
               <TabsTrigger value="notifications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <Bell className="h-4 w-4" /><span className="hidden sm:inline">Уведомления</span>
@@ -186,6 +192,14 @@ const OrganizationSettings = () => {
           <TabsContent value="participants">
             <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
               <ParticipantsManagement />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("access") && (
+          <TabsContent value="access">
+            <SettingsSection title="Права доступа" description="Управление доступом к разделам системы" icon={Shield}>
+              <AccessManagement organizationId={currentOrgId!} />
             </SettingsSection>
           </TabsContent>
         )}

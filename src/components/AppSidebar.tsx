@@ -28,6 +28,7 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useUserPermissions, ROUTE_PERMISSION_MAP } from "@/hooks/useUserPermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -127,6 +128,7 @@ export function AppSidebar() {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { isAdmin, isViewer } = useUserRole();
+  const { hasPermission, hasRouteAccess } = useUserPermissions();
   const totalUnread = useUnreadMessages();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
@@ -153,7 +155,7 @@ export function AppSidebar() {
   };
 
   const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }> }[]) => {
-    return items.map((item) => {
+    return items.filter(item => hasRouteAccess(item.url)).map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
       const showBadge = item.url === "/chat" && totalUnread > 0;
@@ -206,7 +208,10 @@ export function AppSidebar() {
         {(isViewer
           ? [{ label: "CRM", icon: FileText, items: [{ title: "Заявки", url: "/requests", icon: FileText }] }]
           : menuGroups
-        ).map((group, idx) => {
+        ).filter(group => {
+          // Filter groups where at least one item is accessible
+          return group.items.some(item => hasRouteAccess(item.url));
+        }).map((group, idx) => {
           const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
           return (
             <div key={group.label}>
@@ -224,7 +229,7 @@ export function AppSidebar() {
                 </SidebarGroupContent>
               </SidebarGroup>
               {/* Отчёты внутри блока Аналитика */}
-              {group.label === "Аналитика" && !isDemoMode && isAdmin && (
+              {group.label === "Аналитика" && !isDemoMode && (isAdmin || hasPermission("analytics.reports" as any)) && (
                 <Collapsible defaultOpen={false} className="group/collapsible-reports">
                   <SidebarGroup className="pt-0">
                     <CollapsibleTrigger asChild>

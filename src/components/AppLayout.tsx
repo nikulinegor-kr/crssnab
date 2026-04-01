@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./GlobalSearch";
+import { PermissionRoute } from "./PermissionRoute";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
@@ -61,12 +62,12 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
                     <SubscriptionBanner />
                   </div>
                 )}
-                {children}
+                <PermissionRoute>{children}</PermissionRoute>
               </div>
             ) : (
               <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
                 <SubscriptionBanner />
-                {children}
+                <PermissionRoute>{children}</PermissionRoute>
               </div>
             )}
           </main>
