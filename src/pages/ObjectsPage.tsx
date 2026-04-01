@@ -238,7 +238,7 @@ const ObjectsPage = () => {
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           {tab === "active" && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => archiveMutation.mutate(obj.id)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="В архив" onClick={() => archiveMutation.mutate(obj.id)}>
                               <Archive className="h-3.5 w-3.5" />
                             </Button>
                           )}
