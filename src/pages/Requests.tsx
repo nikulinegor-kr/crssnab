@@ -307,7 +307,7 @@ const Requests = () => {
             >
               <Plus className="h-4 w-4" />
               <span className="hidden xs:inline">Новая заявка</span>
-              <span className="xs:hidden">Новая</span>
+              <span className="xs:hidden" aria-hidden="true">Новая</span>
             </Button>
           )}
         </div>
