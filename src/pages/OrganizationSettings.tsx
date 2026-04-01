@@ -36,7 +36,7 @@ const OrganizationSettings = () => {
   // Determine which tabs are visible based on role
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "users", "participants", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
+    ? ["profile", "general", "participants", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"]; // viewer / member
