@@ -254,12 +254,17 @@ const Requests = () => {
     return requests.filter(r => favoriteIds.has(r.id));
   }, [requests, favoriteIds]);
 
-  const tabs = [
+  const mainTabs = [
     { value: "active", label: "Активные" },
     { value: "favorites", label: "Избранные", icon: <Star className="h-3.5 w-3.5" />, count: favoriteRequests.length },
     { value: "archived", label: "Архив" },
+  ] as const;
+
+  const analyticsTabs = [
     { value: "procurement", label: "Стоимость закупок", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   ] as const;
+
+  const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
     <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-3 sm:space-y-4">
