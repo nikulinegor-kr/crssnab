@@ -14,6 +14,7 @@ import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
 import { AuditLog } from "@/components/settings/AuditLog";
+import { AccessManagement } from "@/components/settings/AccessManagement";
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
