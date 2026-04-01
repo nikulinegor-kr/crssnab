@@ -208,7 +208,10 @@ export function AppSidebar() {
         {(isViewer
           ? [{ label: "CRM", icon: FileText, items: [{ title: "Заявки", url: "/requests", icon: FileText }] }]
           : menuGroups
-        ).map((group, idx) => {
+        ).filter(group => {
+          // Filter groups where at least one item is accessible
+          return group.items.some(item => hasRouteAccess(item.url));
+        }).map((group, idx) => {
           const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
           return (
             <div key={group.label}>
