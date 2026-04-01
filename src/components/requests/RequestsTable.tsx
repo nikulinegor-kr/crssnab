@@ -561,7 +561,7 @@ export const RequestsTable = ({
                     <button
                       onClick={() => openQuickView(request)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                      title="Быстрый просмотр"
+                      aria-label="Быстрый просмотр"
                     >
                       <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
                     </button>
