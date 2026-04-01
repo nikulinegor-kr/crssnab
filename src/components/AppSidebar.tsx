@@ -229,7 +229,7 @@ export function AppSidebar() {
                 </SidebarGroupContent>
               </SidebarGroup>
               {/* Отчёты внутри блока Аналитика */}
-              {group.label === "Аналитика" && !isDemoMode && isAdmin && (
+              {group.label === "Аналитика" && !isDemoMode && (isAdmin || hasPermission("analytics.reports" as any)) && (
                 <Collapsible defaultOpen={false} className="group/collapsible-reports">
                   <SidebarGroup className="pt-0">
                     <CollapsibleTrigger asChild>
