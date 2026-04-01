@@ -155,7 +155,7 @@ export function AppSidebar() {
   };
 
   const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }> }[]) => {
-    return items.map((item) => {
+    return items.filter(item => hasRouteAccess(item.url)).map((item) => {
       const isActive = currentPath === item.url;
       const url = isDemoMode ? `${item.url}?demo=true` : item.url;
       const showBadge = item.url === "/chat" && totalUnread > 0;
