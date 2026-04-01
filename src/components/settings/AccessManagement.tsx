@@ -209,7 +209,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
         position: editPosition.trim() || null,
       }).eq("id", editingUser.user_id);
 
-      if (editRole !== editingUser.role) {
+      if (editRole !== editingUser.role as string) {
         await supabase.from("user_organizations").update({ role: editRole }).eq("id", editingUser.id);
       }
 
