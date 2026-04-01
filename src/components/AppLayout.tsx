@@ -63,7 +63,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
                     <SubscriptionBanner />
                   </div>
                 )}
-                {children}
+                <PermissionRoute>{children}</PermissionRoute>
               </div>
             ) : (
               <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
