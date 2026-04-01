@@ -20,6 +20,9 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
   return (
     <SidebarProvider defaultOpen={false}>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md">
+        Перейти к основному содержимому
+      </a>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-background/95">
         <AppSidebar />
         
