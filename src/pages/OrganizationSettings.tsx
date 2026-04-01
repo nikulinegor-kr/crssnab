@@ -116,11 +116,6 @@ const OrganizationSettings = () => {
                 <Settings className="h-4 w-4" /><span className="hidden sm:inline">Общие</span>
               </TabsTrigger>
             )}
-            {visibleTabs.includes("users") && (
-              <TabsTrigger value="users" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
-                <Users className="h-4 w-4" /><span className="hidden sm:inline">Пользователи</span>
-              </TabsTrigger>
-            )}
             {visibleTabs.includes("participants") && (
               <TabsTrigger value="participants" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <UserCheck className="h-4 w-4" /><span className="hidden sm:inline">Участники</span>
