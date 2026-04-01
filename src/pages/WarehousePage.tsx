@@ -419,8 +419,12 @@ export default function WarehousePage() {
               <TableBody>
                 {filteredStock.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                      Нет данных об остатках
+                    <TableCell colSpan={8} className="text-center py-12">
+                      <Warehouse className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+                      <p className="text-muted-foreground font-medium">Нет данных об остатках</p>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                        Для начала работы создайте склад и товары, затем оформите первый приход через кнопку «Приход» выше.
+                      </p>
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -167,6 +167,7 @@ const MobileRequestCard = memo(({
         size="icon"
         className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
         onClick={onDelete}
+        aria-label="Архивировать заявку"
       >
         <Trash2 className="h-3 w-3" />
       </Button>
@@ -544,6 +545,7 @@ export const RequestsTable = ({
                       <button
                         onClick={() => onToggleFavorite(request.id)}
                         className="hover:scale-110 transition-transform"
+                        aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
                       >
                         <Star
                           className={`h-4 w-4 ${
@@ -559,7 +561,7 @@ export const RequestsTable = ({
                     <button
                       onClick={() => openQuickView(request)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                      title="Быстрый просмотр"
+                      aria-label="Быстрый просмотр"
                     >
                       <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
                     </button>

@@ -233,12 +233,12 @@ const ObjectsPage = () => {
                           {obj.contract_number && <p className="text-xs text-muted-foreground">Контракт: {obj.contract_number}</p>}
                         </div>
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Badge variant="secondary" className="text-xs">{reqCount} заявок</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingObject(obj)}>
+                          <Badge variant="secondary" className="text-xs">{reqCount} {reqCount === 1 ? "заявка" : reqCount >= 2 && reqCount <= 4 ? "заявки" : "заявок"}</Badge>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Редактировать объект" onClick={() => setEditingObject(obj)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           {tab === "active" && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => archiveMutation.mutate(obj.id)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="В архив" onClick={() => archiveMutation.mutate(obj.id)}>
                               <Archive className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -246,6 +246,7 @@ const ObjectsPage = () => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
+                            aria-label="Удалить объект"
                             onClick={() => setDeleteTarget(obj)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

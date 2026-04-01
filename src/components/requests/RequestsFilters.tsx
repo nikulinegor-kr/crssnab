@@ -377,17 +377,18 @@ export const RequestsFilters = ({
           </PopoverContent>
         </Popover>
 
-        <Button
-          variant={hasActiveFilters ? "destructive" : "outline"}
-          size="sm"
-          onClick={() => { resetFilters(); clearSmartSearch(); }}
-          disabled={!hasActiveFilters}
-          title="Сбросить все фильтры"
-          className="shrink-0 h-9 sm:h-10 px-2 sm:px-3 gap-1.5"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">Сбросить</span>
-        </Button>
+        {hasActiveFilters && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => { resetFilters(); clearSmartSearch(); }}
+            title="Сбросить все фильтры"
+            className="shrink-0 h-9 sm:h-10 px-2 sm:px-3 gap-1.5"
+          >
+            <RotateCcw className="h-4 w-4" />
+            <span className="hidden sm:inline">Сбросить</span>
+          </Button>
+        )}
       </div>
 
       {/* Smart search indicator */}

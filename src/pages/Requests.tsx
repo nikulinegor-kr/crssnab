@@ -254,12 +254,17 @@ const Requests = () => {
     return requests.filter(r => favoriteIds.has(r.id));
   }, [requests, favoriteIds]);
 
-  const tabs = [
+  const mainTabs = [
     { value: "active", label: "Активные" },
     { value: "favorites", label: "Избранные", icon: <Star className="h-3.5 w-3.5" />, count: favoriteRequests.length },
     { value: "archived", label: "Архив" },
+  ] as const;
+
+  const analyticsTabs = [
     { value: "procurement", label: "Стоимость закупок", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   ] as const;
+
+  const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
     <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-3 sm:space-y-4">
@@ -307,15 +312,15 @@ const Requests = () => {
             >
               <Plus className="h-4 w-4" />
               <span className="hidden xs:inline">Новая заявка</span>
-              <span className="xs:hidden">Новая</span>
+              <span className="xs:hidden" aria-hidden="true">Новая</span>
             </Button>
           )}
         </div>
       </div>
 
       {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex gap-1 border-b border-border">
-        {tabs.map((tab) => (
+      <nav className="flex gap-1 border-b border-border items-end">
+        {mainTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
@@ -334,6 +339,26 @@ const Requests = () => {
                 {(tab as any).count}
               </span>
             )}
+            {activeTab === tab.value && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+            )}
+          </button>
+        ))}
+        <div className="mx-2 h-5 w-px bg-border self-center" />
+        {analyticsTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={cn(
+              "relative px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5",
+              "hover:text-foreground",
+              activeTab === tab.value
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {tab.icon}
+            {tab.label}
             {activeTab === tab.value && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
             )}
@@ -554,6 +579,7 @@ const Requests = () => {
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
         size="icon"
         variant="secondary"
+        aria-label="Открыть чат"
       >
         <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>

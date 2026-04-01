@@ -212,14 +212,14 @@ export const RequestsMiniDashboard = ({
                 </span>
                 {dynamicVal !== 0 && (
                   <span className={cn(
-                    "text-[10px] font-medium leading-none",
+                    "text-[10px] font-medium leading-none ml-1",
                     dynamicVal > 0 ? "text-red-500" : "text-green-500"
                   )}>
                     {dynamicVal > 0 ? `+${dynamicVal}` : dynamicVal}
                   </span>
                 )}
               </div>
-              <div className="text-[10px] sm:text-[11px] text-muted-foreground/70 mt-0.5 leading-tight truncate">
+              <div className="text-[10px] sm:text-[11px] text-muted-foreground/70 mt-1 leading-tight truncate">
                 {card.label}
               </div>
             </div>
