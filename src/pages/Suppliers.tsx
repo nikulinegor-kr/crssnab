@@ -552,11 +552,6 @@ export default function Suppliers() {
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
                       <div>
-                        <Badge variant="outline" className="font-normal text-xs">
-                          {supplier.category}
-                        </Badge>
-                      </div>
-                      <div>
                         <Badge className={getStatusColor(supplier.status)}>
                           {supplier.status}
                         </Badge>
