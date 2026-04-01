@@ -128,6 +128,7 @@ export function AppSidebar() {
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const { isAdmin, isViewer } = useUserRole();
+  const { hasPermission, hasRouteAccess } = useUserPermissions();
   const totalUnread = useUnreadMessages();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
