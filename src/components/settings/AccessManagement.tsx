@@ -36,18 +36,27 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
       setLoading(true);
       const { data, error } = await supabase
         .from("user_organizations")
-        .select("user_id, role, profiles:user_id(full_name, email)")
+        .select("user_id, role")
         .eq("organization_id", organizationId);
 
       if (error) {
         console.error(error);
         toast({ title: "Ошибка", description: "Не удалось загрузить пользователей", variant: "destructive" });
       } else {
-        const mapped = (data || []).map((row: any) => ({
-          user_id: row.user_id,
-          role: row.role,
-          profile: row.profiles,
-        }));
+        const userIds = (data || []).map((m) => m.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+
+        const mapped = (data || []).map((row: any) => {
+          const profile = profiles?.find((p) => p.id === row.user_id);
+          return {
+            user_id: row.user_id,
+            role: row.role,
+            profile: profile ? { full_name: profile.full_name, email: profile.email } : null,
+          };
+        });
         setUsers(mapped);
       }
       setLoading(false);
