@@ -554,6 +554,7 @@ const Requests = () => {
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
         size="icon"
         variant="secondary"
+        aria-label="Открыть чат"
       >
         <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
