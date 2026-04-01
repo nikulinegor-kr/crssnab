@@ -210,7 +210,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
       }).eq("id", editingUser.user_id);
 
       if (editRole !== editingUser.role as string) {
-        await supabase.from("user_organizations").update({ role: editRole }).eq("id", editingUser.id);
+        await supabase.from("user_organizations").update({ role: editRole as any }).eq("id", editingUser.id);
       }
 
       toast({ title: "Сохранено", description: "Данные обновлены" });
