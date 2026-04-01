@@ -196,6 +196,14 @@ const OrganizationSettings = () => {
           </TabsContent>
         )}
 
+        {visibleTabs.includes("access") && (
+          <TabsContent value="access">
+            <SettingsSection title="Права доступа" description="Управление доступом к разделам системы" icon={Shield}>
+              <AccessManagement organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
         {visibleTabs.includes("notifications") && (
           <TabsContent value="notifications" className="space-y-8">
             <SettingsSection title="Настройки уведомлений" description="Push-уведомления, Telegram и автонапоминания" icon={Bell}>
