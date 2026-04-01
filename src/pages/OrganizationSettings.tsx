@@ -171,18 +171,13 @@ const OrganizationSettings = () => {
         )}
 
 
-        {visibleTabs.includes("participants") && (
-          <TabsContent value="participants">
-            <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
-              <ParticipantsManagement />
-            </SettingsSection>
-          </TabsContent>
-        )}
-
         {visibleTabs.includes("access") && (
-          <TabsContent value="access">
+          <TabsContent value="access" className="space-y-8">
             <SettingsSection title="Пользователи и доступ" description="Управление командой, ролями и правами доступа к разделам" icon={Shield}>
               <AccessManagement organizationId={currentOrgId!} />
+            </SettingsSection>
+            <SettingsSection title="Участники заявок" description="Заявители, исполнители и подрядчики" icon={UserCheck}>
+              <ParticipantsManagement />
             </SettingsSection>
           </TabsContent>
         )}
