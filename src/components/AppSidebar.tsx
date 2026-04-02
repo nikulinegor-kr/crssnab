@@ -91,6 +91,7 @@ const menuGroups = [
     icon: BarChart3,
     items: [
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+      { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
 ];
