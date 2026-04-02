@@ -17,9 +17,9 @@ export default {
         'xs': '480px',
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        heading: ["Geist", "Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        sans: ["Manrope", "system-ui", "sans-serif"],
+        heading: ["Manrope", "system-ui", "sans-serif"],
+        mono: ["Manrope", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

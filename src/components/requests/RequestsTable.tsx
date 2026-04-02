@@ -535,7 +535,7 @@ export const RequestsTable = ({
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-xs text-muted-foreground font-numeric overflow-hidden" style={{ width: widths.request_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
@@ -569,7 +569,7 @@ export const RequestsTable = ({
                                 getPriorityColor={getPriorityColor}
                                 onEdit={onEditClick}
                               >
-                                <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
+                                <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-snug truncate" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
                               </RequestQuickPreview>
@@ -621,42 +621,42 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.availability }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.availability }}>
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                        <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-xs italic">нет данных</span>
+                        <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.contractor }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.contractor }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-tight truncate text-xs text-muted-foreground">
+                            <div className="line-clamp-2 leading-snug truncate text-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">не указан</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
                           )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.invoice_number }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.invoice_number }}>
                       {request.invoice_number ? (
-                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate font-numeric">
+                        <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-xs italic">не выставлен</span>
+                        <span className="text-[#9CA3AF] text-[12px] italic">не выставлен</span>
                       )}
                     </TableCell>
                   )}
@@ -669,97 +669,97 @@ export const RequestsTable = ({
                         displayValue={
                           request.payment_percentage !== null && request.payment_percentage !== undefined
                             ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                            : <span className="text-muted-foreground/30 text-xs italic">0%</span>
+                            : <span className="text-[#9CA3AF] text-[12px] italic">0%</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-xs italic">ожидается</span>}
+                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date }}>
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-xs italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.transport_company }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
                         value={request.transport_company || ""}
                         displayValue={
                           request.transport_company ? (
-                            <div className="line-clamp-2 text-muted-foreground leading-tight truncate font-numeric">
+                            <div className="line-clamp-2 text-foreground leading-snug truncate">
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">не назначен</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
                           )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.amount }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.amount }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
                         value={request.amount ?? ""}
                         displayValue={
                           request.amount && request.amount > 0 ? (
-                            <span className="font-medium font-numeric">
+                            <span className="font-medium">
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">нет суммы</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">нет суммы</span>
                           )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.applicant }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-tight truncate text-xs text-muted-foreground">
+                            <div className="line-clamp-2 leading-snug truncate text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">не указан</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
                           )
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.equipment && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.equipment }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.equipment }}>
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
-                        <div className="leading-tight truncate text-sm">
-                          <div className="font-medium font-numeric">
+                        <div className="leading-snug truncate">
+                          <div className="font-medium text-foreground">
                             <HighlightText text={(request as any).equipment_plate || ""} searchQuery={searchQuery} />
                           </div>
                           {(request as any).equipment_display && (
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div className="text-[13px] text-muted-foreground truncate">
                               <HighlightText text={(request as any).equipment_display} searchQuery={searchQuery} />
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-xs italic">нет техники</span>
+                        <span className="text-[#9CA3AF] text-[12px] italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
@@ -771,11 +771,11 @@ export const RequestsTable = ({
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-muted-foreground italic leading-tight text-left">
+                            <div className="line-clamp-3 text-[#6B7280] text-[13px] leading-snug text-left">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">нет</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">нет</span>
                           )
                         }
                       />
