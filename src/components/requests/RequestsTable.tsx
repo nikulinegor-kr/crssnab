@@ -193,7 +193,7 @@ export const RequestsTable = ({
   headerActions,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
-  const { visibility, updateVisibility } = useTableColumnVisibility();
+  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility();
   const { widths, updateWidth } = useTableColumnWidths();
   
   // Quick View state — only store ID to avoid re-renders from table data updates
