@@ -535,7 +535,7 @@ export const RequestsTable = ({
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-xs text-muted-foreground font-numeric overflow-hidden" style={{ width: widths.request_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
