@@ -4,6 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 
 export type AiMessage = { role: "user" | "assistant"; content: string };
 
+export interface PageContext {
+  pageName: string;
+  url: string;
+  summary?: string;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claude-chat`;
 
 export function useAiChat() {
