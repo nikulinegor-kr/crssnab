@@ -569,7 +569,7 @@ export const RequestsTable = ({
                                 getPriorityColor={getPriorityColor}
                                 onEdit={onEditClick}
                               >
-                                <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
+                                <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-snug truncate" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
                               </RequestQuickPreview>
