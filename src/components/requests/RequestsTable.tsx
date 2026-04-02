@@ -541,23 +541,49 @@ export const RequestsTable = ({
                   )}
                   {visibility.description && (
                     <TableCell className="px-3 py-2 border-r overflow-hidden" style={{ width: widths.description }}>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="description"
-                        value={request.description}
-                        displayValue={
-                          <RequestQuickPreview
-                            request={request}
-                            getStatusColor={getStatusColor}
-                            getPriorityColor={getPriorityColor}
-                            onEdit={onEditClick}
+                      <div className="flex items-center gap-1.5">
+                        {onToggleFavorite && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite(request.id); }}
+                            className="shrink-0 hover:scale-110 transition-transform"
+                            aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
                           >
-                            <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
-                              <HighlightText text={request.description} searchQuery={searchQuery} />
-                            </div>
-                          </RequestQuickPreview>
-                        }
-                      />
+                            <Star
+                              className={`h-3.5 w-3.5 ${
+                                favoriteIds?.has(request.id)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground/20 hover:text-yellow-400"
+                              }`}
+                            />
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <InlineEditCell
+                            requestId={request.id}
+                            field="description"
+                            value={request.description}
+                            displayValue={
+                              <RequestQuickPreview
+                                request={request}
+                                getStatusColor={getStatusColor}
+                                getPriorityColor={getPriorityColor}
+                                onEdit={onEditClick}
+                              >
+                                <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
+                                  <HighlightText text={request.description} searchQuery={searchQuery} />
+                                </div>
+                              </RequestQuickPreview>
+                            }
+                          />
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
+                          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                          aria-label="Быстрый просмотр"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-primary" />
+                        </button>
+                      </div>
                     </TableCell>
                   )}
                   {visibility.priority && (
