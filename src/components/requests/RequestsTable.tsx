@@ -633,7 +633,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground/30 text-[11px] italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
