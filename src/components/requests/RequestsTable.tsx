@@ -682,7 +682,7 @@ export const RequestsTable = ({
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
