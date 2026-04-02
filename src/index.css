@@ -14,8 +14,9 @@ All colors MUST be HSL.
   html {
     overflow-x: hidden;
     width: 100%;
-    /* Support for dynamic viewport height on mobile with virtual keyboard */
     height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   body {
@@ -24,6 +25,11 @@ All colors MUST be HSL.
     width: 100%;
     position: relative;
     min-height: 100dvh;
+  }
+
+  h1, h2, .page-title {
+    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
   }
 
   #root {
