@@ -55,7 +55,7 @@ export function useAiChat() {
     return data.id;
   }, [conversationId]);
 
-  const sendMessage = useCallback(async (text: string, orgId: string) => {
+  const sendMessage = useCallback(async (text: string, orgId: string, pageContext?: PageContext) => {
     if (!text.trim() || isLoading) return;
 
     const userMsg: AiMessage = { role: "user", content: text.trim() };
