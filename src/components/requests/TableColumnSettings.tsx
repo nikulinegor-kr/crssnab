@@ -111,7 +111,7 @@ export const TableColumnSettings = ({
               </Label>
             </div>
           ))}
-          {!isDefault && onReset && (
+          {onReset && (
             <>
               <Separator className="my-2" />
               <Button
