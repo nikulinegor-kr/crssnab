@@ -4,6 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 
 export type AiMessage = { role: "user" | "assistant"; content: string };
 
+export interface PageContext {
+  pageName: string;
+  url: string;
+  summary?: string;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claude-chat`;
 
 export function useAiChat() {
@@ -49,7 +55,7 @@ export function useAiChat() {
     return data.id;
   }, [conversationId]);
 
-  const sendMessage = useCallback(async (text: string, orgId: string) => {
+  const sendMessage = useCallback(async (text: string, orgId: string, pageContext?: PageContext) => {
     if (!text.trim() || isLoading) return;
 
     const userMsg: AiMessage = { role: "user", content: text.trim() };
@@ -78,7 +84,7 @@ export function useAiChat() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMessages }),
+        body: JSON.stringify({ messages: allMessages, pageContext }),
         signal: abortRef.current.signal,
       });
 

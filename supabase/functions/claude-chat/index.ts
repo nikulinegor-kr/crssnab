@@ -11,14 +11,14 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, pageContext } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
-    const systemPrompt = `Ты — AI-ассистент для CRM-системы управления заявками, поставками и закупками (CRSS).
+    let systemPrompt = `Ты — AI-ассистент для CRM-системы управления заявками, поставками и закупками (CRSS).
 
 Твои возможности:
 - Помогать менеджерам с управлением заявками: приоритизация, назначение, контроль сроков
@@ -35,7 +35,18 @@ serve(async (req) => {
 - Давай конкретные, практичные рекомендации
 - Используй структурированные ответы (списки, таблицы) когда это уместно
 - Если не знаешь точный ответ — честно скажи и предложи альтернативу
-- При ответах на вопросы о данных — напоминай что у тебя нет прямого доступа к базе данных системы`;
+- Учитывай контекст страницы, на которой сейчас находится пользователь, чтобы давать релевантные ответы`;
+
+    // Inject page context if provided
+    if (pageContext && typeof pageContext === "object") {
+      systemPrompt += `\n\n--- КОНТЕКСТ ТЕКУЩЕЙ СТРАНИЦЫ ---
+Страница: ${pageContext.pageName || "Неизвестная"}
+URL: ${pageContext.url || ""}`;
+      if (pageContext.summary) {
+        systemPrompt += `\nДанные на экране: ${pageContext.summary}`;
+      }
+      systemPrompt += `\n--- КОНЕЦ КОНТЕКСТА ---`;
+    }
 
     // Convert messages to Anthropic format
     const anthropicMessages = messages.map((msg: { role: string; content: string }) => ({
