@@ -2763,6 +2763,50 @@ export type Database = {
           },
         ]
       }
+      telegram_settings: {
+        Row: {
+          auto_send_on_create: boolean | null
+          auto_send_on_status_change: boolean | null
+          bot_token: string | null
+          chat_id: string | null
+          created_at: string | null
+          id: string
+          invoice_chat_id: string | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_send_on_create?: boolean | null
+          auto_send_on_status_change?: boolean | null
+          bot_token?: string | null
+          chat_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_chat_id?: string | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_send_on_create?: boolean | null
+          auto_send_on_status_change?: boolean | null
+          bot_token?: string | null
+          chat_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_chat_id?: string | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_organizations: {
         Row: {
           created_at: string | null
