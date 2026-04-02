@@ -692,7 +692,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
