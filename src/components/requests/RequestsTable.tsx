@@ -588,16 +588,23 @@ export const RequestsTable = ({
                   )}
                   {visibility.priority && (
                     <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.priority }}>
-                      <Badge
-                        variant="outline"
-                        className="text-xs px-2 py-0.5"
-                        style={{
-                          borderColor: getPriorityColor(request.priority || "Планово"),
-                          color: getPriorityColor(request.priority || "Планово"),
-                        }}
-                      >
-                        {request.priority || "Планово"}
-                      </Badge>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="priority"
+                        value={request.priority || "Планово"}
+                        displayValue={
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-2 py-0.5 cursor-pointer"
+                            style={{
+                              borderColor: getPriorityColor(request.priority || "Планово"),
+                              color: getPriorityColor(request.priority || "Планово"),
+                            }}
+                          >
+                            {request.priority || "Планово"}
+                          </Badge>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.status && (
