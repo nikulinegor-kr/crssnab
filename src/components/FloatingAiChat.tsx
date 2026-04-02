@@ -1,11 +1,77 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, X, Send, Loader2, User, Sparkles, Minimize2, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAiChat, type AiMessage } from "@/hooks/useAiChat";
+import { useAiChat, type AiMessage, type PageContext } from "@/hooks/useAiChat";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+
+const PAGE_NAMES: Record<string, string> = {
+  "/requests": "Заявки",
+  "/dashboard": "Дашборд",
+  "/objects": "Объекты",
+  "/suppliers": "Поставщики",
+  "/shipments": "Поставки",
+  "/warehouse": "Склад",
+  "/equipment": "Техника",
+  "/nomenclature": "Номенклатура",
+  "/calendar": "Календарь",
+  "/chat": "Чат команды",
+  "/documents": "Документы",
+  "/material-statements": "Ведомости материалов",
+  "/budgets": "Бюджеты",
+  "/ai-assistant": "AI-ассистент",
+  "/organization/settings": "Настройки",
+  "/profile": "Профиль",
+};
+
+function getPageContext(pathname: string): PageContext {
+  // Match dynamic routes like /requests/123
+  const basePath = "/" + pathname.split("/").filter(Boolean)[0];
+  const pageName = PAGE_NAMES[pathname] || PAGE_NAMES[basePath] || "Страница CRM";
+
+  // Collect visible data summary from the page
+  let summary = "";
+  try {
+    // Grab stats widgets if present
+    const statWidgets = document.querySelectorAll("[data-ai-context]");
+    if (statWidgets.length > 0) {
+      const parts: string[] = [];
+      statWidgets.forEach((el) => {
+        const ctx = el.getAttribute("data-ai-context");
+        if (ctx) parts.push(ctx);
+      });
+      if (parts.length) summary += parts.join("; ");
+    }
+
+    // Grab table row count
+    const tableRows = document.querySelectorAll("table tbody tr");
+    if (tableRows.length > 0) {
+      summary += (summary ? ". " : "") + `В таблице ${tableRows.length} строк`;
+    }
+
+    // Grab page heading
+    const h1 = document.querySelector("h1");
+    if (h1?.textContent) {
+      summary = `Заголовок: ${h1.textContent.trim()}` + (summary ? ". " + summary : "");
+    }
+
+    // For request detail pages, grab description
+    if (pathname.startsWith("/requests/")) {
+      const descEl = document.querySelector("[data-ai-context='request-description']")
+        || document.querySelector(".whitespace-pre-wrap");
+      if (descEl?.textContent) {
+        summary += (summary ? ". " : "") + `Описание заявки: ${descEl.textContent.trim().slice(0, 200)}`;
+      }
+    }
+  } catch {
+    // DOM access errors are non-critical
+  }
+
+  return { pageName, url: pathname, summary: summary || undefined };
+}
 
 const QUICK_PROMPTS = [
   "Помоги составить письмо поставщику",
