@@ -765,7 +765,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground/30 text-[11px] italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
