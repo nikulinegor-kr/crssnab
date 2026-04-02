@@ -692,18 +692,18 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.transport_company }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.transport_company }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
                         value={request.transport_company || ""}
                         displayValue={
                           request.transport_company ? (
-                            <div className="line-clamp-2 text-muted-foreground leading-tight truncate font-numeric">
+                            <div className="line-clamp-2 text-foreground leading-snug truncate">
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">не назначен</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
                           )
                         }
                       />
