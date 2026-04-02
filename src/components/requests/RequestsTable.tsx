@@ -755,7 +755,7 @@ export const RequestsTable = ({
                     <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.equipment }}>
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
                         <div className="leading-tight truncate text-sm">
-                          <div className="font-medium">
+                          <div className="font-medium font-numeric">
                             <HighlightText text={(request as any).equipment_plate || ""} searchQuery={searchQuery} />
                           </div>
                           {(request as any).equipment_display && (
