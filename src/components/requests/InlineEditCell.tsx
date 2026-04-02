@@ -126,36 +126,37 @@ export const InlineEditCell = ({
     );
   }
 
-  // Status field uses Select
-  if (field === "status") {
+  // Status / Priority field uses Select
+  if (field === "status" || field === "priority") {
+    const options = field === "status" ? STATUSES : PRIORITIES;
+    const label = field === "status" ? "Статус" : "Приоритет";
     return (
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
         <Select
           value={editValue}
           onValueChange={(val) => {
             setEditValue(val);
-            // Auto-save on status change
             setTimeout(async () => {
               setIsSaving(true);
               try {
                 const { error } = await supabase
                   .from("requests")
-                  .update({ status: val })
+                  .update({ [field]: val })
                   .eq("id", requestId);
 
                 if (error) throw error;
 
                 queryClient.invalidateQueries({ queryKey: ["requests"] });
                 toast({
-                  title: "Статус изменён",
-                  description: `Новый статус: ${val}`,
+                  title: `${label} изменён`,
+                  description: `Новое значение: ${val}`,
                 });
                 setIsEditing(false);
               } catch (error) {
                 console.error("Error saving:", error);
                 toast({
                   title: "Ошибка",
-                  description: "Не удалось изменить статус",
+                  description: `Не удалось изменить ${label.toLowerCase()}`,
                   variant: "destructive",
                 });
               } finally {
@@ -169,9 +170,9 @@ export const InlineEditCell = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="z-[100]">
-            {STATUSES.map((status) => (
-              <SelectItem key={status} value={status} className="text-xs">
-                {status}
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt} className="text-xs">
+                {opt}
               </SelectItem>
             ))}
           </SelectContent>
