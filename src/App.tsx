@@ -57,6 +57,7 @@ const Contact = lazyWithRetry(() => import("./pages/Contact"));
 const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
 const EmployeeLogin = lazyWithRetry(() => import("./pages/EmployeeLogin"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -188,6 +189,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <ChatPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai-assistant"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AIAssistantPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

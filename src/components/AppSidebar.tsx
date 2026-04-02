@@ -18,6 +18,7 @@ import {
   FolderOpen,
   FileSpreadsheet,
   Files,
+  Bot,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -90,6 +91,7 @@ const menuGroups = [
     icon: BarChart3,
     items: [
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+      { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
 ];
