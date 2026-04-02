@@ -76,6 +76,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
             )}
           </main>
         </div>
+        <FloatingAiChat />
       </div>
     </SidebarProvider>
   );
