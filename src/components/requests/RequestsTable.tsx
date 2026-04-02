@@ -658,7 +658,7 @@ export const RequestsTable = ({
                   {visibility.invoice_number && (
                     <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.invoice_number }}>
                       {request.invoice_number ? (
-                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate font-numeric">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
