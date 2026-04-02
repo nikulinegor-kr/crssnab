@@ -438,7 +438,6 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="w-8 text-center p-1 border-r text-xs text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -446,14 +445,7 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
-              {onToggleFavorite && (
-                <TableHead className="w-8 text-center p-1 border-r">
-                  <Star className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
-                </TableHead>
-              )}
-              <TableHead className="w-8 text-center p-1 border-r">
-                <Eye className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
-              </TableHead>
+              <TableHead className="w-8 text-center p-1 border-r text-xs text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
@@ -530,9 +522,6 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
-                    {rowNumber}
-                  </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r align-middle" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
@@ -542,31 +531,8 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  {onToggleFavorite && (
-                    <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onToggleFavorite(request.id)}
-                        className="hover:scale-110 transition-transform"
-                        aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
-                      >
-                        <Star
-                          className={`h-4 w-4 ${
-                            favoriteIds?.has(request.id)
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground/30 hover:text-yellow-400"
-                          }`}
-                        />
-                      </button>
-                    </TableCell>
-                  )}
-                  <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => openQuickView(request)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                      aria-label="Быстрый просмотр"
-                    >
-                      <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                    </button>
+                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
+                    {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-xs text-muted-foreground font-numeric overflow-hidden" style={{ width: widths.request_date }}>
@@ -575,23 +541,49 @@ export const RequestsTable = ({
                   )}
                   {visibility.description && (
                     <TableCell className="px-3 py-2 border-r overflow-hidden" style={{ width: widths.description }}>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="description"
-                        value={request.description}
-                        displayValue={
-                          <RequestQuickPreview
-                            request={request}
-                            getStatusColor={getStatusColor}
-                            getPriorityColor={getPriorityColor}
-                            onEdit={onEditClick}
+                      <div className="flex items-center gap-1.5">
+                        {onToggleFavorite && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite(request.id); }}
+                            className="shrink-0 hover:scale-110 transition-transform"
+                            aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
                           >
-                            <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
-                              <HighlightText text={request.description} searchQuery={searchQuery} />
-                            </div>
-                          </RequestQuickPreview>
-                        }
-                      />
+                            <Star
+                              className={`h-3.5 w-3.5 ${
+                                favoriteIds?.has(request.id)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground/20 hover:text-yellow-400"
+                              }`}
+                            />
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <InlineEditCell
+                            requestId={request.id}
+                            field="description"
+                            value={request.description}
+                            displayValue={
+                              <RequestQuickPreview
+                                request={request}
+                                getStatusColor={getStatusColor}
+                                getPriorityColor={getPriorityColor}
+                                onEdit={onEditClick}
+                              >
+                                <div className="line-clamp-1 hover:text-primary transition-colors font-semibold text-foreground leading-tight truncate" title={request.description}>
+                                  <HighlightText text={request.description} searchQuery={searchQuery} />
+                                </div>
+                              </RequestQuickPreview>
+                            }
+                          />
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
+                          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                          aria-label="Быстрый просмотр"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-primary" />
+                        </button>
+                      </div>
                     </TableCell>
                   )}
                   {visibility.priority && (
