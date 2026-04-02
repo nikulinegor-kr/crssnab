@@ -194,6 +194,16 @@ const App = () => {
               }
             />
             <Route
+              path="/ai-assistant"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AIAssistantPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/profile"
               element={
                 <ProtectedRoute>

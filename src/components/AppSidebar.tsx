@@ -18,6 +18,7 @@ import {
   FolderOpen,
   FileSpreadsheet,
   Files,
+  Bot,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
