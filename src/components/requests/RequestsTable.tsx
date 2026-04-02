@@ -113,7 +113,7 @@ const MobileRequestCard = memo(({
       <div className="flex-1 min-w-0 space-y-1">
         {/* Header row with date, priority, status */}
         <div className="flex items-center justify-between gap-1 flex-wrap">
-          <span className="text-[10px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             {format(new Date(request.request_date), "dd.MM.yy")}
           </span>
           <div className="flex items-center gap-1">
@@ -145,7 +145,7 @@ const MobileRequestCard = memo(({
         </div>
 
         {/* Compact info row */}
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
           {request.contractor && (
             <span className="truncate max-w-[100px]">
               <span className="font-medium">К:</span> <HighlightText text={request.contractor} searchQuery={searchQuery} />
@@ -345,9 +345,9 @@ export const RequestsTable = ({
   // Compact Pagination UI
   const PaginationControls = () => (
     <div className="flex items-center justify-between gap-2 py-2 border-t mt-2">
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-          <SelectTrigger className="w-14 h-6 text-[11px] px-2">
+          <SelectTrigger className="w-14 h-6 text-xs px-2">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -362,7 +362,7 @@ export const RequestsTable = ({
       </div>
       
       <div className="flex items-center gap-1">
-        <span className="text-[11px] text-muted-foreground mr-1">
+        <span className="text-xs text-muted-foreground mr-1">
           {startIndex + 1}-{Math.min(endIndex, totalItems)}
         </span>
         <Button
@@ -383,7 +383,7 @@ export const RequestsTable = ({
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
-        <span className="text-[11px] font-medium px-1 min-w-[2.5rem] text-center">
+        <span className="text-xs font-medium px-1 min-w-[2.5rem] text-center">
           {currentPage}/{totalPages || 1}
         </span>
         <Button
@@ -438,7 +438,7 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="w-8 text-center p-1 border-r text-[10px] text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
+              <TableHead className="w-8 text-center p-1 border-r text-xs text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
               <TableHead className="w-10 text-center p-2 border-r">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -530,7 +530,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-[11px] text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
+                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
                     {rowNumber}
                   </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
@@ -633,7 +633,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-[11px] italic">нет данных</span>
+                        <span className="text-muted-foreground/30 text-xs italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
@@ -649,7 +649,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-[11px] italic">не указан</span>
+                            <span className="text-muted-foreground/30 text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -662,7 +662,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-[11px] italic">не выставлен</span>
+                        <span className="text-muted-foreground/30 text-xs italic">не выставлен</span>
                       )}
                     </TableCell>
                   )}
@@ -675,14 +675,14 @@ export const RequestsTable = ({
                         displayValue={
                           request.payment_percentage !== null && request.payment_percentage !== undefined
                             ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                            : <span className="text-muted-foreground/30 text-[11px] italic">0%</span>
+                            : <span className="text-muted-foreground/30 text-xs italic">0%</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">ожидается</span>}
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-xs italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
@@ -692,7 +692,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-xs italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
@@ -709,7 +709,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-[11px] italic">не назначен</span>
+                            <span className="text-muted-foreground/30 text-xs italic">не назначен</span>
                           )
                         }
                       />
@@ -727,7 +727,7 @@ export const RequestsTable = ({
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/30 text-[11px] italic">нет суммы</span>
+                            <span className="text-muted-foreground/30 text-xs italic">нет суммы</span>
                           )
                         }
                       />
@@ -745,7 +745,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-[11px] italic">не указан</span>
+                            <span className="text-muted-foreground/30 text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -765,7 +765,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-[11px] italic">нет техники</span>
+                        <span className="text-muted-foreground/30 text-xs italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
@@ -781,7 +781,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-[11px] italic">нет</span>
+                            <span className="text-muted-foreground/30 text-xs italic">нет</span>
                           )
                         }
                       />
