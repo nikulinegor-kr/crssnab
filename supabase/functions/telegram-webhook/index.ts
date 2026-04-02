@@ -152,19 +152,35 @@ function getStatusEmoji(status: string): string {
   return "📋";
 }
 
-// Find organization by chat_id
+// Find organization by chat_id (using telegram_settings table)
 async function findOrganizationByChatId(chatId: number) {
+  const { data: tgSetting, error: tgErr } = await supabase
+    .from("telegram_settings")
+    .select("organization_id")
+    .eq("chat_id", chatId.toString())
+    .single();
+  
+  if (tgErr || !tgSetting) {
+    console.error("Error finding organization by chat_id:", tgErr);
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("organizations")
     .select("id, name")
-    .eq("telegram_chat_id", chatId.toString())
+    .eq("id", tgSetting.organization_id)
     .single();
   
   if (error) {
-    console.error("Error finding organization by chat_id:", error);
+    console.error("Error finding organization:", error);
     return null;
   }
   return data;
+}
+
+// Helper to safely match request by partial or full UUID
+function sanitizeUuidPart(input: string): string {
+  return input.replace(/[^0-9a-f-]/gi, '');
 }
 
 // Build original keyboard for a request (same logic as notify-telegram)
