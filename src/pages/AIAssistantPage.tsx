@@ -3,11 +3,25 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Loader2, Trash2, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Send, Bot, User, Loader2, Trash2, Sparkles, Plus, MessageSquare, Search, Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAiChat, type AiMessage } from "@/hooks/useAiChat";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
-type Message = { role: "user" | "assistant"; content: string };
+interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const SUGGESTIONS = [
   "Как приоритизировать заявки при большом потоке?",
@@ -16,135 +30,170 @@ const SUGGESTIONS = [
   "Как оптимизировать процесс закупок?",
 ];
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claude-chat`;
-
 export default function AIAssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { currentOrgId } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const {
+    messages, isLoading, conversationId,
+    sendMessage, loadConversation, startNewConversation, stopGeneration,
+  } = useAiChat();
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { toast } = useToast();
+
+  // Load conversations list
+  const { data: conversations, refetch: refetchConversations } = useQuery({
+    queryKey: ["ai-conversations", currentOrgId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !currentOrgId) return [];
+
+      const { data, error } = await supabase
+        .from("ai_conversations")
+        .select("id, title, created_at, updated_at")
+        .eq("user_id", user.id)
+        .eq("organization_id", currentOrgId)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as Conversation[];
+    },
+    enabled: !!currentOrgId,
+  });
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
-
-    const userMsg: Message = { role: "user", content: text.trim() };
-    const allMessages = [...messages, userMsg];
-    setMessages(allMessages);
-    setInput("");
-    setIsLoading(true);
-
-    let assistantContent = "";
-
-    try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: allMessages }),
-      });
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: "Ошибка сервера" }));
-        throw new Error(err.error || `HTTP ${resp.status}`);
-      }
-
-      if (!resp.body) throw new Error("No stream body");
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIdx: number;
-        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIdx);
-          buffer = buffer.slice(newlineIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              setMessages((prev) => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) =>
-                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
-                  );
-                }
-                return [...prev, { role: "assistant", content: assistantContent }];
-              });
-            }
-          } catch {
-            // partial JSON, skip
-          }
-        }
-      }
-    } catch (e: any) {
-      toast({
-        title: "Ошибка",
-        description: e.message || "Не удалось получить ответ от AI",
-        variant: "destructive",
-      });
-      // Remove user message if no response came
-      if (!assistantContent) {
-        setMessages((prev) => prev.slice(0, -1));
-      }
-    } finally {
-      setIsLoading(false);
+  // Refetch conversations when conversationId changes (new conv created)
+  useEffect(() => {
+    if (conversationId) {
+      refetchConversations();
     }
-  }, [messages, isLoading, toast]);
+  }, [conversationId, refetchConversations]);
+
+  const handleSend = useCallback(() => {
+    if (!input.trim() || !currentOrgId || isLoading) return;
+    sendMessage(input.trim(), currentOrgId);
+    setInput("");
+  }, [input, currentOrgId, isLoading, sendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(input);
+      handleSend();
     }
   };
 
+  const handleSelectConversation = (conv: Conversation) => {
+    loadConversation(conv.id);
+  };
+
+  const handleDeleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { error } = await supabase.from("ai_conversations").delete().eq("id", convId);
+    if (error) {
+      toast({ title: "Ошибка", description: "Не удалось удалить разговор", variant: "destructive" });
+      return;
+    }
+    if (conversationId === convId) {
+      startNewConversation();
+    }
+    refetchConversations();
+  };
+
+  const handleNewChat = () => {
+    startNewConversation();
+  };
+
+  const filteredConversations = conversations?.filter((c) =>
+    !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Bot className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">AI-ассистент</h1>
-            <p className="text-xs text-muted-foreground">Claude · помощник менеджера</p>
+    <div className="flex h-[calc(100vh-7rem)] max-w-6xl mx-auto gap-4">
+      {/* Sidebar - conversation list */}
+      <div className="w-72 shrink-0 flex flex-col border border-border/40 rounded-xl bg-card overflow-hidden hidden md:flex">
+        <div className="p-3 border-b border-border/40 space-y-2">
+          <Button onClick={handleNewChat} className="w-full gap-2" size="sm">
+            <Plus className="h-4 w-4" />
+            Новый разговор
+          </Button>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Поиск..."
+              className="pl-8 h-8 text-xs"
+            />
           </div>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setMessages([])}
-            aria-label="Очистить чат"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Очистить
-          </Button>
-        )}
+
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-0.5">
+            {filteredConversations?.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-8">
+                Нет разговоров
+              </p>
+            )}
+            {filteredConversations?.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => handleSelectConversation(conv)}
+                className={cn(
+                  "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors group flex items-start gap-2",
+                  conversationId === conv.id
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-muted/50 text-foreground"
+                )}
+              >
+                <MessageSquare className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium">{conv.title}</p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Clock className="h-3 w-3" />
+                    {format(new Date(conv.updated_at), "d MMM, HH:mm", { locale: ru })}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                  onClick={(e) => handleDeleteConversation(conv.id, e)}
+                  aria-label="Удалить разговор"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
+      {/* Main chat area */}
       <Card className="flex-1 flex flex-col overflow-hidden border-border/40">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bot className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-base font-semibold leading-none">AI-ассистент</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">Claude · помощник менеджера</p>
+            </div>
+          </div>
+          {isLoading && (
+            <Button variant="outline" size="sm" onClick={stopGeneration}>
+              Остановить
+            </Button>
+          )}
+        </div>
+
+        {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-6">
@@ -154,7 +203,7 @@ export default function AIAssistantPage() {
               <div className="text-center space-y-2">
                 <h2 className="text-lg font-medium">Чем могу помочь?</h2>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Я помогу с управлением заявками, закупками, поставками и другими задачами CRM
+                  Я помогу с управлением заявками, закупками, коммуникацией с поставщиками и аналитикой
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full">
@@ -164,7 +213,7 @@ export default function AIAssistantPage() {
                     variant="outline"
                     size="sm"
                     className="text-left h-auto py-2.5 px-3 text-xs whitespace-normal justify-start"
-                    onClick={() => sendMessage(s)}
+                    onClick={() => currentOrgId && sendMessage(s, currentOrgId)}
                   >
                     {s}
                   </Button>
@@ -218,6 +267,7 @@ export default function AIAssistantPage() {
           )}
         </ScrollArea>
 
+        {/* Input */}
         <div className="p-3 border-t border-border/40">
           <div className="flex gap-2 items-end">
             <Textarea
@@ -232,7 +282,7 @@ export default function AIAssistantPage() {
             />
             <Button
               size="icon"
-              onClick={() => sendMessage(input)}
+              onClick={handleSend}
               disabled={!input.trim() || isLoading}
               aria-label="Отправить сообщение"
             >
