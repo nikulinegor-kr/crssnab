@@ -106,33 +106,33 @@ async function getOrganizationStatuses(orgId: string) {
 async function notifyGroupAboutStatusChange(request: any, status: string, username: string, fullName: string) {
   console.log("Notifying group about status change:", { requestId: request.id, status });
   
-  // Get organization telegram settings
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("telegram_chat_id, telegram_bot_token")
-    .eq("id", request.organization_id)
+  // Get organization telegram settings from telegram_settings table
+  const { data: tgSettings, error: tgError } = await supabase
+    .from("telegram_settings")
+    .select("chat_id, bot_token")
+    .eq("organization_id", request.organization_id)
     .single();
 
-  if (orgError || !org) {
-    console.error("Error fetching organization:", orgError);
+  if (tgError || !tgSettings) {
+    console.error("Error fetching telegram settings:", tgError);
     return;
   }
 
-  if (!org.telegram_chat_id || !org.telegram_bot_token) {
+  if (!tgSettings.chat_id || !tgSettings.bot_token) {
     console.log("Telegram not configured for organization");
     return;
   }
 
   const message = `🔔 Изменен статус заявки\n\n` +
-    `🧾 Заявка: ${request.description}\n` +
-    `📋 Номер: ${request.request_number}\n` +
-    `✅ Новый статус: ${status}\n` +
-    `👤 Изменил: @${username || fullName}\n` +
+    `🧾 Заявка: ${escapeHtml(request.description)}\n` +
+    `📋 Номер: ${escapeHtml(request.request_number)}\n` +
+    `✅ Новый статус: ${escapeHtml(status)}\n` +
+    `👤 Изменил: ${escapeHtml(username || fullName)}\n` +
     `📅 ${new Date().toLocaleString("ru-RU")}`;
 
   try {
     await sendTelegramRequest("sendMessage", {
-      chat_id: org.telegram_chat_id,
+      chat_id: tgSettings.chat_id,
       text: message,
       parse_mode: "HTML",
     });
