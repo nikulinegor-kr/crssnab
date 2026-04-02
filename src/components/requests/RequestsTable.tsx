@@ -669,7 +669,7 @@ export const RequestsTable = ({
                         displayValue={
                           request.payment_percentage !== null && request.payment_percentage !== undefined
                             ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                            : <span className="text-muted-foreground/30 text-xs italic">0%</span>
+                            : <span className="text-[#9CA3AF] text-[12px] italic">0%</span>
                         }
                       />
                     </TableCell>
