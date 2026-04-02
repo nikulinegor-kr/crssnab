@@ -89,7 +89,7 @@ export const EquipmentSidebar = ({ organizationId }: EquipmentSidebarProps) => {
                   <TableCell className="font-medium">{e.brand || "—"}</TableCell>
                   <TableCell>{e.model || "—"}</TableCell>
                   <TableCell>{e.year || "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
+                  <TableCell className="font-numeric">{e.vin || "—"}</TableCell>
                   <TableCell>{e.plate_number || "—"}</TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
                     {e.comment || "—"}
