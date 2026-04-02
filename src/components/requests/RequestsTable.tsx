@@ -621,13 +621,13 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.availability }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.availability }}>
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-muted-foreground leading-tight truncate">
+                        <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/30 text-xs italic">нет данных</span>
+                        <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
