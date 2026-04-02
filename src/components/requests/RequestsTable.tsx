@@ -680,13 +680,13 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.delivery_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-xs italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
