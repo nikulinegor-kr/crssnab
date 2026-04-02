@@ -533,12 +533,14 @@ export const RequestsTable = ({
                   <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
                     {rowNumber}
                   </TableCell>
-                  <TableCell className="w-10 text-center px-3 py-2 border-r" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedRequestIds.has(request.id)}
-                      onCheckedChange={() => toggleRequestSelection(request.id)}
-                      className="h-4 w-4"
-                    />
+                  <TableCell className="w-10 text-center px-3 py-2 border-r align-middle" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={selectedRequestIds.has(request.id)}
+                        onCheckedChange={() => toggleRequestSelection(request.id)}
+                        className="h-4 w-4"
+                      />
+                    </div>
                   </TableCell>
                   {onToggleFavorite && (
                     <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
