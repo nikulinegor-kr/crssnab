@@ -79,16 +79,17 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
 
     setSaving(true);
     try {
+      // Upsert into telegram_settings table (admin-only)
       const { error } = await supabase
-        .from("organizations")
-        .update({
-          telegram_bot_token: botToken || null,
-          telegram_chat_id: chatId || null,
-          telegram_auto_send_on_create: autoSendOnCreate,
-          telegram_auto_send_on_status_change: autoSendOnStatusChange,
-          telegram_invoice_chat_id: invoiceChatId || null,
-        } as any)
-        .eq("id", organizationId);
+        .from("telegram_settings" as any)
+        .upsert({
+          organization_id: organizationId,
+          bot_token: botToken || null,
+          chat_id: chatId || null,
+          auto_send_on_create: autoSendOnCreate,
+          auto_send_on_status_change: autoSendOnStatusChange,
+          invoice_chat_id: invoiceChatId || null,
+        } as any, { onConflict: "organization_id" });
 
       if (error) throw error;
 
