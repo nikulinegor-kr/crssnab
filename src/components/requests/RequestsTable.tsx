@@ -633,7 +633,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground/30 text-[11px] italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
@@ -649,7 +649,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">не указан</span>
                           )
                         }
                       />
@@ -662,7 +662,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground/30 text-[11px] italic">не выставлен</span>
                       )}
                     </TableCell>
                   )}
@@ -675,14 +675,14 @@ export const RequestsTable = ({
                         displayValue={
                           request.payment_percentage !== null && request.payment_percentage !== undefined
                             ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
-                            : <span className="text-muted-foreground/40">—</span>
+                            : <span className="text-muted-foreground/30 text-[11px] italic">0%</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-muted-foreground overflow-hidden" style={{ width: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
@@ -692,7 +692,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/40">—</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground/30 text-[11px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
@@ -709,7 +709,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">не назначен</span>
                           )
                         }
                       />
@@ -727,7 +727,7 @@ export const RequestsTable = ({
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">нет суммы</span>
                           )
                         }
                       />
@@ -745,7 +745,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">не указан</span>
                           )
                         }
                       />
@@ -765,7 +765,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground/30 text-[11px] italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
@@ -781,7 +781,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">нет</span>
                           )
                         }
                       />
