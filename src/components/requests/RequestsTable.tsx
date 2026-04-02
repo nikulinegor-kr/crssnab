@@ -723,7 +723,7 @@ export const RequestsTable = ({
                         value={request.amount ?? ""}
                         displayValue={
                           request.amount && request.amount > 0 ? (
-                            <span className="font-medium">
+                            <span className="font-medium font-numeric">
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
