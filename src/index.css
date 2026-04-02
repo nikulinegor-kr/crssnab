@@ -28,8 +28,9 @@ All colors MUST be HSL.
   }
 
   h1, h2, .page-title {
-    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    font-family: 'Manrope', system-ui, sans-serif;
     font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   #root {
