@@ -431,7 +431,7 @@ export const RequestsTable = ({
       <div className="hidden lg:block">
         <div className="flex items-center justify-end gap-2 mb-2">
           {headerActions}
-          <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} />
+          <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="rounded-md border overflow-x-auto">
         <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
