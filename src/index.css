@@ -158,14 +158,13 @@ All colors MUST be HSL.
   }
 }
 
+@layer utilities {
   .font-numeric {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
-}
 
-@layer utilities {
   .glassmorphism {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
