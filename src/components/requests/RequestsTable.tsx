@@ -771,11 +771,11 @@ export const RequestsTable = ({
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-muted-foreground italic leading-tight text-left">
+                            <div className="line-clamp-3 text-[#6B7280] text-[13px] leading-snug text-left">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">нет</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">нет</span>
                           )
                         }
                       />
