@@ -200,9 +200,7 @@ export function FloatingAiChat() {
                   variant="outline"
                   size="sm"
                   className="text-xs h-auto py-2 justify-start whitespace-normal text-left"
-                  onClick={() => {
-                    if (currentOrgId) sendMessage(p, currentOrgId);
-                  }}
+                  onClick={() => handleSendWithContext(p)}
                 >
                   {p}
                 </Button>
