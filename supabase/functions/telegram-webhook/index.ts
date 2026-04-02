@@ -410,7 +410,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
+      .like("id", `${sanitizeUuidPart(requestIdPart)}%`)
       .single();
     
     if (error || !request) {
