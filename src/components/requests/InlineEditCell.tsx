@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { STATUSES } from "@/hooks/useRequestsFilters";
+import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
