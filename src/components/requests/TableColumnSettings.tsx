@@ -1,4 +1,4 @@
-import { Settings2 } from "lucide-react";
+import { Settings2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 export interface ColumnVisibility {
   request_date: boolean;
@@ -65,11 +66,13 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
 interface TableColumnSettingsProps {
   visibility: ColumnVisibility;
   onVisibilityChange: (visibility: ColumnVisibility) => void;
+  onReset?: () => void;
 }
 
 export const TableColumnSettings = ({
   visibility,
   onVisibilityChange,
+  onReset,
 }: TableColumnSettingsProps) => {
   const handleToggle = (column: keyof ColumnVisibility) => {
     onVisibilityChange({
@@ -77,6 +80,10 @@ export const TableColumnSettings = ({
       [column]: !visibility[column],
     });
   };
+
+  const isDefault = Object.keys(DEFAULT_COLUMN_VISIBILITY).every(
+    (key) => visibility[key as keyof ColumnVisibility] === DEFAULT_COLUMN_VISIBILITY[key as keyof ColumnVisibility]
+  );
 
   return (
     <Popover>
@@ -104,6 +111,20 @@ export const TableColumnSettings = ({
               </Label>
             </div>
           ))}
+          {!isDefault && onReset && (
+            <>
+              <Separator className="my-2" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-8 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                onClick={onReset}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Сбросить колонки
+              </Button>
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { ColumnVisibility, DEFAULT_COLUMN_VISIBILITY } from "@/components/requests/TableColumnSettings";
 
-const STORAGE_KEY = "requests-column-visibility";
+const STORAGE_KEY = "requests_table_columns";
 
 export const useTableColumnVisibility = () => {
   const [visibility, setVisibility] = useState<ColumnVisibility>(() => {
