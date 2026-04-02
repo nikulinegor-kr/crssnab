@@ -728,18 +728,18 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.applicant }}>
+                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.applicant }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-tight truncate text-xs text-muted-foreground">
+                            <div className="line-clamp-2 leading-snug truncate text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/30 text-xs italic">не указан</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
                           )
                         }
                       />
