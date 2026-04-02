@@ -18,6 +18,15 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Escape HTML entities to prevent injection in Telegram messages
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return text.replace(/[&<>"']/g, (m) => {
+    const map: Record<string, string> = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return map[m] || m;
+  });
+}
+
 // Input validation schemas
 const telegramUserSchema = z.object({
   username: z.string().max(100).optional(),
