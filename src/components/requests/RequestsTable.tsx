@@ -649,7 +649,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">не указан</span>
                           )
                         }
                       />
