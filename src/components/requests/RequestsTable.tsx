@@ -522,9 +522,6 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
-                    {rowNumber}
-                  </TableCell>
                   <TableCell className="w-10 text-center px-3 py-2 border-r align-middle" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
@@ -534,31 +531,8 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  {onToggleFavorite && (
-                    <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onToggleFavorite(request.id)}
-                        className="hover:scale-110 transition-transform"
-                        aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
-                      >
-                        <Star
-                          className={`h-4 w-4 ${
-                            favoriteIds?.has(request.id)
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground/30 hover:text-yellow-400"
-                          }`}
-                        />
-                      </button>
-                    </TableCell>
-                  )}
-                  <TableCell className="w-8 text-center px-1 py-2 border-r" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => openQuickView(request)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                      aria-label="Быстрый просмотр"
-                    >
-                      <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                    </button>
+                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
+                    {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center px-3 py-2 border-r text-xs text-muted-foreground font-numeric overflow-hidden" style={{ width: widths.request_date }}>
