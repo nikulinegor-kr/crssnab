@@ -87,6 +87,7 @@ export function FloatingAiChat() {
   const { messages, isLoading, sendMessage, startNewConversation } = useAiChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,9 +99,14 @@ export function FloatingAiChat() {
     }
   }, [isOpen]);
 
+  const handleSendWithContext = useCallback((text: string) => {
+    if (!text.trim() || !currentOrgId || isLoading) return;
+    const ctx = getPageContext(location.pathname);
+    sendMessage(text.trim(), currentOrgId, ctx);
+  }, [currentOrgId, isLoading, sendMessage, location.pathname]);
+
   const handleSend = () => {
-    if (!input.trim() || !currentOrgId || isLoading) return;
-    sendMessage(input.trim(), currentOrgId);
+    handleSendWithContext(input);
     setInput("");
   };
 
