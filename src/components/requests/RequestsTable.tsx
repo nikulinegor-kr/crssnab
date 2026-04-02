@@ -727,7 +727,7 @@ export const RequestsTable = ({
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/40">—</span>
+                            <span className="text-muted-foreground/30 text-[11px] italic">нет суммы</span>
                           )
                         }
                       />
