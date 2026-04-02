@@ -161,8 +161,6 @@ All colors MUST be HSL.
 
 @layer utilities {
   .font-numeric {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
 
