@@ -18,6 +18,15 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Escape HTML entities to prevent injection in Telegram messages
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return text.replace(/[&<>"']/g, (m) => {
+    const map: Record<string, string> = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return map[m] || m;
+  });
+}
+
 // Input validation schemas
 const telegramUserSchema = z.object({
   username: z.string().max(100).optional(),
@@ -97,33 +106,33 @@ async function getOrganizationStatuses(orgId: string) {
 async function notifyGroupAboutStatusChange(request: any, status: string, username: string, fullName: string) {
   console.log("Notifying group about status change:", { requestId: request.id, status });
   
-  // Get organization telegram settings
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("telegram_chat_id, telegram_bot_token")
-    .eq("id", request.organization_id)
+  // Get organization telegram settings from telegram_settings table
+  const { data: tgSettings, error: tgError } = await supabase
+    .from("telegram_settings")
+    .select("chat_id, bot_token")
+    .eq("organization_id", request.organization_id)
     .single();
 
-  if (orgError || !org) {
-    console.error("Error fetching organization:", orgError);
+  if (tgError || !tgSettings) {
+    console.error("Error fetching telegram settings:", tgError);
     return;
   }
 
-  if (!org.telegram_chat_id || !org.telegram_bot_token) {
+  if (!tgSettings.chat_id || !tgSettings.bot_token) {
     console.log("Telegram not configured for organization");
     return;
   }
 
   const message = `🔔 Изменен статус заявки\n\n` +
-    `🧾 Заявка: ${request.description}\n` +
-    `📋 Номер: ${request.request_number}\n` +
-    `✅ Новый статус: ${status}\n` +
-    `👤 Изменил: @${username || fullName}\n` +
+    `🧾 Заявка: ${escapeHtml(request.description)}\n` +
+    `📋 Номер: ${escapeHtml(request.request_number)}\n` +
+    `✅ Новый статус: ${escapeHtml(status)}\n` +
+    `👤 Изменил: ${escapeHtml(username || fullName)}\n` +
     `📅 ${new Date().toLocaleString("ru-RU")}`;
 
   try {
     await sendTelegramRequest("sendMessage", {
-      chat_id: org.telegram_chat_id,
+      chat_id: tgSettings.chat_id,
       text: message,
       parse_mode: "HTML",
     });
@@ -143,19 +152,35 @@ function getStatusEmoji(status: string): string {
   return "📋";
 }
 
-// Find organization by chat_id
+// Find organization by chat_id (using telegram_settings table)
 async function findOrganizationByChatId(chatId: number) {
+  const { data: tgSetting, error: tgErr } = await supabase
+    .from("telegram_settings")
+    .select("organization_id")
+    .eq("chat_id", chatId.toString())
+    .single();
+  
+  if (tgErr || !tgSetting) {
+    console.error("Error finding organization by chat_id:", tgErr);
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("organizations")
     .select("id, name")
-    .eq("telegram_chat_id", chatId.toString())
+    .eq("id", tgSetting.organization_id)
     .single();
   
   if (error) {
-    console.error("Error finding organization by chat_id:", error);
+    console.error("Error finding organization:", error);
     return null;
   }
   return data;
+}
+
+// Helper to safely match request by partial or full UUID
+function sanitizeUuidPart(input: string): string {
+  return input.replace(/[^0-9a-f-]/gi, '');
 }
 
 // Build original keyboard for a request (same logic as notify-telegram)
@@ -385,7 +410,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestIdPart}%`)
+      .like("id", `${sanitizeUuidPart(requestIdPart)}%`)
       .single();
     
     if (error || !request) {
@@ -453,7 +478,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     const { data: requests, error } = await supabase
       .from("requests")
       .select("*")
-      .like("id", `${requestId}%`)
+      .like("id", `${sanitizeUuidPart(requestId)}%`)
       .single();
     
     if (error || !requests) {
