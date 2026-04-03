@@ -525,13 +525,10 @@ serve(async (req) => {
     const { requestId, mode } = schema.parse(requestBody);
     console.log("Notifying about request:", requestId, "mode:", mode);
 
-    // Get request details with organization info
+    // Get request details
     const { data: request, error } = await supabase
       .from("requests")
-      .select(`
-        *,
-        organizations!inner(telegram_bot_token, telegram_chat_id, telegram_invoice_chat_id)
-      `)
+      .select("*")
       .eq("id", requestId)
       .single();
 
@@ -561,7 +558,7 @@ serve(async (req) => {
     }
 
     // Check if organization has Telegram configured
-    const org = request.organizations;
+    const org = await getTelegramSettings(request.organization_id);
     if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
       console.log("Telegram not configured for this organization");
       return new Response(
