@@ -184,10 +184,9 @@ const OrganizationSettings = () => {
 
         {visibleTabs.includes("notifications") && (
           <TabsContent value="notifications" className="space-y-8">
-            <SettingsSection title="Настройки уведомлений" description="Push-уведомления, Telegram и автонапоминания" icon={Bell}>
+            <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
               <div className="space-y-6">
-                <PushNotificationSettings />
-                {isAdmin && <TelegramSettings organizationId={currentOrgId!} />}
+                <NotificationSettings organizationId={currentOrgId!} />
                 {isAdmin && <DeadlineReminderSettings />}
               </div>
             </SettingsSection>
