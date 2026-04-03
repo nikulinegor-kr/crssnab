@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -438,25 +438,24 @@ export const RequestsTable = ({
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-[5px] p-0 border-r"></TableHead>
-              <ResizableTableHeader
-                column="checkbox"
-                label=""
-                width={widths.checkbox}
-                onResize={handleColumnResize}
-                className="!p-0"
-              >
+              <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
                   className="h-4 w-4"
                 />
-              </ResizableTableHeader>
-              <ResizableTableHeader column="row_number" label="№" width={widths.row_number} onResize={handleColumnResize} />
+              </TableHead>
+              <TableHead className="w-[28px] min-w-[28px] max-w-[28px] text-center p-1 border-r border-b text-xs text-muted-foreground font-bold">№</TableHead>
               {visibility.request_date && (
-                <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
+                <TableHead className="w-[70px] min-w-[70px] max-w-[70px] text-center p-1 border-r border-b text-xs font-bold text-foreground/80 cursor-pointer hover:bg-muted/60" onClick={() => handleSort("request_date")}>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <span className="uppercase">Дата</span>
+                    {sortConfig?.field === "request_date" ? (sortConfig.direction === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                  </div>
+                </TableHead>
               )}
               {visibility.description && (
-                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} align="left" />
+                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
               )}
               {visibility.priority && (
                 <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
@@ -528,7 +527,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="text-center px-1 py-2 border-r border-b align-middle" style={{ width: widths.checkbox, minWidth: widths.checkbox, maxWidth: widths.checkbox }} onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -537,11 +536,11 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="text-center px-1 py-1.5 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: widths.row_number, minWidth: widths.row_number, maxWidth: widths.row_number }}>
+                  <TableCell className="text-center p-1 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }}>
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date, minWidth: widths.request_date, maxWidth: widths.request_date }}>
+                    <TableCell className="text-center p-1 border-r border-b text-[13px] text-muted-foreground" style={{ width: 70, minWidth: 70, maxWidth: 70 }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
