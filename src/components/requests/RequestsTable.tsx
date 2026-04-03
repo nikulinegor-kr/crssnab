@@ -528,7 +528,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-10 text-center px-3 py-2 border-r align-middle" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="text-center px-1 py-2 border-r border-b align-middle" style={{ width: widths.checkbox, minWidth: widths.checkbox, maxWidth: widths.checkbox }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -537,7 +537,7 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
+                  <TableCell className="text-center px-1 py-1.5 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: widths.row_number, minWidth: widths.row_number, maxWidth: widths.row_number }}>
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
