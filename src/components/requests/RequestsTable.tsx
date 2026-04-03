@@ -698,7 +698,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground text-[12px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>}</span>
                         }
                       />
                     </TableCell>
@@ -715,7 +715,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-[12px] italic">не назначена</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
                           )
                         }
                       />
