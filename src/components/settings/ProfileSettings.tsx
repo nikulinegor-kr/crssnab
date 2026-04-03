@@ -259,7 +259,7 @@ export const ProfileSettings = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground tracking-tight">Уведомления</h3>
           {telegramConnected ? (
-            <Badge variant="outline" className="gap-1.5 border-green-500/30 bg-green-500/10 text-green-600">
+          <Badge variant="outline" className="gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-3 w-3" />
               Подключено
             </Badge>
