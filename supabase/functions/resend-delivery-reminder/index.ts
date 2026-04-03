@@ -11,6 +11,17 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+/** Fetch telegram credentials from the dedicated telegram_settings table */
+async function getTelegramSettingsForOrg(orgId: string) {
+  const { data } = await supabase
+    .from("telegram_settings")
+    .select("bot_token, chat_id")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  if (!data) return null;
+  return { telegram_bot_token: data.bot_token, telegram_chat_id: data.chat_id };
+}
+
 // Yakutsk timezone offset: UTC+9
 const YAKUTSK_OFFSET_HOURS = 9;
 
