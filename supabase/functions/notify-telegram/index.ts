@@ -421,6 +421,42 @@ serve(async (req) => {
       });
     }
 
+    // Handle test personal message
+    if (requestBody.action === "test_personal") {
+      const { telegramUserId, organizationId } = requestBody;
+      if (!telegramUserId || !organizationId) {
+        return new Response(
+          JSON.stringify({ error: "Не указаны обязательные параметры" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const org = await getTelegramSettings(organizationId);
+      if (!org?.telegram_bot_token) {
+        return new Response(
+          JSON.stringify({ error: "Telegram бот не настроен для организации" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
+        chat_id: telegramUserId,
+        text: "✅ Тестовое сообщение\n\nВаш Telegram успешно подключён к системе уведомлений.",
+        parse_mode: "HTML",
+      });
+
+      if (!result.ok) {
+        return new Response(
+          JSON.stringify({ success: false, error: result.description || "Не удалось отправить сообщение. Убедитесь, что вы начали диалог с ботом." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Handle send to invoice chat only
     if (requestBody.action === "send_to_invoice_chat") {
       const { requestId } = requestBody;
