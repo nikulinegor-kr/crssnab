@@ -180,7 +180,7 @@ serve(async (req) => {
     let sentCount = 0;
 
     for (const request of requests) {
-      const org = (request as any).organizations;
+      const org = await getTelegramSettingsForOrg(request.organization_id);
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) continue;
 
       // Check if already fully accepted (accepted_no_issues = final "Доставлено" status)
