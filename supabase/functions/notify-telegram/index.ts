@@ -433,7 +433,7 @@ serve(async (req) => {
 
       const { data: req, error: reqErr } = await supabase
         .from("requests")
-        .select("*, organizations!inner(telegram_bot_token, telegram_invoice_chat_id)")
+        .select("*")
         .eq("id", requestId)
         .single();
 
@@ -444,7 +444,7 @@ serve(async (req) => {
         );
       }
 
-      const reqOrg = req.organizations;
+      const reqOrg = await getTelegramSettings(req.organization_id);
       if (!reqOrg?.telegram_bot_token || !reqOrg?.telegram_invoice_chat_id) {
         return new Response(
           JSON.stringify({ error: "Telegram Buh чат не настроен" }),
