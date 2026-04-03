@@ -526,15 +526,18 @@ serve(async (req) => {
     console.log("Notifying about request:", requestId, "mode:", mode);
 
     // Get request details
+    console.log("Fetching request:", requestId);
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
       .eq("id", requestId)
-      .single();
+      .maybeSingle();
+
+    console.log("Request query result - data:", !!request, "error:", error ? JSON.stringify(error) : "none");
 
     if (error || !request) {
       return new Response(
-        JSON.stringify({ error: "Заявка не найдена" }),
+        JSON.stringify({ error: "Заявка не найдена", details: error?.message || "no data returned" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
