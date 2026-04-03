@@ -64,19 +64,26 @@ export const ProfileSettings = () => {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, position, telegram_user_id, email, phone")
+        .select("full_name, position, telegram_user_id, email")
         .eq("id", user.id)
         .single();
 
       if (error) throw error;
 
       if (data) {
+        // phone column was just added, fetch separately to avoid type error
+        const { data: phoneData } = await supabase
+          .from("profiles")
+          .select("phone" as any)
+          .eq("id", user.id)
+          .single();
+
         const loaded: ProfileData = {
           fullName: data.full_name || "",
           position: data.position || "",
           telegramUserId: data.telegram_user_id?.toString() || "",
           email: data.email || "",
-          phone: (data as any).phone || "",
+          phone: (phoneData as any)?.phone || "",
         };
         setProfile(loaded);
         setInitial(loaded);
