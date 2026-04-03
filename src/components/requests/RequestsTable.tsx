@@ -437,15 +437,21 @@ export const RequestsTable = ({
         <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
-              <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="w-10 text-center p-2 border-r">
+              <TableHead className="w-[5px] p-0 border-r"></TableHead>
+              <ResizableTableHeader
+                column="checkbox"
+                label=""
+                width={widths.checkbox}
+                onResize={handleColumnResize}
+                className="!p-0"
+              >
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
                   className="h-4 w-4"
                 />
-              </TableHead>
-              <TableHead className="w-8 text-center p-1 border-r text-xs text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
+              </ResizableTableHeader>
+              <ResizableTableHeader column="row_number" label="№" width={widths.row_number} onResize={handleColumnResize} />
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
