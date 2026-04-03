@@ -651,7 +651,7 @@ export const RequestsTable = ({
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-snug truncate text-foreground">
+                            <div className="line-clamp-2 leading-snug text-center text-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
