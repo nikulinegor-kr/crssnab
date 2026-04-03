@@ -527,7 +527,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="text-center px-1 py-2 border-r border-b align-middle" style={{ width: widths.checkbox, minWidth: widths.checkbox, maxWidth: widths.checkbox }} onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -536,11 +536,11 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="text-center px-1 py-1.5 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: widths.row_number, minWidth: widths.row_number, maxWidth: widths.row_number }}>
+                  <TableCell className="text-center p-1 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }}>
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date, minWidth: widths.request_date, maxWidth: widths.request_date }}>
+                    <TableCell className="text-center p-1 border-r border-b text-[13px] text-muted-foreground" style={{ width: 70, minWidth: 70, maxWidth: 70 }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
