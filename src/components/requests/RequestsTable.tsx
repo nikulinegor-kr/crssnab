@@ -747,7 +747,7 @@ export const RequestsTable = ({
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-snug truncate text-foreground">
+                            <div className="line-clamp-2 leading-snug text-center text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
