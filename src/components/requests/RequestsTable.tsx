@@ -546,7 +546,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-3 py-2 border-r overflow-hidden" style={{ width: widths.description }}>
+                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.description, minWidth: widths.description, maxWidth: widths.description }}>
                       <div className="flex items-center gap-1.5">
                         {onToggleFavorite && (
                           <button
@@ -575,7 +575,7 @@ export const RequestsTable = ({
                                 getPriorityColor={getPriorityColor}
                                 onEdit={onEditClick}
                               >
-                                <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-snug truncate" title={request.description}>
+                                <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
                               </RequestQuickPreview>
