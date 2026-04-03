@@ -1562,9 +1562,6 @@ export type Database = {
           secondary_color: string | null
           telegram_auto_send_on_create: boolean | null
           telegram_auto_send_on_status_change: boolean | null
-          telegram_bot_token: string | null
-          telegram_chat_id: string | null
-          telegram_invoice_chat_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1580,9 +1577,6 @@ export type Database = {
           secondary_color?: string | null
           telegram_auto_send_on_create?: boolean | null
           telegram_auto_send_on_status_change?: boolean | null
-          telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
-          telegram_invoice_chat_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1598,9 +1592,6 @@ export type Database = {
           secondary_color?: string | null
           telegram_auto_send_on_create?: boolean | null
           telegram_auto_send_on_status_change?: boolean | null
-          telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
-          telegram_invoice_chat_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -3022,6 +3013,20 @@ export type Database = {
           secondary_color: string
           telegram_auto_send_on_create: boolean
           telegram_auto_send_on_status_change: boolean
+          updated_at: string
+        }[]
+      }
+      get_subscription_safe: {
+        Args: { _org_id: string }
+        Returns: {
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          organization_id: string
+          plan_id: string
+          status: string
+          trial_ends_at: string
           updated_at: string
         }[]
       }
