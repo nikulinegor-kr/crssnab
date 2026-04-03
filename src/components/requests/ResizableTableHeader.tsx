@@ -14,6 +14,7 @@ interface ResizableTableHeaderProps {
   onSort?: () => void;
   className?: string;
   align?: "left" | "center";
+  children?: React.ReactNode;
 }
 
 export const ResizableTableHeader = ({
@@ -27,6 +28,7 @@ export const ResizableTableHeader = ({
   onSort,
   className = "",
   align = "center",
+  children,
 }: ResizableTableHeaderProps) => {
   const headerRef = useRef<HTMLTableCellElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -42,7 +44,7 @@ export const ResizableTableHeader = ({
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const diff = moveEvent.clientX - startX;
-        const newWidth = Math.max(50, startWidth + diff);
+        const newWidth = Math.max(28, startWidth + diff);
         onResize(column, newWidth);
       };
 
@@ -72,24 +74,28 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-bold border-r text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
+        "relative p-2 font-bold border-r border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
       style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px`, transition: isResizing ? 'none' : 'width 150ms ease-out, min-width 150ms ease-out, max-width 150ms ease-out' }}
       onClick={sortable ? onSort : undefined}
     >
-      <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : "justify-center")}>
-        <span className="truncate text-xs uppercase">{label}</span>
-        {sortable && (
-          <Icon
-            className={cn(
-              "h-3 w-3 flex-shrink-0",
-              isActive ? "text-primary" : "text-muted-foreground/50"
-            )}
-          />
-        )}
-      </div>
+      {children ? (
+        <div className="flex items-center justify-center">{children}</div>
+      ) : (
+        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : "justify-center")}>
+          <span className="truncate text-xs uppercase">{label}</span>
+          {sortable && (
+            <Icon
+              className={cn(
+                "h-3 w-3 flex-shrink-0",
+                isActive ? "text-primary" : "text-muted-foreground/50"
+              )}
+            />
+          )}
+        </div>
+      )}
       {/* Resize handle */}
       <div
         className={cn(

@@ -433,24 +433,30 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border overflow-x-auto">
-        <Table className="text-sm" style={{ tableLayout: 'fixed' }}>
+        <div className="rounded-md border border-border overflow-x-auto">
+        <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
-              <TableHead className="w-1 p-0"></TableHead>
-              <TableHead className="w-10 text-center p-2 border-r">
+              <TableHead className="w-[5px] p-0 border-r"></TableHead>
+              <ResizableTableHeader
+                column="checkbox"
+                label=""
+                width={widths.checkbox}
+                onResize={handleColumnResize}
+                className="!p-0"
+              >
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
                   className="h-4 w-4"
                 />
-              </TableHead>
-              <TableHead className="w-8 text-center p-1 border-r text-xs text-muted-foreground sticky left-0 bg-muted z-[2]">№</TableHead>
+              </ResizableTableHeader>
+              <ResizableTableHeader column="row_number" label="№" width={widths.row_number} onResize={handleColumnResize} />
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
-                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} className="text-left" />
+                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} align="left" />
               )}
               {visibility.priority && (
                 <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
@@ -522,7 +528,7 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell className="w-10 text-center px-3 py-2 border-r align-middle" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="text-center px-1 py-2 border-r border-b align-middle" style={{ width: widths.checkbox, minWidth: widths.checkbox, maxWidth: widths.checkbox }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -531,16 +537,16 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="w-8 text-center px-1 py-1.5 border-r text-xs text-muted-foreground/60 font-mono sticky left-0 bg-inherit z-[1]">
+                  <TableCell className="text-center px-1 py-1.5 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: widths.row_number, minWidth: widths.row_number, maxWidth: widths.row_number }}>
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-[13px] text-muted-foreground overflow-hidden" style={{ width: widths.request_date, minWidth: widths.request_date, maxWidth: widths.request_date }}>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-3 py-2 border-r overflow-hidden" style={{ width: widths.description }}>
+                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.description, minWidth: widths.description, maxWidth: widths.description }}>
                       <div className="flex items-center gap-1.5">
                         {onToggleFavorite && (
                           <button
@@ -569,7 +575,7 @@ export const RequestsTable = ({
                                 getPriorityColor={getPriorityColor}
                                 onEdit={onEditClick}
                               >
-                                <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-snug truncate" title={request.description}>
+                                <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
                               </RequestQuickPreview>
@@ -587,7 +593,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.priority && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.priority }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority, minWidth: widths.priority, maxWidth: widths.priority }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="priority"
@@ -608,7 +614,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.status }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="status"
@@ -628,7 +634,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.availability }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.availability, minWidth: widths.availability, maxWidth: widths.availability }}>
                       {request.availability_delivery_time ? (
                         <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
@@ -639,7 +645,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.contractor }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.contractor, minWidth: widths.contractor, maxWidth: widths.contractor }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
@@ -657,7 +663,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.invoice_number }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }}>
                       {request.invoice_number ? (
                         <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
@@ -668,7 +674,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center px-3 py-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -682,12 +688,12 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }}>
                       {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date, minWidth: widths.delivery_date, maxWidth: widths.delivery_date }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -699,7 +705,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.transport_company }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.transport_company, minWidth: widths.transport_company, maxWidth: widths.transport_company }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
@@ -717,7 +723,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.amount }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
@@ -735,7 +741,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.applicant }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.applicant, minWidth: widths.applicant, maxWidth: widths.applicant }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
@@ -753,7 +759,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.equipment && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.equipment }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.equipment, minWidth: widths.equipment, maxWidth: widths.equipment }}>
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
                         <div className="leading-snug truncate">
                           <div className="font-medium text-foreground">
@@ -771,7 +777,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.comments }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.comments, minWidth: widths.comments, maxWidth: widths.comments }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
@@ -789,7 +795,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {/* Row Action Menu */}
-                  <TableCell className="w-10 text-center px-1 py-2" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
