@@ -635,7 +635,7 @@ export const RequestsTable = ({
                   {visibility.availability && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.availability, minWidth: widths.availability, maxWidth: widths.availability }}>
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-foreground leading-snug truncate">
+                        <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
