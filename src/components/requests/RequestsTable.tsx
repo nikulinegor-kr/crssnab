@@ -593,7 +593,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.priority && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.priority }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="priority"
@@ -614,7 +614,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.status }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.status }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="status"
@@ -634,7 +634,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.availability }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.availability }}>
                       {request.availability_delivery_time ? (
                         <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
@@ -645,7 +645,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.contractor }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.contractor }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
@@ -663,7 +663,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.invoice_number }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.invoice_number }}>
                       {request.invoice_number ? (
                         <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
@@ -674,7 +674,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center px-3 py-2 border-r font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -688,12 +688,12 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date }}>
                       {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-3 py-2 border-r text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -705,7 +705,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.transport_company }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.transport_company }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
@@ -723,7 +723,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.amount }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.amount }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
@@ -741,7 +741,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.applicant }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.applicant }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
@@ -759,7 +759,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.equipment && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden text-[14px]" style={{ width: widths.equipment }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.equipment }}>
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
                         <div className="leading-snug truncate">
                           <div className="font-medium text-foreground">
@@ -777,7 +777,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center px-3 py-2 border-r overflow-hidden" style={{ width: widths.comments }}>
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.comments }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
@@ -795,7 +795,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {/* Row Action Menu */}
-                  <TableCell className="w-10 text-center px-1 py-2" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
