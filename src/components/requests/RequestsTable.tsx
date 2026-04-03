@@ -635,7 +635,7 @@ export const RequestsTable = ({
                   {visibility.availability && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.availability, minWidth: widths.availability, maxWidth: widths.availability }}>
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-foreground leading-snug truncate">
+                        <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -651,7 +651,7 @@ export const RequestsTable = ({
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-snug truncate text-foreground">
+                            <div className="line-clamp-2 leading-snug text-center text-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -664,7 +664,7 @@ export const RequestsTable = ({
                   {visibility.invoice_number && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }}>
                       {request.invoice_number ? (
-                        <div className="line-clamp-2 text-foreground leading-snug truncate">
+                        <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -711,7 +711,7 @@ export const RequestsTable = ({
                         value={request.transport_company || ""}
                         displayValue={
                           request.transport_company ? (
-                            <div className="line-clamp-2 text-foreground leading-snug truncate">
+                            <div className="line-clamp-2 text-foreground leading-snug text-center">
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -747,7 +747,7 @@ export const RequestsTable = ({
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-snug truncate text-foreground">
+                            <div className="line-clamp-2 leading-snug text-center text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -783,7 +783,7 @@ export const RequestsTable = ({
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-[#6B7280] text-[13px] leading-snug text-left">
+                            <div className="line-clamp-3 text-muted-foreground text-[13px] leading-snug text-center">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
