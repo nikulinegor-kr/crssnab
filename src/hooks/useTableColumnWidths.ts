@@ -3,6 +3,8 @@ import { useState, useCallback, useEffect } from "react";
 const STORAGE_KEY = "requests-column-widths";
 
 export interface ColumnWidths {
+  checkbox: number;
+  row_number: number;
   request_date: number;
   description: number;
   priority: number;
@@ -21,6 +23,8 @@ export interface ColumnWidths {
 }
 
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
+  checkbox: 40,
+  row_number: 36,
   request_date: 90,
   description: 250,
   priority: 110,
@@ -38,7 +42,7 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   equipment: 120,
 };
 
-export const MIN_COLUMN_WIDTH = 50;
+export const MIN_COLUMN_WIDTH = 28;
 
 export const useTableColumnWidths = () => {
   const [widths, setWidths] = useState<ColumnWidths>(() => {
