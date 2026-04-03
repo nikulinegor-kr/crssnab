@@ -7,7 +7,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TelegramSettings } from "@/components/settings/TelegramSettings";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { UsersManagement } from "@/components/settings/UsersManagement";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
