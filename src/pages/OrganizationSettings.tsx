@@ -7,7 +7,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TelegramSettings } from "@/components/settings/TelegramSettings";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { UsersManagement } from "@/components/settings/UsersManagement";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
@@ -184,10 +184,9 @@ const OrganizationSettings = () => {
 
         {visibleTabs.includes("notifications") && (
           <TabsContent value="notifications" className="space-y-8">
-            <SettingsSection title="Настройки уведомлений" description="Push-уведомления, Telegram и автонапоминания" icon={Bell}>
+            <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
               <div className="space-y-6">
-                <PushNotificationSettings />
-                {isAdmin && <TelegramSettings organizationId={currentOrgId!} />}
+                <NotificationSettings organizationId={currentOrgId!} />
                 {isAdmin && <DeadlineReminderSettings />}
               </div>
             </SettingsSection>
