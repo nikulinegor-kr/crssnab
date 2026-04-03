@@ -1692,6 +1692,7 @@ export type Database = {
           full_name: string | null
           id: string
           organization_name: string
+          phone: string | null
           position: string | null
           telegram_user_id: number | null
           updated_at: string | null
@@ -1702,6 +1703,7 @@ export type Database = {
           full_name?: string | null
           id: string
           organization_name: string
+          phone?: string | null
           position?: string | null
           telegram_user_id?: number | null
           updated_at?: string | null
@@ -1712,6 +1714,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           organization_name?: string
+          phone?: string | null
           position?: string | null
           telegram_user_id?: number | null
           updated_at?: string | null
