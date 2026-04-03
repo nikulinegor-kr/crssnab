@@ -65,8 +65,12 @@ export function DeadstockFormDialog({ open, onOpenChange, item, onSave, isPendin
         setTk(item.tk || "");
         setShippedAt(item.shipped_at || "");
         setArrivedAt(item.arrived_at || "");
-        setExistingPhotos(item.photo_urls || []);
-        setExistingDocs(item.document_urls || []);
+        // Resolve signed URLs for existing photos/docs (buckets are now private)
+        const resolveUrls = async (urls: string[], bucket: "deadstock-photos" | "deadstock-documents") => {
+          return Promise.all(urls.map(url => getDeadstockSignedUrl(url, bucket)));
+        };
+        resolveUrls(item.photo_urls || [], "deadstock-photos").then(setExistingPhotos);
+        resolveUrls(item.document_urls || [], "deadstock-documents").then(setExistingDocs);
       } else {
         setName(""); setDescription(""); setQty("1"); setPartNumber(""); setPrice("");
         setSoldAt(""); setBuyer(""); setInvoiceNumber(""); setTk("");
