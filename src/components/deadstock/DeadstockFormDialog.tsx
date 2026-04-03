@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { DeadstockItem, uploadDeadstockFiles } from "@/hooks/useDeadstock";
+import { DeadstockItem, uploadDeadstockFiles, getDeadstockSignedUrl } from "@/hooks/useDeadstock";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
