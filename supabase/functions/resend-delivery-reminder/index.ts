@@ -140,8 +140,7 @@ serve(async (req) => {
       .select(`
         id, description, status, priority, applicant, executor,
         transport_company, delivery_date, organization_id, request_number,
-        telegram_message_id, telegram_message_ids,
-        organizations!inner(telegram_bot_token, telegram_chat_id)
+        telegram_message_id, telegram_message_ids
       `)
       .eq("status", "Доставлено в ТК")
       .eq("archived", false);
