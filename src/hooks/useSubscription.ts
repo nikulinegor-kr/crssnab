@@ -38,12 +38,10 @@ export const useSubscription = () => {
           setStatus(null);
         }
 
-        // Get subscription details
-        const { data: subscription, error: subError } = await supabase
-          .from("subscriptions")
-          .select("status, trial_ends_at, current_period_end")
-          .eq("organization_id", currentOrgId)
-          .maybeSingle();
+        // Get subscription details (uses safe RPC to avoid exposing Stripe IDs)
+        const { data: subscriptionRows, error: subError } = await supabase
+          .rpc("get_subscription_safe", { _org_id: currentOrgId });
+        const subscription = subscriptionRows?.[0] ?? null;
 
         if (subError && subError.code !== "PGRST116") {
           console.error("Error fetching subscription:", subError);

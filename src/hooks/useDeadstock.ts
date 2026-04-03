@@ -139,8 +139,36 @@ export async function uploadDeadstockFiles(
     const path = `${orgId}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from(bucket).upload(path, file);
     if (error) throw error;
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-    urls.push(urlData.publicUrl);
+    // Create signed URL (bucket is now private)
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
+    if (signedError) throw signedError;
+    urls.push(signedData.signedUrl);
   }
   return urls;
+}
+
+/** Helper to get a fresh signed URL for a deadstock file (handles both legacy public URLs and paths) */
+export async function getDeadstockSignedUrl(
+  url: string,
+  bucket: "deadstock-photos" | "deadstock-documents"
+): Promise<string> {
+  // If it's already a signed URL with token, return as-is (still valid)
+  if (url.includes('/object/sign/')) return url;
+  
+  // Extract path from public URL pattern
+  const publicPrefix = `/object/public/${bucket}/`;
+  const idx = url.indexOf(publicPrefix);
+  const path = idx !== -1 ? url.substring(idx + publicPrefix.length) : url;
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(decodeURIComponent(path), 3600); // 1 hour
+  
+  if (error) {
+    console.error('Error creating signed URL for deadstock file:', error);
+    return url; // fallback to original
+  }
+  return data.signedUrl;
 }
