@@ -383,11 +383,7 @@ serve(async (req) => {
         );
       }
 
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("telegram_bot_token, telegram_chat_id")
-        .eq("id", organization_id)
-        .single();
+      const org = await getTelegramSettings(organization_id);
 
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
         return new Response(
