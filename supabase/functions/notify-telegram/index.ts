@@ -12,6 +12,23 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+/** Fetch telegram credentials from the dedicated telegram_settings table */
+async function getTelegramSettings(orgId: string) {
+  const { data, error } = await supabase
+    .from("telegram_settings")
+    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    telegram_bot_token: data.bot_token,
+    telegram_chat_id: data.chat_id,
+    telegram_auto_send_on_create: data.auto_send_on_create,
+    telegram_auto_send_on_status_change: data.auto_send_on_status_change,
+    telegram_invoice_chat_id: data.invoice_chat_id,
+  };
+}
+
 async function sendTelegramRequest(botToken: string, method: string, body: any) {
   const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
     method: "POST",
@@ -366,11 +383,7 @@ serve(async (req) => {
         );
       }
 
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("telegram_bot_token, telegram_chat_id")
-        .eq("id", organization_id)
-        .single();
+      const org = await getTelegramSettings(organization_id);
 
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
         return new Response(
@@ -420,7 +433,7 @@ serve(async (req) => {
 
       const { data: req, error: reqErr } = await supabase
         .from("requests")
-        .select("*, organizations!inner(telegram_bot_token, telegram_invoice_chat_id)")
+        .select("*")
         .eq("id", requestId)
         .single();
 
@@ -431,7 +444,7 @@ serve(async (req) => {
         );
       }
 
-      const reqOrg = req.organizations;
+      const reqOrg = await getTelegramSettings(req.organization_id);
       if (!reqOrg?.telegram_bot_token || !reqOrg?.telegram_invoice_chat_id) {
         return new Response(
           JSON.stringify({ error: "Telegram Buh чат не настроен" }),
@@ -512,13 +525,10 @@ serve(async (req) => {
     const { requestId, mode } = schema.parse(requestBody);
     console.log("Notifying about request:", requestId, "mode:", mode);
 
-    // Get request details with organization info
+    // Get request details
     const { data: request, error } = await supabase
       .from("requests")
-      .select(`
-        *,
-        organizations!inner(telegram_bot_token, telegram_chat_id, telegram_invoice_chat_id)
-      `)
+      .select("*")
       .eq("id", requestId)
       .single();
 
@@ -548,7 +558,7 @@ serve(async (req) => {
     }
 
     // Check if organization has Telegram configured
-    const org = request.organizations;
+    const org = await getTelegramSettings(request.organization_id);
     if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
       console.log("Telegram not configured for this organization");
       return new Response(

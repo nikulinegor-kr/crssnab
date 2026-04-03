@@ -113,35 +113,35 @@ serve(async (req) => {
   }
 
   try {
-    // Get all organizations with Telegram configured
-    const { data: organizations, error: orgError } = await supabase
-      .from("organizations")
-      .select("id, name, telegram_bot_token, telegram_chat_id")
-      .not("telegram_bot_token", "is", null)
-      .not("telegram_chat_id", "is", null);
+    // Get all organizations with Telegram configured from telegram_settings
+    const { data: telegramConfigs, error: tgError } = await supabase
+      .from("telegram_settings")
+      .select("organization_id, bot_token, chat_id")
+      .not("bot_token", "is", null)
+      .not("chat_id", "is", null);
 
-    if (orgError) {
-      console.error("Error fetching organizations:", orgError);
+    if (tgError) {
+      console.error("Error fetching telegram settings:", tgError);
       return new Response(
-        JSON.stringify({ error: orgError.message }),
+        JSON.stringify({ error: tgError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Found ${organizations?.length || 0} organizations with Telegram configured`);
+    console.log(`Found ${telegramConfigs?.length || 0} organizations with Telegram configured`);
 
     const results: any[] = [];
 
-    for (const org of organizations || []) {
-      if (org.telegram_bot_token && org.telegram_chat_id) {
-        console.log(`Processing organization: ${org.name} (${org.id})`);
+    for (const tg of telegramConfigs || []) {
+      if (tg.bot_token && tg.chat_id) {
+        console.log(`Processing organization: ${tg.organization_id}`);
         const result = await sendDailySummary(
-          org.id, 
-          org.telegram_bot_token, 
-          org.telegram_chat_id
+          tg.organization_id, 
+          tg.bot_token, 
+          tg.chat_id
         );
         results.push({
-          organization: org.name,
+          organization: tg.organization_id,
           ...result
         });
       }

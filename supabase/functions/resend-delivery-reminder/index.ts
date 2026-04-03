@@ -11,6 +11,17 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+/** Fetch telegram credentials from the dedicated telegram_settings table */
+async function getTelegramSettingsForOrg(orgId: string) {
+  const { data } = await supabase
+    .from("telegram_settings")
+    .select("bot_token, chat_id")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  if (!data) return null;
+  return { telegram_bot_token: data.bot_token, telegram_chat_id: data.chat_id };
+}
+
 // Yakutsk timezone offset: UTC+9
 const YAKUTSK_OFFSET_HOURS = 9;
 
@@ -140,8 +151,7 @@ serve(async (req) => {
       .select(`
         id, description, status, priority, applicant, executor,
         transport_company, delivery_date, organization_id, request_number,
-        telegram_message_id, telegram_message_ids,
-        organizations!inner(telegram_bot_token, telegram_chat_id)
+        telegram_message_id, telegram_message_ids
       `)
       .eq("status", "Доставлено в ТК")
       .eq("archived", false);
@@ -170,7 +180,7 @@ serve(async (req) => {
     let sentCount = 0;
 
     for (const request of requests) {
-      const org = (request as any).organizations;
+      const org = await getTelegramSettingsForOrg(request.organization_id);
       if (!org?.telegram_bot_token || !org?.telegram_chat_id) continue;
 
       // Check if already fully accepted (accepted_no_issues = final "Доставлено" status)
