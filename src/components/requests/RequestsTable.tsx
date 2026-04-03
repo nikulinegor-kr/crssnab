@@ -715,7 +715,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-[12px] italic">не назначена</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
                           )
                         }
                       />
