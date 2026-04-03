@@ -12,6 +12,23 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+/** Fetch telegram credentials from the dedicated telegram_settings table */
+async function getTelegramSettings(orgId: string) {
+  const { data, error } = await supabase
+    .from("telegram_settings")
+    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id")
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    telegram_bot_token: data.bot_token,
+    telegram_chat_id: data.chat_id,
+    telegram_auto_send_on_create: data.auto_send_on_create,
+    telegram_auto_send_on_status_change: data.auto_send_on_status_change,
+    telegram_invoice_chat_id: data.invoice_chat_id,
+  };
+}
+
 async function sendTelegramRequest(botToken: string, method: string, body: any) {
   const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
     method: "POST",
