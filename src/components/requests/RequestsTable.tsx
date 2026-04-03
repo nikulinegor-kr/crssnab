@@ -783,7 +783,7 @@ export const RequestsTable = ({
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-[#6B7280] text-[13px] leading-snug text-left">
+                            <div className="line-clamp-3 text-muted-foreground text-[13px] leading-snug text-center">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
