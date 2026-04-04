@@ -404,13 +404,6 @@ export const RequestsFilters = ({
         </div>
       )}
 
-      {/* Quick Filters */}
-      <QuickFilters
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        priorityFilter={priorityFilter}
-        setPriorityFilter={setPriorityFilter}
-      />
     </div>
   );
 };
