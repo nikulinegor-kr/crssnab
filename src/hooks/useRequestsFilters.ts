@@ -10,6 +10,7 @@ export type SpecialDateFilter =
   | "stale" 
   | "deliveryToday" 
   | "overdueDelivery" 
+  | "overdueShipment"
   | "unpaid" 
   | "paid" 
   | "invoiced"
@@ -260,6 +261,13 @@ export const useRequestsFilters = (
         if (request.status === "Доставлено" || request.status === "Выполнено") return false;
         if (!request.delivery_date || request.status === "В пути") return false;
         if (!isBefore(new Date(request.delivery_date), today)) return false;
+      }
+
+      if (specialDateFilter === "overdueShipment") {
+        const shipDate = (request as any).shipment_date;
+        if (!shipDate) return false;
+        if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(request.status)) return false;
+        if (!isBefore(new Date(shipDate), today)) return false;
       }
 
       if (specialDateFilter === "unpaid") {

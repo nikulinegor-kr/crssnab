@@ -67,9 +67,11 @@ export const RequestsMiniDashboard = ({
       if (!r.delivery_date) return false;
       return isToday(new Date(r.delivery_date));
     }).length;
-    const overdueDelivery = active.filter(r => {
-      if (!r.delivery_date || r.status === "В пути") return false;
-      return isBefore(new Date(r.delivery_date), today);
+    const overdueShipment = active.filter(r => {
+      const shipDate = (r as any).shipment_date;
+      if (!shipDate) return false;
+      if (["В пути", "Доставлено", "Доставлено в ТК"].includes(r.status)) return false;
+      return isBefore(new Date(shipDate), today);
     }).length;
 
     const unpaid = active.filter(r => {
@@ -90,7 +92,7 @@ export const RequestsMiniDashboard = ({
     return {
       emergency, priority, planned,
       overdue, stale,
-      inTransit, deliveryToday, overdueDelivery,
+      inTransit, deliveryToday, overdueShipment,
       unpaid, paid, invoiced,
       newRequests, inWork,
     };
@@ -169,12 +171,12 @@ export const RequestsMiniDashboard = ({
           type: "special", specialFilter: "deliveryToday",
         },
         {
-          id: "overdueDelivery", label: "Просрочена доставка", count: metrics.overdueDelivery,
-          icon: <Package className="h-3.5 w-3.5" />,
+          id: "overdueShipment", label: "Просрочка отгрузки", count: metrics.overdueShipment,
+          icon: <AlertTriangle className="h-3.5 w-3.5" />,
           colorClass: "text-red-600 dark:text-red-400",
           iconBg: "bg-red-100 dark:bg-red-900/50",
           activeBg: "bg-red-50 dark:bg-red-950/60 border-red-400 dark:border-red-600 ring-1 ring-red-200 dark:ring-red-800",
-          type: "special", specialFilter: "overdueDelivery",
+          type: "special", specialFilter: "overdueShipment",
         },
       ],
     },
@@ -271,7 +273,7 @@ export const RequestsMiniDashboard = ({
                     active
                       ? item.activeBg
                       : "bg-card border-border/40 hover:border-border",
-                    item.count > 0 && (item.id === "emergency" || item.id === "overdue" || item.id === "overdueDelivery")
+                    item.count > 0 && (item.id === "emergency" || item.id === "overdue" || item.id === "overdueShipment")
                       ? "border-red-200/60 dark:border-red-800/40"
                       : ""
                   )}

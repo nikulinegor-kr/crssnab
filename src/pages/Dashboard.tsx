@@ -192,9 +192,10 @@ const Dashboard = () => {
 
     // Logistics
     const deliveryToday = all.filter(r => r.delivery_date?.split("T")[0] === today && !["Доставлено", "Выполнено"].includes(r.status)).length;
-    const overdueDelivery = all.filter(r => {
-      if (!r.delivery_date || ["Доставлено", "Выполнено", "Отменено", "Закрыто"].includes(r.status)) return false;
-      return r.delivery_date.split("T")[0] < today;
+    const overdueShipment = all.filter(r => {
+      if (!(r as any).shipment_date) return false;
+      if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(r.status)) return false;
+      return (r as any).shipment_date.split("T")[0] < today;
     }).length;
 
     // Finance — only requests WITH invoice (invoice_number not empty)
@@ -242,7 +243,7 @@ const Dashboard = () => {
       emergency, priority, planned,
       newRequests, inProgress, inTransit,
       overdue, stale, notPickedUp,
-      deliveryToday, overdueDelivery,
+      deliveryToday, overdueShipment,
       unpaid, partiallyPaid, paid,
       completed, completionRate, total: all.length,
       avgCreationToOrder, avgOrderToDelivery, avgFullCycle,
@@ -395,8 +396,8 @@ const Dashboard = () => {
               <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня" onClick={() => navigate("/requests?filter=deliveryToday")} />
-                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" hint="Дата прихода прошла, статус не «Доставлено»" onClick={() => navigate("/requests?filter=overdueDelivery")} />
+                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня, статус не «Доставлено»" onClick={() => navigate("/requests?filter=deliveryToday")} />
+                <DashboardCard title="Просрочка отгрузки" value={stats.overdueShipment} icon={AlertTriangle} variant="danger" hint="Просрочка отгрузки — дата отгрузки прошла, но товар не отправлен" onClick={() => navigate("/requests?filter=overdueShipment")} />
               </div>
             </div>
 
