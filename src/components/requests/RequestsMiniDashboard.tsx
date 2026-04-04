@@ -273,7 +273,7 @@ export const RequestsMiniDashboard = ({
                     active
                       ? item.activeBg
                       : "bg-card border-border/40 hover:border-border",
-                    item.count > 0 && (item.id === "emergency" || item.id === "overdue" || item.id === "overdueDelivery")
+                    item.count > 0 && (item.id === "emergency" || item.id === "overdue" || item.id === "overdueShipment")
                       ? "border-red-200/60 dark:border-red-800/40"
                       : ""
                   )}
