@@ -375,15 +375,21 @@ const Requests = () => {
             onFilterClick={(type, value) => {
               filters.setSpecialDateFilter(null);
               if (type === "priority") {
-                filters.setPriorityFilter(value);
+                filters.setPriorityFilter(filters.priorityFilter === value ? "all" : value);
               } else {
-                filters.setStatusFilter([value]);
+                filters.setStatusFilter(filters.statusFilter.length === 1 && filters.statusFilter[0] === value ? [] : [value]);
               }
             }}
             onSpecialFilterClick={(filter) => {
+              if (filter) {
+                filters.setPriorityFilter("all");
+                filters.setStatusFilter([]);
+              }
               filters.setSpecialDateFilter(filter);
             }}
             activeSpecialFilter={filters.specialDateFilter}
+            activePriorityFilter={filters.priorityFilter}
+            activeStatusFilter={filters.statusFilter}
           />
 
           {/* LEVEL 4-6: Filters (search, quick, advanced) */}
