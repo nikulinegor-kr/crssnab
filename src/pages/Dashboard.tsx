@@ -143,8 +143,8 @@ const Dashboard = () => {
 
     // Urgency
     const emergency = active.filter(r => r.priority === "Аварийно").length;
-    const priority = active.filter(r => r.priority === "Приоритет").length;
-    const planned = active.filter(r => r.priority === "Плановая" || !r.priority).length;
+    const priority = active.filter(r => r.priority === "Приоритетно").length;
+    const planned = active.filter(r => r.priority === "Планово" || !r.priority).length;
 
     // Work
     const newRequests = all.filter(r => r.status === "Новая заявка").length;
