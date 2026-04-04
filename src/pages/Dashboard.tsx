@@ -344,8 +344,8 @@ const Dashboard = () => {
               <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" onClick={() => navigate("/shipments")} />
-                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" onClick={() => navigate("/requests?filter=deliveryToday")} />
+                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests?filter=overdueDelivery")} />
               </div>
             </div>
 
