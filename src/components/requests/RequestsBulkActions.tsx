@@ -510,7 +510,31 @@ export const RequestsBulkActions = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Transfer to Object */}
+            {/* Change Payment Status Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <CreditCard className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Оплата</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(0)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-destructive" />
+                  Не оплачено (0%)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(50)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-amber-500" />
+                  Частично (50%)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(100)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-emerald-500" />
+                  Оплачено (100%)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               onClick={() => setTransferDialogOpen(true)}
               variant="outline"
