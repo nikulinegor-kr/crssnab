@@ -86,7 +86,7 @@ const SelectOrganization = () => {
 
   const selectOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
-    navigate("/requests");
+    navigate("/dashboard");
   };
 
   const getRoleBadge = (role: string) => {
