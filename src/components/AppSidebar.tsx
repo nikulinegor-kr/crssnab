@@ -58,7 +58,6 @@ const menuGroups = [
     items: [
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { title: "Заявки", url: "/requests", icon: FileText },
-      { title: "Объекты", url: "/objects", icon: Building2 },
     ],
   },
   {
@@ -73,6 +72,7 @@ const menuGroups = [
     label: "ERP",
     icon: Layers,
     items: [
+      { title: "Объекты", url: "/objects", icon: Building2 },
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
       { title: "Склад", url: "/warehouse", icon: Warehouse },
       { title: "Техника", url: "/equipment", icon: Truck },
