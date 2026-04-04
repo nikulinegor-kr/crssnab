@@ -106,7 +106,7 @@ const Dashboard = () => {
   const { logoUrl, orgName } = useOrgBranding();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [period, setPeriod] = useState<PeriodKey>("month");
+  const [period, setPeriod] = useState<PeriodKey>("all");
   const { settings } = useViewSettings();
   const { isAdmin } = useUserRole();
 
