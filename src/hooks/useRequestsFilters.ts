@@ -223,7 +223,6 @@ export const useRequestsFilters = (
       if (specialDateFilter === "stale") {
         if (request.status === "Доставлено" || request.status === "Выполнено") return false;
         const lastUpdate = new Date(request.updated_at || request.created_at);
-        const { differenceInDays } = await import("date-fns");
         if (differenceInDays(today, lastUpdate) <= 2) return false;
       }
 
