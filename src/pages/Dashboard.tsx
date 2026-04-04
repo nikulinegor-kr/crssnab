@@ -243,7 +243,7 @@ const Dashboard = () => {
       emergency, priority, planned,
       newRequests, inProgress, inTransit,
       overdue, stale, notPickedUp,
-      deliveryToday, overdueDelivery,
+      deliveryToday, overdueShipment,
       unpaid, partiallyPaid, paid,
       completed, completionRate, total: all.length,
       avgCreationToOrder, avgOrderToDelivery, avgFullCycle,
