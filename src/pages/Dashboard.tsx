@@ -333,8 +333,8 @@ const Dashboard = () => {
             <div className="space-y-2">
               <SectionHeader icon={AlertTriangle} title="Проблемы" color="text-destructive" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" onClick={() => navigate("/requests?filter=overdue")} />
+                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" onClick={() => navigate("/requests?filter=stale")} />
                 <DashboardCard title="Не забраны из ТК" value={stats.notPickedUp} icon={PackageX} variant="danger" onClick={() => navigate("/requests?status=Доставлено в ТК")} />
               </div>
             </div>
