@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft, CreditCard } from "lucide-react";
 import { BulkTransferObjectDialog } from "./BulkTransferObjectDialog";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
@@ -179,6 +179,26 @@ export const RequestsBulkActions = ({
         .in("id", Array.from(selectedRequestIds));
       if (error) throw error;
       toast({ title: "Исполнитель назначен", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleBulkPaymentUpdate = async (percent: number) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const status = percent === 0 ? "Не оплачено" : percent >= 100 ? "Оплачено" : "Частично оплачено";
+      const { error } = await supabase
+        .from("requests")
+        .update({ payment_percent: percent, payment_status: status })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Оплата обновлена", description: `Обновлено заявок: ${selectedRequestIds.size}` });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       setSelectedRequestIds(new Set());
     } catch (err: any) {
@@ -490,7 +510,31 @@ export const RequestsBulkActions = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Transfer to Object */}
+            {/* Change Payment Status Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <CreditCard className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Оплата</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(0)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-destructive" />
+                  Не оплачено (0%)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(50)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-amber-500" />
+                  Частично (50%)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(100)}>
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-emerald-500" />
+                  Оплачено (100%)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               onClick={() => setTransferDialogOpen(true)}
               variant="outline"
