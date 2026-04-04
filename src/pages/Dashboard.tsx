@@ -405,7 +405,7 @@ const Dashboard = () => {
               <SectionHeader icon={FileText} title="Работа" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="Новые заявки" value={stats.newRequests} icon={Plus} variant="info" onClick={() => navigate("/requests?status=Новая заявка")} />
-                <DashboardCard title="Выполняется" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе")} />
+                <DashboardCard title="Выполняется" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе,КП,На согласовании,Счёт,Счёт в Бухгалтерии,В пути,Доставлено в ТК")} />
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
               </div>
             </div>

@@ -199,7 +199,7 @@ export const useRequestsFilters = (
           setHideDelivered(true);
         }
       } else {
-        setStatusFilter([status]);
+        setStatusFilter(status.split(","));
       }
     }
     if (priority) {
