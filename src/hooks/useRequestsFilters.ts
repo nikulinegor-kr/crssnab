@@ -263,6 +263,13 @@ export const useRequestsFilters = (
         if (!isBefore(new Date(request.delivery_date), today)) return false;
       }
 
+      if (specialDateFilter === "overdueShipment") {
+        const shipDate = (request as any).shipment_date;
+        if (!shipDate) return false;
+        if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(request.status)) return false;
+        if (!isBefore(new Date(shipDate), today)) return false;
+      }
+
       if (specialDateFilter === "unpaid") {
         if (request.status === "Доставлено" || request.status === "Выполнено") return false;
         const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
