@@ -67,9 +67,11 @@ export const RequestsMiniDashboard = ({
       if (!r.delivery_date) return false;
       return isToday(new Date(r.delivery_date));
     }).length;
-    const overdueDelivery = active.filter(r => {
-      if (!r.delivery_date || r.status === "В пути") return false;
-      return isBefore(new Date(r.delivery_date), today);
+    const overdueShipment = active.filter(r => {
+      const shipDate = (r as any).shipment_date;
+      if (!shipDate) return false;
+      if (["В пути", "Доставлено", "Доставлено в ТК"].includes(r.status)) return false;
+      return isBefore(new Date(shipDate), today);
     }).length;
 
     const unpaid = active.filter(r => {
