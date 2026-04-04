@@ -384,7 +384,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
         payment_percentage: request.payment_percentage ?? null,
-        payment_status: (request as any).payment_status || "Не выставлен",
+        payment_percent: (request as any).payment_percent ?? 0,
+        payment_status: (() => {
+          const p = (request as any).payment_percent ?? 0;
+          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
+        })(),
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
