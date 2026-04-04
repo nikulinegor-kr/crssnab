@@ -241,12 +241,14 @@ export const useRequestsFilters = (
 
       if (specialDateFilter === "unpaid") {
         if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!(request.status === "Счёт" || (request.payment_percentage === 0 && request.amount > 0))) return false;
+        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+        if (!(pct === 0 && request.amount > 0)) return false;
       }
 
       if (specialDateFilter === "paid") {
         if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!(request.payment_percentage === 100 || request.status === "Оплачено")) return false;
+        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+        if (!(pct >= 100)) return false;
       }
 
       if (specialDateFilter === "invoiced") {
