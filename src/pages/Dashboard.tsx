@@ -361,6 +361,35 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
+            {/* Summary Block */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {[
+                    { title: "Всего заявок", value: stats.total, icon: FileText, color: "text-foreground" },
+                    { title: "Новых", value: stats.newRequests, icon: Plus, color: "text-primary" },
+                    { title: "Выполняется", value: stats.inProgress, icon: Timer, color: "text-orange-500" },
+                    { title: "В пути", value: stats.inTransit, icon: Truck, color: "text-blue-500" },
+                    { title: "Доставлено в ТК", value: stats.notPickedUp, icon: PackageCheck, color: "text-indigo-500" },
+                    { title: "Доставлено", value: stats.completed, icon: CheckCircle, color: "text-green-500" },
+                  ].map((card) => {
+                    const Icon = card.icon;
+                    return (
+                      <div key={card.title} className="flex items-center gap-3">
+                        <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
+                          <Icon className={`h-4 w-4 ${card.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold leading-tight">{card.value}</p>
+                          <p className="text-xs text-muted-foreground">{card.title}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* 🔴 СРОЧНОСТЬ */}
             <div className="space-y-2">
               <SectionHeader icon={Zap} title="Срочность" color="text-destructive" />
@@ -376,7 +405,7 @@ const Dashboard = () => {
               <SectionHeader icon={FileText} title="Работа" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="Новые заявки" value={stats.newRequests} icon={Plus} variant="info" onClick={() => navigate("/requests?status=Новая заявка")} />
-                <DashboardCard title="В работе" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе")} />
+                <DashboardCard title="Выполняется" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе")} />
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
               </div>
             </div>
