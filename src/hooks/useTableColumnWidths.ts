@@ -12,6 +12,7 @@ export interface ColumnWidths {
   availability: number;
   contractor: number;
   invoice_number: number;
+  payment_prepay: number;
   payment_percentage: number;
   shipment_date: number;
   delivery_date: number;
