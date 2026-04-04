@@ -20,7 +20,6 @@ import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
 import { DashboardWidgetSettings } from "@/components/dashboard/DashboardWidgetSettings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
