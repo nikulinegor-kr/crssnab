@@ -250,6 +250,32 @@ const Dashboard = () => {
     };
   }, [filteredRequests, today]);
 
+  // Top objects by expenses
+  const [expenseObjectFilter, setExpenseObjectFilter] = useState<string>("all");
+  
+  const objectExpenses = useMemo(() => {
+    const map: Record<string, { name: string; total: number; count: number }> = {};
+    filteredRequests.forEach(r => {
+      if (!r.amount || r.amount <= 0) return;
+      const name = (r as any).object_name || "Без объекта";
+      if (!map[name]) map[name] = { name, total: 0, count: 0 };
+      map[name].total += r.amount;
+      map[name].count += 1;
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [filteredRequests]);
+
+  const filteredObjectExpenses = useMemo(() => {
+    if (expenseObjectFilter === "all") return objectExpenses.slice(0, 10);
+    return objectExpenses.filter(o => o.name === expenseObjectFilter);
+  }, [objectExpenses, expenseObjectFilter]);
+
+  const totalExpenses = useMemo(() => 
+    (expenseObjectFilter === "all" ? objectExpenses : filteredObjectExpenses)
+      .reduce((sum, o) => sum + o.total, 0), 
+    [objectExpenses, filteredObjectExpenses, expenseObjectFilter]
+  );
+
   const calendarRequests = useMemo(() => (requests || []).filter(r => r.delivery_date), [requests]);
 
   useEffect(() => {
