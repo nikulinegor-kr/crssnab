@@ -436,7 +436,7 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border border-border overflow-x-auto">
+        <div className="rounded-md border border-border overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
         <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
@@ -715,7 +715,14 @@ export const RequestsTable = ({
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="shipment_date"
+                        value={request.shipment_date || ""}
+                        displayValue={
+                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}</span>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
