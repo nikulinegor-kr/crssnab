@@ -436,7 +436,7 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border border-border overflow-auto max-h-[calc(100vh-280px)]">
+        <div className="rounded-md border border-border overflow-x-auto">
         <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="sticky top-0 z-20 bg-muted shadow-[0_2px_4px_rgba(0,0,0,0.08)] [&_th]:bg-muted">
             <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
