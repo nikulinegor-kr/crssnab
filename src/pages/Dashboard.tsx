@@ -107,16 +107,32 @@ const Dashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const { settings } = useViewSettings();
   const { isAdmin } = useUserRole();
+
+  const availableYears = useMemo(() => {
+    if (!requests) return [new Date().getFullYear().toString()];
+    const years = new Set(
+      requests.filter(r => r.request_date).map(r => new Date(r.request_date).getFullYear().toString())
+    );
+    if (years.size === 0) years.add(new Date().getFullYear().toString());
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
+  }, [requests]);
 
   const periodStart = useMemo(() => getPeriodStart(period), [period]);
 
   const filteredRequests = useMemo(() => {
     if (!requests) return [];
-    if (!periodStart) return requests;
-    return requests.filter(r => new Date(r.created_at) >= periodStart);
-  }, [requests, periodStart]);
+    // First filter by year
+    const yearFiltered = requests.filter(r => {
+      if (!r.request_date) return false;
+      return new Date(r.request_date).getFullYear().toString() === selectedYear;
+    });
+    // Then apply period
+    if (!periodStart) return yearFiltered;
+    return yearFiltered.filter(r => new Date(r.created_at) >= periodStart);
+  }, [requests, periodStart, selectedYear]);
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
