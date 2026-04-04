@@ -10,6 +10,7 @@ export type SpecialDateFilter =
   | "stale" 
   | "deliveryToday" 
   | "overdueDelivery" 
+  | "overdueShipment"
   | "unpaid" 
   | "paid" 
   | "invoiced"
