@@ -213,6 +213,46 @@ export const useRequestsFilters = (
         const deliveryDate = new Date(request.delivery_date);
         if (!(isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(sevenDaysFromNow, 1)))) return false;
       }
+
+      if (specialDateFilter === "overdue") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date) return false;
+        if (!isBefore(new Date(request.delivery_date), today)) return false;
+      }
+
+      if (specialDateFilter === "stale") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        const lastUpdate = new Date(request.updated_at || request.created_at);
+        const { differenceInDays } = await import("date-fns");
+        if (differenceInDays(today, lastUpdate) <= 2) return false;
+      }
+
+      if (specialDateFilter === "deliveryToday") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date) return false;
+        const dd = new Date(request.delivery_date);
+        if (dd.toDateString() !== today.toDateString()) return false;
+      }
+
+      if (specialDateFilter === "overdueDelivery") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date || request.status === "В пути") return false;
+        if (!isBefore(new Date(request.delivery_date), today)) return false;
+      }
+
+      if (specialDateFilter === "unpaid") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!(request.status === "Счёт" || (request.payment_percentage === 0 && request.amount > 0))) return false;
+      }
+
+      if (specialDateFilter === "paid") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!(request.payment_percentage === 100 || request.status === "Оплачено")) return false;
+      }
+
+      if (specialDateFilter === "invoiced") {
+        if (request.status !== "Счёт в Бухгалтерии") return false;
+      }
       
       // Full-text search across all fields
       const matchesSearch = matchesFullTextSearch(request, searchQuery);
