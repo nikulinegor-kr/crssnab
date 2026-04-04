@@ -436,10 +436,10 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border border-border overflow-x-auto">
+        <div className="rounded-md border border-border bg-background">
         <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
-          <TableHeader className="sticky top-0 z-20 bg-muted shadow-[0_2px_4px_rgba(0,0,0,0.08)] [&_th]:bg-muted">
-            <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
+          <TableHeader className="bg-muted/60 [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted [&_th]:shadow-sm">
+            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-[5px] p-0 border-r"></TableHead>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
