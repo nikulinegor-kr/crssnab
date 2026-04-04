@@ -273,20 +273,32 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Period filter */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-muted-foreground mr-1">Период:</span>
-          {periodOptions.map(opt => (
-            <Button
-              key={opt.key}
-              variant={period === opt.key ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-xs px-3"
-              onClick={() => setPeriod(opt.key)}
-            >
-              {opt.label}
-            </Button>
-          ))}
+        {/* Period filter + Year */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Период:</span>
+            {periodOptions.map(opt => (
+              <Button
+                key={opt.key}
+                variant={period === opt.key ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs px-3"
+                onClick={() => setPeriod(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[120px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>{year} год</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
