@@ -173,10 +173,10 @@ const Dashboard = () => {
 
     // Work
     const newRequests = all.filter(r => r.status === "Новая заявка").length;
-    const inProgress = all.filter(r => r.status === "В работе" || r.status === "КП" || r.status === "На согласовании" || r.status === "Счёт").length;
+    const inProgress = all.filter(r => ["В работе", "КП", "На согласовании", "Счёт", "Счёт в Бухгалтерии"].includes(r.status)).length;
     const inTransit = all.filter(r => r.status === "В пути" || r.status === "Отправлено").length;
 
-    // Problems
+    // Problems — overdue = delivery_date < today AND not delivered
     const overdue = active.filter(r => {
       if (!r.delivery_date) return false;
       return r.delivery_date.split("T")[0] < today;
@@ -192,16 +192,17 @@ const Dashboard = () => {
     const notPickedUp = all.filter(r => r.status === "Доставлено в ТК").length;
 
     // Logistics
-    const deliveryToday = all.filter(r => r.delivery_date?.split("T")[0] === today && r.status !== "Доставлено").length;
+    const deliveryToday = all.filter(r => r.delivery_date?.split("T")[0] === today && !["Доставлено", "Выполнено"].includes(r.status)).length;
     const overdueDelivery = all.filter(r => {
-      if (!r.delivery_date || r.status === "Доставлено") return false;
+      if (!r.delivery_date || ["Доставлено", "Выполнено", "Отменено", "Закрыто"].includes(r.status)) return false;
       return r.delivery_date.split("T")[0] < today;
     }).length;
 
-    // Finance — use payment_status field
-    const unpaid = active.filter(r => r.payment_status === "Не оплачено").length;
-    const partiallyPaid = active.filter(r => r.payment_status === "Частично оплачено").length;
-    const paid = all.filter(r => r.payment_status === "Оплачено").length;
+    // Finance — only requests WITH invoice (invoice_number not empty)
+    const withInvoice = all.filter(r => r.invoice_number && r.invoice_number.trim() !== "");
+    const unpaid = withInvoice.filter(r => r.payment_status !== "Оплачено" && r.payment_status !== "Частично оплачено").length;
+    const partiallyPaid = withInvoice.filter(r => r.payment_status === "Частично оплачено").length;
+    const paid = withInvoice.filter(r => r.payment_status === "Оплачено").length;
 
     // Efficiency
     const completed = all.filter(r => r.status === "Доставлено").length;
