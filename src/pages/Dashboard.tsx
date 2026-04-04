@@ -61,6 +61,7 @@ interface DashboardCardProps {
   value: number;
   icon: React.ElementType;
   variant?: "danger" | "warning" | "success" | "info" | "neutral";
+  hint?: string;
   onClick?: () => void;
 }
 
@@ -72,9 +73,9 @@ const variantStyles: Record<string, { icon: string; border: string; bg: string; 
   neutral: { icon: "text-muted-foreground", border: "border-border/40", bg: "bg-muted/50", text: "text-foreground" },
 };
 
-function DashboardCard({ title, value, icon: Icon, variant = "neutral", onClick }: DashboardCardProps) {
+function DashboardCard({ title, value, icon: Icon, variant = "neutral", hint, onClick }: DashboardCardProps) {
   const s = variantStyles[variant];
-  return (
+  const card = (
     <Card
       className={`${s.border} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}
       onClick={onClick}
@@ -87,9 +88,25 @@ function DashboardCard({ title, value, icon: Icon, variant = "neutral", onClick 
           </div>
         </div>
         <p className={`text-2xl font-bold ${value > 0 ? s.text : "text-muted-foreground"}`}>{value}</p>
+        {hint && <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{hint}</p>}
       </CardContent>
     </Card>
   );
+
+  if (hint) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{card}</TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+            {hint}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return card;
 }
 
 function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType; title: string; color: string }) {
