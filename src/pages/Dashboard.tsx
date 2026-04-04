@@ -396,8 +396,8 @@ const Dashboard = () => {
               <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня" onClick={() => navigate("/requests?filter=deliveryToday")} />
-                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" hint="Дата прихода прошла, статус не «Доставлено»" onClick={() => navigate("/requests?filter=overdueDelivery")} />
+                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня, статус не «Доставлено»" onClick={() => navigate("/requests?filter=deliveryToday")} />
+                <DashboardCard title="Просрочка отгрузки" value={stats.overdueShipment} icon={AlertTriangle} variant="danger" hint="Просрочка отгрузки — дата отгрузки прошла, но товар не отправлен" onClick={() => navigate("/requests?filter=overdueShipment")} />
               </div>
             </div>
 
