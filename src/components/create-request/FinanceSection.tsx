@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
 import { Banknote, ScanText, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
