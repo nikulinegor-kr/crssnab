@@ -156,9 +156,12 @@ const MobileRequestCard = memo(({
               <span className="font-medium">З:</span> <HighlightText text={request.applicant} searchQuery={searchQuery} />
             </span>
           )}
-          {request.payment_percentage !== null && request.payment_percentage !== undefined && (
-            <span className="font-semibold text-primary">{request.payment_percentage}%</span>
-          )}
+          {(() => {
+            const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+            if (pct === 0) return null;
+            if (pct >= 100) return <span className="font-semibold text-emerald-600">Оплачено</span>;
+            return <span className="font-semibold text-amber-600">{pct}%</span>;
+          })()}
         </div>
       </div>
       
