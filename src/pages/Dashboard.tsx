@@ -21,6 +21,7 @@ import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequest
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
 import { DashboardWidgetSettings } from "@/components/dashboard/DashboardWidgetSettings";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -107,16 +108,32 @@ const Dashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const { settings } = useViewSettings();
   const { isAdmin } = useUserRole();
+
+  const availableYears = useMemo(() => {
+    if (!requests) return [new Date().getFullYear().toString()];
+    const years = new Set(
+      requests.filter(r => r.request_date).map(r => new Date(r.request_date).getFullYear().toString())
+    );
+    if (years.size === 0) years.add(new Date().getFullYear().toString());
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
+  }, [requests]);
 
   const periodStart = useMemo(() => getPeriodStart(period), [period]);
 
   const filteredRequests = useMemo(() => {
     if (!requests) return [];
-    if (!periodStart) return requests;
-    return requests.filter(r => new Date(r.created_at) >= periodStart);
-  }, [requests, periodStart]);
+    // First filter by year
+    const yearFiltered = requests.filter(r => {
+      if (!r.request_date) return false;
+      return new Date(r.request_date).getFullYear().toString() === selectedYear;
+    });
+    // Then apply period
+    if (!periodStart) return yearFiltered;
+    return yearFiltered.filter(r => new Date(r.created_at) >= periodStart);
+  }, [requests, periodStart, selectedYear]);
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
@@ -256,20 +273,32 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Period filter */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-muted-foreground mr-1">Период:</span>
-          {periodOptions.map(opt => (
-            <Button
-              key={opt.key}
-              variant={period === opt.key ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-xs px-3"
-              onClick={() => setPeriod(opt.key)}
-            >
-              {opt.label}
-            </Button>
-          ))}
+        {/* Period filter + Year */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Период:</span>
+            {periodOptions.map(opt => (
+              <Button
+                key={opt.key}
+                variant={period === opt.key ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs px-3"
+                onClick={() => setPeriod(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[120px] h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>{year} год</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
