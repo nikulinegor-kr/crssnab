@@ -188,7 +188,25 @@ export const RequestsBulkActions = ({
     }
   };
 
-  const handleBulkStatusChange = async () => {
+  const handleBulkPaymentUpdate = async (percent: number) => {
+    if (selectedRequestIds.size === 0) return;
+    setIsSending(true);
+    try {
+      const status = percent === 0 ? "Не оплачено" : percent >= 100 ? "Оплачено" : "Частично оплачено";
+      const { error } = await supabase
+        .from("requests")
+        .update({ payment_percent: percent, payment_status: status })
+        .in("id", Array.from(selectedRequestIds));
+      if (error) throw error;
+      toast({ title: "Оплата обновлена", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
     if (selectedRequestIds.size === 0) {
       toast({ title: "Ошибка", description: "Выберите хотя бы одну заявку", variant: "destructive" });
       return;
