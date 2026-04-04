@@ -173,10 +173,10 @@ const Dashboard = () => {
       return r.delivery_date.split("T")[0] < today;
     }).length;
 
-    // Finance
-    const unpaid = active.filter(r => !r.payment_percent || r.payment_percent === 0).length;
-    const partiallyPaid = active.filter(r => r.payment_percent && r.payment_percent > 0 && r.payment_percent < 100).length;
-    const paid = all.filter(r => r.payment_percent === 100).length;
+    // Finance — use payment_status field
+    const unpaid = active.filter(r => r.payment_status === "Не оплачено").length;
+    const partiallyPaid = active.filter(r => r.payment_status === "Частично оплачено").length;
+    const paid = all.filter(r => r.payment_status === "Оплачено").length;
 
     // Efficiency
     const completed = all.filter(r => r.status === "Доставлено").length;
