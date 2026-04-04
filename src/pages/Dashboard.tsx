@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, Clock, AlertCircle, Plus, MessageCircle, Building2, Truck, 
   AlertTriangle, DollarSign, CheckCircle, Timer, Pause, PackageCheck,
-  TrendingUp, Zap, Star, CalendarDays, PackageX, Ban
+  TrendingUp, Zap, Star, CalendarDays, PackageX, Ban, BarChart3
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
