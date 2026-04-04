@@ -21,6 +21,7 @@ import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequest
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
 import { DashboardWidgetSettings } from "@/components/dashboard/DashboardWidgetSettings";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
 import { useUserRole } from "@/hooks/useUserRole";
