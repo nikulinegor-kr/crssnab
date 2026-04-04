@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "priority" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "payment_percent" | "description" | "applicant" | "contractor" | "amount";
+  field: "status" | "priority" | "transport_company" | "delivery_date" | "shipment_date" | "comments" | "payment_percentage" | "payment_percent" | "description" | "applicant" | "contractor" | "amount";
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
