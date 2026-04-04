@@ -171,11 +171,25 @@ export const useRequestsFilters = (
     saveFiltersToStorage(currentFilters as RequestFilters);
   }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
 
-  // Apply filters from URL params on mount (overrides saved filters if present)
+  // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
     const isNew = searchParams.get("new");
+    const filter = searchParams.get("filter") as SpecialDateFilter | null;
+    const paymentStatus = searchParams.get("payment_status");
+
+    // If any URL param is present, reset everything to defaults first
+    if (status || priority || isNew || filter || paymentStatus) {
+      setSearchQuery("");
+      setStatusFilter([]);
+      setPriorityFilter("all");
+      setYearFilter("all");
+      setApplicantFilter("all");
+      setObjectFilter("all");
+      setHideDelivered(false);
+      setSpecialDateFilter(null);
+    }
 
     if (status) {
       if (status.startsWith("!")) {
@@ -192,6 +206,15 @@ export const useRequestsFilters = (
     }
     if (isNew === "true") {
       setYearFilter(new Date().getFullYear().toString());
+    }
+    if (filter) {
+      setSpecialDateFilter(filter);
+    }
+    if (paymentStatus) {
+      // Map payment_status to the appropriate special filter
+      if (paymentStatus === "unpaid") setSpecialDateFilter("unpaid");
+      else if (paymentStatus === "paid") setSpecialDateFilter("paid");
+      else if (paymentStatus === "partial") setSpecialDateFilter("invoiced");
     }
   }, [searchParams]);
 
