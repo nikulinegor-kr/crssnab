@@ -56,6 +56,7 @@ const menuGroups = [
     label: "CRM",
     icon: FileText,
     items: [
+      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { title: "Заявки", url: "/requests", icon: FileText },
       { title: "Объекты", url: "/objects", icon: Building2 },
     ],
@@ -90,7 +91,6 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
-      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
