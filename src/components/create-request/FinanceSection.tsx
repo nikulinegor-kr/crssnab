@@ -250,26 +250,77 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
             name="payment_percentage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">% оплаты</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="0"
-                    className="h-9 select-all min-w-0 text-sm"
-                    disabled={disabled}
-                    value={field.value ?? ""}
-                    onChange={(e) => {
-                      const val = e.target.value === "" ? null : Math.min(100, Math.max(0, parseInt(e.target.value, 10)));
-                      field.onChange(isNaN(val as number) ? null : val);
-                    }}
-                  />
-                </FormControl>
+                <FormLabel className="text-xs">% предоплаты</FormLabel>
+                <Select
+                  value={field.value != null ? String(field.value) : ""}
+                  onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="—" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="0">0%</SelectItem>
+                    <SelectItem value="50">50%</SelectItem>
+                    <SelectItem value="100">100%</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
+
+        {/* Actual payment */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <FormField
+            control={form.control}
+            name="payment_percent"
+            render={({ field }) => {
+              const val = field.value ?? 0;
+              const statusLabel = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : "Частично оплачено";
+              const statusColor = val === 0 ? "text-destructive" : val >= 100 ? "text-emerald-600" : "text-amber-600";
+              const prepay = form.watch("payment_percentage") ?? 0;
+              const underpaid = prepay > 0 && val < prepay;
+              return (
+                <FormItem>
+                  <FormLabel className="text-xs">Факт оплаты (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      className={cn("h-9 select-all min-w-0 text-sm", underpaid && "border-destructive")}
+                      disabled={disabled}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value === "" ? null : Math.min(100, Math.max(0, parseInt(e.target.value, 10)));
+                        field.onChange(isNaN(v as number) ? null : v);
+                      }}
+                    />
+                  </FormControl>
+                  {underpaid && (
+                    <p className="text-[11px] text-destructive">Недоплата: факт {val}% &lt; план {prepay}%</p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <FormItem>
+            <FormLabel className="text-xs">Статус оплаты</FormLabel>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm">
+              {(() => {
+                const val = form.watch("payment_percent") ?? 0;
+                if (val === 0) return <span className="text-destructive font-medium">Не оплачено</span>;
+                if (val >= 100) return <span className="text-emerald-600 font-medium">Оплачено</span>;
+                return <span className="text-amber-600 font-medium">Частично ({val}%)</span>;
+              })()}
+            </div>
+          </FormItem>
         </div>
 
         {/* Availability row */}
