@@ -92,7 +92,7 @@ export const RequestsMiniDashboard = ({
     return {
       emergency, priority, planned,
       overdue, stale,
-      inTransit, deliveryToday, overdueDelivery,
+      inTransit, deliveryToday, overdueShipment,
       unpaid, paid, invoiced,
       newRequests, inWork,
     };
