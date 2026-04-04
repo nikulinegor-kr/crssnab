@@ -28,7 +28,7 @@ const SelectOrganization = () => {
     // Если уже выбранная организация сохранена — сразу в дашборд
     const saved = localStorage.getItem("currentOrganizationId");
     if (saved) {
-      navigate("/requests");
+      navigate("/dashboard");
       return;
     }
     fetchOrganizations();
