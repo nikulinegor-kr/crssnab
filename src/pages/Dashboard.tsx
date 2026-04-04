@@ -385,9 +385,9 @@ const Dashboard = () => {
             <div className="space-y-2">
               <SectionHeader icon={AlertTriangle} title="Проблемы" color="text-destructive" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" onClick={() => navigate("/requests?filter=overdue")} />
-                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" onClick={() => navigate("/requests?filter=stale")} />
-                <DashboardCard title="Не забраны из ТК" value={stats.notPickedUp} icon={PackageX} variant="danger" onClick={() => navigate("/requests?status=Доставлено в ТК")} />
+                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" hint="Дата прихода прошла, но заявка не доставлена" onClick={() => navigate("/requests?filter=overdue")} />
+                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" hint="Нет изменений более 2 дней" onClick={() => navigate("/requests?filter=stale")} />
+                <DashboardCard title="Не забраны из ТК" value={stats.notPickedUp} icon={PackageX} variant="danger" hint="Статус «Доставлено в ТК», но не забраны" onClick={() => navigate("/requests?status=Доставлено в ТК")} />
               </div>
             </div>
 
@@ -396,18 +396,18 @@ const Dashboard = () => {
               <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" onClick={() => navigate("/requests?filter=deliveryToday")} />
-                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests?filter=overdueDelivery")} />
+                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня" onClick={() => navigate("/requests?filter=deliveryToday")} />
+                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" hint="Дата прихода прошла, статус не «Доставлено»" onClick={() => navigate("/requests?filter=overdueDelivery")} />
               </div>
             </div>
 
             {/* 💰 ФИНАНСЫ */}
             <div className="space-y-2">
-              <SectionHeader icon={DollarSign} title="Финансы" color="text-green-500" />
+              <SectionHeader icon={DollarSign} title="Финансы (со счётом)" color="text-green-500" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" onClick={() => navigate("/requests?payment_status=unpaid")} />
-                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" onClick={() => navigate("/requests?payment_status=partial")} />
-                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" onClick={() => navigate("/requests?payment_status=paid")} />
+                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" hint="Есть счёт, но оплата не проведена" onClick={() => navigate("/requests?payment_status=unpaid")} />
+                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" hint="Есть счёт, оплата частичная" onClick={() => navigate("/requests?payment_status=partial")} />
+                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" hint="Есть счёт, оплата 100%" onClick={() => navigate("/requests?payment_status=paid")} />
               </div>
             </div>
 
@@ -438,26 +438,84 @@ const Dashboard = () => {
                 <SectionHeader icon={Timer} title="Среднее время (дней)" color="text-blue-500" />
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { title: "Создание → Заказ", value: stats.avgCreationToOrder },
-                    { title: "Заказ → Доставка", value: stats.avgOrderToDelivery },
-                    { title: "Полный цикл", value: stats.avgFullCycle },
+                    { title: "Создание → Заказ", value: stats.avgCreationToOrder, hint: "От создания заявки до отгрузки" },
+                    { title: "Заказ → Доставка", value: stats.avgOrderToDelivery, hint: "От отгрузки до прихода" },
+                    { title: "Полный цикл", value: stats.avgFullCycle, hint: "От создания до доставки" },
                   ].map(item => (
-                    <Card key={item.title} className="border-border/40">
-                      <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground mb-2 leading-tight">{item.title}</p>
-                        <p className={`text-2xl font-bold ${item.value > 14 ? "text-destructive" : item.value > 7 ? "text-orange-500" : "text-green-500"}`}>
-                          {item.value || "—"}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <TooltipProvider key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Card className="border-border/40">
+                            <CardContent className="p-4">
+                              <p className="text-xs text-muted-foreground mb-2 leading-tight">{item.title}</p>
+                              <p className={`text-2xl font-bold ${item.value > 14 ? "text-destructive" : item.value > 7 ? "text-orange-500" : "text-green-500"}`}>
+                                {item.value || "—"}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">{item.hint}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* График расходов для руководства */}
-            {isAdmin && settings.dashboard.showExpenseChart && requests && requests.length > 0 && (
-              <ExpenseChart requests={requests} selectedYear={new Date().getFullYear().toString()} />
+            {/* 📦 ТОП ОБЪЕКТОВ ПО РАСХОДАМ */}
+            {objectExpenses.length > 0 && (
+              <Card className="border-border/40">
+                <CardHeader className="pb-3 p-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-primary" />
+                      Расходы по объектам
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        {totalExpenses.toLocaleString("ru-RU")} ₽
+                      </span>
+                    </CardTitle>
+                    <Select value={expenseObjectFilter} onValueChange={setExpenseObjectFilter}>
+                      <SelectTrigger className="w-[200px] h-8 text-xs">
+                        <SelectValue placeholder="Все объекты" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все объекты</SelectItem>
+                        {objectExpenses.map(o => (
+                          <SelectItem key={o.name} value={o.name}>{o.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="space-y-2">
+                    {filteredObjectExpenses.map((obj, idx) => {
+                      const maxTotal = objectExpenses[0]?.total || 1;
+                      const pct = Math.round((obj.total / maxTotal) * 100);
+                      return (
+                        <div key={obj.name} className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-foreground truncate max-w-[60%]">
+                              <span className="text-muted-foreground mr-1.5">{idx + 1}.</span>
+                              {obj.name}
+                            </span>
+                            <span className="font-medium text-foreground whitespace-nowrap">
+                              {obj.total.toLocaleString("ru-RU")} ₽
+                              <span className="text-muted-foreground text-xs ml-1.5">({obj.count} заявок)</span>
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary/60 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Аналитика */}
