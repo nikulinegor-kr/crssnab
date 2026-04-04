@@ -715,7 +715,14 @@ export const RequestsTable = ({
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }}>
-                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="shipment_date"
+                        value={request.shipment_date || ""}
+                        displayValue={
+                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}</span>
+                        }
+                      />
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
