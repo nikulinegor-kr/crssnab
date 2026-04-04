@@ -109,6 +109,28 @@ export default function SupplyDashboardPage() {
         </CreateRequestDialog>
       </div>
 
+      {/* Summary Block */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {summaryCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div key={card.title} className="flex items-center gap-3">
+                  <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
+                    <Icon className={`h-4 w-4 ${card.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold leading-tight">{card.value}</p>
+                    <p className="text-xs text-muted-foreground">{card.title}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         {cards.map((card) => {
