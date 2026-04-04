@@ -72,12 +72,14 @@ export const RequestsMiniDashboard = ({
       return isBefore(new Date(r.delivery_date), today);
     }).length;
 
-    const unpaid = active.filter(r =>
-      r.status === "Счёт" || (r.payment_percentage !== null && r.payment_percentage !== undefined && r.payment_percentage === 0 && r.amount > 0)
-    ).length;
-    const paid = active.filter(r =>
-      r.payment_percentage === 100 || r.status === "Оплачено"
-    ).length;
+    const unpaid = active.filter(r => {
+      const pct = (r as any).payment_percent ?? r.payment_percentage ?? 0;
+      return pct === 0 && r.amount > 0;
+    }).length;
+    const paid = active.filter(r => {
+      const pct = (r as any).payment_percent ?? r.payment_percentage ?? 0;
+      return pct >= 100;
+    }).length;
     const invoiced = active.filter(r =>
       r.status === "Счёт в Бухгалтерии"
     ).length;
