@@ -258,7 +258,7 @@ export const InlineEditCell = ({
   }
 
   // Date field
-  if (field === "delivery_date") {
+  if (field === "delivery_date" || field === "shipment_date") {
     return (
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
         <Input
