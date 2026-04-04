@@ -36,6 +36,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   availability: false,
   contractor: true,
   invoice_number: false,
+  payment_prepay: true,
   payment_percentage: true,
   shipment_date: false,
   delivery_date: true,
