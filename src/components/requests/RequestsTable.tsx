@@ -678,15 +678,27 @@ export const RequestsTable = ({
                       )}
                     </TableCell>
                   )}
+                  {visibility.payment_prepay && (
+                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.payment_prepay, minWidth: widths.payment_prepay, maxWidth: widths.payment_prepay }}>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="payment_percentage"
+                        value={request.payment_percentage ?? 0}
+                        displayValue={
+                          <span className="text-muted-foreground">{request.payment_percentage ?? 0}%</span>
+                        }
+                      />
+                    </TableCell>
+                  )}
                   {visibility.payment_percentage && (
                     <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }}>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percent"
-                        value={(request as any).payment_percent ?? request.payment_percentage ?? 0}
+                        value={(request as any).payment_percent ?? 0}
                         displayValue={
                           (() => {
-                            const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+                            const pct = (request as any).payment_percent ?? 0;
                             const prepay = request.payment_percentage ?? 0;
                             const underpaid = prepay > 0 && pct < prepay;
                             if (pct === 0) return <span className="text-destructive text-[12px]">Не оплачено</span>;
