@@ -143,8 +143,8 @@ const Dashboard = () => {
 
     // Urgency
     const emergency = active.filter(r => r.priority === "Аварийно").length;
-    const priority = active.filter(r => r.priority === "Приоритет").length;
-    const planned = active.filter(r => r.priority === "Плановая" || !r.priority).length;
+    const priority = active.filter(r => r.priority === "Приоритетно").length;
+    const planned = active.filter(r => r.priority === "Планово" || !r.priority).length;
 
     // Work
     const newRequests = all.filter(r => r.status === "Новая заявка").length;
@@ -314,8 +314,8 @@ const Dashboard = () => {
               <SectionHeader icon={Zap} title="Срочность" color="text-destructive" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="Аварийные" value={stats.emergency} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests?priority=Аварийно")} />
-                <DashboardCard title="Приоритетные" value={stats.priority} icon={Star} variant="warning" onClick={() => navigate("/requests?priority=Приоритет")} />
-                <DashboardCard title="Плановые" value={stats.planned} icon={CalendarDays} variant="info" onClick={() => navigate("/requests?priority=Плановая")} />
+                <DashboardCard title="Приоритетные" value={stats.priority} icon={Star} variant="warning" onClick={() => navigate("/requests?priority=Приоритетно")} />
+                <DashboardCard title="Плановые" value={stats.planned} icon={CalendarDays} variant="info" onClick={() => navigate("/requests?priority=Планово")} />
               </div>
             </div>
 
