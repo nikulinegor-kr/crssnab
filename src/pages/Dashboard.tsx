@@ -353,9 +353,9 @@ const Dashboard = () => {
             <div className="space-y-2">
               <SectionHeader icon={DollarSign} title="Финансы" color="text-green-500" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" onClick={() => navigate("/requests?payment_status=unpaid")} />
+                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" onClick={() => navigate("/requests?payment_status=partial")} />
+                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" onClick={() => navigate("/requests?payment_status=paid")} />
               </div>
             </div>
 
