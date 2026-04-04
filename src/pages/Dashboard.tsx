@@ -101,7 +101,14 @@ function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType; 
 }
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const rawNavigate = useNavigate();
+  // Clear saved filters before navigating to /requests so dashboard filter is the only active one
+  const navigate = useCallback((path: string) => {
+    if (path.startsWith("/requests")) {
+      localStorage.removeItem("requests_filters");
+    }
+    rawNavigate(path);
+  }, [rawNavigate]);
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { currentOrgId } = useCurrentOrganization();
   const { logoUrl, orgName } = useOrgBranding();
