@@ -3,7 +3,17 @@ import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
 import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
 
-export type SpecialDateFilter = "deliveredLast7Days" | "upcomingNext7Days" | null;
+export type SpecialDateFilter = 
+  | "deliveredLast7Days" 
+  | "upcomingNext7Days" 
+  | "overdue" 
+  | "stale" 
+  | "deliveryToday" 
+  | "overdueDelivery" 
+  | "unpaid" 
+  | "paid" 
+  | "invoiced"
+  | null;
 
 export interface RequestFilters {
   searchQuery: string;
