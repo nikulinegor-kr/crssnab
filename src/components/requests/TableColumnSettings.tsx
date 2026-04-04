@@ -17,6 +17,7 @@ export interface ColumnVisibility {
   availability: boolean;
   contractor: boolean;
   invoice_number: boolean;
+  payment_prepay: boolean;
   payment_percentage: boolean;
   shipment_date: boolean;
   delivery_date: boolean;
