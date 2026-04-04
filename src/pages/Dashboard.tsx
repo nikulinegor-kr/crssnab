@@ -192,9 +192,10 @@ const Dashboard = () => {
 
     // Logistics
     const deliveryToday = all.filter(r => r.delivery_date?.split("T")[0] === today && !["Доставлено", "Выполнено"].includes(r.status)).length;
-    const overdueDelivery = all.filter(r => {
-      if (!r.delivery_date || ["Доставлено", "Выполнено", "Отменено", "Закрыто"].includes(r.status)) return false;
-      return r.delivery_date.split("T")[0] < today;
+    const overdueShipment = all.filter(r => {
+      if (!(r as any).shipment_date) return false;
+      if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(r.status)) return false;
+      return (r as any).shipment_date.split("T")[0] < today;
     }).length;
 
     // Finance — only requests WITH invoice (invoice_number not empty)
