@@ -101,7 +101,14 @@ function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType; 
 }
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const rawNavigate = useNavigate();
+  // Clear saved filters before navigating to /requests so dashboard filter is the only active one
+  const navigate = useCallback((path: string) => {
+    if (path.startsWith("/requests")) {
+      localStorage.removeItem("requests_filters");
+    }
+    rawNavigate(path);
+  }, [rawNavigate]);
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { currentOrgId } = useCurrentOrganization();
   const { logoUrl, orgName } = useOrgBranding();
@@ -333,8 +340,8 @@ const Dashboard = () => {
             <div className="space-y-2">
               <SectionHeader icon={AlertTriangle} title="Проблемы" color="text-destructive" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" onClick={() => navigate("/requests?filter=overdue")} />
+                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" onClick={() => navigate("/requests?filter=stale")} />
                 <DashboardCard title="Не забраны из ТК" value={stats.notPickedUp} icon={PackageX} variant="danger" onClick={() => navigate("/requests?status=Доставлено в ТК")} />
               </div>
             </div>
@@ -344,8 +351,8 @@ const Dashboard = () => {
               <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" onClick={() => navigate("/shipments")} />
-                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" onClick={() => navigate("/requests?filter=deliveryToday")} />
+                <DashboardCard title="Просроч. доставка" value={stats.overdueDelivery} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests?filter=overdueDelivery")} />
               </div>
             </div>
 
@@ -353,9 +360,9 @@ const Dashboard = () => {
             <div className="space-y-2">
               <SectionHeader icon={DollarSign} title="Финансы" color="text-green-500" />
               <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" onClick={() => navigate("/requests")} />
-                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" onClick={() => navigate("/requests")} />
+                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" onClick={() => navigate("/requests?payment_status=unpaid")} />
+                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" onClick={() => navigate("/requests?payment_status=partial")} />
+                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" onClick={() => navigate("/requests?payment_status=paid")} />
               </div>
             </div>
 
