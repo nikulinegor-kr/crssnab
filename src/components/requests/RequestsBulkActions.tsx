@@ -207,6 +207,8 @@ export const RequestsBulkActions = ({
       setIsSending(false);
     }
   };
+
+  const handleBulkStatusChange = async () => {
     if (selectedRequestIds.size === 0) {
       toast({ title: "Ошибка", description: "Выберите хотя бы одну заявку", variant: "destructive" });
       return;
