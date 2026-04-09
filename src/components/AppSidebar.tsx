@@ -91,6 +91,8 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
+      { title: "Производительность команды", url: "/team-performance", icon: Users },
+      { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },

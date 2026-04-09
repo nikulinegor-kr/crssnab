@@ -16,7 +16,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 async function getTelegramSettings(orgId: string) {
   const { data, error } = await supabase
     .from("telegram_settings")
-    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id")
+    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id, procurement_chat_id, auto_send_to_procurement")
     .eq("organization_id", orgId)
     .maybeSingle();
   if (error || !data) return null;
@@ -26,6 +26,8 @@ async function getTelegramSettings(orgId: string) {
     telegram_auto_send_on_create: data.auto_send_on_create,
     telegram_auto_send_on_status_change: data.auto_send_on_status_change,
     telegram_invoice_chat_id: data.invoice_chat_id,
+    telegram_procurement_chat_id: data.procurement_chat_id,
+    telegram_auto_send_to_procurement: data.auto_send_to_procurement,
   };
 }
 
