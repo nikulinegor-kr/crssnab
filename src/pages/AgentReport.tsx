@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Check, Loader2 } from "lucide-react";
+import { FileSpreadsheet, Check, Loader2, AlertTriangle, Pencil, Lock, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { Plus } from "lucide-react";
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const defaultHeader = {
   report_number: "1",
