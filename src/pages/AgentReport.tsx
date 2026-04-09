@@ -199,10 +199,10 @@ const AgentReport = () => {
     }
 
     const { data, error } = await supabase
-      .from(table).insert(insertData).select().single();
+      .from(table as any).insert(insertData).select().single();
     if (error) throw error;
-    setId(data.id);
-    return data.id;
+    setId((data as any).id);
+    return (data as any).id;
   };
 
   const persistRows = async (
@@ -211,9 +211,9 @@ const AgentReport = () => {
     rowsData: any[],
   ) => {
     // Delete all existing rows, re-insert
-    await supabase.from(table).delete().eq("report_id", reportIdVal);
+    await (supabase.from(table as any) as any).delete().eq("report_id", reportIdVal);
     if (rowsData.length > 0) {
-      const { error } = await supabase.from(table).insert(
+      const { error } = await (supabase.from(table as any) as any).insert(
         rowsData.map(r => {
           const { id, formula, ...rest } = r;
           return {
@@ -525,7 +525,7 @@ const AgentReport = () => {
     }
     if (saveStatus === "saved") {
       return (
-        <div className="flex items-center gap-1.5 text-xs text-green-600">
+        <div className="flex items-center gap-1.5 text-xs text-primary">
           <Check className="h-3 w-3" />
           <span>Сохранено</span>
         </div>
