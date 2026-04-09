@@ -110,8 +110,12 @@ export const ExportReportButton = ({ headerData, rows, month, year, commissionAm
       ]);
 
       // Commission row
-      let commission = commissionAmount ?? 0;
-      if (commissionAmount === undefined) {
+      let commission = 0;
+      if (commissionAmount !== undefined) {
+        commission = commissionAmount;
+      } else if (commissionPercent !== undefined) {
+        commission = total * (commissionPercent / 100);
+      } else {
         if (total >= 10000000) {
           commission = 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
         } else if (total >= 5000000) {
