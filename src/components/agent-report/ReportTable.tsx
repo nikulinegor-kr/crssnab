@@ -22,9 +22,10 @@ interface ReportTableProps {
   selectedMonth?: number;
   selectedYear?: number;
   months?: { value: number; label: string }[];
+  commissionPercent?: number;
 }
 
-export const ReportTable = ({ rows, onChange, contractNumber, contractDate, selectedMonth, selectedYear, months }: ReportTableProps) => {
+export const ReportTable = ({ rows, onChange, contractNumber, contractDate, selectedMonth, selectedYear, months, commissionPercent }: ReportTableProps) => {
   const updateCell = (rowNumber: number, field: keyof TableRow, value: any) => {
     const updatedRows = rows.map(r => {
       if (r.row_number === rowNumber) {
@@ -58,7 +59,17 @@ export const ReportTable = ({ rows, onChange, contractNumber, contractDate, sele
   };
 
   const calculateCommission = () => {
-    return calculateTotal() * 0.08;
+    const total = calculateTotal();
+    if (commissionPercent !== undefined) {
+      return total * (commissionPercent / 100);
+    }
+    if (total >= 10000000) {
+      return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+    } else if (total >= 5000000) {
+      return 5000000 * 0.02 + (total - 5000000) * 0.01;
+    } else {
+      return total * 0.02;
+    }
   };
 
   return (
