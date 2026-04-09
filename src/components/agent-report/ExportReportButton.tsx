@@ -9,9 +9,10 @@ interface ExportReportButtonProps {
   month: number;
   year: number;
   commissionAmount?: number;
+  commissionPercent?: number;
 }
 
-export const ExportReportButton = ({ headerData, rows, month, year, commissionAmount }: ExportReportButtonProps) => {
+export const ExportReportButton = ({ headerData, rows, month, year, commissionAmount, commissionPercent }: ExportReportButtonProps) => {
   const { toast } = useToast();
 
   const exportToExcel = () => {
