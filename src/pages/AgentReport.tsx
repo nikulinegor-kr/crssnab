@@ -56,6 +56,15 @@ const AgentReport = () => {
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
 
   useEffect(() => {
+    // Auto-update period and report number when month/year changes
+    const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+    const mm = String(selectedMonth).padStart(2, '0');
+    setHeaderData(prev => ({
+      ...prev,
+      period_start: `${selectedYear}-${mm}-01`,
+      period_end: `${selectedYear}-${mm}-${String(lastDay).padStart(2, '0')}`,
+      report_number: selectedMonth.toString(),
+    }));
     loadReport();
   }, [selectedMonth, selectedYear, currentOrgId]);
 
