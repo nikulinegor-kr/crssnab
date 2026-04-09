@@ -23,6 +23,7 @@ interface ExportActReportButtonProps {
   additionalRows: AdditionalRow[];
   month: number;
   year: number;
+  agentCommission?: number;
 }
 
 export const ExportActReportButton = ({
@@ -30,6 +31,7 @@ export const ExportActReportButton = ({
   additionalRows,
   month,
   year,
+  agentCommission = 0,
 }: ExportActReportButtonProps) => {
   const { toast } = useToast();
 
@@ -38,323 +40,102 @@ export const ExportActReportButton = ({
       const workbook = XLSX.utils.book_new();
 
       const monthNames = [
-        "ЯНВАРЬ",
-        "ФЕВРАЛЬ",
-        "МАРТ",
-        "АПРЕЛЬ",
-        "МАЙ",
-        "ИЮНЬ",
-        "ИЮЛЬ",
-        "АВГУСТ",
-        "СЕНТЯБРЬ",
-        "ОКТЯБРЬ",
-        "НОЯБРЬ",
-        "ДЕКАБРЬ",
+        "ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ",
+        "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ",
       ];
 
-      const borderStyle = {
-        top: { style: "thin", color: { rgb: "000000" } },
-        bottom: { style: "thin", color: { rgb: "000000" } },
-        left: { style: "thin", color: { rgb: "000000" } },
-        right: { style: "thin", color: { rgb: "000000" } },
-      };
-
-      const excelData: any[] = [];
+      const excelData: any[][] = [];
 
       // Title
-      excelData.push([
-        {
-          v: `ОТЧЕТ АГЕНТА ПО АКТУ ЗА ${monthNames[month - 1]} ${year}г.`,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true, sz: 14 },
-          },
-        },
-      ]);
+      excelData.push([`ОТЧЕТ АГЕНТА ПО АКТУ ЗА ${monthNames[month - 1]} ${year}г.`]);
       excelData.push([""]);
 
       // Subtitle
+      excelData.push([`Расчет суммы вознаграждения за ${monthNames[month - 1]}  ${year}г.`]);
+
+      // Headers
       excelData.push([
-        {
-          v: `Расчет суммы вознаграждения за ${monthNames[month - 1]} ${year}г.`,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-          },
-        },
+        "Дата перечисления",
+        "Перечислено на р/счет, касса в том числе вознаграждение",
+        "Налог 7%",
+        "Остаток после удержания налога 7%",
+        "Заработная плата 30 000\n+% вознаграждение агента",
+        "Сумма по чекам",
+        "Сумма Акта",
       ]);
 
-      // Calculation table headers
-      excelData.push([
-        {
-          v: "Заработная плата 30 000 +% вознаграждение агента",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Сумма по чекам",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "ЗП+Чеки",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Налог 7%",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Сумма Акта",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-      ]);
+      const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
 
-      // Calculation table data
+      // Data rows
       calculationRows.forEach((row) => {
         excelData.push([
-          {
-            v: row.salary_with_commission || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-          {
-            v: row.check_amount || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-          {
-            v: row.remainder_after_tax || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-          {
-            v: row.tax_7_percent || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-          {
-            v: row.act_amount || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
+          row.transfer_date || "",
+          row.transferred_amount || "",
+          row.tax_7_percent || 0,
+          row.remainder_after_tax || 0,
+          30000,
+          checkAmountTotal,
+          row.act_amount || 0,
         ]);
+        // Commission sub-row
+        if (agentCommission > 0) {
+          excelData.push(["", "", "", "", agentCommission, "", ""]);
+        }
       });
 
-      // Calculation totals
-      const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
-      
+      // Totals
       const calcTotals = {
-        salary_with_commission: calculationRows.reduce(
-          (sum, row) => sum + (row.salary_with_commission || 0),
-          0
-        ),
         tax_7_percent: calculationRows.reduce((sum, row) => sum + (row.tax_7_percent || 0), 0),
-        remainder_after_tax: calculationRows.reduce(
-          (sum, row) => sum + (row.remainder_after_tax || 0),
-          0
-        ),
+        remainder_after_tax: calculationRows.reduce((sum, row) => sum + (row.remainder_after_tax || 0), 0),
+        salary_with_commission: calculationRows.reduce((sum, row) => {
+          return sum + (row.salary_with_commission !== null && row.salary_with_commission !== 0
+            ? row.salary_with_commission : 30000 + agentCommission);
+        }, 0),
         check_amount: checkAmountTotal,
         act_amount: calculationRows.reduce((sum, row) => sum + (row.act_amount || 0), 0),
       };
 
       excelData.push([
-        {
-          v: calcTotals.salary_with_commission,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-        {
-          v: calcTotals.check_amount,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-        {
-          v: calcTotals.remainder_after_tax,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-        {
-          v: calcTotals.tax_7_percent,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-        {
-          v: calcTotals.act_amount,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
+        "ИТОГО:",
+        "",
+        calcTotals.tax_7_percent,
+        calcTotals.remainder_after_tax,
+        calcTotals.salary_with_commission,
+        calcTotals.check_amount,
+        calcTotals.act_amount,
       ]);
 
       excelData.push([""]);
       excelData.push([""]);
 
-      // Чеки
-      excelData.push([
-        {
-          v: "Чеки",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true, sz: 12 },
-          },
-        },
-      ]);
+      // Checks table
+      excelData.push(["№", "", "", "", "", "", "Сумма"]);
 
-      // Чеки table headers
-      excelData.push([
-        {
-          v: "№",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Описание",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-        {
-          v: "Сумма",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-            fill: { patternType: "solid", fgColor: { rgb: "D9D9D9" } },
-          },
-        },
-      ]);
-
-      // Additional table data
       additionalRows.forEach((row, index) => {
-        excelData.push([
-          {
-            v: index + 1,
-            s: { alignment: { horizontal: "center" }, border: borderStyle },
-          },
-          {
-            v: row.description || "",
-            s: { alignment: { horizontal: "center" }, border: borderStyle },
-          },
-          {
-            v: row.amount || 0,
-            s: {
-              alignment: { horizontal: "center" },
-              numFmt: "#,##0.00",
-              border: borderStyle,
-            },
-          },
-        ]);
+        excelData.push([index + 1, row.description || "", "", "", "", "", row.amount || 0]);
       });
 
-      // Additional totals
       const addTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
-
-      excelData.push([
-        {
-          v: "ИТОГО:",
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            border: borderStyle,
-          },
-        },
-        { v: "", s: { border: borderStyle } },
-        {
-          v: addTotal,
-          s: {
-            alignment: { horizontal: "center" },
-            font: { bold: true },
-            numFmt: "#,##0.00",
-            border: borderStyle,
-          },
-        },
-      ]);
+      excelData.push(["ИТОГО:", "", "", "", "", "", addTotal || "-"]);
 
       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
-      // Calculate row count for merge
-      const calcRowCount = calculationRows.length + 4; // 4 = title + empty + subtitle + header
-
-      // Merge cells
+      // Merges
       const merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Title
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }, // Subtitle
-        { s: { r: calcRowCount + 5, c: 0 }, e: { r: calcRowCount + 5, c: 2 } }, // Чеки header
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } },
       ];
       worksheet["!merges"] = merges;
 
       // Column widths
       worksheet["!cols"] = [
-        { wch: 25 }, // Зарплата
-        { wch: 15 }, // Чеки
-        { wch: 15 }, // ЗП+Чеки
-        { wch: 12 }, // Налог
-        { wch: 15 }, // Акта
+        { wch: 18 },
+        { wch: 30 },
+        { wch: 14 },
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 16 },
+        { wch: 16 },
       ];
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Отчет по акту");
@@ -362,17 +143,10 @@ export const ExportActReportButton = ({
       const fileName = `Отчет_по_акту_${monthNames[month - 1]}_${year}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
-      toast({
-        title: "Успешно",
-        description: "Файл успешно экспортирован",
-      });
+      toast({ title: "Успешно", description: "Файл успешно экспортирован" });
     } catch (error) {
       console.error("Error exporting to Excel:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось экспортировать файл",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: "Не удалось экспортировать файл", variant: "destructive" });
     }
   };
 
