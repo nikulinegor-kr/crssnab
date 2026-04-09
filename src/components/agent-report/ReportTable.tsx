@@ -58,14 +58,7 @@ export const ReportTable = ({ rows, onChange, contractNumber, contractDate, sele
   };
 
   const calculateCommission = () => {
-    const total = calculateTotal();
-    if (total >= 10000000) {
-      return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
-    } else if (total >= 5000000) {
-      return 5000000 * 0.02 + (total - 5000000) * 0.01;
-    } else {
-      return total * 0.02;
-    }
+    return calculateTotal() * 0.08;
   };
 
   return (
