@@ -298,6 +298,7 @@ const AgentReport = () => {
             </Select>
 
             <Button onClick={saveReport} size="sm" className="sm:size-default">Сохранить</Button>
+            <Button onClick={loadDataFromRequests} variant="outline" size="sm" className="sm:size-default">🔄 Из заявок</Button>
             <ExportReportButton 
               headerData={headerData}
               rows={rows}
