@@ -65,7 +65,7 @@ export default function AgentActReport() {
 
     try {
       const { data: reportData, error: reportError } = await supabase
-        .from("agent_report_data")
+        .from("agent_report_uu_data")
         .select("id")
         .eq("organization_id", currentOrgId)
         .eq("month", month)
@@ -76,7 +76,7 @@ export default function AgentActReport() {
 
       if (reportData) {
         const { data: rowsData, error: rowsError } = await supabase
-          .from("agent_report_rows")
+          .from("agent_report_uu_rows")
           .select("amount")
           .eq("report_id", reportData.id);
 
@@ -387,7 +387,7 @@ export default function AgentActReport() {
           <h1 className="text-3xl font-bold">Отчет агента по акту</h1>
           {agentCommission > 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              Вознаграждение агента за период: {agentCommission.toFixed(2)} ₽
+              Вознаграждение агента (из отчёта УУ) за период: {agentCommission.toFixed(2)} ₽
             </p>
           )}
         </div>
