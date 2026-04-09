@@ -1,8 +1,8 @@
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Check, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ReportHeader } from "@/components/agent-report/ReportHeader";
 import { ReportTable } from "@/components/agent-report/ReportTable";
 import { ExportReportButton } from "@/components/agent-report/ExportReportButton";
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Button } from "@/components/ui/button";
 import { Request } from "@/hooks/useRequests";
-import { Plus, Save } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
@@ -28,11 +28,6 @@ const defaultHeader = {
   recipient_name: "Переведенцев М.Л.",
   recipient_position: "Генеральный директор ООО«САХАРЕСУРС»"
 };
-
-const emptyRows = [
-  { row_number: 1, tmc: "", contractor: "", invoice_number: "", amount: 0 },
-  { row_number: 2, tmc: "", contractor: "", invoice_number: "", amount: 0 }
-];
 
 const months = [
   { value: 1, label: "Январь" }, { value: 2, label: "Февраль" },
@@ -63,24 +58,27 @@ interface AdditionalRow {
   amount: number | null;
 }
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 const AgentReport = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [activeTab, setActiveTab] = useState("uu");
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
 
   // === Report (Отчет агента) state ===
   const [reportId, setReportId] = useState<string | null>(null);
   const [headerData, setHeaderData] = useState({ ...defaultHeader });
-  const [rows, setRows] = useState([...emptyRows]);
+  const [rows, setRows] = useState<any[]>([]);
 
   // === UU Report (Отчет агента - УУ) state ===
   const [uuReportId, setUuReportId] = useState<string | null>(null);
   const [uuHeaderData, setUuHeaderData] = useState({ ...defaultHeader });
-  const [uuRows, setUuRows] = useState([...emptyRows]);
+  const [uuRows, setUuRows] = useState<any[]>([]);
 
   // === Act Report (Отчет по акту) state ===
   const [actReportId, setActReportId] = useState<string | null>(null);
@@ -89,6 +87,11 @@ const AgentReport = () => {
   const [agentCommission, setAgentCommission] = useState(0);
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
+
+  // Refs to track if initial load is done (to avoid auto-save on load)
+  const initialLoadDone = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-update period when month/year changes
   useEffect(() => {
@@ -106,19 +109,50 @@ const AgentReport = () => {
   // Load all reports when month/year/org changes
   useEffect(() => {
     if (currentOrgId) {
-      loadReport();
-      loadUuReport();
-      loadActReport();
-      loadAgentCommission();
+      initialLoadDone.current = false;
+      loadAllData();
     }
   }, [selectedMonth, selectedYear, currentOrgId]);
 
-  // ========== SHARED ==========
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadReport(),
+        loadUuReport(),
+        loadActReport(),
+      ]);
+    } finally {
+      setLoading(false);
+      // Small delay to avoid triggering auto-save from initial load state changes
+      setTimeout(() => { initialLoadDone.current = true; }, 500);
+    }
+  };
+
+  // ========== AUTO-SAVE DEBOUNCE ==========
+  const triggerAutoSave = useCallback((saveFn: () => Promise<void>) => {
+    if (!initialLoadDone.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    setSaveStatus("saving");
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await saveFn();
+        setSaveStatus("saved");
+        savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 3000);
+      } catch (error) {
+        console.error("Auto-save error:", error);
+        setSaveStatus("error");
+        savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 5000);
+      }
+    }, 1000);
+  }, []);
+
+  // ========== SHARED: Load data from requests ==========
   const loadDataFromRequests = useCallback(async () => {
     if (!currentOrgId) return [];
     const { data: requests, error } = await supabase
-      .from("requests")
-      .select("*")
+      .from("requests").select("*")
       .eq("organization_id", currentOrgId)
       .order("request_date", { ascending: false });
     if (error) throw error;
@@ -143,21 +177,59 @@ const AgentReport = () => {
     }));
   }, [currentOrgId, selectedMonth, selectedYear]);
 
-  const refreshFromRequests = async (target: "report" | "uu") => {
-    try {
-      const newRows = await loadDataFromRequests();
-      const result = newRows.length > 0 ? newRows : [...emptyRows];
-      if (target === "report") { setRows(result); setReportId(null); }
-      else { setUuRows(result); setUuReportId(null); }
-    } catch (error) {
-      console.error("Error loading requests:", error);
+  // ========== PERSIST HELPERS ==========
+  const ensureReportId = async (
+    table: string,
+    currentId: string | null,
+    setId: (id: string) => void,
+    headerForInsert?: Record<string, any>
+  ): Promise<string> => {
+    if (currentId) return currentId;
+    if (!currentOrgId) throw new Error("No org");
+
+    const insertData: any = {
+      organization_id: currentOrgId,
+      month: selectedMonth,
+      year: selectedYear,
+    };
+
+    if (headerForInsert) {
+      Object.assign(insertData, headerForInsert);
+      insertData.created_by = (await supabase.auth.getUser()).data.user?.id;
+    }
+
+    const { data, error } = await supabase
+      .from(table as any).insert(insertData).select().single();
+    if (error) throw error;
+    setId((data as any).id);
+    return (data as any).id;
+  };
+
+  const persistRows = async (
+    table: string,
+    reportIdVal: string,
+    rowsData: any[],
+  ) => {
+    // Delete all existing rows, re-insert
+    await (supabase.from(table as any) as any).delete().eq("report_id", reportIdVal);
+    if (rowsData.length > 0) {
+      const { error } = await (supabase.from(table as any) as any).insert(
+        rowsData.map(r => {
+          const { id, formula, ...rest } = r;
+          return {
+            ...rest,
+            report_id: reportIdVal,
+            amount: typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0,
+          };
+        })
+      );
+      if (error) throw error;
     }
   };
 
   // ========== REPORT (Отчет агента) ==========
   const loadReport = async () => {
     if (!currentOrgId) return;
-    setLoading(true);
     try {
       const { data: reportData, error } = await supabase
         .from("agent_report_data").select("*")
@@ -183,53 +255,34 @@ const AgentReport = () => {
           .from("agent_report_rows").select("*")
           .eq("report_id", reportData.id).order("row_number");
         if (rowsError) throw rowsError;
-        if (rowsData?.length) {
-          setRows(rowsData.map(r => ({
-            id: r.id, row_number: r.row_number, tmc: r.tmc || "",
-            contractor: r.contractor || "", invoice_number: r.invoice_number || "",
-            amount: r.amount || 0, formula: r.formula || undefined
-          })));
-        }
+        setRows(rowsData?.map(r => ({
+          id: r.id, row_number: r.row_number, tmc: r.tmc || "",
+          contractor: r.contractor || "", invoice_number: r.invoice_number || "",
+          amount: r.amount || 0, formula: r.formula || undefined
+        })) || []);
       } else {
-        await refreshFromRequests("report");
+        // Auto-load from requests and save immediately
+        const newRows = await loadDataFromRequests();
+        setRows(newRows);
+        if (newRows.length > 0) {
+          const id = await ensureReportId("agent_report_data", null, setReportId, headerData);
+          await persistRows("agent_report_rows", id, newRows);
+        }
       }
     } catch (error) {
       console.error("Error loading report:", error);
-      toast({ title: "Ошибка", description: "Не удалось загрузить данные", variant: "destructive" });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const saveReport = async () => {
+  const saveReportNow = async () => {
     if (!currentOrgId) return;
-    try {
-      let id = reportId;
-      if (id) {
-        const { error } = await supabase.from("agent_report_data")
-          .update({ ...headerData, month: selectedMonth, year: selectedYear }).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.from("agent_report_data")
-          .insert({ organization_id: currentOrgId, ...headerData, month: selectedMonth, year: selectedYear,
-            created_by: (await supabase.auth.getUser()).data.user?.id }).select().single();
-        if (error) throw error;
-        id = data.id; setReportId(data.id);
-      }
-      if (id) {
-        await supabase.from("agent_report_rows").delete().eq("report_id", id);
-        const { error } = await supabase.from("agent_report_rows").insert(
-          rows.map(r => ({ report_id: id, row_number: r.row_number, tmc: r.tmc,
-            contractor: r.contractor, invoice_number: r.invoice_number,
-            amount: typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0, formula: null }))
-        );
-        if (error) throw error;
-      }
-      toast({ title: "Успешно", description: "Отчет сохранен" });
-    } catch (error) {
-      console.error("Error saving report:", error);
-      toast({ title: "Ошибка", description: "Не удалось сохранить отчет", variant: "destructive" });
-    }
+    const id = await ensureReportId("agent_report_data", reportId, setReportId, headerData);
+    await supabase.from("agent_report_data")
+      .update({ ...headerData, month: selectedMonth, year: selectedYear }).eq("id", id);
+    await persistRows("agent_report_rows", id, rows);
+    // Update commission for act report
+    const total = rows.reduce((sum: number, r: any) => sum + (typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0), 0);
+    setAgentCommission(calculateCommission(total));
   };
 
   // ========== UU REPORT (Отчет агента - УУ) ==========
@@ -260,50 +313,37 @@ const AgentReport = () => {
           .from("agent_report_uu_rows").select("*")
           .eq("report_id", reportData.id).order("row_number");
         if (rowsError) throw rowsError;
-        if (rowsData?.length) {
-          setUuRows(rowsData.map(r => ({
-            id: r.id, row_number: r.row_number, tmc: r.tmc || "",
-            contractor: r.contractor || "", invoice_number: r.invoice_number || "",
-            amount: r.amount || 0, formula: r.formula || undefined
-          })));
-        }
+        setUuRows(rowsData?.map(r => ({
+          id: r.id, row_number: r.row_number, tmc: r.tmc || "",
+          contractor: r.contractor || "", invoice_number: r.invoice_number || "",
+          amount: r.amount || 0, formula: r.formula || undefined
+        })) || []);
       } else {
-        await refreshFromRequests("uu");
+        // Auto-load from requests and save immediately
+        const newRows = await loadDataFromRequests();
+        setUuRows(newRows);
+        if (newRows.length > 0) {
+          const id = await ensureReportId("agent_report_uu_data", null, setUuReportId, uuHeaderData);
+          await persistRows("agent_report_uu_rows", id, newRows);
+          // Update commission
+          const total = newRows.reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+          setAgentCommission(calculateCommission(total));
+        }
       }
     } catch (error) {
       console.error("Error loading UU report:", error);
     }
   };
 
-  const saveUuReport = async () => {
+  const saveUuReportNow = async () => {
     if (!currentOrgId) return;
-    try {
-      let id = uuReportId;
-      if (id) {
-        const { error } = await supabase.from("agent_report_uu_data")
-          .update({ ...uuHeaderData, month: selectedMonth, year: selectedYear }).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.from("agent_report_uu_data")
-          .insert({ organization_id: currentOrgId, ...uuHeaderData, month: selectedMonth, year: selectedYear,
-            created_by: (await supabase.auth.getUser()).data.user?.id }).select().single();
-        if (error) throw error;
-        id = data.id; setUuReportId(data.id);
-      }
-      if (id) {
-        await supabase.from("agent_report_uu_rows").delete().eq("report_id", id);
-        const { error } = await supabase.from("agent_report_uu_rows").insert(
-          uuRows.map(r => ({ report_id: id, row_number: r.row_number, tmc: r.tmc,
-            contractor: r.contractor, invoice_number: r.invoice_number,
-            amount: typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0, formula: null }))
-        );
-        if (error) throw error;
-      }
-      toast({ title: "Успешно", description: "Отчет УУ сохранен" });
-    } catch (error) {
-      console.error("Error saving UU report:", error);
-      toast({ title: "Ошибка", description: "Не удалось сохранить отчет УУ", variant: "destructive" });
-    }
+    const id = await ensureReportId("agent_report_uu_data", uuReportId, setUuReportId, uuHeaderData);
+    await supabase.from("agent_report_uu_data")
+      .update({ ...uuHeaderData, month: selectedMonth, year: selectedYear }).eq("id", id);
+    await persistRows("agent_report_uu_rows", id, uuRows);
+    // Update commission
+    const total = uuRows.reduce((sum: number, r: any) => sum + (typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0), 0);
+    setAgentCommission(calculateCommission(total));
   };
 
   // ========== ACT REPORT (Отчет по акту) ==========
@@ -311,19 +351,6 @@ const AgentReport = () => {
     if (total >= 10000000) return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
     if (total >= 5000000) return 5000000 * 0.02 + (total - 5000000) * 0.01;
     return total * 0.02;
-  };
-
-  const loadAgentCommission = async () => {
-    if (!currentOrgId) return;
-    try {
-      const { data: reportData } = await supabase.from("agent_report_data").select("id")
-        .eq("organization_id", currentOrgId).eq("month", selectedMonth).eq("year", selectedYear).maybeSingle();
-      if (reportData) {
-        const { data: rowsData } = await supabase.from("agent_report_rows").select("amount").eq("report_id", reportData.id);
-        const total = rowsData?.reduce((sum, row) => sum + (row.amount || 0), 0) || 0;
-        setAgentCommission(calculateCommission(total));
-      } else { setAgentCommission(0); }
-    } catch { setAgentCommission(0); }
   };
 
   const loadActReport = async () => {
@@ -338,8 +365,8 @@ const AgentReport = () => {
           .eq("report_id", reportData.id).order("row_number");
         const { data: addData } = await supabase.from("agent_act_additional_rows").select("*")
           .eq("report_id", reportData.id).order("row_number");
-        const checkAmountTotal = (addData || []).reduce((sum, row) => sum + (row.amount || 0), 0);
-        const processed = (calcData || []).map(row => {
+        const checkAmountTotal = (addData || []).reduce((sum: number, row: any) => sum + (row.amount || 0), 0);
+        const processed = (calcData || []).map((row: any) => {
           const p = { ...row };
           if (row.salary_with_commission) {
             p.tax_7_percent = parseFloat((row.salary_with_commission * 0.07).toFixed(2));
@@ -353,47 +380,75 @@ const AgentReport = () => {
       } else {
         setActReportId(null); setCalculationRows([]); setAdditionalRows([]);
       }
+
+      // Load commission from UU report
+      const { data: uuData } = await supabase.from("agent_report_uu_data").select("id")
+        .eq("organization_id", currentOrgId).eq("month", selectedMonth).eq("year", selectedYear).maybeSingle();
+      if (uuData) {
+        const { data: uuRowsData } = await supabase.from("agent_report_uu_rows").select("amount").eq("report_id", uuData.id);
+        const total = uuRowsData?.reduce((sum: number, r: any) => sum + (r.amount || 0), 0) || 0;
+        setAgentCommission(calculateCommission(total));
+      } else {
+        setAgentCommission(0);
+      }
     } catch (error) {
       console.error("Error loading act report:", error);
     }
   };
 
-  const saveActReport = async () => {
+  const saveActReportNow = async () => {
     if (!currentOrgId) return;
-    try {
-      let id = actReportId;
-      if (!id) {
-        const { data, error } = await supabase.from("agent_act_report_data")
-          .insert({ organization_id: currentOrgId, month: selectedMonth, year: selectedYear }).select().single();
-        if (error) throw error;
-        id = data.id; setActReportId(id);
-      }
-      for (const row of calculationRows) {
-        if (row.id.startsWith("new-")) {
-          const { id: _, ...rd } = row;
-          await supabase.from("agent_act_calculation_rows").insert({ ...rd, report_id: id });
-        } else {
-          const { id: _, ...rd } = row;
-          await supabase.from("agent_act_calculation_rows").update(rd).eq("id", row.id);
-        }
-      }
-      for (const row of additionalRows) {
-        if (row.id.startsWith("new-")) {
-          const { id: _, ...rd } = row;
-          await supabase.from("agent_act_additional_rows").insert({ ...rd, report_id: id });
-        } else {
-          const { id: _, ...rd } = row;
-          await supabase.from("agent_act_additional_rows").update(rd).eq("id", row.id);
-        }
-      }
-      await loadActReport();
-      toast({ title: "Успешно", description: "Отчет по акту сохранен" });
-    } catch (error) {
-      console.error("Error saving act report:", error);
-      toast({ title: "Ошибка", description: "Не удалось сохранить", variant: "destructive" });
+    let id = actReportId;
+    if (!id) {
+      const { data, error } = await supabase.from("agent_act_report_data")
+        .insert({ organization_id: currentOrgId, month: selectedMonth, year: selectedYear }).select().single();
+      if (error) throw error;
+      id = data.id; setActReportId(id);
+    }
+    // Save calculation rows
+    await supabase.from("agent_act_calculation_rows").delete().eq("report_id", id);
+    if (calculationRows.length > 0) {
+      const { error } = await supabase.from("agent_act_calculation_rows").insert(
+        calculationRows.map(r => {
+          const { id: _, ...rest } = r;
+          return { ...rest, report_id: id };
+        })
+      );
+      if (error) throw error;
+    }
+    // Save additional rows
+    await supabase.from("agent_act_additional_rows").delete().eq("report_id", id);
+    if (additionalRows.length > 0) {
+      const { error } = await supabase.from("agent_act_additional_rows").insert(
+        additionalRows.map(r => {
+          const { id: _, ...rest } = r;
+          return { ...rest, report_id: id };
+        })
+      );
+      if (error) throw error;
     }
   };
 
+  // ========== AUTO-SAVE TRIGGERS ==========
+  // Report auto-save
+  useEffect(() => {
+    if (!initialLoadDone.current || !currentOrgId) return;
+    triggerAutoSave(saveReportNow);
+  }, [rows, headerData]);
+
+  // UU Report auto-save
+  useEffect(() => {
+    if (!initialLoadDone.current || !currentOrgId) return;
+    triggerAutoSave(saveUuReportNow);
+  }, [uuRows, uuHeaderData]);
+
+  // Act Report auto-save
+  useEffect(() => {
+    if (!initialLoadDone.current || !currentOrgId) return;
+    triggerAutoSave(saveActReportNow);
+  }, [calculationRows, additionalRows]);
+
+  // ========== ACT REPORT HANDLERS ==========
   const addCalculationRow = () => {
     const baseSalary = 30000 + agentCommission;
     const checkAmountTotal = additionalRows.reduce((sum, r) => sum + (r.amount || 0), 0);
@@ -458,6 +513,34 @@ const AgentReport = () => {
     }));
   };
 
+  // ========== SAVE STATUS INDICATOR ==========
+  const renderSaveIndicator = () => {
+    if (saveStatus === "saving") {
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Сохранение...</span>
+        </div>
+      );
+    }
+    if (saveStatus === "saved") {
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-primary">
+          <Check className="h-3 w-3" />
+          <span>Сохранено</span>
+        </div>
+      );
+    }
+    if (saveStatus === "error") {
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-destructive">
+          <span>Ошибка сохранения</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   // ========== RENDER ==========
   const renderReportContent = (
     title: string,
@@ -465,16 +548,13 @@ const AgentReport = () => {
     setHData: typeof setHeaderData,
     rRows: typeof rows,
     setRRows: typeof setRows,
-    onSave: () => void,
-    onRefresh: () => void,
     exportBtn: React.ReactNode,
     commissionPercent?: number
   ) => (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Button onClick={onSave} size="sm">Сохранить</Button>
-        <Button onClick={onRefresh} variant="outline" size="sm">🔄 Из заявок</Button>
         {exportBtn}
+        {renderSaveIndicator()}
       </div>
       <Card className="p-6 space-y-6 bg-background">
         <ReportHeader
@@ -529,6 +609,7 @@ const AgentReport = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            {renderSaveIndicator()}
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
               <SelectTrigger className="w-[120px] sm:w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -558,7 +639,6 @@ const AgentReport = () => {
           <TabsContent value="report" className="mt-4">
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
-              saveReport, () => refreshFromRequests("report"),
               <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
               8
             )}
@@ -567,7 +647,6 @@ const AgentReport = () => {
           <TabsContent value="uu" className="mt-4">
             {renderReportContent(
               "Отчет агента - УУ", uuHeaderData, setUuHeaderData, uuRows, setUuRows,
-              saveUuReport, () => refreshFromRequests("uu"),
               <ExportReportButton headerData={uuHeaderData} rows={uuRows} month={selectedMonth} year={selectedYear} />
             )}
           </TabsContent>
@@ -583,9 +662,12 @@ const AgentReport = () => {
               <Card className="p-6 space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Расчет суммы вознаграждения</h2>
-                  <Button onClick={addCalculationRow} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />Добавить строку
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {renderSaveIndicator()}
+                    <Button onClick={addCalculationRow} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />Добавить строку
+                    </Button>
+                  </div>
                 </div>
                 <ActCalculationTable
                   rows={calculationRows}
@@ -617,9 +699,6 @@ const AgentReport = () => {
                   month={selectedMonth}
                   year={selectedYear}
                 />
-                <Button onClick={saveActReport}>
-                  <Save className="h-4 w-4 mr-2" />Сохранить
-                </Button>
               </div>
             </div>
           </TabsContent>
