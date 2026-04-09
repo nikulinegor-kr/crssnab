@@ -821,11 +821,45 @@ const AgentReport = () => {
           </TabsList>
 
           <TabsContent value="report" className="mt-4">
+            {/* Selection transparency info */}
+            {selectionInfo && (
+              <div className="mb-4 space-y-2">
+                {selectionInfo.error ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{selectionInfo.error}</AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                    <Info className="h-3.5 w-3.5 shrink-0" />
+                    <span>Выбрано строк: <strong>{selectionInfo.selectedCount}</strong> из {selectionInfo.totalCount}</span>
+                    <span className="text-border">|</span>
+                    <span>Сумма до корректировки: <strong>{selectionInfo.totalBeforeAdjust.toFixed(2)} ₽</strong></span>
+                    {selectionInfo.adjustedRowIndex !== null && (
+                      <>
+                        <span className="text-border">|</span>
+                        <span>Корректировка: <strong className={selectionInfo.adjustmentDelta > 0 ? "text-primary" : "text-destructive"}>{selectionInfo.adjustmentDelta > 0 ? "+" : ""}{selectionInfo.adjustmentDelta.toFixed(2)} ₽</strong></span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
-              <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
+              <div className="flex items-center gap-2">
+                <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />
+                <Button
+                  variant={reportEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setReportEditMode(!reportEditMode)}
+                >
+                  {reportEditMode ? <Lock className="h-3.5 w-3.5 mr-1.5" /> : <Pencil className="h-3.5 w-3.5 mr-1.5" />}
+                  {reportEditMode ? "Заблокировать" : "Редактировать"}
+                </Button>
+              </div>,
               8,
-              true
+              !reportEditMode
             )}
           </TabsContent>
 
