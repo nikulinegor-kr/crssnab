@@ -614,12 +614,18 @@ const AgentReport = () => {
     rRows: typeof rows,
     setRRows: typeof setRows,
     exportBtn: React.ReactNode,
-    commissionPercent?: number
+    commissionPercent?: number,
+    readOnly?: boolean
   ) => (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {exportBtn}
         {renderSaveIndicator()}
+        {readOnly && (
+          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+            Формируется автоматически из УУ + Акт
+          </div>
+        )}
       </div>
       <Card className="p-6 space-y-6 bg-background">
         <ReportHeader
@@ -636,6 +642,7 @@ const AgentReport = () => {
           selectedYear={selectedYear}
           months={months}
           commissionPercent={commissionPercent}
+          readOnly={readOnly}
         />
         <div className="space-y-2 pt-4 border-t border-border">
           <p className="text-sm">
