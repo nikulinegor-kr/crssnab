@@ -763,6 +763,7 @@ const AgentReport = () => {
     setRRows: typeof setRows,
     exportBtn: React.ReactNode,
     commissionPercent?: number,
+    commissionAmount?: number,
     readOnly?: boolean
   ) => (
     <>
@@ -790,6 +791,7 @@ const AgentReport = () => {
           selectedYear={selectedYear}
           months={months}
           commissionPercent={commissionPercent}
+          commissionAmount={commissionAmount}
           readOnly={readOnly}
         />
         <div className="space-y-2 pt-4 border-t border-border">
@@ -884,7 +886,13 @@ const AgentReport = () => {
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
               <div className="flex items-center gap-2">
-                <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />
+                <ExportReportButton
+                  headerData={headerData}
+                  rows={rows}
+                  month={selectedMonth}
+                  year={selectedYear}
+                  commissionAmount={calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0)}
+                />
                 <Button
                   variant={reportEditMode ? "default" : "outline"}
                   size="sm"
@@ -895,6 +903,7 @@ const AgentReport = () => {
                 </Button>
               </div>,
               8,
+              calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0),
               !reportEditMode
             )}
           </TabsContent>

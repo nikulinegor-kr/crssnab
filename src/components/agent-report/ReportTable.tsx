@@ -25,10 +25,11 @@ interface ReportTableProps {
   selectedYear?: number;
   months?: { value: number; label: string }[];
   commissionPercent?: number;
+  commissionAmount?: number;
   readOnly?: boolean;
 }
 
-export const ReportTable = ({ rows, onChange, contractNumber, contractDate, selectedMonth, selectedYear, months, commissionPercent, readOnly }: ReportTableProps) => {
+export const ReportTable = ({ rows, onChange, contractNumber, contractDate, selectedMonth, selectedYear, months, commissionPercent, commissionAmount, readOnly }: ReportTableProps) => {
   const updateCell = (rowNumber: number, field: keyof TableRow, value: any) => {
     if (readOnly) return;
     const updatedRows = rows.map(r => {
@@ -65,6 +66,9 @@ export const ReportTable = ({ rows, onChange, contractNumber, contractDate, sele
   };
 
   const calculateCommission = () => {
+    if (commissionAmount !== undefined) {
+      return commissionAmount;
+    }
     const total = calculateTotal();
     if (commissionPercent !== undefined) {
       return total * (commissionPercent / 100);
