@@ -1732,6 +1732,7 @@ export type Database = {
           old_value: string | null
           organization_id: string
           request_id: string
+          snapshot: Json | null
           user_id: string | null
         }
         Insert: {
@@ -1744,6 +1745,7 @@ export type Database = {
           old_value?: string | null
           organization_id: string
           request_id: string
+          snapshot?: Json | null
           user_id?: string | null
         }
         Update: {
@@ -1756,6 +1758,7 @@ export type Database = {
           old_value?: string | null
           organization_id?: string
           request_id?: string
+          snapshot?: Json | null
           user_id?: string | null
         }
         Relationships: [
@@ -2764,34 +2767,40 @@ export type Database = {
         Row: {
           auto_send_on_create: boolean | null
           auto_send_on_status_change: boolean | null
+          auto_send_to_procurement: boolean | null
           bot_token: string | null
           chat_id: string | null
           created_at: string | null
           id: string
           invoice_chat_id: string | null
           organization_id: string
+          procurement_chat_id: string | null
           updated_at: string | null
         }
         Insert: {
           auto_send_on_create?: boolean | null
           auto_send_on_status_change?: boolean | null
+          auto_send_to_procurement?: boolean | null
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id: string
+          procurement_chat_id?: string | null
           updated_at?: string | null
         }
         Update: {
           auto_send_on_create?: boolean | null
           auto_send_on_status_change?: boolean | null
+          auto_send_to_procurement?: boolean | null
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id?: string
+          procurement_chat_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
