@@ -129,20 +129,21 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
                     </Button>
                   </TableCell>
                 </TableRow>
-                {agentCommission > 0 && (
-                  <TableRow key={`${row.id}-commission`} className="border-t-0">
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell className="text-right bg-muted/30">
-                      {agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                )}
+                <TableRow key={`${row.id}-commission`} className="border-t-0">
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right bg-muted/30 text-xs text-muted-foreground">
+                    {agentCommission > 0
+                      ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2 })
+                      : "—"}
+                    <div className="text-[10px]">вознагр. УУ</div>
+                  </TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
               </>
             );
           })}
