@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Check, Loader2 } from "lucide-react";
+import { FileSpreadsheet, Check, Loader2, AlertTriangle, Pencil, Lock, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { Plus } from "lucide-react";
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const defaultHeader = {
   report_number: "1",
@@ -60,6 +62,15 @@ interface AdditionalRow {
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
+interface SelectionInfo {
+  totalBeforeAdjust: number;
+  adjustedRowIndex: number | null;
+  adjustmentDelta: number;
+  selectedCount: number;
+  totalCount: number;
+  error: string | null;
+}
+
 const AgentReport = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -85,6 +96,8 @@ const AgentReport = () => {
   const [calculationRows, setCalculationRows] = useState<CalculationRow[]>([]);
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
   const [agentCommission, setAgentCommission] = useState(0);
+  const [reportEditMode, setReportEditMode] = useState(false);
+  const [selectionInfo, setSelectionInfo] = useState<SelectionInfo | null>(null);
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
 
@@ -232,50 +245,147 @@ const AgentReport = () => {
     return calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
   }, [calculationRows]);
 
-  const generateReportRows = useCallback((sourceRows: any[], targetActAmount: number) => {
+  const generateReportRows = useCallback((sourceRows: any[], targetActAmount: number): { rows: any[]; info: SelectionInfo } => {
     // 1. Filter out "ИП Никулин Е.В."
     const filtered = sourceRows.filter(r => {
       const contractor = (r.contractor || "").trim();
       return !contractor.includes("ИП Никулин") && !contractor.includes("Никулин Е.В");
     });
 
-    if (filtered.length === 0 || targetActAmount <= 0) return [];
+    const emptyInfo: SelectionInfo = { totalBeforeAdjust: 0, adjustedRowIndex: null, adjustmentDelta: 0, selectedCount: 0, totalCount: filtered.length, error: null };
 
-    // 2. Sort descending by amount for greedy
-    const sorted = [...filtered].sort((a, b) => (b.amount || 0) - (a.amount || 0));
+    if (filtered.length === 0 || targetActAmount <= 0) {
+      return { rows: [], info: { ...emptyInfo, error: filtered.length === 0 ? "Нет доступных строк (все исключены)" : null } };
+    }
 
-    // 3. Greedy select
-    const selected: any[] = [];
-    let currentSum = 0;
-    for (const row of sorted) {
-      const amt = typeof row.amount === 'number' ? row.amount : parseFloat(String(row.amount)) || 0;
-      if (amt <= 0) continue;
-      if (currentSum + amt <= targetActAmount) {
-        selected.push({ ...row, _adjusted: false });
-        currentSum += amt;
+    // Convert amounts to integers (kopecks) for exact DP
+    const items = filtered.map((r, idx) => ({
+      originalIndex: idx,
+      row: r,
+      amount: Math.round((typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0) * 100),
+    })).filter(item => item.amount > 0);
+
+    const targetKopecks = Math.round(targetActAmount * 100);
+
+    // 2. Subset-sum via meet-in-the-middle for up to ~40 items, or DP for smaller sets
+    let bestSubset: number[] = [];
+    let bestSum = 0;
+
+    if (items.length <= 25) {
+      // DP approach with bitset tracking (practical for ≤25 items)
+      // Use a map: sum -> bitmask of items used
+      const dp = new Map<number, number>();
+      dp.set(0, 0);
+
+      for (let i = 0; i < items.length; i++) {
+        const amt = items[i].amount;
+        // Iterate in reverse order of sums to avoid using same item twice
+        const entries = Array.from(dp.entries());
+        for (const [sum, mask] of entries) {
+          const newSum = sum + amt;
+          if (newSum <= targetKopecks && !dp.has(newSum)) {
+            dp.set(newSum, mask | (1 << i));
+          }
+        }
+        // Prune: keep only entries that could potentially reach target
+        // (skip pruning for small sets)
+      }
+
+      // Find the closest sum to target
+      let closestSum = 0;
+      let closestMask = 0;
+      for (const [sum, mask] of dp.entries()) {
+        if (Math.abs(sum - targetKopecks) < Math.abs(closestSum - targetKopecks)) {
+          closestSum = sum;
+          closestMask = mask;
+        }
+      }
+
+      bestSum = closestSum;
+      for (let i = 0; i < items.length; i++) {
+        if (closestMask & (1 << i)) bestSubset.push(i);
+      }
+    } else {
+      // For larger sets, use greedy + local search as fallback
+      const sorted = items.map((item, i) => ({ ...item, sortIdx: i })).sort((a, b) => b.amount - a.amount);
+      let currentSum = 0;
+      const selectedIndices: number[] = [];
+
+      for (const item of sorted) {
+        if (currentSum + item.amount <= targetKopecks) {
+          selectedIndices.push(item.sortIdx);
+          currentSum += item.amount;
+        }
+      }
+
+      // Try swapping: for each unselected, check if replacing a selected item gets closer
+      const selectedSet = new Set(selectedIndices);
+      let improved = true;
+      while (improved) {
+        improved = false;
+        for (let i = 0; i < items.length; i++) {
+          if (selectedSet.has(i)) continue;
+          for (const j of Array.from(selectedSet)) {
+            const newSum = currentSum - items[j].amount + items[i].amount;
+            if (newSum <= targetKopecks && newSum > currentSum) {
+              selectedSet.delete(j);
+              selectedSet.add(i);
+              currentSum = newSum;
+              improved = true;
+              break;
+            }
+          }
+          if (improved) break;
+        }
+      }
+
+      bestSum = currentSum;
+      bestSubset = Array.from(selectedSet);
+    }
+
+    // 3. Build selected rows
+    const selected = bestSubset.map(i => ({ ...items[i].row, _adjusted: false, _originalAmount: items[i].amount / 100 }));
+    const totalBeforeAdjust = bestSum / 100;
+
+    // 4. Calculate difference and apply adjustment if within threshold
+    const diff = parseFloat((targetActAmount - totalBeforeAdjust).toFixed(2));
+    const diffPercent = totalBeforeAdjust > 0 ? Math.abs(diff / totalBeforeAdjust) * 100 : 100;
+
+    let adjustedRowIndex: number | null = null;
+    let adjustmentDelta = 0;
+    let error: string | null = null;
+
+    if (Math.abs(diff) > 0.005 && selected.length > 0) {
+      if (diffPercent <= 2) {
+        // Adjust the row with the largest amount (most robust to small changes)
+        const maxIdx = selected.reduce((best, r, i) => (r._originalAmount || 0) > (selected[best]._originalAmount || 0) ? i : best, 0);
+        const newAmount = parseFloat(((selected[maxIdx]._originalAmount || 0) + diff).toFixed(2));
+        if (newAmount > 0) {
+          adjustedRowIndex = maxIdx;
+          adjustmentDelta = diff;
+          selected[maxIdx] = { ...selected[maxIdx], amount: newAmount, _adjusted: true };
+        } else {
+          error = `Невозможно корректно собрать отчёт — корректировка приводит к отрицательной сумме. Проверьте данные.`;
+        }
+      } else {
+        error = `Невозможно корректно собрать отчёт — разница ${Math.abs(diff).toFixed(2)} ₽ (${diffPercent.toFixed(1)}%) превышает допустимый порог 2%. Проверьте данные.`;
       }
     }
 
-    // 4. Adjust last row to match exactly
-    const diff = parseFloat((targetActAmount - currentSum).toFixed(2));
-    if (diff > 0 && selected.length > 0) {
-      const lastIdx = selected.length - 1;
-      selected[lastIdx] = {
-        ...selected[lastIdx],
-        amount: parseFloat((selected[lastIdx].amount + diff).toFixed(2)),
-        _adjusted: true,
-      };
-    } else if (diff > 0 && selected.length === 0 && sorted.length > 0) {
-      // If no rows fit, take the smallest and set it to target
-      const smallest = sorted[sorted.length - 1];
-      selected.push({ ...smallest, amount: targetActAmount, _adjusted: true });
-    }
-
     // Re-number
-    return selected.map((r, i) => ({
-      ...r,
-      row_number: i + 1,
-    }));
+    const result = selected.map((r, i) => ({ ...r, row_number: i + 1 }));
+
+    return {
+      rows: result,
+      info: {
+        totalBeforeAdjust,
+        adjustedRowIndex,
+        adjustmentDelta,
+        selectedCount: selected.length,
+        totalCount: filtered.length,
+        error,
+      },
+    };
   }, []);
 
   // ========== REPORT (Отчет агента) ==========
@@ -476,23 +586,25 @@ const AgentReport = () => {
   const autoGenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!initialLoadDone.current || !currentOrgId) return;
+    if (reportEditMode) return; // Don't auto-generate in edit mode
     if (uuRows.length === 0) return;
     const actTotal = calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
     if (actTotal <= 0) return;
 
     if (autoGenRef.current) clearTimeout(autoGenRef.current);
     autoGenRef.current = setTimeout(() => {
-      const generated = generateReportRows(uuRows, actTotal);
+      const { rows: generated, info } = generateReportRows(uuRows, actTotal);
+      setSelectionInfo(info);
       // Only update if actually different to avoid infinite loops
       const currentSum = rows.reduce((s, r) => s + (r.amount || 0), 0);
-      const newSum = generated.reduce((s, r) => s + (r.amount || 0), 0);
+      const newSum = generated.reduce((s: number, r: any) => s + (r.amount || 0), 0);
       if (Math.abs(currentSum - newSum) > 0.001 || rows.length !== generated.length) {
         setRows(generated);
       }
     }, 300);
 
     return () => { if (autoGenRef.current) clearTimeout(autoGenRef.current); };
-  }, [uuRows, calculationRows, generateReportRows]);
+  }, [uuRows, calculationRows, generateReportRows, reportEditMode]);
 
   // ========== AUTO-SAVE TRIGGERS ==========
   // Report auto-save
@@ -709,11 +821,45 @@ const AgentReport = () => {
           </TabsList>
 
           <TabsContent value="report" className="mt-4">
+            {/* Selection transparency info */}
+            {selectionInfo && (
+              <div className="mb-4 space-y-2">
+                {selectionInfo.error ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{selectionInfo.error}</AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                    <Info className="h-3.5 w-3.5 shrink-0" />
+                    <span>Выбрано строк: <strong>{selectionInfo.selectedCount}</strong> из {selectionInfo.totalCount}</span>
+                    <span className="text-border">|</span>
+                    <span>Сумма до корректировки: <strong>{selectionInfo.totalBeforeAdjust.toFixed(2)} ₽</strong></span>
+                    {selectionInfo.adjustedRowIndex !== null && (
+                      <>
+                        <span className="text-border">|</span>
+                        <span>Корректировка: <strong className={selectionInfo.adjustmentDelta > 0 ? "text-primary" : "text-destructive"}>{selectionInfo.adjustmentDelta > 0 ? "+" : ""}{selectionInfo.adjustmentDelta.toFixed(2)} ₽</strong></span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
-              <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
+              <div className="flex items-center gap-2">
+                <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />
+                <Button
+                  variant={reportEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setReportEditMode(!reportEditMode)}
+                >
+                  {reportEditMode ? <Lock className="h-3.5 w-3.5 mr-1.5" /> : <Pencil className="h-3.5 w-3.5 mr-1.5" />}
+                  {reportEditMode ? "Заблокировать" : "Редактировать"}
+                </Button>
+              </div>,
               8,
-              true
+              !reportEditMode
             )}
           </TabsContent>
 
