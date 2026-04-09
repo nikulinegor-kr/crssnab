@@ -634,9 +634,12 @@ const AgentReport = () => {
     const actTotal = getActTotal();
     if (actTotal <= 0) return;
 
+    // Target ИТОГО such that ИТОГО * 8% = actTotal
+    const targetItogo = parseFloat((actTotal / 0.08).toFixed(2));
+
     if (autoGenRef.current) clearTimeout(autoGenRef.current);
     autoGenRef.current = setTimeout(() => {
-      const { rows: generated, info } = generateReportRows(uuRows, actTotal);
+      const { rows: generated, info } = generateReportRows(uuRows, targetItogo);
       setSelectionInfo(info);
       // Only update if actually different to avoid infinite loops
       const currentSum = rows.reduce((s, r) => s + (r.amount || 0), 0);
