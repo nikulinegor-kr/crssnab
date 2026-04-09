@@ -712,7 +712,8 @@ const AgentReport = () => {
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
               <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
-              8
+              8,
+              true
             )}
           </TabsContent>
 
