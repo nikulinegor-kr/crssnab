@@ -152,23 +152,48 @@ function getStatusEmoji(status: string): string {
   return "📋";
 }
 
-// Find organization by chat_id (using telegram_settings table)
+// Find organization by chat_id (check main chat_id, procurement_chat_id, invoice_chat_id)
 async function findOrganizationByChatId(chatId: number) {
-  const { data: tgSetting, error: tgErr } = await supabase
+  const chatStr = chatId.toString();
+  
+  // Try main chat_id first
+  let orgId: string | null = null;
+  const { data: tgSetting } = await supabase
     .from("telegram_settings")
     .select("organization_id")
-    .eq("chat_id", chatId.toString())
-    .single();
+    .eq("chat_id", chatStr)
+    .maybeSingle();
+  orgId = tgSetting?.organization_id || null;
   
-  if (tgErr || !tgSetting) {
-    console.error("Error finding organization by chat_id:", tgErr);
+  // Try procurement_chat_id
+  if (!orgId) {
+    const { data: procSetting } = await supabase
+      .from("telegram_settings")
+      .select("organization_id")
+      .eq("procurement_chat_id", chatStr)
+      .maybeSingle();
+    orgId = procSetting?.organization_id || null;
+  }
+  
+  // Try invoice_chat_id
+  if (!orgId) {
+    const { data: invSetting } = await supabase
+      .from("telegram_settings")
+      .select("organization_id")
+      .eq("invoice_chat_id", chatStr)
+      .maybeSingle();
+    orgId = invSetting?.organization_id || null;
+  }
+
+  if (!orgId) {
+    console.error("No organization found for chat_id:", chatId);
     return null;
   }
 
   const { data, error } = await supabase
     .from("organizations")
     .select("id, name")
-    .eq("id", tgSetting.organization_id)
+    .eq("id", orgId)
     .single();
   
   if (error) {
@@ -176,6 +201,22 @@ async function findOrganizationByChatId(chatId: number) {
     return null;
   }
   return data;
+}
+
+// Get executors for an organization (from request_participants)
+async function getExecutors(orgId: string) {
+  const { data, error } = await supabase
+    .from("request_participants")
+    .select("id, name")
+    .eq("organization_id", orgId)
+    .eq("participant_type", "executor")
+    .eq("is_active", true)
+    .order("name");
+  if (error) {
+    console.error("Error fetching executors:", error);
+    return [];
+  }
+  return data || [];
 }
 
 // Helper to safely match request by partial or full UUID
@@ -465,6 +506,123 @@ async function handleCallbackQuery(callbackQuery: any) {
     
     await sendTelegramRequest("answerCallbackQuery", {
       callback_query_id: callbackQuery.id,
+    });
+    return;
+  }
+
+  // ===== PROCUREMENT GROUP: Assign executor flow =====
+  if (data.startsWith("assign_exec_")) {
+    const requestId = data.replace("assign_exec_", "");
+    console.log("Assign executor requested for:", requestId);
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*, organization_id")
+      .eq("id", requestId)
+      .maybeSingle();
+    
+    if (error || !request) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    const executors = await getExecutors(request.organization_id);
+    if (executors.length === 0) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Нет доступных исполнителей. Добавьте их в CRM.",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Build executor selection keyboard
+    const keyboard: any[][] = [];
+    for (let i = 0; i < executors.length; i += 2) {
+      const row = [];
+      row.push({
+        text: executors[i].name,
+        callback_data: `exec_sel_${i}_${requestId}`
+      });
+      if (executors[i + 1]) {
+        row.push({
+          text: executors[i + 1].name,
+          callback_data: `exec_sel_${i + 1}_${requestId}`
+        });
+      }
+      keyboard.push(row);
+    }
+    
+    await sendTelegramRequest("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: keyboard }
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: "Выберите исполнителя",
+    });
+    return;
+  }
+  
+  // Handle executor selection
+  if (data.startsWith("exec_sel_")) {
+    const parts = data.replace("exec_sel_", "").split("_");
+    const executorIndex = parseInt(parts[0]);
+    const requestId = parts.slice(1).join("_");
+    console.log("Executor selected:", { executorIndex, requestId });
+    
+    const { data: request, error } = await supabase
+      .from("requests")
+      .select("*, organization_id")
+      .eq("id", requestId)
+      .maybeSingle();
+    
+    if (error || !request) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Заявка не найдена",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    const executors = await getExecutors(request.organization_id);
+    const selectedExecutor = executors[executorIndex];
+    
+    if (!selectedExecutor) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Исполнитель не найден",
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Save awaiting comment state with procurement context
+    await supabase
+      .from("requests")
+      .update({ 
+        awaiting_comment_from: `procurement_comment:${username || fullName}:${requestId}:${selectedExecutor.name}`
+      })
+      .eq("id", requestId);
+    
+    const originalText = validated.message.text || "";
+    await sendTelegramRequest("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: originalText + `\n\n👷 Исполнитель: ${selectedExecutor.name}\n\n📝 Отправьте комментарий следующим сообщением (обязательно):`,
+    });
+    
+    await sendTelegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackQuery.id,
+      text: `Выбран: ${selectedExecutor.name}. Отправьте комментарий.`,
+      show_alert: true,
     });
     return;
   }
@@ -1199,6 +1357,124 @@ async function handleMessage(message: any) {
       await handleHelpCommand(chatId);
       return;
     }
+  }
+
+  // ===== PROCUREMENT: Check for procurement comment awaiting =====
+  const userIdentifierProcurement = username || fullName;
+  const { data: procRequests, error: procError } = await supabase
+    .from("requests")
+    .select("*")
+    .like("awaiting_comment_from", `procurement_comment:${userIdentifierProcurement}:%`)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (!procError && procRequests && procRequests.length > 0 && text) {
+    const request = procRequests[0];
+    const awaitParts = request.awaiting_comment_from?.split(":") || [];
+    // Format: procurement_comment:<user>:<requestId>:<executorName>
+    const executorName = awaitParts.slice(3).join(":");
+    const comment = text;
+    const now = new Date().toLocaleString("ru-RU");
+    console.log("Processing procurement comment for request:", request.id, "executor:", executorName);
+    
+    // 1. Assign executor and change status to "Новая заявка"
+    await supabase
+      .from("requests")
+      .update({ 
+        executor: executorName,
+        status: "Новая заявка",
+        awaiting_comment_from: null,
+      })
+      .eq("id", request.id);
+    
+    // 2. Log activity
+    await supabase.from("request_activities").insert({
+      request_id: request.id,
+      organization_id: request.organization_id,
+      action: "executor_assigned",
+      field_name: "executor",
+      new_value: executorName,
+      description: `👷 Назначен исполнитель: ${executorName} (через группу закупок) — @${userIdentifierProcurement}, ${now}`,
+    });
+    
+    // 3. Get full request data for main group message
+    const { data: updatedRequest } = await supabase
+      .from("requests")
+      .select("*")
+      .eq("id", request.id)
+      .single();
+    
+    // 4. Get telegram settings for main group
+    const { data: tgSettings } = await supabase
+      .from("telegram_settings")
+      .select("bot_token, chat_id")
+      .eq("organization_id", request.organization_id)
+      .single();
+    
+    if (tgSettings?.bot_token && tgSettings?.chat_id) {
+      // Get equipment info
+      let equipmentInfo = "";
+      if (updatedRequest?.equipment_id) {
+        const { data: eq } = await supabase
+          .from("equipment")
+          .select("brand, model, plate_number")
+          .eq("id", updatedRequest.equipment_id)
+          .maybeSingle();
+        if (eq) equipmentInfo = [eq.brand, eq.model, eq.plate_number].filter(Boolean).join(" / ");
+      }
+      
+      // Get object name
+      let objectName = "";
+      if (updatedRequest?.object_id) {
+        const { data: obj } = await supabase
+          .from("request_objects")
+          .select("name")
+          .eq("id", updatedRequest.object_id)
+          .maybeSingle();
+        if (obj) objectName = obj.name;
+      }
+      
+      // Build main group message
+      const mainLines: string[] = [];
+      mainLines.push(`📋 Заявка назначена`);
+      mainLines.push("");
+      mainLines.push(`📅 ${new Date().toLocaleDateString("ru-RU")}`);
+      mainLines.push(`🧾 ${updatedRequest?.description || "Без описания"}`);
+      if (updatedRequest?.quantity) mainLines.push(`📦 Кол-во: ${updatedRequest.quantity}`);
+      if (objectName) mainLines.push(`🏗 Объект: ${objectName}`);
+      if (equipmentInfo) mainLines.push(`🚜 Техника: ${equipmentInfo}`);
+      if (updatedRequest?.priority) mainLines.push(`⭐ Приоритет: ${updatedRequest.priority}`);
+      if (updatedRequest?.applicant) mainLines.push(`👤 Заявитель: ${updatedRequest.applicant}`);
+      mainLines.push(`👷 Исполнитель: ${executorName}`);
+      mainLines.push("");
+      mainLines.push(`💬 Комментарий: ${comment}`);
+      mainLines.push("");
+      mainLines.push(`📋 Статус: Новая заявка`);
+      
+      const mainResult = await sendTelegramRequest("sendMessage", {
+        chat_id: tgSettings.chat_id,
+        text: mainLines.join("\n"),
+      });
+      
+      // Save main group message id
+      if (mainResult.ok && mainResult.result) {
+        await supabase
+          .from("requests")
+          .update({ 
+            telegram_message_id: mainResult.result.message_id,
+            telegram_message_ids: [mainResult.result.message_id]
+          })
+          .eq("id", request.id);
+      }
+    }
+    
+    // 5. Confirm in procurement chat
+    await sendTelegramRequest("sendMessage", {
+      chat_id: chatId,
+      text: `✅ Заявка "${request.description}" назначена на исполнителя: ${executorName}\n\nСтатус изменён на "Новая заявка"`,
+    });
+    
+    return;
   }
 
   // Check for discrepancy description awaiting

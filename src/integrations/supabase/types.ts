@@ -2160,6 +2160,7 @@ export type Database = {
           status: string
           telegram_message_id: number | null
           telegram_message_ids: number[] | null
+          telegram_procurement_message_id: number | null
           transport_company: string | null
           unit: string | null
           updated_at: string | null
@@ -2208,6 +2209,7 @@ export type Database = {
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
+          telegram_procurement_message_id?: number | null
           transport_company?: string | null
           unit?: string | null
           updated_at?: string | null
@@ -2256,6 +2258,7 @@ export type Database = {
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
+          telegram_procurement_message_id?: number | null
           transport_company?: string | null
           unit?: string | null
           updated_at?: string | null
