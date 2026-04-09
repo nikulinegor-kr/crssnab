@@ -472,6 +472,28 @@ const AgentReport = () => {
     }
   };
 
+  // ========== AUTO-GENERATE "Отчет агента" from UU + Act ==========
+  const autoGenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!initialLoadDone.current || !currentOrgId) return;
+    if (uuRows.length === 0) return;
+    const actTotal = calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
+    if (actTotal <= 0) return;
+
+    if (autoGenRef.current) clearTimeout(autoGenRef.current);
+    autoGenRef.current = setTimeout(() => {
+      const generated = generateReportRows(uuRows, actTotal);
+      // Only update if actually different to avoid infinite loops
+      const currentSum = rows.reduce((s, r) => s + (r.amount || 0), 0);
+      const newSum = generated.reduce((s, r) => s + (r.amount || 0), 0);
+      if (Math.abs(currentSum - newSum) > 0.001 || rows.length !== generated.length) {
+        setRows(generated);
+      }
+    }, 300);
+
+    return () => { if (autoGenRef.current) clearTimeout(autoGenRef.current); };
+  }, [uuRows, calculationRows, generateReportRows]);
+
   // ========== AUTO-SAVE TRIGGERS ==========
   // Report auto-save
   useEffect(() => {
