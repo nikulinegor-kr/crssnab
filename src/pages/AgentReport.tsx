@@ -62,6 +62,15 @@ interface AdditionalRow {
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
+interface SelectionInfo {
+  totalBeforeAdjust: number;
+  adjustedRowIndex: number | null;
+  adjustmentDelta: number;
+  selectedCount: number;
+  totalCount: number;
+  error: string | null;
+}
+
 const AgentReport = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
