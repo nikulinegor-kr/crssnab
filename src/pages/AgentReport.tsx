@@ -227,6 +227,57 @@ const AgentReport = () => {
     }
   };
 
+  // ========== GREEDY ALGORITHM: Auto-generate "Отчет агента" ==========
+  const getActTotal = useCallback(() => {
+    return calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
+  }, [calculationRows]);
+
+  const generateReportRows = useCallback((sourceRows: any[], targetActAmount: number) => {
+    // 1. Filter out "ИП Никулин Е.В."
+    const filtered = sourceRows.filter(r => {
+      const contractor = (r.contractor || "").trim();
+      return !contractor.includes("ИП Никулин") && !contractor.includes("Никулин Е.В");
+    });
+
+    if (filtered.length === 0 || targetActAmount <= 0) return [];
+
+    // 2. Sort descending by amount for greedy
+    const sorted = [...filtered].sort((a, b) => (b.amount || 0) - (a.amount || 0));
+
+    // 3. Greedy select
+    const selected: any[] = [];
+    let currentSum = 0;
+    for (const row of sorted) {
+      const amt = typeof row.amount === 'number' ? row.amount : parseFloat(String(row.amount)) || 0;
+      if (amt <= 0) continue;
+      if (currentSum + amt <= targetActAmount) {
+        selected.push({ ...row, _adjusted: false });
+        currentSum += amt;
+      }
+    }
+
+    // 4. Adjust last row to match exactly
+    const diff = parseFloat((targetActAmount - currentSum).toFixed(2));
+    if (diff > 0 && selected.length > 0) {
+      const lastIdx = selected.length - 1;
+      selected[lastIdx] = {
+        ...selected[lastIdx],
+        amount: parseFloat((selected[lastIdx].amount + diff).toFixed(2)),
+        _adjusted: true,
+      };
+    } else if (diff > 0 && selected.length === 0 && sorted.length > 0) {
+      // If no rows fit, take the smallest and set it to target
+      const smallest = sorted[sorted.length - 1];
+      selected.push({ ...smallest, amount: targetActAmount, _adjusted: true });
+    }
+
+    // Re-number
+    return selected.map((r, i) => ({
+      ...r,
+      row_number: i + 1,
+    }));
+  }, []);
+
   // ========== REPORT (Отчет агента) ==========
   const loadReport = async () => {
     if (!currentOrgId) return;
@@ -261,13 +312,8 @@ const AgentReport = () => {
           amount: r.amount || 0, formula: r.formula || undefined
         })) || []);
       } else {
-        // Auto-load from requests and save immediately
-        const newRows = await loadDataFromRequests();
-        setRows(newRows);
-        if (newRows.length > 0) {
-          const id = await ensureReportId("agent_report_data", null, setReportId, headerData);
-          await persistRows("agent_report_rows", id, newRows);
-        }
+        setReportId(null);
+        setRows([]);
       }
     } catch (error) {
       console.error("Error loading report:", error);
@@ -280,9 +326,6 @@ const AgentReport = () => {
     await supabase.from("agent_report_data")
       .update({ ...headerData, month: selectedMonth, year: selectedYear }).eq("id", id);
     await persistRows("agent_report_rows", id, rows);
-    // Update commission for act report
-    const total = rows.reduce((sum: number, r: any) => sum + (typeof r.amount === 'number' ? r.amount : parseFloat(String(r.amount)) || 0), 0);
-    setAgentCommission(calculateCommission(total));
   };
 
   // ========== UU REPORT (Отчет агента - УУ) ==========
@@ -429,6 +472,28 @@ const AgentReport = () => {
     }
   };
 
+  // ========== AUTO-GENERATE "Отчет агента" from UU + Act ==========
+  const autoGenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!initialLoadDone.current || !currentOrgId) return;
+    if (uuRows.length === 0) return;
+    const actTotal = calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
+    if (actTotal <= 0) return;
+
+    if (autoGenRef.current) clearTimeout(autoGenRef.current);
+    autoGenRef.current = setTimeout(() => {
+      const generated = generateReportRows(uuRows, actTotal);
+      // Only update if actually different to avoid infinite loops
+      const currentSum = rows.reduce((s, r) => s + (r.amount || 0), 0);
+      const newSum = generated.reduce((s, r) => s + (r.amount || 0), 0);
+      if (Math.abs(currentSum - newSum) > 0.001 || rows.length !== generated.length) {
+        setRows(generated);
+      }
+    }, 300);
+
+    return () => { if (autoGenRef.current) clearTimeout(autoGenRef.current); };
+  }, [uuRows, calculationRows, generateReportRows]);
+
   // ========== AUTO-SAVE TRIGGERS ==========
   // Report auto-save
   useEffect(() => {
@@ -549,12 +614,18 @@ const AgentReport = () => {
     rRows: typeof rows,
     setRRows: typeof setRows,
     exportBtn: React.ReactNode,
-    commissionPercent?: number
+    commissionPercent?: number,
+    readOnly?: boolean
   ) => (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {exportBtn}
         {renderSaveIndicator()}
+        {readOnly && (
+          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+            Формируется автоматически из УУ + Акт
+          </div>
+        )}
       </div>
       <Card className="p-6 space-y-6 bg-background">
         <ReportHeader
@@ -571,6 +642,7 @@ const AgentReport = () => {
           selectedYear={selectedYear}
           months={months}
           commissionPercent={commissionPercent}
+          readOnly={readOnly}
         />
         <div className="space-y-2 pt-4 border-t border-border">
           <p className="text-sm">
@@ -640,7 +712,8 @@ const AgentReport = () => {
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
               <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
-              8
+              8,
+              true
             )}
           </TabsContent>
 
