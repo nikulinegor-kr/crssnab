@@ -147,6 +147,20 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
               </>
             );
           })}
+          {/* Commission sub-row before ИТОГО - always visible */}
+          <TableRow>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell className="text-right bg-muted/30 text-sm">
+              <div>{agentCommission > 0 ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2 }) : "—"}</div>
+              <div className="text-[10px] text-muted-foreground">вознагр. УУ (п. 4.2)</div>
+            </TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+          </TableRow>
           <TableRow className="font-bold bg-muted/50">
             <TableCell className="text-left">ИТОГО:</TableCell>
             <TableCell></TableCell>
