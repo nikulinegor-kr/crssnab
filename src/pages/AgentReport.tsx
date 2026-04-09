@@ -67,7 +67,7 @@ const AgentReport = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-  const [activeTab, setActiveTab] = useState("report");
+  const [activeTab, setActiveTab] = useState("uu");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
@@ -548,8 +548,8 @@ const AgentReport = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="report">Отчет агента</TabsTrigger>
             <TabsTrigger value="uu">Отчет агента - УУ</TabsTrigger>
+            <TabsTrigger value="report">Отчет агента</TabsTrigger>
             <TabsTrigger value="act">Отчет по акту</TabsTrigger>
           </TabsList>
 
