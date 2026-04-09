@@ -136,9 +136,8 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
                   <TableCell></TableCell>
                   <TableCell className="text-right bg-muted/30 text-xs text-muted-foreground">
                     {agentCommission > 0
-                      ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2 })
+                      ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                       : "—"}
-                    <div className="text-[10px]">вознагр. УУ</div>
                   </TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -154,8 +153,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
             <TableCell></TableCell>
             <TableCell></TableCell>
             <TableCell className="text-right bg-muted/30 text-sm">
-              <div>{agentCommission > 0 ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2 }) : "—"}</div>
-              <div className="text-[10px] text-muted-foreground">вознагр. УУ (п. 4.2)</div>
+              {agentCommission > 0 ? agentCommission.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
             </TableCell>
             <TableCell></TableCell>
             <TableCell></TableCell>
