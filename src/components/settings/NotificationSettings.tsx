@@ -39,6 +39,8 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
   const [botToken, setBotToken] = useState("");
   const [chatId, setChatId] = useState("");
   const [invoiceChatId, setInvoiceChatId] = useState("");
+  const [procurementChatId, setProcurementChatId] = useState("");
+  const [autoSendToProcurement, setAutoSendToProcurement] = useState(true);
 
   // Notification preferences
   const [autoSendOnCreate, setAutoSendOnCreate] = useState(true);
@@ -62,10 +64,10 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
   const telegramConnected = !!(botToken && chatId);
 
   const currentState = useMemo(() => ({
-    botToken, chatId, invoiceChatId,
-    autoSendOnCreate, autoSendOnStatusChange,
+    botToken, chatId, invoiceChatId, procurementChatId,
+    autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement,
     notifyOnExecutorAssign, notifyOnComment, notifyOnReminder,
-  }), [botToken, chatId, invoiceChatId, autoSendOnCreate, autoSendOnStatusChange, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder]);
+  }), [botToken, chatId, invoiceChatId, procurementChatId, autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder]);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(currentState) !== JSON.stringify(initial);
@@ -91,13 +93,17 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
             setAutoSendOnCreate(settings.telegram_auto_send_on_create ?? true);
             setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
             setInvoiceChatId(settings.telegram_invoice_chat_id || "");
+            setProcurementChatId(settings.telegram_procurement_chat_id || "");
+            setAutoSendToProcurement(settings.telegram_auto_send_to_procurement ?? true);
 
             const loaded = {
               botToken: settings.telegram_bot_token || "",
               chatId: settings.telegram_chat_id || "",
               invoiceChatId: settings.telegram_invoice_chat_id || "",
+              procurementChatId: settings.telegram_procurement_chat_id || "",
               autoSendOnCreate: settings.telegram_auto_send_on_create ?? true,
               autoSendOnStatusChange: settings.telegram_auto_send_on_status_change ?? true,
+              autoSendToProcurement: settings.telegram_auto_send_to_procurement ?? true,
               notifyOnExecutorAssign: true,
               notifyOnComment: true,
               notifyOnReminder: true,
@@ -136,6 +142,8 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
           auto_send_on_create: autoSendOnCreate,
           auto_send_on_status_change: autoSendOnStatusChange,
           invoice_chat_id: invoiceChatId || null,
+          procurement_chat_id: procurementChatId || null,
+          auto_send_to_procurement: autoSendToProcurement,
         } as any, { onConflict: "organization_id" });
 
       if (error) throw error;
@@ -243,6 +251,17 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
               />
             </FieldRow>
 
+            <FieldRow label="Chat ID группы закупок" optional>
+              <Input
+                value={procurementChatId}
+                onChange={(e) => setProcurementChatId(e.target.value)}
+                placeholder="-1001234567890"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Группа для первичной обработки заявок: назначение исполнителя перед отправкой в основной чат.
+              </p>
+            </FieldRow>
+
             <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-[13px] text-muted-foreground leading-relaxed">
               <Info className="h-4 w-4 mt-0.5 shrink-0" />
               <span>
@@ -282,6 +301,12 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
             label="Изменение статуса"
             checked={autoSendOnStatusChange}
             onCheckedChange={isAdmin ? setAutoSendOnStatusChange : undefined}
+            disabled={!isAdmin}
+          />
+          <ToggleRow
+            label="Отправлять в группу закупок"
+            checked={autoSendToProcurement}
+            onCheckedChange={isAdmin ? setAutoSendToProcurement : undefined}
             disabled={!isAdmin}
           />
           <ToggleRow
