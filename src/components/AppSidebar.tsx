@@ -100,7 +100,6 @@ const menuGroups = [
 
 const reportMenuItems = [
   { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
-  { title: "Отчет агента по акту", url: "/agent-act-report", icon: FileBarChart },
   { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
 ];
 
