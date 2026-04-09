@@ -482,6 +482,7 @@ export default function AgentActReport() {
           additionalRows={additionalRows}
           month={month}
           year={year}
+          agentCommission={agentCommission}
         />
         <Button onClick={handleSave} disabled={loading}>
           <Save className="h-4 w-4 mr-2" />
