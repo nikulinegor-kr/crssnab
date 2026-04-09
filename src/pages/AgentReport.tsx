@@ -465,7 +465,8 @@ const AgentReport = () => {
     setRRows: typeof setRows,
     onSave: () => void,
     onRefresh: () => void,
-    exportBtn: React.ReactNode
+    exportBtn: React.ReactNode,
+    commissionPercent?: number
   ) => (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -487,6 +488,7 @@ const AgentReport = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           months={months}
+          commissionPercent={commissionPercent}
         />
         <div className="space-y-2 pt-4 border-t border-border">
           <p className="text-sm">
