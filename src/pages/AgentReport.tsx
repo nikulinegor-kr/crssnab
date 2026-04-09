@@ -145,22 +145,15 @@ const AgentReport = () => {
 
       if (error) throw error;
 
-      // Filter requests by month/year and status
+      const matchesMonth = (dateStr: string | null) => {
+        if (!dateStr) return false;
+        const [y, m] = dateStr.split("-");
+        return y === selectedYear.toString() && String(parseInt(m, 10)) === selectedMonth.toString();
+      };
+
       const filteredRequests = (requests || []).filter((request: Request) => {
-        const validStatuses = ["В пути", "Доставлено", "Доставлено в ТК"];
-        if (!validStatuses.includes(request.status)) return false;
         if (!request.amount || request.amount === 0) return false;
-
-        const dateToCheck = request.delivery_date || request.shipment_date;
-        if (!dateToCheck) return false;
-
-        const [yearStr, monthStr] = dateToCheck.split("-");
-        if (!yearStr || !monthStr) return false;
-
-        return (
-          yearStr === selectedYear.toString() &&
-          String(parseInt(monthStr, 10)) === selectedMonth.toString()
-        );
+        return matchesMonth(request.delivery_date) || matchesMonth(request.shipment_date);
       });
 
       // Convert to rows
