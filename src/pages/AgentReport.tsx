@@ -763,6 +763,7 @@ const AgentReport = () => {
     setRRows: typeof setRows,
     exportBtn: React.ReactNode,
     commissionPercent?: number,
+    commissionAmount?: number,
     readOnly?: boolean
   ) => (
     <>
