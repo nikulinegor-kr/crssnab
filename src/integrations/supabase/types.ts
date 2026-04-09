@@ -3050,9 +3050,11 @@ export type Database = {
         Returns: {
           telegram_auto_send_on_create: boolean
           telegram_auto_send_on_status_change: boolean
+          telegram_auto_send_to_procurement: boolean
           telegram_bot_token: string
           telegram_chat_id: string
           telegram_invoice_chat_id: string
+          telegram_procurement_chat_id: string
         }[]
       }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
