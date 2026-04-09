@@ -242,8 +242,15 @@ const AgentReport = () => {
 
   // ========== GREEDY ALGORITHM: Auto-generate "Отчет агента" ==========
   const getActTotal = useCallback(() => {
+    if (calculationRows.length === 0) {
+      const checkAmountTotal = additionalRows.reduce((sum, row) => sum + (row.amount || 0), 0);
+      const salaryTotal = 30000 + agentCommission;
+      const remainder = salaryTotal + checkAmountTotal;
+      return parseFloat(((remainder / 93) * 100).toFixed(2));
+    }
+
     return calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
-  }, [calculationRows]);
+  }, [additionalRows, agentCommission, calculationRows]);
 
   const generateReportRows = useCallback((sourceRows: any[], targetActAmount: number): { rows: any[]; info: SelectionInfo } => {
     // 1. Filter out "ИП Никулин Е.В."
@@ -624,7 +631,7 @@ const AgentReport = () => {
     if (!initialLoadDone.current || !currentOrgId) return;
     if (reportEditMode) return; // Don't auto-generate in edit mode
     if (uuRows.length === 0) return;
-    const actTotal = calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0);
+    const actTotal = getActTotal();
     if (actTotal <= 0) return;
 
     if (autoGenRef.current) clearTimeout(autoGenRef.current);
@@ -640,7 +647,7 @@ const AgentReport = () => {
     }, 300);
 
     return () => { if (autoGenRef.current) clearTimeout(autoGenRef.current); };
-  }, [uuRows, calculationRows, generateReportRows, reportEditMode]);
+  }, [uuRows, getActTotal, generateReportRows, reportEditMode]);
 
   // ========== AUTO-SAVE TRIGGERS ==========
   // Report auto-save
@@ -891,7 +898,7 @@ const AgentReport = () => {
                   rows={rows}
                   month={selectedMonth}
                   year={selectedYear}
-                  commissionAmount={calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0)}
+                  commissionAmount={getActTotal()}
                 />
                 <Button
                   variant={reportEditMode ? "default" : "outline"}
@@ -903,7 +910,7 @@ const AgentReport = () => {
                 </Button>
               </div>,
               8,
-              calculationRows.reduce((sum, r) => sum + (r.act_amount || 0), 0),
+              getActTotal(),
               !reportEditMode
             )}
           </TabsContent>
