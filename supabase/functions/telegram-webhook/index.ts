@@ -152,23 +152,48 @@ function getStatusEmoji(status: string): string {
   return "📋";
 }
 
-// Find organization by chat_id (using telegram_settings table)
+// Find organization by chat_id (check main chat_id, procurement_chat_id, invoice_chat_id)
 async function findOrganizationByChatId(chatId: number) {
-  const { data: tgSetting, error: tgErr } = await supabase
+  const chatStr = chatId.toString();
+  
+  // Try main chat_id first
+  let orgId: string | null = null;
+  const { data: tgSetting } = await supabase
     .from("telegram_settings")
     .select("organization_id")
-    .eq("chat_id", chatId.toString())
-    .single();
+    .eq("chat_id", chatStr)
+    .maybeSingle();
+  orgId = tgSetting?.organization_id || null;
   
-  if (tgErr || !tgSetting) {
-    console.error("Error finding organization by chat_id:", tgErr);
+  // Try procurement_chat_id
+  if (!orgId) {
+    const { data: procSetting } = await supabase
+      .from("telegram_settings")
+      .select("organization_id")
+      .eq("procurement_chat_id", chatStr)
+      .maybeSingle();
+    orgId = procSetting?.organization_id || null;
+  }
+  
+  // Try invoice_chat_id
+  if (!orgId) {
+    const { data: invSetting } = await supabase
+      .from("telegram_settings")
+      .select("organization_id")
+      .eq("invoice_chat_id", chatStr)
+      .maybeSingle();
+    orgId = invSetting?.organization_id || null;
+  }
+
+  if (!orgId) {
+    console.error("No organization found for chat_id:", chatId);
     return null;
   }
 
   const { data, error } = await supabase
     .from("organizations")
     .select("id, name")
-    .eq("id", tgSetting.organization_id)
+    .eq("id", orgId)
     .single();
   
   if (error) {
@@ -176,6 +201,22 @@ async function findOrganizationByChatId(chatId: number) {
     return null;
   }
   return data;
+}
+
+// Get executors for an organization (from request_participants)
+async function getExecutors(orgId: string) {
+  const { data, error } = await supabase
+    .from("request_participants")
+    .select("id, name")
+    .eq("organization_id", orgId)
+    .eq("participant_type", "executor")
+    .eq("is_active", true)
+    .order("name");
+  if (error) {
+    console.error("Error fetching executors:", error);
+    return [];
+  }
+  return data || [];
 }
 
 // Helper to safely match request by partial or full UUID
