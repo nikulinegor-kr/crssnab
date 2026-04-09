@@ -96,6 +96,8 @@ const AgentReport = () => {
   const [calculationRows, setCalculationRows] = useState<CalculationRow[]>([]);
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
   const [agentCommission, setAgentCommission] = useState(0);
+  const [reportEditMode, setReportEditMode] = useState(false);
+  const [selectionInfo, setSelectionInfo] = useState<SelectionInfo | null>(null);
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
 
