@@ -308,7 +308,9 @@ const AgentReport = () => {
 
   // ========== ACT REPORT (Отчет по акту) ==========
   const calculateCommission = (total: number) => {
-    return total * 0.08;
+    if (total >= 10000000) return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+    if (total >= 5000000) return 5000000 * 0.02 + (total - 5000000) * 0.01;
+    return total * 0.02;
   };
 
   const loadAgentCommission = async () => {
