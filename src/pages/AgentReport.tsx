@@ -308,7 +308,9 @@ const AgentReport = () => {
 
   // ========== ACT REPORT (Отчет по акту) ==========
   const calculateCommission = (total: number) => {
-    return total * 0.08;
+    if (total >= 10000000) return 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+    if (total >= 5000000) return 5000000 * 0.02 + (total - 5000000) * 0.01;
+    return total * 0.02;
   };
 
   const loadAgentCommission = async () => {
@@ -465,7 +467,8 @@ const AgentReport = () => {
     setRRows: typeof setRows,
     onSave: () => void,
     onRefresh: () => void,
-    exportBtn: React.ReactNode
+    exportBtn: React.ReactNode,
+    commissionPercent?: number
   ) => (
     <>
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -487,6 +490,7 @@ const AgentReport = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           months={months}
+          commissionPercent={commissionPercent}
         />
         <div className="space-y-2 pt-4 border-t border-border">
           <p className="text-sm">
@@ -555,7 +559,8 @@ const AgentReport = () => {
             {renderReportContent(
               "Отчет агента", headerData, setHeaderData, rows, setRows,
               saveReport, () => refreshFromRequests("report"),
-              <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />
+              <ExportReportButton headerData={headerData} rows={rows} month={selectedMonth} year={selectedYear} />,
+              8
             )}
           </TabsContent>
 
