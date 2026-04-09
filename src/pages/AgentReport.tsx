@@ -901,7 +901,7 @@ const AgentReport = () => {
                   rows={rows}
                   month={selectedMonth}
                   year={selectedYear}
-                  commissionAmount={getActTotal()}
+                  commissionPercent={8}
                 />
                 <Button
                   variant={reportEditMode ? "default" : "outline"}
@@ -913,7 +913,7 @@ const AgentReport = () => {
                 </Button>
               </div>,
               8,
-              getActTotal(),
+              undefined,
               !reportEditMode
             )}
           </TabsContent>
