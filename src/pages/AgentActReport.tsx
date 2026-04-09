@@ -387,7 +387,7 @@ export default function AgentActReport() {
           <h1 className="text-3xl font-bold">Отчет агента по акту</h1>
           {agentCommission > 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              Вознаграждение агента за период: {agentCommission.toFixed(2)} ₽
+              Вознаграждение агента (из отчёта УУ) за период: {agentCommission.toFixed(2)} ₽
             </p>
           )}
         </div>
