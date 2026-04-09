@@ -258,7 +258,7 @@ const AgentReport = () => {
       return { rows: [], info: { ...emptyInfo, error: filtered.length === 0 ? "Нет доступных строк (все исключены)" : null } };
     }
 
-    // Convert amounts to integers (kopecks) for exact DP
+    // Convert amounts to integers (kopecks) for exact arithmetic
     const items = filtered.map((r, idx) => ({
       originalIndex: idx,
       row: r,
@@ -266,60 +266,67 @@ const AgentReport = () => {
     })).filter(item => item.amount > 0);
 
     const targetKopecks = Math.round(targetActAmount * 100);
+    const totalAvailable = items.reduce((s, it) => s + it.amount, 0);
 
-    // 2. Subset-sum via meet-in-the-middle for up to ~40 items, or DP for smaller sets
+    // PRE-CHECK: log values
+    console.log("[AgentReport] Подбор строк:", {
+      целевая_сумма: targetActAmount,
+      доступных_строк: items.length,
+      сумма_доступных: totalAvailable / 100,
+    });
+
+    // PRE-CHECK: if total available < target, cannot build report
+    if (totalAvailable < targetKopecks) {
+      const err = `Недостаточно сумм для формирования отчёта. Доступно: ${(totalAvailable / 100).toFixed(2)} ₽, требуется: ${targetActAmount.toFixed(2)} ₽`;
+      console.warn("[AgentReport]", err);
+      return { rows: [], info: { ...emptyInfo, error: err } };
+    }
+
+    // 2. Subset-sum: find subset with sum closest to target but NOT exceeding it
     let bestSubset: number[] = [];
     let bestSum = 0;
 
-    if (items.length <= 25) {
-      // DP approach with bitset tracking (practical for ≤25 items)
-      // Use a map: sum -> bitmask of items used
-      const dp = new Map<number, number>();
-      dp.set(0, 0);
+    if (items.length <= 20) {
+      // DP with array-based tracking (safe for ≤20 items)
+      // dp[sum] = array of item indices
+      const dp = new Map<number, number[]>();
+      dp.set(0, []);
 
       for (let i = 0; i < items.length; i++) {
         const amt = items[i].amount;
-        // Iterate in reverse order of sums to avoid using same item twice
+        // Process existing entries (snapshot to avoid mutation during iteration)
         const entries = Array.from(dp.entries());
-        for (const [sum, mask] of entries) {
+        for (const [sum, indices] of entries) {
           const newSum = sum + amt;
-          if (newSum <= targetKopecks && !dp.has(newSum)) {
-            dp.set(newSum, mask | (1 << i));
+          // STRICT: never exceed target
+          if (newSum > targetKopecks) continue;
+          if (!dp.has(newSum) || newSum > bestSum) {
+            dp.set(newSum, [...indices, i]);
           }
         }
-        // Prune: keep only entries that could potentially reach target
-        // (skip pruning for small sets)
       }
 
-      // Find the closest sum to target
-      let closestSum = 0;
-      let closestMask = 0;
-      for (const [sum, mask] of dp.entries()) {
-        if (Math.abs(sum - targetKopecks) < Math.abs(closestSum - targetKopecks)) {
-          closestSum = sum;
-          closestMask = mask;
+      // Find best (closest to target, never exceeding)
+      for (const [sum, indices] of dp.entries()) {
+        if (sum <= targetKopecks && sum > bestSum) {
+          bestSum = sum;
+          bestSubset = indices;
         }
       }
-
-      bestSum = closestSum;
-      for (let i = 0; i < items.length; i++) {
-        if (closestMask & (1 << i)) bestSubset.push(i);
-      }
     } else {
-      // For larger sets, use greedy + local search as fallback
+      // Greedy + local search for larger sets
       const sorted = items.map((item, i) => ({ ...item, sortIdx: i })).sort((a, b) => b.amount - a.amount);
       let currentSum = 0;
-      const selectedIndices: number[] = [];
+      const selectedSet = new Set<number>();
 
       for (const item of sorted) {
         if (currentSum + item.amount <= targetKopecks) {
-          selectedIndices.push(item.sortIdx);
+          selectedSet.add(item.sortIdx);
           currentSum += item.amount;
         }
       }
 
-      // Try swapping: for each unselected, check if replacing a selected item gets closer
-      const selectedSet = new Set(selectedIndices);
+      // Local search: try swaps to get closer
       let improved = true;
       while (improved) {
         improved = false;
@@ -339,6 +346,14 @@ const AgentReport = () => {
         }
       }
 
+      // Try adding any remaining items
+      for (let i = 0; i < items.length; i++) {
+        if (!selectedSet.has(i) && currentSum + items[i].amount <= targetKopecks) {
+          selectedSet.add(i);
+          currentSum += items[i].amount;
+        }
+      }
+
       bestSum = currentSum;
       bestSubset = Array.from(selectedSet);
     }
@@ -346,6 +361,13 @@ const AgentReport = () => {
     // 3. Build selected rows
     const selected = bestSubset.map(i => ({ ...items[i].row, _adjusted: false, _originalAmount: items[i].amount / 100 }));
     const totalBeforeAdjust = bestSum / 100;
+
+    console.log("[AgentReport] Результат подбора:", {
+      выбрано_строк: selected.length,
+      сумма_выбранных: totalBeforeAdjust,
+      целевая: targetActAmount,
+      разница: parseFloat((targetActAmount - totalBeforeAdjust).toFixed(2)),
+    });
 
     // 4. Calculate difference and apply adjustment if within threshold
     const diff = parseFloat((targetActAmount - totalBeforeAdjust).toFixed(2));
@@ -357,7 +379,7 @@ const AgentReport = () => {
 
     if (Math.abs(diff) > 0.005 && selected.length > 0) {
       if (diffPercent <= 2) {
-        // Adjust the row with the largest amount (most robust to small changes)
+        // Adjust the row with the largest amount
         const maxIdx = selected.reduce((best, r, i) => (r._originalAmount || 0) > (selected[best]._originalAmount || 0) ? i : best, 0);
         const newAmount = parseFloat(((selected[maxIdx]._originalAmount || 0) + diff).toFixed(2));
         if (newAmount > 0) {
@@ -371,6 +393,20 @@ const AgentReport = () => {
         error = `Невозможно корректно собрать отчёт — разница ${Math.abs(diff).toFixed(2)} ₽ (${diffPercent.toFixed(1)}%) превышает допустимый порог 2%. Проверьте данные.`;
       }
     }
+
+    // POST-CHECK: verify final sum
+    const finalSum = selected.reduce((s, r) => s + (typeof r.amount === 'number' ? r.amount : 0), 0);
+    const finalDiff = Math.abs(finalSum - targetActAmount);
+    if (finalDiff > 0.01 && !error) {
+      error = `Расчёт некорректен: итого ${finalSum.toFixed(2)} ₽ ≠ цель ${targetActAmount.toFixed(2)} ₽. Проверьте данные.`;
+      console.error("[AgentReport] POST-CHECK FAILED:", { finalSum, targetActAmount, finalDiff });
+    }
+
+    console.log("[AgentReport] Финальная проверка:", {
+      итого: finalSum.toFixed(2),
+      цель: targetActAmount.toFixed(2),
+      ок: finalDiff <= 0.01,
+    });
 
     // Re-number
     const result = selected.map((r, i) => ({ ...r, row_number: i + 1 }));
