@@ -41,6 +41,49 @@ export default function AgentActReport() {
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [agentCommission, setAgentCommission] = useState<number>(0);
+  const [receipts, setReceipts] = useState<RecognizedReceipt[]>([]);
+
+  // Sync recognized receipts → additional rows
+  const syncReceiptsToAdditionalRows = useCallback((newReceipts: RecognizedReceipt[]) => {
+    setReceipts(newReceipts);
+
+    // Group done receipts by category
+    const grouped: Record<string, number> = {};
+    newReceipts
+      .filter(r => r.status === "done" && r.amount)
+      .forEach(r => {
+        grouped[r.category] = (grouped[r.category] || 0) + (r.amount || 0);
+      });
+
+    // Build additional rows from grouped receipts
+    const receiptRows: AdditionalRow[] = Object.entries(grouped).map(([cat, amount], idx) => ({
+      id: `receipt-cat-${cat}`,
+      row_number: idx + 1,
+      description: cat,
+      amount,
+    }));
+
+    // Keep manually added rows (non-receipt rows)
+    const manualRows = additionalRows.filter(r => !r.id.startsWith("receipt-cat-"));
+    const merged = [...receiptRows, ...manualRows.map((r, i) => ({ ...r, row_number: receiptRows.length + i + 1 }))];
+
+    setAdditionalRows(merged);
+
+    // Recalculate calculation rows
+    const checkAmountTotal = merged.reduce((sum, row) => sum + (row.amount || 0), 0);
+    setCalculationRows(prev =>
+      prev.map(row => {
+        if (!row.salary_with_commission) return row;
+        const remainder = row.salary_with_commission + checkAmountTotal;
+        const actAmount = (remainder / 93) * 100;
+        return {
+          ...row,
+          remainder_after_tax: parseFloat(remainder.toFixed(2)),
+          act_amount: parseFloat(actAmount.toFixed(2)),
+        };
+      })
+    );
+  }, [additionalRows]);
 
   useEffect(() => {
     if (currentOrgId) {
