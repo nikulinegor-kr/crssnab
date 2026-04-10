@@ -738,6 +738,26 @@ const AgentReport = () => {
     }));
   };
 
+  const syncReceiptsToAdditionalRows = useCallback((newReceipts: RecognizedReceipt[]) => {
+    setReceipts(newReceipts);
+    const grouped: Record<string, number> = {};
+    newReceipts
+      .filter(r => r.status === "done" && r.amount)
+      .forEach(r => { grouped[r.category] = (grouped[r.category] || 0) + (r.amount || 0); });
+    const receiptRows: AdditionalRow[] = Object.entries(grouped).map(([cat, amount], idx) => ({
+      id: `receipt-cat-${cat}`, row_number: idx + 1, description: cat, amount,
+    }));
+    const manualRows = additionalRows.filter(r => !r.id.startsWith("receipt-cat-"));
+    const merged = [...receiptRows, ...manualRows.map((r, i) => ({ ...r, row_number: receiptRows.length + i + 1 }))];
+    setAdditionalRows(merged);
+    const checkTotal = merged.reduce((sum, r) => sum + (r.amount || 0), 0);
+    setCalculationRows(prev => prev.map(row => {
+      if (!row.salary_with_commission) return row;
+      const remainder = parseFloat((row.salary_with_commission + checkTotal).toFixed(2));
+      return { ...row, remainder_after_tax: remainder, act_amount: parseFloat(((remainder / 93) * 100).toFixed(2)) };
+    }));
+  }, [additionalRows]);
+
   // ========== SAVE STATUS INDICATOR ==========
   const renderSaveIndicator = () => {
     if (saveStatus === "saving") {
