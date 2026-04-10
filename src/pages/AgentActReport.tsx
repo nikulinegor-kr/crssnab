@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
+import { ReceiptManager, type RecognizedReceipt } from "@/components/agent-act-report/ReceiptManager";
 
 interface CalculationRow {
   id: string;
