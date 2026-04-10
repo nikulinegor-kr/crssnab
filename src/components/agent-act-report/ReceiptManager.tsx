@@ -62,7 +62,9 @@ export const ReceiptManager = ({
     };
 
     try {
-      const filePath = `receipts/${organizationId}/${year}-${month}/${Date.now()}-${file.name}`;
+      // Sanitize filename: remove non-ASCII chars to avoid Storage "Invalid key" errors
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `receipts/${organizationId}/${year}-${month}/${Date.now()}-${safeFileName}`;
       const { error: uploadError } = await supabase.storage
         .from("request-documents")
         .upload(filePath, file);
