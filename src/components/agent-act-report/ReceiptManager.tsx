@@ -152,12 +152,11 @@ export const ReceiptManager = ({
           const pages = await mergedPdf.copyPages(srcDoc, srcDoc.getPageIndices());
           pages.forEach(page => mergedPdf.addPage(page));
         } else {
-          const uint8 = new Uint8Array(bytes);
           let image;
           if (receipt.file.type === "image/png" || receipt.fileName.toLowerCase().endsWith(".png")) {
-            image = await mergedPdf.embedPng(uint8);
+            image = await mergedPdf.embedPng(bytes);
           } else {
-            image = await mergedPdf.embedJpg(uint8);
+            image = await mergedPdf.embedJpg(bytes);
           }
 
           const page = mergedPdf.addPage([image.width, image.height]);
