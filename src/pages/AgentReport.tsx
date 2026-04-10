@@ -17,6 +17,7 @@ import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalT
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { ReceiptManager, type RecognizedReceipt } from "@/components/agent-act-report/ReceiptManager";
 
 const defaultHeader = {
   report_number: "1",
