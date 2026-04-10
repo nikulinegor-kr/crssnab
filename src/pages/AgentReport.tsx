@@ -96,6 +96,7 @@ const AgentReport = () => {
   const [actReportId, setActReportId] = useState<string | null>(null);
   const [calculationRows, setCalculationRows] = useState<CalculationRow[]>([]);
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
+  const [receipts, setReceipts] = useState<RecognizedReceipt[]>([]);
   const [agentCommission, setAgentCommission] = useState(0);
   const [reportEditMode, setReportEditMode] = useState(false);
   const [selectionInfo, setSelectionInfo] = useState<SelectionInfo | null>(null);
