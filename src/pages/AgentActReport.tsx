@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
 import { ExportActReportButton } from "@/components/agent-act-report/ExportActReportButton";
+import { ReceiptManager, type RecognizedReceipt } from "@/components/agent-act-report/ReceiptManager";
 
 interface CalculationRow {
   id: string;
@@ -40,6 +41,49 @@ export default function AgentActReport() {
   const [additionalRows, setAdditionalRows] = useState<AdditionalRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [agentCommission, setAgentCommission] = useState<number>(0);
+  const [receipts, setReceipts] = useState<RecognizedReceipt[]>([]);
+
+  // Sync recognized receipts → additional rows
+  const syncReceiptsToAdditionalRows = useCallback((newReceipts: RecognizedReceipt[]) => {
+    setReceipts(newReceipts);
+
+    // Group done receipts by category
+    const grouped: Record<string, number> = {};
+    newReceipts
+      .filter(r => r.status === "done" && r.amount)
+      .forEach(r => {
+        grouped[r.category] = (grouped[r.category] || 0) + (r.amount || 0);
+      });
+
+    // Build additional rows from grouped receipts
+    const receiptRows: AdditionalRow[] = Object.entries(grouped).map(([cat, amount], idx) => ({
+      id: `receipt-cat-${cat}`,
+      row_number: idx + 1,
+      description: cat,
+      amount,
+    }));
+
+    // Keep manually added rows (non-receipt rows)
+    const manualRows = additionalRows.filter(r => !r.id.startsWith("receipt-cat-"));
+    const merged = [...receiptRows, ...manualRows.map((r, i) => ({ ...r, row_number: receiptRows.length + i + 1 }))];
+
+    setAdditionalRows(merged);
+
+    // Recalculate calculation rows
+    const checkAmountTotal = merged.reduce((sum, row) => sum + (row.amount || 0), 0);
+    setCalculationRows(prev =>
+      prev.map(row => {
+        if (!row.salary_with_commission) return row;
+        const remainder = row.salary_with_commission + checkAmountTotal;
+        const actAmount = (remainder / 93) * 100;
+        return {
+          ...row,
+          remainder_after_tax: parseFloat(remainder.toFixed(2)),
+          act_amount: parseFloat(actAmount.toFixed(2)),
+        };
+      })
+    );
+  }, [additionalRows]);
 
   useEffect(() => {
     if (currentOrgId) {
@@ -456,10 +500,18 @@ export default function AgentActReport() {
         </div>
       </Card>
 
+      <ReceiptManager
+        receipts={receipts}
+        onReceiptsChange={syncReceiptsToAdditionalRows}
+        month={month}
+        year={year}
+        organizationId={currentOrgId}
+      />
+
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Чеки</h2>
+            <h2 className="text-xl font-semibold">Дополнительные расходы</h2>
             <div className="flex gap-2">
               <Button onClick={addAdditionalRow} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
