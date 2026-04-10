@@ -974,9 +974,17 @@ const AgentReport = () => {
                 />
               </Card>
 
+              <ReceiptManager
+                receipts={receipts}
+                onReceiptsChange={syncReceiptsToAdditionalRows}
+                month={selectedMonth}
+                year={selectedYear}
+                organizationId={currentOrgId}
+              />
+
               <Card className="p-6 space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">Чеки</h2>
+                  <h2 className="text-xl font-semibold">Дополнительные расходы</h2>
                   <Button onClick={addAdditionalRow} size="sm">
                     <Plus className="h-4 w-4 mr-2" />Добавить строку
                   </Button>
