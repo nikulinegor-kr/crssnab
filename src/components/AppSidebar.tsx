@@ -8,7 +8,7 @@ import {
   Percent,
   Sun,
   Moon,
-  ChevronDown,
+  
   Building2,
   BarChart3,
   Warehouse,
@@ -45,11 +45,6 @@ import {
   useSidebar,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 const menuGroups = [
   {
