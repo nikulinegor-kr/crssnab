@@ -88,6 +88,14 @@ const menuGroups = [
     ],
   },
   {
+    label: "Отчет Агента",
+    icon: FileBarChart,
+    items: [
+      { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
+      { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
+    ],
+  },
+  {
     label: "Аналитика",
     icon: BarChart3,
     items: [
@@ -96,11 +104,6 @@ const menuGroups = [
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
-];
-
-const reportMenuItems = [
-  { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
-  { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
 ];
 
 const settingsMenuItems = [
