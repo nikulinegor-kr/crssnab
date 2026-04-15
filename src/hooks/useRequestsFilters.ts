@@ -25,6 +25,7 @@ export interface RequestFilters {
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
   objectFilter: string;
+  transportCompanyFilter: string;
 }
 
 export const STATUSES = [
@@ -155,6 +156,7 @@ export const useRequestsFilters = (
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
+  const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
@@ -168,9 +170,10 @@ export const useRequestsFilters = (
       applicantFilter,
       hideDelivered,
       objectFilter,
+      transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter, transportCompanyFilter]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
@@ -304,6 +307,8 @@ export const useRequestsFilters = (
             : !hideDelivered || request.status !== "Доставлено";
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
+      const matchesTransportCompany =
+        transportCompanyFilter === "all" || request.transport_company === transportCompanyFilter;
       return (
         matchesSearch &&
         matchesStatus &&
@@ -311,7 +316,8 @@ export const useRequestsFilters = (
         matchesYear &&
         matchesApplicant &&
         matchesDelivered &&
-        matchesObject
+        matchesObject &&
+        matchesTransportCompany
       );
     });
   }, [
@@ -325,11 +331,18 @@ export const useRequestsFilters = (
     activeTab,
     specialDateFilter,
     objectFilter,
+    transportCompanyFilter,
   ]);
 
   const uniqueApplicants = useMemo(() => {
     return Array.from(
       new Set(requests?.map((r) => r.applicant).filter(Boolean))
+    ).sort() as string[];
+  }, [requests]);
+
+  const uniqueTransportCompanies = useMemo(() => {
+    return Array.from(
+      new Set(requests?.map((r) => r.transport_company).filter((c): c is string => !!c && c.trim().length > 0))
     ).sort() as string[];
   }, [requests]);
 
@@ -358,6 +371,7 @@ export const useRequestsFilters = (
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
     if (filters.objectFilter !== undefined) setObjectFilter(filters.objectFilter);
+    if (filters.transportCompanyFilter !== undefined) setTransportCompanyFilter(filters.transportCompanyFilter);
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -369,6 +383,7 @@ export const useRequestsFilters = (
     setHideDelivered(true);
     setSpecialDateFilter(null);
     setObjectFilter("all");
+    setTransportCompanyFilter("all");
   }, []);
 
   const currentFilters: RequestFilters = {
@@ -380,6 +395,7 @@ export const useRequestsFilters = (
     hideDelivered,
     specialDateFilter,
     objectFilter,
+    transportCompanyFilter,
   };
 
   return {
@@ -400,11 +416,14 @@ export const useRequestsFilters = (
     setSpecialDateFilter,
     objectFilter,
     setObjectFilter,
+    transportCompanyFilter,
+    setTransportCompanyFilter,
     years,
     
     // Computed
     filteredRequests,
     uniqueApplicants,
+    uniqueTransportCompanies,
     currentFilters,
     
     // Actions
