@@ -513,13 +513,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       // Auto-send telegram if status changed
       const statusChanged = data.status !== request.status;
       if (statusChanged) {
-        const { data: orgData } = await supabase
-          .from("organizations")
-          .select("telegram_auto_send_on_status_change")
-          .eq("id", request.organization_id)
-          .single();
+        const { data: tgSettings } = await supabase
+          .from("telegram_settings" as any)
+          .select("auto_send_on_status_change")
+          .eq("organization_id", request.organization_id)
+          .maybeSingle();
         
-        if (orgData?.telegram_auto_send_on_status_change) {
+        if ((tgSettings as any)?.auto_send_on_status_change !== false) {
           await notifyTelegram(request.id);
         }
       }
@@ -780,14 +780,16 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       });
 
       const statusChanged = data.status !== request.status;
-      const { data: orgData } = await supabase
-        .from("organizations")
-        .select("telegram_auto_send_on_status_change")
-        .eq("id", request.organization_id)
-        .single();
-      
-      if (orgData?.telegram_auto_send_on_status_change && statusChanged) {
-        await notifyTelegram(request.id);
+      if (statusChanged) {
+        const { data: tgSettings } = await supabase
+          .from("telegram_settings" as any)
+          .select("auto_send_on_status_change")
+          .eq("organization_id", request.organization_id)
+          .maybeSingle();
+        
+        if ((tgSettings as any)?.auto_send_on_status_change !== false) {
+          await notifyTelegram(request.id);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });
