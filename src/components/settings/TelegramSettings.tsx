@@ -63,7 +63,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
 
   const handleSave = async () => {
     // Validation
-    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
+    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{30,50}$/)) {
       toast({
         title: "Ошибка",
         description: "Неверный формат токена бота",
