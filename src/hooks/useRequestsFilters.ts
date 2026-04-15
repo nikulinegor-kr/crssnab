@@ -362,7 +362,6 @@ export const useRequestsFilters = (
     }
     return result.sort();
   }, [requests]);
-  }, [requests]);
 
   const selectAllStatuses = useCallback(() => {
     if (statusFilter.length === STATUSES.length) {
