@@ -495,6 +495,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
         equipment_id: data.equipment_id || null,
+        photo_url: existingPhotoUrls[0] || null,
+        document_url: existingDocumentUrls[0] || null,
+        photo_urls: existingPhotoUrls,
+        document_urls: existingDocumentUrls,
       };
 
       const { data: updatedData, error } = await supabase
