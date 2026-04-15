@@ -308,7 +308,7 @@ export const useRequestsFilters = (
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
       const matchesTransportCompany =
-        transportCompanyFilter === "all" || request.transport_company === transportCompanyFilter;
+        transportCompanyFilter === "all" || (request.transport_company?.trim().toLowerCase() === transportCompanyFilter.trim().toLowerCase());
       return (
         matchesSearch &&
         matchesStatus &&
