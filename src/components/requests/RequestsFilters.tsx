@@ -365,6 +365,27 @@ export const RequestsFilters = ({
                 </Select>
               </div>
 
+              {/* Transport Company */}
+              {uniqueTransportCompanies.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Транспортная компания</Label>
+                  <Select value={transportCompanyFilter} onValueChange={setTransportCompanyFilter}>
+                    <SelectTrigger className="text-xs h-8">
+                      <div className="flex items-center gap-1 truncate">
+                        <Truck className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        <SelectValue placeholder="ТК" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-background max-h-[200px]">
+                      <SelectItem value="all" className="text-xs">Все ТК</SelectItem>
+                      {uniqueTransportCompanies.map((tc) => (
+                        <SelectItem key={tc} value={tc} className="text-xs">{tc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* Saved Filters */}
               <div className="border-t pt-3">
                 <SavedFiltersDropdown
