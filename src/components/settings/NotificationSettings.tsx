@@ -122,7 +122,7 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
   const handleSave = async () => {
     if (!isAdmin) return;
 
-    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
+    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{30,50}$/)) {
       toast({ variant: "destructive", title: "Ошибка", description: "Неверный формат токена бота" });
       return;
     }
