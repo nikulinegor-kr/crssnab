@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter } from "lucide-react";
+import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter, Truck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,9 @@ interface RequestsFiltersProps {
   deliveredCount?: number;
   objectFilter: string;
   setObjectFilter: (value: string) => void;
+  transportCompanyFilter: string;
+  setTransportCompanyFilter: (value: string) => void;
+  uniqueTransportCompanies: string[];
   requests: Request[] | undefined;
 }
 
@@ -88,6 +91,9 @@ export const RequestsFilters = ({
   deliveredCount = 0,
   objectFilter,
   setObjectFilter,
+  transportCompanyFilter,
+  setTransportCompanyFilter,
+  uniqueTransportCompanies,
   requests,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
@@ -170,6 +176,7 @@ export const RequestsFilters = ({
     yearFilter !== "all" ||
     applicantFilter !== "all" ||
     objectFilter !== "all" ||
+    transportCompanyFilter !== "all" ||
     !hideDelivered ||
     isSmartSearchActive;
 
@@ -178,6 +185,7 @@ export const RequestsFilters = ({
     yearFilter !== "all",
     objectFilter !== "all",
     applicantFilter !== "all",
+    transportCompanyFilter !== "all",
   ].filter(Boolean).length;
 
   return (
