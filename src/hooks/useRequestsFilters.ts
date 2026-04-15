@@ -25,6 +25,7 @@ export interface RequestFilters {
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
   objectFilter: string;
+  transportCompanyFilter: string;
 }
 
 export const STATUSES = [
