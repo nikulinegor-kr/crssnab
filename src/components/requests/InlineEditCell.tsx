@@ -280,6 +280,7 @@ export const InlineEditCell = ({
   const getPlaceholder = () => {
     switch (field) {
       case "transport_company": return "ТК";
+      case "waybill_number": return "№ТТН";
       case "description": return "Описание заявки";
       case "applicant": return "Заявитель";
       case "contractor": return "Контрагент";
