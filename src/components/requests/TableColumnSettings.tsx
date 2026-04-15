@@ -22,6 +22,7 @@ export interface ColumnVisibility {
   shipment_date: boolean;
   delivery_date: boolean;
   transport_company: boolean;
+  waybill_number: boolean;
   amount: boolean;
   applicant: boolean;
   comments: boolean;
@@ -41,6 +42,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   shipment_date: false,
   delivery_date: true,
   transport_company: false,
+  waybill_number: false,
   amount: true,
   applicant: false,
   comments: false,
@@ -60,6 +62,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   shipment_date: "Отгрузка",
   delivery_date: "Приход",
   transport_company: "ТК",
+  waybill_number: "№ТТН",
   amount: "Стоимость",
   applicant: "Заявитель",
   comments: "Комментарий",
