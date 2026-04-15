@@ -341,9 +341,27 @@ export const useRequestsFilters = (
   }, [requests]);
 
   const uniqueTransportCompanies = useMemo(() => {
-    return Array.from(
-      new Set(requests?.map((r) => r.transport_company).filter((c): c is string => !!c && c.trim().length > 0))
-    ).sort() as string[];
+    const companies = requests?.map((r) => r.transport_company).filter((c): c is string => !!c && c.trim().length > 0) || [];
+    // Normalize: group by lowercased+trimmed, pick the most frequent original form
+    const normalizedMap = new Map<string, Map<string, number>>();
+    for (const c of companies) {
+      const key = c.trim().toLowerCase();
+      if (!normalizedMap.has(key)) normalizedMap.set(key, new Map());
+      const variants = normalizedMap.get(key)!;
+      variants.set(c.trim(), (variants.get(c.trim()) || 0) + 1);
+    }
+    const result: string[] = [];
+    for (const variants of normalizedMap.values()) {
+      // Pick variant with highest count
+      let best = "";
+      let bestCount = 0;
+      for (const [variant, count] of variants) {
+        if (count > bestCount) { best = variant; bestCount = count; }
+      }
+      result.push(best);
+    }
+    return result.sort();
+  }, [requests]);
   }, [requests]);
 
   const selectAllStatuses = useCallback(() => {
