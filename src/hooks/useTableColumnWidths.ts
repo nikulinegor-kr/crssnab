@@ -17,6 +17,7 @@ export interface ColumnWidths {
   shipment_date: number;
   delivery_date: number;
   transport_company: number;
+  waybill_number: number;
   amount: number;
   applicant: number;
   comments: number;
@@ -38,6 +39,7 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   shipment_date: 95,
   delivery_date: 95,
   transport_company: 100,
+  waybill_number: 110,
   amount: 110,
   applicant: 110,
   comments: 150,
