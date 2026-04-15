@@ -3048,6 +3048,13 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_telegram_auto_send_settings: {
+        Args: { _org_id: string }
+        Returns: {
+          auto_send_on_create: boolean
+          auto_send_on_status_change: boolean
+        }[]
+      }
       get_telegram_credentials: {
         Args: { _org_id: string }
         Returns: {
