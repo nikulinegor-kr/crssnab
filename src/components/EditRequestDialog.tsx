@@ -514,12 +514,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       const statusChanged = data.status !== request.status;
       if (statusChanged) {
         const { data: tgSettings } = await supabase
-          .from("telegram_settings" as any)
-          .select("auto_send_on_status_change")
-          .eq("organization_id", request.organization_id)
-          .maybeSingle();
+          .rpc("get_telegram_auto_send_settings", { _org_id: request.organization_id });
         
-        if ((tgSettings as any)?.auto_send_on_status_change !== false) {
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_status_change !== false) {
           await notifyTelegram(request.id);
         }
       }
@@ -782,12 +780,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       const statusChanged = data.status !== request.status;
       if (statusChanged) {
         const { data: tgSettings } = await supabase
-          .from("telegram_settings" as any)
-          .select("auto_send_on_status_change")
-          .eq("organization_id", request.organization_id)
-          .maybeSingle();
+          .rpc("get_telegram_auto_send_settings", { _org_id: request.organization_id });
         
-        if ((tgSettings as any)?.auto_send_on_status_change !== false) {
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_status_change !== false) {
           await notifyTelegram(request.id);
         }
       }

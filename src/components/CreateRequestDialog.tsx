@@ -540,12 +540,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       // Send Telegram notification if auto-send is enabled
       if (newRequest) {
         const { data: tgSettings } = await supabase
-          .from("telegram_settings" as any)
-          .select("auto_send_on_create")
-          .eq("organization_id", currentOrgId)
-          .maybeSingle();
+          .rpc("get_telegram_auto_send_settings", { _org_id: currentOrgId });
         
-        if ((tgSettings as any)?.auto_send_on_create !== false) {
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_create !== false) {
           await notifyTelegram(newRequest.id);
         }
       }
