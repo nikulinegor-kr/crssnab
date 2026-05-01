@@ -513,11 +513,37 @@ const AgentReport = () => {
           .from("agent_report_uu_rows").select("*")
           .eq("report_id", reportData.id).order("row_number");
         if (rowsError) throw rowsError;
-        const existing = rowsData?.map(r => ({
+        const existingRaw = rowsData?.map(r => ({
           id: r.id, row_number: r.row_number, tmc: r.tmc || "",
           contractor: r.contractor || "", invoice_number: r.invoice_number || "",
           amount: r.amount || 0, formula: r.formula || undefined
         })) || [];
+
+        // === AUTO-CLEANUP: убираем строки, у которых связанная заявка
+        // больше не имеет статус "В пути" или "Доставлено" ===
+        const ALLOWED_STATUSES = new Set(["В пути", "Доставлено"]);
+        const normInv = (s: string) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+        const invoiceNumbers = existingRaw
+          .map(r => r.invoice_number)
+          .filter(Boolean) as string[];
+        let invalidInvoices = new Set<string>();
+        if (invoiceNumbers.length > 0) {
+          const { data: linkedReqs } = await supabase
+            .from("requests")
+            .select("invoice_number, status")
+            .eq("organization_id", currentOrgId)
+            .in("invoice_number", invoiceNumbers);
+          (linkedReqs || []).forEach((r: any) => {
+            if (r.invoice_number && !ALLOWED_STATUSES.has(r.status)) {
+              invalidInvoices.add(normInv(r.invoice_number));
+            }
+          });
+        }
+        const removedCount = existingRaw.filter(r => r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))).length;
+        const existing = existingRaw.filter(r => !(r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))));
+        if (removedCount > 0) {
+          console.log(`[UU Report] Auto-removed ${removedCount} row(s) — request status no longer "В пути"/"Доставлено"`);
+        }
 
         // === MERGE-SYNC: дотягиваем недостающие заявки за период ===
         const fresh = await loadDataFromRequests();
@@ -530,13 +556,15 @@ const AgentReport = () => {
         const existingKeys = new Set(existing.map(keyOf));
         const toAdd = fresh.filter(f => !existingKeys.has(keyOf(f)));
 
-        if (toAdd.length > 0) {
+        if (toAdd.length > 0 || removedCount > 0) {
           const merged = [...existing, ...toAdd].map((r, i) => ({ ...r, row_number: i + 1 }));
           setUuRows(merged);
           await persistRows("agent_report_uu_rows", reportData.id, merged);
           const total = merged.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
           setAgentCommission(calculateCommission(total));
-          console.log(`[UU Report] Auto-synced ${toAdd.length} new request(s) for ${selectedMonth}/${selectedYear}`);
+          if (toAdd.length > 0) {
+            console.log(`[UU Report] Auto-synced ${toAdd.length} new request(s) for ${selectedMonth}/${selectedYear}`);
+          }
         } else {
           setUuRows(existing);
         }
