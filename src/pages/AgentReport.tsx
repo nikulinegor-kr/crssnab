@@ -178,8 +178,10 @@ const AgentReport = () => {
       return y === selectedYear.toString() && String(parseInt(m, 10)) === selectedMonth.toString();
     };
 
+    const ALLOWED_STATUSES = new Set(["В пути", "Доставлено"]);
     const filtered = (requests || []).filter((r: Request) => {
       if (!r.amount || r.amount === 0) return false;
+      if (!ALLOWED_STATUSES.has((r as any).status)) return false;
       return matchesMonth(r.delivery_date) || matchesMonth(r.shipment_date);
     });
 
