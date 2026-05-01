@@ -511,11 +511,33 @@ const AgentReport = () => {
           .from("agent_report_uu_rows").select("*")
           .eq("report_id", reportData.id).order("row_number");
         if (rowsError) throw rowsError;
-        setUuRows(rowsData?.map(r => ({
+        const existing = rowsData?.map(r => ({
           id: r.id, row_number: r.row_number, tmc: r.tmc || "",
           contractor: r.contractor || "", invoice_number: r.invoice_number || "",
           amount: r.amount || 0, formula: r.formula || undefined
-        })) || []);
+        })) || [];
+
+        // === MERGE-SYNC: дотягиваем недостающие заявки за период ===
+        const fresh = await loadDataFromRequests();
+        const norm = (s: string) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+        const keyOf = (r: any) => {
+          const inv = norm(r.invoice_number);
+          if (inv) return `inv::${inv}`;
+          return `desc::${norm(r.tmc || r.description)}::${norm(r.contractor)}::${Number(r.amount || 0).toFixed(2)}`;
+        };
+        const existingKeys = new Set(existing.map(keyOf));
+        const toAdd = fresh.filter(f => !existingKeys.has(keyOf(f)));
+
+        if (toAdd.length > 0) {
+          const merged = [...existing, ...toAdd].map((r, i) => ({ ...r, row_number: i + 1 }));
+          setUuRows(merged);
+          await persistRows("agent_report_uu_rows", reportData.id, merged);
+          const total = merged.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
+          setAgentCommission(calculateCommission(total));
+          console.log(`[UU Report] Auto-synced ${toAdd.length} new request(s) for ${selectedMonth}/${selectedYear}`);
+        } else {
+          setUuRows(existing);
+        }
       } else {
         // Auto-load from requests and save immediately
         const newRows = await loadDataFromRequests();
