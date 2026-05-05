@@ -10,22 +10,21 @@ export const usePushNotifications = () => {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Check if push notifications are supported
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    const supported = 'Notification' in window;
     setIsSupported(supported);
 
     if (supported) {
       setPermission(Notification.permission as PermissionState);
-      
-      // Register service worker
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => {
-          console.log('Service Worker registered:', reg);
-          setRegistration(reg);
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration()
+          .then((reg) => {
+            setRegistration(reg ?? null);
+          })
+          .catch((error) => {
+            console.error('Failed to get Service Worker registration:', error);
+          });
+      }
     } else {
       setPermission('unsupported');
     }
