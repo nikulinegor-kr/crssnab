@@ -4,6 +4,9 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 import "./index.css";
+import { installGlobalErrorReporter, reportError } from "./lib/errorReporter";
+
+installGlobalErrorReporter();
 
 const unregisterLegacyServiceWorkers = async () => {
   if (!("serviceWorker" in navigator)) return;
@@ -104,6 +107,11 @@ const bootstrapApp = async () => {
   try {
     slowBootTimer = window.setTimeout(() => {
       root.render(<BootstrapScreen state="slow" />);
+      reportError({
+        message: "Slow bootstrap: App import >4s",
+        severity: "warning",
+        context: { source: "bootstrap_slow" },
+      });
     }, 4000);
 
     const { default: App } = await import("./App.tsx");
@@ -120,6 +128,13 @@ const bootstrapApp = async () => {
     }
 
     console.error("[Bootstrap] Failed to start app:", error);
+
+    reportError({
+      message: error instanceof Error ? error.message : "Bootstrap failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      severity: "error",
+      context: { source: "bootstrap" },
+    });
 
     root.render(
       <BootstrapScreen
