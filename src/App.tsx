@@ -60,6 +60,7 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
+const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -459,6 +460,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <TeamPerformancePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/error-logs"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ErrorLogsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
