@@ -4,6 +4,9 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 import "./index.css";
+import { installGlobalErrorReporter, reportError } from "./lib/errorReporter";
+
+installGlobalErrorReporter();
 
 const unregisterLegacyServiceWorkers = async () => {
   if (!("serviceWorker" in navigator)) return;
