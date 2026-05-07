@@ -66,7 +66,28 @@ export default function ErrorLogsPage() {
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<string>("all");
   const [period, setPeriod] = useState<string>("7d");
+  const [deployment, setDeployment] = useState<string>("all");
   const [selected, setSelected] = useState<ErrorLog | null>(null);
+
+  const deployments = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of logs) {
+      const d = (l.context as Record<string, unknown> | null)?.deployment_id;
+      if (typeof d === "string" && d) set.add(d);
+    }
+    return Array.from(set);
+  }, [logs]);
+
+  const parseUA = (ua: string | null): string => {
+    if (!ua) return "—";
+    if (/Edg\//.test(ua)) return "Edge";
+    if (/OPR\/|Opera/.test(ua)) return "Opera";
+    if (/YaBrowser/.test(ua)) return "Yandex";
+    if (/Chrome\//.test(ua)) return "Chrome";
+    if (/Firefox\//.test(ua)) return "Firefox";
+    if (/Safari\//.test(ua)) return "Safari";
+    return "Other";
+  };
 
   const periodSinceISO = useMemo(() => {
     const now = Date.now();
