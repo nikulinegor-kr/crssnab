@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   Files,
   Bot,
+  ShieldAlert,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -99,6 +100,10 @@ const menuGroups = [
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
+];
+
+const adminMenuItems = [
+  { title: "Журнал ошибок", url: "/admin/error-logs", icon: ShieldAlert },
 ];
 
 const settingsMenuItems = [
@@ -252,6 +257,23 @@ export function AppSidebar() {
             </div>
           );
         })}
+
+        {/* Админ-раздел */}
+        {isAdmin && !isDemoMode && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              {showText && (
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
+                  Администрирование
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>{renderMenuItems(adminMenuItems)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {/* Настройки — скрыты для наблюдателей */}
         {!isViewer && (
