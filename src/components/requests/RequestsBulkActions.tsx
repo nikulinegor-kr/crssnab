@@ -579,6 +579,10 @@ export const RequestsBulkActions = ({
               requests={requests || []}
               filteredRequests={selectedRequests}
             />
+            <MeetingReportButton
+              requests={requests || []}
+              filteredRequests={selectedRequests}
+            />
 
             <div className="h-4 w-px bg-border mx-0.5 hidden sm:block" />
 
