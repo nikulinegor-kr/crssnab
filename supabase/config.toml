@@ -1,4 +1,43 @@
 project_id = "cfdwsdydbtwaljnidirf"
 
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.analyze-request]
+verify_jwt = true
+
+[functions.daily-summary]
+verify_jwt = false
+
+[functions.check-deadline-reminders]
+verify_jwt = false
+
+[functions.auto-archive-requests]
+verify_jwt = false
+
+[functions.semantic-search]
+verify_jwt = true
+
+[functions.ai-analytics]
+verify_jwt = true
+
+[functions.check-delivery-arrived]
+verify_jwt = false
+
+[functions.dadata-lookup]
+verify_jwt = false
+
+[functions.extract-supplier]
+verify_jwt = false
+
+[functions.resend-delivery-reminder]
+verify_jwt = false
+
+[functions.recognize-kp]
+verify_jwt = true
+
+[functions.download-zip]
+verify_jwt = true
+
 [functions.log-client-error]
 verify_jwt = false
