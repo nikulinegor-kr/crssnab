@@ -130,12 +130,16 @@ export default function ErrorLogsPage() {
 
   const filtered = useMemo(() => {
     const terms = search.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (!terms.length) return logs;
     return logs.filter((log) => {
+      if (deployment !== "all") {
+        const d = (log.context as Record<string, unknown> | null)?.deployment_id;
+        if (d !== deployment) return false;
+      }
+      if (!terms.length) return true;
       const hay = `${log.message} ${log.url ?? ""} ${log.stack ?? ""} ${JSON.stringify(log.context ?? {})}`.toLowerCase();
       return terms.every((t) => hay.includes(t));
     });
-  }, [logs, search]);
+  }, [logs, search, deployment]);
 
   if (roleLoading) {
     return (
