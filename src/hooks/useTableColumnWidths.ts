@@ -12,10 +12,12 @@ export interface ColumnWidths {
   availability: number;
   contractor: number;
   invoice_number: number;
+  payment_prepay: number;
   payment_percentage: number;
   shipment_date: number;
   delivery_date: number;
   transport_company: number;
+  waybill_number: number;
   amount: number;
   applicant: number;
   comments: number;
@@ -32,10 +34,12 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   availability: 100,
   contractor: 130,
   invoice_number: 100,
-  payment_percentage: 80,
+  payment_prepay: 90,
+  payment_percentage: 90,
   shipment_date: 95,
   delivery_date: 95,
   transport_company: 100,
+  waybill_number: 110,
   amount: 110,
   applicant: 110,
   comments: 150,

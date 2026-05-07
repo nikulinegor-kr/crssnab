@@ -98,6 +98,7 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
+  payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
@@ -328,6 +329,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       invoice_number: request.invoice_number || "",
       amount: request.amount ?? null,
       payment_percentage: request.payment_percentage ?? 0,
+      payment_percent: (request as any).payment_percent ?? 0,
       shipment_date: request.shipment_date || "",
       delivery_date: request.delivery_date || "",
       transport_company: request.transport_company || "",
@@ -383,7 +385,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
         payment_percentage: request.payment_percentage ?? null,
-        payment_status: (request as any).payment_status || "Не выставлен",
+        payment_percent: (request as any).payment_percent ?? 0,
+        payment_status: (() => {
+          const p = (request as any).payment_percent ?? 0;
+          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
+        })(),
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
@@ -471,7 +477,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_status: data.payment_status || "Не выставлен",
+        payment_percent: data.payment_percent ?? 0,
+        payment_status: (() => {
+          const p = data.payment_percent ?? 0;
+          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
+        })(),
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -485,6 +495,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
         equipment_id: data.equipment_id || null,
+        photo_url: existingPhotoUrls[0] || null,
+        document_url: existingDocumentUrls[0] || null,
+        photo_urls: existingPhotoUrls,
+        document_urls: existingDocumentUrls,
       };
 
       const { data: updatedData, error } = await supabase
@@ -503,13 +517,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       // Auto-send telegram if status changed
       const statusChanged = data.status !== request.status;
       if (statusChanged) {
-        const { data: orgData } = await supabase
-          .from("organizations")
-          .select("telegram_auto_send_on_status_change")
-          .eq("id", request.organization_id)
-          .single();
+        const { data: tgSettings } = await supabase
+          .rpc("get_telegram_auto_send_settings", { _org_id: request.organization_id });
         
-        if (orgData?.telegram_auto_send_on_status_change) {
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_status_change !== false) {
           await notifyTelegram(request.id);
         }
       }
@@ -685,7 +697,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_status: data.payment_status || "Не выставлен",
+        payment_percent: data.payment_percent ?? 0,
+        payment_status: (() => {
+          const p = data.payment_percent ?? 0;
+          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
+        })(),
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -766,14 +782,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       });
 
       const statusChanged = data.status !== request.status;
-      const { data: orgData } = await supabase
-        .from("organizations")
-        .select("telegram_auto_send_on_status_change")
-        .eq("id", request.organization_id)
-        .single();
-      
-      if (orgData?.telegram_auto_send_on_status_change && statusChanged) {
-        await notifyTelegram(request.id);
+      if (statusChanged) {
+        const { data: tgSettings } = await supabase
+          .rpc("get_telegram_auto_send_settings", { _org_id: request.organization_id });
+        
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_status_change !== false) {
+          await notifyTelegram(request.id);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["requests"] });

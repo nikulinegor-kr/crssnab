@@ -375,15 +375,21 @@ const Requests = () => {
             onFilterClick={(type, value) => {
               filters.setSpecialDateFilter(null);
               if (type === "priority") {
-                filters.setPriorityFilter(value);
+                filters.setPriorityFilter(filters.priorityFilter === value ? "all" : value);
               } else {
-                filters.setStatusFilter([value]);
+                filters.setStatusFilter(filters.statusFilter.length === 1 && filters.statusFilter[0] === value ? [] : [value]);
               }
             }}
             onSpecialFilterClick={(filter) => {
+              if (filter) {
+                filters.setPriorityFilter("all");
+                filters.setStatusFilter([]);
+              }
               filters.setSpecialDateFilter(filter);
             }}
             activeSpecialFilter={filters.specialDateFilter}
+            activePriorityFilter={filters.priorityFilter}
+            activeStatusFilter={filters.statusFilter}
           />
 
           {/* LEVEL 4-6: Filters (search, quick, advanced) */}
@@ -412,6 +418,9 @@ const Requests = () => {
             deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
+            transportCompanyFilter={filters.transportCompanyFilter}
+            setTransportCompanyFilter={filters.setTransportCompanyFilter}
+            uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
           />
 
@@ -478,6 +487,9 @@ const Requests = () => {
             deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
+            transportCompanyFilter={filters.transportCompanyFilter}
+            setTransportCompanyFilter={filters.setTransportCompanyFilter}
+            uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
           />
 

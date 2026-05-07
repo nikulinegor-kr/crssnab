@@ -35,7 +35,9 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Paperclip } from "lucide-react";
+import { MultiFileDropZone } from "@/components/MultiFileDropZone";
+import { FormSectionCard } from "./create-request/FormSectionCard";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
@@ -92,6 +94,7 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
+  payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
@@ -328,7 +331,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       invoice_number: "",
       amount: null,
       payment_percentage: null,
-      payment_status: "Не выставлен",
+      payment_percent: null,
+      payment_status: "Не оплачено",
       shipment_date: "",
       delivery_date: "",
       transport_company: initialData?.transport_company || "",
@@ -494,7 +498,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_status: data.payment_status || "Не выставлен",
+        payment_percent: data.payment_percent ?? 0,
+        payment_status: (() => {
+          const p = data.payment_percent ?? 0;
+          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
+        })(),
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -531,13 +539,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
       // Send Telegram notification if auto-send is enabled
       if (newRequest) {
-        const { data: orgData } = await supabase
-          .from("organizations")
-          .select("telegram_auto_send_on_create")
-          .eq("id", currentOrgId)
-          .single();
+        const { data: tgSettings } = await supabase
+          .rpc("get_telegram_auto_send_settings", { _org_id: currentOrgId });
         
-        if (orgData?.telegram_auto_send_on_create) {
+        const settings = Array.isArray(tgSettings) ? tgSettings[0] : tgSettings;
+        if (settings?.auto_send_on_create !== false) {
           await notifyTelegram(newRequest.id);
         }
       }
@@ -712,7 +718,36 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           recentTransportCompanies={recentTransportCompanies}
         />
 
-        {/* 8. Additional (Collapsed by default): ZRS, Files */}
+        {/* 8. Files — always visible */}
+        <FormSectionCard
+          title="Файлы"
+          icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <MultiFileDropZone
+              accept="image/*"
+              files={photoFiles}
+              onFilesChange={setPhotoFiles}
+              label="Фото"
+              hint="JPG, PNG, WEBP до 5 МБ, макс. 10"
+              icon="image"
+              maxSizeMB={5}
+              maxFiles={10}
+            />
+            <MultiFileDropZone
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
+              files={documentFiles}
+              onFilesChange={setDocumentFiles}
+              label="Документы (Счёт/КП)"
+              hint="PDF, DOC, XLS до 10 МБ, макс. 10"
+              icon="document"
+              maxSizeMB={10}
+              maxFiles={10}
+            />
+          </div>
+        </FormSectionCard>
+
+        {/* 9. Additional (Collapsed by default): ZRS */}
         <AdditionalSection
           form={form}
           formValues={formValues}

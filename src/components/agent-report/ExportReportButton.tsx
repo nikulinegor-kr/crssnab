@@ -8,9 +8,11 @@ interface ExportReportButtonProps {
   rows: any[];
   month: number;
   year: number;
+  commissionAmount?: number;
+  commissionPercent?: number;
 }
 
-export const ExportReportButton = ({ headerData, rows, month, year }: ExportReportButtonProps) => {
+export const ExportReportButton = ({ headerData, rows, month, year, commissionAmount, commissionPercent }: ExportReportButtonProps) => {
   const { toast } = useToast();
 
   const exportToExcel = () => {
@@ -109,12 +111,18 @@ export const ExportReportButton = ({ headerData, rows, month, year }: ExportRepo
 
       // Commission row
       let commission = 0;
-      if (total >= 10000000) {
-        commission = 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
-      } else if (total >= 5000000) {
-        commission = 5000000 * 0.02 + (total - 5000000) * 0.01;
+      if (commissionAmount !== undefined) {
+        commission = commissionAmount;
+      } else if (commissionPercent !== undefined) {
+        commission = total * (commissionPercent / 100);
       } else {
-        commission = total * 0.02;
+        if (total >= 10000000) {
+          commission = 5000000 * 0.02 + 5000000 * 0.01 + (total - 10000000) * 0.005;
+        } else if (total >= 5000000) {
+          commission = 5000000 * 0.02 + (total - 5000000) * 0.01;
+        } else {
+          commission = total * 0.02;
+        }
       }
       
       const displayMonthNames = [

@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.download-zip]
 verify_jwt = true
+
+[functions.log-client-error]
+verify_jwt = false

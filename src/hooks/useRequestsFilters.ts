@@ -1,9 +1,20 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
-import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
+import { addDays, startOfToday, isBefore, isAfter, differenceInDays } from "date-fns";
 
-export type SpecialDateFilter = "deliveredLast7Days" | "upcomingNext7Days" | null;
+export type SpecialDateFilter = 
+  | "deliveredLast7Days" 
+  | "upcomingNext7Days" 
+  | "overdue" 
+  | "stale" 
+  | "deliveryToday" 
+  | "overdueDelivery" 
+  | "overdueShipment"
+  | "unpaid" 
+  | "paid" 
+  | "invoiced"
+  | null;
 
 export interface RequestFilters {
   searchQuery: string;
@@ -14,6 +25,7 @@ export interface RequestFilters {
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
   objectFilter: string;
+  transportCompanyFilter: string;
 }
 
 export const STATUSES = [
@@ -23,6 +35,7 @@ export const STATUSES = [
   "Счёт",
   "Счёт в Бухгалтерии",
   "В работе",
+  "Готов к отгрузке",
   "В пути",
   "Доставлено в ТК",
   "Доставлено",
@@ -52,7 +65,7 @@ export const getStatusColor = (status: string) => {
     case "Оплачено":
       return "#3b82f6"; // Сине-голубой
     case "Готов к отгрузке":
-      return "#f59e0b"; // Оранжевый/янтарный
+      return "#93c5fd"; // Бледно-синий
     case "В пути":
       return "#22c55e"; // Зелёный
     case "Доставлено в ТК":
@@ -144,6 +157,7 @@ export const useRequestsFilters = (
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
+  const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
@@ -157,15 +171,30 @@ export const useRequestsFilters = (
       applicantFilter,
       hideDelivered,
       objectFilter,
+      transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter, transportCompanyFilter]);
 
-  // Apply filters from URL params on mount (overrides saved filters if present)
+  // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
     const isNew = searchParams.get("new");
+    const filter = searchParams.get("filter") as SpecialDateFilter | null;
+    const paymentStatus = searchParams.get("payment_status");
+
+    // If any URL param is present, reset everything to defaults first
+    if (status || priority || isNew || filter || paymentStatus) {
+      setSearchQuery("");
+      setStatusFilter([]);
+      setPriorityFilter("all");
+      setYearFilter("all");
+      setApplicantFilter("all");
+      setObjectFilter("all");
+      setHideDelivered(false);
+      setSpecialDateFilter(null);
+    }
 
     if (status) {
       if (status.startsWith("!")) {
@@ -174,7 +203,7 @@ export const useRequestsFilters = (
           setHideDelivered(true);
         }
       } else {
-        setStatusFilter([status]);
+        setStatusFilter(status.split(","));
       }
     }
     if (priority) {
@@ -182,6 +211,15 @@ export const useRequestsFilters = (
     }
     if (isNew === "true") {
       setYearFilter(new Date().getFullYear().toString());
+    }
+    if (filter) {
+      setSpecialDateFilter(filter);
+    }
+    if (paymentStatus) {
+      // Map payment_status to the appropriate special filter
+      if (paymentStatus === "unpaid") setSpecialDateFilter("unpaid");
+      else if (paymentStatus === "paid") setSpecialDateFilter("paid");
+      else if (paymentStatus === "partial") setSpecialDateFilter("invoiced");
     }
   }, [searchParams]);
 
@@ -203,6 +241,54 @@ export const useRequestsFilters = (
         const deliveryDate = new Date(request.delivery_date);
         if (!(isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(sevenDaysFromNow, 1)))) return false;
       }
+
+      if (specialDateFilter === "overdue") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date) return false;
+        if (!isBefore(new Date(request.delivery_date), today)) return false;
+      }
+
+      if (specialDateFilter === "stale") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        const lastUpdate = new Date(request.updated_at || request.created_at);
+        if (differenceInDays(today, lastUpdate) <= 2) return false;
+      }
+
+      if (specialDateFilter === "deliveryToday") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date) return false;
+        const dd = new Date(request.delivery_date);
+        if (dd.toDateString() !== today.toDateString()) return false;
+      }
+
+      if (specialDateFilter === "overdueDelivery") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        if (!request.delivery_date || request.status === "В пути") return false;
+        if (!isBefore(new Date(request.delivery_date), today)) return false;
+      }
+
+      if (specialDateFilter === "overdueShipment") {
+        const shipDate = (request as any).shipment_date;
+        if (!shipDate) return false;
+        if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(request.status)) return false;
+        if (!isBefore(new Date(shipDate), today)) return false;
+      }
+
+      if (specialDateFilter === "unpaid") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+        if (!(pct === 0 && request.amount > 0)) return false;
+      }
+
+      if (specialDateFilter === "paid") {
+        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
+        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
+        if (!(pct >= 100)) return false;
+      }
+
+      if (specialDateFilter === "invoiced") {
+        if (request.status !== "Счёт в Бухгалтерии") return false;
+      }
       
       // Full-text search across all fields
       const matchesSearch = matchesFullTextSearch(request, searchQuery);
@@ -222,6 +308,8 @@ export const useRequestsFilters = (
             : !hideDelivered || request.status !== "Доставлено";
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
+      const matchesTransportCompany =
+        transportCompanyFilter === "all" || (request.transport_company?.trim().toLowerCase() === transportCompanyFilter.trim().toLowerCase());
       return (
         matchesSearch &&
         matchesStatus &&
@@ -229,7 +317,8 @@ export const useRequestsFilters = (
         matchesYear &&
         matchesApplicant &&
         matchesDelivered &&
-        matchesObject
+        matchesObject &&
+        matchesTransportCompany
       );
     });
   }, [
@@ -243,12 +332,36 @@ export const useRequestsFilters = (
     activeTab,
     specialDateFilter,
     objectFilter,
+    transportCompanyFilter,
   ]);
 
   const uniqueApplicants = useMemo(() => {
     return Array.from(
       new Set(requests?.map((r) => r.applicant).filter(Boolean))
     ).sort() as string[];
+  }, [requests]);
+
+  const uniqueTransportCompanies = useMemo(() => {
+    const companies = requests?.map((r) => r.transport_company).filter((c): c is string => !!c && c.trim().length > 0) || [];
+    // Normalize: group by lowercased+trimmed, pick the most frequent original form
+    const normalizedMap = new Map<string, Map<string, number>>();
+    for (const c of companies) {
+      const key = c.trim().toLowerCase();
+      if (!normalizedMap.has(key)) normalizedMap.set(key, new Map());
+      const variants = normalizedMap.get(key)!;
+      variants.set(c.trim(), (variants.get(c.trim()) || 0) + 1);
+    }
+    const result: string[] = [];
+    for (const variants of normalizedMap.values()) {
+      // Pick variant with highest count
+      let best = "";
+      let bestCount = 0;
+      for (const [variant, count] of variants) {
+        if (count > bestCount) { best = variant; bestCount = count; }
+      }
+      result.push(best);
+    }
+    return result.sort();
   }, [requests]);
 
   const selectAllStatuses = useCallback(() => {
@@ -276,6 +389,7 @@ export const useRequestsFilters = (
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
     if (filters.objectFilter !== undefined) setObjectFilter(filters.objectFilter);
+    if (filters.transportCompanyFilter !== undefined) setTransportCompanyFilter(filters.transportCompanyFilter);
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -287,6 +401,7 @@ export const useRequestsFilters = (
     setHideDelivered(true);
     setSpecialDateFilter(null);
     setObjectFilter("all");
+    setTransportCompanyFilter("all");
   }, []);
 
   const currentFilters: RequestFilters = {
@@ -298,6 +413,7 @@ export const useRequestsFilters = (
     hideDelivered,
     specialDateFilter,
     objectFilter,
+    transportCompanyFilter,
   };
 
   return {
@@ -318,11 +434,14 @@ export const useRequestsFilters = (
     setSpecialDateFilter,
     objectFilter,
     setObjectFilter,
+    transportCompanyFilter,
+    setTransportCompanyFilter,
     years,
     
     // Computed
     filteredRequests,
     uniqueApplicants,
+    uniqueTransportCompanies,
     currentFilters,
     
     // Actions

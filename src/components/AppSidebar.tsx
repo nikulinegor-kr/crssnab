@@ -8,7 +8,7 @@ import {
   Percent,
   Sun,
   Moon,
-  ChevronDown,
+  
   Building2,
   BarChart3,
   Warehouse,
@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   Files,
   Bot,
+  ShieldAlert,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -45,19 +46,14 @@ import {
   useSidebar,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 const menuGroups = [
   {
     label: "CRM",
     icon: FileText,
     items: [
+      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { title: "Заявки", url: "/requests", icon: FileText },
-      { title: "Объекты", url: "/objects", icon: Building2 },
     ],
   },
   {
@@ -72,6 +68,7 @@ const menuGroups = [
     label: "ERP",
     icon: Layers,
     items: [
+      { title: "Объекты", url: "/objects", icon: Building2 },
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
       { title: "Склад", url: "/warehouse", icon: Warehouse },
       { title: "Техника", url: "/equipment", icon: Truck },
@@ -87,19 +84,26 @@ const menuGroups = [
     ],
   },
   {
+    label: "Отчет Агента",
+    icon: FileBarChart,
+    items: [
+      { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
+      { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
+    ],
+  },
+  {
     label: "Аналитика",
     icon: BarChart3,
     items: [
-      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+      { title: "Производительность команды", url: "/team-performance", icon: Users },
+      { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
 ];
 
-const reportMenuItems = [
-  { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
-  { title: "Отчет агента по акту", url: "/agent-act-report", icon: FileBarChart },
-  { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
+const adminMenuItems = [
+  { title: "Журнал ошибок", url: "/admin/error-logs", icon: ShieldAlert },
 ];
 
 const settingsMenuItems = [
@@ -250,34 +254,26 @@ export function AppSidebar() {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
-              {/* Отчёты внутри блока Аналитика */}
-              {group.label === "Аналитика" && !isDemoMode && (isAdmin || hasPermission("analytics.reports" as any)) && (
-                <Collapsible defaultOpen={false} className="group/collapsible-reports">
-                  <SidebarGroup className="pt-0">
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton className="w-full justify-between hover:bg-accent/50">
-                        <div className="flex items-center gap-2">
-                          <FileBarChart className="h-4 w-4" />
-                          {showText && <span>Отчёты</span>}
-                        </div>
-                        {showText && (
-                          <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible-reports:rotate-180" />
-                        )}
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarGroupContent>
-                        <SidebarMenu className="pl-2">
-                          {renderMenuItems(reportMenuItems)}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </CollapsibleContent>
-                  </SidebarGroup>
-                </Collapsible>
-              )}
             </div>
           );
         })}
+
+        {/* Админ-раздел */}
+        {isAdmin && !isDemoMode && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              {showText && (
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
+                  Администрирование
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>{renderMenuItems(adminMenuItems)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {/* Настройки — скрыты для наблюдателей */}
         {!isViewer && (
