@@ -573,6 +573,45 @@ export type Database = {
           },
         ]
       }
+      client_error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          message: string
+          organization_id: string | null
+          severity: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message: string
+          organization_id?: string | null
+          severity?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string
+          organization_id?: string | null
+          severity?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       client_invitations: {
         Row: {
           created_at: string
