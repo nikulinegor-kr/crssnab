@@ -17,7 +17,6 @@ export interface ColumnVisibility {
   availability: boolean;
   contractor: boolean;
   invoice_number: boolean;
-  payment_prepay: boolean;
   payment_percentage: boolean;
   shipment_date: boolean;
   delivery_date: boolean;
@@ -36,7 +35,6 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   availability: false,
   contractor: true,
   invoice_number: false,
-  payment_prepay: true,
   payment_percentage: true,
   shipment_date: false,
   delivery_date: true,
@@ -55,8 +53,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   availability: "Наличие",
   contractor: "Контрагент",
   invoice_number: "Счёт",
-  payment_prepay: "% предоплаты",
-  payment_percentage: "Факт оплаты",
+  payment_percentage: "Оплата",
   shipment_date: "Отгрузка",
   delivery_date: "Приход",
   transport_company: "ТК",

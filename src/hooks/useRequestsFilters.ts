@@ -1,20 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
-import { addDays, startOfToday, isBefore, isAfter, differenceInDays } from "date-fns";
+import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
 
-export type SpecialDateFilter = 
-  | "deliveredLast7Days" 
-  | "upcomingNext7Days" 
-  | "overdue" 
-  | "stale" 
-  | "deliveryToday" 
-  | "overdueDelivery" 
-  | "overdueShipment"
-  | "unpaid" 
-  | "paid" 
-  | "invoiced"
-  | null;
+export type SpecialDateFilter = "deliveredLast7Days" | "upcomingNext7Days" | null;
 
 export interface RequestFilters {
   searchQuery: string;
@@ -172,25 +161,11 @@ export const useRequestsFilters = (
     saveFiltersToStorage(currentFilters as RequestFilters);
   }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
 
-  // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
+  // Apply filters from URL params on mount (overrides saved filters if present)
   useEffect(() => {
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
     const isNew = searchParams.get("new");
-    const filter = searchParams.get("filter") as SpecialDateFilter | null;
-    const paymentStatus = searchParams.get("payment_status");
-
-    // If any URL param is present, reset everything to defaults first
-    if (status || priority || isNew || filter || paymentStatus) {
-      setSearchQuery("");
-      setStatusFilter([]);
-      setPriorityFilter("all");
-      setYearFilter("all");
-      setApplicantFilter("all");
-      setObjectFilter("all");
-      setHideDelivered(false);
-      setSpecialDateFilter(null);
-    }
 
     if (status) {
       if (status.startsWith("!")) {
@@ -199,7 +174,7 @@ export const useRequestsFilters = (
           setHideDelivered(true);
         }
       } else {
-        setStatusFilter(status.split(","));
+        setStatusFilter([status]);
       }
     }
     if (priority) {
@@ -207,15 +182,6 @@ export const useRequestsFilters = (
     }
     if (isNew === "true") {
       setYearFilter(new Date().getFullYear().toString());
-    }
-    if (filter) {
-      setSpecialDateFilter(filter);
-    }
-    if (paymentStatus) {
-      // Map payment_status to the appropriate special filter
-      if (paymentStatus === "unpaid") setSpecialDateFilter("unpaid");
-      else if (paymentStatus === "paid") setSpecialDateFilter("paid");
-      else if (paymentStatus === "partial") setSpecialDateFilter("invoiced");
     }
   }, [searchParams]);
 
@@ -236,54 +202,6 @@ export const useRequestsFilters = (
         if (request.status === "Доставлено" || !request.delivery_date) return false;
         const deliveryDate = new Date(request.delivery_date);
         if (!(isAfter(deliveryDate, addDays(today, -1)) && isBefore(deliveryDate, addDays(sevenDaysFromNow, 1)))) return false;
-      }
-
-      if (specialDateFilter === "overdue") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!request.delivery_date) return false;
-        if (!isBefore(new Date(request.delivery_date), today)) return false;
-      }
-
-      if (specialDateFilter === "stale") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        const lastUpdate = new Date(request.updated_at || request.created_at);
-        if (differenceInDays(today, lastUpdate) <= 2) return false;
-      }
-
-      if (specialDateFilter === "deliveryToday") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!request.delivery_date) return false;
-        const dd = new Date(request.delivery_date);
-        if (dd.toDateString() !== today.toDateString()) return false;
-      }
-
-      if (specialDateFilter === "overdueDelivery") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!request.delivery_date || request.status === "В пути") return false;
-        if (!isBefore(new Date(request.delivery_date), today)) return false;
-      }
-
-      if (specialDateFilter === "overdueShipment") {
-        const shipDate = (request as any).shipment_date;
-        if (!shipDate) return false;
-        if (["В пути", "Доставлено", "Доставлено в ТК", "Выполнено", "Отменено", "Закрыто"].includes(request.status)) return false;
-        if (!isBefore(new Date(shipDate), today)) return false;
-      }
-
-      if (specialDateFilter === "unpaid") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
-        if (!(pct === 0 && request.amount > 0)) return false;
-      }
-
-      if (specialDateFilter === "paid") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
-        if (!(pct >= 100)) return false;
-      }
-
-      if (specialDateFilter === "invoiced") {
-        if (request.status !== "Счёт в Бухгалтерии") return false;
       }
       
       // Full-text search across all fields

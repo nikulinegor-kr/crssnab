@@ -156,12 +156,9 @@ const MobileRequestCard = memo(({
               <span className="font-medium">З:</span> <HighlightText text={request.applicant} searchQuery={searchQuery} />
             </span>
           )}
-          {(() => {
-            const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
-            if (pct === 0) return null;
-            if (pct >= 100) return <span className="font-semibold text-emerald-600">Оплачено</span>;
-            return <span className="font-semibold text-amber-600">{pct}%</span>;
-          })()}
+          {request.payment_percentage !== null && request.payment_percentage !== undefined && (
+            <span className="font-semibold text-primary">{request.payment_percentage}%</span>
+          )}
         </div>
       </div>
       
@@ -436,10 +433,10 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border border-border bg-background">
+        <div className="rounded-md border border-border overflow-x-auto">
         <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
-          <TableHeader className="bg-muted/60 [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted [&_th]:shadow-sm">
-            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '44px' }}>
+          <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
+            <TableRow className="border-b hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-[5px] p-0 border-r"></TableHead>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
@@ -475,11 +472,8 @@ export const RequestsTable = ({
               {visibility.invoice_number && (
                 <ResizableTableHeader column="invoice_number" label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
               )}
-              {visibility.payment_prepay && (
-                <ResizableTableHeader column="payment_prepay" label="% предопл." width={widths.payment_prepay} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
-              )}
               {visibility.payment_percentage && (
-                <ResizableTableHeader column="payment_percentage" label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
+                <ResizableTableHeader column="payment_percentage" label="Оплата" width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.shipment_date && (
                 <ResizableTableHeader column="shipment_date" label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
@@ -641,7 +635,7 @@ export const RequestsTable = ({
                   {visibility.availability && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.availability, minWidth: widths.availability, maxWidth: widths.availability }}>
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-foreground leading-snug text-center">
+                        <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -657,7 +651,7 @@ export const RequestsTable = ({
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-snug text-center text-foreground">
+                            <div className="line-clamp-2 leading-snug truncate text-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -670,7 +664,7 @@ export const RequestsTable = ({
                   {visibility.invoice_number && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }}>
                       {request.invoice_number ? (
-                        <div className="line-clamp-2 text-foreground leading-snug text-center">
+                        <div className="line-clamp-2 text-foreground leading-snug truncate">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -678,51 +672,23 @@ export const RequestsTable = ({
                       )}
                     </TableCell>
                   )}
-                  {visibility.payment_prepay && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.payment_prepay, minWidth: widths.payment_prepay, maxWidth: widths.payment_prepay }}>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="payment_percentage"
-                        value={request.payment_percentage ?? 0}
-                        displayValue={
-                          <span className="text-muted-foreground">{request.payment_percentage ?? 0}%</span>
-                        }
-                      />
-                    </TableCell>
-                  )}
                   {visibility.payment_percentage && (
                     <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }}>
                       <InlineEditCell
                         requestId={request.id}
-                        field="payment_percent"
-                        value={(request as any).payment_percent ?? 0}
+                        field="payment_percentage"
+                        value={request.payment_percentage}
                         displayValue={
-                          (() => {
-                            const pct = (request as any).payment_percent ?? 0;
-                            const prepay = request.payment_percentage ?? 0;
-                            const underpaid = prepay > 0 && pct < prepay;
-                            if (pct === 0) return <span className="text-destructive text-[12px]">Не оплачено</span>;
-                            if (pct >= 100) return <span className="text-emerald-600">Оплачено</span>;
-                            return (
-                              <span className={underpaid ? "text-destructive" : "text-amber-600"}>
-                                {pct}%
-                              </span>
-                            );
-                          })()
+                          request.payment_percentage !== null && request.payment_percentage !== undefined
+                            ? <span className={request.payment_percentage === 100 ? "text-green-600" : "text-primary"}>{request.payment_percentage}%</span>
+                            : <span className="text-[#9CA3AF] text-[12px] italic">0%</span>
                         }
                       />
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
                     <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }}>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="shipment_date"
-                        value={request.shipment_date || ""}
-                        displayValue={
-                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}</span>
-                        }
-                      />
+                      {request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
@@ -732,7 +698,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">{request.status === "Новая" || request.status === "В обработке" ? "ожидается" : request.status === "В пути" ? "в пути" : "ожидается"}</span>}</span>
                         }
                       />
                     </TableCell>
@@ -745,11 +711,11 @@ export const RequestsTable = ({
                         value={request.transport_company || ""}
                         displayValue={
                           request.transport_company ? (
-                            <div className="line-clamp-2 text-foreground leading-snug text-center">
+                            <div className="line-clamp-2 text-foreground leading-snug truncate">
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
+                            <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
                           )
                         }
                       />
@@ -781,7 +747,7 @@ export const RequestsTable = ({
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-snug text-center text-foreground">
+                            <div className="line-clamp-2 leading-snug truncate text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -817,7 +783,7 @@ export const RequestsTable = ({
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-muted-foreground text-[13px] leading-snug text-center">
+                            <div className="line-clamp-3 text-[#6B7280] text-[13px] leading-snug text-left">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (

@@ -62,32 +62,19 @@ export default function SupplyDashboardPage() {
   const today = new Date().toISOString().split("T")[0];
 
   const stats = useMemo(() => {
-    const total = requests.length;
-    const newRequests = requests.filter((r: any) => r.status === "Новая");
-    const inProgress = requests.filter((r: any) => !["Новая", "Доставлено", "Выполнено", "Отменено", "Закрыто"].includes(r.status));
-    const inTransit = requests.filter((r: any) => ["В пути", "Отправлено"].includes(r.status));
-    const deliveredTk = requests.filter((r: any) => r.status === "Доставлено в ТК");
-    const delivered = requests.filter((r: any) => r.status === "Доставлено");
+    const active = requests.filter((r: any) => !["Доставлено", "Выполнено", "Отменено", "Закрыто"].includes(r.status));
+    const inTransit = requests.filter((r: any) => ["В пути", "Отправлено", "Доставлено в ТК"].includes(r.status));
     const todayDeliveries = requests.filter((r: any) => r.delivery_date?.split("T")[0] === today && r.status !== "Доставлено");
-    const emergency = inProgress.filter((r: any) => r.priority === "Аварийно");
+    const emergency = active.filter((r: any) => r.priority === "Аварийно");
     const overdue = requests.filter((r: any) => {
       if (!r.delivery_date || r.status === "Доставлено") return false;
       return r.delivery_date.split("T")[0] < today;
     });
-    return { total, newRequests, inProgress, inTransit, deliveredTk, delivered, todayDeliveries, emergency, overdue };
+    return { active, inTransit, todayDeliveries, emergency, overdue };
   }, [requests, today]);
 
-  const summaryCards = [
-    { title: "Всего заявок", value: stats.total, icon: FileText, color: "text-foreground" },
-    { title: "Новых", value: stats.newRequests.length, icon: Plus, color: "text-primary" },
-    { title: "Выполняется", value: stats.inProgress.length, icon: Boxes, color: "text-amber-500" },
-    { title: "В пути", value: stats.inTransit.length, icon: Truck, color: "text-blue-500" },
-    { title: "Доставлено в ТК", value: stats.deliveredTk.length, icon: Package, color: "text-indigo-500" },
-    { title: "Доставлено", value: stats.delivered.length, icon: Package, color: "text-green-500" },
-  ];
-
   const cards = [
-    { title: "Выполняется", value: stats.inProgress.length, icon: FileText, color: "text-primary", onClick: () => navigate("/requests?status=in_progress") },
+    { title: "Заявки в работе", value: stats.active.length, icon: FileText, color: "text-primary", onClick: () => navigate("/requests") },
     { title: "Поставки в пути", value: stats.inTransit.length, icon: Truck, color: "text-blue-500", onClick: () => navigate("/shipments") },
     { title: "Поставки сегодня", value: stats.todayDeliveries.length, icon: CalendarDays, color: "text-green-500", onClick: () => navigate("/shipments") },
     { title: "Товары заканчиваются", value: lowStockCount, icon: AlertTriangle, color: "text-amber-500", onClick: () => navigate("/procurement-plan") },
@@ -108,28 +95,6 @@ export default function SupplyDashboardPage() {
           </Button>
         </CreateRequestDialog>
       </div>
-
-      {/* Summary Block */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {summaryCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <div key={card.title} className="flex items-center gap-3">
-                  <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
-                    <Icon className={`h-4 w-4 ${card.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold leading-tight">{card.value}</p>
-                    <p className="text-xs text-muted-foreground">{card.title}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">

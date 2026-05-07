@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
   requestId: string;
-  field: "status" | "priority" | "transport_company" | "delivery_date" | "shipment_date" | "comments" | "payment_percentage" | "payment_percent" | "description" | "applicant" | "contractor" | "amount";
+  field: "status" | "priority" | "transport_company" | "delivery_date" | "comments" | "payment_percentage" | "description" | "applicant" | "contractor" | "amount";
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
@@ -190,9 +190,8 @@ export const InlineEditCell = ({
     );
   }
 
-  // Payment percent field - saves both payment_percent and payment_status
-  if (field === "payment_percentage" || field === "payment_percent") {
-    const dbField = field === "payment_percent" ? "payment_percent" : "payment_percentage";
+  // Payment percentage field - manual input
+  if (field === "payment_percentage") {
     const handlePaymentSave = async () => {
       const numValue = parseInt(String(editValue).replace("%", ""), 10);
       const finalValue = isNaN(numValue) ? 0 : Math.min(100, Math.max(0, numValue));
@@ -204,14 +203,9 @@ export const InlineEditCell = ({
 
       setIsSaving(true);
       try {
-        const updateData: Record<string, any> = { [dbField]: finalValue };
-        // Auto-compute payment_status when editing payment_percent
-        if (field === "payment_percent") {
-          updateData.payment_status = finalValue === 0 ? "Не оплачено" : finalValue >= 100 ? "Оплачено" : "Частично оплачено";
-        }
         const { error } = await supabase
           .from("requests")
-          .update(updateData)
+          .update({ payment_percentage: finalValue })
           .eq("id", requestId);
 
         if (error) throw error;
@@ -258,7 +252,7 @@ export const InlineEditCell = ({
   }
 
   // Date field
-  if (field === "delivery_date" || field === "shipment_date") {
+  if (field === "delivery_date") {
     return (
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
         <Input

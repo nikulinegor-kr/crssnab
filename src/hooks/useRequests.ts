@@ -18,8 +18,6 @@ export interface Request {
   invoice_number: string | null;
   amount: number;
   payment_percentage: number;
-  payment_percent: number;
-  payment_status: string;
   shipment_date: string | null;
   delivery_date: string | null;
   transport_company: string | null;

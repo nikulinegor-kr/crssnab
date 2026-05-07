@@ -92,7 +92,6 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
-  payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
@@ -329,8 +328,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       invoice_number: "",
       amount: null,
       payment_percentage: null,
-      payment_percent: null,
-      payment_status: "Не оплачено",
+      payment_status: "Не выставлен",
       shipment_date: "",
       delivery_date: "",
       transport_company: initialData?.transport_company || "",
@@ -496,11 +494,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_percent: data.payment_percent ?? 0,
-        payment_status: (() => {
-          const p = data.payment_percent ?? 0;
-          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
-        })(),
+        payment_status: data.payment_status || "Не выставлен",
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,

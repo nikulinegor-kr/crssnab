@@ -98,7 +98,6 @@ const requestSchema = z.object({
     .nullable()
     .optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
-  payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
   shipment_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты")
@@ -329,7 +328,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       invoice_number: request.invoice_number || "",
       amount: request.amount ?? null,
       payment_percentage: request.payment_percentage ?? 0,
-      payment_percent: (request as any).payment_percent ?? 0,
       shipment_date: request.shipment_date || "",
       delivery_date: request.delivery_date || "",
       transport_company: request.transport_company || "",
@@ -385,11 +383,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
         payment_percentage: request.payment_percentage ?? null,
-        payment_percent: (request as any).payment_percent ?? 0,
-        payment_status: (() => {
-          const p = (request as any).payment_percent ?? 0;
-          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
-        })(),
+        payment_status: (request as any).payment_status || "Не выставлен",
         shipment_date: request.shipment_date || "",
         delivery_date: request.delivery_date || "",
         transport_company: request.transport_company || "",
@@ -477,11 +471,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_percent: data.payment_percent ?? 0,
-        payment_status: (() => {
-          const p = data.payment_percent ?? 0;
-          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
-        })(),
+        payment_status: data.payment_status || "Не выставлен",
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,
@@ -695,11 +685,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
         payment_percentage: data.payment_percentage ?? null,
-        payment_percent: data.payment_percent ?? 0,
-        payment_status: (() => {
-          const p = data.payment_percent ?? 0;
-          return p === 0 ? "Не оплачено" : p >= 100 ? "Оплачено" : "Частично оплачено";
-        })(),
+        payment_status: data.payment_status || "Не выставлен",
         shipment_date: data.shipment_date || null,
         delivery_date: data.delivery_date || null,
         transport_company: data.transport_company || null,

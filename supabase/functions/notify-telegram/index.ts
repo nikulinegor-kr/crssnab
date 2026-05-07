@@ -421,42 +421,6 @@ serve(async (req) => {
       });
     }
 
-    // Handle test personal message
-    if (requestBody.action === "test_personal") {
-      const { telegramUserId, organizationId } = requestBody;
-      if (!telegramUserId || !organizationId) {
-        return new Response(
-          JSON.stringify({ error: "Не указаны обязательные параметры" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const org = await getTelegramSettings(organizationId);
-      if (!org?.telegram_bot_token) {
-        return new Response(
-          JSON.stringify({ error: "Telegram бот не настроен для организации" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
-        chat_id: telegramUserId,
-        text: "✅ Тестовое сообщение\n\nВаш Telegram успешно подключён к системе уведомлений.",
-        parse_mode: "HTML",
-      });
-
-      if (!result.ok) {
-        return new Response(
-          JSON.stringify({ success: false, error: result.description || "Не удалось отправить сообщение. Убедитесь, что вы начали диалог с ботом." }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Handle send to invoice chat only
     if (requestBody.action === "send_to_invoice_chat") {
       const { requestId } = requestBody;
@@ -562,18 +526,15 @@ serve(async (req) => {
     console.log("Notifying about request:", requestId, "mode:", mode);
 
     // Get request details
-    console.log("Fetching request:", requestId);
     const { data: request, error } = await supabase
       .from("requests")
       .select("*")
       .eq("id", requestId)
-      .maybeSingle();
-
-    console.log("Request query result - data:", !!request, "error:", error ? JSON.stringify(error) : "none");
+      .single();
 
     if (error || !request) {
       return new Response(
-        JSON.stringify({ error: "Заявка не найдена", details: error?.message || "no data returned" }),
+        JSON.stringify({ error: "Заявка не найдена" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

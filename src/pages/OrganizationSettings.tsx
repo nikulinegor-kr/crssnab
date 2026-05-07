@@ -4,19 +4,25 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette } from "lucide-react";
+import { Loader2, User, Settings, Users, UserCheck, Bell, FileText, Palette, CreditCard, Plug, Eye, History, Building2, Shield } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { TelegramSettings } from "@/components/settings/TelegramSettings";
+import { UsersManagement } from "@/components/settings/UsersManagement";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+import { AuditLog } from "@/components/settings/AuditLog";
 import { AccessManagement } from "@/components/settings/AccessManagement";
+import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
 import { ParticipantsManagement } from "@/components/settings/ParticipantsManagement";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
-import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
+import { PushNotificationSettings } from "@/components/settings/PushNotificationSettings";
+import { ViewSettings } from "@/components/settings/ViewSettings";
 import { SettingsSection } from "@/components/settings/SettingsSection";
+import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -27,12 +33,13 @@ const OrganizationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [orgName, setOrgName] = useState("");
 
+  // Determine which tabs are visible based on role
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "access", "notifications", "subscription"]
+    ? ["profile", "general", "access", "notifications", "requests", "branding", "subscription", "integrations", "audit"]
     : isEditor
       ? ["profile", "notifications"]
-      : ["profile"];
+      : ["profile"]; // viewer / member
 
   const defaultTab = "profile";
 
@@ -119,9 +126,29 @@ const OrganizationSettings = () => {
                 <Bell className="h-4 w-4" /><span className="hidden sm:inline">Уведомления</span>
               </TabsTrigger>
             )}
+            {visibleTabs.includes("requests") && (
+              <TabsTrigger value="requests" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <FileText className="h-4 w-4" /><span className="hidden sm:inline">Заявки</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("branding") && (
+              <TabsTrigger value="branding" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Palette className="h-4 w-4" /><span className="hidden sm:inline">Брендинг</span>
+              </TabsTrigger>
+            )}
             {visibleTabs.includes("subscription") && (
               <TabsTrigger value="subscription" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <CreditCard className="h-4 w-4" /><span className="hidden sm:inline">Подписка</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("integrations") && (
+              <TabsTrigger value="integrations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <Plug className="h-4 w-4" /><span className="hidden sm:inline">Интеграции</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("audit") && (
+              <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <History className="h-4 w-4" /><span className="hidden sm:inline">История</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -136,21 +163,13 @@ const OrganizationSettings = () => {
         )}
 
         {visibleTabs.includes("general") && (
-          <TabsContent value="general" className="space-y-8">
+          <TabsContent value="general">
             <SettingsSection title="Общие настройки" description="Основная информация об организации" icon={Settings}>
               <GeneralSettings organizationId={currentOrgId!} />
             </SettingsSection>
-            <SettingsSection title="Брендинг" description="Логотип и цветовая схема организации" icon={Palette}>
-              <BrandingSettings organizationId={currentOrgId!} />
-            </SettingsSection>
-            <SettingsSection title="Настройки заявок" description="Статусы, приоритеты и поля заявок" icon={FileText}>
-              <RequestSettings organizationId={currentOrgId!} />
-            </SettingsSection>
-            <SettingsSection title="Объекты" description="Управление объектами для заявок" icon={Building2}>
-              <ObjectsManagement />
-            </SettingsSection>
           </TabsContent>
         )}
+
 
         {visibleTabs.includes("access") && (
           <TabsContent value="access" className="space-y-8">
@@ -165,11 +184,31 @@ const OrganizationSettings = () => {
 
         {visibleTabs.includes("notifications") && (
           <TabsContent value="notifications" className="space-y-8">
-            <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
+            <SettingsSection title="Настройки уведомлений" description="Push-уведомления, Telegram и автонапоминания" icon={Bell}>
               <div className="space-y-6">
-                <NotificationSettings organizationId={currentOrgId!} />
+                <PushNotificationSettings />
+                {isAdmin && <TelegramSettings organizationId={currentOrgId!} />}
                 {isAdmin && <DeadlineReminderSettings />}
               </div>
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("requests") && (
+          <TabsContent value="requests" className="space-y-6">
+            <SettingsSection title="Настройки заявок" description="Статусы, приоритеты и поля заявок" icon={FileText}>
+              <RequestSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+            <SettingsSection title="Объекты" description="Управление объектами для заявок" icon={Building2}>
+              <ObjectsManagement />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("branding") && (
+          <TabsContent value="branding">
+            <SettingsSection title="Брендинг" description="Логотип и цветовая схема организации" icon={Palette}>
+              <BrandingSettings organizationId={currentOrgId!} />
             </SettingsSection>
           </TabsContent>
         )}
@@ -178,6 +217,23 @@ const OrganizationSettings = () => {
           <TabsContent value="subscription">
             <SettingsSection title="Подписка" description="Управление тарифным планом" icon={CreditCard}>
               <SubscriptionSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("integrations") && (
+          <TabsContent value="integrations">
+            <SettingsSection title="Интеграции" description="Подключение внешних сервисов" icon={Plug}>
+              <IntegrationsSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+
+        {visibleTabs.includes("audit") && (
+          <TabsContent value="audit">
+            <SettingsSection title="История изменений" description="Журнал действий пользователей" icon={History}>
+              <AuditLog organizationId={currentOrgId!} />
             </SettingsSection>
           </TabsContent>
         )}
