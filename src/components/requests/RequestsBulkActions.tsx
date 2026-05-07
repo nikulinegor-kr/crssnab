@@ -4,6 +4,7 @@ import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, F
 import { BulkTransferObjectDialog } from "./BulkTransferObjectDialog";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
+import { MeetingReportButton } from "@/components/requests/MeetingReportButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
