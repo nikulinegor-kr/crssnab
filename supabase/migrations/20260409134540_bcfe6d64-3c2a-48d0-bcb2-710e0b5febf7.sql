@@ -1,1 +1,0 @@
-ALTER TABLE public.requests ADD COLUMN IF NOT EXISTS telegram_procurement_message_id bigint;

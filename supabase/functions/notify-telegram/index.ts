@@ -16,7 +16,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 async function getTelegramSettings(orgId: string) {
   const { data, error } = await supabase
     .from("telegram_settings")
-    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id, procurement_chat_id, auto_send_to_procurement")
+    .select("bot_token, chat_id, auto_send_on_create, auto_send_on_status_change, invoice_chat_id")
     .eq("organization_id", orgId)
     .maybeSingle();
   if (error || !data) return null;
@@ -26,8 +26,6 @@ async function getTelegramSettings(orgId: string) {
     telegram_auto_send_on_create: data.auto_send_on_create,
     telegram_auto_send_on_status_change: data.auto_send_on_status_change,
     telegram_invoice_chat_id: data.invoice_chat_id,
-    telegram_procurement_chat_id: data.procurement_chat_id,
-    telegram_auto_send_to_procurement: data.auto_send_to_procurement,
   };
 }
 
@@ -682,75 +680,6 @@ serve(async (req) => {
             telegram_message_ids: [newMessageId]
           })
           .eq("id", requestId);
-
-        // ===== PROCUREMENT GROUP: send to procurement chat if status is "Входящая заявка" =====
-        const procurementChatId = org.telegram_procurement_chat_id;
-        const isIncomingRequest = (request.status || "").toLowerCase().includes("входящая");
-        const autoSendToProcurement = org.telegram_auto_send_to_procurement !== false;
-        
-        if (procurementChatId && isIncomingRequest && autoSendToProcurement) {
-          console.log("Sending to procurement chat:", procurementChatId);
-          
-          // Get equipment info if available
-          let equipmentInfo = "";
-          if (request.equipment_id) {
-            const { data: eq } = await supabase
-              .from("equipment")
-              .select("brand, model, plate_number")
-              .eq("id", request.equipment_id)
-              .maybeSingle();
-            if (eq) {
-              equipmentInfo = [eq.brand, eq.model, eq.plate_number].filter(Boolean).join(" / ");
-            }
-          }
-          
-          // Get object name
-          let objectName = "";
-          if (request.object_id) {
-            const { data: obj } = await supabase
-              .from("request_objects")
-              .select("name")
-              .eq("id", request.object_id)
-              .maybeSingle();
-            if (obj) objectName = obj.name;
-          }
-          
-          // Build procurement message
-          const procLines: string[] = [];
-          procLines.push(`📋 Новая заявка`);
-          procLines.push("");
-          procLines.push(`📅 ${new Date().toLocaleDateString("ru-RU")}`);
-          procLines.push(`🧾 ${request.description || "Без описания"}`);
-          if (request.quantity) procLines.push(`📦 Кол-во: ${request.quantity}`);
-          if (objectName) procLines.push(`🏗 Объект: ${objectName}`);
-          if (equipmentInfo) procLines.push(`🚜 Техника: ${equipmentInfo}`);
-          if (request.priority) procLines.push(`${getPriorityEmoji(request.priority)} Приоритет: ${request.priority}`);
-          if (request.applicant) procLines.push(`👤 Заявитель: ${request.applicant}`);
-          
-          const procKeyboard = {
-            inline_keyboard: [
-              [{ text: "👷 Назначить исполнителя", callback_data: `assign_exec_${requestId}` }],
-            ]
-          };
-          
-          const procResult = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
-            chat_id: procurementChatId,
-            text: procLines.join("\n"),
-            reply_markup: procKeyboard,
-          });
-          
-          // Save procurement message id
-          if (procResult.ok && procResult.result) {
-            await supabase
-              .from("requests")
-              .update({ 
-                telegram_procurement_message_id: procResult.result.message_id 
-              })
-              .eq("id", requestId);
-          }
-          
-          console.log("Procurement chat send result:", JSON.stringify(procResult));
-        }
 
         // Send invoice to separate chat if configured and status is "Счёт в Бухгалтерии"
         const invoiceChatId = org.telegram_invoice_chat_id;

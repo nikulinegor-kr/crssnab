@@ -418,9 +418,6 @@ const Requests = () => {
             deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
-            transportCompanyFilter={filters.transportCompanyFilter}
-            setTransportCompanyFilter={filters.setTransportCompanyFilter}
-            uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
           />
 
@@ -487,9 +484,6 @@ const Requests = () => {
             deliveredCount={requests?.filter(r => r.status === "Доставлено").length || 0}
             objectFilter={filters.objectFilter}
             setObjectFilter={filters.setObjectFilter}
-            transportCompanyFilter={filters.transportCompanyFilter}
-            setTransportCompanyFilter={filters.setTransportCompanyFilter}
-            uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
           />
 

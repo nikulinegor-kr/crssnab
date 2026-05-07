@@ -490,9 +490,6 @@ export const RequestsTable = ({
               {visibility.transport_company && (
                 <ResizableTableHeader column="transport_company" label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
               )}
-              {visibility.waybill_number && (
-                <ResizableTableHeader column="waybill_number" label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
-              )}
               {visibility.amount && (
                 <ResizableTableHeader column="amount" label="Стоимость" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
               )}
@@ -753,24 +750,6 @@ export const RequestsTable = ({
                             </div>
                           ) : (
                             <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
-                          )
-                        }
-                      />
-                    </TableCell>
-                  )}
-                  {visibility.waybill_number && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.waybill_number, minWidth: widths.waybill_number, maxWidth: widths.waybill_number }}>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="waybill_number"
-                        value={request.waybill_number || ""}
-                        displayValue={
-                          request.waybill_number ? (
-                            <div className="line-clamp-2 text-foreground leading-snug text-center">
-                              <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
-                            </div>
-                          ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">—</span>
                           )
                         }
                       />

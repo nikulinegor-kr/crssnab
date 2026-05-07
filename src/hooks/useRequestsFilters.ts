@@ -25,7 +25,6 @@ export interface RequestFilters {
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
   objectFilter: string;
-  transportCompanyFilter: string;
 }
 
 export const STATUSES = [
@@ -35,7 +34,6 @@ export const STATUSES = [
   "Счёт",
   "Счёт в Бухгалтерии",
   "В работе",
-  "Готов к отгрузке",
   "В пути",
   "Доставлено в ТК",
   "Доставлено",
@@ -65,7 +63,7 @@ export const getStatusColor = (status: string) => {
     case "Оплачено":
       return "#3b82f6"; // Сине-голубой
     case "Готов к отгрузке":
-      return "#93c5fd"; // Бледно-синий
+      return "#f59e0b"; // Оранжевый/янтарный
     case "В пути":
       return "#22c55e"; // Зелёный
     case "Доставлено в ТК":
@@ -157,7 +155,6 @@ export const useRequestsFilters = (
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
-  const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
   const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
 
@@ -171,10 +168,9 @@ export const useRequestsFilters = (
       applicantFilter,
       hideDelivered,
       objectFilter,
-      transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter, transportCompanyFilter]);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
@@ -308,8 +304,6 @@ export const useRequestsFilters = (
             : !hideDelivered || request.status !== "Доставлено";
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
-      const matchesTransportCompany =
-        transportCompanyFilter === "all" || (request.transport_company?.trim().toLowerCase() === transportCompanyFilter.trim().toLowerCase());
       return (
         matchesSearch &&
         matchesStatus &&
@@ -317,8 +311,7 @@ export const useRequestsFilters = (
         matchesYear &&
         matchesApplicant &&
         matchesDelivered &&
-        matchesObject &&
-        matchesTransportCompany
+        matchesObject
       );
     });
   }, [
@@ -332,36 +325,12 @@ export const useRequestsFilters = (
     activeTab,
     specialDateFilter,
     objectFilter,
-    transportCompanyFilter,
   ]);
 
   const uniqueApplicants = useMemo(() => {
     return Array.from(
       new Set(requests?.map((r) => r.applicant).filter(Boolean))
     ).sort() as string[];
-  }, [requests]);
-
-  const uniqueTransportCompanies = useMemo(() => {
-    const companies = requests?.map((r) => r.transport_company).filter((c): c is string => !!c && c.trim().length > 0) || [];
-    // Normalize: group by lowercased+trimmed, pick the most frequent original form
-    const normalizedMap = new Map<string, Map<string, number>>();
-    for (const c of companies) {
-      const key = c.trim().toLowerCase();
-      if (!normalizedMap.has(key)) normalizedMap.set(key, new Map());
-      const variants = normalizedMap.get(key)!;
-      variants.set(c.trim(), (variants.get(c.trim()) || 0) + 1);
-    }
-    const result: string[] = [];
-    for (const variants of normalizedMap.values()) {
-      // Pick variant with highest count
-      let best = "";
-      let bestCount = 0;
-      for (const [variant, count] of variants) {
-        if (count > bestCount) { best = variant; bestCount = count; }
-      }
-      result.push(best);
-    }
-    return result.sort();
   }, [requests]);
 
   const selectAllStatuses = useCallback(() => {
@@ -389,7 +358,6 @@ export const useRequestsFilters = (
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
     if (filters.objectFilter !== undefined) setObjectFilter(filters.objectFilter);
-    if (filters.transportCompanyFilter !== undefined) setTransportCompanyFilter(filters.transportCompanyFilter);
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -401,7 +369,6 @@ export const useRequestsFilters = (
     setHideDelivered(true);
     setSpecialDateFilter(null);
     setObjectFilter("all");
-    setTransportCompanyFilter("all");
   }, []);
 
   const currentFilters: RequestFilters = {
@@ -413,7 +380,6 @@ export const useRequestsFilters = (
     hideDelivered,
     specialDateFilter,
     objectFilter,
-    transportCompanyFilter,
   };
 
   return {
@@ -434,14 +400,11 @@ export const useRequestsFilters = (
     setSpecialDateFilter,
     objectFilter,
     setObjectFilter,
-    transportCompanyFilter,
-    setTransportCompanyFilter,
     years,
     
     // Computed
     filteredRequests,
     uniqueApplicants,
-    uniqueTransportCompanies,
     currentFilters,
     
     // Actions

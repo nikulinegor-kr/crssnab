@@ -22,8 +22,6 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
   const [autoSendOnCreate, setAutoSendOnCreate] = useState(true);
   const [autoSendOnStatusChange, setAutoSendOnStatusChange] = useState(true);
   const [invoiceChatId, setInvoiceChatId] = useState("");
-  const [procurementChatId, setProcurementChatId] = useState("");
-  const [autoSendToProcurement, setAutoSendToProcurement] = useState(true);
 
   useEffect(() => {
     loadSettings();
@@ -47,8 +45,6 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         setAutoSendOnCreate(settings.telegram_auto_send_on_create ?? true);
         setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
         setInvoiceChatId(settings.telegram_invoice_chat_id || "");
-        setProcurementChatId(settings.telegram_procurement_chat_id || "");
-        setAutoSendToProcurement(settings.telegram_auto_send_to_procurement ?? true);
       }
     } catch (error: any) {
       toast({
@@ -63,7 +59,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
 
   const handleSave = async () => {
     // Validation
-    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{30,50}$/)) {
+    if (botToken && !botToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
       toast({
         title: "Ошибка",
         description: "Неверный формат токена бота",
@@ -93,8 +89,6 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
           auto_send_on_create: autoSendOnCreate,
           auto_send_on_status_change: autoSendOnStatusChange,
           invoice_chat_id: invoiceChatId || null,
-          procurement_chat_id: procurementChatId || null,
-          auto_send_to_procurement: autoSendToProcurement,
         } as any, { onConflict: "organization_id" });
 
       if (error) throw error;
@@ -192,20 +186,6 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
               Отдельный чат для отправки счетов на оплату. Если не указан, счета отправляются в основной чат.
             </p>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="procurementChatId">Chat ID группы закупок (необязательно)</Label>
-            <Input
-              id="procurementChatId"
-              type="text"
-              placeholder="-1001234567890"
-              value={procurementChatId}
-              onChange={(e) => setProcurementChatId(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Группа для первичной обработки заявок: назначение исполнителя перед отправкой в основной чат.
-            </p>
-          </div>
         </div>
 
         <div className="space-y-4 pt-4 border-t">
@@ -236,20 +216,6 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
               id="autoSendOnStatusChange"
               checked={autoSendOnStatusChange}
               onCheckedChange={setAutoSendOnStatusChange}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="autoSendToProcurement">Отправлять в группу закупок</Label>
-              <p className="text-xs text-muted-foreground">
-                Автоматически отправлять новые заявки в группу закупок для назначения исполнителя
-              </p>
-            </div>
-            <Switch
-              id="autoSendToProcurement"
-              checked={autoSendToProcurement}
-              onCheckedChange={setAutoSendToProcurement}
             />
           </div>
         </div>

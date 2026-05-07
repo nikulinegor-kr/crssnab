@@ -4,7 +4,6 @@ import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, F
 import { BulkTransferObjectDialog } from "./BulkTransferObjectDialog";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
-import { MeetingReportButton } from "@/components/requests/MeetingReportButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -395,10 +394,7 @@ export const RequestsBulkActions = ({
 
   // Export button always visible
   const exportButton = requests && requests.length > 0 && (
-    <>
-      <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
-      <MeetingReportButton requests={requests} filteredRequests={filteredRequests} />
-    </>
+    <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
   );
 
   // If no selection, just show export
@@ -576,10 +572,6 @@ export const RequestsBulkActions = ({
 
             {/* Export Selected */}
             <ExcelExportButton
-              requests={requests || []}
-              filteredRequests={selectedRequests}
-            />
-            <MeetingReportButton
               requests={requests || []}
               filteredRequests={selectedRequests}
             />

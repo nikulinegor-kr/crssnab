@@ -573,45 +573,6 @@ export type Database = {
           },
         ]
       }
-      client_error_logs: {
-        Row: {
-          context: Json | null
-          created_at: string
-          id: string
-          message: string
-          organization_id: string | null
-          severity: string
-          stack: string | null
-          url: string | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          context?: Json | null
-          created_at?: string
-          id?: string
-          message: string
-          organization_id?: string | null
-          severity?: string
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          context?: Json | null
-          created_at?: string
-          id?: string
-          message?: string
-          organization_id?: string | null
-          severity?: string
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       client_invitations: {
         Row: {
           created_at: string
@@ -1771,7 +1732,6 @@ export type Database = {
           old_value: string | null
           organization_id: string
           request_id: string
-          snapshot: Json | null
           user_id: string | null
         }
         Insert: {
@@ -1784,7 +1744,6 @@ export type Database = {
           old_value?: string | null
           organization_id: string
           request_id: string
-          snapshot?: Json | null
           user_id?: string | null
         }
         Update: {
@@ -1797,7 +1756,6 @@ export type Database = {
           old_value?: string | null
           organization_id?: string
           request_id?: string
-          snapshot?: Json | null
           user_id?: string | null
         }
         Relationships: [
@@ -2199,7 +2157,6 @@ export type Database = {
           status: string
           telegram_message_id: number | null
           telegram_message_ids: number[] | null
-          telegram_procurement_message_id: number | null
           transport_company: string | null
           unit: string | null
           updated_at: string | null
@@ -2248,7 +2205,6 @@ export type Database = {
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
-          telegram_procurement_message_id?: number | null
           transport_company?: string | null
           unit?: string | null
           updated_at?: string | null
@@ -2297,7 +2253,6 @@ export type Database = {
           status?: string
           telegram_message_id?: number | null
           telegram_message_ids?: number[] | null
-          telegram_procurement_message_id?: number | null
           transport_company?: string | null
           unit?: string | null
           updated_at?: string | null
@@ -2809,40 +2764,34 @@ export type Database = {
         Row: {
           auto_send_on_create: boolean | null
           auto_send_on_status_change: boolean | null
-          auto_send_to_procurement: boolean | null
           bot_token: string | null
           chat_id: string | null
           created_at: string | null
           id: string
           invoice_chat_id: string | null
           organization_id: string
-          procurement_chat_id: string | null
           updated_at: string | null
         }
         Insert: {
           auto_send_on_create?: boolean | null
           auto_send_on_status_change?: boolean | null
-          auto_send_to_procurement?: boolean | null
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id: string
-          procurement_chat_id?: string | null
           updated_at?: string | null
         }
         Update: {
           auto_send_on_create?: boolean | null
           auto_send_on_status_change?: boolean | null
-          auto_send_to_procurement?: boolean | null
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id?: string
-          procurement_chat_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -3087,23 +3036,14 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_telegram_auto_send_settings: {
-        Args: { _org_id: string }
-        Returns: {
-          auto_send_on_create: boolean
-          auto_send_on_status_change: boolean
-        }[]
-      }
       get_telegram_credentials: {
         Args: { _org_id: string }
         Returns: {
           telegram_auto_send_on_create: boolean
           telegram_auto_send_on_status_change: boolean
-          telegram_auto_send_to_procurement: boolean
           telegram_bot_token: string
           telegram_chat_id: string
           telegram_invoice_chat_id: string
-          telegram_procurement_chat_id: string
         }[]
       }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
