@@ -9,13 +9,36 @@ import {
 import { FileSpreadsheet, FileText, FileDown } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 interface MeetingReportButtonProps {
   requests: Request[];
   filteredRequests?: Request[];
+}
+
+type XlsxModule = typeof import("xlsx");
+type JsPdfCtor = (typeof import("jspdf"))["default"];
+type AutoTableFn = (typeof import("jspdf-autotable"))["default"];
+
+let exportLibsPromise: Promise<{
+  XLSX: XlsxModule;
+  jsPDF: JsPdfCtor;
+  autoTable: AutoTableFn;
+}> | null = null;
+
+async function loadExportLibs() {
+  if (!exportLibsPromise) {
+    exportLibsPromise = Promise.all([
+      import("xlsx"),
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]).then(([XLSX, jspdfModule, autoTableModule]) => ({
+      XLSX,
+      jsPDF: jspdfModule.default,
+      autoTable: autoTableModule.default,
+    }));
+  }
+
+  return exportLibsPromise;
 }
 
 // Roboto cache for cyrillic in PDF
@@ -67,74 +90,87 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
     });
   };
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
     if (!data || data.length === 0) return noData();
+    setBusy(true);
 
-    const rows = data.map((r) => ({
-      "Заявка": r.description || r.request_number || "—",
-      "Статус": r.status || "—",
-      "Факт оплаты, %": r.payment_percentage ?? 0,
-      "Отгрузка": formatDate(r.shipment_date),
-      "Приход": formatDate(r.delivery_date),
-      "Сумма": Number(r.amount) || 0,
-      "Заявитель": r.applicant || "—",
-    }));
+    try {
+      const { XLSX } = await loadExportLibs();
 
-    const totalSum = data.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-    rows.push({
-      "Заявка": `Итого: ${data.length} заявок`,
-      "Статус": "",
-      "Факт оплаты, %": "" as any,
-      "Отгрузка": "",
-      "Приход": "",
-      "Сумма": totalSum,
-      "Заявитель": "",
-    });
+      const rows = data.map((r) => ({
+        "Заявка": r.description || r.request_number || "—",
+        "Статус": r.status || "—",
+        "Факт оплаты, %": r.payment_percentage ?? 0,
+        "Отгрузка": formatDate(r.shipment_date),
+        "Приход": formatDate(r.delivery_date),
+        "Сумма": Number(r.amount) || 0,
+        "Заявитель": r.applicant || "—",
+      }));
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [
-      { wch: 50 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 16 },
-      { wch: 24 },
-    ];
+      const totalSum = data.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      rows.push({
+        "Заявка": `Итого: ${data.length} заявок`,
+        "Статус": "",
+        "Факт оплаты, %": "" as any,
+        "Отгрузка": "",
+        "Приход": "",
+        "Сумма": totalSum,
+        "Заявитель": "",
+      });
 
-    // Bold header
-    const range = XLSX.utils.decode_range(ws["!ref"] as string);
-    for (let C = range.s.c; C <= range.e.c; C++) {
-      const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-      if (ws[addr]) ws[addr].s = { font: { bold: true } };
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 50 },
+        { wch: 18 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 24 },
+      ];
+
+      const range = XLSX.utils.decode_range(ws["!ref"] as string);
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (ws[addr]) ws[addr].s = { font: { bold: true } };
+      }
+
+      for (let R = 1; R <= range.e.r; R++) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: 5 });
+        if (ws[addr]) ws[addr].z = "#,##0.00";
+      }
+
+      const lastRow = range.e.r;
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const addr = XLSX.utils.encode_cell({ r: lastRow, c: C });
+        if (ws[addr]) ws[addr].s = { font: { bold: true } };
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Планерка");
+      XLSX.writeFile(wb, `Планерка_Заявки_${todayFile()}.xlsx`);
+
+      toast({
+        title: "Отчет сформирован",
+        description: `Excel: ${data.length} заявок`,
+      });
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: "Ошибка формирования Excel",
+        description: e?.message || "Попробуйте еще раз",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
     }
-
-    // Number format for Сумма column (col F = index 5)
-    for (let R = 1; R <= range.e.r; R++) {
-      const addr = XLSX.utils.encode_cell({ r: R, c: 5 });
-      if (ws[addr]) ws[addr].z = "#,##0.00";
-    }
-    // Bold totals row
-    const lastRow = range.e.r;
-    for (let C = range.s.c; C <= range.e.c; C++) {
-      const addr = XLSX.utils.encode_cell({ r: lastRow, c: C });
-      if (ws[addr]) ws[addr].s = { font: { bold: true } };
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Планерка");
-    XLSX.writeFile(wb, `Планерка_Заявки_${todayFile()}.xlsx`);
-
-    toast({
-      title: "Отчет сформирован",
-      description: `Excel: ${data.length} заявок`,
-    });
   };
 
   const exportPdf = async () => {
     if (!data || data.length === 0) return noData();
     setBusy(true);
     try {
+      const { jsPDF, autoTable } = await loadExportLibs();
       const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
       // Cyrillic font
