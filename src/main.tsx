@@ -124,6 +124,13 @@ const bootstrapApp = async () => {
 
     console.error("[Bootstrap] Failed to start app:", error);
 
+    reportError({
+      message: error instanceof Error ? error.message : "Bootstrap failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      severity: "error",
+      context: { source: "bootstrap" },
+    });
+
     root.render(
       <BootstrapScreen
         state="error"
