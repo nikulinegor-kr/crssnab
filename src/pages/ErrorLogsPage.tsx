@@ -228,26 +228,34 @@ export default function ErrorLogsPage() {
                   <TableHead className="w-[140px]">Время</TableHead>
                   <TableHead className="w-[110px]">Уровень</TableHead>
                   <TableHead>Сообщение</TableHead>
-                  <TableHead className="w-[180px]">Маршрут</TableHead>
-                  <TableHead className="w-[90px]">Протокол</TableHead>
+                  <TableHead className="w-[170px]">Маршрут</TableHead>
+                  <TableHead className="w-[80px]">Браузер</TableHead>
+                  <TableHead className="w-[80px]">Proto</TableHead>
+                  <TableHead className="w-[90px]">Boot, мс</TableHead>
+                  <TableHead className="w-[100px]">Transfer</TableHead>
+                  <TableHead className="w-[100px]">Deploy</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin inline" />
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Записей нет
                     </TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((log) => {
                     const ctx = (log.context ?? {}) as Record<string, unknown>;
+                    const klass = ctx.error_class as string | undefined;
+                    const dep = ctx.deployment_id as string | undefined;
+                    const transfer = ctx.transfer_size as number | undefined;
+                    const boot = ctx.elapsed_since_boot_ms as number | undefined;
                     return (
                       <TableRow
                         key={log.id}
@@ -269,12 +277,27 @@ export default function ErrorLogsPage() {
                             {log.severity}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[400px] truncate">{log.message}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground truncate max-w-[180px]">
+                        <TableCell className="max-w-[380px] truncate">
+                          {klass && (
+                            <Badge variant="outline" className="mr-2 text-[10px]">{klass}</Badge>
+                          )}
+                          {log.message}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[170px]">
                           {(ctx.route as string) ?? "—"}
                         </TableCell>
+                        <TableCell className="text-xs">{parseUA(log.user_agent)}</TableCell>
                         <TableCell className="text-xs font-numeric">
                           {(ctx.protocol as string) ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-numeric">
+                          {typeof boot === "number" ? boot : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-numeric">
+                          {typeof transfer === "number" ? `${(transfer / 1024).toFixed(1)} КБ` : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {dep ? dep.slice(0, 8) : "—"}
                         </TableCell>
                       </TableRow>
                     );
