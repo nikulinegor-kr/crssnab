@@ -167,7 +167,7 @@ export default function ErrorLogsPage() {
         <CardHeader>
           <CardTitle className="text-base">Фильтры</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <Input
             placeholder="Поиск по сообщению, URL, стеку…"
             value={search}
@@ -193,6 +193,17 @@ export default function ErrorLogsPage() {
               <SelectItem value="24h">24 часа</SelectItem>
               <SelectItem value="7d">7 дней</SelectItem>
               <SelectItem value="30d">30 дней</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={deployment} onValueChange={setDeployment}>
+            <SelectTrigger>
+              <SelectValue placeholder="Deployment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все деплои</SelectItem>
+              {deployments.map((d) => (
+                <SelectItem key={d} value={d}>{d.slice(0, 12)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={load} disabled={loading}>
