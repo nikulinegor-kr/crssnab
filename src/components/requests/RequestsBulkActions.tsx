@@ -395,7 +395,10 @@ export const RequestsBulkActions = ({
 
   // Export button always visible
   const exportButton = requests && requests.length > 0 && (
-    <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
+    <>
+      <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
+      <MeetingReportButton requests={requests} filteredRequests={filteredRequests} />
+    </>
   );
 
   // If no selection, just show export
