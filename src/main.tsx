@@ -107,6 +107,11 @@ const bootstrapApp = async () => {
   try {
     slowBootTimer = window.setTimeout(() => {
       root.render(<BootstrapScreen state="slow" />);
+      reportError({
+        message: "Slow bootstrap: App import >4s",
+        severity: "warning",
+        context: { source: "bootstrap_slow" },
+      });
     }, 4000);
 
     const { default: App } = await import("./App.tsx");
