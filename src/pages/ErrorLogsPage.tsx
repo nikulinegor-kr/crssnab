@@ -66,7 +66,28 @@ export default function ErrorLogsPage() {
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState<string>("all");
   const [period, setPeriod] = useState<string>("7d");
+  const [deployment, setDeployment] = useState<string>("all");
   const [selected, setSelected] = useState<ErrorLog | null>(null);
+
+  const deployments = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of logs) {
+      const d = (l.context as Record<string, unknown> | null)?.deployment_id;
+      if (typeof d === "string" && d) set.add(d);
+    }
+    return Array.from(set);
+  }, [logs]);
+
+  const parseUA = (ua: string | null): string => {
+    if (!ua) return "—";
+    if (/Edg\//.test(ua)) return "Edge";
+    if (/OPR\/|Opera/.test(ua)) return "Opera";
+    if (/YaBrowser/.test(ua)) return "Yandex";
+    if (/Chrome\//.test(ua)) return "Chrome";
+    if (/Firefox\//.test(ua)) return "Firefox";
+    if (/Safari\//.test(ua)) return "Safari";
+    return "Other";
+  };
 
   const periodSinceISO = useMemo(() => {
     const now = Date.now();
@@ -109,12 +130,16 @@ export default function ErrorLogsPage() {
 
   const filtered = useMemo(() => {
     const terms = search.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (!terms.length) return logs;
     return logs.filter((log) => {
+      if (deployment !== "all") {
+        const d = (log.context as Record<string, unknown> | null)?.deployment_id;
+        if (d !== deployment) return false;
+      }
+      if (!terms.length) return true;
       const hay = `${log.message} ${log.url ?? ""} ${log.stack ?? ""} ${JSON.stringify(log.context ?? {})}`.toLowerCase();
       return terms.every((t) => hay.includes(t));
     });
-  }, [logs, search]);
+  }, [logs, search, deployment]);
 
   if (roleLoading) {
     return (
@@ -142,7 +167,7 @@ export default function ErrorLogsPage() {
         <CardHeader>
           <CardTitle className="text-base">Фильтры</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <Input
             placeholder="Поиск по сообщению, URL, стеку…"
             value={search}
@@ -170,6 +195,17 @@ export default function ErrorLogsPage() {
               <SelectItem value="30d">30 дней</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={deployment} onValueChange={setDeployment}>
+            <SelectTrigger>
+              <SelectValue placeholder="Deployment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все деплои</SelectItem>
+              {deployments.map((d) => (
+                <SelectItem key={d} value={d}>{d.slice(0, 12)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Обновить
@@ -192,26 +228,34 @@ export default function ErrorLogsPage() {
                   <TableHead className="w-[140px]">Время</TableHead>
                   <TableHead className="w-[110px]">Уровень</TableHead>
                   <TableHead>Сообщение</TableHead>
-                  <TableHead className="w-[180px]">Маршрут</TableHead>
-                  <TableHead className="w-[90px]">Протокол</TableHead>
+                  <TableHead className="w-[170px]">Маршрут</TableHead>
+                  <TableHead className="w-[80px]">Браузер</TableHead>
+                  <TableHead className="w-[80px]">Proto</TableHead>
+                  <TableHead className="w-[90px]">Boot, мс</TableHead>
+                  <TableHead className="w-[100px]">Transfer</TableHead>
+                  <TableHead className="w-[100px]">Deploy</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin inline" />
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Записей нет
                     </TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((log) => {
                     const ctx = (log.context ?? {}) as Record<string, unknown>;
+                    const klass = ctx.error_class as string | undefined;
+                    const dep = ctx.deployment_id as string | undefined;
+                    const transfer = ctx.transfer_size as number | undefined;
+                    const boot = ctx.elapsed_since_boot_ms as number | undefined;
                     return (
                       <TableRow
                         key={log.id}
@@ -233,12 +277,27 @@ export default function ErrorLogsPage() {
                             {log.severity}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[400px] truncate">{log.message}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground truncate max-w-[180px]">
+                        <TableCell className="max-w-[380px] truncate">
+                          {klass && (
+                            <Badge variant="outline" className="mr-2 text-[10px]">{klass}</Badge>
+                          )}
+                          {log.message}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[170px]">
                           {(ctx.route as string) ?? "—"}
                         </TableCell>
+                        <TableCell className="text-xs">{parseUA(log.user_agent)}</TableCell>
                         <TableCell className="text-xs font-numeric">
                           {(ctx.protocol as string) ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-numeric">
+                          {typeof boot === "number" ? boot : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-numeric">
+                          {typeof transfer === "number" ? `${(transfer / 1024).toFixed(1)} КБ` : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {dep ? dep.slice(0, 8) : "—"}
                         </TableCell>
                       </TableRow>
                     );

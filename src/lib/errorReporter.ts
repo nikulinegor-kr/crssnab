@@ -1,8 +1,9 @@
 /**
  * Lightweight client-side error reporter.
- * - Captures window.onerror, unhandledrejection, and manual reports
- * - Adds bootstrap context (load timing, protocol, connection, route)
- * - Batches/throttles to avoid storms; sendBeacon when available
+ * - Captures window.onerror, unhandledrejection, manual reports
+ * - Captures resource loading failures (script/css/img) and chunk-load errors
+ * - Adds bootstrap context (timing, protocol, connection, route, deployment_id)
+ * - Throttles & dedupes; sendBeacon when available
  */
 
 type Severity = "error" | "warning" | "info";
@@ -23,9 +24,16 @@ const APIKEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const BOOT_TIME = performance.now();
 const seen = new Map<string, number>();
 const DEDUP_MS = 10_000;
-const MAX_PER_MIN = 20;
+const MAX_PER_MIN = 30;
 let sentInWindow = 0;
 let windowStart = Date.now();
+
+// Track failed asset URLs so they can be attached to subsequent errors
+const failedAssets: { url: string; tag: string; at: number }[] = [];
+function pushFailedAsset(url: string, tag: string) {
+  failedAssets.push({ url, tag, at: Date.now() });
+  if (failedAssets.length > 20) failedAssets.shift();
+}
 
 function shouldSend(key: string): boolean {
   const now = Date.now();
@@ -41,13 +49,41 @@ function shouldSend(key: string): boolean {
   return true;
 }
 
+// Try to derive a stable deployment id from the entry script hash
+function detectDeploymentId(): string | null {
+  try {
+    const scripts = Array.from(document.querySelectorAll<HTMLScriptElement>("script[type=module][src]"));
+    for (const s of scripts) {
+      const m = s.src.match(/[/-]([A-Za-z0-9_-]{8,})\.js(?:$|\?)/);
+      if (m) return m[1];
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+const DEPLOYMENT_ID = typeof document !== "undefined" ? detectDeploymentId() : null;
+
+function classifyError(message: string, stack?: string): string | null {
+  const s = `${message}\n${stack ?? ""}`;
+  if (/ChunkLoadError|Loading chunk \d+ failed|Failed to fetch dynamically imported module|Importing a module script failed/i.test(s)) {
+    return "chunk_load_error";
+  }
+  if (/NetworkError|Failed to fetch|Load failed/i.test(s)) return "network_error";
+  if (/SyntaxError/i.test(s)) return "syntax_error";
+  return null;
+}
+
 function bootstrapContext(): Record<string, unknown> {
-  const nav = (navigator as unknown as { connection?: { effectiveType?: string; rtt?: number; downlink?: number } }).connection;
+  const nav = (navigator as unknown as {
+    connection?: { effectiveType?: string; rtt?: number; downlink?: number; saveData?: boolean };
+  }).connection;
   const navEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
   return {
+    deployment_id: DEPLOYMENT_ID,
     elapsed_since_boot_ms: Math.round(performance.now() - BOOT_TIME),
     route: typeof location !== "undefined" ? location.pathname + location.search : null,
-    protocol: navEntry?.nextHopProtocol ?? null, // h2, http/1.1
+    protocol: navEntry?.nextHopProtocol ?? null,
     transfer_size: navEntry?.transferSize ?? null,
     encoded_body_size: navEntry?.encodedBodySize ?? null,
     response_start_ms: navEntry ? Math.round(navEntry.responseStart) : null,
@@ -57,10 +93,12 @@ function bootstrapContext(): Record<string, unknown> {
     connection_type: nav?.effectiveType ?? null,
     connection_rtt: nav?.rtt ?? null,
     connection_downlink: nav?.downlink ?? null,
+    save_data: nav?.saveData ?? null,
     viewport: typeof window !== "undefined"
       ? { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio }
       : null,
     referrer: typeof document !== "undefined" ? document.referrer || null : null,
+    failed_assets: failedAssets.length ? failedAssets.slice() : null,
   };
 }
 
@@ -73,7 +111,8 @@ function getOrgId(): string | null {
 }
 
 export function reportError(payload: ReportPayload): void {
-  const key = `${payload.severity ?? "error"}|${payload.message}`.slice(0, 200);
+  const klass = classifyError(payload.message, payload.stack);
+  const key = `${payload.severity ?? "error"}|${klass ?? ""}|${payload.message}`.slice(0, 240);
   if (!shouldSend(key)) return;
 
   const body = JSON.stringify({
@@ -83,28 +122,28 @@ export function reportError(payload: ReportPayload): void {
     user_agent: navigator.userAgent,
     severity: payload.severity ?? "error",
     organization_id: payload.organization_id ?? getOrgId(),
-    context: { ...bootstrapContext(), ...(payload.context ?? {}) },
+    context: {
+      ...bootstrapContext(),
+      error_class: klass,
+      ...(payload.context ?? {}),
+    },
   });
 
   try {
     if (navigator.sendBeacon) {
       const blob = new Blob([body], { type: "application/json" });
-      // sendBeacon ignores headers; the function accepts anonymous calls
       const ok = navigator.sendBeacon(ENDPOINT, blob);
       if (ok) return;
     }
   } catch {
-    /* fall back to fetch */
+    /* fall back */
   }
 
   try {
     void fetch(ENDPOINT, {
       method: "POST",
       keepalive: true,
-      headers: {
-        "Content-Type": "application/json",
-        apikey: APIKEY,
-      },
+      headers: { "Content-Type": "application/json", apikey: APIKEY },
       body,
     });
   } catch {
@@ -117,33 +156,54 @@ export function installGlobalErrorReporter(): void {
   if ((window as unknown as { __errorReporterInstalled?: boolean }).__errorReporterInstalled) return;
   (window as unknown as { __errorReporterInstalled?: boolean }).__errorReporterInstalled = true;
 
-  window.addEventListener("error", (event) => {
-    const err = event.error as Error | undefined;
-    reportError({
-      message: err?.message || event.message || "window.onerror",
-      stack: err?.stack,
-      severity: "error",
-      context: {
-        source: "window.onerror",
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-      },
-    });
-  });
+  // Capture resource loading failures (script/css/img). These bubble only in capture phase.
+  window.addEventListener(
+    "error",
+    (event) => {
+      const target = event.target as (HTMLElement & { src?: string; href?: string }) | null;
+      if (target && target !== (window as unknown as EventTarget) && (target.tagName === "SCRIPT" || target.tagName === "LINK" || target.tagName === "IMG")) {
+        const url = target.src || target.href || "";
+        if (url) pushFailedAsset(url, target.tagName);
+        reportError({
+          message: `Resource load failed: ${target.tagName} ${url}`,
+          severity: "error",
+          context: {
+            source: "resource_error",
+            tag: target.tagName,
+            asset_url: url,
+          },
+        });
+        return;
+      }
+      const err = (event as ErrorEvent).error as Error | undefined;
+      reportError({
+        message: err?.message || (event as ErrorEvent).message || "window.onerror",
+        stack: err?.stack,
+        severity: "error",
+        context: {
+          source: "window.onerror",
+          filename: (event as ErrorEvent).filename,
+          lineno: (event as ErrorEvent).lineno,
+          colno: (event as ErrorEvent).colno,
+        },
+      });
+    },
+    true, // capture so resource errors are seen
+  );
 
   window.addEventListener("unhandledrejection", (event) => {
     const reason = event.reason as unknown;
     const err = reason instanceof Error ? reason : undefined;
+    const message = err?.message || (typeof reason === "string" ? reason : "unhandledrejection");
     reportError({
-      message: err?.message || (typeof reason === "string" ? reason : "unhandledrejection"),
+      message,
       stack: err?.stack,
       severity: "error",
       context: { source: "unhandledrejection" },
     });
   });
 
-  // Boot watchdog: if app doesn't render within 12s, report
+  // Boot watchdog
   const watchdog = window.setTimeout(() => {
     const root = document.getElementById("root");
     const rendered = root && root.children.length > 0;
@@ -151,13 +211,16 @@ export function installGlobalErrorReporter(): void {
       reportError({
         message: "Boot watchdog: app did not render within 12s",
         severity: "warning",
-        context: { source: "boot_watchdog", root_children: root?.children.length ?? 0 },
+        context: {
+          source: "boot_watchdog",
+          render_timeout_reason: failedAssets.length ? "failed_assets" : "unknown",
+          root_children: root?.children.length ?? 0,
+        },
       });
     }
   }, 12_000);
 
   window.addEventListener("load", () => {
-    // App boot completed; cancel watchdog if root has content
     setTimeout(() => {
       const root = document.getElementById("root");
       if (root && root.children.length > 0) clearTimeout(watchdog);
