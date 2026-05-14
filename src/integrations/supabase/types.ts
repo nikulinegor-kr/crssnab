@@ -2896,6 +2896,7 @@ export type Database = {
           bot_token: string | null
           chat_id: string | null
           created_at: string | null
+          deadline_chat_id: string | null
           id: string
           invoice_chat_id: string | null
           organization_id: string
@@ -2909,6 +2910,7 @@ export type Database = {
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
+          deadline_chat_id?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id: string
@@ -2922,6 +2924,7 @@ export type Database = {
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
+          deadline_chat_id?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id?: string
