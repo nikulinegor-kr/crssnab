@@ -200,6 +200,39 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
           }, { onConflict: "request_id,notification_type" });
         sent++;
         results.push({ request_id: r.id, type, ok: true });
+
+        // Параллельно создаём in-app уведомления → realtime триггерит браузерный push
+        try {
+          const titleMap: Record<NotifType, string> = {
+            shipment_tomorrow: "🚛 Завтра отгрузка",
+            arrival_3d: "📦 Прибытие через 3 дня",
+            arrival_1d: "⚠️ Прибытие завтра",
+            arrival_today: "✅ Сегодня прибытие",
+            overdue: "❌ Просрочка доставки",
+          };
+          const shortBody = `Заявка #${r.request_number}${r.description ? " — " + r.description : ""}`;
+          const link = `/requests/${r.id}`;
+
+          const { data: members } = await supabase
+            .from("user_organizations")
+            .select("user_id")
+            .eq("organization_id", orgId)
+            .in("role", ["owner", "admin", "editor"]);
+
+          if (members && members.length > 0) {
+            const rows = members.map((m: any) => ({
+              user_id: m.user_id,
+              organization_id: orgId,
+              type: `shipment_${type}`,
+              title: titleMap[type],
+              message: shortBody,
+              link,
+            }));
+            await supabase.from("notifications").insert(rows);
+          }
+        } catch (e) {
+          console.error("in-app notification insert failed", e);
+        }
       } else {
         results.push({ request_id: r.id, type, ok: false, error: tgResp?.description });
       }
