@@ -123,6 +123,23 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
           }
         }
       }
+
+      // Schedule settings (visible to all org members; editable by admins)
+      const { data: sched } = await supabase
+        .from("notification_schedule_settings" as any)
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      if (sched) {
+        const s: any = sched;
+        setScheduleEnabled(s.enabled ?? true);
+        setNotifyShipmentTomorrow(s.notify_shipment_tomorrow ?? true);
+        setNotifyArrival3d(s.notify_arrival_3d ?? true);
+        setNotifyArrival1d(s.notify_arrival_1d ?? true);
+        setNotifyArrivalToday(s.notify_arrival_today ?? true);
+        setNotifyOverdue(s.notify_overdue ?? true);
+        setSendTime((s.send_time ?? "09:00").slice(0, 5));
+      }
     } catch (error) {
       console.error("Error loading notification settings:", error);
     } finally {
