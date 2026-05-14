@@ -218,6 +218,20 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
               Группа для первичной обработки заявок: назначение исполнителя перед отправкой в основной чат.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="deadlineChatId">Chat ID для уведомлений по срокам (необязательно)</Label>
+            <Input
+              id="deadlineChatId"
+              type="text"
+              placeholder="-1001234567890"
+              value={deadlineChatId}
+              onChange={(e) => setDeadlineChatId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Отдельная группа для напоминаний об отгрузке, прибытии и просрочках. Если не указана, уведомления идут в основной чат.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4 pt-4 border-t">
