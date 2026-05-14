@@ -1495,6 +1495,45 @@ export type Database = {
           },
         ]
       }
+      notification_schedule_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          notify_arrival_1d: boolean
+          notify_arrival_3d: boolean
+          notify_arrival_today: boolean
+          notify_overdue: boolean
+          notify_shipment_tomorrow: boolean
+          organization_id: string
+          send_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          notify_arrival_1d?: boolean
+          notify_arrival_3d?: boolean
+          notify_arrival_today?: boolean
+          notify_overdue?: boolean
+          notify_shipment_tomorrow?: boolean
+          organization_id: string
+          send_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          notify_arrival_1d?: boolean
+          notify_arrival_3d?: boolean
+          notify_arrival_today?: boolean
+          notify_overdue?: boolean
+          notify_shipment_tomorrow?: boolean
+          organization_id?: string
+          send_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1926,6 +1965,47 @@ export type Database = {
           },
         ]
       }
+      request_notification_log: {
+        Row: {
+          forced: boolean
+          id: string
+          notification_type: string
+          organization_id: string
+          request_id: string
+          sent_at: string
+          sent_by: string | null
+          telegram_message_id: number | null
+        }
+        Insert: {
+          forced?: boolean
+          id?: string
+          notification_type: string
+          organization_id: string
+          request_id: string
+          sent_at?: string
+          sent_by?: string | null
+          telegram_message_id?: number | null
+        }
+        Update: {
+          forced?: boolean
+          id?: string
+          notification_type?: string
+          organization_id?: string
+          request_id?: string
+          sent_at?: string
+          sent_by?: string | null
+          telegram_message_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_notification_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_objects: {
         Row: {
           address: string | null
@@ -2158,6 +2238,7 @@ export type Database = {
       }
       requests: {
         Row: {
+          actual_arrival_date: string | null
           amount: number | null
           applicant: string | null
           applicant_user_id: string | null
@@ -2207,6 +2288,7 @@ export type Database = {
           waybill_number: string | null
         }
         Insert: {
+          actual_arrival_date?: string | null
           amount?: number | null
           applicant?: string | null
           applicant_user_id?: string | null
@@ -2256,6 +2338,7 @@ export type Database = {
           waybill_number?: string | null
         }
         Update: {
+          actual_arrival_date?: string | null
           amount?: number | null
           applicant?: string | null
           applicant_user_id?: string | null
