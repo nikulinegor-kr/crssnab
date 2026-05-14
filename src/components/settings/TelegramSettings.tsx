@@ -83,6 +83,15 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
       return;
     }
 
+    if (deadlineChatId && !deadlineChatId.match(/^-?\d+$/)) {
+      toast({
+        title: "Ошибка",
+        description: "Chat ID для уведомлений по срокам должен быть числом",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Upsert into telegram_settings table (admin-only)
