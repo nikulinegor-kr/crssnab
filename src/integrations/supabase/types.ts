@@ -2896,6 +2896,7 @@ export type Database = {
           bot_token: string | null
           chat_id: string | null
           created_at: string | null
+          deadline_chat_id: string | null
           id: string
           invoice_chat_id: string | null
           organization_id: string
@@ -2909,6 +2910,7 @@ export type Database = {
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
+          deadline_chat_id?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id: string
@@ -2922,6 +2924,7 @@ export type Database = {
           bot_token?: string | null
           chat_id?: string | null
           created_at?: string | null
+          deadline_chat_id?: string | null
           id?: string
           invoice_chat_id?: string | null
           organization_id?: string
@@ -3185,6 +3188,7 @@ export type Database = {
           telegram_auto_send_to_procurement: boolean
           telegram_bot_token: string
           telegram_chat_id: string
+          telegram_deadline_chat_id: string
           telegram_invoice_chat_id: string
           telegram_procurement_chat_id: string
         }[]

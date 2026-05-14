@@ -23,6 +23,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
   const [autoSendOnStatusChange, setAutoSendOnStatusChange] = useState(true);
   const [invoiceChatId, setInvoiceChatId] = useState("");
   const [procurementChatId, setProcurementChatId] = useState("");
+  const [deadlineChatId, setDeadlineChatId] = useState("");
   const [autoSendToProcurement, setAutoSendToProcurement] = useState(true);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
         setInvoiceChatId(settings.telegram_invoice_chat_id || "");
         setProcurementChatId(settings.telegram_procurement_chat_id || "");
+        setDeadlineChatId(settings.telegram_deadline_chat_id || "");
         setAutoSendToProcurement(settings.telegram_auto_send_to_procurement ?? true);
       }
     } catch (error: any) {
@@ -81,6 +83,15 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
       return;
     }
 
+    if (deadlineChatId && !deadlineChatId.match(/^-?\d+$/)) {
+      toast({
+        title: "Ошибка",
+        description: "Chat ID для уведомлений по срокам должен быть числом",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Upsert into telegram_settings table (admin-only)
@@ -94,6 +105,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
           auto_send_on_status_change: autoSendOnStatusChange,
           invoice_chat_id: invoiceChatId || null,
           procurement_chat_id: procurementChatId || null,
+          deadline_chat_id: deadlineChatId || null,
           auto_send_to_procurement: autoSendToProcurement,
         } as any, { onConflict: "organization_id" });
 
@@ -204,6 +216,20 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
             />
             <p className="text-xs text-muted-foreground">
               Группа для первичной обработки заявок: назначение исполнителя перед отправкой в основной чат.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="deadlineChatId">Chat ID для уведомлений по срокам (необязательно)</Label>
+            <Input
+              id="deadlineChatId"
+              type="text"
+              placeholder="-1001234567890"
+              value={deadlineChatId}
+              onChange={(e) => setDeadlineChatId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Отдельная группа для напоминаний об отгрузке, прибытии и просрочках. Если не указана, уведомления идут в основной чат.
             </p>
           </div>
         </div>

@@ -125,10 +125,11 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
   // telegram creds
   const { data: tg } = await supabase
     .from("telegram_settings")
-    .select("bot_token, chat_id")
+    .select("bot_token, chat_id, deadline_chat_id")
     .eq("organization_id", orgId)
     .maybeSingle();
-  if (!tg?.bot_token || !tg?.chat_id) return { sent: 0, skipped: "no_telegram" };
+  const targetChatId = tg?.deadline_chat_id || tg?.chat_id;
+  if (!tg?.bot_token || !targetChatId) return { sent: 0, skipped: "no_telegram" };
 
   // requests
   let q = supabase
@@ -180,7 +181,7 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
       }
 
       const text = buildMessage(type, r);
-      const tgResp = await sendTelegram(tg.bot_token, tg.chat_id, text);
+      const tgResp = await sendTelegram(tg.bot_token, targetChatId, text);
       const ok = tgResp?.ok === true;
       const messageId = tgResp?.result?.message_id ?? null;
 
