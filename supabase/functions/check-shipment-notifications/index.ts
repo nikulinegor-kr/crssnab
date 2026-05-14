@@ -181,7 +181,7 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
       }
 
       const text = buildMessage(type, r);
-      const tgResp = await sendTelegram(tg.bot_token, tg.chat_id, text);
+      const tgResp = await sendTelegram(tg.bot_token, targetChatId, text);
       const ok = tgResp?.ok === true;
       const messageId = tgResp?.result?.message_id ?? null;
 
