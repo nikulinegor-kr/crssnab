@@ -14,27 +14,68 @@ interface Notification {
   created_at: string;
 }
 
-// Helper function to show browser notification
+// Локальный лог последних push-уведомлений (для UI настроек)
+const PUSH_LOG_KEY = "crss-push-log-v1";
+const PUSH_SOUND_KEY = "crss-push-sound";
+const PUSH_BROWSER_ENABLED_KEY = "crss-push-browser-enabled";
+
+export const appendPushLog = (entry: { title: string; body: string; link?: string | null }) => {
+  try {
+    const raw = localStorage.getItem(PUSH_LOG_KEY);
+    const log = raw ? JSON.parse(raw) : [];
+    log.unshift({ ...entry, ts: new Date().toISOString() });
+    localStorage.setItem(PUSH_LOG_KEY, JSON.stringify(log.slice(0, 30)));
+  } catch (_) { /* noop */ }
+};
+
+const playNotificationSound = () => {
+  if (localStorage.getItem(PUSH_SOUND_KEY) === "off") return;
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.setValueAtTime(660, ctx.currentTime + 0.12);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.36);
+  } catch (_) { /* noop */ }
+};
+
 const showBrowserNotification = async (title: string, body: string, link?: string | null) => {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification(title, {
+  if (localStorage.getItem(PUSH_BROWSER_ENABLED_KEY) === "off") return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+  appendPushLog({ title, body, link });
+  playNotificationSound();
+
+  const url = link || "/dashboard";
+  try {
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        registration.active?.postMessage({
+          type: "show-notification",
+          title,
           body,
-          icon: '/favicon.png',
-          badge: '/favicon.png',
-          data: { url: link || '/dashboard' }
+          url,
+          tag: link || undefined,
+          icon: "/favicon.png",
+          badge: "/favicon.png",
         });
-      } else {
-        new Notification(title, {
-          body,
-          icon: '/favicon.png'
-        });
+        return;
       }
-    } catch (error) {
-      console.error('Error showing browser notification:', error);
     }
+    // Fallback: прямой Notification API (откроется/сфокусируется текущая вкладка)
+    const n = new Notification(title, { body, icon: "/favicon.png", tag: link || undefined });
+    n.onclick = () => { window.focus(); window.location.href = url; n.close(); };
+  } catch (error) {
+    console.error("Error showing browser notification:", error);
   }
 };
 
