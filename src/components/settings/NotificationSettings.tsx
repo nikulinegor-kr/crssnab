@@ -50,6 +50,16 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
   const [notifyOnComment, setNotifyOnComment] = useState(true);
   const [notifyOnReminder, setNotifyOnReminder] = useState(true);
 
+  // Schedule settings (delivery/shipment reminders)
+  const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [notifyShipmentTomorrow, setNotifyShipmentTomorrow] = useState(true);
+  const [notifyArrival3d, setNotifyArrival3d] = useState(true);
+  const [notifyArrival1d, setNotifyArrival1d] = useState(true);
+  const [notifyArrivalToday, setNotifyArrivalToday] = useState(true);
+  const [notifyOverdue, setNotifyOverdue] = useState(true);
+  const [sendTime, setSendTime] = useState("09:00");
+  const [runningCheck, setRunningCheck] = useState(false);
+
   // Initial state for change detection
   const [initial, setInitial] = useState({
     botToken: "",
