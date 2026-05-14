@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Info,
   ExternalLink,
+  CalendarClock,
 } from "lucide-react";
 
 interface NotificationSettingsProps {
@@ -49,6 +50,16 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
   const [notifyOnComment, setNotifyOnComment] = useState(true);
   const [notifyOnReminder, setNotifyOnReminder] = useState(true);
 
+  // Schedule settings (delivery/shipment reminders)
+  const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [notifyShipmentTomorrow, setNotifyShipmentTomorrow] = useState(true);
+  const [notifyArrival3d, setNotifyArrival3d] = useState(true);
+  const [notifyArrival1d, setNotifyArrival1d] = useState(true);
+  const [notifyArrivalToday, setNotifyArrivalToday] = useState(true);
+  const [notifyOverdue, setNotifyOverdue] = useState(true);
+  const [sendTime, setSendTime] = useState("09:00");
+  const [runningCheck, setRunningCheck] = useState(false);
+
   // Initial state for change detection
   const [initial, setInitial] = useState({
     botToken: "",
@@ -67,7 +78,9 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
     botToken, chatId, invoiceChatId, procurementChatId,
     autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement,
     notifyOnExecutorAssign, notifyOnComment, notifyOnReminder,
-  }), [botToken, chatId, invoiceChatId, procurementChatId, autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder]);
+    scheduleEnabled, notifyShipmentTomorrow, notifyArrival3d,
+    notifyArrival1d, notifyArrivalToday, notifyOverdue, sendTime,
+  }), [botToken, chatId, invoiceChatId, procurementChatId, autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder, scheduleEnabled, notifyShipmentTomorrow, notifyArrival3d, notifyArrival1d, notifyArrivalToday, notifyOverdue, sendTime]);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(currentState) !== JSON.stringify(initial);
@@ -112,6 +125,23 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
           }
         }
       }
+
+      // Schedule settings (visible to all org members; editable by admins)
+      const { data: sched } = await supabase
+        .from("notification_schedule_settings" as any)
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      if (sched) {
+        const s: any = sched;
+        setScheduleEnabled(s.enabled ?? true);
+        setNotifyShipmentTomorrow(s.notify_shipment_tomorrow ?? true);
+        setNotifyArrival3d(s.notify_arrival_3d ?? true);
+        setNotifyArrival1d(s.notify_arrival_1d ?? true);
+        setNotifyArrivalToday(s.notify_arrival_today ?? true);
+        setNotifyOverdue(s.notify_overdue ?? true);
+        setSendTime((s.send_time ?? "09:00").slice(0, 5));
+      }
     } catch (error) {
       console.error("Error loading notification settings:", error);
     } finally {
@@ -148,6 +178,21 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
 
       if (error) throw error;
 
+      // Save schedule settings
+      const { error: sErr } = await supabase
+        .from("notification_schedule_settings" as any)
+        .upsert({
+          organization_id: organizationId,
+          enabled: scheduleEnabled,
+          notify_shipment_tomorrow: notifyShipmentTomorrow,
+          notify_arrival_3d: notifyArrival3d,
+          notify_arrival_1d: notifyArrival1d,
+          notify_arrival_today: notifyArrivalToday,
+          notify_overdue: notifyOverdue,
+          send_time: sendTime,
+        } as any, { onConflict: "organization_id" });
+      if (sErr) throw sErr;
+
       setInitial({ ...currentState });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -179,6 +224,24 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
       toast({ variant: "destructive", title: "Ошибка", description: error.message });
     } finally {
       setTestingSend(false);
+    }
+  };
+
+  const handleRunCheckNow = async () => {
+    setRunningCheck(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-shipment-notifications", {
+        body: { organizationId },
+      });
+      if (error) throw error;
+      toast({
+        title: "Проверка запущена",
+        description: `Отправлено уведомлений: ${data?.sent ?? 0}`,
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Ошибка", description: e.message });
+    } finally {
+      setRunningCheck(false);
     }
   };
 
@@ -341,6 +404,95 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
               <Send className="h-3.5 w-3.5" />
             )}
             Отправить тестовое сообщение
+          </Button>
+        )}
+      </section>
+
+      {/* ========== РАСПИСАНИЕ — напоминания по срокам ========== */}
+      <section className="space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground tracking-tight">
+              Напоминания по срокам
+            </h3>
+            <span className="text-xs text-muted-foreground">в Telegram-группу</span>
+          </div>
+          <Switch
+            checked={scheduleEnabled}
+            onCheckedChange={isAdmin ? setScheduleEnabled : undefined}
+            disabled={!isAdmin}
+          />
+        </div>
+        <Separator />
+
+        <div className="space-y-3">
+          <ToggleRow
+            label="🚛 Завтра отгрузка"
+            checked={notifyShipmentTomorrow}
+            onCheckedChange={isAdmin ? setNotifyShipmentTomorrow : undefined}
+            disabled={!isAdmin || !scheduleEnabled}
+          />
+          <ToggleRow
+            label="📦 За 3 дня до прибытия"
+            checked={notifyArrival3d}
+            onCheckedChange={isAdmin ? setNotifyArrival3d : undefined}
+            disabled={!isAdmin || !scheduleEnabled}
+          />
+          <ToggleRow
+            label="⚠️ За 1 день до прибытия"
+            checked={notifyArrival1d}
+            onCheckedChange={isAdmin ? setNotifyArrival1d : undefined}
+            disabled={!isAdmin || !scheduleEnabled}
+          />
+          <ToggleRow
+            label="✅ В день прибытия"
+            checked={notifyArrivalToday}
+            onCheckedChange={isAdmin ? setNotifyArrivalToday : undefined}
+            disabled={!isAdmin || !scheduleEnabled}
+          />
+          <ToggleRow
+            label="❌ Просрочка доставки"
+            checked={notifyOverdue}
+            onCheckedChange={isAdmin ? setNotifyOverdue : undefined}
+            disabled={!isAdmin || !scheduleEnabled}
+          />
+
+          <FieldRow label="Время отправки">
+            <Input
+              type="time"
+              value={sendTime}
+              onChange={(e) => setSendTime(e.target.value)}
+              disabled={!isAdmin || !scheduleEnabled}
+              className="w-[140px]"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Сейчас расписание запускается ежедневно в 09:00 МСК. Чтобы поменять время, обратитесь к администратору системы.
+            </p>
+          </FieldRow>
+        </div>
+
+        <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-[13px] text-muted-foreground leading-relaxed">
+          <Info className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>
+            Каждое уведомление отправляется в группу один раз. Когда статус заявки переходит в «Доставлено», дальнейшие напоминания отключаются автоматически.
+          </span>
+        </div>
+
+        {telegramConnected && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRunCheckNow}
+            disabled={runningCheck}
+            className="gap-2"
+          >
+            {runningCheck ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
+            Проверить сейчас
           </Button>
         )}
       </section>

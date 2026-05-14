@@ -16,6 +16,22 @@ import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Request } from "@/hooks/useRequests";
 
+function getDeliveryDateTone(dateStr?: string | null, status?: string | null) {
+  if (!dateStr) return null;
+  const finalStatuses = ["Доставлено", "Прибыло", "Закрыто", "Отменено", "Выполнено"];
+  if (status && finalStatuses.includes(status)) {
+    return { label: "Прибыло", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" };
+  }
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+  const days = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return { label: `Просрочка ${Math.abs(days)} дн.`, className: "bg-red-500/10 text-red-600 border-red-500/30" };
+  if (days === 0) return { label: "Сегодня", className: "bg-red-500/10 text-red-600 border-red-500/30" };
+  if (days === 1) return { label: "Завтра", className: "bg-orange-500/10 text-orange-600 border-orange-500/30" };
+  if (days <= 3) return { label: `Через ${days} дн.`, className: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
+  return { label: `Через ${days} дн.`, className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" };
+}
+
 interface RequestLogisticsCardProps {
   request: Request;
   canEdit: boolean;
@@ -144,7 +160,17 @@ export function RequestLogisticsCard({
               <CalendarDays className="h-4 w-4 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground mb-1">Дата доставки</p>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs text-muted-foreground">Дата доставки</p>
+                {(() => {
+                  const tone = getDeliveryDateTone(request.delivery_date, request.status);
+                  return tone ? (
+                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded border", tone.className)}>
+                      {tone.label}
+                    </span>
+                  ) : null;
+                })()}
+              </div>
               {canEdit ? (
                 <Popover>
                   <PopoverTrigger asChild>
