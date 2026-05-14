@@ -225,6 +225,24 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
     }
   };
 
+  const handleRunCheckNow = async () => {
+    setRunningCheck(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-shipment-notifications", {
+        body: { organizationId },
+      });
+      if (error) throw error;
+      toast({
+        title: "Проверка запущена",
+        description: `Отправлено уведомлений: ${data?.sent ?? 0}`,
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Ошибка", description: e.message });
+    } finally {
+      setRunningCheck(false);
+    }
+  };
+
   const handleTestPush = async () => {
     await sendNotification("Тестовое уведомление", {
       body: "Push-уведомления работают корректно!",
