@@ -687,6 +687,12 @@ export default function RequestDetail() {
               onUpdate={handleUpdate}
             />
 
+            {/* 2.1 Telegram notifications status */}
+            <RequestNotificationsCard
+              requestId={request.id}
+              organizationId={request.organization_id}
+            />
+
 
 
             {/* 4. Financial Information */}
