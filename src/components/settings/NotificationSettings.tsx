@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Info,
   ExternalLink,
+  CalendarClock,
 } from "lucide-react";
 
 interface NotificationSettingsProps {
