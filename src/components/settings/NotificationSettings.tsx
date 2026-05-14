@@ -540,7 +540,7 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
         {isEnabled && (
           <Button variant="outline" size="sm" onClick={handleTestPush} className="gap-2">
             <Send className="h-3.5 w-3.5" />
-            Отправить тест
+            Отправить тестовое push
           </Button>
         )}
 
@@ -550,6 +550,8 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
             <span>Telegram не подключён — push-уведомления используются как основной канал.</span>
           </div>
         )}
+
+        {isSupported && permission !== "denied" && <PushNotificationsLog />}
       </section>
 
       {/* ========== Save ========== */}
