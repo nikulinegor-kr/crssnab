@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { PushNotificationsLog } from "@/components/settings/PushNotificationsLog";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   Loader2,
