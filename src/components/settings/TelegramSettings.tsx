@@ -105,6 +105,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
           auto_send_on_status_change: autoSendOnStatusChange,
           invoice_chat_id: invoiceChatId || null,
           procurement_chat_id: procurementChatId || null,
+          deadline_chat_id: deadlineChatId || null,
           auto_send_to_procurement: autoSendToProcurement,
         } as any, { onConflict: "organization_id" });
 
