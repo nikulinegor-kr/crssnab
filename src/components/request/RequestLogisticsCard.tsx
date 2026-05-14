@@ -160,7 +160,17 @@ export function RequestLogisticsCard({
               <CalendarDays className="h-4 w-4 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground mb-1">Дата доставки</p>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs text-muted-foreground">Дата доставки</p>
+                {(() => {
+                  const tone = getDeliveryDateTone(request.delivery_date, request.status);
+                  return tone ? (
+                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded border", tone.className)}>
+                      {tone.label}
+                    </span>
+                  ) : null;
+                })()}
+              </div>
               {canEdit ? (
                 <Popover>
                   <PopoverTrigger asChild>
