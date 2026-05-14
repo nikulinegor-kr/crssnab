@@ -78,7 +78,9 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
     botToken, chatId, invoiceChatId, procurementChatId,
     autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement,
     notifyOnExecutorAssign, notifyOnComment, notifyOnReminder,
-  }), [botToken, chatId, invoiceChatId, procurementChatId, autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder]);
+    scheduleEnabled, notifyShipmentTomorrow, notifyArrival3d,
+    notifyArrival1d, notifyArrivalToday, notifyOverdue, sendTime,
+  }), [botToken, chatId, invoiceChatId, procurementChatId, autoSendOnCreate, autoSendOnStatusChange, autoSendToProcurement, notifyOnExecutorAssign, notifyOnComment, notifyOnReminder, scheduleEnabled, notifyShipmentTomorrow, notifyArrival3d, notifyArrival1d, notifyArrivalToday, notifyOverdue, sendTime]);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(currentState) !== JSON.stringify(initial);
