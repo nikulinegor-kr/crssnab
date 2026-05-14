@@ -176,6 +176,21 @@ export const NotificationSettings = ({ organizationId }: NotificationSettingsPro
 
       if (error) throw error;
 
+      // Save schedule settings
+      const { error: sErr } = await supabase
+        .from("notification_schedule_settings" as any)
+        .upsert({
+          organization_id: organizationId,
+          enabled: scheduleEnabled,
+          notify_shipment_tomorrow: notifyShipmentTomorrow,
+          notify_arrival_3d: notifyArrival3d,
+          notify_arrival_1d: notifyArrival1d,
+          notify_arrival_today: notifyArrivalToday,
+          notify_overdue: notifyOverdue,
+          send_time: sendTime,
+        } as any, { onConflict: "organization_id" });
+      if (sErr) throw sErr;
+
       setInitial({ ...currentState });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
