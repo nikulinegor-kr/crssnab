@@ -49,6 +49,7 @@ export const TelegramSettings = ({ organizationId }: TelegramSettingsProps) => {
         setAutoSendOnStatusChange(settings.telegram_auto_send_on_status_change ?? true);
         setInvoiceChatId(settings.telegram_invoice_chat_id || "");
         setProcurementChatId(settings.telegram_procurement_chat_id || "");
+        setDeadlineChatId(settings.telegram_deadline_chat_id || "");
         setAutoSendToProcurement(settings.telegram_auto_send_to_procurement ?? true);
       }
     } catch (error: any) {
