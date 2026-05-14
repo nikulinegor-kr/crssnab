@@ -45,6 +45,7 @@ import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
+import { RequestNotificationsCard } from "@/components/request/RequestNotificationsCard";
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 
 interface Activity {
