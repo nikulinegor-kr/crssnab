@@ -8,20 +8,46 @@ import { installGlobalErrorReporter, reportError } from "./lib/errorReporter";
 
 installGlobalErrorReporter();
 
-const unregisterLegacyServiceWorkers = async () => {
+const isInIframe = (() => {
+  try { return window.self !== window.top; } catch { return true; }
+})();
+const isPreviewHost =
+  window.location.hostname.includes("id-preview--") ||
+  window.location.hostname.includes("lovableproject.com") ||
+  window.location.hostname.includes("lovable.app");
+
+const setupNotificationServiceWorker = async () => {
   if (!("serviceWorker" in navigator)) return;
 
-  try {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((registration) => registration.unregister()));
-
-    if ("caches" in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+  // В preview/iframe — снимаем регистрацию, чтобы не кэшировать сборки
+  if (isInIframe || isPreviewHost) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((r) => r.unregister()));
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((c) => caches.delete(c)));
+      }
+    } catch (e) {
+      console.error("SW cleanup failed:", e);
     }
-  } catch (error) {
-    console.error("Failed to unregister legacy service workers:", error);
+    return;
   }
+
+  // В production — регистрируем SW для уведомлений
+  try {
+    await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  } catch (e) {
+    console.error("SW registration failed:", e);
+  }
+
+  // Навигация по сообщениям от SW (клик по уведомлению)
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type === "navigate" && typeof data.url === "string") {
+      window.location.href = data.url;
+    }
+  });
 };
 
 type BootstrapState = "loading" | "slow" | "error";
@@ -91,13 +117,13 @@ const scheduleCleanup = () => {
 
   if (idleWindow.requestIdleCallback) {
     idleWindow.requestIdleCallback(() => {
-      void unregisterLegacyServiceWorkers();
+      void setupNotificationServiceWorker();
     });
     return;
   }
 
   window.setTimeout(() => {
-    void unregisterLegacyServiceWorkers();
+    void setupNotificationServiceWorker();
   }, 1500);
 };
 
