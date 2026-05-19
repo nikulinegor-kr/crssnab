@@ -1094,6 +1094,11 @@ export default function MaterialStatementsPage() {
     } catch (e: any) {
       toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
       setKpDialogOpen(false);
+      if (queueAfter.length > 0) {
+        const [nextFile, ...rest] = queueAfter;
+        setKpQueue(rest);
+        void processKpUpload(nextFile, rest);
+      }
     } finally { setKpLoading(false); }
   };
 
