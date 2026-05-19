@@ -12,6 +12,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
 import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
 import { QuickRequestProvider } from "./components/quick-request/QuickRequestProvider";
+import { useMobileKeyboardFocus } from "./hooks/useMobileKeyboardFocus";
 
 // Lazy load all pages with retry mechanism for code splitting
 const Index = lazyWithRetry(() => import("./pages/Index"));
@@ -88,6 +89,8 @@ const createQueryClient = () => new QueryClient({
 
 const App = () => {
   const [queryClient] = useState(createQueryClient);
+  useMobileKeyboardFocus();
+  
   
   return (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
