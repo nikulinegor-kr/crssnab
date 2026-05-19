@@ -337,6 +337,25 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Mobile-only prominent Quick Request action */}
+        <button
+          type="button"
+          onClick={openQuickRequest}
+          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white shadow-md transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold leading-tight">Быстрая заявка</div>
+              <div className="text-xs text-white/85">Создать за 2 секунды</div>
+            </div>
+          </div>
+          <Plus className="h-5 w-5 opacity-90" />
+        </button>
+
+
         {/* Period filter + Year */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
