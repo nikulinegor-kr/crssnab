@@ -179,6 +179,12 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
               Оплачено
             </Badge>
           )}
+          {request.items_count != null && request.items_count > 1 && (
+            <Badge variant="secondary" className="h-5 text-[10px] px-1.5">
+              <Package className="h-3 w-3 mr-0.5" />
+              {request.items_count} материалов
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
