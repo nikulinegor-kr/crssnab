@@ -122,7 +122,54 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     return map;
   }, [supplierPrices]);
 
-  // Step 1: Select file and recognize
+  // Sanitize file name for Supabase Storage (ASCII-only key)
+  const sanitizeStorageName = (name: string): string => {
+    const dot = name.lastIndexOf(".");
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
+    const cleanBase = base
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "file";
+    const cleanExt = ext.replace(/[^a-zA-Z0-9.]/g, "");
+    return cleanBase + cleanExt;
+  };
+
+  const recognizeKpFile = async (file: File): Promise<{ supplier: string | null; items: any[] }> => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const isExcel = ext === "xlsx" || ext === "xls";
+
+    if (isExcel) {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const sheetsText: string[] = [];
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const csv = XLSX.utils.sheet_to_csv(sheet, { FS: "\t", RS: "\n" });
+        if (csv.trim()) sheetsText.push(`=== Лист: ${sheetName} ===\n${csv}`);
+      }
+      const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
+        body: { textContent: sheetsText.join("\n\n"), fileType: "xlsx" },
+      });
+      if (error) throw error;
+      return { supplier: result?.supplier || null, items: result?.items || [] };
+    }
+
+    const safeName = sanitizeStorageName(file.name);
+    const path = `${orgId}/kp/${Date.now()}_${safeName}`;
+    const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
+    if (uploadError) throw uploadError;
+    const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
+    const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
+      body: { fileUrl: urlData.publicUrl, fileType: "pdf" },
+    });
+    if (error) throw error;
+    return { supplier: result?.supplier || null, items: result?.items || [] };
+  };
+
+  // Step 1: Select file and recognize (single file flow with manual confirm)
   const handleFileSelected = async (file: File) => {
     if (kpSuppliers.length >= MAX_KP) {
       toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
@@ -134,41 +181,9 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     setUploading(true);
 
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const isExcel = ext === "xlsx" || ext === "xls";
-
-      let kpData: any;
-      if (isExcel) {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const sheetsText: string[] = [];
-        for (const sheetName of workbook.SheetNames) {
-          const sheet = workbook.Sheets[sheetName];
-          const csv = XLSX.utils.sheet_to_csv(sheet, { FS: "\t", RS: "\n" });
-          if (csv.trim()) sheetsText.push(`=== Лист: ${sheetName} ===\n${csv}`);
-        }
-        const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
-          body: { textContent: sheetsText.join("\n\n"), fileType: "xlsx" },
-        });
-        if (error) throw error;
-        kpData = result;
-      } else {
-        const path = `${orgId}/kp/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
-        const { data: result, error } = await supabase.functions.invoke("recognize-kp", {
-          body: { fileUrl: urlData.publicUrl, fileType: "pdf" },
-        });
-        if (error) throw error;
-        kpData = result;
-      }
-
-      setRecognizedData({ supplier: kpData.supplier || null, items: kpData.items || [] });
-      // Auto-fill supplier name from recognized data
-      if (kpData.supplier) {
-        setSupplierName(kpData.supplier);
-      }
+      const kpData = await recognizeKpFile(file);
+      setRecognizedData({ supplier: kpData.supplier, items: kpData.items });
+      if (kpData.supplier) setSupplierName(kpData.supplier);
       setRecognizeStep("confirm");
     } catch (e: any) {
       toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
@@ -178,6 +193,99 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Multi-file: auto-recognize, auto-create supplier, auto-apply matched prices
+  const handleMultipleFilesSelected = async (files: File[]) => {
+    const slotsLeft = MAX_KP - kpSuppliers.length;
+    if (slotsLeft <= 0) {
+      toast({ title: `Максимум ${MAX_KP} КП на раздел`, variant: "destructive" });
+      return;
+    }
+    const queue = files.slice(0, slotsLeft);
+    if (files.length > slotsLeft) {
+      toast({ title: `Загружено ${slotsLeft} из ${files.length}`, description: `Лимит ${MAX_KP} КП на раздел` });
+    }
+
+    setUploading(true);
+    let okCount = 0;
+    let failCount = 0;
+
+    const materialItems = allItems.filter(i => i.item_type === "material" || !i.item_type);
+    const pricedPool = materialItems.map(i => ({ id: i.id, name: i.name, unit: i.unit, price: i.price }));
+    const materialWithParams = materialItems.map(i => ({ ...i, params: parseMaterialParams(i.name) }));
+
+    for (const file of queue) {
+      try {
+        setRecognizedFile(file);
+        const kpData = await recognizeKpFile(file);
+        const fallbackName = file.name.replace(/\.[^.]+$/, "");
+        const suppName = (kpData.supplier && kpData.supplier.trim()) || fallbackName;
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        const isExcel = ext === "xlsx" || ext === "xls";
+
+        const { data: supplier, error: insertError } = await (supabase
+          .from("kp_suppliers" as any).insert({
+            organization_id: orgId,
+            folder_id: folderId,
+            supplier_name: suppName,
+            file_name: file.name,
+            file_type: isExcel ? "xlsx" : "pdf",
+            status: "recognized",
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+          }).select().single() as any);
+        if (insertError) throw insertError;
+        const supplierId = (supplier as any).id;
+
+        const matches: KpMatch[] = kpData.items.map((kpItem: any) => {
+          const kpParams = parseMaterialParams(kpItem.name);
+          if (kpParams.type && kpParams.diameter != null) {
+            for (const m of materialWithParams) {
+              if (isExactStructuralMatch(kpParams, m.params)) {
+                return { kpItemName: kpItem.name, kpPrice: kpItem.price, matchedItemId: m.id, matchType: "exact", similarity: 1 };
+              }
+            }
+          }
+          const r = findBestParametricMatch(kpItem.name, kpItem.unit, pricedPool);
+          if (r && (r.matchType === "parametric" || r.score >= 0.6)) {
+            return { kpItemName: kpItem.name, kpPrice: kpItem.price, matchedItemId: r.itemId, matchType: r.matchType, similarity: r.score };
+          }
+          return { kpItemName: kpItem.name, kpPrice: kpItem.price, matchedItemId: null, matchType: "none", similarity: 0 };
+        });
+
+        const toInsert = matches
+          .filter(m => m.matchedItemId && m.kpPrice != null)
+          .map(m => {
+            const item = allItems.find(i => i.id === m.matchedItemId);
+            const totalPrice = item?.quantity != null && m.kpPrice != null ? item.quantity * m.kpPrice : null;
+            return {
+              kp_supplier_id: supplierId,
+              material_item_id: m.matchedItemId!,
+              price: m.kpPrice,
+              total_price: totalPrice,
+              match_type: m.matchType,
+            };
+          });
+
+        for (const row of toInsert) {
+          await (supabase.from("kp_supplier_prices" as any).upsert(row, { onConflict: "kp_supplier_id,material_item_id" }) as any);
+        }
+
+        okCount++;
+      } catch (e: any) {
+        failCount++;
+        toast({ title: `Ошибка: ${file.name}`, description: e.message, variant: "destructive" });
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["kp-suppliers"] });
+    queryClient.invalidateQueries({ queryKey: ["kp-supplier-prices"] });
+    toast({ title: "Загрузка КП завершена", description: `Успешно: ${okCount}${failCount ? `, ошибок: ${failCount}` : ""}` });
+
+    setUploading(false);
+    setRecognizedFile(null);
+    setUploadDialogOpen(false);
+    setRecognizeStep("select");
   };
 
   // Step 2: Confirm supplier name and apply
@@ -339,20 +447,25 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
           {recognizeStep === "select" && (
             <>
               <div>
-                <label className="text-sm font-medium">1. Выберите файл КП (Excel или PDF)</label>
+                <label className="text-sm font-medium">1. Выберите файлы КП (Excel или PDF)</label>
                 <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary/50 transition-colors mt-1">
                   <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
-                  <span className="text-xs text-muted-foreground">Поставщик определится автоматически из КП</span>
+                  <span className="text-sm text-muted-foreground">Нажмите для выбора файлов</span>
+                  <span className="text-xs text-muted-foreground">Можно выбрать несколько файлов сразу — поставщик определится автоматически</span>
                   <input
                     type="file"
                     accept=".pdf,.xlsx,.xls"
+                    multiple
                     className="hidden"
                     onChange={e => {
-                      if (e.target.files?.[0]) {
-                        handleFileSelected(e.target.files[0]);
-                        e.target.value = "";
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+                      if (files.length === 1) {
+                        handleFileSelected(files[0]);
+                      } else {
+                        handleMultipleFilesSelected(files);
                       }
+                      e.target.value = "";
                     }}
                   />
                 </label>
