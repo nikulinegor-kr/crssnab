@@ -447,20 +447,25 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
           {recognizeStep === "select" && (
             <>
               <div>
-                <label className="text-sm font-medium">1. Выберите файл КП (Excel или PDF)</label>
+                <label className="text-sm font-medium">1. Выберите файлы КП (Excel или PDF)</label>
                 <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary/50 transition-colors mt-1">
                   <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Нажмите для выбора файла</span>
-                  <span className="text-xs text-muted-foreground">Поставщик определится автоматически из КП</span>
+                  <span className="text-sm text-muted-foreground">Нажмите для выбора файлов</span>
+                  <span className="text-xs text-muted-foreground">Можно выбрать несколько файлов сразу — поставщик определится автоматически</span>
                   <input
                     type="file"
                     accept=".pdf,.xlsx,.xls"
+                    multiple
                     className="hidden"
                     onChange={e => {
-                      if (e.target.files?.[0]) {
-                        handleFileSelected(e.target.files[0]);
-                        e.target.value = "";
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+                      if (files.length === 1) {
+                        handleFileSelected(files[0]);
+                      } else {
+                        handleMultipleFilesSelected(files);
                       }
+                      e.target.value = "";
                     }}
                   />
                 </label>
