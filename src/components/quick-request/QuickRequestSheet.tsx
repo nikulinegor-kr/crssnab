@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Plus, Zap, X, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Zap, ExternalLink } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -10,13 +10,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -270,17 +263,20 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90dvh]">
-          <DrawerHeader className="text-left">
-            <DrawerTitle>{header}</DrawerTitle>
-            <DrawerDescription>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="p-0 flex flex-col max-h-[90dvh] rounded-t-xl"
+        >
+          <SheetHeader className="px-4 pt-4 pb-2 border-b text-left">
+            <SheetTitle>{header}</SheetTitle>
+            <SheetDescription>
               Введите название — остальное заполните позже.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="overflow-y-auto">{body}</div>
-        </DrawerContent>
-      </Drawer>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">{body}</div>
+        </SheetContent>
+      </Sheet>
     );
   }
 
