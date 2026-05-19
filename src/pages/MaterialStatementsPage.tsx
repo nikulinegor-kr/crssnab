@@ -110,6 +110,22 @@ interface KpItem { name: string; unit: string | null; price: number | null; }
 interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; matchType?: "exact" | "fuzzy" | "parametric"; matchDescription?: string | null; }
 interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; matchDescription?: string | null; }
 
+const MAX_KP_BATCH_UPLOAD = 6;
+
+const sanitizeStorageName = (name: string): string => {
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  const cleanBase = base
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "file";
+  const cleanExt = ext.replace(/[^a-zA-Z0-9.]/g, "");
+  return cleanBase + cleanExt;
+};
+
 export default function MaterialStatementsPage() {
   const { currentOrgId: orgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -170,6 +186,7 @@ export default function MaterialStatementsPage() {
   const [kpApplying, setKpApplying] = useState(false);
   const [kpFileName, setKpFileName] = useState<string>("");
   const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
+  const [kpQueue, setKpQueue] = useState<File[]>([]);
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
