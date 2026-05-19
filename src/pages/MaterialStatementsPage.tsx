@@ -1939,9 +1939,13 @@ export default function MaterialStatementsPage() {
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
                                   <Trash2 className="h-4 w-4 mr-1" /> Удалить
                                 </Button>
-                                <Button size="sm" onClick={() => { setProcurementMode("selected"); setProcurementDialogOpen(true); }}>
+                                <Button size="sm" onClick={() => {
+                                  const picked = stItems.filter(i => selectedItemIds.has(i.id));
+                                  handleQuickCreateRequestsFromMaterials(picked);
+                                }}>
                                   <ShoppingCart className="h-4 w-4 mr-1" /> Заявка
                                 </Button>
+
                               </>
                             )}
                             {stItems.length > 0 && (
