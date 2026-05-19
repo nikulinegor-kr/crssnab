@@ -110,6 +110,22 @@ interface KpItem { name: string; unit: string | null; price: number | null; }
 interface KpMatch { kpItem: KpItem; matchedItemId: string | null; matchedItemName: string | null; oldPrice: number | null; similarity: number; autoMatched: boolean; status: "updated" | "not_found"; matchType?: "exact" | "fuzzy" | "parametric"; matchDescription?: string | null; }
 interface KpApplyLog { materialName: string; oldPrice: number | null; newPrice: number | null; status: "updated" | "not_found"; fileName?: string; matchDescription?: string | null; }
 
+const MAX_KP_BATCH_UPLOAD = 6;
+
+const sanitizeStorageName = (name: string): string => {
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  const cleanBase = base
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "file";
+  const cleanExt = ext.replace(/[^a-zA-Z0-9.]/g, "");
+  return cleanBase + cleanExt;
+};
+
 export default function MaterialStatementsPage() {
   const { currentOrgId: orgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -170,6 +186,7 @@ export default function MaterialStatementsPage() {
   const [kpApplying, setKpApplying] = useState(false);
   const [kpFileName, setKpFileName] = useState<string>("");
   const [kpApplyLog, setKpApplyLog] = useState<KpApplyLog[]>([]);
+  const [kpQueue, setKpQueue] = useState<File[]>([]);
 
   // ZIP download state
   const [downloadingZip, setDownloadingZip] = useState(false);
@@ -1005,7 +1022,7 @@ export default function MaterialStatementsPage() {
 
 
   // KP Upload & Matching
-  const handleKpUpload = async (file: File) => {
+  const processKpUpload = async (file: File, queueAfter: File[] = []) => {
     if (!orgId || allItems.length === 0) {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
       return;
@@ -1035,7 +1052,8 @@ export default function MaterialStatementsPage() {
         data = result;
       } else {
         // PDF — upload and send URL
-        const path = `${orgId}/kp/${Date.now()}_${file.name}`;
+        const safeName = sanitizeStorageName(file.name);
+        const path = `${orgId}/kp/${Date.now()}_${safeName}`;
         const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
@@ -1076,7 +1094,29 @@ export default function MaterialStatementsPage() {
     } catch (e: any) {
       toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
       setKpDialogOpen(false);
+      if (queueAfter.length > 0) {
+        const [nextFile, ...rest] = queueAfter;
+        setKpQueue(rest);
+        void processKpUpload(nextFile, rest);
+      }
     } finally { setKpLoading(false); }
+  };
+
+  const handleKpUpload = async (inputFiles: FileList | File[]) => {
+    const files = Array.from(inputFiles || []);
+    if (files.length === 0) return;
+
+    const queue = files.slice(0, MAX_KP_BATCH_UPLOAD);
+    if (files.length > MAX_KP_BATCH_UPLOAD) {
+      toast({
+        title: `Загружено ${MAX_KP_BATCH_UPLOAD} из ${files.length}`,
+        description: `За раз можно обработать до ${MAX_KP_BATCH_UPLOAD} файлов КП`,
+      });
+    }
+
+    const [firstFile, ...rest] = queue;
+    setKpQueue(rest);
+    await processKpUpload(firstFile, rest);
   };
 
   const handleKpMatchChange = (index: number, itemId: string | null) => {
@@ -1144,6 +1184,12 @@ export default function MaterialStatementsPage() {
       setKpDialogOpen(false); setKpMatches([]);
       setKpOverwriteManual(false); setKpManualItems([]);
       console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
+
+      if (kpQueue.length > 0) {
+        const [nextFile, ...rest] = kpQueue;
+        setKpQueue(rest);
+        void processKpUpload(nextFile, rest);
+      }
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
     } finally { setKpApplying(false); }
@@ -1756,8 +1802,8 @@ export default function MaterialStatementsPage() {
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
-                      <input type="file" accept=".pdf,.xlsx,.xls" className="hidden"
-                        onChange={e => { if (e.target.files?.[0]) { handleKpUpload(e.target.files[0]); e.target.value = ""; } }}
+                      <input type="file" accept=".pdf,.xlsx,.xls" multiple className="hidden"
+                        onChange={e => { if (e.target.files?.length) { handleKpUpload(e.target.files); e.target.value = ""; } }}
                       />
                     </label>
                   </Button>
