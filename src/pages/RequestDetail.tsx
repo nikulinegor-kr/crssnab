@@ -47,6 +47,7 @@ import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
 import { RequestNotificationsCard } from "@/components/request/RequestNotificationsCard";
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
+import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
 
 interface Activity {
   id: string;
@@ -915,6 +916,11 @@ export default function RequestDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Ведомость материалов — текст для поставщика */}
+            {currentOrgId && (
+              <SupplierTextBlock requestId={request.id} organizationId={currentOrgId} />
+            )}
 
             {/* 6. Activity Feed - System history separated */}
             <RequestActivityFeed activities={activities} />
