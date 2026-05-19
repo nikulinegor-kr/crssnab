@@ -8,9 +8,10 @@ import type { Request } from "@/hooks/useRequests";
 interface Props {
   column: ColumnDef;
   requests: (Request & { items_count?: number })[];
+  onOpen?: (id: string) => void;
 }
 
-export function BoardColumn({ column, requests }: Props) {
+export function BoardColumn({ column, requests, onOpen }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
@@ -34,7 +35,7 @@ export function BoardColumn({ column, requests }: Props) {
           strategy={verticalListSortingStrategy}
         >
           {requests.map((r) => (
-            <BoardCard key={r.id} request={r} />
+            <BoardCard key={r.id} request={r} onOpen={onOpen} />
           ))}
         </SortableContext>
         {requests.length === 0 && (
