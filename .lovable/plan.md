@@ -1,56 +1,69 @@
-Two large initiatives. I'll outline the plan so we agree on scope before I start touching ~30+ files.
+## Доска (Kanban) — план реализации
 
-## 1. Mobile optimization
+Новый view для существующей сущности `requests`. Без новых таблиц для задач — работаем с теми же заявками.
 
-### Global (index.css, main layout)
-- Switch all `100vh` to `100dvh`, add `viewport-fit=cover` to `index.html`, enable safe-area insets (`env(safe-area-inset-*)`).
-- Add iOS input fix: `font-size: 16px` on inputs/selects/textareas at <768px to prevent Safari zoom + scroll jump.
-- Lock body horizontal overflow + add `overscroll-behavior: contain` on scroll containers.
-- Use `interactive-widget=resizes-content` viewport meta to fix keyboard overlap.
-- Increase tap targets to min 44×44 px on mobile (buttons, icon-buttons, table actions).
+### 1. Маршрут и навигация
+- Новый маршрут `/board` в `src/App.tsx` (lazy-loaded `BoardPage`).
+- Пункт в `AppSidebar` с иконкой `LayoutDashboard` («Доска»), разместить рядом с «Заявки».
+- В `MobileBottomNav` добавить иконку для быстрого доступа.
 
-### Forms (Create/Edit Request, Telegram, etc.)
-- Replace Dialog with Drawer on mobile (already partial — extend to EditRequest, Telegram dialogs).
-- Add **sticky bottom action bar** inside drawers with Save/Cancel; respects safe-area + keyboard.
-- Prevent input refocus jumps: stable keys, no conditional re-mounting on each keystroke.
-- Auto-scroll focused input into view above keyboard.
+### 2. Страница `src/pages/BoardPage.tsx`
+Состав:
+- Шапка: поиск, быстрые фильтры (Все / Мои / Срочные / Просроченные / Без ответа / Без поставщика), переключатель «Доска / Таблица» (ссылка на `/requests`).
+- Колонки статусов:
+  - Новая, В работе, Запрос КП, Ожидание ответа, Согласование, Оплачено, Доставка, Завершено.
+  - Маппинг существующих русских статусов из БД (`Новая заявка`, `В работе`, `Запрос КП`, `Ожидание КП`, `На согласовании`, `Оплачено`, `В пути` / `Доставлено в ТК`, `Доставлено`) — нормализация в утилите `src/lib/boardStatuses.ts`.
+- Горизонтальный скролл колонок. На мобильном — swipe + sticky фильтры.
 
-### Tables → Cards on mobile
-- RequestsTable: render card layout < md breakpoint (status badge + REQ description + date + executor + amount on top; action buttons larger).
-- Same treatment for Shipments, Procurement, Warehouse where applicable (Requests prioritized; others in follow-up).
+### 3. Drag & Drop
+- Библиотека `@dnd-kit/core` + `@dnd-kit/sortable` (легче `react-beautiful-dnd`, поддержка touch).
+- При drop:
+  - Optimistic update в React Query кеше.
+  - `UPDATE requests SET status = ... WHERE id = ...`.
+  - Триггер `log_request_activity` уже логирует смену статуса — отдельно ничего не пишем.
 
-### Navigation
-- Add **bottom navigation bar** on mobile: Заявки · + (Быстрая заявка) · Уведомления · Настройки.
-- Hide desktop sidebar on mobile; keep hamburger for full menu.
+### 4. Карточка `src/components/board/BoardCard.tsx`
+Компактная: описание (title), контрагент, ответственный (avatar+имя из `executor` или нового `assignee_id`), дата (`delivery_date`), бейдж приоритета, число позиций (`request_items.count`), статус оплаты, цветовая полоса слева по `priority`. Бейджи: «Срочно», «Просрочено» (delivery_date < now), «Нет поставщика».
 
-### Performance
-- Audit re-renders in RequestsTable (memoize rows, columns).
-- Add `react-window` virtualization for long lists (Requests, Nomenclature, MovementJournal) — only if list >100 rows.
-- Debounce search inputs (already 300–400ms in selectors; extend to global search).
+Быстрые действия (popover на «…»): открыть заявку, копировать текст поставщику, Telegram (`https://t.me/...`), WhatsApp (`https://wa.me/...`), позвонить (`tel:`), документы.
 
-## 2. Быстрая заявка (Quick Request)
+### 5. Фильтр «Мои»
+- Использовать текущего пользователя (`useAuth`), сравнивать с `executor` / `created_by` / `assignee_id`.
 
-### Data
-- Reuse existing `requests` table. Insert with: `description=<title>`, `status='Новая'`, `created_at=now()`, `created_by=auth.uid()`, `organization_id`, `priority='Средний'` (default), other fields null.
-- No migration needed if all other columns are nullable / have defaults. I'll verify and add a tiny migration only if required.
+### 6. Realtime
+- `supabase.channel('board-requests').on('postgres_changes', { table: 'requests' })` — инвалидация query на UPDATE/INSERT/DELETE.
+- Включить realtime publication для `requests` (миграция: `ALTER PUBLICATION supabase_realtime ADD TABLE public.requests;` если ещё не добавлена).
 
-### UI components
-- `QuickRequestSheet.tsx` — bottom Drawer/Sheet with two tabs: **Одна** | **Несколько (до 5)**.
-  - Single: one input + «Создать». After insert: toast with «Открыть» action.
-  - Bulk: 5 input rows, only filled ones submitted. After: list of created with «Открыть» / «Создать ещё».
-- `QuickRequestFab.tsx` — floating «+ Быстрая заявка» button, visible on all authed pages (bottom-right above bottom-nav on mobile).
-- Global keyboard shortcut `Q` to open on desktop.
-- Integrate trigger into the new bottom-nav center «+» button.
+### 7. Activity Log
+Уже есть таблица `request_activities` + триггер. На карточке клик «История» открывает drawer с `RequestActivityFeed`.
 
-### UX details
-- Instant insert via `supabase.from('requests').insert(...).select().single()`.
-- Autofocus first input; Enter submits single, Enter on bulk moves to next row, Cmd/Ctrl+Enter submits all.
-- Optimistic UI — request appears in cache via `queryClient.invalidateQueries(['requests'])`.
+### 8. Назначение сотрудников
+Сейчас уже есть `executor` (text) и `applicant_user_id`. Для будущей гибкости — необязательная миграция: добавить `assignee_id uuid` в `requests` (NULL допустим, FK на `auth.users` нельзя — оставляем без FK, как в проекте). Пока используем `executor` для аватара через `request_participants`.
 
-## Phasing (so we can ship incrementally)
-1. **Phase A — Quick Request** (smaller, high value): QuickRequestSheet + FAB + shortcut. Verify insert works with current schema.
-2. **Phase B — Mobile core**: dvh/safe-area/viewport meta, input zoom fix, sticky drawer footer, bottom navigation.
-3. **Phase C — Mobile tables**: Requests card view on mobile.
-4. **Phase D — Performance**: memoization + virtualization where measured.
+Решение: **не добавляем колонку сейчас**, чтобы не ломать формы. Используем `executor` + lookup в `request_participants` для avatar/имени. Расширение оставим как TODO.
 
-Confirm and I'll start with **Phase A + B** in this turn (they're the highest-impact and don't conflict), then continue with C and D.
+### 9. Мобильная адаптация
+- На viewport <768: одна колонка во весь экран, swipe между ними (snap scroll), sticky фильтр-bar, карточка по тапу → drawer с деталями.
+
+### 10. Производительность
+- Используем существующий `useRequests(false)` с пагинацией .range.
+- `useMemo` группировка по статусам.
+
+### Файлы
+Новые:
+- `src/pages/BoardPage.tsx`
+- `src/components/board/BoardColumn.tsx`
+- `src/components/board/BoardCard.tsx`
+- `src/components/board/BoardFilters.tsx`
+- `src/lib/boardStatuses.ts`
+
+Изменения:
+- `src/App.tsx` — маршрут.
+- `src/components/AppSidebar.tsx` — пункт меню.
+- Миграция (если нужно): `ALTER PUBLICATION supabase_realtime ADD TABLE public.requests;`.
+
+### Зависимости
+`bun add @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
+
+### Что НЕ делаем в этой итерации (зафиксировано в коде TODO)
+- SLA-движок, KPI-дашборд по сотрудникам, отдельные роли (помощник/логист/снабженец) — добавим в следующих итерациях, как и просили («заложить основу»). Архитектура (один request, разные view) этому не мешает.
