@@ -20,6 +20,7 @@ import {
   Files,
   Bot,
   ShieldAlert,
+  KanbanSquare,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -54,6 +55,7 @@ const menuGroups = [
     items: [
       { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { title: "Заявки", url: "/requests", icon: FileText },
+      { title: "Доска", url: "/board", icon: KanbanSquare },
     ],
   },
   {

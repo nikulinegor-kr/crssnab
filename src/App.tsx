@@ -51,6 +51,7 @@ const ProcurementPlanPage = lazyWithRetry(() => import("./pages/ProcurementPlanP
 const SupplyDashboardPage = lazyWithRetry(() => import("./pages/SupplyDashboardPage"));
 const MovementJournalPage = lazyWithRetry(() => import("./pages/MovementJournalPage"));
 const MaterialStatementsPage = lazyWithRetry(() => import("./pages/MaterialStatementsPage"));
+const BoardPage = lazyWithRetry(() => import("./pages/BoardPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
@@ -147,6 +148,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <Requests />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/board"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BoardPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
