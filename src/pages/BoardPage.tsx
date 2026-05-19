@@ -291,7 +291,7 @@ export default function BoardPage() {
                   <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
                     История
                   </div>
-                  <RequestActivityFeed requestId={openRequest.id} />
+                  <BoardActivity requestId={openRequest.id} />
                 </div>
               </div>
 
