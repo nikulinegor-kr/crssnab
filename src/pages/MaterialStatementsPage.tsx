@@ -114,6 +114,7 @@ export default function MaterialStatementsPage() {
   const { currentOrgId: orgId } = useCurrentOrganization();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Selection state
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
