@@ -6,6 +6,8 @@ import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./GlobalSearch";
 import { PermissionRoute } from "./PermissionRoute";
 import { FloatingAiChat } from "./FloatingAiChat";
+import { MobileBottomNav } from "./MobileBottomNav";
+import { QuickRequestFab } from "./quick-request/QuickRequestFab";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
@@ -75,8 +77,12 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
               </div>
             )}
           </main>
+          {/* Bottom spacer so content isn't hidden behind mobile nav */}
+          <div className="h-16 md:hidden" aria-hidden />
         </div>
         <FloatingAiChat />
+        <QuickRequestFab />
+        <MobileBottomNav />
       </div>
     </SidebarProvider>
   );
