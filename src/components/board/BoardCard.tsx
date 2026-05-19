@@ -46,7 +46,7 @@ function priorityColor(p: string | null | undefined) {
   }
 }
 
-export function BoardCard({ request, overlay }: Props) {
+export function BoardCard({ request, overlay, onOpen }: Props) {
   const { toast } = useToast();
   const sortable = useSortable({ id: request.id, data: { request } });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortable;
@@ -74,12 +74,20 @@ export function BoardCard({ request, overlay }: Props) {
     toast({ title: "Скопировано" });
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (overlay) return;
+    // Не открываем drawer, если клик пришёл из меню/кнопки
+    if ((e.target as HTMLElement).closest("[data-no-card-open]")) return;
+    onOpen?.(request.id);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      onClick={handleCardClick}
       className={cn(
         "group relative rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
         overlay && "shadow-xl ring-2 ring-primary/40 rotate-1"
@@ -95,17 +103,13 @@ export function BoardCard({ request, overlay }: Props) {
 
       <div className="p-3 pl-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <Link
-            to={`/requests/${request.id}`}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="text-sm font-medium leading-snug line-clamp-2 hover:text-primary"
-          >
+          <div className="text-sm font-medium leading-snug line-clamp-2">
             {title}
-          </Link>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
+                data-no-card-open
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
                 className="text-muted-foreground hover:text-foreground p-0.5 -mr-1 rounded"
@@ -114,7 +118,7 @@ export function BoardCard({ request, overlay }: Props) {
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48" data-no-card-open>
               <DropdownMenuItem asChild>
                 <Link to={`/requests/${request.id}`}>
                   <ExternalLink className="h-4 w-4 mr-2" /> Открыть заявку
