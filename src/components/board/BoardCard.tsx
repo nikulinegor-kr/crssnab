@@ -197,10 +197,9 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
             ) : (
               <span className="opacity-60">— исп.</span>
             )}
-            {request.items_count != null && request.items_count > 0 && (
-              <span className="flex items-center gap-0.5">
-                <Package className="h-3 w-3" />
-                {request.items_count}
+            {request.updated_at && (
+              <span className="opacity-70 truncate">
+                {format(new Date(request.updated_at), "d MMM HH:mm", { locale: ru })}
               </span>
             )}
           </div>
