@@ -833,17 +833,22 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     return (
       <>
         {exitWarningDialog}
-        <Drawer open={open} onOpenChange={handleOpenChange} dismissible={false}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>{children}</DrawerTrigger>
-          <DrawerContent className="mt-0 h-[90dvh] max-h-[90dvh] w-full max-w-full overflow-hidden flex flex-col">
-            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0 flex items-center justify-between">
-              <DrawerTitle>Новая заявка</DrawerTitle>
+          <SheetContent
+            side="bottom"
+            className="p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
+            <SheetHeader className="text-left border-b pb-3 pt-3 px-4 flex-shrink-0 flex-row items-center justify-between space-y-0">
+              <SheetTitle>Новая заявка</SheetTitle>
               <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0">
                 ✕
               </Button>
-            </DrawerHeader>
-            <DrawerDescription className="sr-only">Заполните форму для создания заявки</DrawerDescription>
-            <div 
+            </SheetHeader>
+            <SheetDescription className="sr-only">Заполните форму для создания заявки</SheetDescription>
+            <div
               className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
             >
               {formContent}
@@ -851,8 +856,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             <div className="shrink-0 border-t bg-background/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               {mobileActions}
             </div>
-          </DrawerContent>
-        </Drawer>
+          </SheetContent>
+        </Sheet>
       </>
     );
   }
