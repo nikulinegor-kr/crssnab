@@ -30,6 +30,7 @@ interface Props {
     items_count?: number;
   };
   overlay?: boolean;
+  onOpen?: (id: string) => void;
 }
 
 function priorityColor(p: string | null | undefined) {
