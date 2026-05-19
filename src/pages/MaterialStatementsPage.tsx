@@ -1797,8 +1797,8 @@ export default function MaterialStatementsPage() {
                   <Button variant="outline" size="sm" asChild>
                     <label className="cursor-pointer">
                       <FileSpreadsheet className="h-4 w-4 mr-1" /> Загрузить КП
-                      <input type="file" accept=".pdf,.xlsx,.xls" className="hidden"
-                        onChange={e => { if (e.target.files?.[0]) { handleKpUpload(e.target.files[0]); e.target.value = ""; } }}
+                      <input type="file" accept=".pdf,.xlsx,.xls" multiple className="hidden"
+                        onChange={e => { if (e.target.files?.length) { handleKpUpload(e.target.files); e.target.value = ""; } }}
                       />
                     </label>
                   </Button>
