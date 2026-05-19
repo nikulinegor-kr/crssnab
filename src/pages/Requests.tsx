@@ -40,6 +40,7 @@ const Requests = () => {
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const { canCreate } = useUserRole();
+  const { open: openQuickRequest } = useQuickRequest();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
