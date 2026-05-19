@@ -917,6 +917,11 @@ export default function RequestDetail() {
               </CardContent>
             </Card>
 
+            {/* Ведомость материалов — текст для поставщика */}
+            {currentOrgId && (
+              <SupplierTextBlock requestId={request.id} organizationId={currentOrgId} />
+            )}
+
             {/* 6. Activity Feed - System history separated */}
             <RequestActivityFeed activities={activities} />
           </div>
