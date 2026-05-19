@@ -896,6 +896,113 @@ export default function MaterialStatementsPage() {
     }
   };
 
+  // Умная генерация общего названия для объединённой заявки
+  const generateMergedTitle = (items: MaterialItem[]): string => {
+    const names = items.map(i => (i.name || "").trim()).filter(Boolean);
+    if (names.length === 0) return "Закупка материалов";
+    if (names.length === 1) return names[0];
+    const wordsArr = names.map(n => n.split(/\s+/));
+    const minLen = Math.min(...wordsArr.map(w => w.length));
+    const prefix: string[] = [];
+    for (let i = 0; i < minLen; i++) {
+      const w = wordsArr[0][i];
+      if (wordsArr.every(arr => arr[i]?.toLowerCase() === w.toLowerCase())) {
+        prefix.push(w);
+      } else break;
+    }
+    if (prefix.length >= 1) {
+      const title = prefix.join(" ").replace(/[,;:\-—]+$/, "").trim();
+      if (title.length >= 3) return title;
+    }
+    const first = wordsArr[0][0] || "Материалы";
+    return `${first} и ещё ${names.length - 1}`;
+  };
+
+  // Объединить выбранные материалы в одну заявку
+  const handleMergeCreateRequestFromMaterials = async (items: MaterialItem[]) => {
+    if (!orgId || items.length === 0) return;
+    const available = items.filter(i => !i.procurement_status || i.procurement_status === "none");
+    if (available.length === 0) {
+      toast({ title: "Нет материалов для заявки", description: "Все выбранные позиции уже в закупке", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Не авторизован");
+
+      const { count: existingCount } = await supabase
+        .from("requests")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", orgId);
+      const baseCount = existingCount || 0;
+
+      const objectName = selectedObj?.name;
+      const sectionName = selectedSection?.name;
+      const today = new Date().toISOString().split("T")[0];
+
+      const title = generateMergedTitle(available);
+      const suppliers = Array.from(new Set(available.map(i => i.supplier).filter(Boolean))) as string[];
+
+      const commentLines = [
+        `Позиций: ${available.length}`,
+        suppliers.length > 0 && `Поставщик: ${suppliers.join(", ")}`,
+        objectName && `Объект: ${objectName}${sectionName ? ` / ${sectionName}` : ""}`,
+      ].filter(Boolean);
+
+      const { data: newReq, error } = await supabase
+        .from("requests")
+        .insert({
+          organization_id: orgId,
+          created_by: user.id,
+          request_number: `M-${baseCount + 1}`,
+          description: title,
+          contractor: suppliers.length === 1 ? suppliers[0] : null,
+          comments: commentLines.join("\n") || null,
+          status: "Новая заявка",
+          priority: "Планово",
+          request_date: today,
+          request_type: "Закупка материалов",
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const requestItems = available.map(item => ({
+        request_id: newReq.id,
+        organization_id: orgId,
+        name: item.name,
+        quantity: item.quantity || 1,
+        article: item.type_mark || null,
+      }));
+      await supabase.from("request_items").insert(requestItems);
+
+      for (const item of available) {
+        await (supabase.from("material_statement_items" as any)
+          .update({
+            procurement_request_id: newReq.id,
+            procurement_status: "in_procurement",
+          })
+          .eq("id", item.id) as any);
+      }
+
+      setSelectedItemIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+
+      toast({
+        title: `Создана объединённая заявка: ${available.length} поз.`,
+        description: `«${title}» — открываю...`,
+      });
+      navigate(`/requests/${newReq.id}`);
+    } catch (e: any) {
+      toast({ title: "Ошибка создания заявки", description: e.message, variant: "destructive" });
+    }
+  };
+
+
+
+
 
   // KP Upload & Matching
   const handleKpUpload = async (file: File) => {
