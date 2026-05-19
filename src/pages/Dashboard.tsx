@@ -11,6 +11,7 @@ import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
+import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
@@ -317,6 +318,16 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2">
             <DashboardWidgetSettings />
+            <Button
+              onClick={openQuickRequest}
+              size="sm"
+              title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
+              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white border-0"
+            >
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">Быстрая заявка</span>
+              <span className="sm:hidden">Быстро</span>
+            </Button>
             <CreateRequestDialog>
               <Button size="sm" className="gap-1.5">
                 <Plus className="h-4 w-4" /> Новая заявка
