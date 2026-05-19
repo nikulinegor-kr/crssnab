@@ -11,6 +11,7 @@ import { AppLayout } from "./components/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
 import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
+import { QuickRequestProvider } from "./components/quick-request/QuickRequestProvider";
 
 // Lazy load all pages with retry mechanism for code splitting
 const Index = lazyWithRetry(() => import("./pages/Index"));
@@ -97,6 +98,7 @@ const App = () => {
           <Sonner />
           <NetworkStatusIndicator />
           <BrowserRouter>
+          <QuickRequestProvider>
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -478,6 +480,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
+          </QuickRequestProvider>
           </BrowserRouter>
         </ErrorBoundary>
       </TooltipProvider>
