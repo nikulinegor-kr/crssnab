@@ -89,6 +89,8 @@ const createQueryClient = () => new QueryClient({
 
 const App = () => {
   const [queryClient] = useState(createQueryClient);
+  useMobileKeyboardFocus();
+  
   
   return (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
