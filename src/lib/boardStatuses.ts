@@ -6,7 +6,7 @@ export type BoardColumn = {
   title: string;
   /** Канонический статус, который выставляется при дропе в эту колонку. */
   targetStatus: string;
-  /** Все статусы из БД, которые попадают в эту колонку. */
+  /** Все статусы из БД, которые попадают в эту колонку (с учётом регистра/пробелов). */
   statuses: string[];
   /** tailwind класс для акцентной полоски/бейджа колонки */
   accent: string;
@@ -17,58 +17,67 @@ export const BOARD_COLUMNS: BoardColumn[] = [
     id: "new",
     title: "Новая",
     targetStatus: "Новая заявка",
-    statuses: ["Новая заявка"],
+    statuses: ["Новая заявка", "Новая"],
     accent: "bg-sky-500",
   },
   {
-    id: "in_work",
+    id: "in_progress",
     title: "В работе",
     targetStatus: "В работе",
     statuses: ["В работе"],
     accent: "bg-blue-500",
   },
   {
-    id: "approval",
-    title: "Согласование",
-    targetStatus: "На согласовании",
-    statuses: ["На согласовании"],
+    id: "quotation",
+    title: "Запрос КП",
+    targetStatus: "Запрос КП",
+    statuses: ["Запрос КП"],
+    accent: "bg-cyan-500",
+  },
+  {
+    id: "waiting",
+    title: "Ожидание ответа",
+    targetStatus: "Ожидание ответа",
+    statuses: ["Ожидание ответа", "Ожидание КП"],
     accent: "bg-amber-500",
   },
   {
-    id: "invoice",
-    title: "Счёт / Оплата",
-    targetStatus: "Счёт",
-    statuses: ["Счёт", "Счёт в Бухгалтерии", "Обновить счёт", "Обновить счёт "],
+    id: "approval",
+    title: "Согласование",
+    targetStatus: "На согласовании",
+    statuses: ["На согласовании", "Согласование"],
+    accent: "bg-yellow-500",
+  },
+  {
+    id: "paid",
+    title: "Оплачено",
+    targetStatus: "Оплачено",
+    statuses: ["Оплачено", "Счёт", "Счёт в Бухгалтерии", "Обновить счёт", "Обновить счёт ", "Счёт "],
     accent: "bg-orange-500",
   },
   {
-    id: "ready",
-    title: "К отгрузке",
-    targetStatus: "Готов к отгрузке",
-    statuses: ["Готов к отгрузке", "Готов к отгрузке "],
-    accent: "bg-violet-500",
-  },
-  {
-    id: "transit",
-    title: "В пути",
+    id: "shipping",
+    title: "Доставка",
     targetStatus: "В пути",
-    statuses: ["В пути", "Доставлено в ТК"],
+    statuses: ["Доставка", "Готов к отгрузке", "Готов к отгрузке ", "В пути", "Доставлено в ТК"],
     accent: "bg-indigo-500",
   },
   {
-    id: "done",
-    title: "Доставлено",
+    id: "completed",
+    title: "Завершено",
     targetStatus: "Доставлено",
-    statuses: ["Доставлено", "Выполнено"],
+    statuses: ["Завершено", "Доставлено", "Выполнено"],
     accent: "bg-emerald-500",
   },
 ];
 
+const norm = (s: string) => s.trim().toLowerCase();
+
 export function getColumnIdForStatus(status: string | null | undefined): string {
   if (!status) return "new";
-  const s = status.trim();
+  const s = norm(status);
   for (const col of BOARD_COLUMNS) {
-    if (col.statuses.some((cs) => cs.trim() === s)) return col.id;
+    if (col.statuses.some((cs) => norm(cs) === s)) return col.id;
   }
   return "new";
 }
