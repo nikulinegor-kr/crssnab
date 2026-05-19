@@ -120,6 +120,7 @@ function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType; 
 
 const Dashboard = () => {
   const rawNavigate = useNavigate();
+  const { open: openQuickRequest } = useQuickRequest();
   // Clear saved filters before navigating to /requests so dashboard filter is the only active one
   const navigate = useCallback((path: string) => {
     if (path.startsWith("/requests")) {
