@@ -804,6 +804,99 @@ export default function MaterialStatementsPage() {
     toast({ title: `${count} поз. помечены как «${label}»` });
   };
 
+  // Быстрое создание заявок из выбранных строк ведомости (одна заявка на материал)
+  const handleQuickCreateRequestsFromMaterials = async (items: MaterialItem[]) => {
+    if (!orgId || items.length === 0) return;
+    // Не создаём заявки на уже привязанные к закупке позиции
+    const available = items.filter(i => !i.procurement_status || i.procurement_status === "none");
+    if (available.length === 0) {
+      toast({ title: "Нет материалов для заявки", description: "Все выбранные позиции уже в закупке", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Не авторизован");
+
+      const { count: existingCount } = await supabase
+        .from("requests")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", orgId);
+      const baseCount = existingCount || 0;
+
+      const objectName = selectedObj?.name;
+      const sectionName = selectedSection?.name;
+      const today = new Date().toISOString().split("T")[0];
+
+      const createdIds: string[] = [];
+      for (let i = 0; i < available.length; i++) {
+        const item = available[i];
+        const qtyStr = item.quantity != null
+          ? `${Number(item.quantity).toLocaleString("ru-RU")}${item.unit ? ` ${item.unit}` : ""}`
+          : null;
+        const commentLines = [
+          qtyStr && `Количество: ${qtyStr}`,
+          item.type_mark && `Марка: ${item.type_mark}`,
+          item.supplier && `Поставщик: ${item.supplier}`,
+          objectName && `Объект: ${objectName}${sectionName ? ` / ${sectionName}` : ""}`,
+        ].filter(Boolean);
+
+        const { data: newReq, error } = await supabase
+          .from("requests")
+          .insert({
+            organization_id: orgId,
+            created_by: user.id,
+            request_number: `M-${baseCount + i + 1}`,
+            description: item.name || "Материал",
+            comments: commentLines.join("\n") || null,
+            status: "Новая заявка",
+            priority: "Планово",
+            request_date: today,
+            request_type: "Закупка материалов",
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+
+        // request_items с количеством/маркой
+        await supabase.from("request_items").insert({
+          request_id: newReq.id,
+          organization_id: orgId,
+          name: item.name,
+          quantity: item.quantity || 1,
+          article: item.type_mark || null,
+        });
+
+        // Привязка позиции ведомости к заявке
+        await (supabase.from("material_statement_items" as any)
+          .update({
+            procurement_request_id: newReq.id,
+            procurement_status: "in_procurement",
+          })
+          .eq("id", item.id) as any);
+
+        createdIds.push(newReq.id);
+      }
+
+      setSelectedItemIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["material-items"] });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["section-progress-items"] });
+
+      const word = createdIds.length === 1 ? "заявка" : (createdIds.length < 5 ? "заявки" : "заявок");
+      toast({
+        title: `Создано ${createdIds.length} ${word} из ведомости материалов`,
+        description: createdIds.length === 1 ? "Открываю заявку..." : undefined,
+      });
+
+      if (createdIds.length === 1) {
+        navigate(`/requests/${createdIds[0]}`);
+      }
+    } catch (e: any) {
+      toast({ title: "Ошибка создания заявок", description: e.message, variant: "destructive" });
+    }
+  };
+
+
   // KP Upload & Matching
   const handleKpUpload = async (file: File) => {
     if (!orgId || allItems.length === 0) {
