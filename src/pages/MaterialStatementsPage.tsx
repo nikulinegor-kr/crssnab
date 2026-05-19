@@ -1022,7 +1022,7 @@ export default function MaterialStatementsPage() {
 
 
   // KP Upload & Matching
-  const handleKpUpload = async (file: File) => {
+  const processKpUpload = async (file: File, queueAfter: File[] = []) => {
     if (!orgId || allItems.length === 0) {
       toast({ title: "Нет материалов для сопоставления", description: "Сначала загрузите и распознайте ведомости", variant: "destructive" });
       return;
@@ -1052,7 +1052,8 @@ export default function MaterialStatementsPage() {
         data = result;
       } else {
         // PDF — upload and send URL
-        const path = `${orgId}/kp/${Date.now()}_${file.name}`;
+        const safeName = sanitizeStorageName(file.name);
+        const path = `${orgId}/kp/${Date.now()}_${safeName}`;
         const { error: uploadError } = await supabase.storage.from("material-statements").upload(path, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("material-statements").getPublicUrl(path);
@@ -1094,6 +1095,23 @@ export default function MaterialStatementsPage() {
       toast({ title: "Ошибка распознавания КП", description: e.message, variant: "destructive" });
       setKpDialogOpen(false);
     } finally { setKpLoading(false); }
+  };
+
+  const handleKpUpload = async (inputFiles: FileList | File[]) => {
+    const files = Array.from(inputFiles || []);
+    if (files.length === 0) return;
+
+    const queue = files.slice(0, MAX_KP_BATCH_UPLOAD);
+    if (files.length > MAX_KP_BATCH_UPLOAD) {
+      toast({
+        title: `Загружено ${MAX_KP_BATCH_UPLOAD} из ${files.length}`,
+        description: `За раз можно обработать до ${MAX_KP_BATCH_UPLOAD} файлов КП`,
+      });
+    }
+
+    const [firstFile, ...rest] = queue;
+    setKpQueue(rest);
+    await processKpUpload(firstFile, rest);
   };
 
   const handleKpMatchChange = (index: number, itemId: string | null) => {
@@ -1161,6 +1179,12 @@ export default function MaterialStatementsPage() {
       setKpDialogOpen(false); setKpMatches([]);
       setKpOverwriteManual(false); setKpManualItems([]);
       console.log("[KP Apply Log]", JSON.stringify(log, null, 2));
+
+      if (kpQueue.length > 0) {
+        const [nextFile, ...rest] = kpQueue;
+        setKpQueue(rest);
+        void processKpUpload(nextFile, rest);
+      }
     } catch (e: any) {
       toast({ title: "Ошибка применения КП", description: e.message, variant: "destructive" });
     } finally { setKpApplying(false); }
