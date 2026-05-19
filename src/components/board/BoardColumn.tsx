@@ -35,7 +35,7 @@ export function BoardColumn({ column, requests, onOpen }: Props) {
           strategy={verticalListSortingStrategy}
         >
           {requests.map((r) => (
-            <BoardCard key={r.id} request={r} />
+            <BoardCard key={r.id} request={r} onOpen={onOpen} />
           ))}
         </SortableContext>
         {requests.length === 0 && (
