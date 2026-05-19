@@ -30,7 +30,8 @@ import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
 
-import { AlertCircle, Plus, MessageCircle, ShoppingCart, Star } from "lucide-react";
+import { AlertCircle, Plus, MessageCircle, ShoppingCart, Star, Zap } from "lucide-react";
+import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
 import { cn } from "@/lib/utils";
 
 const Requests = () => {
@@ -39,6 +40,7 @@ const Requests = () => {
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const { canCreate } = useUserRole();
+  const { open: openQuickRequest } = useQuickRequest();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
@@ -305,15 +307,27 @@ const Requests = () => {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {canCreate && activeTab === "active" && (
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              size="lg"
-              className="gap-2 px-6 text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all sticky top-16 z-10"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden xs:inline">Новая заявка</span>
-              <span className="xs:hidden" aria-hidden="true">Новая</span>
-            </Button>
+            <>
+              <Button
+                onClick={openQuickRequest}
+                size="lg"
+                title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
+                className="gap-2 px-4 text-sm font-semibold shadow-md hover:shadow-lg transition-all bg-amber-500 hover:bg-amber-600 text-white border-0"
+              >
+                <Zap className="h-4 w-4" />
+                <span className="hidden sm:inline">Быстрая заявка</span>
+                <span className="sm:hidden">Быстро</span>
+              </Button>
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                size="lg"
+                className="gap-2 px-6 text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all sticky top-16 z-10"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden xs:inline">Новая заявка</span>
+                <span className="xs:hidden" aria-hidden="true">Новая</span>
+              </Button>
+            </>
           )}
         </div>
       </div>
