@@ -81,7 +81,7 @@ export default function BoardPage() {
     return requests.filter((r) => {
       if (filter === "mine") {
         if (!userId) return false;
-        if (r.created_by !== userId && r.applicant_user_id !== userId) return false;
+        if ((r as any).created_by !== userId && r.applicant_user_id !== userId) return false;
       }
       if (filter === "urgent" && !(r.priority === "Аварийно" || r.priority === "Срочно")) return false;
       if (filter === "overdue") {
