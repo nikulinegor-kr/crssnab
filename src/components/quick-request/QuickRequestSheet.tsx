@@ -263,17 +263,20 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90dvh]">
-          <DrawerHeader className="text-left">
-            <DrawerTitle>{header}</DrawerTitle>
-            <DrawerDescription>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="p-0 flex flex-col max-h-[90dvh] rounded-t-xl"
+        >
+          <SheetHeader className="px-4 pt-4 pb-2 border-b text-left">
+            <SheetTitle>{header}</SheetTitle>
+            <SheetDescription>
               Введите название — остальное заполните позже.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="overflow-y-auto">{body}</div>
-        </DrawerContent>
-      </Drawer>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">{body}</div>
+        </SheetContent>
+      </Sheet>
     );
   }
 
