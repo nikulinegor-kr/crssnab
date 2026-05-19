@@ -318,3 +318,20 @@ function Field({ label, value }: { label: string; value: string | null | undefin
     </div>
   );
 }
+
+function BoardActivity({ requestId }: { requestId: string }) {
+  const { data } = useQuery({
+    queryKey: ["board-activity", requestId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_activities")
+        .select("id, action, field_name, old_value, new_value, description, created_at, user_id")
+        .eq("request_id", requestId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  return <RequestActivityFeed activities={data as any} />;
+}
