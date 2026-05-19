@@ -2046,12 +2046,19 @@ export default function MaterialStatementsPage() {
                                 <Button size="sm" variant="destructive" onClick={handleBulkDeleteItems}>
                                   <Trash2 className="h-4 w-4 mr-1" /> Удалить
                                 </Button>
-                                <Button size="sm" onClick={() => {
+                                <Button size="sm" variant="outline" onClick={() => {
                                   const picked = stItems.filter(i => selectedItemIds.has(i.id));
                                   handleQuickCreateRequestsFromMaterials(picked);
                                 }}>
-                                  <ShoppingCart className="h-4 w-4 mr-1" /> Заявка
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Создать отдельно
                                 </Button>
+                                <Button size="sm" onClick={() => {
+                                  const picked = stItems.filter(i => selectedItemIds.has(i.id));
+                                  handleMergeCreateRequestFromMaterials(picked);
+                                }}>
+                                  <ShoppingCart className="h-4 w-4 mr-1" /> Объединить в заявку
+                                </Button>
+
 
                               </>
                             )}
