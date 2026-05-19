@@ -45,17 +45,24 @@ All colors MUST be HSL.
     textarea:focus,
     select:focus {
       scroll-margin-top: 120px;
-      scroll-margin-bottom: 20px;
+      scroll-margin-bottom: 120px;
     }
-    
+
+    /* Prevent iOS Safari zoom-on-focus by ensuring inputs are >=16px */
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+
     /* Fix for iOS Safari virtual keyboard */
     [data-vaul-drawer] {
-      height: 85dvh !important;
-      max-height: 85dvh !important;
+      height: 90dvh !important;
+      max-height: 90dvh !important;
     }
-    
+
     [data-vaul-drawer-content] {
-      max-height: 85dvh !important;
+      max-height: 90dvh !important;
       overflow-x: hidden !important;
       width: 100% !important;
       max-width: 100% !important;
@@ -66,6 +73,11 @@ All colors MUST be HSL.
     [data-vaul-drawer] {
       overflow-x: hidden !important;
       overscroll-behavior-x: none;
+    }
+
+    /* Larger tap targets for buttons/icon buttons */
+    button:not(.no-min-tap) {
+      min-height: 40px;
     }
   }
   
