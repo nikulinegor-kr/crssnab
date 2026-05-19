@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, type DragEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
