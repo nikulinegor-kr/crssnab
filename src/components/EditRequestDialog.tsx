@@ -1201,22 +1201,29 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   if (isMobile) {
     return (
       <>
-        <Drawer open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
-          <DrawerContent className="mt-0 h-[90dvh] max-h-[90dvh] w-full max-w-full overflow-hidden flex flex-col">
-            <DrawerHeader className="text-left border-b pb-3 pt-3 flex-shrink-0 flex items-center justify-between">
+        <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
+          <SheetContent
+            side="bottom"
+            className="p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
+            <SheetHeader className="text-left border-b pb-3 pt-3 px-4 flex-shrink-0 flex-row items-center justify-between space-y-0">
               {headerContent}
-            </DrawerHeader>
-            <div 
+            </SheetHeader>
+            <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
+            <SheetDescription className="sr-only">Изменение данных заявки</SheetDescription>
+            <div
               className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
-              style={{ 
+              style={{
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
               }}
             >
               {formContent}
             </div>
-          </DrawerContent>
-        </Drawer>
+          </SheetContent>
+        </Sheet>
         {deleteDialogContent}
         {closeConfirmDialogContent}
         {conflictDialogContent}
