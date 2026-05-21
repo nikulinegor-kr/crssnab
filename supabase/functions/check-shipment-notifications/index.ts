@@ -128,7 +128,8 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
     .select("bot_token, chat_id, deadline_chat_id")
     .eq("organization_id", orgId)
     .maybeSingle();
-  const targetChatId = tg?.deadline_chat_id || tg?.chat_id;
+  // Доставка/прибытие/просрочка — отправляем только в выделенную группу
+  const targetChatId = "-1003756750218";
   if (!tg?.bot_token || !targetChatId) return { sent: 0, skipped: "no_telegram" };
 
   // requests
