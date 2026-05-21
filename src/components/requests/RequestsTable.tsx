@@ -815,6 +815,17 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+                  {visibility.executor && (
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.executor, minWidth: widths.executor, maxWidth: widths.executor }}>
+                      {request.executor ? (
+                        <div className="line-clamp-2 leading-snug text-center text-foreground">
+                          <HighlightText text={request.executor} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
+                      )}
+                    </TableCell>
+                  )}
                   {visibility.equipment && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.equipment, minWidth: widths.equipment, maxWidth: widths.equipment }}>
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
