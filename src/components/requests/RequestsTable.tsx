@@ -499,6 +499,9 @@ export const RequestsTable = ({
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
+              {visibility.executor && (
+                <ResizableTableHeader column="executor" label="Исполнитель" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+              )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" label="Техника" width={widths.equipment} onResize={handleColumnResize} />
               )}
