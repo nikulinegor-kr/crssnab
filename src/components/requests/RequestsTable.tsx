@@ -38,6 +38,7 @@ import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
 import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
+import { InlineExecutorCell } from "./InlineExecutorCell";
 import { RequestQuickView } from "./RequestQuickView";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -817,13 +818,12 @@ export const RequestsTable = ({
                   )}
                   {visibility.executor && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.executor, minWidth: widths.executor, maxWidth: widths.executor }}>
-                      {request.executor ? (
-                        <div className="line-clamp-2 leading-snug text-center text-foreground">
-                          <HighlightText text={request.executor} searchQuery={searchQuery} />
-                        </div>
-                      ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
-                      )}
+                      <InlineExecutorCell
+                        requestId={request.id}
+                        organizationId={request.organization_id}
+                        value={request.executor}
+                        searchQuery={searchQuery}
+                      />
                     </TableCell>
                   )}
                   {visibility.equipment && (
