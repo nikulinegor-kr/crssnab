@@ -20,6 +20,7 @@ export interface ColumnWidths {
   waybill_number: number;
   amount: number;
   applicant: number;
+  executor: number;
   comments: number;
   equipment: number;
 }
@@ -42,6 +43,7 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   waybill_number: 110,
   amount: 110,
   applicant: 110,
+  executor: 130,
   comments: 150,
   equipment: 120,
 };
