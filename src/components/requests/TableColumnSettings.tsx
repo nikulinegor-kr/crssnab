@@ -25,6 +25,7 @@ export interface ColumnVisibility {
   waybill_number: boolean;
   amount: boolean;
   applicant: boolean;
+  executor: boolean;
   comments: boolean;
   equipment: boolean;
 }
@@ -45,6 +46,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   waybill_number: false,
   amount: true,
   applicant: false,
+  executor: true,
   comments: false,
   equipment: false,
 };
@@ -65,6 +67,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   waybill_number: "№ТТН",
   amount: "Стоимость",
   applicant: "Заявитель",
+  executor: "Исполнитель",
   comments: "Комментарий",
   equipment: "Техника",
 };

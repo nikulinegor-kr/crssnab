@@ -499,6 +499,9 @@ export const RequestsTable = ({
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
+              {visibility.executor && (
+                <ResizableTableHeader column="executor" label="Исполнитель" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+              )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" label="Техника" width={widths.equipment} onResize={handleColumnResize} />
               )}
@@ -810,6 +813,17 @@ export const RequestsTable = ({
                           )
                         }
                       />
+                    </TableCell>
+                  )}
+                  {visibility.executor && (
+                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.executor, minWidth: widths.executor, maxWidth: widths.executor }}>
+                      {request.executor ? (
+                        <div className="line-clamp-2 leading-snug text-center text-foreground">
+                          <HighlightText text={request.executor} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.equipment && (
