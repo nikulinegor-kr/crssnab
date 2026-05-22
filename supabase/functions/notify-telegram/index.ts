@@ -12,6 +12,10 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Hardcoded routing groups (per business rules)
+const INCOMING_REQUESTS_CHAT_ID = "-5268728373";       // first notification (status "Входящая заявка")
+const NEW_REQUESTS_CHAT_ID = "-1003141855190";         // after executor is assigned
+
 /** Fetch telegram credentials from the dedicated telegram_settings table */
 async function getTelegramSettings(orgId: string) {
   const { data, error } = await supabase
