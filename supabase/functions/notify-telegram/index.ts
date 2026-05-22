@@ -952,7 +952,6 @@ serve(async (req) => {
         } else {
           console.log("Status is NOT 'Счёт в Бухгалтерии', skipping file attachments. Current status:", request.status);
         }
-      }
     }
 
     console.log("Telegram result:", result);
