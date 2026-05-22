@@ -761,9 +761,6 @@ serve(async (req) => {
     }
 
     if (result.ok && result.result && !isIncomingRequest) {
-      // legacy block continues below
-    }
-    if (result.ok && result.result && !isIncomingRequest) {
 
         // Send invoice to separate chat if configured and status is "Счёт в Бухгалтерии"
         const invoiceChatId = org.telegram_invoice_chat_id;
