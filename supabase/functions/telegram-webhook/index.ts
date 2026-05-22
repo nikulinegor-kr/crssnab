@@ -1404,14 +1404,15 @@ async function handleMessage(message: any) {
       .eq("id", request.id)
       .single();
     
-    // 4. Get telegram settings for main group
+    // 4. Get telegram settings for bot token (chat is hardcoded to NEW_REQUESTS group)
+    const NEW_REQUESTS_CHAT_ID = "-1003141855190";
     const { data: tgSettings } = await supabase
       .from("telegram_settings")
       .select("bot_token, chat_id")
       .eq("organization_id", request.organization_id)
       .single();
     
-    if (tgSettings?.bot_token && tgSettings?.chat_id) {
+    if (tgSettings?.bot_token) {
       // Get equipment info
       let equipmentInfo = "";
       if (updatedRequest?.equipment_id) {
