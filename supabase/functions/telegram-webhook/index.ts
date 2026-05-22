@@ -1453,7 +1453,7 @@ async function handleMessage(message: any) {
       mainLines.push(`📋 Статус: Новая заявка`);
       
       const mainResult = await sendTelegramRequest("sendMessage", {
-        chat_id: tgSettings.chat_id,
+        chat_id: NEW_REQUESTS_CHAT_ID,
         text: mainLines.join("\n"),
       });
       
