@@ -62,7 +62,7 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
       request_number: buildRequestNumber(),
       request_date: today,
       description: t,
-      status: "Новая заявка",
+      status: "Входящая заявка",
       priority: "Планово",
       applicant: "—",
       created_by: user.id,
@@ -75,7 +75,12 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
       .select("id, description, request_number");
 
     if (error) throw error;
-    return data || [];
+    const created = data || [];
+    // Fire notifications (incoming group with executor selection)
+    for (const r of created) {
+      notifyTelegram(r.id, "send").catch((e) => console.error("notifyTelegram failed", e));
+    }
+    return created;
   };
 
   const handleSingleSubmit = async (e?: React.FormEvent) => {
