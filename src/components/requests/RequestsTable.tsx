@@ -39,6 +39,7 @@ import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
 import { InlineExecutorCell } from "./InlineExecutorCell";
+import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
