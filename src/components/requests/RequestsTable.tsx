@@ -39,6 +39,7 @@ import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
 import { InlineExecutorCell } from "./InlineExecutorCell";
+import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -699,24 +700,9 @@ export const RequestsTable = ({
                   )}
                   {visibility.payment_percentage && (
                     <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }}>
-                      <InlineEditCell
+                      <InlinePaymentStatusCell
                         requestId={request.id}
-                        field="payment_percent"
-                        value={(request as any).payment_percent ?? 0}
-                        displayValue={
-                          (() => {
-                            const pct = (request as any).payment_percent ?? 0;
-                            const prepay = request.payment_percentage ?? 0;
-                            const underpaid = prepay > 0 && pct < prepay;
-                            if (pct === 0) return <span className="text-destructive text-[12px]">Не оплачено</span>;
-                            if (pct >= 100) return <span className="text-emerald-600">Оплачено</span>;
-                            return (
-                              <span className={underpaid ? "text-destructive" : "text-amber-600"}>
-                                {pct}%
-                              </span>
-                            );
-                          })()
-                        }
+                        paymentPercent={(request as any).payment_percent ?? 0}
                       />
                     </TableCell>
                   )}
