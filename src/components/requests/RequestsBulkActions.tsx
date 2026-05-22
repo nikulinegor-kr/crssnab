@@ -60,6 +60,26 @@ export const RequestsBulkActions = ({
   const { currentOrgId } = useCurrentOrganization();
   const createProcurement = useCreateProcurement();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [hardDeleteOpen, setHardDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleHardDelete = async () => {
+    if (selectedRequestIds.size === 0) return;
+    setIsDeleting(true);
+    try {
+      const ids = Array.from(selectedRequestIds);
+      const { error } = await supabase.from("requests").delete().in("id", ids);
+      if (error) throw error;
+      toast({ title: "Заявки удалены", description: `Удалено навсегда: ${ids.length}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+      setHardDeleteOpen(false);
+    } catch (e: any) {
+      toast({ title: "Ошибка удаления", description: e.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch statuses for the org
   const { data: statuses } = useQuery({
