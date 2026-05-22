@@ -685,8 +685,61 @@ export const RequestsBulkActions = ({
               <span className="hidden sm:inline">В архив</span>
               <span>({selectedRequestIds.size})</span>
             </Button>
+
+            <Button
+              onClick={() => setHardDeleteOpen(true)}
+              variant="destructive"
+              className="gap-1.5 text-xs h-8 px-3 bg-red-700 hover:bg-red-800"
+              size="sm"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Удалить навсегда</span>
+              <span className="sm:hidden">Удалить</span>
+              <span>({selectedRequestIds.size})</span>
+            </Button>
           </>
         )}
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 ml-auto"
+          onClick={() => setSelectedRequestIds(new Set())}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      <BulkTransferObjectDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        selectedRequestIds={selectedRequestIds}
+        onComplete={() => setSelectedRequestIds(new Set())}
+      />
+
+      <AlertDialog open={hardDeleteOpen} onOpenChange={setHardDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить заявки навсегда?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Будет безвозвратно удалено заявок: <strong>{selectedRequestIds.size}</strong>.
+              Это действие нельзя отменить — данные исчезнут полностью, без архива.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleHardDelete}
+              disabled={isDeleting}
+              className="bg-red-700 hover:bg-red-800"
+            >
+              {isDeleting ? "Удаление..." : "Удалить навсегда"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
 
         <Button
           variant="ghost"
