@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft, CreditCard } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft, CreditCard, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BulkTransferObjectDialog } from "./BulkTransferObjectDialog";
 import { Button } from "@/components/ui/button";
 import { ExcelExportButton } from "@/components/dashboard/ExcelExportButton";
@@ -50,6 +60,26 @@ export const RequestsBulkActions = ({
   const { currentOrgId } = useCurrentOrganization();
   const createProcurement = useCreateProcurement();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [hardDeleteOpen, setHardDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleHardDelete = async () => {
+    if (selectedRequestIds.size === 0) return;
+    setIsDeleting(true);
+    try {
+      const ids = Array.from(selectedRequestIds);
+      const { error } = await supabase.from("requests").delete().in("id", ids);
+      if (error) throw error;
+      toast({ title: "Заявки удалены", description: `Удалено навсегда: ${ids.length}` });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      setSelectedRequestIds(new Set());
+      setHardDeleteOpen(false);
+    } catch (e: any) {
+      toast({ title: "Ошибка удаления", description: e.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch statuses for the org
   const { data: statuses } = useQuery({
@@ -655,6 +685,18 @@ export const RequestsBulkActions = ({
               <span className="hidden sm:inline">В архив</span>
               <span>({selectedRequestIds.size})</span>
             </Button>
+
+            <Button
+              onClick={() => setHardDeleteOpen(true)}
+              variant="destructive"
+              className="gap-1.5 text-xs h-8 px-3 bg-red-700 hover:bg-red-800"
+              size="sm"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Удалить навсегда</span>
+              <span className="sm:hidden">Удалить</span>
+              <span>({selectedRequestIds.size})</span>
+            </Button>
           </>
         )}
 
@@ -673,6 +715,28 @@ export const RequestsBulkActions = ({
         selectedRequestIds={selectedRequestIds}
         onComplete={() => setSelectedRequestIds(new Set())}
       />
+
+      <AlertDialog open={hardDeleteOpen} onOpenChange={setHardDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить заявки навсегда?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Будет безвозвратно удалено заявок: <strong>{selectedRequestIds.size}</strong>.
+              Это действие нельзя отменить — данные исчезнут полностью, без архива.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleHardDelete}
+              disabled={isDeleting}
+              className="bg-red-700 hover:bg-red-800"
+            >
+              {isDeleting ? "Удаление..." : "Удалить навсегда"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
