@@ -327,7 +327,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     defaultValues: {
       request_date: new Date().toISOString().split("T")[0],
       description: initialData?.description || "",
-      status: initialData?.status || "Новая заявка",
+      status: initialData?.status || "Входящая заявка",
       priority: initialData?.priority || "Планово",
       applicant: initialData?.applicant || "",
       executor: initialData?.executor || "",
