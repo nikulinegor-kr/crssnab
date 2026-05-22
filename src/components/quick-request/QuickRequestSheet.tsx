@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyTelegram } from "@/lib/telegram";
 
 type CreatedRequest = { id: string; description: string; request_number: string };
 
