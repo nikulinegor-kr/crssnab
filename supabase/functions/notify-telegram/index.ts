@@ -12,6 +12,10 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Hardcoded routing groups (per business rules)
+const INCOMING_REQUESTS_CHAT_ID = "-5268728373";       // first notification (status "Входящая заявка")
+const NEW_REQUESTS_CHAT_ID = "-1003141855190";         // after executor is assigned
+
 /** Fetch telegram credentials from the dedicated telegram_settings table */
 async function getTelegramSettings(orgId: string) {
   const { data, error } = await supabase
@@ -638,9 +642,12 @@ serve(async (req) => {
       }
     }
 
+    // Detect "incoming" request — these are routed ONLY to the incoming-requests group
+    const isIncomingRequest = (request.status || "").toLowerCase().includes("входящая");
+
     // Send or update message based on mode
     let result;
-    const shouldEdit = request.telegram_message_id && mode !== "send";
+    const shouldEdit = request.telegram_message_id && mode !== "send" && !isIncomingRequest;
     if (shouldEdit) {
       // Update existing message
       result = await sendTelegramRequest(org.telegram_bot_token, "editMessageText", {
@@ -663,8 +670,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-    } else {
-      // Send new message
+    } else if (!isIncomingRequest) {
+      // Send new message to MAIN chat (only for non-incoming requests)
       result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
         chat_id: org.telegram_chat_id,
         text: message,
@@ -674,7 +681,6 @@ serve(async (req) => {
       // Save message_id to database (replace array with just the new message)
       if (result.ok && result.result) {
         const newMessageId = result.result.message_id;
-        
         await supabase
           .from("requests")
           .update({ 
@@ -682,75 +688,79 @@ serve(async (req) => {
             telegram_message_ids: [newMessageId]
           })
           .eq("id", requestId);
+      }
+    } else {
+      result = { ok: true, skipped_main: true };
+    }
 
-        // ===== PROCUREMENT GROUP: send to procurement chat if status is "Входящая заявка" =====
-        const procurementChatId = org.telegram_procurement_chat_id;
-        const isIncomingRequest = (request.status || "").toLowerCase().includes("входящая");
-        const autoSendToProcurement = org.telegram_auto_send_to_procurement !== false;
-        
-        if (procurementChatId && isIncomingRequest && autoSendToProcurement) {
-          console.log("Sending to procurement chat:", procurementChatId);
-          
-          // Get equipment info if available
-          let equipmentInfo = "";
-          if (request.equipment_id) {
-            const { data: eq } = await supabase
-              .from("equipment")
-              .select("brand, model, plate_number")
-              .eq("id", request.equipment_id)
-              .maybeSingle();
-            if (eq) {
-              equipmentInfo = [eq.brand, eq.model, eq.plate_number].filter(Boolean).join(" / ");
-            }
-          }
-          
-          // Get object name
-          let objectName = "";
-          if (request.object_id) {
-            const { data: obj } = await supabase
-              .from("request_objects")
-              .select("name")
-              .eq("id", request.object_id)
-              .maybeSingle();
-            if (obj) objectName = obj.name;
-          }
-          
-          // Build procurement message
-          const procLines: string[] = [];
-          procLines.push(`📋 Новая заявка`);
-          procLines.push("");
-          procLines.push(`📅 ${new Date().toLocaleDateString("ru-RU")}`);
-          procLines.push(`🧾 ${request.description || "Без описания"}`);
-          if (request.quantity) procLines.push(`📦 Кол-во: ${request.quantity}`);
-          if (objectName) procLines.push(`🏗 Объект: ${objectName}`);
-          if (equipmentInfo) procLines.push(`🚜 Техника: ${equipmentInfo}`);
-          if (request.priority) procLines.push(`${getPriorityEmoji(request.priority)} Приоритет: ${request.priority}`);
-          if (request.applicant) procLines.push(`👤 Заявитель: ${request.applicant}`);
-          
-          const procKeyboard = {
-            inline_keyboard: [
-              [{ text: "👷 Назначить исполнителя", callback_data: `assign_exec_${requestId}` }],
-            ]
-          };
-          
-          const procResult = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
-            chat_id: procurementChatId,
-            text: procLines.join("\n"),
-            reply_markup: procKeyboard,
-          });
-          
-          // Save procurement message id
-          if (procResult.ok && procResult.result) {
-            await supabase
-              .from("requests")
-              .update({ 
-                telegram_procurement_message_id: procResult.result.message_id 
-              })
-              .eq("id", requestId);
-          }
-          
-          console.log("Procurement chat send result:", JSON.stringify(procResult));
+    // ===== INCOMING REQUESTS GROUP: send to hardcoded incoming chat when status is "Входящая заявка" =====
+    if (isIncomingRequest) {
+      const procurementChatId = INCOMING_REQUESTS_CHAT_ID;
+      console.log("Sending to incoming requests chat:", procurementChatId);
+
+      // Get equipment info if available
+      let equipmentInfo = "";
+      if (request.equipment_id) {
+        const { data: eq } = await supabase
+          .from("equipment")
+          .select("brand, model, plate_number")
+          .eq("id", request.equipment_id)
+          .maybeSingle();
+        if (eq) {
+          equipmentInfo = [eq.brand, eq.model, eq.plate_number].filter(Boolean).join(" / ");
         }
+      }
+
+      // Get object name
+      let objectName = "";
+      if (request.object_id) {
+        const { data: obj } = await supabase
+          .from("request_objects")
+          .select("name")
+          .eq("id", request.object_id)
+          .maybeSingle();
+        if (obj) objectName = obj.name;
+      }
+
+      // Build incoming message
+      const procLines: string[] = [];
+      procLines.push(`📥 Входящая заявка`);
+      procLines.push("");
+      procLines.push(`📅 ${new Date().toLocaleDateString("ru-RU")}`);
+      procLines.push(`🧾 ${request.description || "Без описания"}`);
+      if (request.quantity) procLines.push(`📦 Кол-во: ${request.quantity}`);
+      if (objectName) procLines.push(`🏗 Объект: ${objectName}`);
+      if (equipmentInfo) procLines.push(`🚜 Техника: ${equipmentInfo}`);
+      if (request.priority) procLines.push(`${getPriorityEmoji(request.priority)} Приоритет: ${request.priority}`);
+      if (request.applicant) procLines.push(`👤 Заявитель: ${request.applicant}`);
+
+      // Avoid duplicate: only send once per request
+      if (!request.telegram_procurement_message_id) {
+        const procKeyboard = {
+          inline_keyboard: [
+            [{ text: "👷 Назначить исполнителя", callback_data: `assign_exec_${requestId}` }],
+          ]
+        };
+
+        const procResult = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
+          chat_id: procurementChatId,
+          text: procLines.join("\n"),
+          reply_markup: procKeyboard,
+        });
+
+        if (procResult.ok && procResult.result) {
+          await supabase
+            .from("requests")
+            .update({ telegram_procurement_message_id: procResult.result.message_id })
+            .eq("id", requestId);
+        }
+        console.log("Incoming chat send result:", JSON.stringify(procResult));
+      } else {
+        console.log("Incoming message already sent for this request, skipping duplicate");
+      }
+    }
+
+    if (result.ok && result.result && !isIncomingRequest) {
 
         // Send invoice to separate chat if configured and status is "Счёт в Бухгалтерии"
         const invoiceChatId = org.telegram_invoice_chat_id;
@@ -942,7 +952,6 @@ serve(async (req) => {
         } else {
           console.log("Status is NOT 'Счёт в Бухгалтерии', skipping file attachments. Current status:", request.status);
         }
-      }
     }
 
     console.log("Telegram result:", result);
