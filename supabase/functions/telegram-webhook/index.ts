@@ -604,25 +604,99 @@ async function handleCallbackQuery(callbackQuery: any) {
       return;
     }
     
-    // Save awaiting comment state with procurement context
+    const now = new Date().toLocaleString("ru-RU");
+    const userIdentifier = username || fullName;
+
+    // 1. Assign executor and change status to "Новая заявка" immediately (no comment required)
     await supabase
       .from("requests")
-      .update({ 
-        awaiting_comment_from: `procurement_comment:${username || fullName}:${requestId}:${selectedExecutor.name}`
+      .update({
+        executor: selectedExecutor.name,
+        status: "Новая заявка",
+        awaiting_comment_from: null,
       })
       .eq("id", requestId);
-    
+
+    // 2. Log activity
+    await supabase.from("request_activities").insert({
+      request_id: requestId,
+      organization_id: request.organization_id,
+      action: "executor_assigned",
+      field_name: "executor",
+      new_value: selectedExecutor.name,
+      description: `👷 Назначен исполнитель: ${selectedExecutor.name} (через группу закупок) — @${userIdentifier}, ${now}`,
+    });
+
+    // 3. Update the incoming-group message (remove buttons, mark assigned)
     const originalText = validated.message.text || "";
     await sendTelegramRequest("editMessageText", {
       chat_id: chatId,
       message_id: messageId,
-      text: originalText + `\n\n👷 Исполнитель: ${selectedExecutor.name}\n\n📝 Отправьте комментарий следующим сообщением (обязательно):`,
+      text: originalText + `\n\n👷 Исполнитель: ${selectedExecutor.name}\n📋 Статус: Новая заявка`,
     });
-    
+
+    // 4. Send notification to NEW REQUESTS group
+    const NEW_REQUESTS_CHAT_ID = "-1003141855190";
+    const { data: tgSettings } = await supabase
+      .from("telegram_settings")
+      .select("bot_token")
+      .eq("organization_id", request.organization_id)
+      .single();
+
+    if (tgSettings?.bot_token) {
+      let equipmentInfo = "";
+      if (request.equipment_id) {
+        const { data: eq } = await supabase
+          .from("equipment")
+          .select("brand, model, plate_number")
+          .eq("id", request.equipment_id)
+          .maybeSingle();
+        if (eq) equipmentInfo = [eq.brand, eq.model, eq.plate_number].filter(Boolean).join(" / ");
+      }
+
+      let objectName = "";
+      if (request.object_id) {
+        const { data: obj } = await supabase
+          .from("request_objects")
+          .select("name")
+          .eq("id", request.object_id)
+          .maybeSingle();
+        if (obj) objectName = obj.name;
+      }
+
+      const mainLines: string[] = [];
+      mainLines.push(`📋 Заявка назначена`);
+      mainLines.push("");
+      mainLines.push(`📅 ${new Date().toLocaleDateString("ru-RU")}`);
+      mainLines.push(`🧾 ${request.description || "Без описания"}`);
+      if (request.quantity) mainLines.push(`📦 Кол-во: ${request.quantity}`);
+      if (objectName) mainLines.push(`🏗 Объект: ${objectName}`);
+      if (equipmentInfo) mainLines.push(`🚜 Техника: ${equipmentInfo}`);
+      if (request.priority) mainLines.push(`⭐ Приоритет: ${request.priority}`);
+      if (request.applicant) mainLines.push(`👤 Заявитель: ${request.applicant}`);
+      mainLines.push(`👷 Исполнитель: ${selectedExecutor.name}`);
+      mainLines.push("");
+      mainLines.push(`📋 Статус: Новая заявка`);
+
+      const mainResult = await sendTelegramRequest("sendMessage", {
+        chat_id: NEW_REQUESTS_CHAT_ID,
+        text: mainLines.join("\n"),
+      });
+
+      if (mainResult.ok && mainResult.result) {
+        await supabase
+          .from("requests")
+          .update({
+            telegram_message_id: mainResult.result.message_id,
+            telegram_message_ids: [mainResult.result.message_id],
+          })
+          .eq("id", requestId);
+      }
+    }
+
     await sendTelegramRequest("answerCallbackQuery", {
       callback_query_id: callbackQuery.id,
-      text: `Выбран: ${selectedExecutor.name}. Отправьте комментарий.`,
-      show_alert: true,
+      text: `Назначен: ${selectedExecutor.name}`,
     });
     return;
   }
