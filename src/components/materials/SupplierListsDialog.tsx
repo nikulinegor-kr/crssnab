@@ -355,19 +355,17 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
               <Button size="sm" onClick={handleCreateList}>
                 <Plus className="h-4 w-4 mr-1" /> Создать
               </Button>
-              {selectedListId && (
-                <Button size="sm" variant="outline" asChild>
-                  <label className="cursor-pointer">
-                    <Upload className="h-4 w-4 mr-1" /> Импорт Excel
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      className="hidden"
-                      onChange={e => { if (e.target.files?.[0]) { importExcel(e.target.files[0]); e.target.value = ""; } }}
-                    />
-                  </label>
-                </Button>
-              )}
+              <Button size="sm" variant="outline" asChild>
+                <label className="cursor-pointer">
+                  <Upload className="h-4 w-4 mr-1" /> Импорт Excel
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    className="hidden"
+                    onChange={e => { if (e.target.files?.[0]) { importExcel(e.target.files[0]); e.target.value = ""; } }}
+                  />
+                </label>
+              </Button>
               {selectedListId && items.length > 0 && (
                 <Button size="sm" variant="outline" onClick={exportExcel}>
                   <Download className="h-4 w-4 mr-1" /> Excel
