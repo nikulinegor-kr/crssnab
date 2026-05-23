@@ -41,11 +41,11 @@ interface ItemRow {
 }
 
 
-export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
+export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger, initialListId, openInitially, onClose }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [open, setOpen] = useState(!!openInitially);
+  const [selectedListId, setSelectedListId] = useState<string | null>(initialListId ?? null);
   const [creatingName, setCreatingName] = useState("");
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [newRegion, setNewRegion] = useState("");
