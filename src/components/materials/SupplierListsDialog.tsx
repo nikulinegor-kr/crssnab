@@ -13,6 +13,7 @@ interface Props {
   objectId: string;
   objectName: string;
   organizationId: string;
+  trigger?: React.ReactNode;
 }
 
 interface ListRow {
@@ -41,7 +42,7 @@ const DEFAULT_REGIONS = [
   "Красноярский край", "Екатеринбург", "Челябинск",
 ];
 
-export const SupplierListsDialog = ({ objectId, objectName, organizationId }: Props) => {
+export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -201,9 +202,15 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId }: Pr
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <FileSpreadsheet className="h-4 w-4 mr-1" /> Ведомость поставщиков
-      </Button>
+      {trigger ? (
+        <span onClick={(e) => { e.stopPropagation(); setOpen(true); }} className="contents">
+          {trigger}
+        </span>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+          <FileSpreadsheet className="h-4 w-4 mr-1" /> Ведомость поставщиков
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] overflow-hidden flex flex-col">
