@@ -52,17 +52,19 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
   const [newRegion, setNewRegion] = useState("");
 
   const { data: lists = [] } = useQuery({
-    queryKey: ["supplier-lists", objectId],
+    queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("supplier_lists" as any)
         .select("id, name, created_at")
-        .eq("object_id", objectId)
+        .eq("organization_id", organizationId)
         .order("created_at", { ascending: false });
+      q = objectId ? q.eq("object_id", objectId) : q.is("object_id", null);
+      const { data, error } = await q;
       if (error) throw error;
       return (data || []) as unknown as ListRow[];
     },
-    enabled: open && !!objectId,
+    enabled: open,
   });
 
   useEffect(() => {
