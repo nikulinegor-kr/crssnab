@@ -202,9 +202,15 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        <FileSpreadsheet className="h-4 w-4 mr-1" /> Ведомость поставщиков
-      </Button>
+      {trigger ? (
+        <span onClick={(e) => { e.stopPropagation(); setOpen(true); }} className="contents">
+          {trigger}
+        </span>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+          <FileSpreadsheet className="h-4 w-4 mr-1" /> Ведомость поставщиков
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] overflow-hidden flex flex-col">
