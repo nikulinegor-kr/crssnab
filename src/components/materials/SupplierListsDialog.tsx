@@ -10,7 +10,7 @@ import { Plus, Sparkles, Trash2, Download, Loader2, FileSpreadsheet } from "luci
 import * as XLSX from "xlsx";
 
 interface Props {
-  objectId: string;
+  objectId?: string | null;
   objectName: string;
   organizationId: string;
   trigger?: React.ReactNode;
