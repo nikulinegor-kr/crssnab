@@ -224,17 +224,17 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
       ["Объект:", objectName],
       ["Дата составления:", new Date().toLocaleDateString("ru-RU")],
       [],
-      ["№", "Ссылка на сайт", "Регион поставки", "Наименование поставщика", "Контактное лицо", "Телефон", "Email", "Условия оплаты", "Примечание"],
+      ["№", "Ссылка на сайт", "Регион поставки", "Наименование поставщика", "Контактное лицо", "Телефон", "Email", "Адрес", "Условия оплаты", "Примечание"],
     ];
     let i = 1;
     for (const [region, list] of groupedItems) {
       rows.push([region]);
       for (const it of list) {
-        rows.push([i++, it.website_url || "", it.region, it.supplier_name || "", it.contact_person || "", it.phone || "", it.email || "", it.payment_terms || "", it.note || ""]);
+        rows.push([i++, it.website_url || "", it.region, it.supplier_name || "", it.contact_person || "", it.phone || "", it.email || "", it.address || "", it.payment_terms || "", it.note || ""]);
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 24 }];
+    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 18 }, { wch: 24 }, { wch: 32 }, { wch: 22 }, { wch: 24 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Поставщики");
     XLSX.writeFile(wb, `Ведомость поставщиков — ${objectName}.xlsx`);
