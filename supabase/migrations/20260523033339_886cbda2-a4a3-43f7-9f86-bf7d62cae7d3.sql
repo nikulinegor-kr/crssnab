@@ -1,0 +1,1 @@
+ALTER TABLE public.supplier_lists ALTER COLUMN object_id DROP NOT NULL;

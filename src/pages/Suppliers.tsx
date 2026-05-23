@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { useDadataSearch, DadataSuggestion } from "@/hooks/useDadataSearch";
+import { SupplierListsDialog } from "@/components/materials/SupplierListsDialog";
 
 interface Supplier {
   id: string;
@@ -448,6 +449,12 @@ export default function Suppliers() {
               </p>
             </div>
             <div className="flex gap-2">
+              {currentOrgId && (
+                <SupplierListsDialog
+                  objectName="Общая"
+                  organizationId={currentOrgId}
+                />
+              )}
               <Button onClick={() => handleOpenDialog()} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Новый поставщик
