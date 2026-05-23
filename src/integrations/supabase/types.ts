@@ -2779,7 +2779,7 @@ export type Database = {
           created_by: string | null
           id: string
           name: string
-          object_id: string
+          object_id: string | null
           organization_id: string
           updated_at: string
         }
@@ -2788,7 +2788,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name: string
-          object_id: string
+          object_id?: string | null
           organization_id: string
           updated_at?: string
         }
@@ -2797,7 +2797,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name?: string
-          object_id?: string
+          object_id?: string | null
           organization_id?: string
           updated_at?: string
         }
