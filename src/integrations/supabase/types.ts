@@ -2716,9 +2716,11 @@ export type Database = {
       }
       supplier_list_items: {
         Row: {
+          address: string | null
           contact_person: string | null
           created_at: string
           email: string | null
+          extraction_failed: boolean
           id: string
           list_id: string
           note: string | null
@@ -2732,9 +2734,11 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          address?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          extraction_failed?: boolean
           id?: string
           list_id: string
           note?: string | null
@@ -2748,9 +2752,11 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          address?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          extraction_failed?: boolean
           id?: string
           list_id?: string
           note?: string | null
