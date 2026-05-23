@@ -330,7 +330,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
         </Button>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) onClose?.(); }}>
         <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Ведомость поставщиков — {objectName}</DialogTitle>
