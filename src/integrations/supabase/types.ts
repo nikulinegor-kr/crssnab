@@ -2714,6 +2714,95 @@ export type Database = {
           },
         ]
       }
+      supplier_list_items: {
+        Row: {
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          list_id: string
+          note: string | null
+          organization_id: string
+          payment_terms: string | null
+          phone: string | null
+          position: number
+          region: string
+          supplier_name: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          list_id: string
+          note?: string | null
+          organization_id: string
+          payment_terms?: string | null
+          phone?: string | null
+          position?: number
+          region?: string
+          supplier_name?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          list_id?: string
+          note?: string | null
+          organization_id?: string
+          payment_terms?: string | null
+          phone?: string | null
+          position?: number
+          region?: string
+          supplier_name?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          object_id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          object_id: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          object_id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
