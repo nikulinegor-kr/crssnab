@@ -345,7 +345,46 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                 {groupedItems.map(([region, list]) => (
                   <div key={region} className="border rounded-lg overflow-hidden">
                     <div className="bg-muted px-3 py-2 font-semibold flex items-center justify-between">
-                      <span>{region}</span>
+                      {editingRegion === region ? (
+                        <Input
+                          autoFocus
+                          value={editingRegionValue}
+                          onChange={e => setEditingRegionValue(e.target.value)}
+                          onBlur={async () => {
+                            await renameRegion(region, editingRegionValue);
+                            setEditingRegion(null);
+                            setEditingRegionValue("");
+                          }}
+                          onKeyDown={async e => {
+                            if (e.key === "Enter") {
+                              await renameRegion(region, editingRegionValue);
+                              setEditingRegion(null);
+                              setEditingRegionValue("");
+                            }
+                            if (e.key === "Escape") {
+                              setEditingRegion(null);
+                              setEditingRegionValue("");
+                            }
+                          }}
+                          className="h-8 text-sm w-[240px]"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{region}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p- 0 text-muted-foreground"
+                            onClick={() => {
+                              setEditingRegion(region);
+                              setEditingRegionValue(region === "Без региона" ? "" : region);
+                            }}
+                            title="Переименовать регион"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => addRow(region)}>
                         <Plus className="h-4 w-4 mr-1" /> Строка
                       </Button>
