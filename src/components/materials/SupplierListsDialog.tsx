@@ -36,8 +36,10 @@ interface ItemRow {
   contact_person: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
   payment_terms: string | null;
   note: string | null;
+  extraction_failed: boolean | null;
 }
 
 
@@ -158,6 +160,8 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     refetchItems();
   };
 
+  const normalizeUrlKey = (u: string) => u.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+
   const enrich = async (item: ItemRow, urlOverride?: string) => {
     const url = (urlOverride ?? item.website_url ?? "").trim();
     if (!url) {
@@ -166,7 +170,6 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     }
     setEnrichingId(item.id);
     try {
-      // Persist URL first if it differs from saved value
       if (url !== (item.website_url ?? "")) {
         await supabase.from("supplier_list_items" as any).update({ website_url: url }).eq("id", item.id);
       }
@@ -174,16 +177,39 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
         body: { url },
       });
       if (error) throw error;
-      const patch = {
-        supplier_name: data.supplier_name || item.supplier_name,
-        contact_person: data.contact_person || item.contact_person,
-        phone: data.phone || item.phone,
-        email: data.email || item.email,
+
+      const success = !!data.success;
+
+      // Dedupe: if another row in the same list already has the same normalized URL, merge into it and delete current
+      const key = normalizeUrlKey(data.website_url || url);
+      const duplicate = items.find(i => i.id !== item.id && i.website_url && normalizeUrlKey(i.website_url) === key);
+      const targetId = duplicate?.id ?? item.id;
+
+      const patch: any = {
+        website_url: data.website_url || url,
+        supplier_name: success ? (data.supplier_name || null) : null,
+        contact_person: success ? (data.contact_person || null) : null,
+        phone: success ? (data.phone || null) : null,
+        email: success ? (data.email || null) : null,
+        address: success ? (data.address || null) : null,
+        payment_terms: success ? (data.payment_terms || null) : null,
+        extraction_failed: !success,
       };
-      await supabase.from("supplier_list_items" as any).update(patch).eq("id", item.id);
+      if (success && data.region) patch.region = data.region;
+
+      await supabase.from("supplier_list_items" as any).update(patch).eq("id", targetId);
+      if (duplicate) {
+        await supabase.from("supplier_list_items" as any).delete().eq("id", item.id);
+      }
       refetchItems();
-      toast({ title: data.fetched ? "Данные подтянуты" : "Сайт недоступен — AI вернул что смог" });
+      toast({
+        title: success ? "Данные подтянуты" : "Не удалось распознать",
+        description: success ? undefined : "Поля отмечены красным — заполните вручную",
+        variant: success ? "default" : "destructive",
+      });
     } catch (e: any) {
+      await supabase.from("supplier_list_items" as any).update({ extraction_failed: true }).eq("id", item.id);
+      refetchItems();
       toast({ title: "Ошибка", description: e?.message || "Не удалось извлечь данные", variant: "destructive" });
     } finally {
       setEnrichingId(null);
@@ -198,17 +224,17 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
       ["Объект:", objectName],
       ["Дата составления:", new Date().toLocaleDateString("ru-RU")],
       [],
-      ["№", "Ссылка на сайт", "Регион поставки", "Наименование поставщика", "Контактное лицо", "Телефон", "Email", "Условия оплаты", "Примечание"],
+      ["№", "Ссылка на сайт", "Регион поставки", "Наименование поставщика", "Контактное лицо", "Телефон", "Email", "Адрес", "Условия оплаты", "Примечание"],
     ];
     let i = 1;
     for (const [region, list] of groupedItems) {
       rows.push([region]);
       for (const it of list) {
-        rows.push([i++, it.website_url || "", it.region, it.supplier_name || "", it.contact_person || "", it.phone || "", it.email || "", it.payment_terms || "", it.note || ""]);
+        rows.push([i++, it.website_url || "", it.region, it.supplier_name || "", it.contact_person || "", it.phone || "", it.email || "", it.address || "", it.payment_terms || "", it.note || ""]);
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 24 }];
+    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 22 }, { wch: 32 }, { wch: 24 }, { wch: 18 }, { wch: 24 }, { wch: 32 }, { wch: 22 }, { wch: 24 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Поставщики");
     XLSX.writeFile(wb, `Ведомость поставщиков — ${objectName}.xlsx`);
@@ -445,14 +471,18 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                           <th className="px-2 py-1">Контактное лицо</th>
                           <th className="px-2 py-1">Телефон</th>
                           <th className="px-2 py-1">Email</th>
+                          <th className="px-2 py-1">Адрес</th>
                           <th className="px-2 py-1">Условия оплаты</th>
                           <th className="px-2 py-1">Примечание</th>
                           <th className="px-2 py-1 w-16"></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {list.map((it, idx) => (
-                          <tr key={it.id} className="border-t hover:bg-muted/30">
+                        {list.map((it, idx) => {
+                          const failed = !!it.extraction_failed;
+                          const errCls = failed ? "border-destructive bg-destructive/5 focus-visible:ring-destructive" : "";
+                          return (
+                          <tr key={it.id} className={`border-t hover:bg-muted/30 ${failed ? "bg-destructive/5" : ""}`}>
                             <td className="px-2 py-1 text-center text-muted-foreground">{idx + 1}</td>
                             <td className="px-1 py-1">
                               <div className="flex gap-1">
@@ -478,11 +508,12 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                                 </Button>
                               </div>
                             </td>
-                            <td className="px-1 py-1"><Input defaultValue={it.supplier_name || ""} onBlur={e => updateItem(it.id, { supplier_name: e.target.value })} className="h-8 text-xs" /></td>
-                            <td className="px-1 py-1"><Input defaultValue={it.contact_person || ""} onBlur={e => updateItem(it.id, { contact_person: e.target.value })} className="h-8 text-xs" /></td>
-                            <td className="px-1 py-1"><Input defaultValue={it.phone || ""} onBlur={e => updateItem(it.id, { phone: e.target.value })} className="h-8 text-xs" /></td>
-                            <td className="px-1 py-1"><Input defaultValue={it.email || ""} onBlur={e => updateItem(it.id, { email: e.target.value })} className="h-8 text-xs" /></td>
-                            <td className="px-1 py-1"><Input defaultValue={it.payment_terms || ""} onBlur={e => updateItem(it.id, { payment_terms: e.target.value })} className="h-8 text-xs" /></td>
+                            <td className="px-1 py-1"><Input key={`sn-${it.id}-${it.supplier_name||""}`} defaultValue={it.supplier_name || ""} onBlur={e => updateItem(it.id, { supplier_name: e.target.value, extraction_failed: false })} className={`h-8 text-xs ${errCls}`} /></td>
+                            <td className="px-1 py-1"><Input key={`cp-${it.id}-${it.contact_person||""}`} defaultValue={it.contact_person || ""} onBlur={e => updateItem(it.id, { contact_person: e.target.value, extraction_failed: false })} className={`h-8 text-xs ${errCls}`} /></td>
+                            <td className="px-1 py-1"><Input key={`ph-${it.id}-${it.phone||""}`} defaultValue={it.phone || ""} onBlur={e => updateItem(it.id, { phone: e.target.value, extraction_failed: false })} className={`h-8 text-xs ${errCls}`} /></td>
+                            <td className="px-1 py-1"><Input key={`em-${it.id}-${it.email||""}`} defaultValue={it.email || ""} onBlur={e => updateItem(it.id, { email: e.target.value, extraction_failed: false })} className={`h-8 text-xs ${errCls}`} /></td>
+                            <td className="px-1 py-1"><Input key={`ad-${it.id}-${it.address||""}`} defaultValue={it.address || ""} onBlur={e => updateItem(it.id, { address: e.target.value, extraction_failed: false })} className={`h-8 text-xs ${errCls}`} /></td>
+                            <td className="px-1 py-1"><Input key={`pt-${it.id}-${it.payment_terms||""}`} defaultValue={it.payment_terms || ""} onBlur={e => updateItem(it.id, { payment_terms: e.target.value })} className="h-8 text-xs" /></td>
                             <td className="px-1 py-1"><Input defaultValue={it.note || ""} onBlur={e => updateItem(it.id, { note: e.target.value })} className="h-8 text-xs" /></td>
                             <td className="px-2 py-1 text-center">
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => deleteItem(it.id)}>
@@ -490,7 +521,8 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                               </Button>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

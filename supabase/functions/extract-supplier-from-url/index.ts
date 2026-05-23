@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Ты извлекаешь контактные данные организации-поставщика с её сайта. Верни только результат через tool call. Если данных нет — пустые строки. Телефон в формате +7..., email в нижнем регистре.",
+            content: "Ты извлекаешь контактные данные организации-поставщика с её сайта. Верни результат только через tool call. Если данных нет — пустые строки. Телефон в формате +7XXXXXXXXXX (если несколько — первый основной). Email в нижнем регистре. Адрес — полный почтовый адрес. Регион — субъект РФ или город. Условия оплаты — кратко (например, 'Предоплата 100%', 'Отсрочка 30 дней', 'По договору').",
           },
           { role: "user", content: prompt },
         ],
@@ -232,8 +232,11 @@ Deno.serve(async (req) => {
                 contact_person: { type: "string", description: "ФИО или должность контактного лица" },
                 phone: { type: "string", description: "Основной телефон" },
                 email: { type: "string", description: "Основной email" },
+                address: { type: "string", description: "Полный почтовый адрес офиса/склада" },
+                region: { type: "string", description: "Регион поставки (субъект РФ или город)" },
+                payment_terms: { type: "string", description: "Условия оплаты, если указаны на сайте" },
               },
-              required: ["supplier_name", "contact_person", "phone", "email"],
+              required: ["supplier_name", "contact_person", "phone", "email", "address", "region", "payment_terms"],
               additionalProperties: false,
             },
           },
@@ -265,14 +268,21 @@ Deno.serve(async (req) => {
     let parsed: any = {};
     try { parsed = JSON.parse(args || "{}"); } catch {}
 
-    return new Response(JSON.stringify({
-      supplier_name: parsed.supplier_name || "",
-      contact_person: parsed.contact_person || "",
-      phone: parsed.phone || "",
-      email: parsed.email || "",
+    const result = {
+      supplier_name: (parsed.supplier_name || "").trim(),
+      contact_person: (parsed.contact_person || "").trim(),
+      phone: (parsed.phone || "").trim(),
+      email: (parsed.email || "").trim().toLowerCase(),
+      address: (parsed.address || "").trim(),
+      region: (parsed.region || "").trim(),
+      payment_terms: (parsed.payment_terms || "").trim(),
       website_url: normalizedUrl,
       fetched,
-    }), {
+    };
+    const hasAnyData = !!(result.supplier_name || result.phone || result.email || result.address);
+    const success = fetched && hasAnyData;
+
+    return new Response(JSON.stringify({ ...result, success }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
