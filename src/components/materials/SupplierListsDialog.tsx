@@ -14,6 +14,9 @@ interface Props {
   objectName: string;
   organizationId: string;
   trigger?: React.ReactNode;
+  initialListId?: string | null;
+  openInitially?: boolean;
+  onClose?: () => void;
 }
 
 interface ListRow {
