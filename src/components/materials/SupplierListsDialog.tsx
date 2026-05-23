@@ -158,15 +158,20 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     refetchItems();
   };
 
-  const enrich = async (item: ItemRow) => {
-    if (!item.website_url) {
+  const enrich = async (item: ItemRow, urlOverride?: string) => {
+    const url = (urlOverride ?? item.website_url ?? "").trim();
+    if (!url) {
       toast({ title: "Сначала вставьте ссылку на сайт", variant: "destructive" });
       return;
     }
     setEnrichingId(item.id);
     try {
+      // Persist URL first if it differs from saved value
+      if (url !== (item.website_url ?? "")) {
+        await supabase.from("supplier_list_items" as any).update({ website_url: url }).eq("id", item.id);
+      }
       const { data, error } = await supabase.functions.invoke("extract-supplier-from-url", {
-        body: { url: item.website_url },
+        body: { url },
       });
       if (error) throw error;
       const patch = {
