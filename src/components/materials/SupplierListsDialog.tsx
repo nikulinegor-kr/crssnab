@@ -36,8 +36,10 @@ interface ItemRow {
   contact_person: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
   payment_terms: string | null;
   note: string | null;
+  extraction_failed: boolean | null;
 }
 
 
