@@ -457,12 +457,23 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                             <td className="px-1 py-1">
                               <div className="flex gap-1">
                                 <Input
+                                  id={`url-${it.id}`}
                                   defaultValue={it.website_url || ""}
                                   onBlur={e => updateItem(it.id, { website_url: e.target.value })}
                                   placeholder="https://..."
                                   className="h-8 text-xs"
                                 />
-                                <Button size="sm" variant="outline" className="h-8 px-2" disabled={enrichingId === it.id} onClick={() => enrich(it)} title="Подтянуть AI">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-2"
+                                  disabled={enrichingId === it.id}
+                                  onClick={() => {
+                                    const el = document.getElementById(`url-${it.id}`) as HTMLInputElement | null;
+                                    enrich(it, el?.value);
+                                  }}
+                                  title="Подтянуть AI"
+                                >
                                   {enrichingId === it.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                                 </Button>
                               </div>
