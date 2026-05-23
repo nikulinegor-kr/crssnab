@@ -13,6 +13,7 @@ interface Props {
   objectId: string;
   objectName: string;
   organizationId: string;
+  trigger?: React.ReactNode;
 }
 
 interface ListRow {
