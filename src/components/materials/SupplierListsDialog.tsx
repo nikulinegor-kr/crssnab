@@ -37,10 +37,6 @@ interface ItemRow {
   note: string | null;
 }
 
-const DEFAULT_REGIONS = [
-  "Новосибирск", "Хабаровский край", "Иркутская область",
-  "Красноярский край", "Екатеринбург", "Челябинск",
-];
 
 export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
   const { toast } = useToast();
@@ -105,11 +101,6 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
       .select("id, name, created_at")
       .single();
     if (error) { toast({ title: "Ошибка", description: error.message, variant: "destructive" }); return; }
-    // Seed default regions with one empty row each
-    const seeds = DEFAULT_REGIONS.map((region, idx) => ({
-      list_id: (data as any).id, organization_id: organizationId, region, position: 0,
-    }));
-    await supabase.from("supplier_list_items" as any).insert(seeds);
     setCreatingName("");
     setSelectedListId((data as any).id);
     qc.invalidateQueries({ queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`] });
