@@ -14,6 +14,9 @@ interface Props {
   objectName: string;
   organizationId: string;
   trigger?: React.ReactNode;
+  initialListId?: string | null;
+  openInitially?: boolean;
+  onClose?: () => void;
 }
 
 interface ListRow {
@@ -38,11 +41,11 @@ interface ItemRow {
 }
 
 
-export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
+export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger, initialListId, openInitially, onClose }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [open, setOpen] = useState(!!openInitially);
+  const [selectedListId, setSelectedListId] = useState<string | null>(initialListId ?? null);
   const [creatingName, setCreatingName] = useState("");
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [newRegion, setNewRegion] = useState("");
@@ -327,7 +330,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
         </Button>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) onClose?.(); }}>
         <DialogContent className="max-w-[95vw] w-[1200px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Ведомость поставщиков — {objectName}</DialogTitle>

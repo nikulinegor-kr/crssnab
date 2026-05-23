@@ -32,6 +32,7 @@ import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
 import { SupplierListsDialog } from "@/components/materials/SupplierListsDialog";
+import { SupplierListsTreeMenu } from "@/components/materials/SupplierListsTreeMenu";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
@@ -1654,18 +1655,10 @@ export default function MaterialStatementsPage() {
                           </button>
                           {/* Ведомость поставщиков */}
                           {orgId && (
-                            <SupplierListsDialog
+                            <SupplierListsTreeMenu
                               objectId={entry.object.id}
                               objectName={entry.object.name}
                               organizationId={orgId}
-                              trigger={
-                                <button
-                                  className="w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-accent/50"
-                                >
-                                  <FileSpreadsheet className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                                  <span className="truncate flex-1 text-left text-xs font-medium">Ведомость поставщиков</span>
-                                </button>
-                              }
                             />
                           )}
                           {entry.sections.length === 0 && (
