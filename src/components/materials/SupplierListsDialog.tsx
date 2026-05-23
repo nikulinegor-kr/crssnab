@@ -207,68 +207,109 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
   };
 
   const importExcel = async (file: File) => {
-    if (!selectedListId) {
-      toast({ title: "Сначала выберите или создайте ведомость", variant: "destructive" });
-      return;
-    }
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-      if (!raw.length) { toast({ title: "Файл пустой", variant: "destructive" }); return; }
 
-      // Find header row (first row that contains a known keyword)
-      const KEYS = ["регион", "поставщик", "назв", "контакт", "телеф", "email", "почт", "сайт", "url", "ссылк", "оплат", "примеч", "коммент"];
-      let headerIdx = 0;
-      for (let i = 0; i < Math.min(raw.length, 10); i++) {
-        const joined = raw[i].map(c => String(c).toLowerCase()).join("|");
-        if (KEYS.some(k => joined.includes(k))) { headerIdx = i; break; }
-      }
-      const headers = raw[headerIdx].map((h: any) => String(h || "").toLowerCase().trim());
-      const findCol = (...keys: string[]) =>
-        headers.findIndex(h => keys.some(k => h.includes(k)));
-      const cRegion = findCol("регион");
-      const cName = findCol("поставщик", "назв", "организац", "компани");
-      const cContact = findCol("контакт", "фио", "представит");
-      const cPhone = findCol("телеф", "тел.", "phone");
-      const cEmail = findCol("email", "почт", "e-mail", "эл.почт");
-      const cUrl = findCol("сайт", "url", "ссылк", "веб");
-      const cPay = findCol("оплат", "условия");
-      const cNote = findCol("примеч", "коммент", "note");
+      // Create a NEW dedicated list per imported file
+      const baseName = file.name.replace(/\.(xlsx|xls)$/i, "").trim() || `Импорт ${new Date().toLocaleString("ru-RU")}`;
+      const { data: newList, error: listErr } = await supabase
+        .from("supplier_lists" as any)
+        .insert({ organization_id: organizationId, object_id: objectId ?? null, name: baseName })
+        .select("id")
+        .single();
+      if (listErr) throw listErr;
+      const newListId = (newList as any).id as string;
 
-      const rows = raw.slice(headerIdx + 1).filter(r => r.some((v: any) => String(v).trim()));
-      if (!rows.length) { toast({ title: "Нет данных для импорта", variant: "destructive" }); return; }
+      const HEADER_KEYS = ["регион", "поставщик", "назв", "организац", "компани", "контакт", "фио", "телеф", "тел", "phone", "email", "почт", "сайт", "url", "ссылк", "веб", "оплат", "усл", "примеч", "коммент"];
+      const norm = (v: any) => String(v ?? "").replace(/\s+/g, " ").trim();
+      const lc = (v: any) => norm(v).toLowerCase();
 
+      const allInserts: any[] = [];
       const positionsByRegion = new Map<string, number>();
-      for (const it of items) {
-        const r = it.region || "Без региона";
-        positionsByRegion.set(r, Math.max(positionsByRegion.get(r) ?? -1, it.position));
+      const nextPos = (r: string) => {
+        const p = (positionsByRegion.get(r) ?? -1) + 1;
+        positionsByRegion.set(r, p);
+        return p;
+      };
+
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const raw: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+        if (!raw.length) continue;
+
+        // Pick best header row: max keyword hits in first 25 rows (min 2)
+        let headerIdx = -1; let best = 1;
+        for (let i = 0; i < Math.min(raw.length, 25); i++) {
+          const joined = raw[i].map(lc).join("|");
+          const hits = HEADER_KEYS.reduce((n, k) => n + (joined.includes(k) ? 1 : 0), 0);
+          if (hits > best) { best = hits; headerIdx = i; }
+        }
+        if (headerIdx < 0) continue;
+
+        const headers = raw[headerIdx].map(lc);
+        const findCol = (...keys: string[]) => headers.findIndex(h => keys.some(k => h.includes(k)));
+        const cRegion = findCol("регион", "край", "область");
+        const cName = findCol("поставщик", "организац", "компани", "назв");
+        const cContact = findCol("контакт", "фио", "представит", "менеджер");
+        const cPhone = findCol("телеф", "тел.", "тел ", "phone", "моб");
+        const cEmail = findCol("email", "почт", "e-mail", "мейл");
+        const cUrl = findCol("сайт", "url", "ссылк", "веб");
+        const cPay = findCol("оплат", "усл");
+        const cNote = findCol("примеч", "коммент", "note");
+
+        // Region tracked from "section header" rows (single meaningful cell)
+        let currentRegion = wb.SheetNames.length > 1 ? sheetName : "";
+
+        for (let i = headerIdx + 1; i < raw.length; i++) {
+          const cells = raw[i].map(norm);
+          const nonEmpty = cells.filter(Boolean);
+          if (nonEmpty.length === 0) continue;
+
+          const hasName = cName >= 0 && !!cells[cName];
+          const hasPhone = cPhone >= 0 && !!cells[cPhone];
+          const hasEmail = cEmail >= 0 && !!cells[cEmail];
+          const hasUrl = cUrl >= 0 && !!cells[cUrl];
+          const hasContact = cContact >= 0 && !!cells[cContact];
+
+          // Section header row (region divider)
+          if (nonEmpty.length <= 2 && !hasName && !hasPhone && !hasEmail && !hasUrl && !hasContact) {
+            currentRegion = nonEmpty[0];
+            continue;
+          }
+
+          if (!hasName && !hasPhone && !hasEmail && !hasUrl && !hasContact) continue;
+
+          const region = (cRegion >= 0 && cells[cRegion]) ? cells[cRegion] : (currentRegion || "Без региона");
+
+          allInserts.push({
+            list_id: newListId,
+            organization_id: organizationId,
+            region,
+            position: nextPos(region),
+            supplier_name: hasName ? cells[cName] : null,
+            contact_person: hasContact ? cells[cContact] : null,
+            phone: hasPhone ? cells[cPhone] : null,
+            email: hasEmail ? cells[cEmail] : null,
+            website_url: hasUrl ? cells[cUrl] : null,
+            payment_terms: cPay >= 0 && cells[cPay] ? cells[cPay] : null,
+            note: cNote >= 0 && cells[cNote] ? cells[cNote] : null,
+          });
+        }
       }
 
-      const toInsert = rows.map((r: any[]) => {
-        const region = (cRegion >= 0 ? String(r[cRegion] || "").trim() : "") || "Без региона";
-        const pos = (positionsByRegion.get(region) ?? -1) + 1;
-        positionsByRegion.set(region, pos);
-        return {
-          list_id: selectedListId,
-          organization_id: organizationId,
-          region,
-          position: pos,
-          supplier_name: cName >= 0 ? String(r[cName] || "").trim() || null : null,
-          contact_person: cContact >= 0 ? String(r[cContact] || "").trim() || null : null,
-          phone: cPhone >= 0 ? String(r[cPhone] || "").trim() || null : null,
-          email: cEmail >= 0 ? String(r[cEmail] || "").trim() || null : null,
-          website_url: cUrl >= 0 ? String(r[cUrl] || "").trim() || null : null,
-          payment_terms: cPay >= 0 ? String(r[cPay] || "").trim() || null : null,
-          note: cNote >= 0 ? String(r[cNote] || "").trim() || null : null,
-        };
-      });
+      if (!allInserts.length) {
+        await supabase.from("supplier_lists" as any).delete().eq("id", newListId);
+        toast({ title: "Не удалось распознать данные", description: "Проверьте, что в файле есть строка-заголовок с колонками: поставщик, телефон, email, сайт…", variant: "destructive" });
+        return;
+      }
 
-      const { error } = await supabase.from("supplier_list_items" as any).insert(toInsert);
-      if (error) throw error;
-      refetchItems();
-      toast({ title: `Импортировано строк: ${toInsert.length}` });
+      const { error: insErr } = await supabase.from("supplier_list_items" as any).insert(allInserts);
+      if (insErr) throw insErr;
+
+      qc.invalidateQueries({ queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`] });
+      setSelectedListId(newListId);
+      toast({ title: `Создана ведомость «${baseName}»`, description: `Импортировано строк: ${allInserts.length}` });
     } catch (e: any) {
       toast({ title: "Ошибка импорта", description: e?.message || String(e), variant: "destructive" });
     }
