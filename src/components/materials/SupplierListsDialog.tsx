@@ -101,7 +101,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     const name = creatingName.trim() || `Ведомость поставщиков — ${objectName}`;
     const { data, error } = await supabase
       .from("supplier_lists" as any)
-      .insert({ organization_id: organizationId, object_id: objectId, name })
+      .insert({ organization_id: organizationId, object_id: objectId ?? null, name })
       .select("id, name, created_at")
       .single();
     if (error) { toast({ title: "Ошибка", description: error.message, variant: "destructive" }); return; }
@@ -112,7 +112,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     await supabase.from("supplier_list_items" as any).insert(seeds);
     setCreatingName("");
     setSelectedListId((data as any).id);
-    qc.invalidateQueries({ queryKey: ["supplier-lists", objectId] });
+    qc.invalidateQueries({ queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`] });
     toast({ title: "Ведомость создана" });
   };
 
@@ -120,7 +120,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     if (!confirm("Удалить ведомость и все её строки?")) return;
     await supabase.from("supplier_lists" as any).delete().eq("id", id);
     if (selectedListId === id) setSelectedListId(null);
-    qc.invalidateQueries({ queryKey: ["supplier-lists", objectId] });
+    qc.invalidateQueries({ queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`] });
   };
 
   const addRow = async (region: string) => {
