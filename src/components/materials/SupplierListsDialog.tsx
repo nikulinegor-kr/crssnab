@@ -37,10 +37,6 @@ interface ItemRow {
   note: string | null;
 }
 
-const DEFAULT_REGIONS = [
-  "Новосибирск", "Хабаровский край", "Иркутская область",
-  "Красноярский край", "Екатеринбург", "Челябинск",
-];
 
 export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
   const { toast } = useToast();
