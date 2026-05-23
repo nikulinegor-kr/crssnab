@@ -374,7 +374,7 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-6 w-6 p- 0 text-muted-foreground"
+                            className="h-6 w-6 p-0 text-muted-foreground"
                             onClick={() => {
                               setEditingRegion(region);
                               setEditingRegionValue(region === "Без региона" ? "" : region);
