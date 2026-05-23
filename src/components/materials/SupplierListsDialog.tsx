@@ -46,6 +46,8 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
   const [creatingName, setCreatingName] = useState("");
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [newRegion, setNewRegion] = useState("");
+  const [editingRegion, setEditingRegion] = useState<string | null>(null);
+  const [editingRegionValue, setEditingRegionValue] = useState("");
 
   const { data: lists = [] } = useQuery({
     queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`],
