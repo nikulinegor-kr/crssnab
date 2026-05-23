@@ -1654,18 +1654,10 @@ export default function MaterialStatementsPage() {
                           </button>
                           {/* Ведомость поставщиков */}
                           {orgId && (
-                            <SupplierListsDialog
+                            <SupplierListsTreeMenu
                               objectId={entry.object.id}
                               objectName={entry.object.name}
                               organizationId={orgId}
-                              trigger={
-                                <button
-                                  className="w-full flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-accent/50"
-                                >
-                                  <FileSpreadsheet className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                                  <span className="truncate flex-1 text-left text-xs font-medium">Ведомость поставщиков</span>
-                                </button>
-                              }
                             />
                           )}
                           {entry.sections.length === 0 && (
