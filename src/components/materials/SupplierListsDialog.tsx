@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Sparkles, Trash2, Download, Loader2, FileSpreadsheet, Upload } from "lucide-react";
+import { Plus, Sparkles, Trash2, Download, Loader2, FileSpreadsheet, Upload, Pencil } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface Props {
@@ -46,6 +46,8 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
   const [creatingName, setCreatingName] = useState("");
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [newRegion, setNewRegion] = useState("");
+  const [editingRegion, setEditingRegion] = useState<string | null>(null);
+  const [editingRegionValue, setEditingRegionValue] = useState("");
 
   const { data: lists = [] } = useQuery({
     queryKey: ["supplier-lists", objectId ?? `org:${organizationId}`],
@@ -135,6 +137,17 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
 
   const updateItem = async (id: string, patch: Partial<ItemRow>) => {
     await supabase.from("supplier_list_items" as any).update(patch).eq("id", id);
+  };
+
+  const renameRegion = async (oldRegion: string, newRegionName: string) => {
+    if (!selectedListId || !newRegionName.trim() || newRegionName.trim() === oldRegion) return;
+    const target = oldRegion === "Без региона" ? "" : oldRegion;
+    await supabase
+      .from("supplier_list_items" as any)
+      .update({ region: newRegionName.trim() })
+      .eq("list_id", selectedListId)
+      .eq("region", target);
+    refetchItems();
   };
 
   const deleteItem = async (id: string) => {
@@ -332,7 +345,46 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                 {groupedItems.map(([region, list]) => (
                   <div key={region} className="border rounded-lg overflow-hidden">
                     <div className="bg-muted px-3 py-2 font-semibold flex items-center justify-between">
-                      <span>{region}</span>
+                      {editingRegion === region ? (
+                        <Input
+                          autoFocus
+                          value={editingRegionValue}
+                          onChange={e => setEditingRegionValue(e.target.value)}
+                          onBlur={async () => {
+                            await renameRegion(region, editingRegionValue);
+                            setEditingRegion(null);
+                            setEditingRegionValue("");
+                          }}
+                          onKeyDown={async e => {
+                            if (e.key === "Enter") {
+                              await renameRegion(region, editingRegionValue);
+                              setEditingRegion(null);
+                              setEditingRegionValue("");
+                            }
+                            if (e.key === "Escape") {
+                              setEditingRegion(null);
+                              setEditingRegionValue("");
+                            }
+                          }}
+                          className="h-8 text-sm w-[240px]"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{region}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-muted-foreground"
+                            onClick={() => {
+                              setEditingRegion(region);
+                              setEditingRegionValue(region === "Без региона" ? "" : region);
+                            }}
+                            title="Переименовать регион"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => addRow(region)}>
                         <Plus className="h-4 w-4 mr-1" /> Строка
                       </Button>
