@@ -160,6 +160,8 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     refetchItems();
   };
 
+  const normalizeUrlKey = (u: string) => u.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+
   const enrich = async (item: ItemRow, urlOverride?: string) => {
     const url = (urlOverride ?? item.website_url ?? "").trim();
     if (!url) {
@@ -168,7 +170,6 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     }
     setEnrichingId(item.id);
     try {
-      // Persist URL first if it differs from saved value
       if (url !== (item.website_url ?? "")) {
         await supabase.from("supplier_list_items" as any).update({ website_url: url }).eq("id", item.id);
       }
@@ -176,16 +177,39 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
         body: { url },
       });
       if (error) throw error;
-      const patch = {
-        supplier_name: data.supplier_name || item.supplier_name,
-        contact_person: data.contact_person || item.contact_person,
-        phone: data.phone || item.phone,
-        email: data.email || item.email,
+
+      const success = !!data.success;
+
+      // Dedupe: if another row in the same list already has the same normalized URL, merge into it and delete current
+      const key = normalizeUrlKey(data.website_url || url);
+      const duplicate = items.find(i => i.id !== item.id && i.website_url && normalizeUrlKey(i.website_url) === key);
+      const targetId = duplicate?.id ?? item.id;
+
+      const patch: any = {
+        website_url: data.website_url || url,
+        supplier_name: success ? (data.supplier_name || null) : null,
+        contact_person: success ? (data.contact_person || null) : null,
+        phone: success ? (data.phone || null) : null,
+        email: success ? (data.email || null) : null,
+        address: success ? (data.address || null) : null,
+        payment_terms: success ? (data.payment_terms || null) : null,
+        extraction_failed: !success,
       };
-      await supabase.from("supplier_list_items" as any).update(patch).eq("id", item.id);
+      if (success && data.region) patch.region = data.region;
+
+      await supabase.from("supplier_list_items" as any).update(patch).eq("id", targetId);
+      if (duplicate) {
+        await supabase.from("supplier_list_items" as any).delete().eq("id", item.id);
+      }
       refetchItems();
-      toast({ title: data.fetched ? "Данные подтянуты" : "Сайт недоступен — AI вернул что смог" });
+      toast({
+        title: success ? "Данные подтянуты" : "Не удалось распознать",
+        description: success ? undefined : "Поля отмечены красным — заполните вручную",
+        variant: success ? "default" : "destructive",
+      });
     } catch (e: any) {
+      await supabase.from("supplier_list_items" as any).update({ extraction_failed: true }).eq("id", item.id);
+      refetchItems();
       toast({ title: "Ошибка", description: e?.message || "Не удалось извлечь данные", variant: "destructive" });
     } finally {
       setEnrichingId(null);
