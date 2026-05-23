@@ -489,8 +489,20 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
                                 <Input
                                   id={`url-${it.id}`}
                                   defaultValue={it.website_url || ""}
-                                  onBlur={e => updateItem(it.id, { website_url: e.target.value })}
-                                  placeholder="https://..."
+                                  onBlur={e => {
+                                    const val = e.target.value.trim();
+                                    if (val && val !== (it.website_url || "").trim()) {
+                                      enrich(it, val);
+                                    }
+                                  }}
+                                  onPaste={e => {
+                                    const pasted = e.clipboardData.getData("text").trim();
+                                    if (!pasted) return;
+                                    e.preventDefault();
+                                    (e.currentTarget as HTMLInputElement).value = pasted;
+                                    enrich(it, pasted);
+                                  }}
+                                  placeholder="https://... или site.ru"
                                   className="h-8 text-xs"
                                 />
                                 <Button
