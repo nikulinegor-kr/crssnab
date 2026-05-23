@@ -89,12 +89,33 @@ async function fetchPageHtml(url: string): Promise<{ html: string; finalUrl: str
       "Cache-Control": "no-cache",
     },
     redirect: "follow",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) return null;
   const html = await response.text();
   return html ? { html, finalUrl: response.url || url } : null;
+}
+
+async function fetchViaJina(rawUrl: string): Promise<string> {
+  const normalized = normalizeUrl(rawUrl);
+  if (!normalized) return "";
+
+  try {
+    const response = await fetch(`https://r.jina.ai/http://${new URL(normalized).host}${new URL(normalized).pathname}${new URL(normalized).search}`, {
+      headers: {
+        "Accept": "text/plain, text/markdown;q=0.9, */*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (compatible; CRSSnabBot/1.0; +https://crssnab.ru)",
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return "";
+    const text = await response.text();
+    return text.slice(0, 18000).trim();
+  } catch (e) {
+    console.warn("jina fallback failed", normalized, e);
+    return "";
+  }
 }
 
 async function fetchSiteText(rawUrl: string): Promise<{ pageText: string; normalizedUrl: string | null; fetched: boolean }> {
@@ -103,7 +124,7 @@ async function fetchSiteText(rawUrl: string): Promise<{ pageText: string; normal
     return { pageText: "", normalizedUrl: null, fetched: false };
   }
 
-  for (const candidate of candidates) {
+  for (const candidate of candidates.slice(0, 2)) {
     try {
       const homePage = await fetchPageHtml(candidate);
       if (!homePage) continue;
@@ -130,6 +151,15 @@ async function fetchSiteText(rawUrl: string): Promise<{ pageText: string; normal
     } catch (e) {
       console.warn("fetch failed", candidate, e);
     }
+  }
+
+  const fallbackText = await fetchViaJina(candidates[0]);
+  if (fallbackText) {
+    return {
+      pageText: fallbackText,
+      normalizedUrl: candidates[0],
+      fetched: true,
+    };
   }
 
   return { pageText: "", normalizedUrl: candidates[0] ?? null, fetched: false };
