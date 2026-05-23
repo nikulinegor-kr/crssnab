@@ -1848,6 +1848,13 @@ export default function MaterialStatementsPage() {
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
                 {selectedObjectId && orgId && selectedObj && (
+                  <SupplierListsDialog
+                    objectId={selectedObjectId}
+                    objectName={selectedObj.name}
+                    organizationId={orgId}
+                  />
+                )}
+                {selectedObjectId && orgId && selectedObj && (
                   <ConsolidatedExcelExportButton
                     objectId={selectedObjectId}
                     objectName={selectedObj.name}
