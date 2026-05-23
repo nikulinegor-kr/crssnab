@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Sparkles, Trash2, Download, Loader2, FileSpreadsheet } from "lucide-react";
+import { Plus, Sparkles, Trash2, Download, Loader2, FileSpreadsheet, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface Props {
