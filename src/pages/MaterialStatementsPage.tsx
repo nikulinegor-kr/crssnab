@@ -31,6 +31,7 @@ import { Progress } from "@/components/ui/progress";
 import * as XLSX from "xlsx";
 import { CreateProcurementDialog } from "@/components/materials/CreateProcurementDialog";
 import { ConsolidatedExcelExportButton } from "@/components/materials/ConsolidatedExcelExportButton";
+import { SupplierListsDialog } from "@/components/materials/SupplierListsDialog";
 import { IncomingUploads } from "@/components/materials/IncomingUploads";
 import { FinalStatement } from "@/components/materials/FinalStatement";
 import { HighlightText } from "@/components/HighlightText";
@@ -1847,6 +1848,13 @@ export default function MaterialStatementsPage() {
                 <Button size="sm" variant="outline" onClick={() => handleDownloadZip('folder', selectedFolderId!)} disabled={downloadingZip}>
                   <Archive className="h-4 w-4 mr-1" /> ZIP
                 </Button>
+                {selectedObjectId && orgId && selectedObj && (
+                  <SupplierListsDialog
+                    objectId={selectedObjectId}
+                    objectName={selectedObj.name}
+                    organizationId={orgId}
+                  />
+                )}
                 {selectedObjectId && orgId && selectedObj && (
                   <ConsolidatedExcelExportButton
                     objectId={selectedObjectId}
