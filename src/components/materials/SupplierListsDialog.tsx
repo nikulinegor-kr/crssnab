@@ -139,6 +139,17 @@ export const SupplierListsDialog = ({ objectId, objectName, organizationId, trig
     await supabase.from("supplier_list_items" as any).update(patch).eq("id", id);
   };
 
+  const renameRegion = async (oldRegion: string, newRegionName: string) => {
+    if (!selectedListId || !newRegionName.trim() || newRegionName.trim() === oldRegion) return;
+    const target = oldRegion === "Без региона" ? "" : oldRegion;
+    await supabase
+      .from("supplier_list_items" as any)
+      .update({ region: newRegionName.trim() })
+      .eq("list_id", selectedListId)
+      .eq("region", target);
+    refetchItems();
+  };
+
   const deleteItem = async (id: string) => {
     await supabase.from("supplier_list_items" as any).delete().eq("id", id);
     refetchItems();
