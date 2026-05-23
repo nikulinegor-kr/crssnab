@@ -42,7 +42,7 @@ const DEFAULT_REGIONS = [
   "Красноярский край", "Екатеринбург", "Челябинск",
 ];
 
-export const SupplierListsDialog = ({ objectId, objectName, organizationId }: Props) => {
+export const SupplierListsDialog = ({ objectId, objectName, organizationId, trigger }: Props) => {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
