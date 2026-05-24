@@ -18,12 +18,12 @@ interface MaxSettingsProps {
 }
 
 const NOTIFICATION_TYPES = [
-  { value: "supply", label: "Поставка ТМЦ (приход/перемещение)" },
+  { value: "supply", label: "Поставка ТМЦ" },
   { value: "invoice", label: "Счета на оплату" },
   { value: "request", label: "Входящие заявки" },
   { value: "alert", label: "CRSS оповещения" },
-  { value: "general", label: "Общие" },
 ] as const;
+
 
 interface MaxGroup {
   id: string;
@@ -41,7 +41,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
   const [groups, setGroups] = useState<MaxGroup[]>([]);
   const [newGroupId, setNewGroupId] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
-  const [newType, setNewType] = useState<string>("general");
+  const [newType, setNewType] = useState<string>("supply");
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
 
@@ -80,7 +80,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
       return;
     }
-    setNewGroupId(""); setNewGroupName(""); setNewType("general");
+    setNewGroupId(""); setNewGroupName(""); setNewType("supply");
     toast({ title: "Группа добавлена" });
     load();
   };
