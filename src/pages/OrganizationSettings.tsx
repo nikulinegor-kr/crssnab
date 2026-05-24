@@ -4,10 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette } from "lucide-react";
+import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
+import { NotificationRoutingInfo } from "@/components/settings/NotificationRoutingInfo";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
@@ -165,13 +166,35 @@ const OrganizationSettings = () => {
         )}
 
         {visibleTabs.includes("notifications") && (
-          <TabsContent value="notifications" className="space-y-8">
-            <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
-              <div className="space-y-6">
-                <NotificationSettings organizationId={currentOrgId!} />
-                <MaxSettings organizationId={currentOrgId!} />
-                {isAdmin && <DeadlineReminderSettings />}
-              </div>
+          <TabsContent value="notifications" className="space-y-6">
+            <SettingsSection title="Управление уведомлениями" description="Telegram, MAX и автонапоминания" icon={Bell}>
+              <NotificationRoutingInfo />
+              <Tabs defaultValue="telegram" className="mt-6">
+                <TabsList>
+                  <TabsTrigger value="telegram" className="gap-1.5">
+                    <Send className="h-4 w-4" /> Telegram
+                  </TabsTrigger>
+                  <TabsTrigger value="max" className="gap-1.5">
+                    <Bot className="h-4 w-4" /> MAX
+                  </TabsTrigger>
+                  {isAdmin && (
+                    <TabsTrigger value="reminders" className="gap-1.5">
+                      <CalendarClock className="h-4 w-4" /> Напоминания
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+                <TabsContent value="telegram" className="mt-4">
+                  <NotificationSettings organizationId={currentOrgId!} />
+                </TabsContent>
+                <TabsContent value="max" className="mt-4">
+                  <MaxSettings organizationId={currentOrgId!} />
+                </TabsContent>
+                {isAdmin && (
+                  <TabsContent value="reminders" className="mt-4">
+                    <DeadlineReminderSettings />
+                  </TabsContent>
+                )}
+              </Tabs>
             </SettingsSection>
           </TabsContent>
         )}
