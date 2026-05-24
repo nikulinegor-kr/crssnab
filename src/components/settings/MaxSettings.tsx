@@ -269,7 +269,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
               </TableHeader>
               <TableBody>
                 {discovered.map((g) => (
-                  <DiscoveredRow key={g.id} g={g} busy={busy} onClaim={claim} onCopy={copyText} />
+                  <DiscoveredRow key={g.id} g={g} busy={busy} onClaim={claim} onCopy={copyText} onRemove={remove} />
                 ))}
               </TableBody>
             </Table>
@@ -406,12 +406,13 @@ function summarizePayload(p: any): string {
 }
 
 const DiscoveredRow = ({
-  g, busy, onClaim, onCopy,
+  g, busy, onClaim, onCopy, onRemove,
 }: {
   g: MaxGroup;
   busy: boolean;
   onClaim: (g: MaxGroup, type: string) => void;
   onCopy: (text: string, label?: string) => void;
+  onRemove: (g: MaxGroup) => void;
 }) => {
   const [type, setType] = useState<string>("supply");
   return (
@@ -438,7 +439,12 @@ const DiscoveredRow = ({
         </Select>
       </TableCell>
       <TableCell className="text-right">
-        <Button size="sm" onClick={() => onClaim(g, type)} disabled={busy}>Привязать</Button>
+        <div className="flex justify-end gap-1">
+          <Button size="sm" onClick={() => onClaim(g, type)} disabled={busy}>Привязать</Button>
+          <Button size="sm" variant="ghost" onClick={() => onRemove(g)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
