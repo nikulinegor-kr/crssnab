@@ -8,6 +8,7 @@ import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
+import { MaxRoutingSchema } from "@/components/settings/MaxRoutingSchema";
 import { NotificationRoutingInfo } from "@/components/settings/NotificationRoutingInfo";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
@@ -186,7 +187,8 @@ const OrganizationSettings = () => {
                 <TabsContent value="telegram" className="mt-4">
                   <NotificationSettings organizationId={currentOrgId!} />
                 </TabsContent>
-                <TabsContent value="max" className="mt-4">
+                <TabsContent value="max" className="mt-4 space-y-6">
+                  <MaxRoutingSchema organizationId={currentOrgId!} />
                   <MaxSettings organizationId={currentOrgId!} />
                 </TabsContent>
                 {isAdmin && (
