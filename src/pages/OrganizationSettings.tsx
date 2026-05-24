@@ -7,6 +7,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
+import { MaxSettings } from "@/components/settings/MaxSettings";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
