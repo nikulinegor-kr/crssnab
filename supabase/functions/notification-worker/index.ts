@@ -162,8 +162,17 @@ Deno.serve(async (req) => {
   let delivered = 0;
   let failed = 0;
 
+  // Sanitizer: strip internal CRM identifiers (#REQ-..., bare # lines) before sending to external platforms
+  const removeInternalIds = (s: string): string =>
+    s
+      .replace(/^\s*#REQ-[\w-]+\s*$/gim, "")          // bare "#REQ-..." lines
+      .replace(/#REQ-[\w-]+/gi, "")                     // inline "#REQ-..." tokens
+      .replace(/\n{3,}/g, "\n\n")                       // collapse blank lines
+      .trim();
+
   for (const row of items) {
-    const text = String(row.payload?.text ?? "");
+    const rawText = String(row.payload?.text ?? "");
+    const text = removeInternalIds(rawText);
     const buttons = Array.isArray(row.payload?.buttons) ? (row.payload!.buttons as Button[]) : [];
     const requestId = row.payload?.request_id as string | undefined;
 
