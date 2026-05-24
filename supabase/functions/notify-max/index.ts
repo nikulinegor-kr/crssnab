@@ -11,18 +11,33 @@ const corsHeaders = {
 async function sendMessage(chatId: string, text: string) {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) throw new Error("MAX_BOT_TOKEN is not configured");
-  const res = await fetch(
-    `${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}&access_token=${token}`,
-    {
+
+  const tryRequest = async (mode: "bearer" | "query") => {
+    let url = `${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (mode === "bearer") {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      url += `&access_token=${token}`;
+    }
+    const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ text }),
-    },
-  );
-  const body = await res.text();
-  if (!res.ok) throw new Error(`MAX API ${res.status}: ${body}`);
-  return body;
+    });
+    const body = await res.text();
+    console.log(`notify-max sendMessage via ${mode} chat=${chatId} -> ${res.status} ${body.slice(0, 300)}`);
+    return { res, body };
+  };
+
+  let r = await tryRequest("bearer");
+  if (!r.res.ok && [401, 403, 404].includes(r.res.status)) {
+    r = await tryRequest("query");
+  }
+  if (!r.res.ok) throw new Error(`MAX API ${r.res.status}: ${r.body}`);
+  return r.body;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
