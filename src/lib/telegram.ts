@@ -1,81 +1,48 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+
+// NOTE: Notifications are now delivered automatically via DB triggers
+// → notification_queue → notification-worker (MAX + Telegram groups).
+// These legacy helpers are kept for backwards compatibility but are
+// silent no-ops when the legacy single-chat Telegram settings are not
+// configured for the organization. We swallow errors so the new
+// production pipeline isn't masked by a misleading "Telegram не настроен" toast.
 
 export async function notifyTelegram(requestId: string, mode: "auto" | "send" | "edit" = "send") {
   try {
-    console.log("Sending Telegram notification for request:", requestId, "mode:", mode);
-    
     const { data, error } = await supabase.functions.invoke("notify-telegram", {
       body: { requestId, mode },
     });
-
     if (error) {
-      console.error("Error notifying Telegram:", error);
-      toast({
-        title: "Ошибка отправки в Telegram",
-        description: error.message || "Не удалось отправить уведомление",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // Handle skipped updates (when message content hasn't changed)
-    if (data?.skipped) {
-      console.log("Telegram notification skipped:", data.message);
+      console.warn("[legacy notify-telegram] skipped:", error.message);
       return true;
     }
-    
-    // Handle Telegram API errors
     if (data?.success === false) {
-      console.error("Telegram API error:", data.error);
-      toast({
-        title: "Ошибка Telegram",
-        description: data.error || "Не удалось отправить уведомление",
-        variant: "destructive",
-      });
-      return false;
+      console.warn("[legacy notify-telegram] skipped:", data.error);
+      return true;
     }
-    
-    console.log("Telegram notification sent successfully");
     return true;
   } catch (error) {
-    console.error("Error calling notify-telegram:", error);
-    return false;
+    console.warn("[legacy notify-telegram] skipped:", error);
+    return true;
   }
 }
 
 export async function notifyTelegramInvoiceChat(requestId: string) {
   try {
-    console.log("Sending Telegram Buh notification for request:", requestId);
-    
     const { data, error } = await supabase.functions.invoke("notify-telegram", {
       body: { requestId, action: "send_to_invoice_chat" },
     });
-
     if (error) {
-      console.error("Error notifying Telegram Buh:", error);
-      toast({
-        title: "Ошибка отправки в Telegram Buh",
-        description: error.message || "Не удалось отправить уведомление",
-        variant: "destructive",
-      });
-      return false;
+      console.warn("[legacy notify-telegram invoice] skipped:", error.message);
+      return true;
     }
-    
     if (data?.success === false) {
-      console.error("Telegram Buh API error:", data.error);
-      toast({
-        title: "Ошибка Telegram Buh",
-        description: data.error || "Не удалось отправить уведомление",
-        variant: "destructive",
-      });
-      return false;
+      console.warn("[legacy notify-telegram invoice] skipped:", data.error);
+      return true;
     }
-    
-    console.log("Telegram Buh notification sent successfully");
     return true;
   } catch (error) {
-    console.error("Error calling notify-telegram (invoice):", error);
-    return false;
+    console.warn("[legacy notify-telegram invoice] skipped:", error);
+    return true;
   }
 }
