@@ -840,11 +840,13 @@ serve(async (req) => {
           }
         }
         
-        // Send documents ONLY if status is "Счёт в Бухгалтерии"
+        // Документы (PDF и т.п.) теперь отправляются ВСЕГДА, если они есть.
+        // Фото по-прежнему уходят только в статусе "Счёт в Бухгалтерии".
         const status = request.status?.toLowerCase() || "";
         const isInvoiceStatus = status.includes("счёт в бухгалтерии") || status.includes("счет в бухгалтерии");
-        
-        if (isInvoiceStatus) {
+
+        {
+
           // Send documents as separate files
           const documentUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
           console.log("Main chat - document URLs to send:", documentUrls.length, JSON.stringify(documentUrls));
@@ -902,56 +904,53 @@ serve(async (req) => {
               }
             }
           }
-          
-          // Send photo files only for invoice status
-          const photoUrls = (request.photo_urls?.length > 0 ? request.photo_urls : (request.photo_url ? [request.photo_url] : []));
-          
-          if (photoUrls.length > 0) {
-            console.log("Status is 'Счёт в Бухгалтерии', sending photo files:", photoUrls.length);
-            
-            for (const photoUrl of photoUrls) {
-              if (photoUrl && (photoUrl.startsWith("http://") || photoUrl.startsWith("https://"))) {
-                try {
-                  // Try to generate a signed URL for the photo
-                  let finalPhotoUrl = photoUrl;
-                  try {
-                    const url = new URL(photoUrl);
-                    const pathParts = url.pathname.split('/');
-                    const bucketIndex = pathParts.findIndex((p: string) => p === 'request-photos');
-                    if (bucketIndex !== -1) {
-                      const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                      const { data: signedData, error: signedError } = await supabase.storage
-                        .from('request-photos')
-                        .createSignedUrl(filePath, 86400);
-                      if (!signedError && signedData?.signedUrl) {
-                        finalPhotoUrl = signedData.signedUrl;
-                        console.log("Using signed URL for photo");
-                      }
-                    }
-                  } catch (e) {
-                    console.log("Could not generate signed URL for photo, using original:", e);
-                  }
 
-                  const photoResult = await sendTelegramRequest(org.telegram_bot_token, "sendPhoto", {
-                    chat_id: org.telegram_chat_id,
-                    photo: finalPhotoUrl,
-                    caption: `📷 Фото к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
-                  });
-                  
-                  if (photoResult.ok) {
-                    console.log("Photo sent successfully");
-                  } else {
-                    console.error("Error sending photo:", photoResult);
+          // Фото оставляем только для статуса "Счёт в Бухгалтерии"
+          if (isInvoiceStatus) {
+            const photoUrls = (request.photo_urls?.length > 0 ? request.photo_urls : (request.photo_url ? [request.photo_url] : []));
+
+            if (photoUrls.length > 0) {
+              console.log("Status is 'Счёт в Бухгалтерии', sending photo files:", photoUrls.length);
+
+              for (const photoUrl of photoUrls) {
+                if (photoUrl && (photoUrl.startsWith("http://") || photoUrl.startsWith("https://"))) {
+                  try {
+                    let finalPhotoUrl = photoUrl;
+                    try {
+                      const url = new URL(photoUrl);
+                      const pathParts = url.pathname.split('/');
+                      const bucketIndex = pathParts.findIndex((p: string) => p === 'request-photos');
+                      if (bucketIndex !== -1) {
+                        const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                        const { data: signedData, error: signedError } = await supabase.storage
+                          .from('request-photos')
+                          .createSignedUrl(filePath, 86400);
+                        if (!signedError && signedData?.signedUrl) {
+                          finalPhotoUrl = signedData.signedUrl;
+                        }
+                      }
+                    } catch (e) {
+                      console.log("Could not generate signed URL for photo, using original:", e);
+                    }
+
+                    const photoResult = await sendTelegramRequest(org.telegram_bot_token, "sendPhoto", {
+                      chat_id: org.telegram_chat_id,
+                      photo: finalPhotoUrl,
+                      caption: `📷 Фото к заявке: ${request.description?.substring(0, 100) || 'Без описания'}`,
+                    });
+
+                    if (!photoResult.ok) {
+                      console.error("Error sending photo:", photoResult);
+                    }
+                  } catch (photoError) {
+                    console.error("Error processing photo:", photoError);
                   }
-                } catch (photoError) {
-                  console.error("Error processing photo:", photoError);
                 }
               }
             }
           }
-        } else {
-          console.log("Status is NOT 'Счёт в Бухгалтерии', skipping file attachments. Current status:", request.status);
         }
+
     }
 
     console.log("Telegram result:", result);
