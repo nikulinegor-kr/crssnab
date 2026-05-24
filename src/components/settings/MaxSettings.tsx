@@ -80,7 +80,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
       return;
     }
-    setNewGroupId(""); setNewGroupName(""); setNewType("general");
+    setNewGroupId(""); setNewGroupName(""); setNewType("supply");
     toast({ title: "Группа добавлена" });
     load();
   };
