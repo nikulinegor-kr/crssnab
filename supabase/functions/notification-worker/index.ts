@@ -113,15 +113,16 @@ async function sendMaxDocument(chatId: string, fileUrl: string, fileName: string
     const initToken: string | undefined = uploadInit?.token ?? uploadInit?.file?.token ?? uploadInit?.payload?.token;
     if (!uploadUrl) return { ok: false, status: 0, body: `no upload url: ${uploadInitBody.slice(0, 300)}` };
 
-    // Step 2: download source file then upload binary bytes to the provided URL
+    // Step 2: download source file then upload as multipart form-data using field `data`
     const fileRes = await fetch(fileUrl);
     if (!fileRes.ok) return { ok: false, status: fileRes.status, body: `source fetch failed` };
     const fileBlob = await fileRes.blob();
-    const contentType = fileBlob.type || fileRes.headers.get("content-type") || "application/octet-stream";
+    const form = new FormData();
+    form.append("data", fileBlob, fileName);
     const upRes = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: fileBlob,
+      method: "POST",
+      headers: { Accept: "application/json; charset=utf-8" },
+      body: form,
     });
     const upBody = await upRes.text();
     if (!upRes.ok) return { ok: false, status: upRes.status, body: `upload failed: ${upBody.slice(0, 500)}` };
