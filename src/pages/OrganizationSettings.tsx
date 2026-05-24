@@ -165,13 +165,35 @@ const OrganizationSettings = () => {
         )}
 
         {visibleTabs.includes("notifications") && (
-          <TabsContent value="notifications" className="space-y-8">
-            <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
-              <div className="space-y-6">
-                <NotificationSettings organizationId={currentOrgId!} />
-                <MaxSettings organizationId={currentOrgId!} />
-                {isAdmin && <DeadlineReminderSettings />}
-              </div>
+          <TabsContent value="notifications" className="space-y-6">
+            <SettingsSection title="Управление уведомлениями" description="Telegram, MAX и автонапоминания" icon={Bell}>
+              <NotificationRoutingInfo />
+              <Tabs defaultValue="telegram" className="mt-6">
+                <TabsList>
+                  <TabsTrigger value="telegram" className="gap-1.5">
+                    <Send className="h-4 w-4" /> Telegram
+                  </TabsTrigger>
+                  <TabsTrigger value="max" className="gap-1.5">
+                    <Bot className="h-4 w-4" /> MAX
+                  </TabsTrigger>
+                  {isAdmin && (
+                    <TabsTrigger value="reminders" className="gap-1.5">
+                      <CalendarClock className="h-4 w-4" /> Напоминания
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+                <TabsContent value="telegram" className="mt-4">
+                  <NotificationSettings organizationId={currentOrgId!} />
+                </TabsContent>
+                <TabsContent value="max" className="mt-4">
+                  <MaxSettings organizationId={currentOrgId!} />
+                </TabsContent>
+                {isAdmin && (
+                  <TabsContent value="reminders" className="mt-4">
+                    <DeadlineReminderSettings />
+                  </TabsContent>
+                )}
+              </Tabs>
             </SettingsSection>
           </TabsContent>
         )}
