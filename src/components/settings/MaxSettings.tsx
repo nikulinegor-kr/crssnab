@@ -18,12 +18,12 @@ interface MaxSettingsProps {
 }
 
 const NOTIFICATION_TYPES = [
-  { value: "supply", label: "Поставка ТМЦ (приход/перемещение)" },
+  { value: "supply", label: "Поставка ТМЦ" },
   { value: "invoice", label: "Счета на оплату" },
   { value: "request", label: "Входящие заявки" },
   { value: "alert", label: "CRSS оповещения" },
-  { value: "general", label: "Общие" },
 ] as const;
+
 
 interface MaxGroup {
   id: string;
