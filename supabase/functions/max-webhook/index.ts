@@ -1,7 +1,7 @@
-// MAX Bot webhook — receives updates from botapi.max.ru
+// MAX Bot webhook — receives updates from platform-api.max.ru
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const MAX_API = "https://botapi.max.ru";
+const MAX_API = "https://platform-api.max.ru";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +27,7 @@ async function maxFetch(
       ...((init?.headers as Record<string, string>) || {}),
     };
     if (mode === "bearer") {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers["Authorization"] = token;
     } else {
       const sep = url.includes("?") ? "&" : "?";
       url = `${url}${sep}access_token=${token}`;
