@@ -1419,6 +1419,68 @@ export type Database = {
           },
         ]
       }
+      max_groups: {
+        Row: {
+          created_at: string
+          group_id: string
+          group_name: string
+          id: string
+          is_active: boolean
+          notification_type: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          group_name: string
+          id?: string
+          is_active?: boolean
+          notification_type?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          group_name?: string
+          id?: string
+          is_active?: boolean
+          notification_type?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "max_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      max_updates: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          payload: Json
+          update_id: number
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          payload: Json
+          update_id: number
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          payload?: Json
+          update_id?: number
+        }
+        Relationships: []
+      }
       message_attachments: {
         Row: {
           created_at: string
