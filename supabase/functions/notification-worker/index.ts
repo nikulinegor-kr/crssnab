@@ -12,7 +12,7 @@ const TG_API = "https://api.telegram.org";
 const BATCH = 20;
 const BACKOFF = [30, 120, 600];
 
-type Button = { id: string; name: string };
+type Button = { id?: string; name: string; data?: string };
 
 type QueueRow = {
   id: string;
@@ -32,20 +32,21 @@ type SendResult = {
   message_id?: string | number | null;
 };
 
-function buildCallbackData(requestId: string, executorId: string) {
-  return `assign:${requestId}:${executorId}`;
+function buildCallbackData(requestId: string | undefined, btn: Button): string {
+  if (btn.data) return btn.data;
+  return `assign:${requestId ?? ""}:${btn.id ?? ""}`;
 }
 
-function buildTgKeyboard(requestId: string, buttons: Button[]) {
+function buildTgKeyboard(requestId: string | undefined, buttons: Button[]) {
   const rows: any[] = [];
   for (let i = 0; i < buttons.length; i += 2) {
     const row = [
-      { text: buttons[i].name.slice(0, 30), callback_data: buildCallbackData(requestId, buttons[i].id) },
+      { text: buttons[i].name.slice(0, 30), callback_data: buildCallbackData(requestId, buttons[i]) },
     ];
     if (buttons[i + 1]) {
       row.push({
         text: buttons[i + 1].name.slice(0, 30),
-        callback_data: buildCallbackData(requestId, buttons[i + 1].id),
+        callback_data: buildCallbackData(requestId, buttons[i + 1]),
       });
     }
     rows.push(row);
@@ -53,17 +54,17 @@ function buildTgKeyboard(requestId: string, buttons: Button[]) {
   return { inline_keyboard: rows };
 }
 
-function buildMaxAttachments(requestId: string, buttons: Button[]) {
+function buildMaxAttachments(requestId: string | undefined, buttons: Button[]) {
   const rows: any[] = [];
   for (let i = 0; i < buttons.length; i += 2) {
     const row = [
-      { type: "callback", text: buttons[i].name.slice(0, 30), payload: buildCallbackData(requestId, buttons[i].id) },
+      { type: "callback", text: buttons[i].name.slice(0, 30), payload: buildCallbackData(requestId, buttons[i]) },
     ];
     if (buttons[i + 1]) {
       row.push({
         type: "callback",
         text: buttons[i + 1].name.slice(0, 30),
-        payload: buildCallbackData(requestId, buttons[i + 1].id),
+        payload: buildCallbackData(requestId, buttons[i + 1]),
       });
     }
     rows.push(row);
