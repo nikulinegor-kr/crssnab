@@ -2593,6 +2593,9 @@ export type Database = {
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          invoice_routed_at: string | null
+          invoice_routed_by: string | null
+          invoice_routing: string | null
           object_id: string | null
           operation_type: string | null
           organization_id: string | null
@@ -2643,6 +2646,9 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          invoice_routed_at?: string | null
+          invoice_routed_by?: string | null
+          invoice_routing?: string | null
           object_id?: string | null
           operation_type?: string | null
           organization_id?: string | null
@@ -2693,6 +2699,9 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          invoice_routed_at?: string | null
+          invoice_routed_by?: string | null
+          invoice_routing?: string | null
           object_id?: string | null
           operation_type?: string | null
           organization_id?: string | null

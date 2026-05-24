@@ -461,6 +461,41 @@ async function handleCallbackQuery(callbackQuery: any) {
     return;
   }
 
+  // Invoice routing callbacks (invroute / invconfirm / invcancel)
+  if (data.startsWith("invroute:") || data.startsWith("invconfirm:") || data.startsWith("invcancel:")) {
+    const parts = data.split(":");
+    const prefix = parts[0];
+    const requestId = parts[1];
+    const choice = parts[2] as "pay" | "to" | undefined;
+    const action = prefix === "invroute" ? "select" : prefix === "invconfirm" ? "confirm" : "cancel";
+    if (!requestId) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Некорректные данные",
+        show_alert: true,
+      });
+      return;
+    }
+    await fetch(`${SUPABASE_URL}/functions/v1/invoice-route`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        request_id: requestId,
+        action,
+        choice,
+        source: "telegram",
+        chat_id: chatId,
+        message_id: messageId,
+        callback_id: callbackQuery.id,
+        user: { id: validated.from.username ?? null, name: fullName, username },
+      }),
+    }).catch((e) => console.error("invoice-route call failed:", e));
+    return;
+  }
+
 
 
   // Handle archive pagination
