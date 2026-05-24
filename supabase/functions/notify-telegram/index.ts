@@ -840,11 +840,13 @@ serve(async (req) => {
           }
         }
         
-        // Send documents ONLY if status is "Счёт в Бухгалтерии"
+        // Документы (PDF и т.п.) теперь отправляются ВСЕГДА, если они есть.
+        // Фото по-прежнему уходят только в статусе "Счёт в Бухгалтерии".
         const status = request.status?.toLowerCase() || "";
         const isInvoiceStatus = status.includes("счёт в бухгалтерии") || status.includes("счет в бухгалтерии");
-        
-        if (isInvoiceStatus) {
+
+        {
+
           // Send documents as separate files
           const documentUrls = (request.document_urls?.length > 0 ? request.document_urls : (request.document_url ? [request.document_url] : []));
           console.log("Main chat - document URLs to send:", documentUrls.length, JSON.stringify(documentUrls));
