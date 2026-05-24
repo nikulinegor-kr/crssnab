@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
 import { MaxRoutingSchema } from "@/components/settings/MaxRoutingSchema";
+import { MaxDirectDebug } from "@/components/settings/MaxDirectDebug";
 import { NotificationRoutingInfo } from "@/components/settings/NotificationRoutingInfo";
 import { NotificationScenarioTester } from "@/components/settings/NotificationScenarioTester";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
