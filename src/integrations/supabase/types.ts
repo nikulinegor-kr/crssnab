@@ -1687,6 +1687,8 @@ export type Database = {
           organization_id: string
           payload: Json
           platform: string
+          provider_chat_id: string | null
+          provider_message_id: string | null
           retry_count: number
           sent_at: string | null
           status: string
@@ -1709,6 +1711,8 @@ export type Database = {
           organization_id: string
           payload?: Json
           platform: string
+          provider_chat_id?: string | null
+          provider_message_id?: string | null
           retry_count?: number
           sent_at?: string | null
           status?: string
@@ -1731,6 +1735,8 @@ export type Database = {
           organization_id?: string
           payload?: Json
           platform?: string
+          provider_chat_id?: string | null
+          provider_message_id?: string | null
           retry_count?: number
           sent_at?: string | null
           status?: string
@@ -3625,6 +3631,14 @@ export type Database = {
     Functions: {
       _priority_emoji: { Args: { _p: string }; Returns: string }
       _status_emoji: { Args: { _s: string }; Returns: string }
+      build_assigned_message: {
+        Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: string
+      }
+      build_incoming_message: {
+        Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: string
+      }
       build_request_message: {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
@@ -3650,6 +3664,7 @@ export type Database = {
         Returns: undefined
       }
       get_client_org_id: { Args: { _user_id: string }; Returns: string }
+      get_executor_buttons: { Args: { _org_id: string }; Returns: Json }
       get_invitation_by_token: {
         Args: { _token: string }
         Returns: {
