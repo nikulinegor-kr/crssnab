@@ -542,22 +542,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
   }, [request, canEdit, queryClient]);
 
-  // Debounced server save on form change
-  useEffect(() => {
-    if (!open || !canEdit || isViewer) return;
-    
-    const subscription = form.watch((value) => {
-      if (serverSaveTimeoutRef.current) {
-        clearTimeout(serverSaveTimeoutRef.current);
-      }
-      
-      serverSaveTimeoutRef.current = setTimeout(() => {
-        saveToServer(value as RequestFormData);
-      }, 2000);
-    });
+  // ⚠️ Серверное автосохранение отключено намеренно: смена статуса и отправка
+  // уведомлений в Telegram/MAX должны происходить ТОЛЬКО после нажатия кнопки
+  // "Сохранить" (onSubmit). Локальный draft продолжает сохраняться отдельно.
 
-    return () => subscription.unsubscribe();
-  }, [open, canEdit, isViewer, form, saveToServer]);
 
   // Keyboard shortcuts
   useEffect(() => {
