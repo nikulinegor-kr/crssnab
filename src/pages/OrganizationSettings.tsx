@@ -179,6 +179,9 @@ const OrganizationSettings = () => {
                   <TabsTrigger value="max" className="gap-1.5">
                     <Bot className="h-4 w-4" /> MAX
                   </TabsTrigger>
+                  <TabsTrigger value="tester" className="gap-1.5">
+                    <Bell className="h-4 w-4" /> Тест сценариев
+                  </TabsTrigger>
                   {isAdmin && (
                     <TabsTrigger value="reminders" className="gap-1.5">
                       <CalendarClock className="h-4 w-4" /> Напоминания
@@ -191,6 +194,9 @@ const OrganizationSettings = () => {
                 <TabsContent value="max" className="mt-4 space-y-6">
                   <MaxRoutingSchema organizationId={currentOrgId!} />
                   <MaxSettings organizationId={currentOrgId!} />
+                </TabsContent>
+                <TabsContent value="tester" className="mt-4">
+                  <NotificationScenarioTester organizationId={currentOrgId!} orgName={orgName} />
                 </TabsContent>
                 {isAdmin && (
                   <TabsContent value="reminders" className="mt-4">
