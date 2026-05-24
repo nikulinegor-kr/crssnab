@@ -1481,6 +1481,36 @@ export type Database = {
         }
         Relationships: []
       }
+      max_webhook_logs: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          event_type: string | null
+          group_id: string | null
+          group_name: string | null
+          id: string
+          payload: Json
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          group_id?: string | null
+          group_name?: string | null
+          id?: string
+          payload: Json
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          group_id?: string | null
+          group_name?: string | null
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       message_attachments: {
         Row: {
           created_at: string
