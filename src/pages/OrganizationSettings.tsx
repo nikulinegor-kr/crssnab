@@ -194,6 +194,7 @@ const OrganizationSettings = () => {
                 </TabsContent>
                 <TabsContent value="max" className="mt-4 space-y-6">
                   <MaxRoutingSchema organizationId={currentOrgId!} />
+                  <MaxDirectDebug organizationId={currentOrgId!} />
                   <MaxSettings organizationId={currentOrgId!} />
                 </TabsContent>
                 <TabsContent value="tester" className="mt-4">
