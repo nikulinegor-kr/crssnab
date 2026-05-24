@@ -264,8 +264,7 @@ Deno.serve(async (req) => {
         .eq("id", row.id);
 
       // Send attached documents (PDF etc.) as files after the text message.
-      // Telegram only — MAX requires a separate upload flow.
-      if (row.platform === "telegram" && requestId) {
+      if (requestId) {
         try {
           const { data: reqRow } = await supabase
             .from("requests")
@@ -276,35 +275,43 @@ Deno.serve(async (req) => {
             ? (reqRow as any).document_urls
             : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : []);
           if (docUrls.length > 0) {
-            const tok = await getTgToken(row.organization_id);
-            if (tok) {
-              for (const docUrl of docUrls) {
-                if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
-                let finalUrl = docUrl;
+            const tgTok = row.platform === "telegram" ? await getTgToken(row.organization_id) : null;
+            for (const docUrl of docUrls) {
+              if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
+              let finalUrl = docUrl;
+              let fileName = "document.pdf";
+              try {
+                const u = new URL(docUrl);
+                const parts = u.pathname.split("/");
+                fileName = decodeURIComponent(parts[parts.length - 1] || "document.pdf");
+                const idx = parts.findIndex((p) => p === "request-documents");
+                if (idx !== -1) {
+                  const filePath = parts.slice(idx + 1).join("/");
+                  const { data: signed } = await supabase.storage
+                    .from("request-documents")
+                    .createSignedUrl(filePath, 86400);
+                  if (signed?.signedUrl) finalUrl = signed.signedUrl;
+                }
+              } catch { /* keep original */ }
+              const caption = `📄 ${String((reqRow as any)?.description ?? "").slice(0, 100)}`.trim();
+
+              if (row.platform === "telegram" && tgTok) {
                 try {
-                  const u = new URL(docUrl);
-                  const parts = u.pathname.split("/");
-                  const idx = parts.findIndex((p) => p === "request-documents");
-                  if (idx !== -1) {
-                    const filePath = parts.slice(idx + 1).join("/");
-                    const { data: signed } = await supabase.storage
-                      .from("request-documents")
-                      .createSignedUrl(filePath, 86400);
-                    if (signed?.signedUrl) finalUrl = signed.signedUrl;
-                  }
-                } catch { /* keep original */ }
-                const caption = `📄 ${String((reqRow as any)?.description ?? "").slice(0, 100)}`.trim();
-                try {
-                  const res = await fetch(`${TG_API}/bot${tok}/sendDocument`, {
+                  const res = await fetch(`${TG_API}/bot${tgTok}/sendDocument`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ chat_id: row.group_id, document: finalUrl, caption }),
                   });
                   if (!res.ok) {
-                    console.error("[notification-worker] sendDocument failed", res.status, await res.text());
+                    console.error("[notification-worker] TG sendDocument failed", res.status, await res.text());
                   }
                 } catch (e) {
-                  console.error("[notification-worker] sendDocument exception", e);
+                  console.error("[notification-worker] TG sendDocument exception", e);
+                }
+              } else if (row.platform === "max") {
+                const r = await sendMaxDocument(row.group_id, finalUrl, fileName, caption);
+                if (!r.ok) {
+                  console.error("[notification-worker] MAX sendDocument failed", r.status, r.body);
                 }
               }
             }
