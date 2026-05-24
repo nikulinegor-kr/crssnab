@@ -17,6 +17,8 @@ type Button = { id: string; name: string };
 type QueueRow = {
   id: string;
   organization_id: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
   platform: "max" | "telegram";
   group_id: string;
   payload: { text: string; buttons?: Button[]; request_id?: string; kind?: string; [k: string]: any };
@@ -89,6 +91,10 @@ async function sendMax(chatId: string, text: string, attachments?: any): Promise
   return { ok: res.ok, status: res.status, body: respBody.slice(0, 1500), message_id: messageId };
 }
 
+async function delay(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function sendMaxDocument(chatId: string, fileUrl: string, fileName: string, caption: string): Promise<SendResult> {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) return { ok: false, status: 0, body: "MAX_BOT_TOKEN not configured" };
@@ -104,35 +110,63 @@ async function sendMaxDocument(chatId: string, fileUrl: string, fileName: string
     }
     const uploadInit = JSON.parse(uploadInitBody);
     const uploadUrl: string | undefined = uploadInit?.url;
+    const initToken: string | undefined = uploadInit?.token ?? uploadInit?.file?.token ?? uploadInit?.payload?.token;
     if (!uploadUrl) return { ok: false, status: 0, body: `no upload url: ${uploadInitBody.slice(0, 300)}` };
 
-    // Step 2: download source file then upload multipart
+    // Step 2: download source file then upload as multipart form-data using field `data`
     const fileRes = await fetch(fileUrl);
     if (!fileRes.ok) return { ok: false, status: fileRes.status, body: `source fetch failed` };
     const fileBlob = await fileRes.blob();
     const form = new FormData();
     form.append("data", fileBlob, fileName);
-    const upRes = await fetch(uploadUrl, { method: "POST", body: form });
+    const upRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { Accept: "application/json; charset=utf-8" },
+      body: form,
+    });
     const upBody = await upRes.text();
     if (!upRes.ok) return { ok: false, status: upRes.status, body: `upload failed: ${upBody.slice(0, 500)}` };
-    let fileToken: string | undefined;
+    let fileToken: string | undefined = initToken;
     try {
       const upJson = JSON.parse(upBody);
-      fileToken = upJson?.token ?? upJson?.file?.token ?? upJson?.payload?.token;
+      fileToken = fileToken ?? upJson?.token ?? upJson?.file?.token ?? upJson?.payload?.token;
     } catch { /* ignore */ }
     if (!fileToken) return { ok: false, status: 0, body: `no file token: ${upBody.slice(0, 300)}` };
 
-    // Step 3: send message with file attachment
-    const msgRes = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: token },
-      body: JSON.stringify({
-        text: caption,
-        attachments: [{ type: "file", payload: { token: fileToken } }],
-      }),
-    });
-    const msgBody = await msgRes.text();
-    return { ok: msgRes.ok, status: msgRes.status, body: msgBody.slice(0, 1000) };
+    // Step 3: send message with file attachment, retry while MAX is still processing the upload
+    const retryDelays = [0, 2000, 4000, 7000];
+    let lastStatus = 0;
+    let lastBody = "";
+    for (const retryDelay of retryDelays) {
+      if (retryDelay > 0) await delay(retryDelay);
+      const msgRes = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token },
+        body: JSON.stringify({
+          text: caption,
+          attachments: [{ type: "file", payload: { token: fileToken } }],
+        }),
+      });
+      const msgBody = await msgRes.text();
+      lastStatus = msgRes.status;
+      lastBody = msgBody;
+
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(msgBody);
+      } catch { /* ignore */ }
+
+      const code = parsed?.code ?? parsed?.error?.code ?? null;
+      const messageId = parsed?.message?.body?.mid ?? parsed?.message?.mid ?? parsed?.message_id ?? null;
+      if (msgRes.ok && code !== "attachment.not.ready") {
+        return { ok: true, status: msgRes.status, body: msgBody.slice(0, 1000), message_id: messageId };
+      }
+      if (code !== "attachment.not.ready") {
+        return { ok: false, status: msgRes.status, body: msgBody.slice(0, 1000), message_id: messageId };
+      }
+    }
+
+    return { ok: false, status: lastStatus, body: lastBody.slice(0, 1000) };
   } catch (e: any) {
     return { ok: false, status: 0, body: `EXCEPTION: ${e?.message || e}` };
   }
@@ -170,7 +204,7 @@ Deno.serve(async (req) => {
 
   const { data: rows, error } = await supabase
     .from("notification_queue")
-    .select("id, organization_id, platform, group_id, payload, retry_count")
+    .select("id, organization_id, entity_type, entity_id, platform, group_id, payload, retry_count")
     .in("status", ["queued"])
     .lte("next_attempt_at", new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -223,7 +257,9 @@ Deno.serve(async (req) => {
     const rawText = String(row.payload?.text ?? "");
     const text = removeInternalIds(rawText);
     const buttons = Array.isArray(row.payload?.buttons) ? (row.payload!.buttons as Button[]) : [];
-    const requestId = row.payload?.request_id as string | undefined;
+    const requestId = typeof row.payload?.request_id === "string" && row.payload.request_id
+      ? row.payload.request_id
+      : (row.entity_type === "request" && row.entity_id ? row.entity_id : undefined);
 
     let result: SendResult;
     try {
