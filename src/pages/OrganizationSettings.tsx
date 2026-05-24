@@ -169,6 +169,7 @@ const OrganizationSettings = () => {
             <SettingsSection title="Управление уведомлениями" description="Telegram, push-уведомления и автонапоминания" icon={Bell}>
               <div className="space-y-6">
                 <NotificationSettings organizationId={currentOrgId!} />
+                <MaxSettings organizationId={currentOrgId!} />
                 {isAdmin && <DeadlineReminderSettings />}
               </div>
             </SettingsSection>
