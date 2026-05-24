@@ -27,7 +27,7 @@ async function maxFetch(
       ...((init?.headers as Record<string, string>) || {}),
     };
     if (mode === "bearer") {
-      headers["Authorization"] = `Bearer ${token}`;
+      headers["Authorization"] = token;
     } else {
       const sep = url.includes("?") ? "&" : "?";
       url = `${url}${sep}access_token=${token}`;
