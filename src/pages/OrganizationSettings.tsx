@@ -186,7 +186,8 @@ const OrganizationSettings = () => {
                 <TabsContent value="telegram" className="mt-4">
                   <NotificationSettings organizationId={currentOrgId!} />
                 </TabsContent>
-                <TabsContent value="max" className="mt-4">
+                <TabsContent value="max" className="mt-4 space-y-6">
+                  <MaxRoutingSchema organizationId={currentOrgId!} />
                   <MaxSettings organizationId={currentOrgId!} />
                 </TabsContent>
                 {isAdmin && (
