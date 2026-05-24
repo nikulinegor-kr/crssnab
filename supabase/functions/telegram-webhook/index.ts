@@ -1729,6 +1729,66 @@ serve(async (req) => {
     console.log("=== Telegram update received ===");
     console.log("Full update:", JSON.stringify(update, null, 2));
 
+    // Auto-discover groups + log incoming events (mirror of MAX behaviour)
+    try {
+      const msg = update.message || update.edited_message || update.channel_post;
+      if (msg?.chat?.id) {
+        const chatId = String(msg.chat.id);
+        const chatType = msg.chat.type || null;
+        const groupName = msg.chat.title || msg.chat.username || msg.chat.first_name || `Chat ${chatId}`;
+
+        await supabase.from("telegram_webhook_logs").insert({
+          event_type: "incoming_raw",
+          group_id: chatId,
+          chat_id: chatId,
+          group_name: groupName,
+          payload: update,
+        });
+
+        const { data: existing } = await supabase
+          .from("telegram_groups")
+          .select("id, organization_id")
+          .eq("group_id", chatId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from("telegram_groups").update({
+            last_message_at: new Date().toISOString(),
+            group_name: groupName,
+            chat_type: chatType,
+          }).eq("id", existing.id);
+        } else {
+          await supabase.from("telegram_groups").insert({
+            organization_id: null,
+            group_id: chatId,
+            group_name: groupName,
+            chat_type: chatType,
+            notification_type: "general",
+            is_discovered: true,
+            is_active: true,
+            last_message_at: new Date().toISOString(),
+          });
+        }
+
+        const text = msg.text || msg.caption || "";
+        if (typeof text === "string" && /^\/id(\b|@)/i.test(text.trim())) {
+          try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: msg.chat.id,
+                text: `<b>Chat ID:</b> <code>${chatId}</code>\n<b>Тип:</b> ${chatType || "—"}\n<b>Название:</b> ${groupName}`,
+                parse_mode: "HTML",
+              }),
+            });
+          } catch (_) { /* noop */ }
+        }
+      }
+    } catch (discoverErr) {
+      console.error("discover/log error:", discoverErr);
+    }
+
     if (update.callback_query) {
       console.log("Processing callback_query");
       await handleCallbackQuery(update.callback_query);

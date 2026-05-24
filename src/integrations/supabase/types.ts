@@ -3090,6 +3090,62 @@ export type Database = {
           },
         ]
       }
+      telegram_groups: {
+        Row: {
+          chat_type: string | null
+          created_at: string
+          group_id: string
+          group_name: string
+          id: string
+          is_active: boolean
+          is_discovered: boolean
+          last_api_at: string | null
+          last_api_status: number | null
+          last_message_at: string | null
+          notification_type: string
+          organization_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_type?: string | null
+          created_at?: string
+          group_id: string
+          group_name: string
+          id?: string
+          is_active?: boolean
+          is_discovered?: boolean
+          last_api_at?: string | null
+          last_api_status?: number | null
+          last_message_at?: string | null
+          notification_type?: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_type?: string | null
+          created_at?: string
+          group_id?: string
+          group_name?: string
+          id?: string
+          is_active?: boolean
+          is_discovered?: boolean
+          last_api_at?: string | null
+          last_api_status?: number | null
+          last_message_at?: string | null
+          notification_type?: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       telegram_settings: {
         Row: {
           auto_send_on_create: boolean | null
@@ -3142,6 +3198,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      telegram_webhook_logs: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          event_type: string | null
+          group_id: string | null
+          group_name: string | null
+          id: string
+          payload: Json
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          group_id?: string | null
+          group_name?: string | null
+          id?: string
+          payload: Json
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          group_id?: string | null
+          group_name?: string | null
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
       }
       user_organizations: {
         Row: {
