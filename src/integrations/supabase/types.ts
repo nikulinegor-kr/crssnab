@@ -1421,33 +1421,48 @@ export type Database = {
       }
       max_groups: {
         Row: {
+          chat_type: string | null
           created_at: string
           group_id: string
           group_name: string
           id: string
           is_active: boolean
+          is_discovered: boolean
+          last_api_at: string | null
+          last_api_status: number | null
+          last_message_at: string | null
           notification_type: string
-          organization_id: string
+          organization_id: string | null
           updated_at: string
         }
         Insert: {
+          chat_type?: string | null
           created_at?: string
           group_id: string
           group_name: string
           id?: string
           is_active?: boolean
+          is_discovered?: boolean
+          last_api_at?: string | null
+          last_api_status?: number | null
+          last_message_at?: string | null
           notification_type?: string
-          organization_id: string
+          organization_id?: string | null
           updated_at?: string
         }
         Update: {
+          chat_type?: string | null
           created_at?: string
           group_id?: string
           group_name?: string
           id?: string
           is_active?: boolean
+          is_discovered?: boolean
+          last_api_at?: string | null
+          last_api_status?: number | null
+          last_message_at?: string | null
           notification_type?: string
-          organization_id?: string
+          organization_id?: string | null
           updated_at?: string
         }
         Relationships: [
