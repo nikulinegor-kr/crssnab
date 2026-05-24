@@ -3623,6 +3623,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _priority_emoji: { Args: { _p: string }; Returns: string }
+      _status_emoji: { Args: { _s: string }; Returns: string }
+      build_request_message: {
+        Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: string
+      }
       check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
