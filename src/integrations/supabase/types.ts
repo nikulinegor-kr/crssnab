@@ -3639,6 +3639,10 @@ export type Database = {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
       }
+      build_incoming_message_v2: {
+        Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: string
+      }
       build_request_message: {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
