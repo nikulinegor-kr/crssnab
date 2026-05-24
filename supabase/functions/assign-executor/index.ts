@@ -38,10 +38,16 @@ async function tgAnswer(callbackId: string | undefined, text: string, alert = fa
 async function tgEditMessage(chatId: string | number, messageId: string | number, text: string) {
   const tok = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!tok) return;
+  // Send empty inline_keyboard to remove the executor buttons in-place.
   await fetch(`${TG_API}/bot${tok}/editMessageText`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, text, parse_mode: "HTML" }),
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      reply_markup: { inline_keyboard: [] },
+    }),
   }).catch(() => {});
 }
 
@@ -59,11 +65,28 @@ async function maxAnswer(callbackId: string | undefined, text: string) {
 async function maxEditMessage(messageId: string | number, text: string) {
   const tok = Deno.env.get("MAX_BOT_TOKEN");
   if (!tok) return;
+  // attachments: [] removes the inline button keyboard from the original message.
   await fetch(`${MAX_API}/messages?message_id=${encodeURIComponent(String(messageId))}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: tok },
     body: JSON.stringify({ text, attachments: [] }),
   }).catch(() => {});
+}
+
+async function buildAssignedText(
+  supabase: ReturnType<typeof createClient>,
+  requestId: string,
+  fallbackExecutorName: string,
+): Promise<string> {
+  try {
+    const { data, error } = await supabase.rpc("build_assigned_message_by_id", {
+      _request_id: requestId,
+    });
+    if (!error && typeof data === "string" && data.length > 0) return data;
+  } catch (e) {
+    console.warn("build_assigned_message_by_id failed:", e);
+  }
+  return `✅ Исполнитель назначен: ${fallbackExecutorName}`;
 }
 
 Deno.serve(async (req) => {
