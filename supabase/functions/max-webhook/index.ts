@@ -11,7 +11,12 @@ const corsHeaders = {
 type SupaClient = ReturnType<typeof createClient>;
 let LAST_AUTH_MODE: "bearer" | "query" = "bearer";
 
-async function maxFetch(path: string, init?: RequestInit, supabase?: SupaClient) {
+async function maxFetch(
+  path: string,
+  init?: RequestInit,
+  supabase?: SupaClient,
+  ctx?: { chatId?: string | null },
+) {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) throw new Error("MAX_BOT_TOKEN is not configured");
 
@@ -34,7 +39,6 @@ async function maxFetch(path: string, init?: RequestInit, supabase?: SupaClient)
     return { res, text, data };
   };
 
-  // Try last known good mode first, fall back to the other on auth failure
   const order: ("bearer" | "query")[] =
     LAST_AUTH_MODE === "bearer" ? ["bearer", "query"] : ["query", "bearer"];
 
@@ -47,18 +51,24 @@ async function maxFetch(path: string, init?: RequestInit, supabase?: SupaClient)
     if (supabase) {
       await supabase.from("max_webhook_logs").insert({
         event_type: `api_response:${mode}`,
-        group_id: null,
-        chat_id: null,
+        group_id: ctx?.chatId || null,
+        chat_id: ctx?.chatId || null,
         group_name: null,
         payload: { path, method: init?.method || "GET", status: r.res.status, response: r.data },
       });
+
+      if (ctx?.chatId) {
+        await supabase
+          .from("max_groups")
+          .update({ last_api_status: r.res.status, last_api_at: new Date().toISOString() })
+          .eq("group_id", String(ctx.chatId));
+      }
     }
 
     if (r.res.ok) {
       LAST_AUTH_MODE = mode;
       return r.data;
     }
-    // only retry the other mode on auth-related failure
     if (![401, 403, 404].includes(r.res.status)) break;
   }
   throw new Error(`MAX API ${last?.res.status}: ${last?.text}`);
@@ -69,16 +79,52 @@ async function sendMessage(chatId: string | number, text: string, supabase?: Sup
     `/messages?chat_id=${chatId}`,
     { method: "POST", body: JSON.stringify({ text }) },
     supabase,
+    { chatId: String(chatId) },
   );
 }
 
 async function fetchChatTitle(chatId: string | number, supabase?: SupaClient): Promise<string | null> {
   try {
-    const data = await maxFetch(`/chats/${chatId}`, undefined, supabase);
+    const data = await maxFetch(`/chats/${chatId}`, undefined, supabase, { chatId: String(chatId) });
     return data?.title ?? null;
   } catch (_) {
     return null;
   }
+}
+
+// Auto-discover or update a group row by group_id
+async function upsertDiscoveredGroup(
+  supabase: SupaClient,
+  chatId: string,
+  groupName: string | null,
+  chatType: string | null,
+) {
+  const { data: existing } = await supabase
+    .from("max_groups")
+    .select("id, group_name, chat_type")
+    .eq("group_id", chatId)
+    .maybeSingle();
+
+  const nowIso = new Date().toISOString();
+
+  if (!existing) {
+    await supabase.from("max_groups").insert({
+      group_id: chatId,
+      group_name: groupName || `Группа ${chatId}`,
+      chat_type: chatType,
+      notification_type: "supply",
+      is_active: true,
+      is_discovered: true,
+      last_message_at: nowIso,
+      organization_id: null,
+    });
+    return;
+  }
+
+  const patch: Record<string, unknown> = { last_message_at: nowIso };
+  if (groupName && groupName !== existing.group_name) patch.group_name = groupName;
+  if (chatType && chatType !== existing.chat_type) patch.chat_type = chatType;
+  await supabase.from("max_groups").update(patch).eq("id", existing.id);
 }
 
 Deno.serve(async (req) => {
@@ -89,15 +135,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Test endpoint: GET /test-max?chat_id=...&text=...
   const url = new URL(req.url);
   if (req.method === "GET" && url.pathname.endsWith("/test-max")) {
     const chatId = url.searchParams.get("chat_id") || url.searchParams.get("group_id");
     const text = url.searchParams.get("text") || "✅ Тестовое сообщение от CRSS CRM (MAX bot)";
     if (!chatId) {
       return new Response(JSON.stringify({ ok: false, error: "chat_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     try {
@@ -107,24 +151,18 @@ Deno.serve(async (req) => {
       });
     } catch (e: any) {
       return new Response(JSON.stringify({ ok: false, auth_mode: LAST_AUTH_MODE, error: e?.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
   }
-
-
 
   try {
     const update = await req.json();
     console.log("MAX update (raw):", JSON.stringify(update));
 
-    // Log the raw incoming payload immediately, before any per-update processing
     await supabase.from("max_webhook_logs").insert({
       event_type: "incoming_raw",
-      group_id: null,
-      chat_id: null,
-      group_name: null,
+      group_id: null, chat_id: null, group_name: null,
       payload: update,
     });
 
@@ -135,20 +173,14 @@ Deno.serve(async (req) => {
       const type = u?.update_type || u?.type || "unknown";
       const msgPre = u?.message || {};
       const chatIdRaw =
-        u?.chat_id ??
-        msgPre?.recipient?.chat_id ??
-        msgPre?.chat?.id ??
-        u?.chat?.id ??
-        "";
+        u?.chat_id ?? msgPre?.recipient?.chat_id ?? msgPre?.chat?.id ?? u?.chat?.id ?? "";
       const chatIdStr = chatIdRaw ? String(chatIdRaw) : "";
       const chatType: string =
         msgPre?.recipient?.chat_type ?? u?.chat_type ?? u?.chat?.type ?? "unknown";
 
-      // Try to resolve group title (best-effort, may fail for dialogs)
       let groupTitle: string | null = null;
       if (chatIdStr) groupTitle = await fetchChatTitle(chatIdStr, supabase);
 
-      // Log every event
       await supabase.from("max_webhook_logs").insert({
         event_type: type,
         group_id: chatIdStr || null,
@@ -156,6 +188,11 @@ Deno.serve(async (req) => {
         group_name: groupTitle,
         payload: u,
       });
+
+      // Auto-discover / update the group row on any chat event
+      if (chatIdStr) {
+        await upsertDiscoveredGroup(supabase, chatIdStr, groupTitle, chatType);
+      }
 
       // Deduplication
       const { data: existing } = await supabase
@@ -166,32 +203,28 @@ Deno.serve(async (req) => {
       if (existing) continue;
 
       await supabase.from("max_updates").insert({
-        update_id: updateId,
-        chat_id: chatIdStr,
-        payload: u,
+        update_id: updateId, chat_id: chatIdStr, payload: u,
       });
 
-      // Bot added to chat -> auto-confirm
       if (type === "bot_added" || type === "chat_title_changed") {
         if (chatIdStr) {
           const title = groupTitle || `Чат ${chatIdStr}`;
           await sendMessage(
             chatIdStr,
-            `Бот снабжения CRSS подключён к группе «${title}». ID группы: ${chatIdStr}\nДобавьте эту группу в настройках CRM, чтобы получать уведомления.`,
+            `Бот снабжения CRSS подключён к группе «${title}». ID группы: ${chatIdStr}\nГруппа уже появилась в настройках CRM — привяжите её к организации.`,
             supabase,
           );
         }
         continue;
       }
 
-      // Message handling
       const text: string = (msgPre?.body?.text || msgPre?.text || "").trim();
       if (!chatIdStr || !text) continue;
 
       if (text.startsWith("/start")) {
         await sendMessage(chatIdStr, "Бот снабжения активирован ✅", supabase);
         const title = groupTitle || `Чат ${chatIdStr}`;
-        await sendMessage(chatIdStr, `ID этой группы: ${chatIdStr}\nНазвание: ${title}\nДобавьте её в настройках CRM CRSS.`, supabase);
+        await sendMessage(chatIdStr, `ID этой группы: ${chatIdStr}\nНазвание: ${title}\nГруппа уже видна в настройках CRM CRSS.`, supabase);
       } else if (text.startsWith("/help")) {
         await sendMessage(
           chatIdStr,
@@ -227,16 +260,13 @@ Deno.serve(async (req) => {
       }
     }
 
-
-
-
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
     console.error("max-webhook error:", e?.message || e);
     return new Response(JSON.stringify({ ok: false, error: e?.message }), {
-      status: 200, // always 200 so MAX не ретраит вечно
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

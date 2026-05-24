@@ -8,32 +8,35 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function sendMessage(chatId: string, text: string) {
+async function sendMessage(chatId: string, text: string, admin?: any) {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) throw new Error("MAX_BOT_TOKEN is not configured");
 
   const tryRequest = async (mode: "bearer" | "query") => {
     let url = `${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (mode === "bearer") {
-      headers["Authorization"] = `Bearer ${token}`;
-    } else {
-      url += `&access_token=${token}`;
-    }
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ text }),
-    });
+    if (mode === "bearer") headers["Authorization"] = `Bearer ${token}`;
+    else url += `&access_token=${token}`;
+    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify({ text }) });
     const body = await res.text();
-    console.log(`notify-max sendMessage via ${mode} chat=${chatId} -> ${res.status} ${body.slice(0, 300)}`);
+    console.log(`notify-max via ${mode} chat=${chatId} -> ${res.status} ${body.slice(0, 300)}`);
     return { res, body };
   };
 
   let r = await tryRequest("bearer");
-  if (!r.res.ok && [401, 403, 404].includes(r.res.status)) {
-    r = await tryRequest("query");
+  if (!r.res.ok && [401, 403, 404].includes(r.res.status)) r = await tryRequest("query");
+
+  if (admin) {
+    await admin.from("max_groups")
+      .update({ last_api_status: r.res.status, last_api_at: new Date().toISOString() })
+      .eq("group_id", chatId);
+    await admin.from("max_webhook_logs").insert({
+      event_type: r.res.ok ? "outgoing_ok" : "outgoing_error",
+      group_id: chatId, chat_id: chatId, group_name: null,
+      payload: { status: r.res.status, response: r.body.slice(0, 1000), text: text.slice(0, 500) },
+    });
   }
+
   if (!r.res.ok) throw new Error(`MAX API ${r.res.status}: ${r.body}`);
   return r.body;
 }
@@ -105,7 +108,7 @@ Deno.serve(async (req) => {
     const results: any[] = [];
     for (const g of groups) {
       try {
-        await sendMessage(g.group_id, text);
+        await sendMessage(g.group_id, text, admin);
         results.push({ group_id: g.group_id, ok: true });
       } catch (e: any) {
         results.push({ group_id: g.group_id, ok: false, error: e?.message });
