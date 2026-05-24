@@ -213,6 +213,57 @@ Deno.serve(async (req) => {
           provider_chat_id: row.group_id,
         })
         .eq("id", row.id);
+
+      // Send attached documents (PDF etc.) as files after the text message.
+      // Telegram only — MAX requires a separate upload flow.
+      if (row.platform === "telegram" && requestId) {
+        try {
+          const { data: reqRow } = await supabase
+            .from("requests")
+            .select("description, document_url, document_urls")
+            .eq("id", requestId)
+            .maybeSingle();
+          const docUrls: string[] = Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
+            ? (reqRow as any).document_urls
+            : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : []);
+          if (docUrls.length > 0) {
+            const tok = await getTgToken(row.organization_id);
+            if (tok) {
+              for (const docUrl of docUrls) {
+                if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
+                let finalUrl = docUrl;
+                try {
+                  const u = new URL(docUrl);
+                  const parts = u.pathname.split("/");
+                  const idx = parts.findIndex((p) => p === "request-documents");
+                  if (idx !== -1) {
+                    const filePath = parts.slice(idx + 1).join("/");
+                    const { data: signed } = await supabase.storage
+                      .from("request-documents")
+                      .createSignedUrl(filePath, 86400);
+                    if (signed?.signedUrl) finalUrl = signed.signedUrl;
+                  }
+                } catch { /* keep original */ }
+                const caption = `📄 ${String((reqRow as any)?.description ?? "").slice(0, 100)}`.trim();
+                try {
+                  const res = await fetch(`${TG_API}/bot${tok}/sendDocument`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: row.group_id, document: finalUrl, caption }),
+                  });
+                  if (!res.ok) {
+                    console.error("[notification-worker] sendDocument failed", res.status, await res.text());
+                  }
+                } catch (e) {
+                  console.error("[notification-worker] sendDocument exception", e);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[notification-worker] doc fetch error", e);
+        }
+      }
     } else {
       failed++;
       const nextRetry = row.retry_count + 1;
