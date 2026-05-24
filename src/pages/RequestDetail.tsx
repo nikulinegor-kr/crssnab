@@ -45,7 +45,7 @@ import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
-import { RequestNotificationsCard } from "@/components/request/RequestNotificationsCard";
+
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
 
@@ -745,11 +745,6 @@ export default function RequestDetail() {
               onUpdate={handleUpdate}
             />
 
-            {/* 2.1 Telegram notifications status */}
-            <RequestNotificationsCard
-              requestId={request.id}
-              organizationId={request.organization_id}
-            />
 
 
 
