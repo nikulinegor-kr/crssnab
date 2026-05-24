@@ -173,8 +173,11 @@ const OrganizationSettings = () => {
           <TabsContent value="notifications" className="space-y-6">
             <SettingsSection title="Управление уведомлениями" description="Telegram, MAX и автонапоминания" icon={Bell}>
               <NotificationRoutingInfo />
-              <Tabs defaultValue="telegram" className="mt-6">
+              <Tabs defaultValue="production" className="mt-6">
                 <TabsList>
+                  <TabsTrigger value="production" className="gap-1.5">
+                    <Bell className="h-4 w-4" /> Production
+                  </TabsTrigger>
                   <TabsTrigger value="telegram" className="gap-1.5">
                     <Send className="h-4 w-4" /> Telegram
                   </TabsTrigger>
@@ -190,6 +193,9 @@ const OrganizationSettings = () => {
                     </TabsTrigger>
                   )}
                 </TabsList>
+                <TabsContent value="production" className="mt-4">
+                  <ProductionNotificationsPanel organizationId={currentOrgId!} />
+                </TabsContent>
                 <TabsContent value="telegram" className="mt-4">
                   <NotificationSettings organizationId={currentOrgId!} />
                 </TabsContent>
