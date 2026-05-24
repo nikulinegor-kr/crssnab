@@ -1,0 +1,1 @@
+UPDATE public.notification_settings SET mode = 'production', updated_at = now();
