@@ -89,6 +89,55 @@ async function sendMax(chatId: string, text: string, attachments?: any): Promise
   return { ok: res.ok, status: res.status, body: respBody.slice(0, 1500), message_id: messageId };
 }
 
+async function sendMaxDocument(chatId: string, fileUrl: string, fileName: string, caption: string): Promise<SendResult> {
+  const token = Deno.env.get("MAX_BOT_TOKEN");
+  if (!token) return { ok: false, status: 0, body: "MAX_BOT_TOKEN not configured" };
+  try {
+    // Step 1: get upload URL
+    const uploadInitRes = await fetch(`${MAX_API}/uploads?type=file`, {
+      method: "POST",
+      headers: { Authorization: token },
+    });
+    const uploadInitBody = await uploadInitRes.text();
+    if (!uploadInitRes.ok) {
+      return { ok: false, status: uploadInitRes.status, body: `uploads init failed: ${uploadInitBody.slice(0, 500)}` };
+    }
+    const uploadInit = JSON.parse(uploadInitBody);
+    const uploadUrl: string | undefined = uploadInit?.url;
+    if (!uploadUrl) return { ok: false, status: 0, body: `no upload url: ${uploadInitBody.slice(0, 300)}` };
+
+    // Step 2: download source file then upload multipart
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) return { ok: false, status: fileRes.status, body: `source fetch failed` };
+    const fileBlob = await fileRes.blob();
+    const form = new FormData();
+    form.append("data", fileBlob, fileName);
+    const upRes = await fetch(uploadUrl, { method: "POST", body: form });
+    const upBody = await upRes.text();
+    if (!upRes.ok) return { ok: false, status: upRes.status, body: `upload failed: ${upBody.slice(0, 500)}` };
+    let fileToken: string | undefined;
+    try {
+      const upJson = JSON.parse(upBody);
+      fileToken = upJson?.token ?? upJson?.file?.token ?? upJson?.payload?.token;
+    } catch { /* ignore */ }
+    if (!fileToken) return { ok: false, status: 0, body: `no file token: ${upBody.slice(0, 300)}` };
+
+    // Step 3: send message with file attachment
+    const msgRes = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: token },
+      body: JSON.stringify({
+        text: caption,
+        attachments: [{ type: "file", payload: { token: fileToken } }],
+      }),
+    });
+    const msgBody = await msgRes.text();
+    return { ok: msgRes.ok, status: msgRes.status, body: msgBody.slice(0, 1000) };
+  } catch (e: any) {
+    return { ok: false, status: 0, body: `EXCEPTION: ${e?.message || e}` };
+  }
+}
+
 async function sendTelegram(
   botToken: string,
   chatId: string,
