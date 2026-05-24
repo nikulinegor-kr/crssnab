@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     const results: any[] = [];
     for (const g of groups) {
       try {
-        await sendMessage(g.group_id, text);
+        await sendMessage(g.group_id, text, admin);
         results.push({ group_id: g.group_id, ok: true });
       } catch (e: any) {
         results.push({ group_id: g.group_id, ok: false, error: e?.message });
