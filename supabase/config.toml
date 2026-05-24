@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.check-shipment-notifications]
 verify_jwt = false
+
+[functions.max-webhook]
+verify_jwt = false
+
+[functions.notify-max]
+verify_jwt = false
