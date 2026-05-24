@@ -15,7 +15,7 @@ async function sendMessage(chatId: string, text: string, admin?: any) {
   const tryRequest = async (mode: "bearer" | "query") => {
     let url = `${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (mode === "bearer") headers["Authorization"] = `Bearer ${token}`;
+    if (mode === "bearer") headers["Authorization"] = token;
     else url += `&access_token=${token}`;
     const res = await fetch(url, { method: "POST", headers, body: JSON.stringify({ text }) });
     const body = await res.text();
