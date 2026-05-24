@@ -74,7 +74,7 @@ type Health = {
   latency_ms: number | null;
 };
 
-const NOTIFICATION_TYPES = ["request", "invoice", "supply", "alert", "general"];
+const NOTIFICATION_TYPES = ["incoming", "request", "invoice", "supply", "alert", "general"];
 
 export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
   const [settings, setSettings] = useState<Settings | null>(null);
