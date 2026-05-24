@@ -61,7 +61,7 @@ import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSe
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
-import { ErpSection } from "./create-request/ErpSection";
+
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 
 const requestSchema = z.object({
@@ -1060,12 +1060,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           disabled={isViewer}
         />
 
-        {/* 5. ERP / Склад */}
-        <ErpSection
-          form={form}
-          currentOrgId={request?.organization_id || null}
-          disabled={isViewer}
-        />
 
         {/* 6. Logistics: TK, TTN, Dates */}
         <LogisticsSection
