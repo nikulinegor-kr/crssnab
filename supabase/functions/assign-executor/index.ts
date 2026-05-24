@@ -143,13 +143,14 @@ Deno.serve(async (req) => {
   }
 
   if (current.executor && current.executor.trim() !== "") {
-    const msg = `Исполнитель уже выбран: ${current.executor}`;
+    const warn = `⚠️ Исполнитель уже выбран: ${current.executor}`;
+    const replacement = await buildAssignedText(supabase, request_id, current.executor);
     if (source === "telegram") {
-      await tgAnswer(callback_id, msg, true);
-      await tgEditMessage(chat_id, message_id, `✅ Исполнитель назначен: ${current.executor}`);
+      await tgAnswer(callback_id, warn, true);
+      await tgEditMessage(chat_id, message_id, replacement);
     } else {
-      await maxAnswer(callback_id, msg);
-      await maxEditMessage(message_id, `✅ Исполнитель назначен: ${current.executor}`);
+      await maxAnswer(callback_id, warn);
+      await maxEditMessage(message_id, replacement);
     }
     return new Response(JSON.stringify({ ok: false, error: "already_assigned", executor: current.executor }), {
       status: 409,
@@ -167,20 +168,20 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (updErr || !updated) {
-    // Another concurrent assignment won the race
     const { data: again } = await supabase
       .from("requests")
       .select("executor")
       .eq("id", request_id)
       .maybeSingle();
     const who = again?.executor || "—";
-    const msg = `Исполнитель уже выбран: ${who}`;
+    const warn = `⚠️ Исполнитель уже выбран: ${who}`;
+    const replacement = await buildAssignedText(supabase, request_id, who);
     if (source === "telegram") {
-      await tgAnswer(callback_id, msg, true);
-      await tgEditMessage(chat_id, message_id, `✅ Исполнитель назначен: ${who}`);
+      await tgAnswer(callback_id, warn, true);
+      await tgEditMessage(chat_id, message_id, replacement);
     } else {
-      await maxAnswer(callback_id, msg);
-      await maxEditMessage(message_id, `✅ Исполнитель назначен: ${who}`);
+      await maxAnswer(callback_id, warn);
+      await maxEditMessage(message_id, replacement);
     }
     return new Response(JSON.stringify({ ok: false, error: "race_lost", executor: who }), {
       status: 409,
@@ -206,8 +207,9 @@ Deno.serve(async (req) => {
     },
   });
 
-  // Edit the original incoming-group message (remove buttons, replace text)
-  const replacement = `✅ Исполнитель назначен: ${executor.name}`;
+  // Replace the original incoming message with the full "assigned" template;
+  // buttons are stripped (Telegram empty inline_keyboard, MAX empty attachments).
+  const replacement = await buildAssignedText(supabase, request_id, executor.name);
   try {
     if (source === "telegram") {
       await tgEditMessage(chat_id, message_id, replacement);
