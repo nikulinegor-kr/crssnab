@@ -41,7 +41,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
   const [groups, setGroups] = useState<MaxGroup[]>([]);
   const [newGroupId, setNewGroupId] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
-  const [newType, setNewType] = useState<string>("general");
+  const [newType, setNewType] = useState<string>("supply");
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
 
