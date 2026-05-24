@@ -58,7 +58,30 @@ Deno.serve(async (req) => {
 
     for (const u of updates) {
       const updateId = u?.update_id ?? u?.timestamp ?? Date.now();
-      const type = u?.update_type || u?.type;
+      const type = u?.update_type || u?.type || "unknown";
+      const msgPre = u?.message || {};
+      const chatIdRaw =
+        u?.chat_id ??
+        msgPre?.recipient?.chat_id ??
+        msgPre?.chat?.id ??
+        u?.chat?.id ??
+        "";
+      const chatIdStr = chatIdRaw ? String(chatIdRaw) : "";
+      const chatType: string =
+        msgPre?.recipient?.chat_type ?? u?.chat_type ?? u?.chat?.type ?? "unknown";
+
+      // Try to resolve group title (best-effort, may fail for dialogs)
+      let groupTitle: string | null = null;
+      if (chatIdStr) groupTitle = await fetchChatTitle(chatIdStr);
+
+      // Log every event
+      await supabase.from("max_webhook_logs").insert({
+        event_type: type,
+        group_id: chatIdStr || null,
+        chat_id: chatIdStr || null,
+        group_name: groupTitle,
+        payload: u,
+      });
 
       // Deduplication
       const { data: existing } = await supabase
@@ -70,49 +93,39 @@ Deno.serve(async (req) => {
 
       await supabase.from("max_updates").insert({
         update_id: updateId,
-        chat_id: String(u?.chat_id ?? u?.message?.recipient?.chat_id ?? ""),
+        chat_id: chatIdStr,
         payload: u,
       });
 
-      // Bot added to chat -> save group automatically
+      // Bot added to chat -> auto-confirm
       if (type === "bot_added" || type === "chat_title_changed") {
-        const chatId = String(u?.chat_id ?? "");
-        if (chatId) {
-          const title = (await fetchChatTitle(chatId)) || `Чат ${chatId}`;
-          // Save only if there is at least one organization linked manually.
-          // Since we don't know which org a group belongs to, save with NULL org placeholder won't work due to FK.
-          // Instead: log and let admin claim from UI. Also try linking to ALL orgs that have no group yet.
-          // Simpler: send a confirmation message with chat_id so admin can register it.
+        if (chatIdStr) {
+          const title = groupTitle || `Чат ${chatIdStr}`;
           await sendMessage(
-            chatId,
-            `Бот снабжения CRSS подключён к группе «${title}». ID группы: ${chatId}\nДобавьте эту группу в настройках CRM, чтобы получать уведомления.`,
+            chatIdStr,
+            `Бот снабжения CRSS подключён к группе «${title}». ID группы: ${chatIdStr}\nДобавьте эту группу в настройках CRM, чтобы получать уведомления.`,
           );
         }
         continue;
       }
 
       // Message handling
-      const msg = u?.message || u;
-      const text: string = (msg?.body?.text || msg?.text || "").trim();
-      const chatId = String(
-        msg?.recipient?.chat_id ?? u?.chat_id ?? msg?.chat?.id ?? "",
-      );
-      if (!chatId || !text) continue;
+      const text: string = (msgPre?.body?.text || msgPre?.text || "").trim();
+      if (!chatIdStr || !text) continue;
 
       if (text.startsWith("/start")) {
-        await sendMessage(chatId, "Бот снабжения активирован ✅");
-        // Try to remember the group automatically
-        const title = (await fetchChatTitle(chatId)) || `Чат ${chatId}`;
-        await sendMessage(chatId, `ID этой группы: ${chatId}\nНазвание: ${title}\nДобавьте её в настройках CRM CRSS.`);
+        await sendMessage(chatIdStr, "Бот снабжения активирован ✅");
+        const title = groupTitle || `Чат ${chatIdStr}`;
+        await sendMessage(chatIdStr, `ID этой группы: ${chatIdStr}\nНазвание: ${title}\nДобавьте её в настройках CRM CRSS.`);
       } else if (text.startsWith("/help")) {
         await sendMessage(
-          chatId,
+          chatIdStr,
           [
             "Команды бота снабжения CRSS:",
             "",
             "/start — активация бота",
             "/help — список команд",
-            "/id — показать ID текущей группы",
+            "/id — debug-информация о текущей группе",
             "",
             "Бот отправляет уведомления:",
             "• приход и перемещение груза",
@@ -122,9 +135,21 @@ Deno.serve(async (req) => {
           ].join("\n"),
         );
       } else if (text.startsWith("/id")) {
-        await sendMessage(chatId, `ID этой группы: ${chatId}`);
+        const title = groupTitle || "(не определено)";
+        await sendMessage(
+          chatIdStr,
+          [
+            "🪪 Debug-информация",
+            "",
+            `group_id: ${chatIdStr}`,
+            `chat_id: ${chatIdStr}`,
+            `Название: ${title}`,
+            `Тип чата: ${chatType}`,
+          ].join("\n"),
+        );
       }
     }
+
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
