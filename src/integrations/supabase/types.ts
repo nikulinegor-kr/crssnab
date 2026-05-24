@@ -1602,6 +1602,191 @@ export type Database = {
           },
         ]
       }
+      notification_dedup: {
+        Row: {
+          created_at: string
+          dedup_key: string
+          expires_at: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          dedup_key: string
+          expires_at: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          dedup_key?: string
+          expires_at?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_dedup_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_health: {
+        Row: {
+          component: string
+          id: string
+          last_check_at: string
+          last_error: string | null
+          latency_ms: number | null
+          organization_id: string | null
+          status: string
+        }
+        Insert: {
+          component: string
+          id?: string
+          last_check_at?: string
+          last_error?: string | null
+          latency_ms?: number | null
+          organization_id?: string | null
+          status: string
+        }
+        Update: {
+          component?: string
+          id?: string
+          last_check_at?: string
+          last_error?: string | null
+          latency_ms?: number | null
+          organization_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_health_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_queue: {
+        Row: {
+          created_at: string
+          dedup_key: string | null
+          delivered_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          group_id: string
+          group_name: string | null
+          id: string
+          last_error: string | null
+          last_http_code: number | null
+          last_response: string | null
+          next_attempt_at: string
+          organization_id: string
+          payload: Json
+          platform: string
+          retry_count: number
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dedup_key?: string | null
+          delivered_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          group_id: string
+          group_name?: string | null
+          id?: string
+          last_error?: string | null
+          last_http_code?: number | null
+          last_response?: string | null
+          next_attempt_at?: string
+          organization_id: string
+          payload?: Json
+          platform: string
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dedup_key?: string | null
+          delivered_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          group_id?: string
+          group_name?: string | null
+          id?: string
+          last_error?: string | null
+          last_http_code?: number | null
+          last_response?: string | null
+          next_attempt_at?: string
+          organization_id?: string
+          payload?: Json
+          platform?: string
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_routing_rules: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          is_enabled: boolean
+          notification_type: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          is_enabled?: boolean
+          notification_type: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          is_enabled?: boolean
+          notification_type?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_routing_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_schedule_settings: {
         Row: {
           created_at: string
@@ -1640,6 +1825,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          dedup_window_seconds: number
+          max_per_minute: number
+          mode: string
+          organization_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          dedup_window_seconds?: number
+          max_per_minute?: number
+          mode?: string
+          organization_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          dedup_window_seconds?: number
+          max_per_minute?: number
+          mode?: string
+          organization_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -3406,6 +3626,19 @@ export type Database = {
       check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
+      cleanup_notification_dedup: { Args: never; Returns: undefined }
+      enqueue_notification: {
+        Args: {
+          _dedup_suffix?: string
+          _entity_id: string
+          _entity_type: string
+          _event_type: string
+          _org_id: string
+          _payload?: Json
+          _text: string
+        }
+        Returns: number
+      }
       ensure_user_initialized: {
         Args: { _org_name?: string }
         Returns: undefined
@@ -3422,6 +3655,7 @@ export type Database = {
           used_at: string
         }[]
       }
+      get_notification_mode: { Args: { _org_id: string }; Returns: string }
       get_org_subscription_limits: {
         Args: { _org_id: string }
         Returns: {
@@ -3494,6 +3728,10 @@ export type Database = {
           _organization_id: string
         }
         Returns: string
+      }
+      seed_notification_routing: {
+        Args: { _org_id: string }
+        Returns: undefined
       }
       user_can_create_requests: {
         Args: { _org_id: string; _user_id: string }
