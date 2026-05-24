@@ -117,7 +117,16 @@ Deno.serve(async (req) => {
 
   try {
     const update = await req.json();
-    console.log("MAX update:", JSON.stringify(update));
+    console.log("MAX update (raw):", JSON.stringify(update));
+
+    // Log the raw incoming payload immediately, before any per-update processing
+    await supabase.from("max_webhook_logs").insert({
+      event_type: "incoming_raw",
+      group_id: null,
+      chat_id: null,
+      group_name: null,
+      payload: update,
+    });
 
     const updates = Array.isArray(update?.updates) ? update.updates : [update];
 
@@ -137,7 +146,7 @@ Deno.serve(async (req) => {
 
       // Try to resolve group title (best-effort, may fail for dialogs)
       let groupTitle: string | null = null;
-      if (chatIdStr) groupTitle = await fetchChatTitle(chatIdStr);
+      if (chatIdStr) groupTitle = await fetchChatTitle(chatIdStr, supabase);
 
       // Log every event
       await supabase.from("max_webhook_logs").insert({
@@ -169,6 +178,7 @@ Deno.serve(async (req) => {
           await sendMessage(
             chatIdStr,
             `Бот снабжения CRSS подключён к группе «${title}». ID группы: ${chatIdStr}\nДобавьте эту группу в настройках CRM, чтобы получать уведомления.`,
+            supabase,
           );
         }
         continue;
@@ -179,9 +189,9 @@ Deno.serve(async (req) => {
       if (!chatIdStr || !text) continue;
 
       if (text.startsWith("/start")) {
-        await sendMessage(chatIdStr, "Бот снабжения активирован ✅");
+        await sendMessage(chatIdStr, "Бот снабжения активирован ✅", supabase);
         const title = groupTitle || `Чат ${chatIdStr}`;
-        await sendMessage(chatIdStr, `ID этой группы: ${chatIdStr}\nНазвание: ${title}\nДобавьте её в настройках CRM CRSS.`);
+        await sendMessage(chatIdStr, `ID этой группы: ${chatIdStr}\nНазвание: ${title}\nДобавьте её в настройках CRM CRSS.`, supabase);
       } else if (text.startsWith("/help")) {
         await sendMessage(
           chatIdStr,
@@ -198,6 +208,7 @@ Deno.serve(async (req) => {
             "• счета на оплату",
             "• CRSS оповещения",
           ].join("\n"),
+          supabase,
         );
       } else if (text.startsWith("/id")) {
         const title = groupTitle || "(не определено)";
@@ -211,9 +222,12 @@ Deno.serve(async (req) => {
             `Название: ${title}`,
             `Тип чата: ${chatType}`,
           ].join("\n"),
+          supabase,
         );
       }
     }
+
+
 
 
     return new Response(JSON.stringify({ ok: true }), {
