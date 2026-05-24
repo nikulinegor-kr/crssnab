@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
 import { MaxRoutingSchema } from "@/components/settings/MaxRoutingSchema";
+import { MaxDirectDebug } from "@/components/settings/MaxDirectDebug";
 import { NotificationRoutingInfo } from "@/components/settings/NotificationRoutingInfo";
 import { NotificationScenarioTester } from "@/components/settings/NotificationScenarioTester";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
@@ -193,6 +194,7 @@ const OrganizationSettings = () => {
                 </TabsContent>
                 <TabsContent value="max" className="mt-4 space-y-6">
                   <MaxRoutingSchema organizationId={currentOrgId!} />
+                  <MaxDirectDebug organizationId={currentOrgId!} />
                   <MaxSettings organizationId={currentOrgId!} />
                 </TabsContent>
                 <TabsContent value="tester" className="mt-4">
