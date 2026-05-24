@@ -82,6 +82,8 @@ export default function RequestDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [isSendingTelegramBuh, setIsSendingTelegramBuh] = useState(false);
+  const [isSendingMax, setIsSendingMax] = useState(false);
+  const [isSendingMaxBuh, setIsSendingMaxBuh] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [revisionComment, setRevisionComment] = useState("");
@@ -452,6 +454,33 @@ export default function RequestDetail() {
     }
   };
 
+  const sendToMaxChat = async (chatId: string, label: string, setLoading: (b: boolean) => void) => {
+    if (!id || !request) return;
+    setLoading(true);
+    try {
+      const { data: textData, error: textErr } = await supabase.rpc("build_request_message_by_id", { _request_id: id });
+      if (textErr) throw textErr;
+      const text = String(textData || "");
+      const { data, error } = await supabase.functions.invoke("max-direct-send", {
+        body: { chat_id: chatId, text, organization_id: request.organization_id, mode: "auto" },
+      });
+      if (error) throw error;
+      if (data?.ok || data?.delivered) {
+        toast({ title: "Успешно", description: `Уведомление отправлено в ${label}` });
+      } else {
+        throw new Error(data?.response || "Не доставлено");
+      }
+    } catch (e: any) {
+      console.error(`Error sending ${label}:`, e);
+      toast({ title: "Ошибка", description: `Не удалось отправить в ${label}`, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMax = () => sendToMaxChat("-75086506652357", "Max", setIsSendingMax);
+  const handleSendMaxBuh = () => sendToMaxChat("-75086518776517", "Max Buh", setIsSendingMaxBuh);
+
   const handleFileDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -652,6 +681,34 @@ export default function RequestDetail() {
                   <Send className="h-4 w-4" />
                 )}
                 Telegram Buh
+              </Button>
+              <Button
+                onClick={handleSendMax}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingMax}
+              >
+                {isSendingMax ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Max
+              </Button>
+              <Button
+                onClick={handleSendMaxBuh}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingMaxBuh}
+              >
+                {isSendingMaxBuh ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Max Buh
               </Button>
               {(request.status === "Счёт в бухгалтерии" || request.status === "Счёт в Бухгалтерии") && (
                 <Button

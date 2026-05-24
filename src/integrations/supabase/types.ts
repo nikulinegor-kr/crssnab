@@ -3647,6 +3647,10 @@ export type Database = {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
       }
+      build_request_message_by_id: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
