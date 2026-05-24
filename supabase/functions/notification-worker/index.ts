@@ -17,6 +17,8 @@ type Button = { id: string; name: string };
 type QueueRow = {
   id: string;
   organization_id: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
   platform: "max" | "telegram";
   group_id: string;
   payload: { text: string; buttons?: Button[]; request_id?: string; kind?: string; [k: string]: any };
@@ -170,7 +172,7 @@ Deno.serve(async (req) => {
 
   const { data: rows, error } = await supabase
     .from("notification_queue")
-    .select("id, organization_id, platform, group_id, payload, retry_count")
+    .select("id, organization_id, entity_type, entity_id, platform, group_id, payload, retry_count")
     .in("status", ["queued"])
     .lte("next_attempt_at", new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -223,7 +225,9 @@ Deno.serve(async (req) => {
     const rawText = String(row.payload?.text ?? "");
     const text = removeInternalIds(rawText);
     const buttons = Array.isArray(row.payload?.buttons) ? (row.payload!.buttons as Button[]) : [];
-    const requestId = row.payload?.request_id as string | undefined;
+    const requestId = typeof row.payload?.request_id === "string" && row.payload.request_id
+      ? row.payload.request_id
+      : (row.entity_type === "request" && row.entity_id ? row.entity_id : undefined);
 
     let result: SendResult;
     try {
