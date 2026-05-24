@@ -269,7 +269,7 @@ export const MaxSettings = ({ organizationId }: MaxSettingsProps) => {
               </TableHeader>
               <TableBody>
                 {discovered.map((g) => (
-                  <DiscoveredRow key={g.id} g={g} busy={busy} onClaim={claim} onCopy={copyText} />
+                  <DiscoveredRow key={g.id} g={g} busy={busy} onClaim={claim} onCopy={copyText} onRemove={remove} />
                 ))}
               </TableBody>
             </Table>
