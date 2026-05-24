@@ -3635,6 +3635,14 @@ export type Database = {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
       }
+      build_assigned_message_by_id: {
+        Args: { _request_id: string }
+        Returns: string
+      }
+      build_assigned_message_v2: {
+        Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
+        Returns: string
+      }
       build_incoming_message: {
         Args: { r: Database["public"]["Tables"]["requests"]["Row"] }
         Returns: string
