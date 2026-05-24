@@ -682,6 +682,34 @@ export default function RequestDetail() {
                 )}
                 Telegram Buh
               </Button>
+              <Button
+                onClick={handleSendMax}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingMax}
+              >
+                {isSendingMax ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Max
+              </Button>
+              <Button
+                onClick={handleSendMaxBuh}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isSendingMaxBuh}
+              >
+                {isSendingMaxBuh ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Max Buh
+              </Button>
               {(request.status === "Счёт в бухгалтерии" || request.status === "Счёт в Бухгалтерии") && (
                 <Button
                   onClick={() => setRevisionDialogOpen(true)}
