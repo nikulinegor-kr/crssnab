@@ -39,17 +39,17 @@ function maxKb(rows: Array<Array<{ type: "callback"; text: string; payload: stri
 function initialKb(requestId: string) {
   return {
     tg: tgKb([[
-      { text: "💰 Отписать в оплату", callback_data: `invroute:${requestId}:pay` },
-      { text: "🔧 Отписать в ТО", callback_data: `invroute:${requestId}:to` },
+      { text: "💰 В оплату", callback_data: `invroute:${requestId}:pay` },
+      { text: "🔧 В ТО", callback_data: `invroute:${requestId}:to` },
     ]]),
     max: maxKb([[
-      { type: "callback", text: "💰 Отписать в оплату", payload: `invroute:${requestId}:pay` },
-      { type: "callback", text: "🔧 Отписать в ТО", payload: `invroute:${requestId}:to` },
+      { type: "callback", text: "💰 В оплату", payload: `invroute:${requestId}:pay` },
+      { type: "callback", text: "🔧 В ТО", payload: `invroute:${requestId}:to` },
     ]]),
   };
 }
 function confirmKb(requestId: string, choice: Choice) {
-  const okText = choice === "pay" ? "✅ Подтвердить: в оплату" : "✅ Подтвердить: в ТО";
+  const okText = choice === "pay" ? "✅ Подтв. в оплату" : "✅ Подтв. в ТО";
   return {
     tg: tgKb([[
       { text: okText, callback_data: `invconfirm:${requestId}:${choice}` },
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     if (!choice) {
       return new Response(JSON.stringify({ error: "missing choice" }), { status: 400, headers: corsHeaders });
     }
-    const choiceLabel = choice === "pay" ? "Отписать в оплату" : "Отписать в ТО";
+    const choiceLabel = choice === "pay" ? "В оплату" : "В ТО";
     const text = `${baseText}\n\n⏳ Выбрано: ${choiceLabel} — ${who}\nПодтвердите действие.`;
     const kb = confirmKb(request_id, choice);
     if (source === "telegram") {
