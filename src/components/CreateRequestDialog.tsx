@@ -57,7 +57,7 @@ import { StatusResponsiblesSection } from "./create-request/StatusResponsiblesSe
 import { LogisticsSection } from "./create-request/LogisticsSection";
 import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
-import { ErpSection } from "./create-request/ErpSection";
+
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 
 const requestSchema = z.object({
@@ -693,11 +693,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           onItemsChange={setRequestItems}
         />
 
-        {/* 3. ERP — Stock check (before core params) */}
-        <ErpSection
-          form={form}
-          currentOrgId={currentOrgId}
-        />
 
         {/* 4. Core Params: Date, Object */}
         <CoreParamsSection
