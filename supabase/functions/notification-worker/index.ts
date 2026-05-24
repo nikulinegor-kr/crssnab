@@ -10,40 +10,105 @@ const corsHeaders = {
 const MAX_API = "https://platform-api.max.ru";
 const TG_API = "https://api.telegram.org";
 const BATCH = 20;
-// retry backoff (seconds): 30s, 2m, 10m
 const BACKOFF = [30, 120, 600];
+
+type Button = { id: string; name: string };
 
 type QueueRow = {
   id: string;
   organization_id: string;
   platform: "max" | "telegram";
   group_id: string;
-  payload: { text: string; [k: string]: any };
+  payload: { text: string; buttons?: Button[]; request_id?: string; kind?: string; [k: string]: any };
   retry_count: number;
 };
 
-async function sendMax(chatId: string, text: string) {
+type SendResult = {
+  ok: boolean;
+  status: number;
+  body: string;
+  message_id?: string | number | null;
+};
+
+function buildCallbackData(requestId: string, executorId: string) {
+  return `assign:${requestId}:${executorId}`;
+}
+
+function buildTgKeyboard(requestId: string, buttons: Button[]) {
+  const rows: any[] = [];
+  for (let i = 0; i < buttons.length; i += 2) {
+    const row = [
+      { text: buttons[i].name.slice(0, 30), callback_data: buildCallbackData(requestId, buttons[i].id) },
+    ];
+    if (buttons[i + 1]) {
+      row.push({
+        text: buttons[i + 1].name.slice(0, 30),
+        callback_data: buildCallbackData(requestId, buttons[i + 1].id),
+      });
+    }
+    rows.push(row);
+  }
+  return { inline_keyboard: rows };
+}
+
+function buildMaxAttachments(requestId: string, buttons: Button[]) {
+  const rows: any[] = [];
+  for (let i = 0; i < buttons.length; i += 2) {
+    const row = [
+      { type: "callback", text: buttons[i].name.slice(0, 30), payload: buildCallbackData(requestId, buttons[i].id) },
+    ];
+    if (buttons[i + 1]) {
+      row.push({
+        type: "callback",
+        text: buttons[i + 1].name.slice(0, 30),
+        payload: buildCallbackData(requestId, buttons[i + 1].id),
+      });
+    }
+    rows.push(row);
+  }
+  return [{ type: "inline_keyboard", payload: { buttons: rows } }];
+}
+
+async function sendMax(chatId: string, text: string, attachments?: any): Promise<SendResult> {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) return { ok: false, status: 0, body: "MAX_BOT_TOKEN not configured" };
-  // legacy+bearer works per recent logs
   const url = `${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`;
+  const body: any = { text };
+  if (attachments) body.attachments = attachments;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: token },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(body),
   });
-  const body = await res.text();
-  return { ok: res.ok, status: res.status, body: body.slice(0, 1500) };
+  const respBody = await res.text();
+  let messageId: string | number | null = null;
+  try {
+    const j = JSON.parse(respBody);
+    messageId = j?.message?.body?.mid ?? j?.message?.mid ?? j?.message_id ?? null;
+  } catch { /* ignore */ }
+  return { ok: res.ok, status: res.status, body: respBody.slice(0, 1500), message_id: messageId };
 }
 
-async function sendTelegram(botToken: string, chatId: string, text: string) {
+async function sendTelegram(
+  botToken: string,
+  chatId: string,
+  text: string,
+  replyMarkup?: any,
+): Promise<SendResult> {
+  const body: any = { chat_id: chatId, text, parse_mode: "HTML" };
+  if (replyMarkup) body.reply_markup = replyMarkup;
   const res = await fetch(`${TG_API}/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    body: JSON.stringify(body),
   });
-  const body = await res.text();
-  return { ok: res.ok, status: res.status, body: body.slice(0, 1500) };
+  const respBody = await res.text();
+  let messageId: number | null = null;
+  try {
+    const j = JSON.parse(respBody);
+    messageId = j?.result?.message_id ?? null;
+  } catch { /* ignore */ }
+  return { ok: res.ok, status: res.status, body: respBody.slice(0, 1500), message_id: messageId };
 }
 
 Deno.serve(async (req) => {
@@ -54,8 +119,6 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Claim a batch: simple approach since queue volume is low.
-  // Get queued rows ready for send.
   const { data: rows, error } = await supabase
     .from("notification_queue")
     .select("id, organization_id, platform, group_id, payload, retry_count")
@@ -78,13 +141,11 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Mark as sending
   await supabase
     .from("notification_queue")
     .update({ status: "sending" })
     .in("id", items.map((i) => i.id));
 
-  // Cache tg tokens per org
   const tgTokenCache = new Map<string, string | null>();
   async function getTgToken(orgId: string): Promise<string | null> {
     if (tgTokenCache.has(orgId)) return tgTokenCache.get(orgId)!;
@@ -103,16 +164,25 @@ Deno.serve(async (req) => {
 
   for (const row of items) {
     const text = String(row.payload?.text ?? "");
-    let result: { ok: boolean; status: number; body: string };
+    const buttons = Array.isArray(row.payload?.buttons) ? (row.payload!.buttons as Button[]) : [];
+    const requestId = row.payload?.request_id as string | undefined;
+
+    let result: SendResult;
     try {
       if (row.platform === "max") {
-        result = await sendMax(row.group_id, text);
+        const attachments = buttons.length > 0 && requestId
+          ? buildMaxAttachments(requestId, buttons)
+          : undefined;
+        result = await sendMax(row.group_id, text, attachments);
       } else {
         const tok = await getTgToken(row.organization_id);
         if (!tok) {
           result = { ok: false, status: 0, body: "telegram bot_token not configured for org" };
         } else {
-          result = await sendTelegram(tok, row.group_id, text);
+          const markup = buttons.length > 0 && requestId
+            ? buildTgKeyboard(requestId, buttons)
+            : undefined;
+          result = await sendTelegram(tok, row.group_id, text, markup);
         }
       }
     } catch (e: any) {
@@ -130,6 +200,8 @@ Deno.serve(async (req) => {
           last_http_code: result.status,
           last_response: result.body,
           last_error: null,
+          provider_message_id: result.message_id ? String(result.message_id) : null,
+          provider_chat_id: row.group_id,
         })
         .eq("id", row.id);
     } else {

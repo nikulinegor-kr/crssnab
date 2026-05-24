@@ -1,139 +1,108 @@
+# Маршрутизация входящих заявок с inline-кнопками
 
-# Production-режим уведомлений
+## Что добавляем
 
-Перевожу систему из тестовой в рабочую: один rule-based маршрутизатор, очередь с ретраями, авто-триггеры на реальные события CRM, dashboard и журнал реальных отправок.
+1. **Новый статус** `Входящая заявка` (становится дефолтным для новых заявок).
+2. **Уведомление с inline-кнопками** «Назначить исполнителя» в группу `СахаРесурс | Входящие заявки` (MAX `-75086536078021`, Telegram аналогично).
+3. **Callback `request_assign_executor`** на оба мессенджера: пишет `executor`, переводит статус в `Новая заявка`, рассылает в `Поставка ТМЦ` (`-75086506652357`).
+4. **Realtime-обновление** в CRM (через existing Supabase realtime — статус и executor меняются триггером).
+5. **Защита** от повторного назначения + **audit log**.
 
-## 1. База данных (одна миграция)
+## Архитектура
 
-**`notification_settings`** — глобальный переключатель на организацию
-- `organization_id` (PK), `mode` (`test` | `production`), `dedup_window_seconds` (default 30), `max_per_minute` (default 30), `updated_at`, `updated_by`
-
-**`notification_routing_rules`** — правила «событие → группы»
-- `organization_id`, `event_type` (text), `notification_type` (`request`/`invoice`/`supply`/`alert`), `is_enabled`
-- Уникальность: `(organization_id, event_type)`. Это даёт UI «IF event = X → группы типа Y» (группы уже привязаны к типу).
-- Сидируем дефолтами при включении production.
-
-**`notification_queue`** — единая очередь для MAX и Telegram
-- `id`, `organization_id`, `event_type`, `entity_type`, `entity_id`, `platform` (`max`/`telegram`), `group_id`, `group_name`, `payload jsonb` (текст, метаданные), `status` (`queued`/`sending`/`delivered`/`failed`), `retry_count` (0..3), `next_attempt_at`, `last_error`, `dedup_key`, `created_at`, `sent_at`
-- Индексы: `(status, next_attempt_at)`, `(organization_id, created_at desc)`, `dedup_key`.
-
-**`notification_dedup`** — анти-спам ключи
-- `dedup_key` (PK), `organization_id`, `expires_at`. Чистится по `expires_at`.
-
-**`notification_health`** — снепшоты для дашборда
-- `organization_id`, `component` (`max_api`/`telegram_api`/`max_webhook`/`telegram_webhook`/`edge_functions`), `status` (`ok`/`degraded`/`down`), `last_check_at`, `last_error`.
-
-**RLS** — всё org-scoped через `user_has_org_access` / `user_is_org_admin`. Очередь read-only для admin, write — только service role из edge-функций.
-
-## 2. Edge functions
-
-**`notify-dispatch`** (новая, основная) — принимает событие, применяет routing, формирует записи в `notification_queue` (status=`queued`), дедуплицирует.
-- Вход: `{ organization_id, event_type, payload }`.
-- Возвращает: `{ queued: N, deduped: M, rule_matched: true/false }`.
-- Уважает `notification_settings.mode`: в `test` — пишет в queue со статусом `queued` но не отправляет (виден в журнале как «test mode»); в `production` — сразу пытается отправить через worker.
-
-**`notification-worker`** (новая) — обрабатывает очередь.
-- Берёт пачку `queued`/`failed` с `next_attempt_at <= now()`, помечает `sending`, шлёт через `notify-max` или Telegram API, обновляет статус.
-- Retry: 3 попытки, backoff 30s → 2m → 10m.
-- Вызывается двумя путями: (a) сразу после `notify-dispatch` (fire-and-forget); (b) cron каждые 60 секунд для добивания `failed`/застрявших.
-
-**`notification-health`** (новая) — пингует MAX (`/me`) и Telegram (`getMe`), обновляет `notification_health`. Cron каждые 5 минут.
-
-**Существующие edge-функции** (`notify-telegram`, `notify-max`, `max-direct-send`, `telegram-debug-send`) — оставляем как есть для ручных тестов; production-путь теперь через `notify-dispatch` → queue → `notification-worker`.
-
-## 3. Авто-триггеры CRM (DB-уровень)
-
-Postgres-триггеры, вызывают `pg_net.http_post` к `notify-dispatch` (асинхронно):
-
-- `requests` AFTER INSERT → event `request.created`
-- `requests` AFTER UPDATE OF `status` → `request.status_changed`
-- `requests` AFTER UPDATE OF `executor` → `request.executor_assigned`
-- `requests` AFTER UPDATE OF `payment_status` → `request.payment_changed`, при просрочке — `invoice.overdue`
-- `requests` AFTER UPDATE OF `invoice_number` (was NULL → set) → `invoice.created`
-- `requests` AFTER UPDATE OF `status = 'Доставлено'` → `supply.arrived`
-- `requests` AFTER UPDATE OF `photo_url`/`document_url` (NULL → set) → `supply.attachment_added`
-- `request_comments` AFTER INSERT → `request.comment_added`
-- `stock_movements` AFTER INSERT WHERE type IN ('MOVE_IN','MOVE_OUT') → `supply.cargo_moved`
-
-Триггеры проверяют `notification_settings.mode = 'production'` — если `test`, не дёргают dispatch (или дёргают с пометкой simulate).
-
-Системные ошибки (`alert.system_error`, `alert.webhook_error`) — отправляются из самих edge-функций при поимке исключений / non-2xx ответов webhook.
-
-## 4. Routing Engine
-
-Простая таблица rules: для `event_type` берём `notification_type`, дальше из `max_groups`/`telegram_groups` все активные группы этого типа. Дефолты при включении production:
-
-```
-request.created          → request
-request.status_changed   → request
-request.comment_added    → request
-request.executor_assigned→ request
-invoice.created          → invoice
-invoice.overdue          → invoice
-supply.arrived           → supply
-supply.cargo_moved       → supply
-supply.attachment_added  → supply
-alert.system_error       → alert
-alert.webhook_error      → alert
+```text
+INSERT requests (status='Входящая заявка')
+        │
+        ▼
+notify_request_event() trigger
+        │
+        ▼
+enqueue_notification('request.incoming', payload={buttons:[…executors]})
+        │
+        ▼
+notification-worker
+   ├─ MAX:      POST /messages?chat_id=… attachments=[inline_keyboard]
+   └─ Telegram: sendMessage reply_markup=inline_keyboard
+        │  (сохраняем message_id + chat_id в notification_queue.response)
+        ▼
+Пользователь жмёт кнопку
+        │
+        ├─ Telegram → /telegram-webhook (callback_query)
+        └─ MAX      → /max-webhook (message_callback)
+        │
+        ▼
+edge function `assign-executor`:
+   1. lock через UPDATE … WHERE executor IS NULL RETURNING *
+      └─ если 0 строк → answer "Исполнитель уже выбран"
+   2. UPDATE requests SET executor=…, status='Новая заявка'
+   3. log_audit_event('executor_assigned_via_chat', old/new)
+   4. editMessageText / deleteInlineKeyboard в исходной группе:
+      "✅ Исполнитель назначен: {executor}"
+   5. триггер notify_request_event сам поставит в очередь
+      'request.status_changed' → routing → группа «Поставка ТМЦ»
 ```
 
-UI позволяет переопределять `notification_type` для любого `event_type` и отключать события.
+## Изменения по слоям
 
-## 5. Защита
+### БД (migration)
 
-- **Dedup**: ключ `org:event_type:entity_id:status_hash`, окно `dedup_window_seconds` (по умолчанию 30s) — повторное событие в окне не ставится в очередь.
-- **Throttling**: на уровне worker — не более `max_per_minute` отправок на платформу/org.
-- **Анти-цикл**: webhook-функции (`telegram-webhook`, `max-webhook`) НЕ дёргают `notify-dispatch` для собственных bot-сообщений (фильтр `is_bot` / `from.id == botId`).
+- Добавить в `notification_routing_rules` seed:
+  - `request.incoming` → `notification_type='incoming'`
+- Новый `notification_type` `incoming` для `max_groups`/`telegram_groups` (UI селектор пополнить).
+- `notify_request_event()`:
+  - при `INSERT` если `NEW.status = 'Входящая заявка'` → событие `request.incoming` с payload `{buttons: executors[]}` и **не** слать `request.created` (или отфильтровать в роутинге).
+  - оставшаяся логика без изменений; переход в `Новая заявка` уже даст `request.status_changed` → группа «Поставка ТМЦ» (для неё в БД должен быть routing `request.status_changed` → `notification_type='request'`).
+- Новая функция `build_incoming_message(r)` — формат из ТЗ.
+- Новая функция `build_assigned_message(r)` — короткий формат после назначения (п. 5).
+- `notification_queue`: добавить колонки `provider_message_id text`, `provider_chat_id text`, `buttons jsonb`, `reply_to_queue_id uuid` (для последующего edit).
+- Триггер `assign_executor_guard`: `BEFORE UPDATE` — если `OLD.executor IS NOT NULL AND NEW.executor IS DISTINCT FROM OLD.executor AND current_setting('app.allow_reassign', true) IS DISTINCT FROM 'true'` → `RAISE`.
+- `request_activities`: уже есть, используем `action='executor_assigned'` с `source='chat_button'` в snapshot.
 
-> Полноценный rate-limit на бэке не вводим (см. ограничения платформы) — оставляем только мягкий throttle внутри worker.
+### Edge functions
 
-## 6. UI
+- `notification-worker` — расширить:
+  - если `payload.buttons` — собирать `reply_markup`/`attachments` с `callback_data = "assign:{request_id}:{executor_id}"`.
+  - для MAX использовать `inline_keyboard` через Bot API `attachments: [{type:'inline_keyboard', payload:{buttons:[[…]]}}]`.
+  - после успешной отправки писать `provider_message_id`, `provider_chat_id` в `notification_queue`.
+- `telegram-webhook` — обработать `callback_query` с префиксом `assign:` → вызвать `assign-executor`.
+- `max-webhook` — то же для `callback`.
+- **Новая** `assign-executor` (service role):
+  - входит `{request_id, executor_id, source:'telegram'|'max', chat_id, message_id, user}`.
+  - `SET LOCAL app.allow_reassign = 'false'` — пускай триггер защищает.
+  - атомарный апдейт; при конфликте отвечает `answerCallbackQuery` «Исполнитель уже выбран».
+  - редактирует исходное сообщение → `✅ Исполнитель назначен: {executor}` (без кнопок).
+  - audit log + ответ `answerCallbackQuery`.
 
-Все ниже — внутри уже существующей вкладки **Настройки → Уведомления**, добавляем подразделы.
+### Источник исполнителей
 
-**Глобальный переключатель** (вверху вкладки):
-- Большой свитч `Тестовый ↔ Production` с предупреждением: «В Production режиме CRM шлёт реальные сообщения по событиям без подтверждения».
-- Health-индикаторы рядом: MAX API · Telegram API · Webhook · Edge functions (цветные точки из `notification_health`).
+Берём `request_participants WHERE participant_type='executor' AND is_active`. Кнопки рендерим в 2 колонки, обрезаем длинные ФИО до 30 симв. (лимит callback_data — кладём только `executor_id`).
 
-**Routing Rules** (новая карточка):
-- Таблица всех `event_type` с селектором типа группы и чекбоксом enable.
-- Превью: какие реальные группы получат сообщение (из `max_groups`/`telegram_groups` этого типа).
+### UI (минимум)
 
-**Live Monitoring** (новая карточка):
-- За последние 24 часа: отправлено / в очереди / ошибок (счётчики + sparkline по часам).
-- Топ-5 типов событий, топ ошибок.
-- Realtime подписка на `notification_queue`.
+- В `RequestForm`: дефолтный статус новой заявки = `Входящая заявка`, статус в селекторе доступен.
+- В `ProductionNotificationsPanel`: добавить `incoming` в типы групп.
+- Без новых страниц — назначение через realtime обновит таблицу `/requests`.
 
-**Журнал «Реальные отправки»**:
-- Таблица из `notification_queue` (фильтры: status, platform, event_type, дата).
-- Колонки: время, событие, источник (entity_type/id с линком), платформа, группа, текст (truncate), HTTP, ответ API, время доставки, retry_count.
-- Действия: «Повторить отправку» (сбрасывает status→`queued`, retry_count→0), «Открыть payload».
+## Защита и логирование
 
-**Health-check** (карточка):
-- Кнопка «Проверить сейчас» вызывает `notification-health`.
-- Показывает последний `last_check_at` и `last_error` по каждому компоненту.
+- Конфликт назначения: триггер БД + проверка `executor IS NULL` в `UPDATE … RETURNING` — двойная защита от гонок.
+- Audit: `request_activities` (`action='executor_assigned'`, snapshot со старым/новым статусом, `user_id` берётся из webhook'а — маппинг telegram_user_id/max_user_id → `profiles` через существующую таблицу связей; если нет — пишем `null` и сохраняем raw chat user в snapshot).
+- Idempotency: `callback_data` содержит `request_id`+`executor_id`; повтор нажатия → 0 строк апдейта → «Исполнитель уже выбран».
 
-## 7. Что меняется в существующем коде
+## Файлы
 
-- `notify-telegram` и client-side вызовы из форм заявок: оставляем для совместимости, но в production-режиме событие также пойдёт через триггер → dispatch. Чтобы не задвоить — фронтовые ручные вызовы помечают payload `source: 'manual'`, dispatch учитывает в dedup_key.
-- `NotificationScenarioTester` остаётся для проверки шаблонов в обоих режимах.
-- `MaxRoutingSchema` уже показывает логику — добавим линк «Открыть Routing Rules».
+- `supabase/migrations/<ts>_incoming_requests_routing.sql`
+- `supabase/functions/notification-worker/index.ts` (правка)
+- `supabase/functions/telegram-webhook/index.ts` (callback)
+- `supabase/functions/max-webhook/index.ts` (callback)
+- `supabase/functions/assign-executor/index.ts` (новая)
+- `src/components/requests/RequestForm.tsx` (default status)
+- `src/components/settings/ProductionNotificationsPanel.tsx` (тип `incoming`)
 
-## 8. Технические детали
+## Открытые вопросы
 
-- pg_net требуется для http_post из триггеров — проверю наличие, при необходимости включу расширением.
-- Cron через `pg_cron` (уже используется в проекте для archive-tasks): `notification-worker` каждую минуту, `notification-health` каждые 5 минут.
-- Worker batch = 20, lock через `FOR UPDATE SKIP LOCKED`.
-- Все edge-функции возвращают JSON с CORS-заголовками, ошибки логируют в `max_webhook_logs`/`telegram_webhook_logs` + `alert.system_error` в очередь.
+1. Использовать существующий статус `Новая заявка` или переименовать что-то? Подтверждаю: `Входящая заявка` — новый, `Новая заявка` — уже есть.
+2. Маппинг telegram_user_id → CRM user для audit — есть ли таблица? Если нет, ограничимся записью username в snapshot.
+3. MAX API: поддержка `inline_keyboard` через `attachments` — проверю текущую реализацию `max-webhook`/MAX отправителя.
 
-## Порядок реализации
-
-1. Миграция (таблицы, RLS, дефолтные routing rules, pg_net, pg_cron jobs).
-2. Edge functions: `notify-dispatch`, `notification-worker`, `notification-health`.
-3. DB-триггеры на `requests`, `request_comments`, `stock_movements`.
-4. UI: переключатель режима, Routing Rules, Live Monitoring, Журнал, Health.
-5. Обновить мемори (production routing + queue model).
-
----
-
-Одно решение нужно от вас: **дефолтный режим после миграции — `test` или `production`?** По умолчанию ставлю `test`, чтобы вы вручную переключили после проверки. Скажите «production по умолчанию», если хотите сразу боевой.
+Подтверди план — начну с миграции БД.

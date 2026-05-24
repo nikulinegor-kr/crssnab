@@ -205,6 +205,37 @@ Deno.serve(async (req) => {
       const chatType: string =
         msgPre?.recipient?.chat_type ?? u?.chat_type ?? u?.chat?.type ?? "unknown";
 
+      // ---- Inline-button callback: executor assignment ----
+      const callbackPayload: string | undefined =
+        u?.callback?.payload ?? u?.payload ?? u?.message_callback?.payload;
+      if (type === "message_callback" || (typeof callbackPayload === "string" && callbackPayload.startsWith("assign:"))) {
+        if (typeof callbackPayload === "string" && callbackPayload.startsWith("assign:")) {
+          const [, reqId, execId] = callbackPayload.split(":");
+          const callbackId: string | undefined = u?.callback?.callback_id ?? u?.callback_id;
+          const messageId: string | number | undefined =
+            msgPre?.body?.mid ?? msgPre?.mid ?? u?.callback?.message?.body?.mid ?? u?.callback?.message?.mid;
+          if (reqId && execId) {
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/assign-executor`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                request_id: reqId,
+                executor_id: execId,
+                source: "max",
+                chat_id: chatIdStr,
+                message_id: messageId ?? "",
+                callback_id: callbackId,
+                user: u?.callback?.user || u?.user || null,
+              }),
+            }).catch((e) => console.error("assign-executor (max) failed:", e));
+          }
+          continue;
+        }
+      }
+
       let groupTitle: string | null = null;
       if (chatIdStr) groupTitle = await fetchChatTitle(chatIdStr, supabase);
 
@@ -220,6 +251,7 @@ Deno.serve(async (req) => {
       if (chatIdStr) {
         await upsertDiscoveredGroup(supabase, chatIdStr, groupTitle, chatType);
       }
+
 
       // Deduplication
       const { data: existing } = await supabase

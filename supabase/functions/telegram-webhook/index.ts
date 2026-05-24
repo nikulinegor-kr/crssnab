@@ -426,6 +426,43 @@ async function handleCallbackQuery(callbackQuery: any) {
   console.log("Chat ID:", chatId);
   console.log("User:", username || fullName);
 
+  // Handle executor assignment from incoming-requests group
+  if (data.startsWith("assign:")) {
+    const parts = data.split(":");
+    const requestId = parts[1];
+    const executorId = parts[2];
+    if (!requestId || !executorId) {
+      await sendTelegramRequest("answerCallbackQuery", {
+        callback_query_id: callbackQuery.id,
+        text: "Некорректные данные",
+        show_alert: true,
+      });
+      return;
+    }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/assign-executor`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        request_id: requestId,
+        executor_id: executorId,
+        source: "telegram",
+        chat_id: chatId,
+        message_id: messageId,
+        callback_id: callbackQuery.id,
+        user: { id: validated.from.username ?? null, name: fullName, username },
+      }),
+    }).catch((e) => { console.error("assign-executor call failed:", e); return null; });
+    if (!res || !res.ok) {
+      console.warn("assign-executor returned non-OK:", res?.status);
+    }
+    return;
+  }
+
+
+
   // Handle archive pagination
   if (data.startsWith("archive_page_")) {
     const page = parseInt(data.replace("archive_page_", ""));
