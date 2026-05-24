@@ -8,34 +8,73 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function maxFetch(path: string, init?: RequestInit) {
+type SupaClient = ReturnType<typeof createClient>;
+let LAST_AUTH_MODE: "bearer" | "query" = "bearer";
+
+async function maxFetch(path: string, init?: RequestInit, supabase?: SupaClient) {
   const token = Deno.env.get("MAX_BOT_TOKEN");
   if (!token) throw new Error("MAX_BOT_TOKEN is not configured");
-  const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(`${MAX_API}${path}${sep}access_token=${token}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-  });
-  const text = await res.text();
-  let data: any = null;
-  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
-  if (!res.ok) {
-    console.error("MAX API error", res.status, text);
-    throw new Error(`MAX API ${res.status}: ${text}`);
+
+  const tryRequest = async (mode: "bearer" | "query") => {
+    let url = `${MAX_API}${path}`;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...((init?.headers as Record<string, string>) || {}),
+    };
+    if (mode === "bearer") {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      const sep = url.includes("?") ? "&" : "?";
+      url = `${url}${sep}access_token=${token}`;
+    }
+    const res = await fetch(url, { ...init, headers });
+    const text = await res.text();
+    let data: any = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+    return { res, text, data };
+  };
+
+  // Try last known good mode first, fall back to the other on auth failure
+  const order: ("bearer" | "query")[] =
+    LAST_AUTH_MODE === "bearer" ? ["bearer", "query"] : ["query", "bearer"];
+
+  let last: { res: Response; text: string; data: any } | null = null;
+  for (const mode of order) {
+    const r = await tryRequest(mode);
+    last = r;
+    console.log(`MAX API ${init?.method || "GET"} ${path} via ${mode} -> ${r.res.status} ${r.text.slice(0, 500)}`);
+
+    if (supabase) {
+      await supabase.from("max_webhook_logs").insert({
+        event_type: `api_response:${mode}`,
+        group_id: null,
+        chat_id: null,
+        group_name: null,
+        payload: { path, method: init?.method || "GET", status: r.res.status, response: r.data },
+      });
+    }
+
+    if (r.res.ok) {
+      LAST_AUTH_MODE = mode;
+      return r.data;
+    }
+    // only retry the other mode on auth-related failure
+    if (![401, 403, 404].includes(r.res.status)) break;
   }
-  return data;
+  throw new Error(`MAX API ${last?.res.status}: ${last?.text}`);
 }
 
-async function sendMessage(chatId: string | number, text: string) {
-  return maxFetch(`/messages?chat_id=${chatId}`, {
-    method: "POST",
-    body: JSON.stringify({ text }),
-  });
+async function sendMessage(chatId: string | number, text: string, supabase?: SupaClient) {
+  return maxFetch(
+    `/messages?chat_id=${chatId}`,
+    { method: "POST", body: JSON.stringify({ text }) },
+    supabase,
+  );
 }
 
-async function fetchChatTitle(chatId: string | number): Promise<string | null> {
+async function fetchChatTitle(chatId: string | number, supabase?: SupaClient): Promise<string | null> {
   try {
-    const data = await maxFetch(`/chats/${chatId}`);
+    const data = await maxFetch(`/chats/${chatId}`, undefined, supabase);
     return data?.title ?? null;
   } catch (_) {
     return null;
@@ -49,6 +88,32 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  // Test endpoint: GET /test-max?chat_id=...&text=...
+  const url = new URL(req.url);
+  if (req.method === "GET" && url.pathname.endsWith("/test-max")) {
+    const chatId = url.searchParams.get("chat_id") || url.searchParams.get("group_id");
+    const text = url.searchParams.get("text") || "✅ Тестовое сообщение от CRSS CRM (MAX bot)";
+    if (!chatId) {
+      return new Response(JSON.stringify({ ok: false, error: "chat_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    try {
+      const result = await sendMessage(chatId, text, supabase);
+      return new Response(JSON.stringify({ ok: true, auth_mode: LAST_AUTH_MODE, result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ ok: false, auth_mode: LAST_AUTH_MODE, error: e?.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+
 
   try {
     const update = await req.json();
