@@ -10,6 +10,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { MaxSettings } from "@/components/settings/MaxSettings";
 import { MaxRoutingSchema } from "@/components/settings/MaxRoutingSchema";
 import { NotificationRoutingInfo } from "@/components/settings/NotificationRoutingInfo";
+import { NotificationScenarioTester } from "@/components/settings/NotificationScenarioTester";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { BrandingSettings } from "@/components/settings/BrandingSettings";
 import { RequestSettings } from "@/components/settings/RequestSettings";
