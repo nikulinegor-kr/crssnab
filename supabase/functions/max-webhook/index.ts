@@ -128,6 +128,10 @@ async function upsertDiscoveredGroup(
 }
 
 Deno.serve(async (req) => {
+  // Log EVERY incoming request immediately, before anything else
+  const url = new URL(req.url);
+  console.log(`[max-webhook] ${req.method} ${url.pathname}${url.search} from ${req.headers.get("user-agent") || "?"}`);
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(
@@ -135,10 +139,18 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const url = new URL(req.url);
-  if (req.method === "GET" && url.pathname.endsWith("/test-max")) {
+  // GET /ping — simple liveness probe
+  if (req.method === "GET" && (url.pathname.endsWith("/ping") || url.pathname === "/max-webhook")) {
+    return new Response("OK MAX WEBHOOK", {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain" },
+    });
+  }
+
+  // GET /debug-send?chat_id=...&text=... — force-send a message bypassing webhook
+  if (req.method === "GET" && (url.pathname.endsWith("/debug-send") || url.pathname.endsWith("/test-max"))) {
     const chatId = url.searchParams.get("chat_id") || url.searchParams.get("group_id");
-    const text = url.searchParams.get("text") || "✅ Тестовое сообщение от CRSS CRM (MAX bot)";
+    const text = url.searchParams.get("text") || "✅ Принудительная отправка из debug-send (CRSS CRM)";
     if (!chatId) {
       return new Response(JSON.stringify({ ok: false, error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -146,15 +158,30 @@ Deno.serve(async (req) => {
     }
     try {
       const result = await sendMessage(chatId, text, supabase);
+      console.log(`[debug-send] success chat=${chatId} auth=${LAST_AUTH_MODE}`);
       return new Response(JSON.stringify({ ok: true, auth_mode: LAST_AUTH_MODE, result }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (e: any) {
+      console.error(`[debug-send] failed chat=${chatId}: ${e?.message}`);
       return new Response(JSON.stringify({ ok: false, auth_mode: LAST_AUTH_MODE, error: e?.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
   }
+
+  // MAX webhook verification challenge (some platforms expect echo of a token in GET)
+  if (req.method === "GET") {
+    const challenge = url.searchParams.get("challenge") || url.searchParams.get("hub.challenge");
+    if (challenge) {
+      console.log(`[max-webhook] challenge echo: ${challenge}`);
+      return new Response(challenge, { status: 200, headers: { ...corsHeaders, "Content-Type": "text/plain" } });
+    }
+    return new Response("OK MAX WEBHOOK", {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "text/plain" },
+    });
+  }
+
 
   try {
     const update = await req.json();
