@@ -14,6 +14,7 @@ import {
   ArrowLeft, 
   Edit, 
   Download, 
+  Printer,
   FileImage, 
   FileText,
   Eye,
