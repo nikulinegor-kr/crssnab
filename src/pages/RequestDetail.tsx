@@ -14,6 +14,7 @@ import {
   ArrowLeft, 
   Edit, 
   Download, 
+  Printer,
   FileImage, 
   FileText,
   Eye,
@@ -405,6 +406,67 @@ export default function RequestDetail() {
       });
     }
   };
+
+  const handlePrintDocument = async (url: string) => {
+    try {
+      let printUrl = url;
+      try {
+        const docUrl = new URL(url);
+        const pathParts = docUrl.pathname.split('/');
+        const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
+        if (bucketIndex !== -1) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/');
+          const { data } = await supabase.storage
+            .from('request-documents')
+            .createSignedUrl(filePath, 3600);
+          if (data?.signedUrl) printUrl = data.signedUrl;
+        }
+      } catch { /* fallback to raw url */ }
+
+      const lower = printUrl.split('?')[0].toLowerCase();
+      const isImage = /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(lower);
+
+      if (isImage) {
+        const w = window.open('', '_blank', 'width=900,height=700');
+        if (!w) {
+          toast({ title: 'Разрешите всплывающие окна', variant: 'destructive' });
+          return;
+        }
+        w.document.write(`<html><head><title>Печать</title><style>@page{margin:10mm}body{margin:0}img{max-width:100%;display:block;margin:0 auto}</style></head><body><img src="${printUrl}" onload="setTimeout(()=>{window.focus();window.print();},200)"/></body></html>`);
+        w.document.close();
+        return;
+      }
+
+      // PDF и прочее — печатаем через скрытый iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = printUrl;
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch (e) {
+            console.error('print failed', e);
+            window.open(printUrl, '_blank');
+          }
+        }, 400);
+      };
+      document.body.appendChild(iframe);
+      // Удалим через 60с
+      setTimeout(() => { iframe.remove(); }, 60_000);
+    } catch (error) {
+      console.error('Print error:', error);
+      toast({ title: 'Не удалось отправить на печать', variant: 'destructive' });
+    }
+  };
+
+
 
   const handleSendTelegram = async () => {
     if (!id) return;
@@ -944,6 +1006,16 @@ export default function RequestDetail() {
                                     Скачать
                                   </a>
                                 </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => handlePrintDocument(url)}
+                                >
+                                  <Printer className="h-3 w-3 mr-1" />
+                                  Печать
+                                </Button>
+
                                 {canEdit && (
                                   <Button
                                     variant="ghost"
