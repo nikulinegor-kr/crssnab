@@ -1,6 +1,35 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+interface CommitOnBlurInputProps {
+  value: string;
+  onCommit: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+function CommitOnBlurInput({ value, onCommit, placeholder, className }: CommitOnBlurInputProps) {
+  const [local, setLocal] = useState(value ?? "");
+  useEffect(() => { setLocal(value ?? ""); }, [value]);
+  const commit = () => {
+    if ((local ?? "") !== (value ?? "")) onCommit(local);
+  };
+  return (
+    <Input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+        if (e.key === "Escape") { setLocal(value ?? ""); (e.target as HTMLInputElement).blur(); }
+      }}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+}
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
