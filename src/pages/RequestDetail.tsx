@@ -1006,6 +1006,16 @@ export default function RequestDetail() {
                                     Скачать
                                   </a>
                                 </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => handlePrintDocument(url)}
+                                >
+                                  <Printer className="h-3 w-3 mr-1" />
+                                  Печать
+                                </Button>
+
                                 {canEdit && (
                                   <Button
                                     variant="ghost"
