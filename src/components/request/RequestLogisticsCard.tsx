@@ -117,9 +117,9 @@ export function RequestLogisticsCard({
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
                 {canEdit && item.field ? (
-                  <Input
+                  <CommitOnBlurInput
                     value={(item.value as string) || ""}
-                    onChange={(e) => onUpdate({ [item.field!]: e.target.value || null })}
+                    onCommit={(v) => onUpdate({ [item.field!]: v || null })}
                     placeholder={item.placeholder}
                     className="h-8 text-sm"
                   />
