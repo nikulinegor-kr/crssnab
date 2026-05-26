@@ -68,6 +68,8 @@ async function sendMaxDocument(
     return { ok: false, status: 0, body: `EXCEPTION: ${e?.message || e}` };
   }
 }
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
