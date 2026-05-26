@@ -74,14 +74,244 @@ async function maxFetch(
   throw new Error(`MAX API ${last?.res.status}: ${last?.text}`);
 }
 
-async function sendMessage(chatId: string | number, text: string, supabase?: SupaClient) {
+async function sendMessage(chatId: string | number, text: string, supabase?: SupaClient, attachments?: any) {
+  const body: any = { text };
+  if (attachments) body.attachments = attachments;
   return maxFetch(
     `/messages?chat_id=${chatId}`,
-    { method: "POST", body: JSON.stringify({ text }) },
+    { method: "POST", body: JSON.stringify(body) },
     supabase,
     { chatId: String(chatId) },
   );
 }
+
+async function editMessage(
+  chatId: string,
+  messageId: string | number,
+  text: string,
+  attachments: any | undefined,
+  supabase: SupaClient,
+) {
+  const body: any = { text };
+  if (attachments !== undefined) body.attachments = attachments;
+  return maxFetch(
+    `/messages?message_id=${encodeURIComponent(String(messageId))}`,
+    { method: "PUT", body: JSON.stringify(body) },
+    supabase,
+    { chatId: String(chatId) },
+  );
+}
+
+async function deleteMessageMax(
+  chatId: string,
+  messageId: string | number,
+  supabase: SupaClient,
+) {
+  return maxFetch(
+    `/messages?message_id=${encodeURIComponent(String(messageId))}`,
+    { method: "DELETE" },
+    supabase,
+    { chatId: String(chatId) },
+  );
+}
+
+function deliveryStage1Keyboard(reqId: string) {
+  return [{
+    type: "inline_keyboard",
+    payload: {
+      buttons: [
+        [{ type: "callback", text: "📦 Получение подтверждено", payload: `delivrcv:${reqId}` }],
+        [{ type: "callback", text: "🔄 Изменить статус", payload: `chgstatus:${reqId}` }],
+      ],
+    },
+  }];
+}
+
+function deliveryStage2Keyboard(reqId: string) {
+  return [{
+    type: "inline_keyboard",
+    payload: {
+      buttons: [
+        [
+          { type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` },
+          { type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` },
+        ],
+        [{ type: "callback", text: "🔄 Изменить статус", payload: `chgstatus:${reqId}` }],
+      ],
+    },
+  }];
+}
+
+function discrepancyTypeKeyboard(reqId: string) {
+  return [{
+    type: "inline_keyboard",
+    payload: {
+      buttons: [
+        [{ type: "callback", text: "🔢 Парт-номер", payload: `discrtype:${reqId}:part` }],
+        [{ type: "callback", text: "📦 Количество", payload: `discrtype:${reqId}:qty` }],
+        [{ type: "callback", text: "❌ Не та позиция", payload: `discrtype:${reqId}:wrong` }],
+        [{ type: "callback", text: "💥 Повреждение", payload: `discrtype:${reqId}:damage` }],
+      ],
+    },
+  }];
+}
+
+async function getOrgStatusesMax(supabase: SupaClient, orgId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from("request_statuses")
+    .select("name, sort_order")
+    .eq("organization_id", orgId)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  const list = ((data as any[]) || []).map((s) => s.name as string).filter(Boolean);
+  if (list.length === 0) {
+    return ["Новая заявка", "В работе", "В пути", "Доставлено в ТК", "Доставлено", "Отменено"];
+  }
+  return list;
+}
+
+function chgStatusKeyboard(reqId: string, statuses: string[]) {
+  const rows: any[] = [];
+  const slice = statuses.slice(0, 8);
+  for (let i = 0; i < slice.length; i += 2) {
+    const row: any[] = [
+      { type: "callback", text: slice[i].slice(0, 30), payload: `statussel:${reqId}:${i}` },
+    ];
+    if (slice[i + 1]) {
+      row.push({ type: "callback", text: slice[i + 1].slice(0, 30), payload: `statussel:${reqId}:${i + 1}` });
+    }
+    rows.push(row);
+  }
+  rows.push([{ type: "callback", text: "↩️ Назад", payload: `chgback:${reqId}` }]);
+  return [{ type: "inline_keyboard", payload: { buttons: rows } }];
+}
+
+async function loadRequestMax(supabase: SupaClient, reqId: string) {
+  const { data } = await supabase
+    .from("requests")
+    .select("id, organization_id, status, request_number, description")
+    .eq("id", reqId)
+    .maybeSingle();
+  return data as any;
+}
+
+function fmtMaxUser(cbUser: any): { username: string; fullName: string; who: string } {
+  const username = cbUser?.username || cbUser?.name || "";
+  const first = cbUser?.first_name || "";
+  const last = cbUser?.last_name || "";
+  const fullName = [first, last].filter(Boolean).join(" ").trim();
+  const who = username ? `@${username}` : (fullName || "пользователь");
+  return { username, fullName, who };
+}
+
+async function handleDeliveryCallback(
+  supabase: SupaClient,
+  payload: string,
+  chatId: string,
+  messageId: string | number | undefined,
+  msgText: string,
+  cbUser: any,
+): Promise<boolean> {
+  const [prefix, reqId, extra] = payload.split(":");
+  if (!reqId) return false;
+  const req = await loadRequestMax(supabase, reqId);
+  if (!req) return false;
+  const { username, fullName, who } = fmtMaxUser(cbUser);
+  const now = new Date().toLocaleString("ru-RU");
+  const baseText = msgText || `🧾 Заявка: ${req.description ?? ""}`;
+
+  if (prefix === "delivrcv") {
+    await supabase.from("request_activities").insert({
+      request_id: req.id,
+      organization_id: req.organization_id,
+      action: "received_confirmed",
+      description: `✅ Получение подтверждено — отметил: ${who}, ${now}`,
+    });
+    const newText = `${baseText}\n\n✅ Получение подтверждено — отметил: ${who}, ${now}`;
+    if (messageId) await editMessage(chatId, messageId, newText, deliveryStage2Keyboard(req.id), supabase);
+    else await sendMessage(chatId, newText, supabase, deliveryStage2Keyboard(req.id));
+    return true;
+  }
+
+  if (prefix === "delivok") {
+    await supabase.from("request_activities").insert({
+      request_id: req.id,
+      organization_id: req.organization_id,
+      action: "accepted_no_issues",
+      description: `🟢 Принято без замечаний — отметил: ${who}, ${now}`,
+    });
+    await supabase.from("requests").update({ status: "Доставлено" }).eq("id", req.id);
+    const finalText = `${baseText}\n\n🟢 Принято без замечаний — отметил: ${who}, ${now}`;
+    if (messageId) { try { await deleteMessageMax(chatId, messageId, supabase); } catch (_) { /* ignore */ } }
+    await sendMessage(chatId, finalText, supabase);
+    return true;
+  }
+
+  if (prefix === "delivdisc") {
+    await supabase.from("request_activities").insert({
+      request_id: req.id,
+      organization_id: req.organization_id,
+      action: "discrepancy_found",
+      description: `🔴 Обнаружено несоответствие — отметил: ${who}, ${now}`,
+    });
+    await supabase.from("requests").update({ status: "Несоответствие" }).eq("id", req.id);
+    const newText = `${baseText}\n\n🔴 Обнаружено несоответствие — отметил: ${who}, ${now}\n\nВыберите тип несоответствия:`;
+    if (messageId) await editMessage(chatId, messageId, newText, discrepancyTypeKeyboard(req.id), supabase);
+    else await sendMessage(chatId, newText, supabase, discrepancyTypeKeyboard(req.id));
+    return true;
+  }
+
+  if (prefix === "discrtype") {
+    const typeMap: Record<string, string> = {
+      part: "Парт-номер", qty: "Количество", wrong: "Не та позиция", damage: "Повреждение",
+    };
+    const dType = typeMap[extra || ""] || "Неизвестный тип";
+    await supabase.from("request_activities").insert({
+      request_id: req.id,
+      organization_id: req.organization_id,
+      action: "discrepancy_type_selected",
+      field_name: "discrepancy_type",
+      new_value: dType,
+      description: `📋 Тип несоответствия: ${dType} — ${who}, ${now}`,
+    });
+    await supabase.from("requests")
+      .update({ awaiting_comment_from: `discrepancy:${username || fullName}:${dType}` })
+      .eq("id", req.id);
+    const newText = `${baseText}\n📋 Тип: ${dType}\n\n📝 Опишите проблему следующим сообщением.`;
+    if (messageId) await editMessage(chatId, messageId, newText, [], supabase);
+    else await sendMessage(chatId, newText, supabase);
+    return true;
+  }
+
+  if (prefix === "chgstatus") {
+    const statuses = await getOrgStatusesMax(supabase, req.organization_id);
+    const newText = `${baseText}\n\nВыберите новый статус:`;
+    if (messageId) await editMessage(chatId, messageId, newText, chgStatusKeyboard(req.id, statuses), supabase);
+    else await sendMessage(chatId, newText, supabase, chgStatusKeyboard(req.id, statuses));
+    return true;
+  }
+
+  if (prefix === "statussel") {
+    const statuses = await getOrgStatusesMax(supabase, req.organization_id);
+    const idx = Number(extra);
+    const newStatus = statuses[idx];
+    if (!newStatus) return true;
+    await supabase.from("requests").update({ status: newStatus }).eq("id", req.id);
+    const finalText = `${baseText}\n\n📌 Статус изменён на «${newStatus}» — ${who}, ${now}`;
+    if (messageId) { try { await deleteMessageMax(chatId, messageId, supabase); } catch (_) { /* ignore */ } }
+    await sendMessage(chatId, finalText, supabase);
+    return true;
+  }
+
+  if (prefix === "chgback") {
+    if (messageId) await editMessage(chatId, messageId, baseText, deliveryStage1Keyboard(req.id), supabase);
+    return true;
+  }
+
+  return false;
+}
+
+
 
 async function fetchChatTitle(chatId: string | number, supabase?: SupaClient): Promise<string | null> {
   try {
