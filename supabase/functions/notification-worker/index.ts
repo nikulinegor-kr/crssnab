@@ -285,8 +285,11 @@ Deno.serve(async (req) => {
         })
         .eq("id", row.id);
 
-      // Send attached documents (PDF etc.) as files after the text message.
-      if (requestId) {
+      // Send attached documents (PDF etc.) only for invoice events (status "Счёт в Бухгалтерии").
+      const isInvoiceEvent = (row as any).event_type === "invoice.created"
+        || row.payload?.kind === "invoice_route"
+        || !!row.payload?.invoice_number;
+      if (requestId && isInvoiceEvent) {
         try {
           const { data: reqRow } = await supabase
             .from("requests")
