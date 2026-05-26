@@ -34,6 +34,52 @@ async function sendTelegramRequest(botToken: string, method: string, body: any) 
   return await response.json();
 }
 
+const MAX_API = "https://platform-api.max.ru";
+async function maxSend(chatId: string, text: string, attachments?: any) {
+  const token = Deno.env.get("MAX_BOT_TOKEN");
+  if (!token) return { ok: false, error: "MAX_BOT_TOKEN not configured" } as any;
+  const body: any = { text };
+  if (attachments) body.attachments = attachments;
+  const res = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: token },
+    body: JSON.stringify(body),
+  });
+  const txt = await res.text();
+  let parsed: any = null;
+  try { parsed = JSON.parse(txt); } catch { /* ignore */ }
+  return { ok: res.ok, status: res.status, body: txt, parsed };
+}
+async function maxDelete(messageId: string | number) {
+  const token = Deno.env.get("MAX_BOT_TOKEN");
+  if (!token) return;
+  try {
+    await fetch(`${MAX_API}/messages?message_id=${encodeURIComponent(String(messageId))}`, {
+      method: "DELETE",
+      headers: { Authorization: token },
+    });
+  } catch (_) { /* ignore */ }
+}
+function maxStageKeyboard(reqId: string, stage: "receive" | "acceptance") {
+  if (stage === "receive") {
+    return [{
+      type: "inline_keyboard",
+      payload: { buttons: [[{ type: "callback", text: "📦 Получение подтверждено", payload: `delivrcv:${reqId}` }]] },
+    }];
+  }
+  return [{
+    type: "inline_keyboard",
+    payload: {
+      buttons: [
+        [
+          { type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` },
+          { type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` },
+        ],
+      ],
+    },
+  }];
+}
+
 function getPriorityEmoji(priority: string): string {
   const p = priority?.toLowerCase() || "";
   if (p.includes("авар")) return "🚨";
