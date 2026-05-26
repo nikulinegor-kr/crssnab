@@ -34,11 +34,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Build attachments (inline_keyboard) if buttons provided
+    // buttons: [{ text: string, payload: string }, ...] => 1 button per row
+    let attachments: any[] | undefined;
+    if (Array.isArray(buttons) && buttons.length > 0) {
+      const rows = buttons
+        .filter((b: any) => b && typeof b.text === "string" && typeof b.payload === "string")
+        .map((b: any) => [{ type: "callback", text: String(b.text).slice(0, 30), payload: String(b.payload) }]);
+      if (rows.length > 0) {
+        attachments = [{ type: "inline_keyboard", payload: { buttons: rows } }];
+      }
     }
 
     const botToken = Deno.env.get("MAX_BOT_TOKEN");
@@ -96,10 +108,12 @@ Deno.serve(async (req) => {
     const wantedMode = (mode as string) || "auto";
 
     if (wantedMode === "envelope" || wantedMode === "auto") {
+      const msg: any = { text: messageText };
+      if (attachments) msg.attachments = attachments;
       const r = await doFetch(
         "envelope+bearer",
         `${MAX_API}/messages`,
-        { recipient: { chat_id: chatIdStr, chat_type: "chat" }, message: { text: messageText } },
+        { recipient: { chat_id: chatIdStr, chat_type: "chat" }, message: msg },
         "bearer",
       );
       if (r.delivered && wantedMode === "auto") {
@@ -108,10 +122,12 @@ Deno.serve(async (req) => {
     }
 
     if (wantedMode === "legacy" || wantedMode === "auto") {
+      const payload: any = { text: messageText };
+      if (attachments) payload.attachments = attachments;
       const r = await doFetch(
         "legacy+bearer",
         `${MAX_API}/messages?chat_id=${encodeURIComponent(chatIdStr)}`,
-        { text: messageText },
+        payload,
         "bearer",
       );
       if (r.delivered && wantedMode === "auto") {
@@ -120,10 +136,12 @@ Deno.serve(async (req) => {
     }
 
     if (wantedMode === "query" || wantedMode === "auto") {
+      const payload: any = { text: messageText };
+      if (attachments) payload.attachments = attachments;
       const r = await doFetch(
         "legacy+query",
         `${MAX_API}/messages?chat_id=${encodeURIComponent(chatIdStr)}`,
-        { text: messageText },
+        payload,
         "query",
       );
       if (r.delivered && wantedMode === "auto") {
