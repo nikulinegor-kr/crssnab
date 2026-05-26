@@ -219,12 +219,16 @@ Deno.serve(async (req) => {
         );
         const { data: reqRow } = await admin
           .from("requests")
-          .select("description, document_url, document_urls")
+          .select("description, status, document_url, document_urls")
           .eq("id", request_id)
           .maybeSingle();
-        const docUrls: string[] = Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
-          ? (reqRow as any).document_urls
-          : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : []);
+        const status = String((reqRow as any)?.status ?? "").toLowerCase();
+        const isInvoiceStatus = status === "счёт в бухгалтерии" || status === "счет в бухгалтерии";
+        const docUrls: string[] = !isInvoiceStatus ? [] : (
+          Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
+            ? (reqRow as any).document_urls
+            : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : [])
+        );
         for (const docUrl of docUrls) {
           if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
           let finalUrl = docUrl;

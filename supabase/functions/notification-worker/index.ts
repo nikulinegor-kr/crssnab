@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
   const { data: rows, error } = await supabase
     .from("notification_queue")
-    .select("id, organization_id, entity_type, entity_id, platform, group_id, payload, retry_count")
+    .select("id, organization_id, event_type, entity_type, entity_id, platform, group_id, payload, retry_count")
     .in("status", ["queued"])
     .lte("next_attempt_at", new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -285,8 +285,11 @@ Deno.serve(async (req) => {
         })
         .eq("id", row.id);
 
-      // Send attached documents (PDF etc.) as files after the text message.
-      if (requestId) {
+      // Send attached documents (PDF etc.) only for invoice events (status "Счёт в Бухгалтерии").
+      const isInvoiceEvent = (row as any).event_type === "invoice.created"
+        || row.payload?.kind === "invoice_route"
+        || !!row.payload?.invoice_number;
+      if (requestId && isInvoiceEvent) {
         try {
           const { data: reqRow } = await supabase
             .from("requests")
