@@ -132,10 +132,8 @@ function deliveryStage2Keyboard(reqId: string) {
     type: "inline_keyboard",
     payload: {
       buttons: [
-        [
-          { type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` },
-          { type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` },
-        ],
+        [{ type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` }],
+        [{ type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` }],
         [{ type: "callback", text: "🔄 Изменить статус", payload: `chgstatus:${reqId}` }],
       ],
     },
@@ -173,14 +171,8 @@ async function getOrgStatusesMax(supabase: SupaClient, orgId: string): Promise<s
 function chgStatusKeyboard(reqId: string, statuses: string[]) {
   const rows: any[] = [];
   const slice = statuses.slice(0, 8);
-  for (let i = 0; i < slice.length; i += 2) {
-    const row: any[] = [
-      { type: "callback", text: slice[i].slice(0, 30), payload: `statussel:${reqId}:${i}` },
-    ];
-    if (slice[i + 1]) {
-      row.push({ type: "callback", text: slice[i + 1].slice(0, 30), payload: `statussel:${reqId}:${i + 1}` });
-    }
-    rows.push(row);
+  for (let i = 0; i < slice.length; i++) {
+    rows.push([{ type: "callback", text: slice[i].slice(0, 30), payload: `statussel:${reqId}:${i}` }]);
   }
   rows.push([{ type: "callback", text: "↩️ Назад", payload: `chgback:${reqId}` }]);
   return [{ type: "inline_keyboard", payload: { buttons: rows } }];
