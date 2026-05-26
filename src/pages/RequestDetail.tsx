@@ -534,7 +534,7 @@ export default function RequestDetail() {
       }
 
       const { data, error } = await supabase.functions.invoke("max-direct-send", {
-        body: { chat_id: chatId, text, organization_id: request.organization_id, mode: "auto", buttons },
+        body: { chat_id: chatId, text, organization_id: request.organization_id, mode: "auto", buttons, request_id: id },
       });
       if (error) throw error;
       if (data?.ok || data?.delivered) {
