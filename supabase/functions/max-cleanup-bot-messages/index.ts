@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       const url = `${MAX_API}/messages?chat_id=${encodeURIComponent(t.chatId)}&message_id=${encodeURIComponent(t.messageId)}`;
       const res = await fetch(url, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: token },
       });
       if (res.ok) {
         ok++;
