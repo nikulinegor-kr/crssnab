@@ -150,6 +150,49 @@ Deno.serve(async (req) => {
     }
 
     const last = attempts[attempts.length - 1];
+
+    // After a successful text send, also push attached documents (PDF etc.) to the same chat.
+    if (last?.delivered && request_id) {
+      try {
+        const admin = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const { data: reqRow } = await admin
+          .from("requests")
+          .select("description, document_url, document_urls")
+          .eq("id", request_id)
+          .maybeSingle();
+        const docUrls: string[] = Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
+          ? (reqRow as any).document_urls
+          : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : []);
+        for (const docUrl of docUrls) {
+          if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
+          let finalUrl = docUrl;
+          let fileName = "document.pdf";
+          try {
+            const u = new URL(docUrl);
+            const parts = u.pathname.split("/");
+            fileName = decodeURIComponent(parts[parts.length - 1] || "document.pdf");
+            const idx = parts.findIndex((p) => p === "request-documents");
+            if (idx !== -1) {
+              const filePath = parts.slice(idx + 1).join("/");
+              const { data: signed } = await admin.storage
+                .from("request-documents")
+                .createSignedUrl(filePath, 86400);
+              if (signed?.signedUrl) finalUrl = signed.signedUrl;
+            }
+          } catch { /* keep original */ }
+          const caption = `📄 ${String((reqRow as any)?.description ?? "").slice(0, 100)}`.trim();
+          const docRes = await sendMaxDocument(chatIdStr, finalUrl, fileName, caption, botToken);
+          attempts.push({ mode: "document", endpoint: "uploads+messages", delivered: docRes.ok, http_status: docRes.status, response_body: docRes.body });
+          console.log(`max-direct-send [document] chat=${chatIdStr} file=${fileName} -> ${docRes.status} ok=${docRes.ok}`);
+        }
+      } catch (e: any) {
+        console.error("max-direct-send document send error:", e?.message || e);
+      }
+    }
+
     return finish(last, attempts, chatIdStr, organization_id, messageText);
   } catch (e: any) {
     console.error("max-direct-send error:", e?.message || e);
