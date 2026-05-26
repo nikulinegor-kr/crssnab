@@ -1430,6 +1430,7 @@ export type Database = {
           is_discovered: boolean
           last_api_at: string | null
           last_api_status: number | null
+          last_max_message_id: string | null
           last_message_at: string | null
           notification_type: string
           organization_id: string | null
@@ -1445,6 +1446,7 @@ export type Database = {
           is_discovered?: boolean
           last_api_at?: string | null
           last_api_status?: number | null
+          last_max_message_id?: string | null
           last_message_at?: string | null
           notification_type?: string
           organization_id?: string | null
@@ -1460,6 +1462,7 @@ export type Database = {
           is_discovered?: boolean
           last_api_at?: string | null
           last_api_status?: number | null
+          last_max_message_id?: string | null
           last_message_at?: string | null
           notification_type?: string
           organization_id?: string | null
