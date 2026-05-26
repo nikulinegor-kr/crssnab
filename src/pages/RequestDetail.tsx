@@ -523,8 +523,18 @@ export default function RequestDetail() {
       const { data: textData, error: textErr } = await supabase.rpc("build_request_message_by_id", { _request_id: id });
       if (textErr) throw textErr;
       const text = String(textData || "");
+
+      // Attach delivery confirmation buttons when status is "Доставлено в ТК"
+      let buttons: { text: string; payload: string }[] | undefined;
+      if (request.status === "Доставлено в ТК") {
+        buttons = [
+          { text: "📦 Получение подтверждено", payload: `delivrcv:${id}` },
+          { text: "🔄 Изменить статус", payload: `chgstatus:${id}` },
+        ];
+      }
+
       const { data, error } = await supabase.functions.invoke("max-direct-send", {
-        body: { chat_id: chatId, text, organization_id: request.organization_id, mode: "auto" },
+        body: { chat_id: chatId, text, organization_id: request.organization_id, mode: "auto", buttons },
       });
       if (error) throw error;
       if (data?.ok || data?.delivered) {
