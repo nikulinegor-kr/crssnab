@@ -442,7 +442,14 @@ Deno.serve(async (req) => {
         callbackPayload.startsWith("assign:") ||
         callbackPayload.startsWith("invroute:") ||
         callbackPayload.startsWith("invconfirm:") ||
-        callbackPayload.startsWith("invcancel:")
+        callbackPayload.startsWith("invcancel:") ||
+        callbackPayload.startsWith("delivrcv:") ||
+        callbackPayload.startsWith("delivok:") ||
+        callbackPayload.startsWith("delivdisc:") ||
+        callbackPayload.startsWith("discrtype:") ||
+        callbackPayload.startsWith("chgstatus:") ||
+        callbackPayload.startsWith("statussel:") ||
+        callbackPayload.startsWith("chgback:")
       )) {
         const callbackId: string | undefined = u?.callback?.callback_id ?? u?.callback_id;
         const messageId: string | number | undefined =
