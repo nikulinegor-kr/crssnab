@@ -39,35 +39,20 @@ function buildCallbackData(requestId: string | undefined, btn: Button): string {
 
 function buildTgKeyboard(requestId: string | undefined, buttons: Button[]) {
   const rows: any[] = [];
-  for (let i = 0; i < buttons.length; i += 2) {
-    const row = [
-      { text: buttons[i].name.slice(0, 30), callback_data: buildCallbackData(requestId, buttons[i]) },
-    ];
-    if (buttons[i + 1]) {
-      row.push({
-        text: buttons[i + 1].name.slice(0, 30),
-        callback_data: buildCallbackData(requestId, buttons[i + 1]),
-      });
-    }
-    rows.push(row);
+  for (const btn of buttons) {
+    rows.push([
+      { text: btn.name.slice(0, 30), callback_data: buildCallbackData(requestId, btn) },
+    ]);
   }
   return { inline_keyboard: rows };
 }
 
 function buildMaxAttachments(requestId: string | undefined, buttons: Button[]) {
   const rows: any[] = [];
-  for (let i = 0; i < buttons.length; i += 2) {
-    const row = [
-      { type: "callback", text: buttons[i].name.slice(0, 30), payload: buildCallbackData(requestId, buttons[i]) },
-    ];
-    if (buttons[i + 1]) {
-      row.push({
-        type: "callback",
-        text: buttons[i + 1].name.slice(0, 30),
-        payload: buildCallbackData(requestId, buttons[i + 1]),
-      });
-    }
-    rows.push(row);
+  for (const btn of buttons) {
+    rows.push([
+      { type: "callback", text: btn.name.slice(0, 30), payload: buildCallbackData(requestId, btn) },
+    ]);
   }
   return [{ type: "inline_keyboard", payload: { buttons: rows } }];
 }
