@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
   const { data: rows, error } = await supabase
     .from("notification_queue")
-    .select("id, organization_id, entity_type, entity_id, platform, group_id, payload, retry_count")
+    .select("id, organization_id, event_type, entity_type, entity_id, platform, group_id, payload, retry_count")
     .in("status", ["queued"])
     .lte("next_attempt_at", new Date().toISOString())
     .order("created_at", { ascending: true })
