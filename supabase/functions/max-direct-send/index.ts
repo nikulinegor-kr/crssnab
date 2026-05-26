@@ -34,11 +34,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Build attachments (inline_keyboard) if buttons provided
+    // buttons: [{ text: string, payload: string }, ...] => 1 button per row
+    let attachments: any[] | undefined;
+    if (Array.isArray(buttons) && buttons.length > 0) {
+      const rows = buttons
+        .filter((b: any) => b && typeof b.text === "string" && typeof b.payload === "string")
+        .map((b: any) => [{ type: "callback", text: String(b.text).slice(0, 30), payload: String(b.payload) }]);
+      if (rows.length > 0) {
+        attachments = [{ type: "inline_keyboard", payload: { buttons: rows } }];
+      }
     }
 
     const botToken = Deno.env.get("MAX_BOT_TOKEN");
