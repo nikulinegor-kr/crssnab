@@ -108,10 +108,12 @@ Deno.serve(async (req) => {
     const wantedMode = (mode as string) || "auto";
 
     if (wantedMode === "envelope" || wantedMode === "auto") {
+      const msg: any = { text: messageText };
+      if (attachments) msg.attachments = attachments;
       const r = await doFetch(
         "envelope+bearer",
         `${MAX_API}/messages`,
-        { recipient: { chat_id: chatIdStr, chat_type: "chat" }, message: { text: messageText } },
+        { recipient: { chat_id: chatIdStr, chat_type: "chat" }, message: msg },
         "bearer",
       );
       if (r.delivered && wantedMode === "auto") {
@@ -120,10 +122,12 @@ Deno.serve(async (req) => {
     }
 
     if (wantedMode === "legacy" || wantedMode === "auto") {
+      const payload: any = { text: messageText };
+      if (attachments) payload.attachments = attachments;
       const r = await doFetch(
         "legacy+bearer",
         `${MAX_API}/messages?chat_id=${encodeURIComponent(chatIdStr)}`,
-        { text: messageText },
+        payload,
         "bearer",
       );
       if (r.delivered && wantedMode === "auto") {
@@ -132,10 +136,12 @@ Deno.serve(async (req) => {
     }
 
     if (wantedMode === "query" || wantedMode === "auto") {
+      const payload: any = { text: messageText };
+      if (attachments) payload.attachments = attachments;
       const r = await doFetch(
         "legacy+query",
         `${MAX_API}/messages?chat_id=${encodeURIComponent(chatIdStr)}`,
-        { text: messageText },
+        payload,
         "query",
       );
       if (r.delivered && wantedMode === "auto") {
