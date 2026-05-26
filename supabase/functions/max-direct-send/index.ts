@@ -10,7 +10,64 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+async function delay(ms: number) { await new Promise((r) => setTimeout(r, ms)); }
+
+async function sendMaxDocument(
+  chatId: string,
+  fileUrl: string,
+  fileName: string,
+  caption: string,
+  token: string,
+): Promise<{ ok: boolean; status: number; body: string }> {
+  try {
+    const uploadInitRes = await fetch(`${MAX_API}/uploads?type=file`, {
+      method: "POST",
+      headers: { Authorization: token },
+    });
+    const uploadInitBody = await uploadInitRes.text();
+    if (!uploadInitRes.ok) return { ok: false, status: uploadInitRes.status, body: `uploads init failed: ${uploadInitBody.slice(0, 500)}` };
+    const uploadInit = JSON.parse(uploadInitBody);
+    const uploadUrl: string | undefined = uploadInit?.url;
+    const initToken: string | undefined = uploadInit?.token ?? uploadInit?.file?.token ?? uploadInit?.payload?.token;
+    if (!uploadUrl) return { ok: false, status: 0, body: `no upload url: ${uploadInitBody.slice(0, 300)}` };
+
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) return { ok: false, status: fileRes.status, body: `source fetch failed` };
+    const fileBlob = await fileRes.blob();
+    const form = new FormData();
+    form.append("data", fileBlob, fileName);
+    const upRes = await fetch(uploadUrl, { method: "POST", headers: { Accept: "application/json; charset=utf-8" }, body: form });
+    const upBody = await upRes.text();
+    if (!upRes.ok) return { ok: false, status: upRes.status, body: `upload failed: ${upBody.slice(0, 500)}` };
+    let fileToken: string | undefined = initToken;
+    try {
+      const upJson = JSON.parse(upBody);
+      fileToken = fileToken ?? upJson?.token ?? upJson?.file?.token ?? upJson?.payload?.token;
+    } catch { /* ignore */ }
+    if (!fileToken) return { ok: false, status: 0, body: `no file token: ${upBody.slice(0, 300)}` };
+
+    const retryDelays = [0, 2000, 4000, 7000];
+    let lastStatus = 0, lastBody = "";
+    for (const d of retryDelays) {
+      if (d > 0) await delay(d);
+      const msgRes = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token },
+        body: JSON.stringify({ text: caption, attachments: [{ type: "file", payload: { token: fileToken } }] }),
+      });
+      const msgBody = await msgRes.text();
+      lastStatus = msgRes.status; lastBody = msgBody;
+      let parsed: any = null;
+      try { parsed = JSON.parse(msgBody); } catch { /* ignore */ }
+      const code = parsed?.code ?? parsed?.error?.code ?? null;
+      if (msgRes.ok && code !== "attachment.not.ready") return { ok: true, status: msgRes.status, body: msgBody.slice(0, 1000) };
+      if (code !== "attachment.not.ready") return { ok: false, status: msgRes.status, body: msgBody.slice(0, 1000) };
+    }
+    return { ok: false, status: lastStatus, body: lastBody.slice(0, 1000) };
+  } catch (e: any) {
+    return { ok: false, status: 0, body: `EXCEPTION: ${e?.message || e}` };
+  }
+}
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
