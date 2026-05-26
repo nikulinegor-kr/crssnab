@@ -227,7 +227,6 @@ serve(async (req) => {
 
     for (const request of requests) {
       const org = await getTelegramSettingsForOrg(request.organization_id);
-      if (!org?.telegram_bot_token || !org?.telegram_chat_id) continue;
 
       // Check if already fully accepted (accepted_no_issues = final "Доставлено" status)
       const { data: acceptedActivity } = await supabase
@@ -238,7 +237,6 @@ serve(async (req) => {
         .limit(1);
 
       if (acceptedActivity && acceptedActivity.length > 0) {
-        // Fully accepted, no reminder needed
         continue;
       }
 
@@ -251,26 +249,10 @@ serve(async (req) => {
         .limit(1);
 
       const hasReceivedConfirmed = confirmedActivity && confirmedActivity.length > 0;
-
-      // Determine reminder stage
-      const stage = hasReceivedConfirmed ? "acceptance" : "receive";
+      const stage: "receive" | "acceptance" = hasReceivedConfirmed ? "acceptance" : "receive";
       const dedupKey = `${dedupDescription}_${stage}`;
 
-      // Check if reminder was already sent for this exact slot + stage today
-      const { data: existingReminder } = await supabase
-        .from("request_activities")
-        .select("id")
-        .eq("request_id", request.id)
-        .eq("action", "delivery_reminder_sent")
-        .eq("description", dedupKey)
-        .limit(1);
-
-      if (existingReminder && existingReminder.length > 0) {
-        console.log(`Reminder (${stage}) already sent for ${request.request_number} at slot ${reminderSlot}:00 today`);
-        continue;
-      }
-
-      // Get participants for mentions
+      // Get participants for mentions (shared by TG and MAX)
       const { data: participants } = await supabase
         .from("request_participants")
         .select("name, telegram_username, participant_type")
@@ -279,69 +261,111 @@ serve(async (req) => {
 
       const message = formatReminderMessage(request, participants || [], stage);
 
-      // Different buttons depending on stage
-      let keyboard: any;
-      if (stage === "receive") {
-        keyboard = {
-          inline_keyboard: [
-            [{ text: "📦 Получение подтверждено", callback_data: "received" }],
-          ],
-        };
-      } else {
-        keyboard = {
-          inline_keyboard: [
-            [{ text: "🟢 Принято без замечаний", callback_data: "accepted_ok" }],
-            [{ text: "🔴 Обнаружено несоответствие", callback_data: "discrepancy" }],
-          ],
-        };
-      }
+      // ===== Telegram =====
+      if (org?.telegram_bot_token && org?.telegram_chat_id) {
+        const { data: existingReminder } = await supabase
+          .from("request_activities")
+          .select("id")
+          .eq("request_id", request.id)
+          .eq("action", "delivery_reminder_sent")
+          .eq("description", dedupKey)
+          .limit(1);
 
-      // Delete previous messages for this request
-      const existingMessageIds = request.telegram_message_ids || [];
-      for (const msgId of existingMessageIds) {
-        try {
-          await sendTelegramRequest(org.telegram_bot_token, "deleteMessage", {
-            chat_id: org.telegram_chat_id,
-            message_id: msgId,
+        if (!existingReminder || existingReminder.length === 0) {
+          const tgKeyboard = stage === "receive"
+            ? { inline_keyboard: [[{ text: "📦 Получение подтверждено", callback_data: "received" }]] }
+            : { inline_keyboard: [
+                [{ text: "🟢 Принято без замечаний", callback_data: "accepted_ok" }],
+                [{ text: "🔴 Обнаружено несоответствие", callback_data: "discrepancy" }],
+              ] };
+
+          const existingMessageIds = request.telegram_message_ids || [];
+          for (const msgId of existingMessageIds) {
+            try {
+              await sendTelegramRequest(org.telegram_bot_token, "deleteMessage", {
+                chat_id: org.telegram_chat_id, message_id: msgId,
+              });
+            } catch (e) {
+              console.error("Error deleting old TG message:", msgId, e);
+            }
+          }
+
+          const result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
+            chat_id: org.telegram_chat_id, text: message, reply_markup: tgKeyboard,
           });
-        } catch (e) {
-          console.error("Error deleting old message:", msgId, e);
+
+          if (result.ok && result.result) {
+            const newMessageId = result.result.message_id;
+            await supabase
+              .from("requests")
+              .update({ telegram_message_id: newMessageId, telegram_message_ids: [newMessageId] })
+              .eq("id", request.id);
+            await supabase.from("request_activities").insert({
+              request_id: request.id,
+              organization_id: request.organization_id,
+              action: "delivery_reminder_sent",
+              description: dedupKey,
+            });
+            sentCount++;
+            console.log(`TG reminder (${stage}) sent for ${request.request_number}`);
+          } else {
+            console.error(`Failed TG reminder for ${request.request_number}:`, result);
+          }
         }
       }
 
-      // Send reminder message
-      const result = await sendTelegramRequest(org.telegram_bot_token, "sendMessage", {
-        chat_id: org.telegram_chat_id,
-        text: message,
-        reply_markup: keyboard,
-      });
+      // ===== MAX =====
+      const { data: maxGroups } = await supabase
+        .from("max_groups")
+        .select("group_id, last_max_message_id")
+        .eq("organization_id", request.organization_id)
+        .eq("notification_type", "supply")
+        .eq("is_active", true);
 
-      if (result.ok && result.result) {
-        const newMessageId = result.result.message_id;
+      if (maxGroups && maxGroups.length > 0) {
+        const maxDedupKey = `${dedupKey}_max`;
+        const { data: existingMaxReminder } = await supabase
+          .from("request_activities")
+          .select("id")
+          .eq("request_id", request.id)
+          .eq("action", "delivery_reminder_sent")
+          .eq("description", maxDedupKey)
+          .limit(1);
 
-        // Update telegram_message_id and ids
-        await supabase
-          .from("requests")
-          .update({
-            telegram_message_id: newMessageId,
-            telegram_message_ids: [newMessageId],
-          })
-          .eq("id", request.id);
+        if (!existingMaxReminder || existingMaxReminder.length === 0) {
+          const kb = maxStageKeyboard(request.id, stage);
+          for (const g of maxGroups) {
+            try {
+              if (g.last_max_message_id) {
+                await maxDelete(g.last_max_message_id);
+              }
+            } catch (_) { /* ignore */ }
 
-        // Log activity with dedup key in description
-        await supabase.from("request_activities").insert({
-          request_id: request.id,
-          organization_id: request.organization_id,
-          action: "delivery_reminder_sent",
-          description: dedupKey,
-        });
-
-        sentCount++;
-        console.log(`Reminder (${stage}) sent for request ${request.request_number} (slot ${reminderSlot}:00)`);
-      } else {
-        console.error(`Failed to send reminder for ${request.request_number}:`, result);
+            const res = await maxSend(String(g.group_id), message, kb);
+            if (res.ok) {
+              const newMid = res.parsed?.message?.body?.mid ?? res.parsed?.message?.mid ?? null;
+              if (newMid) {
+                await supabase
+                  .from("max_groups")
+                  .update({ last_max_message_id: String(newMid) })
+                  .eq("group_id", String(g.group_id));
+              }
+              sentCount++;
+              console.log(`MAX reminder (${stage}) sent for ${request.request_number} → ${g.group_id}`);
+            } else {
+              console.error(`Failed MAX reminder for ${request.request_number}:`, res);
+            }
+          }
+          await supabase.from("request_activities").insert({
+            request_id: request.id,
+            organization_id: request.organization_id,
+            action: "delivery_reminder_sent",
+            description: maxDedupKey,
+          });
+        }
       }
     }
+
 
     console.log(`Total reminders sent: ${sentCount}`);
     return new Response(JSON.stringify({ sent: sentCount }), {
