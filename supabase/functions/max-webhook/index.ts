@@ -476,7 +476,11 @@ Deno.serve(async (req) => {
               }),
             }).catch((e) => console.error("assign-executor (max) failed:", e));
           }
-        } else {
+        } else if (
+          callbackPayload.startsWith("invroute:") ||
+          callbackPayload.startsWith("invconfirm:") ||
+          callbackPayload.startsWith("invcancel:")
+        ) {
           const parts = callbackPayload.split(":");
           const prefix = parts[0];
           const reqId = parts[1];
@@ -500,6 +504,15 @@ Deno.serve(async (req) => {
                 user: cbUser,
               }),
             }).catch((e) => console.error("invoice-route (max) failed:", e));
+          }
+        } else {
+          // Delivery confirmation 2-stage flow + change status
+          const cbMsgText: string =
+            u?.callback?.message?.body?.text ?? u?.callback?.message?.text ?? msgPre?.body?.text ?? msgPre?.text ?? "";
+          try {
+            await handleDeliveryCallback(supabase, callbackPayload, chatIdStr, messageId, cbMsgText, cbUser);
+          } catch (e: any) {
+            console.error("handleDeliveryCallback (max) failed:", e?.message || e);
           }
         }
         continue;
