@@ -10,6 +10,65 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function delay(ms: number) { await new Promise((r) => setTimeout(r, ms)); }
+
+async function sendMaxDocument(
+  chatId: string,
+  fileUrl: string,
+  fileName: string,
+  caption: string,
+  token: string,
+): Promise<{ ok: boolean; status: number; body: string }> {
+  try {
+    const uploadInitRes = await fetch(`${MAX_API}/uploads?type=file`, {
+      method: "POST",
+      headers: { Authorization: token },
+    });
+    const uploadInitBody = await uploadInitRes.text();
+    if (!uploadInitRes.ok) return { ok: false, status: uploadInitRes.status, body: `uploads init failed: ${uploadInitBody.slice(0, 500)}` };
+    const uploadInit = JSON.parse(uploadInitBody);
+    const uploadUrl: string | undefined = uploadInit?.url;
+    const initToken: string | undefined = uploadInit?.token ?? uploadInit?.file?.token ?? uploadInit?.payload?.token;
+    if (!uploadUrl) return { ok: false, status: 0, body: `no upload url: ${uploadInitBody.slice(0, 300)}` };
+
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) return { ok: false, status: fileRes.status, body: `source fetch failed` };
+    const fileBlob = await fileRes.blob();
+    const form = new FormData();
+    form.append("data", fileBlob, fileName);
+    const upRes = await fetch(uploadUrl, { method: "POST", headers: { Accept: "application/json; charset=utf-8" }, body: form });
+    const upBody = await upRes.text();
+    if (!upRes.ok) return { ok: false, status: upRes.status, body: `upload failed: ${upBody.slice(0, 500)}` };
+    let fileToken: string | undefined = initToken;
+    try {
+      const upJson = JSON.parse(upBody);
+      fileToken = fileToken ?? upJson?.token ?? upJson?.file?.token ?? upJson?.payload?.token;
+    } catch { /* ignore */ }
+    if (!fileToken) return { ok: false, status: 0, body: `no file token: ${upBody.slice(0, 300)}` };
+
+    const retryDelays = [0, 2000, 4000, 7000];
+    let lastStatus = 0, lastBody = "";
+    for (const d of retryDelays) {
+      if (d > 0) await delay(d);
+      const msgRes = await fetch(`${MAX_API}/messages?chat_id=${encodeURIComponent(chatId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token },
+        body: JSON.stringify({ text: caption, attachments: [{ type: "file", payload: { token: fileToken } }] }),
+      });
+      const msgBody = await msgRes.text();
+      lastStatus = msgRes.status; lastBody = msgBody;
+      let parsed: any = null;
+      try { parsed = JSON.parse(msgBody); } catch { /* ignore */ }
+      const code = parsed?.code ?? parsed?.error?.code ?? null;
+      if (msgRes.ok && code !== "attachment.not.ready") return { ok: true, status: msgRes.status, body: msgBody.slice(0, 1000) };
+      if (code !== "attachment.not.ready") return { ok: false, status: msgRes.status, body: msgBody.slice(0, 1000) };
+    }
+    return { ok: false, status: lastStatus, body: lastBody.slice(0, 1000) };
+  } catch (e: any) {
+    return { ok: false, status: 0, body: `EXCEPTION: ${e?.message || e}` };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -34,7 +93,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode, buttons } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons, request_id } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -150,6 +209,49 @@ Deno.serve(async (req) => {
     }
 
     const last = attempts[attempts.length - 1];
+
+    // After a successful text send, also push attached documents (PDF etc.) to the same chat.
+    if (last?.delivered && request_id) {
+      try {
+        const admin = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const { data: reqRow } = await admin
+          .from("requests")
+          .select("description, document_url, document_urls")
+          .eq("id", request_id)
+          .maybeSingle();
+        const docUrls: string[] = Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
+          ? (reqRow as any).document_urls
+          : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : []);
+        for (const docUrl of docUrls) {
+          if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
+          let finalUrl = docUrl;
+          let fileName = "document.pdf";
+          try {
+            const u = new URL(docUrl);
+            const parts = u.pathname.split("/");
+            fileName = decodeURIComponent(parts[parts.length - 1] || "document.pdf");
+            const idx = parts.findIndex((p) => p === "request-documents");
+            if (idx !== -1) {
+              const filePath = parts.slice(idx + 1).join("/");
+              const { data: signed } = await admin.storage
+                .from("request-documents")
+                .createSignedUrl(filePath, 86400);
+              if (signed?.signedUrl) finalUrl = signed.signedUrl;
+            }
+          } catch { /* keep original */ }
+          const caption = `📄 ${String((reqRow as any)?.description ?? "").slice(0, 100)}`.trim();
+          const docRes = await sendMaxDocument(chatIdStr, finalUrl, fileName, caption, botToken);
+          attempts.push({ mode: "document", endpoint: "uploads+messages", delivered: docRes.ok, http_status: docRes.status, response_body: docRes.body });
+          console.log(`max-direct-send [document] chat=${chatIdStr} file=${fileName} -> ${docRes.status} ok=${docRes.ok}`);
+        }
+      } catch (e: any) {
+        console.error("max-direct-send document send error:", e?.message || e);
+      }
+    }
+
     return finish(last, attempts, chatIdStr, organization_id, messageText);
   } catch (e: any) {
     console.error("max-direct-send error:", e?.message || e);
