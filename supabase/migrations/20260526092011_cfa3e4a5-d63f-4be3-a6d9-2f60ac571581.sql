@@ -1,0 +1,1 @@
+ALTER TABLE public.max_groups ADD COLUMN IF NOT EXISTS last_max_message_id text;
