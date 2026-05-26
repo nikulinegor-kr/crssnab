@@ -63,8 +63,11 @@ Deno.serve(async (req) => {
 
   for (const t of targets) {
     try {
-      const url = `${MAX_API}/messages?access_token=${encodeURIComponent(token)}&chat_id=${encodeURIComponent(t.chatId)}&message_id=${encodeURIComponent(t.messageId)}`;
-      const res = await fetch(url, { method: "DELETE" });
+      const url = `${MAX_API}/messages?chat_id=${encodeURIComponent(t.chatId)}&message_id=${encodeURIComponent(t.messageId)}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         ok++;
       } else {
