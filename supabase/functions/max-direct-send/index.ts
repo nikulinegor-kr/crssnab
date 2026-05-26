@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode, buttons } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons, request_id } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
