@@ -22,6 +22,8 @@ export const ALL_PERMISSION_KEYS = [
   "analytics",
   "analytics.dashboard",
   "analytics.reports",
+  "planner",
+  "planner.access",
 ] as const;
 
 export type PermissionKey = typeof ALL_PERMISSION_KEYS[number];
