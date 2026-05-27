@@ -7,8 +7,10 @@ import { ru } from "date-fns/locale";
 import { CalendarClock, GripVertical, ListChecks, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PRIORITY_META, type PlannerTask, type PlannerTaskStatus } from "@/hooks/usePlannerTasks";
+import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 
 export function KanbanCard({
   task,
