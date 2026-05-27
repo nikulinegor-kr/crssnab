@@ -103,6 +103,13 @@ const menuGroups = [
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
+  {
+    label: "Planner",
+    icon: Sparkles,
+    items: [
+      { title: "Planner", url: "/planner", icon: Sparkles },
+    ],
+  },
 ];
 
 const adminMenuItems = [
