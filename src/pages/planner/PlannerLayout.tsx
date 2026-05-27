@@ -1,6 +1,7 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles, CalendarDays, GanttChartSquare } from "lucide-react";
+import { NavLink, Outlet } from "react-router-dom";
+import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles, CalendarDays, GanttChartSquare, Layers, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 
 const SUB_NAV = [
   { to: "/planner", label: "Обзор", icon: LayoutDashboard, end: true },
@@ -8,6 +9,8 @@ const SUB_NAV = [
   { to: "/planner/board", label: "Канбан", icon: KanbanSquare },
   { to: "/planner/calendar", label: "Календарь", icon: CalendarDays },
   { to: "/planner/timeline", label: "Таймлайн", icon: GanttChartSquare },
+  { to: "/planner/stages", label: "Этапы", icon: Layers },
+  { to: "/planner/templates", label: "Шаблоны", icon: FileText },
 ];
 
 export default function PlannerLayout() {
@@ -48,6 +51,8 @@ export default function PlannerLayout() {
       <div className="flex-1 min-h-0 p-3 sm:p-6">
         <Outlet />
       </div>
+
+      <PlannerQuickFab />
     </div>
   );
 }
