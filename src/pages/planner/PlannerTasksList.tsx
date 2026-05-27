@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, ListChecks, CalendarClock } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Search, ListChecks, CalendarClock, User } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
@@ -14,24 +15,34 @@ import {
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export default function PlannerTasksList() {
   const { data: tasks = [], isLoading } = usePlannerTasks();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PlannerTaskStatus | "all">("all");
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [me, setMe] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
+  const { data: members = [] } = useOrgMembers();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+  }, []);
 
   const filtered = useMemo(() => {
     const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
     return tasks.filter((t) => {
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (onlyMine && t.assignee_id !== me) return false;
       if (terms.length === 0) return true;
       const hay = `${t.title} ${t.description ?? ""}`.toLowerCase();
       return terms.every((term) => hay.includes(term));
     });
-  }, [tasks, search, statusFilter]);
+  }, [tasks, search, statusFilter, onlyMine, me]);
 
   const openNew = () => {
     setEditing(null);
@@ -55,7 +66,10 @@ export default function PlannerTasksList() {
           />
         </div>
         <div className="flex gap-1 overflow-x-auto">
-          <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
+          <FilterChip active={onlyMine} onClick={() => setOnlyMine((v) => !v)}>
+            <User className="h-3 w-3 inline mr-1" />Мои
+          </FilterChip>
+          <FilterChip active={statusFilter === "all" && !onlyMine} onClick={() => { setStatusFilter("all"); setOnlyMine(false); }}>
             Все
           </FilterChip>
           {PLANNER_COLUMNS.map((c) => (
@@ -84,6 +98,7 @@ export default function PlannerTasksList() {
             const due = t.due_date ? new Date(t.due_date) : null;
             const overdue = due && isPast(due) && t.status !== "done";
             const checklistDone = t.checklist.filter((i) => i.done).length;
+            const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
             return (
               <button
                 key={t.id}
@@ -108,6 +123,11 @@ export default function PlannerTasksList() {
                     )}
                   </div>
                 </div>
+                {assignee && (
+                  <Avatar className="h-6 w-6" title={assignee.full_name || assignee.email || ""}>
+                    <AvatarFallback className="text-[10px]">{initialsOf(assignee)}</AvatarFallback>
+                  </Avatar>
+                )}
                 {due && (
                   <Badge
                     variant="outline"

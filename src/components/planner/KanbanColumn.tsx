@@ -7,8 +7,10 @@ import { ru } from "date-fns/locale";
 import { CalendarClock, GripVertical, ListChecks, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PRIORITY_META, type PlannerTask, type PlannerTaskStatus } from "@/hooks/usePlannerTasks";
+import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 
 export function KanbanCard({
   task,
@@ -33,6 +35,8 @@ export function KanbanCard({
   const dueDate = task.due_date ? new Date(task.due_date) : null;
   const overdue = dueDate && isPast(dueDate) && task.status !== "done";
   const dueToday = dueDate && isToday(dueDate);
+  const { data: members = [] } = useOrgMembers();
+  const assignee = task.assignee_id ? members.find((m) => m.user_id === task.assignee_id) : null;
 
   return (
     <div
@@ -55,7 +59,7 @@ export function KanbanCard({
         </button>
       </div>
 
-      {(checklistTotal > 0 || dueDate || task.priority !== "medium") && (
+      {(checklistTotal > 0 || dueDate || task.priority !== "medium" || assignee) && (
         <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
           {task.priority !== "medium" && (
             <span className={cn("rounded px-1.5 py-0.5 font-medium", pr.className)}>{pr.label}</span>
@@ -77,6 +81,11 @@ export function KanbanCard({
               <CalendarClock className="h-3 w-3" />
               {format(dueDate, "d MMM", { locale: ru })}
             </span>
+          )}
+          {assignee && (
+            <Avatar className="h-5 w-5 ml-auto" title={assignee.full_name || assignee.email || ""}>
+              <AvatarFallback className="text-[9px]">{initialsOf(assignee)}</AvatarFallback>
+            </Avatar>
           )}
         </div>
       )}
