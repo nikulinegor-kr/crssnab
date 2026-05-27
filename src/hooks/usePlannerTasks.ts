@@ -13,10 +13,27 @@ export interface ChecklistItem {
   done: boolean;
 }
 
+export interface PlannerAttachment {
+  name: string;
+  url: string;
+  path?: string;
+  size?: number;
+  mime?: string;
+}
+
+export interface PlannerRecurrence {
+  freq: "daily" | "weekly" | "monthly";
+  interval?: number;
+  until?: string | null;
+}
+
 export interface PlannerTask {
   id: string;
   organization_id: string;
   object_id: string | null;
+  stage_id: string | null;
+  request_id: string | null;
+  equipment_id: string | null;
   parent_task_id: string | null;
   title: string;
   description: string | null;
@@ -30,7 +47,11 @@ export interface PlannerTask {
   position: number;
   tags: string[];
   checklist: ChecklistItem[];
-  attachments: { name: string; url: string }[];
+  attachments: PlannerAttachment[];
+  is_private: boolean;
+  recurrence: PlannerRecurrence | null;
+  estimated_hours: number | null;
+  actual_hours: number | null;
   created_at: string;
   updated_at: string;
 }
