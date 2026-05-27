@@ -64,6 +64,10 @@ const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
+const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout"));
+const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
+const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
+const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
 
 // Loading fallback component
 const PageLoader = () => (
