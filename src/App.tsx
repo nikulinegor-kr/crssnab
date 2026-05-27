@@ -513,6 +513,8 @@ const App = () => {
               <Route path="board" element={<PlannerKanban />} />
               <Route path="calendar" element={<PlannerCalendar />} />
               <Route path="timeline" element={<PlannerTimeline />} />
+              <Route path="stages" element={<PlannerStages />} />
+              <Route path="templates" element={<PlannerTemplates />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
