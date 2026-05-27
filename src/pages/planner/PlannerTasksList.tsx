@@ -66,7 +66,10 @@ export default function PlannerTasksList() {
           />
         </div>
         <div className="flex gap-1 overflow-x-auto">
-          <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
+          <FilterChip active={onlyMine} onClick={() => setOnlyMine((v) => !v)}>
+            <User className="h-3 w-3 inline mr-1" />Мои
+          </FilterChip>
+          <FilterChip active={statusFilter === "all" && !onlyMine} onClick={() => { setStatusFilter("all"); setOnlyMine(false); }}>
             Все
           </FilterChip>
           {PLANNER_COLUMNS.map((c) => (
