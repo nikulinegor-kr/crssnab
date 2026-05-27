@@ -70,6 +70,8 @@ const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTask
 const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
 const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalendar"));
 const PlannerTimeline = lazyWithRetry(() => import("./pages/planner/PlannerTimeline"));
+const PlannerStages = lazyWithRetry(() => import("./pages/planner/PlannerStages"));
+const PlannerTemplates = lazyWithRetry(() => import("./pages/planner/PlannerTemplates"));
 
 // Loading fallback component
 const PageLoader = () => (
