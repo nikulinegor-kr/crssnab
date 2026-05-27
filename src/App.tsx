@@ -494,6 +494,20 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/planner"
+              element={
+                <ProtectedRoute>
+                  <AppLayout fullBleed>
+                    <PlannerLayout />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<PlannerDashboard />} />
+              <Route path="tasks" element={<PlannerTasksList />} />
+              <Route path="board" element={<PlannerKanban />} />
+            </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
