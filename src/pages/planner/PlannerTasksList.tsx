@@ -23,18 +23,26 @@ export default function PlannerTasksList() {
   const { data: tasks = [], isLoading } = usePlannerTasks();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PlannerTaskStatus | "all">("all");
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [me, setMe] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
+  const { data: members = [] } = useOrgMembers();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+  }, []);
 
   const filtered = useMemo(() => {
     const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
     return tasks.filter((t) => {
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (onlyMine && t.assignee_id !== me) return false;
       if (terms.length === 0) return true;
       const hay = `${t.title} ${t.description ?? ""}`.toLowerCase();
       return terms.every((term) => hay.includes(term));
     });
-  }, [tasks, search, statusFilter]);
+  }, [tasks, search, statusFilter, onlyMine, me]);
 
   const openNew = () => {
     setEditing(null);
