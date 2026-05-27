@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, ListChecks, CalendarClock } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Search, ListChecks, CalendarClock, User } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
@@ -14,6 +15,8 @@ import {
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export default function PlannerTasksList() {
