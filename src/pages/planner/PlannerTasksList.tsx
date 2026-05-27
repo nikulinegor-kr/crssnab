@@ -98,6 +98,7 @@ export default function PlannerTasksList() {
             const due = t.due_date ? new Date(t.due_date) : null;
             const overdue = due && isPast(due) && t.status !== "done";
             const checklistDone = t.checklist.filter((i) => i.done).length;
+            const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
             return (
               <button
                 key={t.id}
@@ -122,6 +123,11 @@ export default function PlannerTasksList() {
                     )}
                   </div>
                 </div>
+                {assignee && (
+                  <Avatar className="h-6 w-6" title={assignee.full_name || assignee.email || ""}>
+                    <AvatarFallback className="text-[10px]">{initialsOf(assignee)}</AvatarFallback>
+                  </Avatar>
+                )}
                 {due && (
                   <Badge
                     variant="outline"
