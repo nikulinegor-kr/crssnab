@@ -68,6 +68,8 @@ const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout"
 const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
 const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
 const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
+const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalendar"));
+const PlannerTimeline = lazyWithRetry(() => import("./pages/planner/PlannerTimeline"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -507,6 +509,8 @@ const App = () => {
               <Route index element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
+              <Route path="calendar" element={<PlannerCalendar />} />
+              <Route path="timeline" element={<PlannerTimeline />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

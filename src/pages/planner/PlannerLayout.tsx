@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles } from "lucide-react";
+import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles, CalendarDays, GanttChartSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SUB_NAV = [
   { to: "/planner", label: "Обзор", icon: LayoutDashboard, end: true },
   { to: "/planner/tasks", label: "Задачи", icon: ListTodo },
   { to: "/planner/board", label: "Канбан", icon: KanbanSquare },
+  { to: "/planner/calendar", label: "Календарь", icon: CalendarDays },
+  { to: "/planner/timeline", label: "Таймлайн", icon: GanttChartSquare },
 ];
 
 export default function PlannerLayout() {
