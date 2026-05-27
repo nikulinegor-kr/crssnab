@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
+import { MyPlannerTasksWidget } from "@/components/dashboard/MyPlannerTasksWidget";
 import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
