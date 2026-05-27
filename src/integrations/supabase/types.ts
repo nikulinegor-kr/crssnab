@@ -2010,6 +2010,62 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_stages: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          name: string
+          object_id: string | null
+          organization_id: string
+          position: number
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          name: string
+          object_id?: string | null
+          organization_id: string
+          position?: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          name?: string
+          object_id?: string | null
+          organization_id?: string
+          position?: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_stages_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planner_task_activity: {
         Row: {
           action: string
@@ -2095,8 +2151,93 @@ export type Database = {
           },
         ]
       }
+      planner_task_dependencies: {
+        Row: {
+          blocked_by_task_id: string
+          created_at: string
+          dep_type: string
+          id: string
+          organization_id: string
+          task_id: string
+        }
+        Insert: {
+          blocked_by_task_id: string
+          created_at?: string
+          dep_type?: string
+          id?: string
+          organization_id: string
+          task_id: string
+        }
+        Update: {
+          blocked_by_task_id?: string
+          created_at?: string
+          dep_type?: string
+          id?: string
+          organization_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_task_dependencies_blocked_by_task_id_fkey"
+            columns: ["blocked_by_task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planner_task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_task_templates: {
+        Row: {
+          checklist: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          name: string
+          organization_id: string
+          priority: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          name: string
+          organization_id: string
+          priority?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          name?: string
+          organization_id?: string
+          priority?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       planner_tasks: {
         Row: {
+          actual_hours: number | null
           assignee_id: string | null
           attachments: Json
           checklist: Json
@@ -2105,12 +2246,18 @@ export type Database = {
           created_by: string | null
           description: string | null
           due_date: string | null
+          equipment_id: string | null
+          estimated_hours: number | null
           id: string
+          is_private: boolean
           object_id: string | null
           organization_id: string
           parent_task_id: string | null
           position: number
           priority: string
+          recurrence: Json | null
+          request_id: string | null
+          stage_id: string | null
           start_date: string | null
           status: string
           tags: string[]
@@ -2118,6 +2265,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_hours?: number | null
           assignee_id?: string | null
           attachments?: Json
           checklist?: Json
@@ -2126,12 +2274,18 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          equipment_id?: string | null
+          estimated_hours?: number | null
           id?: string
+          is_private?: boolean
           object_id?: string | null
           organization_id: string
           parent_task_id?: string | null
           position?: number
           priority?: string
+          recurrence?: Json | null
+          request_id?: string | null
+          stage_id?: string | null
           start_date?: string | null
           status?: string
           tags?: string[]
@@ -2139,6 +2293,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_hours?: number | null
           assignee_id?: string | null
           attachments?: Json
           checklist?: Json
@@ -2147,12 +2302,18 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          equipment_id?: string | null
+          estimated_hours?: number | null
           id?: string
+          is_private?: boolean
           object_id?: string | null
           organization_id?: string
           parent_task_id?: string | null
           position?: number
           priority?: string
+          recurrence?: Json | null
+          request_id?: string | null
+          stage_id?: string | null
           start_date?: string | null
           status?: string
           tags?: string[]
@@ -2172,6 +2333,13 @@ export type Database = {
             columns: ["parent_task_id"]
             isOneToOne: false
             referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planner_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "planner_stages"
             referencedColumns: ["id"]
           },
         ]
