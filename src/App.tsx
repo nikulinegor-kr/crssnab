@@ -64,6 +64,10 @@ const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
+const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout"));
+const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
+const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
+const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -490,6 +494,20 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/planner"
+              element={
+                <ProtectedRoute>
+                  <AppLayout fullBleed>
+                    <PlannerLayout />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<PlannerDashboard />} />
+              <Route path="tasks" element={<PlannerTasksList />} />
+              <Route path="board" element={<PlannerKanban />} />
+            </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

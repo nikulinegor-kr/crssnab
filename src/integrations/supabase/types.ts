@@ -2010,6 +2010,172 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_task_activity: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          organization_id: string
+          task_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          organization_id: string
+          task_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          organization_id?: string
+          task_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_task_activity_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          organization_id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_tasks: {
+        Row: {
+          assignee_id: string | null
+          attachments: Json
+          checklist: Json
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          object_id: string | null
+          organization_id: string
+          parent_task_id: string | null
+          position: number
+          priority: string
+          start_date: string | null
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          attachments?: Json
+          checklist?: Json
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          object_id?: string | null
+          organization_id: string
+          parent_task_id?: string | null
+          position?: number
+          priority?: string
+          start_date?: string | null
+          status?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          attachments?: Json
+          checklist?: Json
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          object_id?: string | null
+          organization_id?: string
+          parent_task_id?: string | null
+          position?: number
+          priority?: string
+          start_date?: string | null
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_tasks_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planner_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procurement_items: {
         Row: {
           created_at: string

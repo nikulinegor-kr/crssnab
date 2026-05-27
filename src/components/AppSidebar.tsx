@@ -21,6 +21,7 @@ import {
   Bot,
   ShieldAlert,
   KanbanSquare,
+  Sparkles,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -100,6 +101,13 @@ const menuGroups = [
       { title: "Производительность команды", url: "/team-performance", icon: Users },
       { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
+    ],
+  },
+  {
+    label: "Planner",
+    icon: Sparkles,
+    items: [
+      { title: "Planner", url: "/planner", icon: Sparkles },
     ],
   },
 ];

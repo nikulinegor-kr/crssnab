@@ -22,6 +22,8 @@ export const ALL_PERMISSION_KEYS = [
   "analytics",
   "analytics.dashboard",
   "analytics.reports",
+  "planner",
+  "planner.access",
 ] as const;
 
 export type PermissionKey = typeof ALL_PERMISSION_KEYS[number];
@@ -70,6 +72,13 @@ export const PERMISSION_TREE = [
       { key: "analytics.reports" as PermissionKey, label: "Отчёты" },
     ],
   },
+  {
+    key: "planner" as PermissionKey,
+    label: "Planner",
+    children: [
+      { key: "planner.access" as PermissionKey, label: "Доступ к Planner" },
+    ],
+  },
 ];
 
 // Map routes to permission keys
@@ -88,6 +97,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/agent-report": "analytics.reports",
   "/agent-act-report": "analytics.reports",
   "/percent-calculator": "analytics.reports",
+  "/planner": "planner.access",
 };
 
 export const useUserPermissions = () => {
