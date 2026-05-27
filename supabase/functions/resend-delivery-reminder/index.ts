@@ -71,11 +71,10 @@ function maxStageKeyboard(reqId: string, stage: "receive" | "acceptance") {
     type: "inline_keyboard",
     payload: {
       buttons: [
-        [
-          { type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` },
-          { type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` },
-        ],
+        [{ type: "callback", text: "🟢 Принято без замечаний", payload: `delivok:${reqId}` }],
+        [{ type: "callback", text: "🔴 Обнаружено несоответствие", payload: `delivdisc:${reqId}` }],
       ],
+
     },
   }];
 }
