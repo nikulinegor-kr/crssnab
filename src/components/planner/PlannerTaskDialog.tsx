@@ -27,9 +27,10 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   task?: PlannerTask | null;
   defaultStatus?: PlannerTaskStatus;
+  defaultDueDate?: string;
 }
 
-export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus }: Props) {
+export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate }: Props) {
   const isEdit = !!task;
   const { currentOrgId } = useCurrentOrganization();
   const create = useCreatePlannerTask();
@@ -41,7 +42,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus }: P
   const [status, setStatus] = useState<PlannerTaskStatus>(task?.status ?? defaultStatus ?? "backlog");
   const [priority, setPriority] = useState<PlannerTaskPriority>(task?.priority ?? "medium");
   const [objectId, setObjectId] = useState<string | null>(task?.object_id ?? null);
-  const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? "");
+  const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
   const [checklist, setChecklist] = useState<ChecklistItem[]>(task?.checklist ?? []);
   const [newCheckItem, setNewCheckItem] = useState("");
 
