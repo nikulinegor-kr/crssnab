@@ -164,14 +164,12 @@ export const ProfileSettings = () => {
         return;
       }
 
-      // Get telegram settings for org
-      const { data: tgSettings } = await supabase
-        .from("telegram_settings")
-        .select("bot_token")
-        .eq("organization_id", orgData.organization_id)
-        .single();
+      // Check whether a bot is configured (token itself is not exposed to clients)
+      const { data: configured } = await supabase.rpc("telegram_bot_configured" as any, {
+        _org_id: orgData.organization_id,
+      });
 
-      if (!tgSettings?.bot_token) {
+      if (!configured) {
         toast({ variant: "destructive", title: "Ошибка", description: "Telegram бот не настроен для организации" });
         return;
       }
