@@ -64,26 +64,23 @@ export const ProfileSettings = () => {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, position, telegram_user_id, email")
+        .select("full_name, position, email")
         .eq("id", user.id)
         .single();
 
       if (error) throw error;
 
       if (data) {
-        // phone column was just added, fetch separately to avoid type error
-        const { data: phoneData } = await supabase
-          .from("profiles")
-          .select("phone" as any)
-          .eq("id", user.id)
-          .single();
+        // phone and telegram_user_id are protected; fetch via SECURITY DEFINER RPC
+        const { data: contactData } = await supabase.rpc("get_my_contact_info" as any);
+        const contact = Array.isArray(contactData) ? contactData[0] : contactData;
 
         const loaded: ProfileData = {
           fullName: data.full_name || "",
           position: data.position || "",
-          telegramUserId: data.telegram_user_id?.toString() || "",
+          telegramUserId: contact?.telegram_user_id?.toString() || "",
           email: data.email || "",
-          phone: (phoneData as any)?.phone || "",
+          phone: contact?.phone || "",
         };
         setProfile(loaded);
         setInitial(loaded);
@@ -167,14 +164,12 @@ export const ProfileSettings = () => {
         return;
       }
 
-      // Get telegram settings for org
-      const { data: tgSettings } = await supabase
-        .from("telegram_settings")
-        .select("bot_token")
-        .eq("organization_id", orgData.organization_id)
-        .single();
+      // Check whether a bot is configured (token itself is not exposed to clients)
+      const { data: configured } = await supabase.rpc("telegram_bot_configured" as any, {
+        _org_id: orgData.organization_id,
+      });
 
-      if (!tgSettings?.bot_token) {
+      if (!configured) {
         toast({ variant: "destructive", title: "Ошибка", description: "Telegram бот не настроен для организации" });
         return;
       }
