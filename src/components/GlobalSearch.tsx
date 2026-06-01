@@ -196,8 +196,8 @@ export function GlobalSearch() {
           items.push({
             type: "shipment",
             id: r.id,
-            title: r.waybill_number ? `ТТН ${r.waybill_number}` : `Поставка #${r.request_number}`,
-            subtitle: r.transport_company || r.status,
+            title: r.description || (r.waybill_number ? `ТТН ${r.waybill_number}` : "Поставка"),
+            subtitle: r.transport_company || r.waybill_number || r.status,
             url: `/requests/${r.id}`,
           });
         }
