@@ -4038,6 +4038,13 @@ export type Database = {
           used_at: string
         }[]
       }
+      get_my_contact_info: {
+        Args: never
+        Returns: {
+          phone: string
+          telegram_user_id: number
+        }[]
+      }
       get_notification_mode: { Args: { _org_id: string }; Returns: string }
       get_org_subscription_limits: {
         Args: { _org_id: string }
@@ -4116,6 +4123,7 @@ export type Database = {
         Args: { _org_id: string }
         Returns: undefined
       }
+      telegram_bot_configured: { Args: { _org_id: string }; Returns: boolean }
       user_can_create_requests: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
