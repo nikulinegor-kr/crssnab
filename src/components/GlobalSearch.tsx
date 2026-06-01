@@ -197,7 +197,11 @@ export function GlobalSearch() {
             type: "shipment",
             id: r.id,
             title: r.description || (r.waybill_number ? `ТТН ${r.waybill_number}` : "Поставка"),
-            subtitle: r.transport_company || r.waybill_number || r.status,
+            subtitle: [
+              r.transport_company || r.waybill_number,
+              r.shipment_date ? `отгр. ${new Date(r.shipment_date).toLocaleDateString("ru-RU")}` : null,
+              r.delivery_date ? `прих. ${new Date(r.delivery_date).toLocaleDateString("ru-RU")}` : null,
+            ].filter(Boolean).join(" • ") || r.status,
             url: `/requests/${r.id}`,
           });
         }
