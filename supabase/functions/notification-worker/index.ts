@@ -247,6 +247,49 @@ Deno.serve(async (req) => {
       ? row.payload.request_id
       : (row.entity_type === "request" && row.entity_id ? row.entity_id : undefined);
 
+    // Consolidation: on status change, remove previous status message for the same request in the same chat
+    const isStatusEvent = row.event_type === "request.status_changed" || row.payload?.kind === "status_changed" || row.payload?.kind === "delivery_confirm";
+    if (isStatusEvent && requestId) {
+      try {
+        const { data: prev } = await supabase
+          .from("notification_queue")
+          .select("id, provider_message_id")
+          .eq("entity_type", "request")
+          .eq("entity_id", requestId)
+          .eq("platform", row.platform)
+          .eq("group_id", row.group_id)
+          .eq("status", "delivered")
+          .not("provider_message_id", "is", null)
+          .order("delivered_at", { ascending: false })
+          .limit(5);
+        for (const p of prev ?? []) {
+          const mid = (p as any).provider_message_id;
+          if (!mid) continue;
+          try {
+            if (row.platform === "telegram") {
+              const tok = await getTgToken(row.organization_id);
+              if (tok) {
+                await fetch(`${TG_API}/bot${tok}/deleteMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ chat_id: row.group_id, message_id: Number(mid) }),
+                });
+              }
+            }
+            // mark as superseded so we don't try to delete it again
+            await supabase
+              .from("notification_queue")
+              .update({ provider_message_id: null })
+              .eq("id", (p as any).id);
+          } catch (e) {
+            console.warn("[notification-worker] delete prev failed", e);
+          }
+        }
+      } catch (e) {
+        console.warn("[notification-worker] consolidation lookup failed", e);
+      }
+    }
+
     let result: SendResult;
     try {
       if (row.platform === "max") {
