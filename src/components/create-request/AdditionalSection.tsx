@@ -101,11 +101,30 @@ export const AdditionalSection = ({
       const firstPage = pages[0];
       const { width, height } = firstPage.getSize();
 
-      const lines = getZrsLines();
+      const rawLines = getZrsLines();
       const fontSize = 9;
       const lineHeight = 14;
       // Place text in the bottom-right corner
       const startX = width * 0.55;
+      const maxWidth = width - startX - 20;
+
+      // Wrap long lines (>1 line) to up to 2 lines
+      const wrapLine = (text: string): string[] => {
+        if (customFont.widthOfTextAtSize(text, fontSize) <= maxWidth) return [text];
+        const words = text.split(" ");
+        let line1 = "";
+        let i = 0;
+        for (; i < words.length; i++) {
+          const test = line1 ? line1 + " " + words[i] : words[i];
+          if (customFont.widthOfTextAtSize(test, fontSize) > maxWidth) break;
+          line1 = test;
+        }
+        if (!line1) { line1 = words[0] ?? text; i = 1; }
+        const line2 = words.slice(i).join(" ");
+        return line2 ? [line1, line2] : [line1];
+      };
+
+      const lines = rawLines.flatMap(wrapLine);
       let startY = 20 + (lines.length - 1) * lineHeight;
 
       lines.forEach((line) => {
@@ -121,7 +140,10 @@ export const AdditionalSection = ({
 
       const modifiedPdf = await pdfDoc.save();
       const blob = new Blob([modifiedPdf.buffer as ArrayBuffer], { type: "application/pdf" });
-      const newFileName = file.name.replace(".pdf", "_ZRS.pdf");
+      // Name file after the request description with -ZRS suffix
+      const sanitize = (s: string) => s.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+      const baseName = sanitize(formValues.description || "Заявка") || "Заявка";
+      const newFileName = `${baseName}-ZRS.pdf`;
       const modifiedFile = new File([blob], newFileName, { type: "application/pdf" });
 
       // Add to document files so it appears in the Счёт/КП block below
