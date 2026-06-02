@@ -131,7 +131,7 @@ export function GlobalSearch() {
       return words.every(w => lower.includes(w));
     };
 
-    // Requests — search by description, applicant, executor, invoice, waybill, comments, request_number
+    // Requests — search by description, applicant, executor, invoice, waybill, comments, request_number, contractor
     requests?.forEach(r => {
       if (
         matches(r.description) ||
@@ -140,7 +140,8 @@ export function GlobalSearch() {
         matches(r.executor) ||
         matches(r.invoice_number) ||
         matches(r.waybill_number) ||
-        matches(r.comments)
+        matches(r.comments) ||
+        matches(r.contractor)
       ) {
         const key = `req-${r.id}`;
         if (!seen.has(key)) {
@@ -149,7 +150,7 @@ export function GlobalSearch() {
             type: "request",
             id: r.id,
             title: r.description,
-            subtitle: r.status,
+            subtitle: [r.contractor, r.status].filter(Boolean).join(" • "),
             url: `/requests/${r.id}`,
           });
         }
