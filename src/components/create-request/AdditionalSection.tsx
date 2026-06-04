@@ -161,16 +161,15 @@ export const AdditionalSection = ({
     if (!lastZrsFile || !organizationId) return;
     setIsSending(true);
     try {
-      // Upload file to storage
-      const filePath = `zrs/${Date.now()}_${lastZrsFile.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("request-documents")
-        .upload(filePath, lastZrsFile);
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("request-documents")
-        .getPublicUrl(filePath);
+      // Convert file to base64 (avoids storage RLS issues for unsaved requests)
+      const arrayBuffer = await lastZrsFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
+      }
+      const file_base64 = btoa(binary);
 
       const zrsText = getZrsLines().join("\n");
 
@@ -178,7 +177,8 @@ export const AdditionalSection = ({
         body: {
           action: "send_zrs_document",
           organization_id: organizationId,
-          document_url: urlData.publicUrl,
+          file_base64,
+          file_mime: lastZrsFile.type || "application/pdf",
           file_name: lastZrsFile.name,
           caption: `📋 ЗРС — Счёт\n\n${zrsText}`,
         },
@@ -192,6 +192,7 @@ export const AdditionalSection = ({
       setIsSending(false);
     }
   };
+
 
   return (
     <FormSectionCard 
