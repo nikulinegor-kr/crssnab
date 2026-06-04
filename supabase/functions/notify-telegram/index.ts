@@ -381,8 +381,8 @@ serve(async (req) => {
 
     // Handle ZRS document sending
     if (requestBody.action === "send_zrs_document") {
-      const { organization_id, document_url, file_name, caption } = requestBody;
-      if (!organization_id || !document_url) {
+      const { organization_id, document_url, file_name, caption, file_base64, file_mime } = requestBody;
+      if (!organization_id || (!document_url && !file_base64)) {
         return new Response(
           JSON.stringify({ error: "Не указаны обязательные параметры" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -398,7 +398,34 @@ serve(async (req) => {
         );
       }
 
-      // Generate signed URL for the document
+      // If raw file is provided, send via multipart directly to Telegram
+      if (file_base64) {
+        try {
+          const binStr = atob(file_base64);
+          const bytes = new Uint8Array(binStr.length);
+          for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+          const fd = new FormData();
+          fd.append("chat_id", String(org.telegram_chat_id));
+          fd.append("caption", caption || `📋 ${file_name || "Счёт с ЗРС"}`);
+          fd.append("parse_mode", "HTML");
+          fd.append("document", new Blob([bytes], { type: file_mime || "application/pdf" }), file_name || "document.pdf");
+          const tgRes = await fetch(`https://api.telegram.org/bot${org.telegram_bot_token}/sendDocument`, {
+            method: "POST",
+            body: fd,
+          });
+          const tgJson = await tgRes.json();
+          return new Response(JSON.stringify({ success: tgJson.ok, result: tgJson }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } catch (e: any) {
+          console.error("ZRS multipart send error:", e);
+          return new Response(JSON.stringify({ error: e?.message || "send error" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Fallback: existing URL flow
       let signedDocUrl = document_url;
       try {
         const url = new URL(document_url);
@@ -426,6 +453,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Handle test personal message
     if (requestBody.action === "test_personal") {
