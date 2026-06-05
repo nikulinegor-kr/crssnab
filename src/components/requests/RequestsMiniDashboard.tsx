@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import {
   AlertTriangle, Flame, CalendarClock, Clock, Truck, Package,
   CalendarCheck, CalendarX, CreditCard, CircleDollarSign, Receipt,
-  FileText, Wrench
+  FileText, Wrench, CheckCircle2
 } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { SpecialDateFilter } from "@/hooks/useRequestsFilters";
