@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import {
   AlertTriangle, Flame, CalendarClock, Clock, Truck, Package,
   CalendarCheck, CalendarX, CreditCard, CircleDollarSign, Receipt,
-  FileText, Wrench
+  FileText, Wrench, CheckCircle2
 } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { SpecialDateFilter } from "@/hooks/useRequestsFilters";
@@ -89,13 +89,14 @@ export const RequestsMiniDashboard = ({
 
     const newRequests = active.filter(r => r.status === "Новая заявка").length;
     const inWork = active.filter(r => r.status === "В работе" || r.status === "КП" || r.status === "На согласовании").length;
+    const delivered = requests.filter(r => r.status === "Доставлено").length;
 
     return {
       emergency, priority, planned,
       overdue, stale,
       inTransit, deliveredToTk, deliveryToday, overdueShipment,
       unpaid, paid, invoiced,
-      newRequests, inWork,
+      newRequests, inWork, delivered,
     };
   }, [requests]);
 
@@ -236,6 +237,14 @@ export const RequestsMiniDashboard = ({
           iconBg: "bg-amber-100 dark:bg-amber-900/50",
           activeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800",
           type: "status", value: "В работе",
+        },
+        {
+          id: "delivered", label: "Доставлено", count: metrics.delivered,
+          icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+          colorClass: "text-emerald-600 dark:text-emerald-400",
+          iconBg: "bg-emerald-100 dark:bg-emerald-900/50",
+          activeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-600 ring-1 ring-emerald-200 dark:ring-emerald-800",
+          type: "status", value: "Доставлено",
         },
       ],
     },
