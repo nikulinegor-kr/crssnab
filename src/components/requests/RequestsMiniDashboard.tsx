@@ -63,6 +63,7 @@ export const RequestsMiniDashboard = ({
     }).length;
 
     const inTransit = active.filter(r => r.status === "В пути" || r.status === "Доставлено в ТК").length;
+    const deliveredToTk = active.filter(r => r.status === "Доставлено в ТК").length;
     const deliveryToday = active.filter(r => {
       if (!r.delivery_date) return false;
       return isToday(new Date(r.delivery_date));
