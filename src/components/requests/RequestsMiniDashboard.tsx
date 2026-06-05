@@ -63,6 +63,7 @@ export const RequestsMiniDashboard = ({
     }).length;
 
     const inTransit = active.filter(r => r.status === "В пути" || r.status === "Доставлено в ТК").length;
+    const deliveredToTk = active.filter(r => r.status === "Доставлено в ТК").length;
     const deliveryToday = active.filter(r => {
       if (!r.delivery_date) return false;
       return isToday(new Date(r.delivery_date));
@@ -92,7 +93,7 @@ export const RequestsMiniDashboard = ({
     return {
       emergency, priority, planned,
       overdue, stale,
-      inTransit, deliveryToday, overdueShipment,
+      inTransit, deliveredToTk, deliveryToday, overdueShipment,
       unpaid, paid, invoiced,
       newRequests, inWork,
     };
@@ -161,6 +162,14 @@ export const RequestsMiniDashboard = ({
           iconBg: "bg-blue-100 dark:bg-blue-900/50",
           activeBg: "bg-blue-50 dark:bg-blue-950/60 border-blue-400 dark:border-blue-600 ring-1 ring-blue-200 dark:ring-blue-800",
           type: "status", value: "В пути",
+        },
+        {
+          id: "deliveredToTk", label: "Доставлено в ТК", count: metrics.deliveredToTk,
+          icon: <Package className="h-3.5 w-3.5" />,
+          colorClass: "text-indigo-600 dark:text-indigo-400",
+          iconBg: "bg-indigo-100 dark:bg-indigo-900/50",
+          activeBg: "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 dark:border-indigo-600 ring-1 ring-indigo-200 dark:ring-indigo-800",
+          type: "status", value: "Доставлено в ТК",
         },
         {
           id: "deliveryToday", label: "Доставка сегодня", count: metrics.deliveryToday,
