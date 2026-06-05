@@ -602,15 +602,11 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-3 w-3 mr-1" /> Открыть
-                          </a>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => openStoredFile(doc.file_url)}>
+                          <Eye className="h-3 w-3 mr-1" /> Открыть
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                          <a href={doc.file_url} download>
-                            <Download className="h-3 w-3" />
-                          </a>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => downloadStoredFile(doc.file_url, doc.name)}>
+                          <Download className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="ghost"
