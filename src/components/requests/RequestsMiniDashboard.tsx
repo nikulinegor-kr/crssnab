@@ -89,13 +89,14 @@ export const RequestsMiniDashboard = ({
 
     const newRequests = active.filter(r => r.status === "Новая заявка").length;
     const inWork = active.filter(r => r.status === "В работе" || r.status === "КП" || r.status === "На согласовании").length;
+    const delivered = requests.filter(r => r.status === "Доставлено").length;
 
     return {
       emergency, priority, planned,
       overdue, stale,
       inTransit, deliveredToTk, deliveryToday, overdueShipment,
       unpaid, paid, invoiced,
-      newRequests, inWork,
+      newRequests, inWork, delivered,
     };
   }, [requests]);
 
