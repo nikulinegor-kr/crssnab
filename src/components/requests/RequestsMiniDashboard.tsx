@@ -164,6 +164,14 @@ export const RequestsMiniDashboard = ({
           type: "status", value: "В пути",
         },
         {
+          id: "deliveredToTk", label: "Доставлено в ТК", count: metrics.deliveredToTk,
+          icon: <Package className="h-3.5 w-3.5" />,
+          colorClass: "text-indigo-600 dark:text-indigo-400",
+          iconBg: "bg-indigo-100 dark:bg-indigo-900/50",
+          activeBg: "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 dark:border-indigo-600 ring-1 ring-indigo-200 dark:ring-indigo-800",
+          type: "status", value: "Доставлено в ТК",
+        },
+        {
           id: "deliveryToday", label: "Доставка сегодня", count: metrics.deliveryToday,
           icon: <CalendarCheck className="h-3.5 w-3.5" />,
           colorClass: "text-emerald-600 dark:text-emerald-400",
