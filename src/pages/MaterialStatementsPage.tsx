@@ -644,8 +644,9 @@ export default function MaterialStatementsPage() {
     if (!orgId) return;
     setRecognizingId(statement.id);
     try {
+      const signedFileUrl = await resolveSignedUrl(statement.file_url, 60 * 30);
       const { data, error } = await supabase.functions.invoke("recognize-materials", {
-        body: { fileUrl: statement.file_url, statementId: statement.id, organizationId: orgId },
+        body: { fileUrl: signedFileUrl, statementId: statement.id, organizationId: orgId },
       });
       if (error) throw error;
       const warnings = Array.isArray(data?.warnings) ? (data.warnings as string[]) : [];
