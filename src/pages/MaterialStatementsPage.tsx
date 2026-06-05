@@ -789,8 +789,9 @@ export default function MaterialStatementsPage() {
       try {
         await (supabase.from("material_statement_items" as any).delete().eq("statement_id", st.id) as any);
         await (supabase.from("material_statements" as any).update({ is_recognized: false }).eq("id", st.id) as any);
+        const signedFileUrl = await resolveSignedUrl(st.file_url, 60 * 30);
         const { error } = await supabase.functions.invoke("recognize-materials", {
-          body: { fileUrl: st.file_url, statementId: st.id, organizationId: orgId },
+          body: { fileUrl: signedFileUrl, statementId: st.id, organizationId: orgId },
         });
         if (error) throw error;
         successCount++;
