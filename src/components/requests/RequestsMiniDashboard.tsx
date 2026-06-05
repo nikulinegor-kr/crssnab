@@ -238,6 +238,14 @@ export const RequestsMiniDashboard = ({
           activeBg: "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800",
           type: "status", value: "В работе",
         },
+        {
+          id: "delivered", label: "Доставлено", count: metrics.delivered,
+          icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+          colorClass: "text-emerald-600 dark:text-emerald-400",
+          iconBg: "bg-emerald-100 dark:bg-emerald-900/50",
+          activeBg: "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-600 ring-1 ring-emerald-200 dark:ring-emerald-800",
+          type: "status", value: "Доставлено",
+        },
       ],
     },
   ];
