@@ -1936,9 +1936,9 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <File className="h-4 w-4 text-muted-foreground" />
-                          <a href={st.file_url} target="_blank" rel="noopener" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                          <button type="button" className="text-primary hover:underline text-left" onClick={e => { e.stopPropagation(); openStoredFile(st.file_url); }}>
                             {st.file_name}
-                          </a>
+                          </button>
                         </TableCell>
                         <TableCell>
                           <Badge variant={st.file_type === "pdf" ? "destructive" : "default"}>{st.file_type.toUpperCase()}</Badge>
