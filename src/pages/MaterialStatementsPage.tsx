@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { resolveSignedUrl, openStoredFile } from "@/lib/storageUrl";
 import { Input } from "@/components/ui/input";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -643,8 +644,9 @@ export default function MaterialStatementsPage() {
     if (!orgId) return;
     setRecognizingId(statement.id);
     try {
+      const signedFileUrl = await resolveSignedUrl(statement.file_url, 60 * 30);
       const { data, error } = await supabase.functions.invoke("recognize-materials", {
-        body: { fileUrl: statement.file_url, statementId: statement.id, organizationId: orgId },
+        body: { fileUrl: signedFileUrl, statementId: statement.id, organizationId: orgId },
       });
       if (error) throw error;
       const warnings = Array.isArray(data?.warnings) ? (data.warnings as string[]) : [];
@@ -787,8 +789,9 @@ export default function MaterialStatementsPage() {
       try {
         await (supabase.from("material_statement_items" as any).delete().eq("statement_id", st.id) as any);
         await (supabase.from("material_statements" as any).update({ is_recognized: false }).eq("id", st.id) as any);
+        const signedFileUrl = await resolveSignedUrl(st.file_url, 60 * 30);
         const { error } = await supabase.functions.invoke("recognize-materials", {
-          body: { fileUrl: st.file_url, statementId: st.id, organizationId: orgId },
+          body: { fileUrl: signedFileUrl, statementId: st.id, organizationId: orgId },
         });
         if (error) throw error;
         successCount++;
@@ -1933,9 +1936,9 @@ export default function MaterialStatementsPage() {
                         </TableCell>
                         <TableCell className="flex items-center gap-2">
                           <File className="h-4 w-4 text-muted-foreground" />
-                          <a href={st.file_url} target="_blank" rel="noopener" className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                          <button type="button" className="text-primary hover:underline text-left" onClick={e => { e.stopPropagation(); openStoredFile(st.file_url); }}>
                             {st.file_name}
-                          </a>
+                          </button>
                         </TableCell>
                         <TableCell>
                           <Badge variant={st.file_type === "pdf" ? "destructive" : "default"}>{st.file_type.toUpperCase()}</Badge>
