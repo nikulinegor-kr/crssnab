@@ -303,9 +303,11 @@ export const useRequestsFilters = (
       const matchesDelivered =
         activeTab === "archived"
           ? true
-          : specialDateFilter === "deliveredLast7Days" 
-            ? true 
-            : !hideDelivered || request.status !== "Доставлено";
+          : statusFilter.includes("Доставлено")
+            ? true
+            : specialDateFilter === "deliveredLast7Days"
+              ? true
+              : !hideDelivered || request.status !== "Доставлено";
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
       const matchesTransportCompany =
