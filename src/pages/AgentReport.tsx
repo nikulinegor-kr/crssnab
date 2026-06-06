@@ -499,12 +499,14 @@ const AgentReport = () => {
 
       if (reportData) {
         setUuReportId(reportData.id);
+        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+        const mm = String(selectedMonth).padStart(2, '0');
         setUuHeaderData({
           report_number: reportData.report_number,
           contract_number: reportData.contract_number,
           contract_date: reportData.contract_date,
-          period_start: reportData.period_start,
-          period_end: reportData.period_end,
+          period_start: `${selectedYear}-${mm}-01`,
+          period_end: `${selectedYear}-${mm}-${String(lastDay).padStart(2, '0')}`,
           company_name: reportData.company_name,
           company_address: reportData.company_address || "",
           company_phone: reportData.company_phone || "",
