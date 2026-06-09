@@ -2,6 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { SignedImage } from "@/components/SignedImage";
 
 interface ImageGalleryProps {
   images: string[];
@@ -85,7 +86,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
           )}
 
           {/* Image */}
-          <img
+          <SignedImage
             src={currentImage}
             alt={`Изображение ${currentIndex + 1}`}
             className="max-w-full max-h-[85vh] object-contain"
@@ -110,7 +111,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
                     idx === currentIndex ? "border-white" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <SignedImage src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
