@@ -2945,6 +2945,7 @@ export type Database = {
           priority: string | null
           product_id: string | null
           quantity: number | null
+          received_by: string | null
           request_date: string
           request_number: string
           request_type: string | null
@@ -2998,6 +2999,7 @@ export type Database = {
           priority?: string | null
           product_id?: string | null
           quantity?: number | null
+          received_by?: string | null
           request_date: string
           request_number: string
           request_type?: string | null
@@ -3051,6 +3053,7 @@ export type Database = {
           priority?: string | null
           product_id?: string | null
           quantity?: number | null
+          received_by?: string | null
           request_date?: string
           request_number?: string
           request_type?: string | null
