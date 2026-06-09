@@ -19,7 +19,7 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
-import { Banknote, ScanText, Loader2 } from "lucide-react";
+import { Banknote, ScanText, Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
