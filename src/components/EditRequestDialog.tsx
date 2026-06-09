@@ -104,6 +104,10 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
+  invoice_number_2: z.string().trim().max(100).optional().nullable(),
+  amount_2: z.number().min(0).nullable().optional(),
+  invoice_number_3: z.string().trim().max(100).optional().nullable(),
+  amount_3: z.number().min(0).nullable().optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
   payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
