@@ -2910,6 +2910,8 @@ export type Database = {
         Row: {
           actual_arrival_date: string | null
           amount: number | null
+          amount_2: number | null
+          amount_3: number | null
           applicant: string | null
           applicant_user_id: string | null
           archived: boolean
@@ -2930,6 +2932,8 @@ export type Database = {
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          invoice_number_2: string | null
+          invoice_number_3: string | null
           invoice_routed_at: string | null
           invoice_routed_by: string | null
           invoice_routing: string | null
@@ -2964,6 +2968,8 @@ export type Database = {
         Insert: {
           actual_arrival_date?: string | null
           amount?: number | null
+          amount_2?: number | null
+          amount_3?: number | null
           applicant?: string | null
           applicant_user_id?: string | null
           archived?: boolean
@@ -2984,6 +2990,8 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          invoice_number_2?: string | null
+          invoice_number_3?: string | null
           invoice_routed_at?: string | null
           invoice_routed_by?: string | null
           invoice_routing?: string | null
@@ -3018,6 +3026,8 @@ export type Database = {
         Update: {
           actual_arrival_date?: string | null
           amount?: number | null
+          amount_2?: number | null
+          amount_3?: number | null
           applicant?: string | null
           applicant_user_id?: string | null
           archived?: boolean
@@ -3038,6 +3048,8 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          invoice_number_2?: string | null
+          invoice_number_3?: string | null
           invoice_routed_at?: string | null
           invoice_routed_by?: string | null
           invoice_routing?: string | null

@@ -100,6 +100,10 @@ const requestSchema = z.object({
     .min(0, "Сумма не может быть отрицательной")
     .nullable()
     .optional(),
+  invoice_number_2: z.string().trim().max(100).optional().nullable(),
+  amount_2: z.number().min(0).nullable().optional(),
+  invoice_number_3: z.string().trim().max(100).optional().nullable(),
+  amount_3: z.number().min(0).nullable().optional(),
   payment_percentage: z.number().min(0).max(100).nullable().optional(),
   payment_percent: z.number().min(0).max(100).nullable().optional(),
   payment_status: z.string().optional(),
@@ -337,6 +341,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       contractor: initialData?.contractor || "",
       invoice_number: "",
       amount: null,
+      invoice_number_2: "",
+      amount_2: null,
+      invoice_number_3: "",
+      amount_3: null,
       payment_percentage: null,
       payment_percent: null,
       payment_status: "Не оплачено",
@@ -504,6 +512,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
         amount: data.amount ?? null,
+        invoice_number_2: data.invoice_number_2 || null,
+        amount_2: data.amount_2 ?? null,
+        invoice_number_3: data.invoice_number_3 || null,
+        amount_3: data.amount_3 ?? null,
         payment_percentage: data.payment_percentage ?? null,
         payment_percent: data.payment_percent ?? 0,
         payment_status: (() => {

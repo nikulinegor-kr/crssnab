@@ -19,7 +19,7 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
-import { Banknote, ScanText, Loader2 } from "lucide-react";
+import { Banknote, ScanText, Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -205,74 +205,130 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
           )}
         />
 
-        {/* Invoice number, Amount, Payment status - 3 columns */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <FormField
-            control={form.control}
-            name="invoice_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Номер счёта</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Сч. 123" 
-                    className="h-9 select-all min-w-0 text-sm" 
-                    disabled={disabled}
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Invoices (up to 3) + payment % */}
+        {(() => {
+          const inv2Filled = !!form.watch("invoice_number_2") || form.watch("amount_2") != null;
+          const inv3Filled = !!form.watch("invoice_number_3") || form.watch("amount_3") != null;
+          const showInv2 = inv2Filled || (form.watch("_showInv2") as boolean);
+          const showInv3 = inv3Filled || (form.watch("_showInv3") as boolean);
+          const a1 = Number(form.watch("amount") || 0);
+          const a2 = Number(form.watch("amount_2") || 0);
+          const a3 = Number(form.watch("amount_3") || 0);
+          const total = a1 + a2 + a3;
+          const multi = showInv2 || showInv3;
 
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Стоимость (₽)</FormLabel>
-                <FormControl>
-                  <DecimalInput
-                    placeholder=""
-                    className="h-9 select-all min-w-0 text-sm"
-                    disabled={disabled}
-                    value={field.value ?? null}
-                    onValueChange={(v) => field.onChange(v)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          const renderInvoiceRow = (
+            numField: "invoice_number" | "invoice_number_2" | "invoice_number_3",
+            amtField: "amount" | "amount_2" | "amount_3",
+            label: string,
+            onRemove?: () => void,
+          ) => (
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 sm:gap-3 items-end">
+              <FormField
+                control={form.control}
+                name={numField}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">{label}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Сч. 123" className="h-9 select-all min-w-0 text-sm" disabled={disabled} {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={amtField}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Стоимость (₽)</FormLabel>
+                    <FormControl>
+                      <DecimalInput
+                        placeholder=""
+                        className="h-9 select-all min-w-0 text-sm"
+                        disabled={disabled}
+                        value={field.value ?? null}
+                        onValueChange={(v) => field.onChange(v)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {onRemove ? (
+                <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={onRemove} disabled={disabled} title="Удалить счёт">
+                  <X className="h-4 w-4" />
+                </Button>
+              ) : (
+                <div className="w-9" />
+              )}
+            </div>
+          );
 
-          <FormField
-            control={form.control}
-            name="payment_percentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">% предоплаты</FormLabel>
-                <Select
-                  value={field.value != null ? String(field.value) : ""}
-                  onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
-                  disabled={disabled}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="50">50%</SelectItem>
-                    <SelectItem value="100">100%</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          return (
+            <div className="space-y-3">
+              {renderInvoiceRow("invoice_number", "amount", multi ? "Счёт №1" : "Номер счёта")}
+              {showInv2 && renderInvoiceRow("invoice_number_2", "amount_2", "Счёт №2", () => {
+                form.setValue("invoice_number_2", "");
+                form.setValue("amount_2", null);
+                form.setValue("_showInv2" as any, false);
+              })}
+              {showInv3 && renderInvoiceRow("invoice_number_3", "amount_3", "Счёт №3", () => {
+                form.setValue("invoice_number_3", "");
+                form.setValue("amount_3", null);
+                form.setValue("_showInv3" as any, false);
+              })}
+
+              <div className="flex items-center justify-between gap-2">
+                {!showInv3 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={disabled}
+                    onClick={() => form.setValue((showInv2 ? "_showInv3" : "_showInv2") as any, true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Ещё счёт
+                  </Button>
+                )}
+                {multi && (
+                  <div className="ml-auto text-xs text-muted-foreground">
+                    Итого: <span className="font-semibold text-foreground font-numeric">{total.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽</span>
+                  </div>
+                )}
+              </div>
+
+              <FormField
+                control={form.control}
+                name="payment_percentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">% предоплаты</FormLabel>
+                    <Select
+                      value={field.value != null ? String(field.value) : ""}
+                      onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
+                      disabled={disabled}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="50">50%</SelectItem>
+                        <SelectItem value="100">100%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          );
+        })()}
 
         {/* Actual payment */}
         <div className="grid grid-cols-2 gap-2 sm:gap-3">

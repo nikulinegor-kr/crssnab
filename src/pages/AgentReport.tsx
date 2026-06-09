@@ -179,8 +179,15 @@ const AgentReport = () => {
     };
 
     const ALLOWED_STATUSES = new Set(["В пути", "Доставлено"]);
+    const totalAmount = (r: any) =>
+      Number(r.amount || 0) + Number(r.amount_2 || 0) + Number(r.amount_3 || 0);
+    const invoicesJoined = (r: any) =>
+      [r.invoice_number, r.invoice_number_2, r.invoice_number_3]
+        .filter((v) => v && String(v).trim().length > 0)
+        .join(", ");
+
     const filtered = (requests || []).filter((r: Request) => {
-      if (!r.amount || r.amount === 0) return false;
+      if (totalAmount(r) <= 0) return false;
       if (!ALLOWED_STATUSES.has((r as any).status)) return false;
       const contractor = ((r as any).contractor || "").trim();
       if (contractor.includes("ИП Никулин") || contractor.includes("Никулин Е.В")) return false;
@@ -191,8 +198,8 @@ const AgentReport = () => {
       row_number: index + 1,
       tmc: req.description || "",
       contractor: req.contractor || "",
-      invoice_number: req.invoice_number || "",
-      amount: req.amount || 0
+      invoice_number: invoicesJoined(req) || req.invoice_number || "",
+      amount: totalAmount(req),
     }));
   }, [currentOrgId, selectedMonth, selectedYear]);
 
