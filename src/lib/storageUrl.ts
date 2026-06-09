@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 /**
  * Parse a Supabase Storage URL (public or signed) to its bucket + path.
@@ -42,4 +43,30 @@ export async function downloadStoredFile(url: string, suggestedName?: string) {
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+/**
+ * React hook: resolve a stored storage URL to a fresh signed URL.
+ * Returns the original `url` until the signed URL is ready, so consumers
+ * never render `undefined`.
+ */
+export function useSignedUrl(url: string | null | undefined, expiresIn = 60 * 60): string | undefined {
+  const [signed, setSigned] = useState<string | undefined>(url ?? undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!url) {
+      setSigned(undefined);
+      return;
+    }
+    setSigned(url);
+    resolveSignedUrl(url, expiresIn).then((s) => {
+      if (!cancelled) setSigned(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [url, expiresIn]);
+
+  return signed;
 }
