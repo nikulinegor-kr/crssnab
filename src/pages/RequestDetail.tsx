@@ -240,7 +240,22 @@ export default function RequestDetail() {
   });
 
   const handleUpdate = (updates: Partial<Request>) => {
+    // Intercept transition to "Доставлено" — require receiver name
+    if (
+      updates.status === "Доставлено" &&
+      request?.status !== "Доставлено" &&
+      !(request as any)?.received_by &&
+      !(updates as any).received_by
+    ) {
+      setReceivedByDialogOpen(true);
+      return;
+    }
     updateRequestMutation.mutate(updates);
+  };
+
+  const handleReceivedByConfirm = (name: string) => {
+    setReceivedByDialogOpen(false);
+    updateRequestMutation.mutate({ status: "Доставлено", received_by: name } as any);
   };
 
   const sanitizeFilename = (filename: string): string => {
