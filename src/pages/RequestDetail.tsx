@@ -46,6 +46,7 @@ import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
+import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
@@ -88,6 +89,7 @@ export default function RequestDetail() {
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [revisionComment, setRevisionComment] = useState("");
+  const [receivedByDialogOpen, setReceivedByDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const dragCounterRef = useRef(0);
@@ -238,7 +240,22 @@ export default function RequestDetail() {
   });
 
   const handleUpdate = (updates: Partial<Request>) => {
+    // Intercept transition to "Доставлено" — require receiver name
+    if (
+      updates.status === "Доставлено" &&
+      request?.status !== "Доставлено" &&
+      !(request as any)?.received_by &&
+      !(updates as any).received_by
+    ) {
+      setReceivedByDialogOpen(true);
+      return;
+    }
     updateRequestMutation.mutate(updates);
+  };
+
+  const handleReceivedByConfirm = (name: string) => {
+    setReceivedByDialogOpen(false);
+    updateRequestMutation.mutate({ status: "Доставлено", received_by: name } as any);
   };
 
   const sanitizeFilename = (filename: string): string => {
@@ -1166,6 +1183,14 @@ export default function RequestDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ReceivedByDialog
+        open={receivedByDialogOpen}
+        organizationId={request?.organization_id}
+        defaultValue={(request as any)?.received_by}
+        onCancel={() => setReceivedByDialogOpen(false)}
+        onConfirm={handleReceivedByConfirm}
+      />
     </div>
   );
 }

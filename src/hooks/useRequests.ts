@@ -33,6 +33,7 @@ export interface Request {
   created_at: string;
   updated_at: string;
   archived: boolean;
+  received_by?: string | null;
 }
 
 export const useRequests = (showArchived: boolean = false) => {
