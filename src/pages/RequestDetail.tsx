@@ -46,6 +46,7 @@ import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
+import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
