@@ -1183,6 +1183,14 @@ export default function RequestDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ReceivedByDialog
+        open={receivedByDialogOpen}
+        organizationId={request?.organization_id}
+        defaultValue={(request as any)?.received_by}
+        onCancel={() => setReceivedByDialogOpen(false)}
+        onConfirm={handleReceivedByConfirm}
+      />
     </div>
   );
 }
