@@ -67,6 +67,7 @@ const FIELD_LABELS: Record<string, string> = {
   description: "Описание",
   applicant: "Заявитель",
   object_id: "Объект",
+  received_by: "Приёмку ТМЦ осуществил",
 };
 
 const ActionLogPage = () => {
