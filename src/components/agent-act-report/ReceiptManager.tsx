@@ -71,15 +71,17 @@ export const ReceiptManager = ({
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      // Bucket is private — create a short-lived signed URL for the recognizer + later fetch.
+      const { data: signed, error: signErr } = await supabase.storage
         .from("request-documents")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24); // 24h
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Failed to sign URL");
 
-      receipt.fileUrl = urlData.publicUrl;
+      receipt.fileUrl = signed.signedUrl;
 
       const { data, error } = await supabase.functions.invoke("recognize-receipt", {
         body: {
-          fileUrl: urlData.publicUrl,
+          fileUrl: signed.signedUrl,
           fileName: file.name,
           fileType: file.type,
         },
