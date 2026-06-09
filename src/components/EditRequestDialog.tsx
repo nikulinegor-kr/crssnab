@@ -399,6 +399,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
         amount: request.amount ?? null,
+        invoice_number_2: (request as any).invoice_number_2 || "",
+        amount_2: (request as any).amount_2 ?? null,
+        invoice_number_3: (request as any).invoice_number_3 || "",
+        amount_3: (request as any).amount_3 ?? null,
         payment_percentage: request.payment_percentage ?? null,
         payment_percent: (request as any).payment_percent ?? 0,
         payment_status: (() => {
