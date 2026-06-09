@@ -89,6 +89,7 @@ export default function RequestDetail() {
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [revisionComment, setRevisionComment] = useState("");
+  const [receivedByDialogOpen, setReceivedByDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const dragCounterRef = useRef(0);
