@@ -8,6 +8,8 @@ import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { SignedImage } from "@/components/SignedImage";
+import { openStoredFile } from "@/lib/storageUrl";
 
 interface RequestQuickViewProps {
   requestId: string | null;
@@ -147,7 +149,7 @@ export const RequestQuickView = memo(function RequestQuickView({ requestId, open
               <div className="flex gap-1.5 flex-wrap">
                 {allPhotos.slice(0, 4).map((url, i) => (
                   <div key={i} className="w-12 h-12 rounded border border-border overflow-hidden">
-                    <img src={url} alt={`Фото ${i + 1}`} className="w-full h-full object-cover" />
+                    <SignedImage src={url} alt={`Фото ${i + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))}
                 {allPhotos.length > 4 && (
@@ -163,9 +165,9 @@ export const RequestQuickView = memo(function RequestQuickView({ requestId, open
                   <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <FileText className="h-3 w-3 shrink-0 text-primary" />
                     <span className="truncate flex-1">Документ {i + 1}</span>
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="shrink-0 hover:text-primary">
+                    <button type="button" onClick={() => openStoredFile(url)} className="shrink-0 hover:text-primary">
                       <Download className="h-3 w-3" />
-                    </a>
+                    </button>
                   </div>
                 ))}
                 {allDocuments.length > 3 && (

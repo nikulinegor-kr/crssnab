@@ -36,6 +36,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { ImageGallery } from "@/components/ImageGallery";
+import { SignedImage } from "@/components/SignedImage";
+import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -946,7 +948,7 @@ export default function RequestDetail() {
                               onClick={() => handleImageClick(index)}
                               className="w-full h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                             >
-                              <img
+                              <SignedImage
                                 src={url}
                                 alt={`Фото ${index + 1}`}
                                 className="w-full h-full object-cover"
@@ -1026,12 +1028,10 @@ export default function RequestDetail() {
                                   variant="ghost"
                                   size="sm"
                                   className="h-6 px-2 text-xs"
-                                  asChild
+                                  onClick={() => downloadStoredFile(url)}
                                 >
-                                  <a href={url} download target="_blank" rel="noopener noreferrer">
-                                    <Download className="h-3 w-3 mr-1" />
-                                    Скачать
-                                  </a>
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Скачать
                                 </Button>
                                 <Button
                                   variant="ghost"
