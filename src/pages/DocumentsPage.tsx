@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, FileText, FileImage, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { openStoredFile } from "@/lib/storageUrl";
 
 interface DocEntry {
   url: string;
@@ -213,15 +214,14 @@ const DocumentsPage = () => {
                       {format(new Date(doc.date), "dd.MM.yyyy")}
                     </TableCell>
                     <TableCell>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); openStoredFile(doc.url); }}
                         className="text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={e => e.stopPropagation()}
+                        aria-label="Открыть файл"
                       >
                         <ExternalLink className="h-4 w-4" />
-                      </a>
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))
