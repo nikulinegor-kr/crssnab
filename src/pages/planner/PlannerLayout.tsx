@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 
 const SUB_NAV = [
-  { to: "/planner", label: "Задачи CRM", icon: Sun, end: true },
-  { to: "/planner/my", label: "Мой план", icon: User },
+  { to: "/planner", label: "Сегодня", icon: Sun, end: true },
   { to: "/planner/dashboard", label: "Обзор", icon: LayoutDashboard },
   { to: "/planner/tasks", label: "Задачи", icon: ListTodo },
   { to: "/planner/board", label: "Доска задач", icon: KanbanSquare },
@@ -24,8 +23,8 @@ export default function PlannerLayout() {
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <h1 className="text-base font-semibold leading-none">Планировщик</h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Планирование работ и задач</p>
+            <h1 className="text-base font-semibold leading-none">Планировщик CRM</h1>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Автоматические задачи из заявок, счетов и доставки</p>
           </div>
         </div>
         <nav className="px-3 sm:px-6 flex items-center gap-1 overflow-x-auto -mb-px">
