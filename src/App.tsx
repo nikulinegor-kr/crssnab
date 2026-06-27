@@ -598,7 +598,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<PlannerDashboard />} />
+              <Route index element={<PlannerToday />} />
+              <Route path="dashboard" element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
               <Route path="calendar" element={<PlannerCalendar />} />
