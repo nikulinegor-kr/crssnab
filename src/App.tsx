@@ -64,7 +64,8 @@ const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
-const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout"));
+const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.CrmPlannerLayout })));
+const MyPlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.MyPlannerLayout })));
 const PlannerToday = lazyWithRetry(() => import("./pages/planner/PlannerToday"));
 const PlannerMyPlan = lazyWithRetry(() => import("./pages/planner/PlannerMyPlan"));
 const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
@@ -613,11 +614,20 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <AppLayout fullBleed>
-                    <PlannerMyPlan />
+                    <MyPlannerLayout />
                   </AppLayout>
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<PlannerToday />} />
+              <Route path="dashboard" element={<PlannerDashboard />} />
+              <Route path="tasks" element={<PlannerTasksList />} />
+              <Route path="board" element={<PlannerKanban />} />
+              <Route path="calendar" element={<PlannerCalendar />} />
+              <Route path="timeline" element={<PlannerTimeline />} />
+              <Route path="stages" element={<PlannerStages />} />
+              <Route path="templates" element={<PlannerTemplates />} />
+            </Route>
             <Route path="/planner/my" element={<Navigate to="/my-planner" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
