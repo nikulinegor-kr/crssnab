@@ -74,9 +74,9 @@ export const PERMISSION_TREE = [
   },
   {
     key: "planner" as PermissionKey,
-    label: "Planner",
+    label: "Планировщик",
     children: [
-      { key: "planner.access" as PermissionKey, label: "Доступ к Planner" },
+      { key: "planner.access" as PermissionKey, label: "Доступ к Планировщику" },
     ],
   },
 ];
