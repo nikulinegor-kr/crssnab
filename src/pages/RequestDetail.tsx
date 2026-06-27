@@ -836,7 +836,11 @@ export default function RequestDetail() {
               canEdit={canEdit}
               onUpdate={handleUpdate}
             />
-
+            {/* Linked personal planner tasks */}
+            <LinkedPlannerTasks
+              requestId={request.id}
+              organizationId={request.organization_id}
+            />
 
 
 
