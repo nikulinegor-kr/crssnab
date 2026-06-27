@@ -23,6 +23,7 @@ import {
   KanbanSquare,
   Sparkles,
   ClipboardList,
+  CalendarRange,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -121,7 +122,8 @@ const menuGroups = [
     label: "Планировщик",
     icon: Sparkles,
     items: [
-      { title: "Планировщик", url: "/planner", icon: Sparkles },
+      { title: "Планировщик CRM", url: "/planner", icon: ClipboardList },
+      { title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
     ],
   },
 ];

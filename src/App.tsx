@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -600,7 +600,6 @@ const App = () => {
               }
             >
               <Route index element={<PlannerToday />} />
-              <Route path="my" element={<PlannerMyPlan />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
@@ -609,6 +608,17 @@ const App = () => {
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
             </Route>
+            <Route
+              path="/my-planner"
+              element={
+                <ProtectedRoute>
+                  <AppLayout fullBleed>
+                    <PlannerMyPlan />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/planner/my" element={<Navigate to="/my-planner" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
