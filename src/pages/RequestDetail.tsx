@@ -51,6 +51,7 @@ import { RequestQuickActionsCard } from "@/components/request/RequestQuickAction
 import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
+import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
 
 interface Activity {
