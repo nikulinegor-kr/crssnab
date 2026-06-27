@@ -44,7 +44,7 @@ export default function PlannerDashboard() {
             <CardTitle className="text-base">Сегодняшние задачи</CardTitle>
             <Button asChild variant="ghost" size="sm">
               <Link to="/planner/board">
-                <KanbanSquare className="h-4 w-4 mr-1" /> Канбан
+                <KanbanSquare className="h-4 w-4 mr-1" /> Доска задач
               </Link>
             </Button>
           </CardHeader>
