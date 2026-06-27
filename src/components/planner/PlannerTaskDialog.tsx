@@ -71,6 +71,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
   const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
   const [equipmentId, setEquipmentId] = useState<string | null>(task?.equipment_id ?? null);
+  const [requestId, setRequestId] = useState<string | null>(task?.request_id ?? defaultRequestId ?? null);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(task?.checklist ?? []);
   const [attachments, setAttachments] = useState<PlannerAttachment[]>(task?.attachments ?? []);
   const [isPrivate, setIsPrivate] = useState(task?.is_private ?? false);
