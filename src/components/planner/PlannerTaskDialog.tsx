@@ -71,6 +71,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
   const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
   const [equipmentId, setEquipmentId] = useState<string | null>(task?.equipment_id ?? null);
+  const [requestId, setRequestId] = useState<string | null>(task?.request_id ?? defaultRequestId ?? null);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(task?.checklist ?? []);
   const [attachments, setAttachments] = useState<PlannerAttachment[]>(task?.attachments ?? []);
   const [isPrivate, setIsPrivate] = useState(task?.is_private ?? false);
@@ -106,6 +107,22 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
         .select("id, name")
         .eq("organization_id", currentOrgId)
         .order("name");
+      return data ?? [];
+    },
+    enabled: !!currentOrgId && open,
+  });
+
+  const { data: requestsList = [] } = useQuery({
+    queryKey: ["planner-requests-pick", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("requests")
+        .select("id, request_number, description, status")
+        .eq("organization_id", currentOrgId)
+        .eq("archived", false)
+        .order("created_at", { ascending: false })
+        .limit(300);
       return data ?? [];
     },
     enabled: !!currentOrgId && open,
@@ -155,7 +172,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       priority,
       object_id: objectId,
       stage_id: stageId,
-      request_id: task?.request_id ?? defaultRequestId ?? null,
+      request_id: requestId,
       assignee_id: assigneeId,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
@@ -328,6 +345,22 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                     {equipmentList.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Связать с заявкой CRM</Label>
+                <Select value={requestId ?? "none"} onValueChange={(v) => setRequestId(v === "none" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Без заявки" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {requestsList.map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.description || `Заявка ${r.request_number}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">Личная задача — статус заявки не меняется автоматически</p>
               </div>
             </div>
 

@@ -51,6 +51,7 @@ import { RequestQuickActionsCard } from "@/components/request/RequestQuickAction
 import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
+import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
 
 interface Activity {
@@ -835,7 +836,11 @@ export default function RequestDetail() {
               canEdit={canEdit}
               onUpdate={handleUpdate}
             />
-
+            {/* Linked personal planner tasks */}
+            <LinkedPlannerTasks
+              requestId={request.id}
+              organizationId={request.organization_id}
+            />
 
 
 
