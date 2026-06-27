@@ -346,6 +346,22 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Связать с заявкой CRM</Label>
+                <Select value={requestId ?? "none"} onValueChange={(v) => setRequestId(v === "none" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Без заявки" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {requestsList.map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.description || `Заявка ${r.request_number}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">Личная задача — статус заявки не меняется автоматически</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
