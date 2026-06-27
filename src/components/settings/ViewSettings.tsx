@@ -106,7 +106,7 @@ export const ViewSettings = () => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Columns3 className="h-5 w-5 text-primary" />
-            <CardTitle>Настройки Kanban</CardTitle>
+            <CardTitle>Настройки доски задач</CardTitle>
           </div>
           <CardDescription>
             Выберите какие поля показывать на карточках заявок
