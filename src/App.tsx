@@ -66,6 +66,7 @@ const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformanceP
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
 const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout"));
 const PlannerToday = lazyWithRetry(() => import("./pages/planner/PlannerToday"));
+const PlannerMyPlan = lazyWithRetry(() => import("./pages/planner/PlannerMyPlan"));
 const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
 const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
 const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
@@ -599,6 +600,7 @@ const App = () => {
               }
             >
               <Route index element={<PlannerToday />} />
+              <Route path="my" element={<PlannerMyPlan />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />

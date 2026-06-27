@@ -69,6 +69,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [assigneeId, setAssigneeId] = useState<string | null>(task?.assignee_id ?? null);
   const [startDate, setStartDate] = useState(task?.start_date?.slice(0, 10) ?? "");
   const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
+  const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
+  const [equipmentId, setEquipmentId] = useState<string | null>(task?.equipment_id ?? null);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(task?.checklist ?? []);
   const [attachments, setAttachments] = useState<PlannerAttachment[]>(task?.attachments ?? []);
   const [isPrivate, setIsPrivate] = useState(task?.is_private ?? false);
@@ -87,6 +89,20 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .order("name");
+      return data ?? [];
+    },
+    enabled: !!currentOrgId && open,
+  });
+
+  const { data: equipmentList = [] } = useQuery({
+    queryKey: ["planner-equipment", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("equipment")
         .select("id, name")
         .eq("organization_id", currentOrgId)
         .order("name");
@@ -143,6 +159,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       assignee_id: assigneeId,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      due_time: dueTime || null,
+      equipment_id: equipmentId,
       checklist,
       attachments,
       is_private: isPrivate,
@@ -292,8 +310,24 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Дедлайн</Label>
+                <Label>Дата выполнения</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Время</Label>
+                <Input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Техника</Label>
+                <Select value={equipmentId ?? "none"} onValueChange={(v) => setEquipmentId(v === "none" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Без техники" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {equipmentList.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

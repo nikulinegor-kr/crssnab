@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles, CalendarDays, GanttChartSquare, Layers, FileText, Sun } from "lucide-react";
+import { LayoutDashboard, ListTodo, KanbanSquare, Sparkles, CalendarDays, GanttChartSquare, Layers, FileText, Sun, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 
 const SUB_NAV = [
-  { to: "/planner", label: "Сегодня", icon: Sun, end: true },
+  { to: "/planner", label: "Авто-задачи", icon: Sun, end: true },
+  { to: "/planner/my", label: "Мой план", icon: User },
   { to: "/planner/dashboard", label: "Обзор", icon: LayoutDashboard },
   { to: "/planner/tasks", label: "Задачи", icon: ListTodo },
   { to: "/planner/board", label: "Доска задач", icon: KanbanSquare },

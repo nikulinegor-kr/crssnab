@@ -120,6 +120,7 @@ function usePlannerRows() {
       .from("planner_tasks")
       .select("id,organization_id,title,status,priority,assignee_id,due_date,source,source_rule,request_id,created_at,updated_at")
       .eq("organization_id", currentOrgId)
+      .eq("source", "auto_rule")
       .neq("status", "done")
       .order("due_date", { ascending: true, nullsFirst: false })
       .limit(500);

@@ -5,7 +5,8 @@ import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
-export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent";
+export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
+export type PlannerTaskSource = "manual" | "auto_rule" | "crm_request";
 
 export interface ChecklistItem {
   id: string;
@@ -52,6 +53,9 @@ export interface PlannerTask {
   recurrence: PlannerRecurrence | null;
   estimated_hours: number | null;
   actual_hours: number | null;
+  source?: PlannerTaskSource | null;
+  source_rule?: string | null;
+  due_time?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -72,6 +76,7 @@ export const PRIORITY_META: Record<
   medium: { label: "Средний", className: "bg-primary/10 text-primary", dot: "bg-primary" },
   high: { label: "Высокий", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
   urgent: { label: "Срочно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
+  critical: { label: "Критический", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
 };
 
 export const usePlannerTasks = () => {
@@ -143,6 +148,9 @@ export const useCreatePlannerTask = () => {
         is_private: input.is_private ?? false,
         recurrence: input.recurrence ?? null,
         estimated_hours: input.estimated_hours ?? null,
+        due_time: (input as any).due_time ?? null,
+        source: (input as any).source ?? "manual",
+        source_rule: (input as any).source_rule ?? null,
         position: input.position ?? Date.now() % 1000000,
         created_by: user?.id ?? null,
       };
