@@ -118,10 +118,10 @@ const menuGroups = [
     ],
   },
   {
-    label: "Planner",
+    label: "Планировщик",
     icon: Sparkles,
     items: [
-      { title: "Planner", url: "/planner", icon: Sparkles },
+      { title: "Планировщик", url: "/planner", icon: Sparkles },
     ],
   },
 ];
