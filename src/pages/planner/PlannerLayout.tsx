@@ -7,9 +7,9 @@ const SUB_NAV = [
   { to: "/planner", label: "Сегодня", icon: Sun, end: true },
   { to: "/planner/dashboard", label: "Обзор", icon: LayoutDashboard },
   { to: "/planner/tasks", label: "Задачи", icon: ListTodo },
-  { to: "/planner/board", label: "Канбан", icon: KanbanSquare },
+  { to: "/planner/board", label: "Доска задач", icon: KanbanSquare },
   { to: "/planner/calendar", label: "Календарь", icon: CalendarDays },
-  { to: "/planner/timeline", label: "Таймлайн", icon: GanttChartSquare },
+  { to: "/planner/timeline", label: "План по времени", icon: GanttChartSquare },
   { to: "/planner/stages", label: "Этапы", icon: Layers },
   { to: "/planner/templates", label: "Шаблоны", icon: FileText },
 ];
@@ -23,7 +23,7 @@ export default function PlannerLayout() {
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <h1 className="text-base font-semibold leading-none">Planner</h1>
+            <h1 className="text-base font-semibold leading-none">Планировщик</h1>
             <p className="text-[11px] text-muted-foreground mt-0.5">Планирование работ и задач</p>
           </div>
         </div>
