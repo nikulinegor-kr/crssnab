@@ -454,7 +454,18 @@ function isOpen(r: AnalyticsRequest) {
   return !r.archived && !CLOSED_STATUSES.has(r.status ?? "");
 }
 
+import { usePlannerScope } from "@/contexts/PlannerScopeContext";
+import PlannerTodayManual from "./PlannerTodayManual";
+
 export default function PlannerToday() {
+  const plannerScope = usePlannerScope();
+  if (plannerScope === "manual") {
+    return <PlannerTodayManual />;
+  }
+  return <PlannerTodayCrm />;
+}
+
+function PlannerTodayCrm() {
   const { rows, loading: loadingTasks, reload } = usePlannerRows();
   const { data: requests, loading: loadingReq } = useAnalyticsRequests();
   const { data: members } = useOrgMembers();
