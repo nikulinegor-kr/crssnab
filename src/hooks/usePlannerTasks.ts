@@ -53,6 +53,9 @@ export interface PlannerTask {
   recurrence: PlannerRecurrence | null;
   estimated_hours: number | null;
   actual_hours: number | null;
+  source?: PlannerTaskSource | null;
+  source_rule?: string | null;
+  due_time?: string | null;
   created_at: string;
   updated_at: string;
 }
