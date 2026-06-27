@@ -2229,6 +2229,47 @@ export type Database = {
           },
         ]
       }
+      planner_task_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          fire_at: string | null
+          id: string
+          offset_minutes: number
+          organization_id: string
+          sent_at: string | null
+          task_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          fire_at?: string | null
+          id?: string
+          offset_minutes: number
+          organization_id: string
+          sent_at?: string | null
+          task_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          fire_at?: string | null
+          id?: string
+          offset_minutes?: number
+          organization_id?: string
+          sent_at?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_task_reminders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "planner_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planner_task_templates: {
         Row: {
           checklist: Json
@@ -2280,12 +2321,14 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string | null
+          delegated_to: string | null
           description: string | null
           due_date: string | null
           equipment_id: string | null
           estimated_hours: number | null
           id: string
           is_private: boolean
+          last_auto_sync_at: string | null
           object_id: string | null
           organization_id: string
           parent_task_id: string | null
@@ -2293,6 +2336,8 @@ export type Database = {
           priority: string
           recurrence: Json | null
           request_id: string | null
+          source: string
+          source_rule: string | null
           stage_id: string | null
           start_date: string | null
           status: string
@@ -2308,12 +2353,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          delegated_to?: string | null
           description?: string | null
           due_date?: string | null
           equipment_id?: string | null
           estimated_hours?: number | null
           id?: string
           is_private?: boolean
+          last_auto_sync_at?: string | null
           object_id?: string | null
           organization_id: string
           parent_task_id?: string | null
@@ -2321,6 +2368,8 @@ export type Database = {
           priority?: string
           recurrence?: Json | null
           request_id?: string | null
+          source?: string
+          source_rule?: string | null
           stage_id?: string | null
           start_date?: string | null
           status?: string
@@ -2336,12 +2385,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          delegated_to?: string | null
           description?: string | null
           due_date?: string | null
           equipment_id?: string | null
           estimated_hours?: number | null
           id?: string
           is_private?: boolean
+          last_auto_sync_at?: string | null
           object_id?: string | null
           organization_id?: string
           parent_task_id?: string | null
@@ -2349,6 +2400,8 @@ export type Database = {
           priority?: string
           recurrence?: Json | null
           request_id?: string | null
+          source?: string
+          source_rule?: string | null
           stage_id?: string | null
           start_date?: string | null
           status?: string
@@ -4076,6 +4129,10 @@ export type Database = {
         Args: { _org_name?: string }
         Returns: undefined
       }
+      find_user_by_full_name: {
+        Args: { _name: string; _org_id: string }
+        Returns: string
+      }
       get_client_org_id: { Args: { _user_id: string }; Returns: string }
       get_executor_buttons: { Args: { _org_id: string }; Returns: Json }
       get_invitation_by_token: {
@@ -4167,6 +4224,18 @@ export type Database = {
           _new_values?: Json
           _old_values?: Json
           _organization_id: string
+        }
+        Returns: string
+      }
+      planner_upsert_auto_task: {
+        Args: {
+          _assignee: string
+          _due: string
+          _org: string
+          _priority: string
+          _request_id: string
+          _rule: string
+          _title: string
         }
         Returns: string
       }
