@@ -130,7 +130,7 @@ function useMyTasks() {
         .order("due_date", { ascending: true, nullsFirst: false })
         .limit(1000);
       if (error) throw error;
-      return (data ?? []) as PlannerTask[];
+      return ((data ?? []) as unknown) as PlannerTask[];
     },
     enabled: !!currentOrgId,
   });
