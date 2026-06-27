@@ -352,6 +352,42 @@ export type Database = {
           },
         ]
       }
+      ai_analytics_reports: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          model: string | null
+          organization_id: string
+          period_from: string
+          period_to: string
+          summary: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          organization_id: string
+          period_from: string
+          period_to: string
+          summary?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          organization_id?: string
+          period_from?: string
+          period_to?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           created_at: string

@@ -98,6 +98,18 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
+      { title: "Исполнители", url: "/analytics/executors", icon: Users },
+      { title: "Заявки", url: "/analytics/requests", icon: FileText },
+      { title: "Финансы", url: "/analytics/finance", icon: Wallet },
+      { title: "Объекты", url: "/analytics/objects", icon: Building2 },
+      { title: "Логистика", url: "/analytics/logistics", icon: Truck },
+      { title: "AI Аналитик", url: "/analytics/ai", icon: Sparkles },
+    ],
+  },
+  {
+    label: "Журналы",
+    icon: FileBarChart,
+    items: [
       { title: "Производительность команды", url: "/team-performance", icon: Users },
       { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
       { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
