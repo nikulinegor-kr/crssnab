@@ -2324,6 +2324,7 @@ export type Database = {
           delegated_to: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
           equipment_id: string | null
           estimated_hours: number | null
           id: string
@@ -2356,6 +2357,7 @@ export type Database = {
           delegated_to?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           equipment_id?: string | null
           estimated_hours?: number | null
           id?: string
@@ -2388,6 +2390,7 @@ export type Database = {
           delegated_to?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           equipment_id?: string | null
           estimated_hours?: number | null
           id?: string
