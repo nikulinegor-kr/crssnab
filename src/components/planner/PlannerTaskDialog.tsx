@@ -172,7 +172,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       priority,
       object_id: objectId,
       stage_id: stageId,
-      request_id: task?.request_id ?? defaultRequestId ?? null,
+      request_id: requestId,
       assignee_id: assigneeId,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
