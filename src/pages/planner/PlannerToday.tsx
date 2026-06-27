@@ -472,7 +472,7 @@ export default function PlannerToday() {
   }, []);
 
   const memberList = useMemo(
-    () => (members ?? []).map((m: any) => ({ id: m.user_id ?? m.id, full_name: m.full_name ?? m.email ?? "—" })),
+    () => (members ?? []).map((m) => ({ id: m.user_id, full_name: m.full_name ?? m.email ?? "—" })),
     [members],
   );
 
