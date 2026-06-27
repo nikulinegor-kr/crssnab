@@ -310,8 +310,24 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Дедлайн</Label>
+                <Label>Дата выполнения</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Время</Label>
+                <Input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Техника</Label>
+                <Select value={equipmentId ?? "none"} onValueChange={(v) => setEquipmentId(v === "none" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Без техники" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {equipmentList.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
