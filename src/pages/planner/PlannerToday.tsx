@@ -50,6 +50,8 @@ import {
   useAnalyticsRequests,
   AnalyticsRequest,
 } from "@/hooks/useAnalyticsRequests";
+import { usePlannerScope } from "@/contexts/PlannerScopeContext";
+import PlannerTodayManual from "./PlannerTodayManual";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -455,6 +457,14 @@ function isOpen(r: AnalyticsRequest) {
 }
 
 export default function PlannerToday() {
+  const plannerScope = usePlannerScope();
+  if (plannerScope === "manual") {
+    return <PlannerTodayManual />;
+  }
+  return <PlannerTodayCrm />;
+}
+
+function PlannerTodayCrm() {
   const { rows, loading: loadingTasks, reload } = usePlannerRows();
   const { data: requests, loading: loadingReq } = useAnalyticsRequests();
   const { data: members } = useOrgMembers();
