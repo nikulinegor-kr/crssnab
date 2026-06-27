@@ -98,6 +98,12 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/agent-act-report": "analytics.reports",
   "/percent-calculator": "analytics.reports",
   "/planner": "planner.access",
+  "/analytics/executors": "analytics.dashboard",
+  "/analytics/requests": "analytics.dashboard",
+  "/analytics/finance": "analytics.dashboard",
+  "/analytics/objects": "analytics.dashboard",
+  "/analytics/logistics": "analytics.dashboard",
+  "/analytics/ai": "analytics.dashboard",
 };
 
 export const useUserPermissions = () => {
