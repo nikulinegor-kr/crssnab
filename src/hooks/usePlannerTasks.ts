@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
+import { usePlannerScope } from "@/contexts/PlannerScopeContext";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
@@ -81,16 +82,23 @@ export const PRIORITY_META: Record<
 
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
+  const scope = usePlannerScope();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["planner-tasks", currentOrgId],
+    queryKey: ["planner-tasks", currentOrgId, scope],
     queryFn: async (): Promise<PlannerTask[]> => {
       if (!currentOrgId) return [];
-      const { data, error } = await supabase
+      let q = supabase
         .from("planner_tasks")
         .select("*")
-        .eq("organization_id", currentOrgId)
+        .eq("organization_id", currentOrgId);
+      if (scope === "auto") {
+        q = q.eq("source", "auto_rule");
+      } else {
+        q = q.or("source.is.null,source.eq.manual");
+      }
+      const { data, error } = await q
         .order("position", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -103,19 +111,19 @@ export const usePlannerTasks = () => {
   useEffect(() => {
     if (!currentOrgId) return;
     const ch = supabase
-      .channel("planner-tasks-rt")
+      .channel(`planner-tasks-rt-${scope}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "planner_tasks", filter: `organization_id=eq.${currentOrgId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId] });
+          queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId, scope] });
         }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [currentOrgId, queryClient]);
+  }, [currentOrgId, queryClient, scope]);
 
   return query;
 };
