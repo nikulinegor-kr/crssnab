@@ -99,6 +99,7 @@ const menuGroups = [
     label: "Аналитика",
     icon: BarChart3,
     items: [
+      { title: "Подготовка к дню", url: "/analytics/day-prep", icon: ClipboardList },
       { title: "Исполнители", url: "/analytics/executors", icon: Users },
       { title: "Заявки", url: "/analytics/requests", icon: FileText },
       { title: "Финансы", url: "/analytics/finance", icon: Wallet },
