@@ -50,6 +50,8 @@ import {
   useAnalyticsRequests,
   AnalyticsRequest,
 } from "@/hooks/useAnalyticsRequests";
+import { usePlannerScope } from "@/contexts/PlannerScopeContext";
+import PlannerTodayManual from "./PlannerTodayManual";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -453,9 +455,6 @@ const CLOSED_STATUSES = new Set(["Доставлено", "Отменено", "О
 function isOpen(r: AnalyticsRequest) {
   return !r.archived && !CLOSED_STATUSES.has(r.status ?? "");
 }
-
-import { usePlannerScope } from "@/contexts/PlannerScopeContext";
-import PlannerTodayManual from "./PlannerTodayManual";
 
 export default function PlannerToday() {
   const plannerScope = usePlannerScope();
