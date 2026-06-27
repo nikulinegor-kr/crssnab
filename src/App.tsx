@@ -346,6 +346,76 @@ const App = () => {
               }
             />
             <Route
+              path="/analytics/executors"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsExecutorsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/executors/:executor"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsExecutorDetailPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/requests"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsRequestsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/finance"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsFinancePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/objects"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsObjectsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/logistics"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsLogisticsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/ai"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsAiPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/documents"
               element={
                 <ProtectedRoute>
@@ -355,6 +425,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/team"
               element={
