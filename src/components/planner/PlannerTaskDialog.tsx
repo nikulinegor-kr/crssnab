@@ -159,6 +159,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       assignee_id: assigneeId,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      due_time: dueTime || null,
+      equipment_id: equipmentId,
       checklist,
       attachments,
       is_private: isPrivate,
