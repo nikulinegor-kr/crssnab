@@ -104,6 +104,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/analytics/objects": "analytics.dashboard",
   "/analytics/logistics": "analytics.dashboard",
   "/analytics/ai": "analytics.dashboard",
+  "/analytics/day-prep": "analytics.dashboard",
 };
 
 export const useUserPermissions = () => {
