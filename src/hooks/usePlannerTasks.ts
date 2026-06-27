@@ -57,11 +57,11 @@ export interface PlannerTask {
 }
 
 export const PLANNER_COLUMNS: { id: PlannerTaskStatus; title: string }[] = [
-  { id: "backlog", title: "Бэклог" },
-  { id: "todo", title: "К работе" },
+  { id: "backlog", title: "Новые задачи" },
+  { id: "todo", title: "К выполнению" },
   { id: "in_progress", title: "В работе" },
   { id: "review", title: "На проверке" },
-  { id: "done", title: "Готово" },
+  { id: "done", title: "Выполнено" },
 ];
 
 export const PRIORITY_META: Record<
