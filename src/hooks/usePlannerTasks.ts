@@ -171,7 +171,7 @@ export const useCreatePlannerTask = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
       toast({ title: "Задача создана" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
@@ -196,7 +196,7 @@ export const useUpdatePlannerTask = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
   });
@@ -213,7 +213,7 @@ export const useDeletePlannerTask = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
       toast({ title: "Задача удалена" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
