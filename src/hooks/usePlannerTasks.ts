@@ -148,6 +148,9 @@ export const useCreatePlannerTask = () => {
         is_private: input.is_private ?? false,
         recurrence: input.recurrence ?? null,
         estimated_hours: input.estimated_hours ?? null,
+        due_time: (input as any).due_time ?? null,
+        source: (input as any).source ?? "manual",
+        source_rule: (input as any).source_rule ?? null,
         position: input.position ?? Date.now() % 1000000,
         created_by: user?.id ?? null,
       };
