@@ -600,6 +600,7 @@ const App = () => {
               }
             >
               <Route index element={<PlannerToday />} />
+              <Route path="my" element={<PlannerMyPlan />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
