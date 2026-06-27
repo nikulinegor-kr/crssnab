@@ -97,6 +97,20 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     enabled: !!currentOrgId && open,
   });
 
+  const { data: equipmentList = [] } = useQuery({
+    queryKey: ["planner-equipment", currentOrgId],
+    queryFn: async () => {
+      if (!currentOrgId) return [];
+      const { data } = await supabase
+        .from("equipment")
+        .select("id, name")
+        .eq("organization_id", currentOrgId)
+        .order("name");
+      return data ?? [];
+    },
+    enabled: !!currentOrgId && open,
+  });
+
   const { data: comments = [] } = usePlannerTaskComments(isEdit ? task!.id : null);
   const { data: activity = [] } = usePlannerTaskActivity(isEdit ? task!.id : null);
   const { data: deps = [] } = usePlannerDependencies(isEdit ? task!.id : null);
