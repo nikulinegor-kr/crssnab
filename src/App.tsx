@@ -417,6 +417,16 @@ const App = () => {
               }
             />
             <Route
+              path="/analytics/day-prep"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AnalyticsDayPrepPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/documents"
               element={
                 <ProtectedRoute>
