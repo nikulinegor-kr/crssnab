@@ -456,7 +456,7 @@ function isOpen(r: AnalyticsRequest) {
 export default function PlannerToday() {
   const { rows, loading: loadingTasks, reload } = usePlannerRows();
   const { data: requests, loading: loadingReq } = useAnalyticsRequests();
-  const { members } = useOrgMembers();
+  const { data: members } = useOrgMembers();
   const [me, setMe] = useState<string | null>(null);
   const [aiContent, setAiContent] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
