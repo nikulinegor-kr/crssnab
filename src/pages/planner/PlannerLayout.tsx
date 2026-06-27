@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 
 const SUB_NAV = [
-  { to: "/planner", label: "Авто-задачи", icon: Sun, end: true },
+  { to: "/planner", label: "Задачи CRM", icon: Sun, end: true },
   { to: "/planner/my", label: "Мой план", icon: User },
   { to: "/planner/dashboard", label: "Обзор", icon: LayoutDashboard },
   { to: "/planner/tasks", label: "Задачи", icon: ListTodo },
