@@ -73,6 +73,7 @@ export const PRIORITY_META: Record<
   medium: { label: "Средний", className: "bg-primary/10 text-primary", dot: "bg-primary" },
   high: { label: "Высокий", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
   urgent: { label: "Срочно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
+  critical: { label: "Критический", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
 };
 
 export const usePlannerTasks = () => {
