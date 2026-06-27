@@ -5,7 +5,8 @@ import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
-export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent";
+export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
+export type PlannerTaskSource = "manual" | "auto_rule" | "crm_request";
 
 export interface ChecklistItem {
   id: string;
