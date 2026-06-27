@@ -79,6 +79,7 @@ const AnalyticsFinancePage = lazyWithRetry(() => import("./pages/analytics/Analy
 const AnalyticsObjectsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsObjectsPage"));
 const AnalyticsLogisticsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsLogisticsPage"));
 const AnalyticsAiPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsAiPage"));
+const AnalyticsDayPrepPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsDayPrepPage"));
 
 // Loading fallback component
 const PageLoader = () => (
