@@ -367,7 +367,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                     {visibleEquipment.map((e: any) => (
                       <SelectItem key={e.id} value={e.id}>
                         {equipmentLabel(e)}
-                        {e.license_plate ? ` · ${e.license_plate}` : ""}
+                        {e.plate_number ? ` · ${e.plate_number}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -375,8 +375,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 {selectedEquipment && (
                   <div className="rounded-md border border-border/60 bg-muted/30 p-2 text-[11px] space-y-0.5 mt-1">
                     <div className="font-medium">{equipmentLabel(selectedEquipment)}</div>
-                    {selectedEquipment.license_plate && <div>Гос. №: {selectedEquipment.license_plate}</div>}
-                    {selectedEquipment.inventory_number && <div>Инв. №: {selectedEquipment.inventory_number}</div>}
+                    {selectedEquipment.plate_number && <div>Гос. №: {selectedEquipment.plate_number}</div>}
+                    {selectedEquipment.vin && <div>VIN: {selectedEquipment.vin}</div>}
                     {selectedEquipment.current_object_id && (
                       <div>Объект: {objects.find((o: any) => o.id === selectedEquipment.current_object_id)?.name ?? "—"}</div>
                     )}
