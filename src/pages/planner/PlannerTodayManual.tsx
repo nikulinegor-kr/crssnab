@@ -221,6 +221,9 @@ export default function PlannerTodayManual() {
         </div>
       )}
 
+      <EquipmentByObjectBlock tasks={todayTasks} />
+
+
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">Сегодня</div>
         {todayTasks.length === 0 ? (
