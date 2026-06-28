@@ -56,9 +56,9 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground">
                 <TitleIcon className="h-4 w-4" />
               </div>
-              <div>
-                <h1 className="text-base font-semibold leading-none">{title}</h1>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base font-semibold leading-none truncate">{title}</h1>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 sm:truncate">{subtitle}</p>
               </div>
             </div>
             <nav className="px-3 sm:px-6 flex items-center gap-1 overflow-x-auto -mb-px">
