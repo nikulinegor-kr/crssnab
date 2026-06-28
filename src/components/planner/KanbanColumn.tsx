@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PRIORITY_META, type PlannerTask, type PlannerTaskStatus } from "@/hooks/usePlannerTasks";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { PlannerTaskMeta } from "./PlannerTaskMeta";
 
 export function KanbanCard({
   task,
