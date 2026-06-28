@@ -15,8 +15,11 @@ import {
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
+import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { cn } from "@/lib/utils";
 
 export default function PlannerTasksList() {
