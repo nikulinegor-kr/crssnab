@@ -129,7 +129,9 @@ function EquipmentByObjectBlock({ tasks }: { tasks: PlannerTask[] }) {
 }
 
 export default function PlannerTodayManual() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: rawTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(rawTasks), [rawTasks, filters]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
 
