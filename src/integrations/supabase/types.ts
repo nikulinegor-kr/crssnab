@@ -2329,6 +2329,7 @@ export type Database = {
         Row: {
           actual_hours: number | null
           assignee_id: string | null
+          assignee_name: string | null
           attachments: Json
           checklist: Json
           completed_at: string | null
@@ -2362,6 +2363,7 @@ export type Database = {
         Insert: {
           actual_hours?: number | null
           assignee_id?: string | null
+          assignee_name?: string | null
           attachments?: Json
           checklist?: Json
           completed_at?: string | null
@@ -2395,6 +2397,7 @@ export type Database = {
         Update: {
           actual_hours?: number | null
           assignee_id?: string | null
+          assignee_name?: string | null
           attachments?: Json
           checklist?: Json
           completed_at?: string | null

@@ -67,6 +67,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [objectId, setObjectId] = useState<string | null>(task?.object_id ?? defaultObjectId ?? null);
   const [stageId, setStageId] = useState<string | null>(task?.stage_id ?? null);
   const [assigneeId, setAssigneeId] = useState<string | null>(task?.assignee_id ?? null);
+  const [assigneeName, setAssigneeName] = useState<string>((task as any)?.assignee_name ?? "");
   const [startDate, setStartDate] = useState(task?.start_date?.slice(0, 10) ?? "");
   const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
   const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
@@ -195,7 +196,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       object_id: objectId,
       stage_id: stageId,
       request_id: requestId,
-      assignee_id: assigneeId,
+      assignee_id: null,
+      assignee_name: assigneeName.trim() || null,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       due_time: dueTime || null,
@@ -304,15 +306,11 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
               <div className="space-y-1.5">
                 <Label>Ответственный</Label>
-                <Select value={assigneeId ?? "none"} onValueChange={(v) => setAssigneeId(v === "none" ? null : v)}>
-                  <SelectTrigger><SelectValue placeholder="Не назначен" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.user_id} value={m.user_id}>{m.full_name || m.email}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={assigneeName}
+                  onChange={(e) => setAssigneeName(e.target.value)}
+                  placeholder="ФИО"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -326,22 +324,6 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Этап</Label>
-                <Select value={stageId ?? "none"} onValueChange={(v) => setStageId(v === "none" ? null : v)}>
-                  <SelectTrigger><SelectValue placeholder="Без этапа" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {filteredStages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Оценка (часы)</Label>
-                <Input type="number" min={0} step="0.5" value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)} />
-              </div>
 
               <div className="space-y-1.5">
                 <Label>Начало</Label>
