@@ -360,13 +360,29 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Техника</Label>
-                <Select value={equipmentId ?? "none"} onValueChange={(v) => setEquipmentId(v === "none" ? null : v)}>
+                <Select value={equipmentId ?? "__none__"} onValueChange={handleEquipmentChange}>
                   <SelectTrigger><SelectValue placeholder="Без техники" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {equipmentList.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                    <SelectItem value="__none__">—</SelectItem>
+                    {visibleEquipment.map((e: any) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {equipmentLabel(e)}
+                        {e.license_plate ? ` · ${e.license_plate}` : ""}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {selectedEquipment && (
+                  <div className="rounded-md border border-border/60 bg-muted/30 p-2 text-[11px] space-y-0.5 mt-1">
+                    <div className="font-medium">{equipmentLabel(selectedEquipment)}</div>
+                    {selectedEquipment.license_plate && <div>Гос. №: {selectedEquipment.license_plate}</div>}
+                    {selectedEquipment.inventory_number && <div>Инв. №: {selectedEquipment.inventory_number}</div>}
+                    {selectedEquipment.current_object_id && (
+                      <div>Объект: {objects.find((o: any) => o.id === selectedEquipment.current_object_id)?.name ?? "—"}</div>
+                    )}
+                    {selectedEquipment.responsible_name && <div>Ответственный: {selectedEquipment.responsible_name}</div>}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
