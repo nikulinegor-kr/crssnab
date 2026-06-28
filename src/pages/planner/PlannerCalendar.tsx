@@ -29,7 +29,9 @@ import { cn } from "@/lib/utils";
 const WEEK_DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export default function PlannerCalendar() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: allTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const [cursor, setCursor] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
