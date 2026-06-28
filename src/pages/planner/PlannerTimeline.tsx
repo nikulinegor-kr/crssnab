@@ -106,20 +106,7 @@ export default function PlannerTimeline() {
                     </span>
                     <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
                   </button>
-                ))}
-                    onClick={() => {
-                      setEditing(task);
-                      setDialogOpen(true);
-                    }}
-                    style={{ height: ROW_H }}
-                    className="w-full px-3 text-left text-xs flex items-center gap-2 border-b border-border/40 hover:bg-accent/40 transition truncate"
-                  >
-                    <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", PRIORITY_META[task.priority].dot)} />
-                    <span className={cn("truncate", task.status === "done" && "line-through text-muted-foreground")}>
-                      {task.title}
-                    </span>
-                  </button>
-                ))}
+              </div>
               </div>
 
               {/* Grid */}
