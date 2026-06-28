@@ -510,6 +510,24 @@ export default function EquipmentPage() {
                 <Input value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} placeholder="А123БВ777" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Текущий объект</Label>
+                <Select value={currentObjectId ?? "__none__"} onValueChange={(v) => setCurrentObjectId(v === "__none__" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Не привязан" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Не привязан —</SelectItem>
+                    {objects.map((o: any) => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Ответственный (ФИО)</Label>
+                <Input value={responsibleName} onChange={(e) => setResponsibleName(e.target.value)} placeholder="Иванов И.И." />
+              </div>
+            </div>
             <div>
               <Label>Комментарий</Label>
               <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Заметки..." rows={2} />
