@@ -15,6 +15,8 @@ import {
 import { ru } from "date-fns/locale";
 import { usePlannerTasks, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { cn } from "@/lib/utils";
 
 const DAY_W = 40;
