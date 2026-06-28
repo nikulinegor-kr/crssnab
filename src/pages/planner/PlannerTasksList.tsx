@@ -23,7 +23,10 @@ import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { cn } from "@/lib/utils";
 
 export default function PlannerTasksList() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: rawTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const { equipmentMap, objectMap } = usePlannerLookups();
+  const tasks = useMemo(() => filters.apply(rawTasks), [rawTasks, filters]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PlannerTaskStatus | "all">("all");
   const [onlyMine, setOnlyMine] = useState(false);
