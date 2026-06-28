@@ -22,6 +22,8 @@ import {
   type PlannerTask,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { cn } from "@/lib/utils";
 
 const WEEK_DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
