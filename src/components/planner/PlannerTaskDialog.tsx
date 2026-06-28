@@ -306,15 +306,11 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
               <div className="space-y-1.5">
                 <Label>Ответственный</Label>
-                <Select value={assigneeId ?? "none"} onValueChange={(v) => setAssigneeId(v === "none" ? null : v)}>
-                  <SelectTrigger><SelectValue placeholder="Не назначен" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.user_id} value={m.user_id}>{m.full_name || m.email}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={assigneeName}
+                  onChange={(e) => setAssigneeName(e.target.value)}
+                  placeholder="ФИО"
+                />
               </div>
 
               <div className="space-y-1.5">
