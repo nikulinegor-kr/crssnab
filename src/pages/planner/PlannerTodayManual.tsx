@@ -19,6 +19,10 @@ import {
   type PlannerTaskPriority,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
+import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
+import { Truck, MapPin } from "lucide-react";
 
 const PRIORITY_BAR: Record<PlannerTaskPriority, string> = {
   critical: "bg-red-500",
