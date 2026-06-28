@@ -104,7 +104,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("equipment")
-        .select("id, brand, model, license_plate, inventory_number, current_object_id, responsible_name")
+        .select("id, brand, model, plate_number, vin, current_object_id, responsible_name")
         .eq("organization_id", currentOrgId)
         .order("brand");
       return (data ?? []) as any[];
@@ -113,7 +113,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   });
 
   const equipmentLabel = (e: any) =>
-    [e.brand, e.model].filter(Boolean).join(" ").trim() || e.inventory_number || e.license_plate || "Техника";
+    [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
 
   // Filtered equipment if object pre-selected
   const visibleEquipment = objectId && !equipmentId
