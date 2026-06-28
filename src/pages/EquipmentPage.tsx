@@ -182,6 +182,7 @@ export default function EquipmentPage() {
   const openCreate = () => {
     setEditingId(null);
     setBrand(""); setModel(""); setVin(""); setYear(""); setPlateNumber(""); setComment("");
+    setCurrentObjectId(null); setResponsibleName("");
     setShowDialog(true);
   };
 
@@ -193,6 +194,8 @@ export default function EquipmentPage() {
     setYear(e.year?.toString() || "");
     setPlateNumber(e.plate_number || "");
     setComment(e.comment || "");
+    setCurrentObjectId(e.current_object_id ?? null);
+    setResponsibleName(e.responsible_name || "");
     setShowDialog(true);
   };
 
