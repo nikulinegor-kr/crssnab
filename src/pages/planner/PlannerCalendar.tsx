@@ -143,6 +143,13 @@ export default function PlannerCalendar() {
                         </div>
                       );
                     })}
+                    {items.slice(0, 3).some((t) => t.equipment_id || t.object_id) && (
+                      <div className="px-1">
+                        {items.slice(0, 1).map((t) => (
+                          <PlannerTaskMeta key={`m-${t.id}`} equipmentId={t.equipment_id} objectId={t.object_id} size="sm" />
+                        ))}
+                      </div>
+                    )}
                     {items.length > 3 && (
                       <div className="text-[10px] text-muted-foreground px-1">
                         +{items.length - 3}
