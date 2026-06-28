@@ -60,6 +60,8 @@ export function KanbanCard({
         </button>
       </div>
 
+      <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
+
       {(checklistTotal > 0 || dueDate || task.priority !== "medium" || assignee) && (
         <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
           {task.priority !== "medium" && (
