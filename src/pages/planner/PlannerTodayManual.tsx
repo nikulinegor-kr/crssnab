@@ -68,7 +68,62 @@ function TaskRow({ task, onOpen }: { task: PlannerTask; onOpen: (t: PlannerTask)
               {task.title}
             </span>
           </div>
+          </div>
+          <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} className="mt-1" />
         </button>
+      </div>
+    </Card>
+  );
+}
+
+function EquipmentByObjectBlock({ tasks }: { tasks: PlannerTask[] }) {
+  const { equipmentMap, objectMap } = usePlannerLookups();
+  const grouped = useMemo(() => {
+    const map = new Map<string, Map<string, number>>();
+    for (const t of tasks) {
+      if (!t.equipment_id) continue;
+      const eq = equipmentMap.get(t.equipment_id);
+      const objId = t.object_id || eq?.current_object_id;
+      if (!objId) continue;
+      const inner = map.get(objId) ?? new Map<string, number>();
+      inner.set(t.equipment_id, (inner.get(t.equipment_id) ?? 0) + 1);
+      map.set(objId, inner);
+    }
+    return Array.from(map.entries()).map(([oid, eqs]) => ({
+      objectId: oid,
+      objectName: objectMap.get(oid)?.name || "Объект",
+      equipment: Array.from(eqs.entries()).map(([id, count]) => ({
+        id,
+        label: (() => { const e = equipmentMap.get(id); return e ? `${e.brand} ${e.model}`.trim() : "Техника"; })(),
+        count,
+      })),
+    }));
+  }, [tasks, equipmentMap, objectMap]);
+
+  if (grouped.length === 0) return null;
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <MapPin className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold text-sm">Где сегодня работает техника</h3>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {grouped.map((g) => (
+          <div key={g.objectId} className="rounded-lg border border-border/60 p-3">
+            <div className="text-xs font-semibold flex items-center gap-1.5 mb-2">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> {g.objectName}
+            </div>
+            <ul className="space-y-1">
+              {g.equipment.map((e) => (
+                <li key={e.id} className="text-xs flex items-center gap-1.5">
+                  <Truck className="h-3 w-3 text-muted-foreground" />
+                  <span className="flex-1 truncate">{e.label}</span>
+                  <Badge variant="secondary" className="text-[10px]">{e.count}</Badge>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </Card>
   );
