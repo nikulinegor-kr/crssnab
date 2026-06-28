@@ -68,7 +68,6 @@ function TaskRow({ task, onOpen }: { task: PlannerTask; onOpen: (t: PlannerTask)
               {task.title}
             </span>
           </div>
-          </div>
           <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} className="mt-1" />
         </button>
       </div>
