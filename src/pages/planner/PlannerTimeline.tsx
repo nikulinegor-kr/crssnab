@@ -24,7 +24,9 @@ const ROW_H = 36;
 const RANGE_DAYS = 28;
 
 export default function PlannerTimeline() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: allTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const [cursor, setCursor] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
