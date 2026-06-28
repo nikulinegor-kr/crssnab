@@ -23,6 +23,7 @@ import {
 } from "@/hooks/usePlannerTasks";
 import { KanbanColumn, KanbanCard } from "@/components/planner/KanbanColumn";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 
 export default function PlannerKanban() {
   const { data: tasks = [], isLoading } = usePlannerTasks();
