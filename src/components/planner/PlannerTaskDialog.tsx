@@ -324,22 +324,6 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Этап</Label>
-                <Select value={stageId ?? "none"} onValueChange={(v) => setStageId(v === "none" ? null : v)}>
-                  <SelectTrigger><SelectValue placeholder="Без этапа" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {filteredStages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Оценка (часы)</Label>
-                <Input type="number" min={0} step="0.5" value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)} />
-              </div>
 
               <div className="space-y-1.5">
                 <Label>Начало</Label>
