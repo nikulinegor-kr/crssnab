@@ -54,6 +54,8 @@ export default function EquipmentPage() {
   const [year, setYear] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
+  const [currentObjectId, setCurrentObjectId] = useState<string | null>(null);
+  const [responsibleName, setResponsibleName] = useState("");
   const [importing, setImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
