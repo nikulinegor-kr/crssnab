@@ -938,10 +938,12 @@ export type Database = {
           brand: string
           comment: string | null
           created_at: string
+          current_object_id: string | null
           id: string
           model: string
           organization_id: string
           plate_number: string | null
+          responsible_name: string | null
           updated_at: string
           vin: string | null
           year: number | null
@@ -950,10 +952,12 @@ export type Database = {
           brand: string
           comment?: string | null
           created_at?: string
+          current_object_id?: string | null
           id?: string
           model: string
           organization_id: string
           plate_number?: string | null
+          responsible_name?: string | null
           updated_at?: string
           vin?: string | null
           year?: number | null
@@ -962,15 +966,24 @@ export type Database = {
           brand?: string
           comment?: string | null
           created_at?: string
+          current_object_id?: string | null
           id?: string
           model?: string
           organization_id?: string
           plate_number?: string | null
+          responsible_name?: string | null
           updated_at?: string
           vin?: string | null
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "equipment_current_object_id_fkey"
+            columns: ["current_object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "equipment_organization_id_fkey"
             columns: ["organization_id"]

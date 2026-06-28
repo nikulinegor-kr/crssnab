@@ -23,9 +23,12 @@ import {
 } from "@/hooks/usePlannerTasks";
 import { KanbanColumn, KanbanCard } from "@/components/planner/KanbanColumn";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 
 export default function PlannerKanban() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: allTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const update = useUpdatePlannerTask();
   const [activeTask, setActiveTask] = useState<PlannerTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);

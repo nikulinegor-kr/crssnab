@@ -22,12 +22,16 @@ import {
   type PlannerTask,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { cn } from "@/lib/utils";
 
 const WEEK_DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export default function PlannerCalendar() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: allTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const [cursor, setCursor] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
@@ -139,6 +143,13 @@ export default function PlannerCalendar() {
                         </div>
                       );
                     })}
+                    {items.slice(0, 3).some((t) => t.equipment_id || t.object_id) && (
+                      <div className="px-1">
+                        {items.slice(0, 1).map((t) => (
+                          <PlannerTaskMeta key={`m-${t.id}`} equipmentId={t.equipment_id} objectId={t.object_id} size="sm" />
+                        ))}
+                      </div>
+                    )}
                     {items.length > 3 && (
                       <div className="text-[10px] text-muted-foreground px-1">
                         +{items.length - 3}

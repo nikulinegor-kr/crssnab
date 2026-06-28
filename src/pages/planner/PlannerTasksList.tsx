@@ -15,12 +15,18 @@ import {
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
+import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { cn } from "@/lib/utils";
 
 export default function PlannerTasksList() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: rawTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const { equipmentMap, objectMap } = usePlannerLookups();
+  const tasks = useMemo(() => filters.apply(rawTasks), [rawTasks, filters]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PlannerTaskStatus | "all">("all");
   const [onlyMine, setOnlyMine] = useState(false);
@@ -92,55 +98,95 @@ export default function PlannerTasksList() {
           Задач пока нет
         </div>
       ) : (
-        <div className="rounded-lg border border-border/60 overflow-hidden">
-          {filtered.map((t, idx) => {
-            const pr = PRIORITY_META[t.priority];
-            const due = t.due_date ? new Date(t.due_date) : null;
-            const overdue = due && isPast(due) && t.status !== "done";
-            const checklistDone = t.checklist.filter((i) => i.done).length;
-            const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
-            return (
-              <button
-                key={t.id}
-                onClick={() => openEdit(t)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
-                  idx !== filtered.length - 1 && "border-b border-border/40"
-                )}
-              >
-                <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
-                <div className="flex-1 min-w-0">
-                  <div className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>
-                    {t.title}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                    <span>{PLANNER_COLUMNS.find((c) => c.id === t.status)?.title}</span>
-                    {t.checklist.length > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <ListChecks className="h-3 w-3" />
-                        {checklistDone}/{t.checklist.length}
-                      </span>
-                    )}
-                  </div>
+        (() => {
+          const groups: { key: string; label: string; items: typeof filtered }[] = [];
+          if (filters.groupBy === "none") {
+            groups.push({ key: "all", label: "", items: filtered });
+          } else {
+            const buckets = new Map<string, typeof filtered>();
+            for (const t of filtered) {
+              let key = "—";
+              let label = "Без привязки";
+              if (filters.groupBy === "object") {
+                const eq = t.equipment_id ? equipmentMap.get(t.equipment_id) : null;
+                const oid = t.object_id || eq?.current_object_id || null;
+                if (oid) { key = oid; label = objectMap.get(oid)?.name || "Объект"; }
+              } else if (filters.groupBy === "equipment") {
+                if (t.equipment_id) {
+                  const eq = equipmentMap.get(t.equipment_id);
+                  key = t.equipment_id;
+                  label = eq ? `${eq.brand} ${eq.model}`.trim() : "Техника";
+                }
+              }
+              const arr = buckets.get(key) ?? [];
+              arr.push(t);
+              buckets.set(key, arr);
+              if (!groups.find((g) => g.key === key)) groups.push({ key, label, items: arr });
+            }
+          }
+          return (
+            <div className="space-y-3">
+              {groups.map((group) => (
+                <div key={group.key} className="rounded-lg border border-border/60 overflow-hidden">
+                  {group.label && (
+                    <div className="px-3 py-1.5 text-xs font-semibold bg-muted/40 border-b border-border/40 flex items-center justify-between">
+                      <span>{group.label}</span>
+                      <span className="font-numeric text-muted-foreground">{group.items.length}</span>
+                    </div>
+                  )}
+                  {group.items.map((t, idx) => {
+                    const pr = PRIORITY_META[t.priority];
+                    const due = t.due_date ? new Date(t.due_date) : null;
+                    const overdue = due && isPast(due) && t.status !== "done";
+                    const checklistDone = t.checklist.filter((i) => i.done).length;
+                    const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => openEdit(t)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
+                          idx !== group.items.length - 1 && "border-b border-border/40"
+                        )}
+                      >
+                        <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
+                        <div className="flex-1 min-w-0">
+                          <div className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>
+                            {t.title}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span>{PLANNER_COLUMNS.find((c) => c.id === t.status)?.title}</span>
+                            {t.checklist.length > 0 && (
+                              <span className="inline-flex items-center gap-1">
+                                <ListChecks className="h-3 w-3" />
+                                {checklistDone}/{t.checklist.length}
+                              </span>
+                            )}
+                          </div>
+                          <PlannerTaskMeta equipmentId={t.equipment_id} objectId={t.object_id} className="mt-1" />
+                        </div>
+                        {assignee && (
+                          <Avatar className="h-6 w-6" title={assignee.full_name || assignee.email || ""}>
+                            <AvatarFallback className="text-[10px]">{initialsOf(assignee)}</AvatarFallback>
+                          </Avatar>
+                        )}
+                        {due && (
+                          <Badge
+                            variant="outline"
+                            className={cn("font-numeric text-[10px]", overdue && "border-destructive text-destructive")}
+                          >
+                            <CalendarClock className="h-3 w-3 mr-1" />
+                            {format(due, "d MMM", { locale: ru })}
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                {assignee && (
-                  <Avatar className="h-6 w-6" title={assignee.full_name || assignee.email || ""}>
-                    <AvatarFallback className="text-[10px]">{initialsOf(assignee)}</AvatarFallback>
-                  </Avatar>
-                )}
-                {due && (
-                  <Badge
-                    variant="outline"
-                    className={cn("font-numeric text-[10px]", overdue && "border-destructive text-destructive")}
-                  >
-                    <CalendarClock className="h-3 w-3 mr-1" />
-                    {format(due, "d MMM", { locale: ru })}
-                  </Badge>
-                )}
-              </button>
-            );
-          })}
-        </div>
+              ))}
+            </div>
+          );
+        })()
       )}
 
       <PlannerTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} task={editing} />

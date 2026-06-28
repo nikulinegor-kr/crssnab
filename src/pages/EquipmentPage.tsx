@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Search, Truck, Pencil, Trash2, Copy, Check, Upload, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 function CopyString({ equipment }: { equipment: any }) {
@@ -54,6 +55,8 @@ export default function EquipmentPage() {
   const [year, setYear] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
   const [comment, setComment] = useState("");
+  const [currentObjectId, setCurrentObjectId] = useState<string | null>(null);
+  const [responsibleName, setResponsibleName] = useState("");
   const [importing, setImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -85,6 +88,20 @@ export default function EquipmentPage() {
         .order("model");
       if (error) throw error;
       return data;
+    },
+    enabled: !!currentOrgId,
+  });
+
+  const { data: objects = [] } = useQuery({
+    queryKey: ["equipment-objects", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!currentOrgId,
   });
@@ -135,6 +152,8 @@ export default function EquipmentPage() {
         year: year ? parseInt(year) : null,
         plate_number: plateNumber || null,
         comment: comment || null,
+        current_object_id: currentObjectId,
+        responsible_name: responsibleName || null,
       };
       if (editingId) {
         const { error } = await supabase
@@ -178,6 +197,7 @@ export default function EquipmentPage() {
   const openCreate = () => {
     setEditingId(null);
     setBrand(""); setModel(""); setVin(""); setYear(""); setPlateNumber(""); setComment("");
+    setCurrentObjectId(null); setResponsibleName("");
     setShowDialog(true);
   };
 
@@ -189,6 +209,8 @@ export default function EquipmentPage() {
     setYear(e.year?.toString() || "");
     setPlateNumber(e.plate_number || "");
     setComment(e.comment || "");
+    setCurrentObjectId(e.current_object_id ?? null);
+    setResponsibleName(e.responsible_name || "");
     setShowDialog(true);
   };
 
@@ -486,6 +508,24 @@ export default function EquipmentPage() {
               <div>
                 <Label>Гос номер</Label>
                 <Input value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} placeholder="А123БВ777" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Текущий объект</Label>
+                <Select value={currentObjectId ?? "__none__"} onValueChange={(v) => setCurrentObjectId(v === "__none__" ? null : v)}>
+                  <SelectTrigger><SelectValue placeholder="Не привязан" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Не привязан —</SelectItem>
+                    {objects.map((o: any) => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Ответственный (ФИО)</Label>
+                <Input value={responsibleName} onChange={(e) => setResponsibleName(e.target.value)} placeholder="Иванов И.И." />
               </div>
             </div>
             <div>

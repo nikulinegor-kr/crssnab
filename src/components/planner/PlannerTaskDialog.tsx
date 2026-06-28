@@ -104,13 +104,35 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("equipment")
-        .select("id, name")
+        .select("id, brand, model, plate_number, vin, current_object_id, responsible_name")
         .eq("organization_id", currentOrgId)
-        .order("name");
-      return data ?? [];
+        .order("brand");
+      return (data ?? []) as any[];
     },
     enabled: !!currentOrgId && open,
   });
+
+  const equipmentLabel = (e: any) =>
+    [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
+
+  // Filtered equipment if object pre-selected
+  const visibleEquipment = objectId && !equipmentId
+    ? equipmentList.filter((e: any) => e.current_object_id === objectId)
+    : equipmentList;
+
+  // Auto-fill object when equipment selected
+  const handleEquipmentChange = (val: string) => {
+    const next = val === "__none__" ? null : val;
+    setEquipmentId(next);
+    if (next) {
+      const eq = equipmentList.find((e: any) => e.id === next);
+      if (eq?.current_object_id && !objectId) {
+        setObjectId(eq.current_object_id);
+      }
+    }
+  };
+
+  const selectedEquipment = equipmentId ? equipmentList.find((e: any) => e.id === equipmentId) : null;
 
   const { data: requestsList = [] } = useQuery({
     queryKey: ["planner-requests-pick", currentOrgId],
@@ -338,13 +360,29 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Техника</Label>
-                <Select value={equipmentId ?? "none"} onValueChange={(v) => setEquipmentId(v === "none" ? null : v)}>
+                <Select value={equipmentId ?? "__none__"} onValueChange={handleEquipmentChange}>
                   <SelectTrigger><SelectValue placeholder="Без техники" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {equipmentList.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                    <SelectItem value="__none__">—</SelectItem>
+                    {visibleEquipment.map((e: any) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {equipmentLabel(e)}
+                        {e.plate_number ? ` · ${e.plate_number}` : ""}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {selectedEquipment && (
+                  <div className="rounded-md border border-border/60 bg-muted/30 p-2 text-[11px] space-y-0.5 mt-1">
+                    <div className="font-medium">{equipmentLabel(selectedEquipment)}</div>
+                    {selectedEquipment.plate_number && <div>Гос. №: {selectedEquipment.plate_number}</div>}
+                    {selectedEquipment.vin && <div>VIN: {selectedEquipment.vin}</div>}
+                    {selectedEquipment.current_object_id && (
+                      <div>Объект: {objects.find((o: any) => o.id === selectedEquipment.current_object_id)?.name ?? "—"}</div>
+                    )}
+                    {selectedEquipment.responsible_name && <div>Ответственный: {selectedEquipment.responsible_name}</div>}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">

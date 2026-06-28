@@ -15,6 +15,8 @@ import {
 import { ru } from "date-fns/locale";
 import { usePlannerTasks, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { cn } from "@/lib/utils";
 
 const DAY_W = 40;
@@ -22,7 +24,9 @@ const ROW_H = 36;
 const RANGE_DAYS = 28;
 
 export default function PlannerTimeline() {
-  const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: allTasks = [], isLoading } = usePlannerTasks();
+  const filters = usePlannerFilters();
+  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const [cursor, setCursor] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
@@ -92,12 +96,15 @@ export default function PlannerTimeline() {
                       setDialogOpen(true);
                     }}
                     style={{ height: ROW_H }}
-                    className="w-full px-3 text-left text-xs flex items-center gap-2 border-b border-border/40 hover:bg-accent/40 transition truncate"
+                    className="w-full px-3 text-left text-xs flex flex-col justify-center gap-0.5 border-b border-border/40 hover:bg-accent/40 transition"
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", PRIORITY_META[task.priority].dot)} />
-                    <span className={cn("truncate", task.status === "done" && "line-through text-muted-foreground")}>
-                      {task.title}
+                    <span className="flex items-center gap-2 truncate">
+                      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", PRIORITY_META[task.priority].dot)} />
+                      <span className={cn("truncate", task.status === "done" && "line-through text-muted-foreground")}>
+                        {task.title}
+                      </span>
                     </span>
+                    <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
                   </button>
                 ))}
               </div>

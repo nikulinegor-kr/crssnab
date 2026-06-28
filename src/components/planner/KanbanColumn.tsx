@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PRIORITY_META, type PlannerTask, type PlannerTaskStatus } from "@/hooks/usePlannerTasks";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { PlannerTaskMeta } from "./PlannerTaskMeta";
 
 export function KanbanCard({
   task,
@@ -58,6 +59,8 @@ export function KanbanCard({
           <GripVertical className="h-4 w-4" />
         </button>
       </div>
+
+      <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
 
       {(checklistTotal > 0 || dueDate || task.priority !== "medium" || assignee) && (
         <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
