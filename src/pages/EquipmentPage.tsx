@@ -137,6 +137,8 @@ export default function EquipmentPage() {
         year: year ? parseInt(year) : null,
         plate_number: plateNumber || null,
         comment: comment || null,
+        current_object_id: currentObjectId,
+        responsible_name: responsibleName || null,
       };
       if (editingId) {
         const { error } = await supabase
