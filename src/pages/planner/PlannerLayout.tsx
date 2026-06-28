@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
+import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
+import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
 import {
   PlannerScopeProvider,
   plannerBasePath,
