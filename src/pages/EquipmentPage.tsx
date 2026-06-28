@@ -91,6 +91,20 @@ export default function EquipmentPage() {
     enabled: !!currentOrgId,
   });
 
+  const { data: objects = [] } = useQuery({
+    queryKey: ["equipment-objects", currentOrgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("request_objects")
+        .select("id, name")
+        .eq("organization_id", currentOrgId!)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!currentOrgId,
+  });
+
   // Normalize brand: trim, remove trailing punctuation, uppercase
   const normalizeBrand = (brand: string | null | undefined): string => {
     if (!brand) return "";
