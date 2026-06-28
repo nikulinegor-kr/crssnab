@@ -67,6 +67,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [objectId, setObjectId] = useState<string | null>(task?.object_id ?? defaultObjectId ?? null);
   const [stageId, setStageId] = useState<string | null>(task?.stage_id ?? null);
   const [assigneeId, setAssigneeId] = useState<string | null>(task?.assignee_id ?? null);
+  const [assigneeName, setAssigneeName] = useState<string>((task as any)?.assignee_name ?? "");
   const [startDate, setStartDate] = useState(task?.start_date?.slice(0, 10) ?? "");
   const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
   const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
