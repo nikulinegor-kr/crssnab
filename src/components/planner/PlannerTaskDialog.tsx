@@ -104,13 +104,35 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("equipment")
-        .select("id, name")
+        .select("id, brand, model, license_plate, inventory_number, current_object_id, responsible_name")
         .eq("organization_id", currentOrgId)
-        .order("name");
-      return data ?? [];
+        .order("brand");
+      return (data ?? []) as any[];
     },
     enabled: !!currentOrgId && open,
   });
+
+  const equipmentLabel = (e: any) =>
+    [e.brand, e.model].filter(Boolean).join(" ").trim() || e.inventory_number || e.license_plate || "Техника";
+
+  // Filtered equipment if object pre-selected
+  const visibleEquipment = objectId && !equipmentId
+    ? equipmentList.filter((e: any) => e.current_object_id === objectId)
+    : equipmentList;
+
+  // Auto-fill object when equipment selected
+  const handleEquipmentChange = (val: string) => {
+    const next = val === "__none__" ? null : val;
+    setEquipmentId(next);
+    if (next) {
+      const eq = equipmentList.find((e: any) => e.id === next);
+      if (eq?.current_object_id && !objectId) {
+        setObjectId(eq.current_object_id);
+      }
+    }
+  };
+
+  const selectedEquipment = equipmentId ? equipmentList.find((e: any) => e.id === equipmentId) : null;
 
   const { data: requestsList = [] } = useQuery({
     queryKey: ["planner-requests-pick", currentOrgId],
