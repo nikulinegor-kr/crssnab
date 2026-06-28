@@ -106,7 +106,7 @@ export default function PlannerTimeline() {
                     </span>
                     <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
                   </button>
-              </div>
+                ))}
               </div>
 
               {/* Grid */}
