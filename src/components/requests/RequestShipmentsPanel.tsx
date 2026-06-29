@@ -120,7 +120,7 @@ function ShipmentItemsBlock({ shipment, organizationId, canEdit }: { shipment: R
             onChange={(e) => setUnit(e.target.value)}
             className="h-7 text-xs w-16"
           />
-          <Button size="sm" variant="secondary" className="h-7" onClick={add}>
+          <Button type="button" size="sm" variant="secondary" className="h-7" onClick={add}>
             <Plus className="h-3 w-3" />
           </Button>
         </div>
