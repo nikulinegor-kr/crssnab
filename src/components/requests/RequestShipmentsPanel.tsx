@@ -148,7 +148,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Перевозки по заявке</div>
         {canEdit && (
-          <Button size="sm" variant="default" onClick={openCreate}>
+          <Button type="button" size="sm" variant="default" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Добавить перевозку
           </Button>
         )}
