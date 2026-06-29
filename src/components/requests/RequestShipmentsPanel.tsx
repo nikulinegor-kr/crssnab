@@ -85,6 +85,7 @@ function ShipmentItemsBlock({ shipment, organizationId, canEdit }: { shipment: R
               </span>
               {canEdit && (
                 <Button
+                  type="button"
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6"
@@ -119,7 +120,7 @@ function ShipmentItemsBlock({ shipment, organizationId, canEdit }: { shipment: R
             onChange={(e) => setUnit(e.target.value)}
             className="h-7 text-xs w-16"
           />
-          <Button size="sm" variant="secondary" className="h-7" onClick={add}>
+          <Button type="button" size="sm" variant="secondary" className="h-7" onClick={add}>
             <Plus className="h-3 w-3" />
           </Button>
         </div>
@@ -148,7 +149,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Перевозки по заявке</div>
         {canEdit && (
-          <Button size="sm" variant="default" onClick={openCreate}>
+          <Button type="button" size="sm" variant="default" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Добавить перевозку
           </Button>
         )}
@@ -176,10 +177,11 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 </div>
                 {canEdit && (
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}>
+                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
+                      type="button"
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive hover:text-destructive"
