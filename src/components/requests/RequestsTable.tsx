@@ -345,6 +345,18 @@ export const RequestsTable = ({
   const endIndex = startIndex + pageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
+  // Shipments tree expansion
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
+  const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
+
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
