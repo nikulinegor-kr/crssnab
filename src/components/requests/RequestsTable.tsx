@@ -610,19 +610,21 @@ export const RequestsTable = ({
                             field="description"
                             value={request.description}
                             displayValue={
-                              <RequestQuickPreview
-                                request={request}
-                                getStatusColor={getStatusColor}
-                                getPriorityColor={getPriorityColor}
-                                onEdit={onEditClick}
-                              >
-                                <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
-                                  <HighlightText text={request.description} searchQuery={searchQuery} />
-                                </div>
+                              <div className="space-y-1">
+                                <RequestQuickPreview
+                                  request={request}
+                                  getStatusColor={getStatusColor}
+                                  getPriorityColor={getPriorityColor}
+                                  onEdit={onEditClick}
+                                >
+                                  <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
+                                    <HighlightText text={request.description} searchQuery={searchQuery} />
+                                  </div>
+                                </RequestQuickPreview>
                                 {shipmentsSummary?.[request.id] && (
                                   <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
                                 )}
-                              </RequestQuickPreview>
+                              </div>
                             }
                           />
                         </div>
