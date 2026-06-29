@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
+import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown } from "lucide-react";
+import { RequestShipmentsPanel, ShipmentsSummaryChips } from "./RequestShipmentsPanel";
+import { useShipmentsSummary } from "@/hooks/useRequestShipments";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -343,6 +345,18 @@ export const RequestsTable = ({
   const endIndex = startIndex + pageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
+  // Shipments tree expansion
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
+  const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
+
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
@@ -443,6 +457,7 @@ export const RequestsTable = ({
           <TableHeader className="bg-muted/60 [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted [&_th]:shadow-sm">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '44px' }}>
               <TableHead className="w-[5px] p-0 border-r"></TableHead>
+              <TableHead className="w-[28px] min-w-[28px] max-w-[28px] p-0 border-r border-b" aria-label="Раскрыть"></TableHead>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -527,8 +542,8 @@ export const RequestsTable = ({
                const rowNumber = startIndex + index + 1;
               
               return (
+                <React.Fragment key={request.id}>
                   <TableRow
-                  key={request.id}
                   className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
@@ -541,6 +556,19 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
+                  <TableCell
+                    className="p-0 border-r border-b text-center align-middle"
+                    style={{ width: 28, minWidth: 28, maxWidth: 28 }}
+                    onClick={(e) => { e.stopPropagation(); toggleExpand(request.id); }}
+                  >
+                    <button
+                      type="button"
+                      className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
+                      aria-label={expandedRows.has(request.id) ? "Свернуть" : "Раскрыть перевозки"}
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
+                    </button>
+                  </TableCell>
                   <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
@@ -591,6 +619,9 @@ export const RequestsTable = ({
                                 <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
+                                {shipmentsSummary?.[request.id] && (
+                                  <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                )}
                               </RequestQuickPreview>
                             }
                           />
@@ -885,6 +916,18 @@ export const RequestsTable = ({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
+                {expandedRows.has(request.id) && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={100} className="p-0 border-b">
+                      <RequestShipmentsPanel
+                        requestId={request.id}
+                        organizationId={(request as any).organization_id}
+                        canEdit={true}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
               );
             })}
           </TableBody>

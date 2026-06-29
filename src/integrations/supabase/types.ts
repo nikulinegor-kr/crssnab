@@ -2973,6 +2973,83 @@ export type Database = {
           },
         ]
       }
+      request_shipments: {
+        Row: {
+          actual_arrival_date: string | null
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          document_urls: Json
+          driver_name: string | null
+          driver_phone: string | null
+          id: string
+          load_date: string | null
+          organization_id: string
+          planned_arrival_date: string | null
+          request_id: string
+          sequence_number: number
+          status: string
+          trailer_number: string | null
+          transport_company: string | null
+          transport_type: string
+          updated_at: string
+          vehicle_number: string | null
+          waybill_number: string | null
+        }
+        Insert: {
+          actual_arrival_date?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_urls?: Json
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          load_date?: string | null
+          organization_id: string
+          planned_arrival_date?: string | null
+          request_id: string
+          sequence_number?: number
+          status?: string
+          trailer_number?: string | null
+          transport_company?: string | null
+          transport_type?: string
+          updated_at?: string
+          vehicle_number?: string | null
+          waybill_number?: string | null
+        }
+        Update: {
+          actual_arrival_date?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_urls?: Json
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          load_date?: string | null
+          organization_id?: string
+          planned_arrival_date?: string | null
+          request_id?: string
+          sequence_number?: number
+          status?: string
+          trailer_number?: string | null
+          transport_company?: string | null
+          transport_type?: string
+          updated_at?: string
+          vehicle_number?: string | null
+          waybill_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_shipments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_statuses: {
         Row: {
           color: string | null
@@ -3271,6 +3348,50 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipment_items: {
+        Row: {
+          created_at: string
+          id: string
+          material_name: string
+          organization_id: string
+          product_id: string | null
+          quantity: number | null
+          shipment_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_name: string
+          organization_id: string
+          product_id?: string | null
+          quantity?: number | null
+          shipment_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_name?: string
+          organization_id?: string
+          product_id?: string | null
+          quantity?: number | null
+          shipment_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "request_shipments"
             referencedColumns: ["id"]
           },
         ]
