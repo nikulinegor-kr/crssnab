@@ -177,10 +177,11 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 </div>
                 {canEdit && (
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}>
+                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
+                      type="button"
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive hover:text-destructive"
