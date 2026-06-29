@@ -619,6 +619,9 @@ export const RequestsTable = ({
                                 <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
                                 </div>
+                                {shipmentsSummary?.[request.id] && (
+                                  <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                )}
                               </RequestQuickPreview>
                             }
                           />
