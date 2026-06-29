@@ -916,6 +916,18 @@ export const RequestsTable = ({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
+                {expandedRows.has(request.id) && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={100} className="p-0 border-b">
+                      <RequestShipmentsPanel
+                        requestId={request.id}
+                        organizationId={(request as any).organization_id}
+                        canEdit={!isReadOnly}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
               );
             })}
           </TableBody>
