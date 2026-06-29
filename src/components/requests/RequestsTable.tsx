@@ -922,7 +922,7 @@ export const RequestsTable = ({
                       <RequestShipmentsPanel
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
-                        canEdit={!isReadOnly}
+                        canEdit={true}
                       />
                     </TableCell>
                   </TableRow>
