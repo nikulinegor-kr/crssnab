@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type MouseEvent, useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Plus, Pencil, Trash2, Truck, Package, Train, Plane, Ship, ChevronRight, X } from "lucide-react";
@@ -105,7 +105,13 @@ function ShipmentItemsBlock({ shipment, organizationId, canEdit }: { shipment: R
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="h-7 text-xs flex-1"
-            onKeyDown={(e) => { if (e.key === "Enter") add(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                add();
+              }
+            }}
           />
           <Input
             placeholder="Кол-во"
@@ -141,8 +147,18 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RequestShipment | null>(null);
 
-  const openCreate = () => { setEditing(null); setDialogOpen(true); };
-  const openEdit = (s: RequestShipment) => { setEditing(s); setDialogOpen(true); };
+  const openCreate = (event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setEditing(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (s: RequestShipment, event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setEditing(s);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="bg-muted/30 border-l-4 border-primary/50 p-3 space-y-2">
@@ -177,7 +193,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 </div>
                 {canEdit && (
                   <div className="flex gap-1">
-                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(s)}>
+                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={(event) => openEdit(s, event)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
