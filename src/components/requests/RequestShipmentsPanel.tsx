@@ -85,6 +85,7 @@ function ShipmentItemsBlock({ shipment, organizationId, canEdit }: { shipment: R
               </span>
               {canEdit && (
                 <Button
+                  type="button"
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6"
