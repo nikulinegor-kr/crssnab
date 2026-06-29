@@ -730,6 +730,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
+          organizationId={currentOrgId}
         />
 
         {/* 8. Files — always visible */}

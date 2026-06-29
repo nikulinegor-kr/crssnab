@@ -1082,6 +1082,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           form={form}
           recentTransportCompanies={recentTransportCompanies}
           disabled={isViewer}
+          requestId={request?.id}
+          organizationId={request?.organization_id}
         />
 
         {/* 7. Additional: ZRS, Files */}
