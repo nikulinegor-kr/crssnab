@@ -460,6 +460,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           .single();
         
         if (data?.updated_at && serverUpdatedAt && data.updated_at !== serverUpdatedAt) {
+          if (!hasUnsavedChanges()) {
+            setServerUpdatedAt(data.updated_at);
+            return;
+          }
+
           const timeSinceLastSave = Date.now() - (lastServerSaveRef.current ? parseInt(lastServerSaveRef.current) : 0);
           if (timeSinceLastSave > 5000) {
             setShowConflictDialog(true);
@@ -474,7 +479,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     return () => {
       if (conflictCheckIntervalRef.current) clearInterval(conflictCheckIntervalRef.current);
     };
-  }, [open, request?.id, serverUpdatedAt]);
+  }, [open, request?.id, serverUpdatedAt, hasUnsavedChanges]);
 
   // Auto-save to server with debounce
   const saveToServer = useCallback(async (data: RequestFormData) => {

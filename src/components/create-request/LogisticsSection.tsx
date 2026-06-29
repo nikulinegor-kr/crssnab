@@ -53,10 +53,10 @@ export const LogisticsSection = ({
           <span className="text-xs text-muted-foreground">Тип доставки</span>
           <Tabs value={mode} onValueChange={(v) => setMode(v as "single" | "multi")}>
             <TabsList className="h-8">
-              <TabsTrigger value="single" className="text-xs px-3" disabled={disabled}>
+              <TabsTrigger type="button" value="single" className="text-xs px-3" disabled={disabled}>
                 Обычная доставка
               </TabsTrigger>
-              <TabsTrigger value="multi" className="text-xs px-3" disabled={disabled}>
+              <TabsTrigger type="button" value="multi" className="text-xs px-3" disabled={disabled}>
                 Несколько перевозок
               </TabsTrigger>
             </TabsList>

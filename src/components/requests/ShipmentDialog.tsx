@@ -160,8 +160,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
-          <Button onClick={handleSave} disabled={upsert.isPending}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="button" onClick={handleSave} disabled={upsert.isPending}>
             {shipment ? "Сохранить" : "Добавить"}
           </Button>
         </DialogFooter>
