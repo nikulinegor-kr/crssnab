@@ -556,19 +556,26 @@ export const RequestsTable = ({
                       borderRadius: '3px 0 0 3px',
                     }} 
                   />
-                  <TableCell
-                    className="p-0 border-r border-b text-center align-middle"
-                    style={{ width: 28, minWidth: 28, maxWidth: 28 }}
-                    onClick={(e) => { e.stopPropagation(); toggleExpand(request.id); }}
-                  >
-                    <button
-                      type="button"
-                      className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
-                      aria-label={expandedRows.has(request.id) ? "Свернуть" : "Раскрыть перевозки"}
-                    >
-                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
-                    </button>
-                  </TableCell>
+                  {(() => {
+                    const hasMulti = (shipmentsSummary?.[request.id]?.total ?? 0) >= 2;
+                    return (
+                      <TableCell
+                        className="p-0 border-r border-b text-center align-middle"
+                        style={{ width: 28, minWidth: 28, maxWidth: 28 }}
+                        onClick={(e) => { if (hasMulti) { e.stopPropagation(); toggleExpand(request.id); } }}
+                      >
+                        {hasMulti && (
+                          <button
+                            type="button"
+                            className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
+                            aria-label={expandedRows.has(request.id) ? "Свернуть" : "Раскрыть перевозки"}
+                          >
+                            <ChevronDown className={`h-4 w-4 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
+                          </button>
+                        )}
+                      </TableCell>
+                    );
+                  })()}
                   <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox

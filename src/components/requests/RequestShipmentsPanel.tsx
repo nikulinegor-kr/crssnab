@@ -237,7 +237,7 @@ export function ShipmentsSummaryChips({
   inTransit: number;
   overdue: number;
 }) {
-  if (total === 0) return null;
+  if (total < 2) return null;
   return (
     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
       <span title="Всего перевозок">🚛 {total}</span>
