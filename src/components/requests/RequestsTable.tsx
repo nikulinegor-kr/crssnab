@@ -466,18 +466,60 @@ export const RequestsTable = ({
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
-        {paginatedRequests.map((request) => (
-          <MobileRequestCard
-            key={request.id}
-            request={request}
-            isSelected={selectedRequestIds.has(request.id)}
-            onToggleSelection={() => toggleRequestSelection(request.id)}
-            onRowClick={(e) => handleRowClick(request, e)}
-            onDelete={(e) => onDeleteClick(request, e)}
-            searchQuery={searchQuery}
-          />
-        ))}
-        <PaginationControls />
+        <div className="flex justify-end pb-1">
+          <Toggle
+            pressed={groupByObject}
+            onPressedChange={toggleGroupByObject}
+            size="sm"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            По объектам
+          </Toggle>
+        </div>
+        {groupByObject && groupedRequests ? (
+          groupedRequests.map((g) => {
+            const collapsed = collapsedGroups.has(g.key);
+            return (
+              <div key={g.key} className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(g.key)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
+                >
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  <span className="truncate">{g.name}</span>
+                  <span className="ml-auto text-muted-foreground font-normal">{g.items.length}</span>
+                </button>
+                {!collapsed && g.items.map((request) => (
+                  <MobileRequestCard
+                    key={request.id}
+                    request={request}
+                    isSelected={selectedRequestIds.has(request.id)}
+                    onToggleSelection={() => toggleRequestSelection(request.id)}
+                    onRowClick={(e) => handleRowClick(request, e)}
+                    onDelete={(e) => onDeleteClick(request, e)}
+                    searchQuery={searchQuery}
+                  />
+                ))}
+              </div>
+            );
+          })
+        ) : (
+          paginatedRequests.map((request) => (
+            <MobileRequestCard
+              key={request.id}
+              request={request}
+              isSelected={selectedRequestIds.has(request.id)}
+              onToggleSelection={() => toggleRequestSelection(request.id)}
+              onRowClick={(e) => handleRowClick(request, e)}
+              onDelete={(e) => onDeleteClick(request, e)}
+              searchQuery={searchQuery}
+            />
+          ))
+        )}
+        {!groupByObject && <PaginationControls />}
       </div>
 
       {/* Desktop Table View */}
