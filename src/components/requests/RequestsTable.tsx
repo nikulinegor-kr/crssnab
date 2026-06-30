@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
 import { RequestShipmentsPanel, ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { useShipmentsSummary } from "@/hooks/useRequestShipments";
 import { Card } from "@/components/ui/card";
