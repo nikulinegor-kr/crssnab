@@ -220,6 +220,34 @@ export const RequestsTable = ({
   const handleColumnResize = useCallback((column: string, width: number) => {
     updateWidth(column as keyof ColumnWidths, width);
   }, [updateWidth]);
+
+  // Group by object
+  const [groupByObject, setGroupByObject] = useState<boolean>(() => {
+    return localStorage.getItem("requests-group-by-object") === "1";
+  });
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroupByObject = useCallback((v: boolean) => {
+    setGroupByObject(v);
+    localStorage.setItem("requests-group-by-object", v ? "1" : "0");
+  }, []);
+  const toggleGroup = useCallback((key: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Shipments tree expansion (moved above early returns to satisfy hooks rules)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
