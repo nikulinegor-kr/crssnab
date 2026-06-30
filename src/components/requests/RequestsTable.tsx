@@ -1047,10 +1047,11 @@ export const RequestsTable = ({
                 )}
                 </React.Fragment>
               );
-            })}
+              });
+            })()}
           </TableBody>
         </Table>
-        <PaginationControls />
+        {!groupByObject && <PaginationControls />}
         </div>
       </div>
       </div>
