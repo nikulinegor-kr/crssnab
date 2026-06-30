@@ -346,6 +346,30 @@ export const RequestsTable = ({
     openQuickView(request);
   }, [openQuickView, clickTimer]);
 
+  // Pagination calculations — disabled in grouped mode (show all)
+  const totalItems = sortedRequests?.length || 0;
+  const effectivePageSize = groupByObject ? Math.max(totalItems, 1) : pageSize;
+  const totalPages = groupByObject ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = groupByObject ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = startIndex + effectivePageSize;
+  const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
+
+  // Group by object — must stay before early returns to keep hook order stable
+  const groupedRequests = useMemo(() => {
+    if (!groupByObject) return null;
+    const groups = new Map<string, { key: string; name: string; items: typeof paginatedRequests }>();
+    for (const r of paginatedRequests) {
+      const name = (r as any).object_name || "Без объекта";
+      const key = (r as any).object_id || "__none__";
+      if (!groups.has(key)) groups.set(key, { key, name, items: [] });
+      groups.get(key)!.items.push(r);
+    }
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }, [groupByObject, paginatedRequests]);
+
+  const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
+  const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
+
   if (isLoading) {
     return (
       <div className="space-y-1.5">
@@ -366,30 +390,6 @@ export const RequestsTable = ({
       </div>
     );
   }
-
-  // Pagination calculations — disabled in grouped mode (show all)
-  const totalItems = sortedRequests?.length || 0;
-  const effectivePageSize = groupByObject ? Math.max(totalItems, 1) : pageSize;
-  const totalPages = groupByObject ? 1 : Math.ceil(totalItems / pageSize);
-  const startIndex = groupByObject ? 0 : (currentPage - 1) * pageSize;
-  const endIndex = startIndex + effectivePageSize;
-  const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
-
-  // Group by object
-  const groupedRequests = useMemo(() => {
-    if (!groupByObject) return null;
-    const groups = new Map<string, { key: string; name: string; items: typeof paginatedRequests }>();
-    for (const r of paginatedRequests) {
-      const name = (r as any).object_name || "Без объекта";
-      const key = (r as any).object_id || "__none__";
-      if (!groups.has(key)) groups.set(key, { key, name, items: [] });
-      groups.get(key)!.items.push(r);
-    }
-    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
-  }, [groupByObject, paginatedRequests]);
-
-  const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
-  const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
