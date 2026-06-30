@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
 import { RequestShipmentsPanel, ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { useShipmentsSummary } from "@/hooks/useRequestShipments";
 import { Card } from "@/components/ui/card";
@@ -219,6 +220,34 @@ export const RequestsTable = ({
   const handleColumnResize = useCallback((column: string, width: number) => {
     updateWidth(column as keyof ColumnWidths, width);
   }, [updateWidth]);
+
+  // Group by object
+  const [groupByObject, setGroupByObject] = useState<boolean>(() => {
+    return localStorage.getItem("requests-group-by-object") === "1";
+  });
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroupByObject = useCallback((v: boolean) => {
+    setGroupByObject(v);
+    localStorage.setItem("requests-group-by-object", v ? "1" : "0");
+  }, []);
+  const toggleGroup = useCallback((key: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Shipments tree expansion (moved above early returns to satisfy hooks rules)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
@@ -338,22 +367,27 @@ export const RequestsTable = ({
     );
   }
 
-  // Pagination calculations
+  // Pagination calculations — disabled in grouped mode (show all)
   const totalItems = sortedRequests?.length || 0;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  const effectivePageSize = groupByObject ? Math.max(totalItems, 1) : pageSize;
+  const totalPages = groupByObject ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = groupByObject ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
-  // Shipments tree expansion
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }, []);
+  // Group by object
+  const groupedRequests = useMemo(() => {
+    if (!groupByObject) return null;
+    const groups = new Map<string, { key: string; name: string; items: typeof paginatedRequests }>();
+    for (const r of paginatedRequests) {
+      const name = (r as any).object_name || "Без объекта";
+      const key = (r as any).object_id || "__none__";
+      if (!groups.has(key)) groups.set(key, { key, name, items: [] });
+      groups.get(key)!.items.push(r);
+    }
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }, [groupByObject, paginatedRequests]);
+
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
 
@@ -432,23 +466,75 @@ export const RequestsTable = ({
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
-        {paginatedRequests.map((request) => (
-          <MobileRequestCard
-            key={request.id}
-            request={request}
-            isSelected={selectedRequestIds.has(request.id)}
-            onToggleSelection={() => toggleRequestSelection(request.id)}
-            onRowClick={(e) => handleRowClick(request, e)}
-            onDelete={(e) => onDeleteClick(request, e)}
-            searchQuery={searchQuery}
-          />
-        ))}
-        <PaginationControls />
+        <div className="flex justify-end pb-1">
+          <Toggle
+            pressed={groupByObject}
+            onPressedChange={toggleGroupByObject}
+            size="sm"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            По объектам
+          </Toggle>
+        </div>
+        {groupByObject && groupedRequests ? (
+          groupedRequests.map((g) => {
+            const collapsed = collapsedGroups.has(g.key);
+            return (
+              <div key={g.key} className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(g.key)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
+                >
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  <span className="truncate">{g.name}</span>
+                  <span className="ml-auto text-muted-foreground font-normal">{g.items.length}</span>
+                </button>
+                {!collapsed && g.items.map((request) => (
+                  <MobileRequestCard
+                    key={request.id}
+                    request={request}
+                    isSelected={selectedRequestIds.has(request.id)}
+                    onToggleSelection={() => toggleRequestSelection(request.id)}
+                    onRowClick={(e) => handleRowClick(request, e)}
+                    onDelete={(e) => onDeleteClick(request, e)}
+                    searchQuery={searchQuery}
+                  />
+                ))}
+              </div>
+            );
+          })
+        ) : (
+          paginatedRequests.map((request) => (
+            <MobileRequestCard
+              key={request.id}
+              request={request}
+              isSelected={selectedRequestIds.has(request.id)}
+              onToggleSelection={() => toggleRequestSelection(request.id)}
+              onRowClick={(e) => handleRowClick(request, e)}
+              onDelete={(e) => onDeleteClick(request, e)}
+              searchQuery={searchQuery}
+            />
+          ))
+        )}
+        {!groupByObject && <PaginationControls />}
       </div>
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
         <div className="flex items-center justify-end gap-2 mb-2">
+          <Toggle
+            pressed={groupByObject}
+            onPressedChange={toggleGroupByObject}
+            size="sm"
+            aria-label="Группировать по объектам"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Группировать по объектам
+          </Toggle>
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
@@ -531,17 +617,82 @@ export const RequestsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRequests.map((request, index) => {
-              const priorityColor = request.priority === "Аварийно" 
-                ? "#ef4444" 
-                : request.priority === "Приоритетно" 
-                  ? "#f97316" 
-                  : "#d1d5db";
-              
-               const isEvenRow = index % 2 === 1;
-               const rowNumber = startIndex + index + 1;
-              
-              return (
+            {(() => {
+              type Item =
+                | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
+                | { kind: "row"; request: typeof paginatedRequests[number]; index: number };
+              const items: Item[] = [];
+              if (groupByObject && groupedRequests) {
+                let idx = 0;
+                for (const g of groupedRequests) {
+                  items.push({ kind: "group", key: g.key, name: g.name, items: g.items });
+                  if (!collapsedGroups.has(g.key)) {
+                    for (const r of g.items) {
+                      items.push({ kind: "row", request: r, index: idx++ });
+                    }
+                  } else {
+                    idx += g.items.length;
+                  }
+                }
+              } else {
+                paginatedRequests.forEach((r, i) => items.push({ kind: "row", request: r, index: i }));
+              }
+              return items.map((it) => {
+                if (it.kind === "group") {
+                  const counts = it.items.reduce(
+                    (acc, r) => {
+                      acc.total += 1;
+                      if (r.priority === "Аварийно") acc.emergency += 1;
+                      else if (r.priority === "Приоритетно") acc.priority += 1;
+                      else acc.planned += 1;
+                      if (r.status === "В работе") acc.inWork += 1;
+                      if (r.status === "Доставлено") acc.delivered += 1;
+                      acc.amount += Number(r.amount || 0);
+                      return acc;
+                    },
+                    { total: 0, emergency: 0, priority: 0, planned: 0, inWork: 0, delivered: 0, amount: 0 }
+                  );
+                  const collapsed = collapsedGroups.has(it.key);
+                  return (
+                    <TableRow
+                      key={`grp-${it.key}`}
+                      className="bg-muted/70 hover:bg-muted cursor-pointer border-y-2 border-primary/20"
+                      onClick={() => toggleGroup(it.key)}
+                    >
+                      <TableCell colSpan={100} className="px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                          <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="font-semibold text-foreground">{it.name}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">{counts.total} заявок</span>
+                          {counts.emergency > 0 && <span className="text-red-600 font-medium">🔴 {counts.emergency} ав.</span>}
+                          {counts.priority > 0 && <span className="text-orange-600 font-medium">🟠 {counts.priority} приор.</span>}
+                          {counts.planned > 0 && <span className="text-blue-600 font-medium">🔵 {counts.planned} плановых</span>}
+                          {counts.inWork > 0 && <span className="text-muted-foreground">⚙ {counts.inWork} в работе</span>}
+                          {counts.delivered > 0 && <span className="text-emerald-600">✓ {counts.delivered} доставлено</span>}
+                          {counts.amount > 0 && (
+                            <span className="ml-auto font-semibold text-foreground">
+                              {new Intl.NumberFormat("ru-RU").format(Math.round(counts.amount))} ₽
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+                const request = it.request;
+                const index = it.index;
+                const priorityColor = request.priority === "Аварийно"
+                  ? "#ef4444"
+                  : request.priority === "Приоритетно"
+                    ? "#f97316"
+                    : "#d1d5db";
+
+                const isEvenRow = index % 2 === 1;
+                const rowNumber = startIndex + index + 1;
+
+                return (
                 <React.Fragment key={request.id}>
                   <TableRow
                   className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''}`}
@@ -938,10 +1089,11 @@ export const RequestsTable = ({
                 )}
                 </React.Fragment>
               );
-            })}
+              });
+            })()}
           </TableBody>
         </Table>
-        <PaginationControls />
+        {!groupByObject && <PaginationControls />}
         </div>
       </div>
       </div>
