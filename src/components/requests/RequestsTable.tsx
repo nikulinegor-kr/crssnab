@@ -575,17 +575,82 @@ export const RequestsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRequests.map((request, index) => {
-              const priorityColor = request.priority === "Аварийно" 
-                ? "#ef4444" 
-                : request.priority === "Приоритетно" 
-                  ? "#f97316" 
-                  : "#d1d5db";
-              
-               const isEvenRow = index % 2 === 1;
-               const rowNumber = startIndex + index + 1;
-              
-              return (
+            {(() => {
+              type Item =
+                | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
+                | { kind: "row"; request: typeof paginatedRequests[number]; index: number };
+              const items: Item[] = [];
+              if (groupByObject && groupedRequests) {
+                let idx = 0;
+                for (const g of groupedRequests) {
+                  items.push({ kind: "group", key: g.key, name: g.name, items: g.items });
+                  if (!collapsedGroups.has(g.key)) {
+                    for (const r of g.items) {
+                      items.push({ kind: "row", request: r, index: idx++ });
+                    }
+                  } else {
+                    idx += g.items.length;
+                  }
+                }
+              } else {
+                paginatedRequests.forEach((r, i) => items.push({ kind: "row", request: r, index: i }));
+              }
+              return items.map((it) => {
+                if (it.kind === "group") {
+                  const counts = it.items.reduce(
+                    (acc, r) => {
+                      acc.total += 1;
+                      if (r.priority === "Аварийно") acc.emergency += 1;
+                      else if (r.priority === "Приоритетно") acc.priority += 1;
+                      else acc.planned += 1;
+                      if (r.status === "В работе") acc.inWork += 1;
+                      if (r.status === "Доставлено") acc.delivered += 1;
+                      acc.amount += Number(r.amount || 0);
+                      return acc;
+                    },
+                    { total: 0, emergency: 0, priority: 0, planned: 0, inWork: 0, delivered: 0, amount: 0 }
+                  );
+                  const collapsed = collapsedGroups.has(it.key);
+                  return (
+                    <TableRow
+                      key={`grp-${it.key}`}
+                      className="bg-muted/70 hover:bg-muted cursor-pointer border-y-2 border-primary/20"
+                      onClick={() => toggleGroup(it.key)}
+                    >
+                      <TableCell colSpan={100} className="px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                          <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="font-semibold text-foreground">{it.name}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">{counts.total} заявок</span>
+                          {counts.emergency > 0 && <span className="text-red-600 font-medium">🔴 {counts.emergency} ав.</span>}
+                          {counts.priority > 0 && <span className="text-orange-600 font-medium">🟠 {counts.priority} приор.</span>}
+                          {counts.planned > 0 && <span className="text-blue-600 font-medium">🔵 {counts.planned} плановых</span>}
+                          {counts.inWork > 0 && <span className="text-muted-foreground">⚙ {counts.inWork} в работе</span>}
+                          {counts.delivered > 0 && <span className="text-emerald-600">✓ {counts.delivered} доставлено</span>}
+                          {counts.amount > 0 && (
+                            <span className="ml-auto font-semibold text-foreground">
+                              {new Intl.NumberFormat("ru-RU").format(Math.round(counts.amount))} ₽
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+                const request = it.request;
+                const index = it.index;
+                const priorityColor = request.priority === "Аварийно"
+                  ? "#ef4444"
+                  : request.priority === "Приоритетно"
+                    ? "#f97316"
+                    : "#d1d5db";
+
+                const isEvenRow = index % 2 === 1;
+                const rowNumber = startIndex + index + 1;
+
+                return (
                 <React.Fragment key={request.id}>
                   <TableRow
                   className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''}`}
