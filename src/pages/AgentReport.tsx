@@ -189,8 +189,6 @@ const AgentReport = () => {
     const filtered = (requests || []).filter((r: Request) => {
       if (totalAmount(r) <= 0) return false;
       if (!ALLOWED_STATUSES.has((r as any).status)) return false;
-      const contractor = ((r as any).contractor || "").trim();
-      if (contractor.includes("ИП Никулин") || contractor.includes("Никулин Е.В")) return false;
       return matchesMonth(r.delivery_date) || matchesMonth(r.shipment_date);
     });
 
