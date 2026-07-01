@@ -5,15 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, Package } from "lucide-react";
 import {
   SHIPMENT_STATUSES,
   TRANSPORT_TYPES,
   type RequestShipment,
+  type ShipmentItem,
   type ShipmentStatus,
   type TransportType,
+  useShipmentItems,
   useUpsertShipment,
+  useUpsertShipmentItem,
+  useDeleteShipmentItem,
 } from "@/hooks/useRequestShipments";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   open: boolean;
@@ -23,9 +30,21 @@ interface Props {
   shipment?: RequestShipment | null;
 }
 
+interface DraftItem {
+  id?: string;
+  material_name: string;
+  quantity: string;
+  unit: string;
+}
+
 export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment }: Props) {
   const upsert = useUpsertShipment();
+  const upsertItem = useUpsertShipmentItem();
+  const deleteItem = useDeleteShipmentItem();
   const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: existingItems = [] } = useShipmentItems(shipment?.id ?? null);
+
   const [transportType, setTransportType] = useState<TransportType>("auto");
   const [transportCompany, setTransportCompany] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
@@ -38,6 +57,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const [actualDate, setActualDate] = useState("");
   const [status, setStatus] = useState<ShipmentStatus>("Ожидает погрузки");
   const [comment, setComment] = useState("");
+  const [items, setItems] = useState<DraftItem[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,11 +74,62 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
     setActualDate(shipment?.actual_arrival_date ?? "");
     setStatus((shipment?.status ?? "Ожидает погрузки") as ShipmentStatus);
     setComment(shipment?.comment ?? "");
+    setDeletedIds([]);
   }, [open, shipment]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (shipment?.id) {
+      setItems(
+        existingItems.map((i) => ({
+          id: i.id,
+          material_name: i.material_name,
+          quantity: i.quantity != null ? String(i.quantity) : "",
+          unit: i.unit ?? "шт",
+        }))
+      );
+    } else {
+      setItems([]);
+    }
+  }, [open, shipment?.id, existingItems.length]);
+
+  const addRow = () => setItems((p) => [...p, { material_name: "", quantity: "", unit: "шт" }]);
+  const updateRow = (idx: number, patch: Partial<DraftItem>) =>
+    setItems((p) => p.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  const removeRow = (idx: number) => {
+    setItems((p) => {
+      const row = p[idx];
+      if (row.id) setDeletedIds((d) => [...d, row.id!]);
+      return p.filter((_, i) => i !== idx);
+    });
+  };
+
+  const saveItems = async (shipmentId: string) => {
+    for (const id of deletedIds) {
+      await (supabase as any).from("shipment_items").delete().eq("id", id);
+    }
+    for (const row of items) {
+      const name = row.material_name.trim();
+      if (!name) continue;
+      const payload: any = {
+        shipment_id: shipmentId,
+        organization_id: organizationId,
+        material_name: name,
+        quantity: row.quantity ? Number(row.quantity) : null,
+        unit: row.unit || null,
+      };
+      if (row.id) {
+        await (supabase as any).from("shipment_items").update(payload).eq("id", row.id);
+      } else {
+        await (supabase as any).from("shipment_items").insert(payload);
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["shipment-items", shipmentId] });
+  };
 
   const handleSave = async () => {
     try {
-      await upsert.mutateAsync({
+      const saved = await upsert.mutateAsync({
         id: shipment?.id,
         request_id: requestId,
         organization_id: organizationId,
@@ -74,6 +146,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
         status,
         comment: comment || null,
       } as any);
+      await saveItems((saved as any).id);
       toast({ title: shipment ? "Перевозка обновлена" : "Перевозка добавлена" });
       onOpenChange(false);
     } catch (e: any) {
@@ -156,6 +229,56 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
           <div className="space-y-1 sm:col-span-2">
             <Label>Комментарий</Label>
             <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
+          </div>
+
+          {/* Materials */}
+          <div className="sm:col-span-2 space-y-2 border-t pt-3 mt-1">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Package className="h-4 w-4" /> Материалы в перевозке
+              </Label>
+              <Button type="button" size="sm" variant="outline" onClick={addRow}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Добавить
+              </Button>
+            </div>
+            {items.length === 0 ? (
+              <div className="text-xs text-muted-foreground py-2">Нет материалов</div>
+            ) : (
+              <div className="space-y-2">
+                {items.map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                    <Input
+                      className="col-span-7 h-9"
+                      placeholder="Наименование"
+                      value={row.material_name}
+                      onChange={(e) => updateRow(idx, { material_name: e.target.value })}
+                    />
+                    <Input
+                      className="col-span-2 h-9"
+                      type="number"
+                      placeholder="Кол-во"
+                      value={row.quantity}
+                      onChange={(e) => updateRow(idx, { quantity: e.target.value })}
+                    />
+                    <Input
+                      className="col-span-2 h-9"
+                      placeholder="ед."
+                      value={row.unit}
+                      onChange={(e) => updateRow(idx, { unit: e.target.value })}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="col-span-1 h-9 w-9"
+                      onClick={() => removeRow(idx)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
