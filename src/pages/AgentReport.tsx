@@ -552,10 +552,19 @@ const AgentReport = () => {
             }
           });
         }
-        const removedCount = existingRaw.filter(r => r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))).length;
-        const existing = existingRaw.filter(r => !(r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))));
+        const isNikulin = (c: string) => {
+          const v = (c || "").trim();
+          return v.includes("ИП Никулин") || v.includes("Никулин Е.В");
+        };
+        const removedByStatus = existingRaw.filter(r => r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))).length;
+        const removedByNikulin = existingRaw.filter(r => isNikulin(r.contractor)).length;
+        const removedCount = removedByStatus + removedByNikulin;
+        const existing = existingRaw.filter(r =>
+          !(r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))) &&
+          !isNikulin(r.contractor)
+        );
         if (removedCount > 0) {
-          console.log(`[UU Report] Auto-removed ${removedCount} row(s) — request status no longer "В пути"/"Доставлено"`);
+          console.log(`[UU Report] Auto-removed ${removedCount} row(s) — status filter or ИП Никулин`);
         }
 
         // === MERGE-SYNC: дотягиваем недостающие заявки за период ===
