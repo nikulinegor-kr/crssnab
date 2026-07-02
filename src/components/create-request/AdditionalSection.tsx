@@ -48,7 +48,11 @@ export const AdditionalSection = ({
   const [isSending, setIsSending] = useState(false);
 
   const handleCopyZRS = async () => {
-    const zrsText = `Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
+    const reqDate = formValues.request_date
+      ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
+      : "-";
+    const zrsText = `Дата заявки: ${reqDate}
+Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}
 Приоритет: ${formValues.priority || "-"}
