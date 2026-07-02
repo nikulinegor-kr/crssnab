@@ -494,7 +494,6 @@ export default function AnalyticsDayPrepPage() {
 
     const brief = (r: AnalyticsRequest) => ({
       id: r.id,
-      number: r.request_number,
       description: r.description,
       object: obj(r),
       executor: r.executor,
