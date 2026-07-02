@@ -741,6 +741,53 @@ export default function AnalyticsDayPrepPage() {
         </Button>
       </div>
 
+      {/* AI-отчёт */}
+      <Card className="p-5">
+        {!aiContent && !aiLoading && (
+          <div className="text-sm text-muted-foreground">
+            Нажмите «Сформировать AI-резюме дня», чтобы получить готовый управленческий отчёт со списками заявок, счетов и действий.
+          </div>
+        )}
+        {aiLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> AI формирует отчёт…
+          </div>
+        )}
+        {aiContent && (
+          <article className="prose prose-sm dark:prose-invert max-w-none prose-headings:scroll-mt-20">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children, ...props }) => {
+                  const url = String(href ?? "");
+                  if (url.startsWith("/")) {
+                    return (
+                      <a
+                        href={url}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(url);
+                        }}
+                        className="text-primary underline underline-offset-2 hover:text-primary/80"
+                        {...props}
+                      >
+                        {children}
+                      </a>
+                    );
+                  }
+                  return (
+                    <a href={url} target="_blank" rel="noreferrer" {...props}>
+                      {children}
+                    </a>
+                  );
+                },
+              }}
+            >
+              {aiContent}
+            </ReactMarkdown>
+          </article>
+        )}
+      </Card>
+
       {/* Действия на сегодня — быстрый доступ к ключевым задачам дня */}
       <TodayActionsBlock
         groups={[
