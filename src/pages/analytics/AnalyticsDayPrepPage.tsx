@@ -650,8 +650,57 @@ export default function AnalyticsDayPrepPage() {
         </Button>
       </div>
 
+      {/* Действия на сегодня — быстрый доступ к ключевым задачам дня */}
+      <TodayActionsBlock
+        groups={[
+          {
+            key: "pay",
+            title: "Оплатить сегодня",
+            icon: Wallet,
+            tone: "warning",
+            items: payToday,
+          },
+          {
+            key: "ship",
+            title: "Отгрузить сегодня",
+            icon: Truck,
+            tone: "default",
+            items: shipToday,
+          },
+          {
+            key: "arrive",
+            title: "Приёмка сегодня",
+            icon: Calendar,
+            tone: "success",
+            items: arriveToday,
+          },
+          {
+            key: "soon",
+            title: "Сроки в ближайшие 3 дня",
+            icon: Clock,
+            tone: "default",
+            items: soonBreak.map((s) => s.request),
+          },
+          {
+            key: "emerg",
+            title: "Мои аварийные",
+            icon: AlertTriangle,
+            tone: "danger",
+            items: myEmergency,
+          },
+          {
+            key: "ov",
+            title: "Мои просроченные",
+            icon: AlertTriangle,
+            tone: "danger",
+            items: myOverdue,
+          },
+        ]}
+      />
+
       {/* 1. Мои задачи */}
       <SectionHeader index={1} title="Мои задачи на сегодня" hint="Сформировано автоматически по данным CRM" />
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {myTasks.map((t) => (
           <RequestListCard
