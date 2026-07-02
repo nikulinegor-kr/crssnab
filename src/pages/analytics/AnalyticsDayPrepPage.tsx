@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,10 @@ import {
   totalAmount,
   useAnalyticsRequests,
 } from "@/hooks/useAnalyticsRequests";
+
+const STALE_DAYS = 5;
+const fmtMoneyPlain = (n: number) =>
+  n.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) + " ₽";
 
 const DELIVERED = new Set(["Доставлено"]);
 const CLOSED = new Set(["Отменено", "Отклонено", "Закрыто", "Архив"]);
