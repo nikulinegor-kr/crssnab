@@ -912,7 +912,7 @@ export default function AnalyticsDayPrepPage() {
                       to={`/requests/${r.id}`}
                       className="block text-xs text-muted-foreground hover:text-foreground truncate"
                     >
-                      • {r.description || r.request_number}
+                      • {r.description || "Без названия"}
                     </Link>
                   ))}
                 </div>
