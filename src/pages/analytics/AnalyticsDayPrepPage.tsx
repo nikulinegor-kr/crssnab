@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,10 @@ import {
   totalAmount,
   useAnalyticsRequests,
 } from "@/hooks/useAnalyticsRequests";
+
+const STALE_DAYS = 5;
+const fmtMoneyPlain = (n: number) =>
+  n.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) + " ₽";
 
 const DELIVERED = new Set(["Доставлено"]);
 const CLOSED = new Set(["Отменено", "Отклонено", "Закрыто", "Архив"]);
@@ -202,6 +206,8 @@ export default function AnalyticsDayPrepPage() {
   const [myName, setMyName] = useState<string | null>(null);
   const [aiContent, setAiContent] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [objectMap, setObjectMap] = useState<Record<string, string>>({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancel = false;
@@ -219,6 +225,24 @@ export default function AnalyticsDayPrepPage() {
       cancel = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentOrgId) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("request_objects")
+        .select("id,name")
+        .eq("organization_id", currentOrgId);
+      if (cancel || !data) return;
+      const map: Record<string, string> = {};
+      for (const o of data as { id: string; name: string }[]) map[o.id] = o.name;
+      setObjectMap(map);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [currentOrgId]);
 
   const open = useMemo(() => requests.filter(isOpen), [requests]);
 
@@ -371,56 +395,199 @@ export default function AnalyticsDayPrepPage() {
       };
     });
 
-  // 6. AI рекомендации
-  const buildSnapshot = () => ({
-    today: TODAY_ISO,
-    manager: myName ?? "Никулин Е.В.",
-    totals: {
-      open: open.length,
-      emergency: open.filter(isEmergency).length,
-      overdue: open.filter(isOverdue).length,
-      no_executor: needsExecutor.length,
-      no_supplier: noSupplier.length,
-      accounting: stuckAccounting.length,
-    },
-    my_tasks: myTasks.map((t) => ({ title: t.title, count: t.items.length })),
-    stuck: {
-      accounting_top: stuckAccounting.slice(0, 5).map((x) => ({
-        id: x.request.id,
-        description: x.request.description,
-        contractor: x.request.contractor,
-        invoice: x.request.invoice_number,
-        amount: totalAmount(x.request),
-        waiting_days: ageDays(x.request),
-      })),
-      procurement_needs: procurementNeeds.map((p) => ({ label: p.label, count: p.items.length })),
-      overdue_top: overdueList.slice(0, 5).map((x) => ({
-        id: x.request.id,
-        description: x.request.description,
-        executor: x.request.executor,
+  // 6. AI рекомендации — детальный снимок для управленческого отчёта
+  const buildSnapshot = () => {
+    const nowIso = new Date().toISOString();
+    const obj = (r: AnalyticsRequest) =>
+      (r.object_id && objectMap[r.object_id]) || null;
+
+    const brief = (r: AnalyticsRequest) => ({
+      id: r.id,
+      number: r.request_number,
+      description: r.description,
+      object: obj(r),
+      executor: r.executor,
+      contractor: r.contractor,
+      status: r.status,
+      priority: r.priority,
+      amount: totalAmount(r),
+      invoice_number: r.invoice_number,
+      invoice_date: r.invoice_date,
+      payment_status: r.payment_status,
+      shipment_date: r.shipment_date,
+      delivery_date: r.delivery_date ?? r.planned_delivery_date,
+      age_days: ageDays(r),
+    });
+
+    // Причина просрочки — эвристика
+    const overdueReason = (r: AnalyticsRequest) => {
+      if (!r.contractor) return "не назначен поставщик";
+      if (!r.invoice_number && totalAmount(r) === 0) return "не выставлен счёт";
+      if (
+        r.payment_status &&
+        r.payment_status.toLowerCase().includes("ожид")
+      )
+        return "счёт ожидает оплаты";
+      if (ACCOUNTING_STATUSES.has(r.status ?? "")) return "счёт в бухгалтерии";
+      if (!r.shipment_date) return "не оформлена отгрузка";
+      if (!r.transport_company) return "не выбрана транспортная компания";
+      return "требуется контроль исполнителя";
+    };
+
+    // Заявки без движения
+    const stalled = open
+      .filter((r) => ageDays(r) > STALE_DAYS)
+      .map((r) => ({
+        ...brief(r),
+        stalled_days: ageDays(r),
+        next_owner:
+          ACCOUNTING_STATUSES.has(r.status ?? "")
+            ? "Бухгалтерия"
+            : (r.executor ?? "не назначен"),
+      }))
+      .sort((a, b) => b.stalled_days - a.stalled_days)
+      .slice(0, 40);
+
+    // Счета ожидают оплаты
+    const invoicesPendingPay = open
+      .filter(
+        (r) =>
+          r.payment_status &&
+          r.payment_status.toLowerCase().includes("ожид") &&
+          totalAmount(r) > 0,
+      )
+      .map((r) => ({
+        ...brief(r),
+        waiting_days: r.invoice_date
+          ? daysBetween(r.invoice_date, nowIso) ?? 0
+          : ageDays(r),
+      }))
+      .sort((a, b) => b.waiting_days - a.waiting_days);
+
+    const invoicesPendingTotal = invoicesPendingPay.reduce(
+      (s, x) => s + (x.amount || 0),
+      0,
+    );
+
+    // Бухгалтерия
+    const accountingDetailed = open
+      .filter((r) => ACCOUNTING_STATUSES.has(r.status ?? ""))
+      .map((r) => ({ ...brief(r), waiting_days: ageDays(r) }))
+      .sort((a, b) => b.waiting_days - a.waiting_days);
+
+    const accountingTotal = accountingDetailed.reduce(
+      (s, x) => s + (x.amount || 0),
+      0,
+    );
+    const accountingAvgWait = accountingDetailed.length
+      ? Math.round(
+          (accountingDetailed.reduce((s, x) => s + x.waiting_days, 0) /
+            accountingDetailed.length) *
+            10,
+        ) / 10
+      : 0;
+
+    // Среднее время выполнения — по доставленным
+    const closed = requests.filter(
+      (r) => (r.status ?? "") === "Доставлено" && r.delivery_date,
+    );
+    const closureDays = closed
+      .map((r) => daysBetween(r.created_at, r.delivery_date))
+      .filter((x): x is number => typeof x === "number");
+    const avgClosure = closureDays.length
+      ? Math.round(
+          (closureDays.reduce((s, x) => s + x, 0) / closureDays.length) * 10,
+        ) / 10
+      : 0;
+
+    // Сводка по сотрудникам
+    const executorNames = Array.from(
+      new Set(open.map((r) => (r.executor ?? "").trim()).filter(Boolean)),
+    );
+    const employees = executorNames.map((name) => {
+      const mine = open.filter((r) => (r.executor ?? "").trim() === name);
+      const empEmergency = mine.filter(isEmergency).map(brief);
+      const empOverdue = mine
+        .filter(isOverdue)
+        .map((r) => {
+          const target = r.delivery_date ?? r.planned_delivery_date;
+          const days = target
+            ? Math.round(
+                (Date.now() - new Date(target).getTime()) / 86400000,
+              )
+            : 0;
+          return { ...brief(r), overdue_days: days };
+        })
+        .sort((a, b) => b.overdue_days - a.overdue_days);
+      const empAwaiting = mine
+        .filter((r) => REVIEW_STATUSES.has(r.status ?? ""))
+        .map(brief);
+      const empInvoices = mine
+        .filter(
+          (r) =>
+            (r.payment_status &&
+              r.payment_status.toLowerCase().includes("ожид")) ||
+            ACCOUNTING_STATUSES.has(r.status ?? ""),
+        )
+        .map(brief);
+      const empProblematic = [...mine]
+        .sort((a, b) => ageDays(b) - ageDays(a))
+        .slice(0, 3)
+        .map((r) => ({ ...brief(r), stalled_days: ageDays(r) }));
+      const empSoon = mine
+        .filter(
+          (r) =>
+            sameDay(r.delivery_date, TODAY) ||
+            sameDay(r.shipment_date, TODAY) ||
+            isWithinNextDays(r.delivery_date, 3) ||
+            isWithinNextDays(r.planned_delivery_date, 3),
+        )
+        .map(brief);
+
+      return {
+        name,
+        in_work: mine.length,
+        emergency: empEmergency,
+        overdue: empOverdue,
+        awaiting_decision: empAwaiting,
+        invoices: empInvoices,
+        problematic: empProblematic,
+        upcoming: empSoon,
+      };
+    });
+
+    return {
+      today: TODAY_ISO,
+      manager: myName ?? "Руководитель",
+      stale_threshold_days: STALE_DAYS,
+      totals: {
+        open: open.length,
+        emergency: open.filter(isEmergency).length,
+        overdue: open.filter(isOverdue).length,
+        no_executor: needsExecutor.length,
+        no_supplier: noSupplier.length,
+        accounting: accountingDetailed.length,
+        invoices_pending_pay: invoicesPendingPay.length,
+        invoices_pending_pay_total_amount: invoicesPendingTotal,
+        avg_closure_days: avgClosure,
+        avg_accounting_wait_days: accountingAvgWait,
+        invoices_stuck_total_amount: accountingTotal,
+      },
+      emergency: open.filter(isEmergency).map(brief),
+      overdue: overdueList.map((x) => ({
+        ...brief(x.request),
         overdue_days: x._days,
+        reason: overdueReason(x.request),
       })),
-    },
-    kazakova: {
-      no_invoice: kazNoInvoice.length,
-      need_pay: kazNeedPay.length,
-      no_pay_mark: kazNoPayMark.length,
-      ship_ready: kazShipReady.length,
-    },
-    decisions: {
-      stalled_emergency: stalledEmergency.length,
-      big_amount: bigAmount.length,
-      no_executor: noExecForManager.length,
-      long_overdue: longOverdue.length,
-      awaiting_approval: awaitingApproval.length,
-    },
-    deadlines: {
-      pay_today: payToday.length,
-      ship_today: shipToday.length,
-      arrive_today: arriveToday.length,
-      due_in_3_days: soonBreak.length,
-    },
-  });
+      invoices_pending_pay: invoicesPendingPay,
+      accounting_stuck: accountingDetailed,
+      stalled,
+      pay_today: payToday.map((r) => ({ ...brief(r) })),
+      ship_today: shipToday.map(brief),
+      arrive_today: arriveToday.map(brief),
+      employees,
+    };
+  };
 
   const generateAi = async () => {
     if (!currentOrgId) return;
@@ -687,21 +854,53 @@ export default function AnalyticsDayPrepPage() {
       </div>
 
       {/* 6. AI */}
-      <SectionHeader index={6} title="AI-рекомендации" />
+      <SectionHeader
+        index={6}
+        title="AI-отчёт руководителя"
+        hint="Полная детализация: заявки, счета, сотрудники и действия — со ссылками на карточки"
+      />
       <Card className="p-5">
         {!aiContent && !aiLoading && (
           <div className="text-sm text-muted-foreground">
-            Нажмите «Сформировать AI-резюме дня», чтобы получить краткий брифинг руководителя на сегодня.
+            Нажмите «Сформировать AI-резюме дня», чтобы получить готовый управленческий отчёт со списками заявок, счетов и действий.
           </div>
         )}
         {aiLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> AI анализирует данные…
+            <Loader2 className="h-4 w-4 animate-spin" /> AI формирует отчёт…
           </div>
         )}
         {aiContent && (
-          <article className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{aiContent}</ReactMarkdown>
+          <article className="prose prose-sm dark:prose-invert max-w-none prose-headings:scroll-mt-20">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children, ...props }) => {
+                  const url = String(href ?? "");
+                  if (url.startsWith("/")) {
+                    return (
+                      <a
+                        href={url}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(url);
+                        }}
+                        className="text-primary underline underline-offset-2 hover:text-primary/80"
+                        {...props}
+                      >
+                        {children}
+                      </a>
+                    );
+                  }
+                  return (
+                    <a href={url} target="_blank" rel="noreferrer" {...props}>
+                      {children}
+                    </a>
+                  );
+                },
+              }}
+            >
+              {aiContent}
+            </ReactMarkdown>
           </article>
         )}
       </Card>
