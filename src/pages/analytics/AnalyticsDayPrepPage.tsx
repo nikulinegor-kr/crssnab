@@ -199,6 +199,97 @@ function SectionHeader({
   );
 }
 
+type TodayGroup = {
+  key: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "default" | "warning" | "danger" | "success";
+  items: AnalyticsRequest[];
+};
+
+function TodayActionsBlock({ groups }: { groups: TodayGroup[] }) {
+  const total = groups.reduce((s, g) => s + g.items.length, 0);
+  const toneClass = (t: TodayGroup["tone"]) =>
+    ({
+      default: "text-primary",
+      warning: "text-amber-500",
+      danger: "text-red-500",
+      success: "text-emerald-500",
+    })[t];
+
+  return (
+    <Card className="p-4 md:p-5 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <div>
+            <div className="font-semibold text-base">Действия на сегодня</div>
+            <div className="text-xs text-muted-foreground">
+              Быстрый переход к ключевым задачам — один клик до карточки заявки
+            </div>
+          </div>
+        </div>
+        <Badge variant="secondary" className="font-numeric">
+          {total}
+        </Badge>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {groups.map((g) => {
+          const Icon = g.icon;
+          return (
+            <div
+              key={g.key}
+              className="rounded-lg border border-border/60 bg-background/60 p-3"
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className={`h-4 w-4 shrink-0 ${toneClass(g.tone)}`} />
+                  <div className="text-sm font-semibold truncate">{g.title}</div>
+                </div>
+                <Badge
+                  variant={g.items.length > 0 ? "secondary" : "outline"}
+                  className="font-numeric"
+                >
+                  {g.items.length}
+                </Badge>
+              </div>
+              {g.items.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground py-2">
+                  Ничего не запланировано
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {g.items.slice(0, 6).map((r) => (
+                    <li key={r.id}>
+                      <Link
+                        to={`/requests/${r.id}`}
+                        className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent/60 transition"
+                      >
+                        <span className="truncate">
+                          {r.description || r.request_number || "Без названия"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                          {r.executor ?? "без исп."}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                  {g.items.length > 6 && (
+                    <li className="text-[11px] text-muted-foreground px-2">
+                      …и ещё {g.items.length - 6}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 export default function AnalyticsDayPrepPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -650,8 +741,57 @@ export default function AnalyticsDayPrepPage() {
         </Button>
       </div>
 
+      {/* Действия на сегодня — быстрый доступ к ключевым задачам дня */}
+      <TodayActionsBlock
+        groups={[
+          {
+            key: "pay",
+            title: "Оплатить сегодня",
+            icon: Wallet,
+            tone: "warning",
+            items: payToday,
+          },
+          {
+            key: "ship",
+            title: "Отгрузить сегодня",
+            icon: Truck,
+            tone: "default",
+            items: shipToday,
+          },
+          {
+            key: "arrive",
+            title: "Приёмка сегодня",
+            icon: Calendar,
+            tone: "success",
+            items: arriveToday,
+          },
+          {
+            key: "soon",
+            title: "Сроки в ближайшие 3 дня",
+            icon: Clock,
+            tone: "default",
+            items: soonBreak.map((s) => s.request),
+          },
+          {
+            key: "emerg",
+            title: "Мои аварийные",
+            icon: AlertTriangle,
+            tone: "danger",
+            items: myEmergency,
+          },
+          {
+            key: "ov",
+            title: "Мои просроченные",
+            icon: AlertTriangle,
+            tone: "danger",
+            items: myOverdue,
+          },
+        ]}
+      />
+
       {/* 1. Мои задачи */}
       <SectionHeader index={1} title="Мои задачи на сегодня" hint="Сформировано автоматически по данным CRM" />
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {myTasks.map((t) => (
           <RequestListCard
