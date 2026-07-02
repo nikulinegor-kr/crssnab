@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Package } from "lucide-react";
+import { Plus, Trash2, Package, Sparkles, Loader2 } from "lucide-react";
 import {
   SHIPMENT_STATUSES,
   TRANSPORT_TYPES,
@@ -59,6 +59,48 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const [comment, setComment] = useState("");
   const [items, setItems] = useState<DraftItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [recognizing, setRecognizing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRecognize = async (file: File) => {
+    setRecognizing(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("recognize-shipment", {
+        body: { file: dataUrl, fileType: file.type },
+      });
+      if (error) throw error;
+      if (data?.transport_company) setTransportCompany(data.transport_company);
+      if (data?.vehicle_number) setVehicleNumber(data.vehicle_number);
+      if (data?.trailer_number) setTrailerNumber(data.trailer_number);
+      if (data?.driver_name) setDriverName(data.driver_name);
+      if (data?.driver_phone) setDriverPhone(data.driver_phone);
+      if (data?.waybill_number) setWaybillNumber(data.waybill_number);
+      if (data?.load_date) setLoadDate(data.load_date);
+      if (data?.planned_arrival_date) setPlannedDate(data.planned_arrival_date);
+      if (Array.isArray(data?.items) && data.items.length) {
+        const recognized: DraftItem[] = data.items
+          .filter((i: any) => i?.material_name)
+          .map((i: any) => ({
+            material_name: String(i.material_name),
+            quantity: i.quantity != null ? String(i.quantity) : "",
+            unit: i.unit || "шт",
+          }));
+        setItems((prev) => [...prev, ...recognized]);
+      }
+      toast({ title: "Данные распознаны", description: "Проверьте и сохраните" });
+    } catch (e: any) {
+      toast({ title: "Ошибка распознавания", description: e.message, variant: "destructive" });
+    } finally {
+      setRecognizing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -162,6 +204,37 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             {shipment ? `Перевозка №${shipment.sequence_number}` : "Новая перевозка"}
           </DialogTitle>
         </DialogHeader>
+
+        <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
+          <div className="text-xs text-muted-foreground">
+            Загрузите ТТН/накладную — данные о машине, водителе и материалах заполнятся автоматически
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleRecognize(f);
+            }}
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={recognizing}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {recognizing ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+            )}
+            Распознать из файла
+          </Button>
+        </div>
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
           <div className="space-y-1">

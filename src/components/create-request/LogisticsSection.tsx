@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { FormSectionCard } from "./FormSectionCard";
-import { Truck, Info } from "lucide-react";
+import { Truck, Info, Boxes } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRequestShipments } from "@/hooks/useRequestShipments";
 import { RequestShipmentsPanel } from "@/components/requests/RequestShipmentsPanel";
@@ -34,7 +34,6 @@ export const LogisticsSection = ({
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [autoApplied, setAutoApplied] = useState(false);
 
-  // Auto-switch to "multi" if request already has 2+ shipments
   useEffect(() => {
     if (!autoApplied && requestId && existingShipments.length >= 2) {
       setMode("multi");
@@ -43,29 +42,27 @@ export const LogisticsSection = ({
   }, [autoApplied, requestId, existingShipments.length]);
 
   return (
-    <FormSectionCard
-      title="Логистика"
-      icon={<Truck className="h-4 w-4 text-muted-foreground" />}
-    >
-      <div className="space-y-3 sm:space-y-4">
-        {/* Delivery type toggle */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <span className="text-xs text-muted-foreground">Тип доставки</span>
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "single" | "multi")}>
-            <TabsList className="h-8">
-              <TabsTrigger type="button" value="single" className="text-xs px-3" disabled={disabled}>
-                Обычная доставка
-              </TabsTrigger>
-              <TabsTrigger type="button" value="multi" className="text-xs px-3" disabled={disabled}>
-                Несколько перевозок
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <span className="text-xs text-muted-foreground">Тип доставки</span>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as "single" | "multi")}>
+          <TabsList className="h-8">
+            <TabsTrigger type="button" value="single" className="text-xs px-3" disabled={disabled}>
+              Обычная доставка
+            </TabsTrigger>
+            <TabsTrigger type="button" value="multi" className="text-xs px-3" disabled={disabled}>
+              Несколько перевозок
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-        {mode === "single" ? (
-          <>
-            {/* Transport company & Waybill - 2 columns */}
+      {mode === "single" ? (
+        <FormSectionCard
+          title="Логистика · Обычная доставка"
+          icon={<Truck className="h-4 w-4 text-muted-foreground" />}
+        >
+          <div className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <FormField
                 control={form.control}
@@ -111,7 +108,6 @@ export const LogisticsSection = ({
               />
             </div>
 
-            {/* Срок доставки (дней) & Dates - 3 columns */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <FormField
                 control={form.control}
@@ -178,24 +174,31 @@ export const LogisticsSection = ({
                 )}
               />
             </div>
-          </>
-        ) : requestId && organizationId ? (
-          <RequestShipmentsPanel
-            requestId={requestId}
-            organizationId={organizationId}
-            canEdit={!disabled}
-          />
-        ) : (
-          <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <Info className="h-4 w-4 mt-0.5 shrink-0" />
-            <div>
-              Сначала сохраните заявку, после чего здесь появится возможность добавлять
-              перевозки. Каждая перевозка содержит свой список материалов, водителя, ТТН и
-              даты.
-            </div>
           </div>
-        )}
-      </div>
-    </FormSectionCard>
+        </FormSectionCard>
+      ) : (
+        <FormSectionCard
+          title="Логистика · Несколько перевозок"
+          icon={<Boxes className="h-4 w-4 text-muted-foreground" />}
+        >
+          {requestId && organizationId ? (
+            <RequestShipmentsPanel
+              requestId={requestId}
+              organizationId={organizationId}
+              canEdit={!disabled}
+            />
+          ) : (
+            <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <Info className="h-4 w-4 mt-0.5 shrink-0" />
+              <div>
+                Сначала сохраните заявку, после чего здесь появится возможность добавлять
+                перевозки. Каждая перевозка содержит свой список материалов, водителя, ТТН и
+                даты. Данные можно распознать из ТТН/накладной автоматически.
+              </div>
+            </div>
+          )}
+        </FormSectionCard>
+      )}
+    </div>
   );
 };
