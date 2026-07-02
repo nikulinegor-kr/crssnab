@@ -206,6 +206,8 @@ export default function AnalyticsDayPrepPage() {
   const [myName, setMyName] = useState<string | null>(null);
   const [aiContent, setAiContent] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [objectMap, setObjectMap] = useState<Record<string, string>>({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancel = false;
@@ -223,6 +225,24 @@ export default function AnalyticsDayPrepPage() {
       cancel = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentOrgId) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("request_objects")
+        .select("id,name")
+        .eq("organization_id", currentOrgId);
+      if (cancel || !data) return;
+      const map: Record<string, string> = {};
+      for (const o of data as { id: string; name: string }[]) map[o.id] = o.name;
+      setObjectMap(map);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [currentOrgId]);
 
   const open = useMemo(() => requests.filter(isOpen), [requests]);
 
