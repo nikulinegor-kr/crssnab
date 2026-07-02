@@ -67,7 +67,11 @@ export const AdditionalSection = ({
 
   const getZrsLines = () => {
     const objectName = objectsData?.find(o => o.id === formValues.object_id)?.name || "-";
+    const reqDate = formValues.request_date
+      ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
+      : "-";
     return [
+      `Дата заявки: ${reqDate}`,
       `Объект: ${objectName}`,
       `Заявка: ${formValues.description || "-"}`,
       `Заявитель: ${formValues.applicant || "-"}`,
