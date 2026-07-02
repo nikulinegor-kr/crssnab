@@ -205,6 +205,37 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
+          <div className="text-xs text-muted-foreground">
+            Загрузите ТТН/накладную — данные о машине, водителе и материалах заполнятся автоматически
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleRecognize(f);
+            }}
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={recognizing}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {recognizing ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+            )}
+            Распознать из файла
+          </Button>
+        </div>
+
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
           <div className="space-y-1">
             <Label>Тип перевозки</Label>
