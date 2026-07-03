@@ -18,7 +18,11 @@ export default function PlannerDashboard() {
     const overdue = tasks.filter((t) => t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)) && t.status !== "done");
     const inProgress = tasks.filter((t) => t.status === "in_progress");
     const done = tasks.filter((t) => t.status === "done");
-    return { today, overdue, inProgress, done };
+    const tomorrow = startOfDay(new Date());
+    const upcoming = tasks
+      .filter((t) => t.status !== "done" && t.due_date && isAfter(new Date(t.due_date), tomorrow) && !isToday(new Date(t.due_date)))
+      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+    return { today, overdue, inProgress, done, upcoming };
   }, [tasks]);
 
   if (isLoading) {
