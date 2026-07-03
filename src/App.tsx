@@ -631,6 +631,8 @@ const App = () => {
               <Route path="timeline" element={<PlannerTimeline />} />
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
+              <Route path="equipment" element={<PlannerEquipmentLoad />} />
+              <Route path="by-object" element={<PlannerByObject />} />
             </Route>
             <Route path="/planner/my" element={<Navigate to="/my-planner" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
