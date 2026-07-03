@@ -140,7 +140,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("equipment")
-        .select("id, brand, model, plate_number, vin, inventory_number, current_object_id, responsible_name")
+        .select("id, brand, model, plate_number, vin, current_object_id, responsible_name")
         .eq("organization_id", currentOrgId)
         .order("brand");
       return (data ?? []) as any[];
@@ -447,7 +447,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                         <CommandEmpty>Техника не найдена</CommandEmpty>
                         <CommandGroup>
                           {equipmentList.map((e: any) => {
-                            const hay = [e.brand, e.model, e.plate_number, e.vin, e.inventory_number, e.responsible_name]
+                            const hay = [e.brand, e.model, e.plate_number, e.vin, e.responsible_name]
                               .filter(Boolean).join(" ");
                             return (
                               <CommandItem
