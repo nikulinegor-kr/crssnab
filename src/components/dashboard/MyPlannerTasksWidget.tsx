@@ -44,7 +44,7 @@ export function MyPlannerTasksWidget() {
             Активных: {mine.length}{overdue > 0 && <> · <span className="text-destructive">просрочено: {overdue}</span></>}
           </p>
         </div>
-        <Link to="/planner/tasks" className="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
+        <Link to="/my-planner" className="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
           Все <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -57,7 +57,7 @@ export function MyPlannerTasksWidget() {
             const overdueT = t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date));
             return (
               <li key={t.id}>
-                <Link to="/planner/tasks" className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
+                <Link to={`/my-planner/tasks?task=${t.id}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors">
                   {t.status === "in_progress" ? <Circle className="h-3.5 w-3.5 text-primary shrink-0" /> :
                    overdueT ? <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" /> :
                    <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}

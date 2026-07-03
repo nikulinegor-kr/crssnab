@@ -17,6 +17,7 @@ import { Plus, X, Trash2, History, Lock, Repeat, Link2, ChevronsUpDown, Check, T
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   PLANNER_COLUMNS,
@@ -72,6 +73,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const update = useUpdatePlannerTask();
   const del = useDeletePlannerTask();
   const { data: members = [] } = useOrgMembers();
+  const navigate = useNavigate();
   const { data: stages = [] } = usePlannerStages();
   const { data: templates = [] } = usePlannerTemplates();
   const { data: allTasks = [] } = usePlannerTasks();
@@ -440,6 +442,19 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                               </div>
                             </CommandItem>
                           ))}
+                        </CommandGroup>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__add_new_employee__"
+                            onSelect={() => {
+                              onOpenChange(false);
+                              navigate("/organization/settings?tab=users");
+                            }}
+                            className="text-primary"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Добавить сотрудника
+                          </CommandItem>
                         </CommandGroup>
                       </CommandList>
                     </Command>
