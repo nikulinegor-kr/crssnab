@@ -443,6 +443,19 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             </CommandItem>
                           ))}
                         </CommandGroup>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__add_new_employee__"
+                            onSelect={() => {
+                              onOpenChange(false);
+                              navigate("/organization/settings?tab=users");
+                            }}
+                            className="text-primary"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Добавить сотрудника
+                          </CommandItem>
+                        </CommandGroup>
                       </CommandList>
                     </Command>
                   </PopoverContent>
