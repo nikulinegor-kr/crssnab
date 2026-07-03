@@ -49,8 +49,9 @@ function buildNav(base: string, isAdmin: boolean, isManual: boolean) {
 
 export default function PlannerLayout({ scope = "auto" }: Props) {
   const base = plannerBasePath(scope);
-  const nav = buildNav(base);
   const isManual = scope === "manual";
+  const { isAdmin } = useUserRole();
+  const nav = buildNav(base, isAdmin, isManual);
   const title = isManual ? "Мой планировщик" : "Планировщик CRM";
   const subtitle = isManual
     ? "Личные задачи: звонки, встречи, поездки и напоминания"
