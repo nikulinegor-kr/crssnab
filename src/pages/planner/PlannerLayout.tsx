@@ -18,6 +18,7 @@ import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
 import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
 import { PlannerViewAsProvider, usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
+import { ViewAsSelect } from "@/components/planner/ViewAsSelect";
 import {
   PlannerScopeProvider,
   plannerBasePath,
