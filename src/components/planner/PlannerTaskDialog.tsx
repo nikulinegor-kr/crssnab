@@ -17,6 +17,7 @@ import { Plus, X, Trash2, History, Lock, Repeat, Link2, ChevronsUpDown, Check, T
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   PLANNER_COLUMNS,
