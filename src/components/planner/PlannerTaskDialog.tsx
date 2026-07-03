@@ -42,7 +42,7 @@ import { usePlannerStages } from "@/hooks/usePlannerStages";
 import { usePlannerTemplates } from "@/hooks/usePlannerTemplates";
 import { usePlannerDependencies, useAddPlannerDependency, useRemovePlannerDependency } from "@/hooks/usePlannerDependencies";
 import { PlannerAttachmentsField } from "./PlannerAttachmentsField";
-import { VoiceInputButton } from "./VoiceInputButton";
+import { AiImproveButton } from "./AiImproveButton";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   ACTIVE_STATUSES,
@@ -377,7 +377,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               <Label>Название <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" autoFocus className={errCls("title")} />
-                <VoiceInputButton onResult={(t) => setTitle((p) => (p ? p + " " : "") + t)} />
+                <AiImproveButton value={title} onResult={setTitle} title="Улучшить название через AI" />
               </div>
             </div>
 
@@ -385,7 +385,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               <Label>Описание <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Детали…" className={errCls("description")} />
-                <VoiceInputButton onResult={(t) => setDescription((p) => (p ? p + " " : "") + t)} />
+                <AiImproveButton value={description} onResult={setDescription} title="Улучшить описание через AI" />
               </div>
             </div>
 
