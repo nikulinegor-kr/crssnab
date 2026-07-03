@@ -109,6 +109,33 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
   );
 }
 
+function ViewAsBanner() {
+  const { canSwitch, viewedUserId, currentUserId, setViewedUserId, isSelf } = usePlannerViewAs();
+  if (!canSwitch) return null;
+  return (
+    <div className="px-3 sm:px-6 py-1.5 flex items-center gap-2 bg-muted/10 border-t border-border/40">
+      <Users className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-[11px] text-muted-foreground">Просмотр планировщика:</span>
+      <ViewAsSelect />
+      {!isSelf && (
+        <button
+          type="button"
+          onClick={() => setViewedUserId(currentUserId)}
+          className="text-[11px] text-primary hover:underline ml-auto"
+        >
+          Вернуться к моему
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ViewAsSelect() {
+  // Lazy import to keep this file compact
+  const Comp = require("@/components/planner/ViewAsSelect").ViewAsSelect;
+  return <Comp />;
+}
+
 // Convenience wrappers used in route configuration
 export function CrmPlannerLayout() {
   return <PlannerLayout scope="auto" />;
