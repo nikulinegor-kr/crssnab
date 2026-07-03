@@ -3,13 +3,14 @@ import {
   LayoutDashboard,
   ListTodo,
   KanbanSquare,
-  Sparkles,
   CalendarDays,
   GanttChartSquare,
   FileText,
   Sun,
   ClipboardList,
   CalendarRange,
+  Truck,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
