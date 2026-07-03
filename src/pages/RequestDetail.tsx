@@ -589,7 +589,7 @@ export default function RequestDetail() {
         const newUrls: string[] = [];
         for (const file of imageFiles) {
           const sName = sanitizeFilename(file.name);
-          const fName = `${id}-${Date.now()}-${sName}`;
+          const fName = `${request.request_number}/${Date.now()}-${sName}`;
           const { error: ue } = await supabase.storage.from("request-photos").upload(fName, file);
           if (ue) throw ue;
           const { data: { publicUrl } } = supabase.storage.from("request-photos").getPublicUrl(fName);
