@@ -103,6 +103,7 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
           {isManual && <PlannerQuickFab />}
         </div>
       </PlannerFiltersProvider>
+      </PlannerViewAsProvider>
     </PlannerScopeProvider>
   );
 }
