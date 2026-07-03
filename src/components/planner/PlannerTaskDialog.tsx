@@ -582,6 +582,19 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                               );
                             })}
                         </CommandGroup>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__add_new_equipment__"
+                            onSelect={() => {
+                              onOpenChange(false);
+                              navigate("/equipment?new=1");
+                            }}
+                            className="text-primary"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Добавить новую технику
+                          </CommandItem>
+                        </CommandGroup>
                       </CommandList>
                     </Command>
                   </PopoverContent>
