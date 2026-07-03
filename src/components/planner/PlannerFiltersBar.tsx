@@ -6,9 +6,6 @@ import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
 import { useOrgMembers } from "@/hooks/useOrgMembers";
 import { PRIORITY_META, type PlannerTaskPriority } from "@/hooks/usePlannerTasks";
-import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
-import { useOrgMembers } from "@/hooks/useOrgMembers";
-import { PRIORITY_META, type PlannerTaskPriority } from "@/hooks/usePlannerTasks";
 
 const NONE = "__none__";
 
