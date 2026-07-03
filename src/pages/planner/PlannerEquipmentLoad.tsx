@@ -10,6 +10,11 @@ import { useOrgMembers } from "@/hooks/useOrgMembers";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import { cn } from "@/lib/utils";
+import {
+  activeTasksByEquipment,
+  equipmentStatusFromTasks,
+  BUSY_STATUS_META,
+} from "@/lib/plannerEquipmentBusy";
 
 export default function PlannerEquipmentLoad() {
   const { data: allTasks = [] } = usePlannerTasks();
@@ -20,50 +25,78 @@ export default function PlannerEquipmentLoad() {
   const [editing, setEditing] = useState<PlannerTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const activeTasks = useMemo(() => tasks.filter((t) => t.status !== "done"), [tasks]);
-
-  const byEquipment = useMemo(() => {
-    const map = new Map<string, PlannerTask[]>();
-    for (const t of activeTasks) {
-      const ids = t.equipment_ids?.length ? t.equipment_ids : (t.equipment_id ? [t.equipment_id] : []);
-      for (const eid of ids) {
-        const arr = map.get(eid) ?? [];
-        arr.push(t);
-        map.set(eid, arr);
-      }
-    }
-    return map;
-  }, [activeTasks]);
+  // Active-only bucket for status calculation.
+  const byEquipmentActive = useMemo(() => activeTasksByEquipment(tasks), [tasks]);
 
   const rows = useMemo(() => {
     return equipment
-      .map((eq) => ({ eq, tasks: byEquipment.get(eq.id) ?? [] }))
-      .filter((r) => r.tasks.length > 0)
-      .sort((a, b) => b.tasks.length - a.tasks.length);
-  }, [equipment, byEquipment]);
+      .map((eq) => {
+        const eqTasks = byEquipmentActive.get(eq.id) ?? [];
+        return {
+          eq,
+          tasks: eqTasks,
+          status: equipmentStatusFromTasks(eqTasks),
+        };
+      })
+      .sort((a, b) => {
+        // Overloaded → working → planned → free
+        const rank: Record<string, number> = { overloaded: 0, working: 1, planned: 2, free: 3 };
+        const r = rank[a.status] - rank[b.status];
+        return r !== 0 ? r : b.tasks.length - a.tasks.length;
+      });
+  }, [equipment, byEquipmentActive]);
 
   const openEdit = (t: PlannerTask) => {
     setEditing(t);
     setDialogOpen(true);
   };
 
+  const statusCounts = useMemo(() => {
+    const c: Record<string, number> = { free: 0, planned: 0, working: 0, overloaded: 0 };
+    for (const r of rows) c[r.status] = (c[r.status] ?? 0) + 1;
+    return c;
+  }, [rows]);
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Где работает техника</h2>
-        <p className="text-xs text-muted-foreground">Активные задачи по каждой единице техники</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Где работает техника</h2>
+          <p className="text-xs text-muted-foreground">Статус занятости и активные задачи по каждой единице</p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[11px]">
+          {(["overloaded", "working", "planned", "free"] as const).map((s) => {
+            const m = BUSY_STATUS_META[s];
+            return (
+              <span key={s} className={cn("inline-flex items-center gap-1 rounded-md px-2 py-1", m.bg, m.text)}>
+                <span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />
+                {m.label} <span className="font-numeric opacity-70">· {statusCounts[s] ?? 0}</span>
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {rows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border/60 py-16 text-center text-sm text-muted-foreground">
-          Нет активной техники в работе
+          Нет техники
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {rows.map(({ eq, tasks: eqTasks }) => {
+          {rows.map(({ eq, tasks: eqTasks, status }) => {
             const obj = eq.current_object_id ? objectMap.get(eq.current_object_id) : null;
+            const meta = BUSY_STATUS_META[status];
             return (
-              <Card key={eq.id} className="p-4 space-y-3">
+              <Card
+                key={eq.id}
+                className={cn(
+                  "p-4 space-y-3 border-l-4",
+                  status === "overloaded" && "border-l-red-500",
+                  status === "working" && "border-l-blue-500",
+                  status === "planned" && "border-l-amber-500",
+                  status === "free" && "border-l-emerald-500",
+                )}
+              >
                 <div className="space-y-1">
                   <div className="flex items-start gap-2">
                     <Truck className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
@@ -73,7 +106,15 @@ export default function PlannerEquipmentLoad() {
                         <div className="text-[11px] text-muted-foreground font-numeric">Гос. № {eq.plate_number}</div>
                       )}
                     </div>
-                    <Badge variant="secondary" className="font-numeric">{eqTasks.length}</Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]", meta.bg, meta.text)}>
+                        <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
+                        {meta.label}
+                      </span>
+                      {eqTasks.length > 0 && (
+                        <Badge variant="secondary" className="font-numeric">{eqTasks.length}</Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                     {obj && (
@@ -89,39 +130,49 @@ export default function PlannerEquipmentLoad() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  {eqTasks.map((t) => {
-                    const pr = PRIORITY_META[t.priority];
-                    const due = t.due_date ? new Date(t.due_date) : null;
-                    const overdue = due && isPast(due);
-                    const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
-                    const statusLabel = PLANNER_COLUMNS.find((c) => c.id === t.status)?.title;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => openEdit(t)}
-                        className="w-full text-left rounded-md border border-border/50 px-2.5 py-2 hover:bg-accent/40 hover:border-primary/40 transition"
-                      >
-                        <div className="flex items-start gap-2">
-                          <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", pr.dot)} />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm truncate">{t.title}</div>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground mt-0.5">
-                              <span>{statusLabel}</span>
-                              {assignee && <span>· {assignee.full_name || assignee.email}</span>}
-                              {due && (
-                                <span className={cn("inline-flex items-center gap-0.5 font-numeric", overdue && "text-destructive font-medium")}>
-                                  <Calendar className="h-3 w-3" />
-                                  {format(due, "d MMM", { locale: ru })}
-                                </span>
-                              )}
+                {eqTasks.length === 0 ? (
+                  <div className="text-[11px] text-muted-foreground italic">Свободна — нет активных задач</div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {eqTasks.map((t) => {
+                      const pr = PRIORITY_META[t.priority];
+                      const due = t.due_date ? new Date(t.due_date) : null;
+                      const overdue = due && isPast(due);
+                      const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
+                      const statusLabel = PLANNER_COLUMNS.find((c) => c.id === t.status)?.title;
+                      const startDt = t.start_date ? new Date(t.start_date) : null;
+                      const period = startDt && due
+                        ? `${format(startDt, "d MMM", { locale: ru })} — ${format(due, "d MMM", { locale: ru })}`
+                        : due
+                          ? format(due, "d MMM", { locale: ru })
+                          : null;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => openEdit(t)}
+                          className="w-full text-left rounded-md border border-border/50 px-2.5 py-2 hover:bg-accent/40 hover:border-primary/40 transition"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", pr.dot)} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm truncate">{t.title}</div>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground mt-0.5">
+                                <span>{statusLabel}</span>
+                                {assignee && <span>· {assignee.full_name || assignee.email}</span>}
+                                {period && (
+                                  <span className={cn("inline-flex items-center gap-0.5 font-numeric", overdue && "text-destructive font-medium")}>
+                                    <Calendar className="h-3 w-3" />
+                                    {period}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </Card>
             );
           })}
