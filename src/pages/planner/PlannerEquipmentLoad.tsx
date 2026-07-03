@@ -10,6 +10,11 @@ import { useOrgMembers } from "@/hooks/useOrgMembers";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import { cn } from "@/lib/utils";
+import {
+  activeTasksByEquipment,
+  equipmentStatusFromTasks,
+  BUSY_STATUS_META,
+} from "@/lib/plannerEquipmentBusy";
 
 export default function PlannerEquipmentLoad() {
   const { data: allTasks = [] } = usePlannerTasks();
@@ -20,27 +25,26 @@ export default function PlannerEquipmentLoad() {
   const [editing, setEditing] = useState<PlannerTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const activeTasks = useMemo(() => tasks.filter((t) => t.status !== "done"), [tasks]);
-
-  const byEquipment = useMemo(() => {
-    const map = new Map<string, PlannerTask[]>();
-    for (const t of activeTasks) {
-      const ids = t.equipment_ids?.length ? t.equipment_ids : (t.equipment_id ? [t.equipment_id] : []);
-      for (const eid of ids) {
-        const arr = map.get(eid) ?? [];
-        arr.push(t);
-        map.set(eid, arr);
-      }
-    }
-    return map;
-  }, [activeTasks]);
+  // Active-only bucket for status calculation.
+  const byEquipmentActive = useMemo(() => activeTasksByEquipment(tasks), [tasks]);
 
   const rows = useMemo(() => {
     return equipment
-      .map((eq) => ({ eq, tasks: byEquipment.get(eq.id) ?? [] }))
-      .filter((r) => r.tasks.length > 0)
-      .sort((a, b) => b.tasks.length - a.tasks.length);
-  }, [equipment, byEquipment]);
+      .map((eq) => {
+        const eqTasks = byEquipmentActive.get(eq.id) ?? [];
+        return {
+          eq,
+          tasks: eqTasks,
+          status: equipmentStatusFromTasks(eqTasks),
+        };
+      })
+      .sort((a, b) => {
+        // Overloaded → working → planned → free
+        const rank: Record<string, number> = { overloaded: 0, working: 1, planned: 2, free: 3 };
+        const r = rank[a.status] - rank[b.status];
+        return r !== 0 ? r : b.tasks.length - a.tasks.length;
+      });
+  }, [equipment, byEquipmentActive]);
 
   const openEdit = (t: PlannerTask) => {
     setEditing(t);
