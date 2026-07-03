@@ -458,27 +458,41 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Техника (можно несколько)</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Техника (можно несколько)</Label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                    <Checkbox
+                      checked={onlyFreeEquipment}
+                      onCheckedChange={(v) => setOnlyFreeEquipment(v === true)}
+                    />
+                    Только свободные
+                  </label>
+                </div>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal min-h-10 h-auto py-2">
                       <div className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
                         {selectedEquipment.length === 0 && <span className="text-muted-foreground text-sm">Без техники</span>}
-                        {selectedEquipment.map((e: any) => (
-                          <Badge key={e.id} variant="secondary" className="gap-1 max-w-full">
-                            <Truck className="h-3 w-3" />
-                            <span className="truncate">
-                              {equipmentLabelLocal(e)}{e.plate_number ? ` · ${e.plate_number}` : ""}
-                            </span>
-                            <button
-                              onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); toggleEquipment(e.id); }}
-                              className="hover:text-destructive"
-                              aria-label="Убрать"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
+                        {selectedEquipment.map((e: any) => {
+                          const st = equipmentStatuses.get(e.id) ?? "free";
+                          const meta = BUSY_STATUS_META[st];
+                          return (
+                            <Badge key={e.id} variant="secondary" className="gap-1 max-w-full">
+                              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", meta.dot)} title={meta.label} />
+                              <Truck className="h-3 w-3" />
+                              <span className="truncate">
+                                {equipmentLabelLocal(e)}{e.plate_number ? ` · ${e.plate_number}` : ""}
+                              </span>
+                              <button
+                                onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); toggleEquipment(e.id); }}
+                                className="hover:text-destructive"
+                                aria-label="Убрать"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
                       </div>
                       <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
                     </Button>
@@ -493,35 +507,142 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                       <CommandList className="max-h-72">
                         <CommandEmpty>Техника не найдена</CommandEmpty>
                         <CommandGroup>
-                          {equipmentList.map((e: any) => {
-                            const hay = [e.brand, e.model, e.plate_number, e.vin, e.responsible_name]
-                              .filter(Boolean).join(" ");
-                            return (
-                              <CommandItem
-                                key={e.id}
-                                value={hay}
-                                onSelect={() => toggleEquipment(e.id)}
-                              >
-                                <Check className={cn("mr-2 h-4 w-4", equipmentIds.includes(e.id) ? "opacity-100" : "opacity-0")} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm truncate">
-                                    {equipmentLabelLocal(e)}
-                                    {e.plate_number && <span className="text-muted-foreground"> · {e.plate_number}</span>}
-                                  </div>
-                                  {e.responsible_name && (
-                                    <div className="text-[10px] text-muted-foreground truncate">
-                                      {e.responsible_name}
+                          {(equipmentList as any[])
+                            .filter((e) => {
+                              if (equipmentIds.includes(e.id)) return true;
+                              if (!onlyFreeEquipment) return true;
+                              // Hide items with an interval conflict against current target.
+                              return pickerConflict(e.id).length === 0;
+                            })
+                            .map((e: any) => {
+                              const hay = [e.brand, e.model, e.plate_number, e.vin, e.responsible_name]
+                                .filter(Boolean).join(" ");
+                              const st = equipmentStatuses.get(e.id) ?? "free";
+                              const meta = BUSY_STATUS_META[st];
+                              const conflicts = pickerConflict(e.id);
+                              const busy = conflicts.length > 0;
+                              const busyInfo = busy ? conflicts[0] : null;
+                              const busyEnd = busyInfo?.due_date ? format(new Date(busyInfo.due_date), "d MMM", { locale: ru }) : null;
+                              return (
+                                <CommandItem
+                                  key={e.id}
+                                  value={hay}
+                                  onSelect={() => toggleEquipment(e.id)}
+                                  className={cn(busy && !equipmentIds.includes(e.id) && "opacity-70")}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", equipmentIds.includes(e.id) ? "opacity-100" : "opacity-0")} />
+                                  <span className={cn("mr-2 h-2 w-2 rounded-full shrink-0", meta.dot)} title={meta.label} />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm truncate">
+                                      {equipmentLabelLocal(e)}
+                                      {e.plate_number && <span className="text-muted-foreground"> · {e.plate_number}</span>}
                                     </div>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            );
-                          })}
+                                    <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+                                      <span className={meta.text}>{meta.label}</span>
+                                      {busy && busyInfo && (
+                                        <span className="truncate text-amber-600 dark:text-amber-400">
+                                          Занята: «{busyInfo.title}»{busyEnd ? ` до ${busyEnd}` : ""}
+                                        </span>
+                                      )}
+                                      {!busy && e.responsible_name && <span>· {e.responsible_name}</span>}
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              );
+                            })}
                         </CommandGroup>
                       </CommandList>
                     </Command>
                   </PopoverContent>
                 </Popover>
+
+                {/* Conflict warnings for currently-selected equipment */}
+                {Array.from(selectedConflicts.entries()).map(([eid, conflicts]) => {
+                  const eq = equipmentById.get(eid) as any;
+                  if (!eq) return null;
+                  const overridden = overriddenConflicts.has(eid);
+                  return (
+                    <div
+                      key={eid}
+                      className={cn(
+                        "rounded-md border p-3 text-xs space-y-2",
+                        overridden
+                          ? "border-amber-500/30 bg-amber-500/5"
+                          : "border-destructive/40 bg-destructive/5",
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className={cn("h-4 w-4 shrink-0 mt-0.5", overridden ? "text-amber-600" : "text-destructive")} />
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="font-medium">
+                            ⚠️ Техника уже используется — {equipmentLabelLocal(eq)}
+                            {eq.plate_number ? ` · ${eq.plate_number}` : ""}
+                          </div>
+                          {conflicts.slice(0, 3).map((c) => {
+                            const objName = c.object_id ? (objectsById.get(c.object_id) as any)?.name : null;
+                            const assignee = c.assignee_id ? memberById(c.assignee_id) : null;
+                            const s = c.start_date ? format(new Date(c.start_date), "dd.MM.yyyy HH:mm", { locale: ru }) : "—";
+                            const d = c.due_date ? format(new Date(c.due_date), "dd.MM.yyyy HH:mm", { locale: ru }) : "—";
+                            const statusLabel = PLANNER_COLUMNS.find((col) => col.id === c.status)?.title ?? c.status;
+                            return (
+                              <div key={c.id} className="space-y-0.5 pl-1 border-l-2 border-current/20">
+                                <div className="text-sm font-medium">{c.title}</div>
+                                <div className="text-muted-foreground grid grid-cols-1 sm:grid-cols-2 gap-x-3">
+                                  {objName && <span>Объект: <span className="text-foreground">{objName}</span></span>}
+                                  {assignee && <span>Ответственный: <span className="text-foreground">{assignee.full_name || assignee.email}</span></span>}
+                                  <span>Период: <span className="text-foreground font-numeric">{s} — {d}</span></span>
+                                  <span>Статус: <span className="text-foreground">{statusLabel}</span></span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {conflicts.length > 3 && (
+                            <div className="text-muted-foreground">…и ещё задач: {conflicts.length - 3}</div>
+                          )}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => onOpenChange(false)}
+                              title="Закрыть и перейти к задачам техники"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" /> Открыть занятую задачу
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => toggleEquipment(eid)}
+                            >
+                              <X className="h-3 w-3 mr-1" /> Выбрать другую технику
+                            </Button>
+                            {isAdmin && !overridden && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs text-amber-600"
+                                onClick={() =>
+                                  setOverriddenConflicts((prev) => new Set(prev).add(eid))
+                                }
+                              >
+                                Всё равно добавить
+                              </Button>
+                            )}
+                            {overridden && (
+                              <span className="text-[11px] text-amber-600 self-center">
+                                Конфликт подтверждён — сохранение разрешено
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
