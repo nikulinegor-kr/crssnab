@@ -130,11 +130,6 @@ function ViewAsBanner() {
   );
 }
 
-function ViewAsSelect() {
-  // Lazy import to keep this file compact
-  const Comp = require("@/components/planner/ViewAsSelect").ViewAsSelect;
-  return <Comp />;
-}
 
 // Convenience wrappers used in route configuration
 export function CrmPlannerLayout() {
