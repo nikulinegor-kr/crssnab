@@ -284,6 +284,22 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       toast.error("Заполните обязательные поля", { description: v.missing.join(", ") });
       return;
     }
+    // Block save if any selected equipment has an unresolved conflict.
+    const unresolved = Array.from(selectedConflicts.keys()).filter((eid) => !overriddenConflicts.has(eid));
+    if (unresolved.length > 0) {
+      const names = unresolved
+        .map((eid) => {
+          const e = equipmentById.get(eid) as any;
+          return e ? equipmentLabelLocal(e) : "техника";
+        })
+        .join(", ");
+      toast.error("Конфликт занятости техники", {
+        description: isAdmin
+          ? `Подтвердите «Всё равно добавить» или выберите другую: ${names}`
+          : `Техника занята в другой задаче: ${names}`,
+      });
+      return;
+    }
     const payload = {
       title: title.trim(),
       description: description.trim() || null,
