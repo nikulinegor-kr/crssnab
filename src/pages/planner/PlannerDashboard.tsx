@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarClock, KanbanSquare, ListTodo, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CalendarClock, KanbanSquare, ListTodo, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
 import { usePlannerTasks, PRIORITY_META, PLANNER_COLUMNS } from "@/hooks/usePlannerTasks";
-import { format, isPast, isToday } from "date-fns";
+import { format, isPast, isToday, isAfter, startOfDay, differenceInCalendarDays } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,11 @@ export default function PlannerDashboard() {
     const overdue = tasks.filter((t) => t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)) && t.status !== "done");
     const inProgress = tasks.filter((t) => t.status === "in_progress");
     const done = tasks.filter((t) => t.status === "done");
-    return { today, overdue, inProgress, done };
+    const tomorrow = startOfDay(new Date());
+    const upcoming = tasks
+      .filter((t) => t.status !== "done" && t.due_date && isAfter(new Date(t.due_date), tomorrow) && !isToday(new Date(t.due_date)))
+      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+    return { today, overdue, inProgress, done, upcoming };
   }, [tasks]);
 
   if (isLoading) {
@@ -72,6 +76,24 @@ export default function PlannerDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" /> Ближайшие задачи
+          </CardTitle>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="../calendar" relative="path">Календарь</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {stats.upcoming.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Нет запланированных задач</p>
+          ) : (
+            stats.upcoming.slice(0, 8).map((t) => <UpcomingRow key={t.id} task={t} />)
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-3">
@@ -143,6 +165,26 @@ function TaskRow({ task }: { task: any }) {
           {format(due, "d MMM", { locale: ru })}
         </Badge>
       )}
+    </div>
+  );
+}
+
+function UpcomingRow({ task }: { task: any }) {
+  const pr = PRIORITY_META[task.priority as keyof typeof PRIORITY_META];
+  const due = new Date(task.due_date);
+  const days = differenceInCalendarDays(due, new Date());
+  const rel =
+    days === 1 ? "завтра" :
+    days <= 7 ? `через ${days} дн.` :
+    format(due, "d MMM", { locale: ru });
+  return (
+    <div className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-accent/40 transition">
+      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", pr.dot)} />
+      <span className="flex-1 text-sm truncate">{task.title}</span>
+      <span className="text-[11px] text-muted-foreground font-numeric shrink-0">
+        {format(due, "d MMM", { locale: ru })}
+      </span>
+      <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0">{rel}</Badge>
     </div>
   );
 }
