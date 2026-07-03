@@ -60,7 +60,19 @@ export function KanbanCard({
         </button>
       </div>
 
-      <PlannerTaskMeta equipmentId={task.equipment_id} objectId={task.object_id} />
+      <PlannerTaskMeta
+        equipmentId={task.equipment_id}
+        equipmentIds={task.equipment_ids}
+        objectId={task.object_id}
+        assigneeId={task.assignee_id}
+      />
+      {task.start_date || task.due_date ? (
+        <div className="text-[10px] text-muted-foreground font-numeric">
+          {task.start_date ? format(new Date(task.start_date), "d MMM", { locale: ru }) : "—"}
+          {" — "}
+          {task.due_date ? format(new Date(task.due_date), "d MMM", { locale: ru }) : "—"}
+        </div>
+      ) : null}
 
       {(checklistTotal > 0 || dueDate || task.priority !== "medium" || assignee) && (
         <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
