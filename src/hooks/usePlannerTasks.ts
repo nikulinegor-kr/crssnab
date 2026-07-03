@@ -120,7 +120,7 @@ export const usePlannerTasks = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "planner_tasks", filter: `organization_id=eq.${currentOrgId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId, scope] });
+          queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
         }
       )
       .subscribe();
