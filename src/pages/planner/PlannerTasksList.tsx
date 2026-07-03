@@ -163,7 +163,13 @@ export default function PlannerTasksList() {
                               </span>
                             )}
                           </div>
-                          <PlannerTaskMeta equipmentId={t.equipment_id} objectId={t.object_id} className="mt-1" />
+                          <PlannerTaskMeta
+                            equipmentId={t.equipment_id}
+                            equipmentIds={t.equipment_ids}
+                            objectId={t.object_id}
+                            assigneeId={t.assignee_id}
+                            className="mt-1"
+                          />
                         </div>
                         {assignee && (
                           <Avatar className="h-6 w-6" title={assignee.full_name || assignee.email || ""}>
