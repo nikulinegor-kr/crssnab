@@ -128,6 +128,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setErrors({});
     setTab("details");
     setTemplateId("");
+    setOverriddenConflicts(new Set());
+    setOnlyFreeEquipment(true);
   }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId]);
 
   const filteredStages = stages.filter((s) => !objectId || s.object_id === objectId || !s.object_id);
