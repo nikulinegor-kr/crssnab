@@ -1,8 +1,11 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { X, Layers, MapPin, Truck, User, Flag } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, Layers, MapPin, Truck, User, Flag, Search } from "lucide-react";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
+import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
+import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { PRIORITY_META, type PlannerTaskPriority } from "@/hooks/usePlannerTasks";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
 import { useOrgMembers } from "@/hooks/useOrgMembers";
 import { PRIORITY_META, type PlannerTaskPriority } from "@/hooks/usePlannerTasks";
