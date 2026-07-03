@@ -589,7 +589,7 @@ export default function RequestDetail() {
         const newUrls: string[] = [];
         for (const file of imageFiles) {
           const sName = sanitizeFilename(file.name);
-          const fName = `${id}-${Date.now()}-${sName}`;
+          const fName = `${request.request_number}/${Date.now()}-${sName}`;
           const { error: ue } = await supabase.storage.from("request-photos").upload(fName, file);
           if (ue) throw ue;
           const { data: { publicUrl } } = supabase.storage.from("request-photos").getPublicUrl(fName);
@@ -610,7 +610,7 @@ export default function RequestDetail() {
           const ext = file.name.split('.').pop() || '';
           const base = sanitizeFilename(request.description);
           const sfx = docFiles.length > 1 ? `_${i + 1}` : '';
-          const fName = `${id}-${Date.now()}-${base}${sfx}.${ext}`;
+          const fName = `${request.request_number}/${Date.now()}-${base}${sfx}.${ext}`;
           const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file);
           if (ue) throw ue;
           const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fName);
