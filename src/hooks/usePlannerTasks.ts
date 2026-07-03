@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { usePlannerScope } from "@/contexts/PlannerScopeContext";
+import { usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
