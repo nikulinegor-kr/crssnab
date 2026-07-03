@@ -85,7 +85,13 @@ export const PRIORITY_META: Record<
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
   const scope = usePlannerScope();
-  const { viewedUserId } = usePlannerViewAs();
+  const { viewedUserId: ctxViewedUserId } = usePlannerViewAs();
+  const { data: fallbackUserId } = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+    staleTime: 60_000,
+  });
+  const viewedUserId = ctxViewedUserId ?? fallbackUserId ?? null;
   const queryClient = useQueryClient();
 
   const query = useQuery({
