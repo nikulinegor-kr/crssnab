@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { ClipboardList, Plus, Bell, Settings, LayoutDashboard } from "lucide-react";
+import { ClipboardList, Plus, CalendarRange, Settings, LayoutDashboard } from "lucide-react";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,7 @@ export const MobileBottomNav = () => {
           <span className="text-[10px] font-medium text-muted-foreground mt-0.5">Быстро</span>
         </button>
 
-        <Item to="/profile" label="Профиль" icon={Bell} />
+        <Item to="/my-planner" label="Планировщик" icon={CalendarRange} />
         <Item to="/organization/settings" label="Настройки" icon={Settings} />
       </div>
     </nav>
