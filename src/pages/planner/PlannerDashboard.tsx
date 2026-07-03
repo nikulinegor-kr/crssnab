@@ -168,3 +168,23 @@ function TaskRow({ task }: { task: any }) {
     </div>
   );
 }
+
+function UpcomingRow({ task }: { task: any }) {
+  const pr = PRIORITY_META[task.priority as keyof typeof PRIORITY_META];
+  const due = new Date(task.due_date);
+  const days = differenceInCalendarDays(due, new Date());
+  const rel =
+    days === 1 ? "завтра" :
+    days <= 7 ? `через ${days} дн.` :
+    format(due, "d MMM", { locale: ru });
+  return (
+    <div className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-accent/40 transition">
+      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", pr.dot)} />
+      <span className="flex-1 text-sm truncate">{task.title}</span>
+      <span className="text-[11px] text-muted-foreground font-numeric shrink-0">
+        {format(due, "d MMM", { locale: ru })}
+      </span>
+      <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0">{rel}</Badge>
+    </div>
+  );
+}
