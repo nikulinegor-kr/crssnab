@@ -2340,6 +2340,7 @@ export type Database = {
           due_date: string | null
           due_time: string | null
           equipment_id: string | null
+          equipment_ids: string[]
           estimated_hours: number | null
           id: string
           is_private: boolean
@@ -2374,6 +2375,7 @@ export type Database = {
           due_date?: string | null
           due_time?: string | null
           equipment_id?: string | null
+          equipment_ids?: string[]
           estimated_hours?: number | null
           id?: string
           is_private?: boolean
@@ -2408,6 +2410,7 @@ export type Database = {
           due_date?: string | null
           due_time?: string | null
           equipment_id?: string | null
+          equipment_ids?: string[]
           estimated_hours?: number | null
           id?: string
           is_private?: boolean

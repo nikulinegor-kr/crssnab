@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { X, Layers, MapPin, Truck, User, Flag } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, Layers, MapPin, Truck, User, Flag, Search } from "lucide-react";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
 import { useOrgMembers } from "@/hooks/useOrgMembers";
@@ -20,9 +20,19 @@ export function PlannerFiltersBar() {
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-3 sm:px-6 py-2 border-b border-border/40 bg-muted/20">
+      <div className="relative w-full sm:w-64 order-first sm:order-none">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          value={f.searchQuery}
+          onChange={(e) => f.setSearchQuery(e.target.value)}
+          placeholder="Поиск: задача, объект, техника, ФИО, заявка…"
+          className="h-7 pl-7 text-xs"
+        />
+      </div>
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Layers className="h-3 w-3" /> Фильтры:
       </div>
+
 
       <FilterSelect
         icon={<MapPin className="h-3 w-3" />}

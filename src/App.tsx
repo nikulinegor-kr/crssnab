@@ -75,6 +75,8 @@ const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalen
 const PlannerTimeline = lazyWithRetry(() => import("./pages/planner/PlannerTimeline"));
 const PlannerStages = lazyWithRetry(() => import("./pages/planner/PlannerStages"));
 const PlannerTemplates = lazyWithRetry(() => import("./pages/planner/PlannerTemplates"));
+const PlannerEquipmentLoad = lazyWithRetry(() => import("./pages/planner/PlannerEquipmentLoad"));
+const PlannerByObject = lazyWithRetry(() => import("./pages/planner/PlannerByObject"));
 const AnalyticsExecutorsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorsPage"));
 const AnalyticsExecutorDetailPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorDetailPage"));
 const AnalyticsRequestsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsRequestsPage"));
@@ -608,6 +610,8 @@ const App = () => {
               <Route path="timeline" element={<PlannerTimeline />} />
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
+              <Route path="equipment" element={<PlannerEquipmentLoad />} />
+              <Route path="by-object" element={<PlannerByObject />} />
             </Route>
             <Route
               path="/my-planner"
@@ -627,6 +631,8 @@ const App = () => {
               <Route path="timeline" element={<PlannerTimeline />} />
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
+              <Route path="equipment" element={<PlannerEquipmentLoad />} />
+              <Route path="by-object" element={<PlannerByObject />} />
             </Route>
             <Route path="/planner/my" element={<Navigate to="/my-planner" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

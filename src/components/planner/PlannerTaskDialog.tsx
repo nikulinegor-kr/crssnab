@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,9 +11,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2, Send, History, Lock, Repeat, Link2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Plus, X, Trash2, History, Lock, Repeat, Link2, ChevronsUpDown, Check, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   PLANNER_COLUMNS,
   PRIORITY_META,
@@ -32,7 +36,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
-import { usePlannerTaskComments, useAddPlannerComment, usePlannerTaskActivity } from "@/hooks/usePlannerTaskComments";
+import { usePlannerTaskActivity } from "@/hooks/usePlannerTaskComments";
 import { usePlannerStages } from "@/hooks/usePlannerStages";
 import { usePlannerTemplates } from "@/hooks/usePlannerTemplates";
 import { usePlannerDependencies, useAddPlannerDependency, useRemovePlannerDependency } from "@/hooks/usePlannerDependencies";
@@ -49,6 +53,9 @@ interface Props {
   defaultRequestId?: string | null;
 }
 
+const equipmentLabelLocal = (e: any) =>
+  [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
+
 export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId }: Props) {
   const isEdit = !!task;
   const { currentOrgId } = useCurrentOrganization();
@@ -60,28 +67,56 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const { data: templates = [] } = usePlannerTemplates();
   const { data: allTasks = [] } = usePlannerTasks();
 
-  const [title, setTitle] = useState(task?.title ?? "");
-  const [description, setDescription] = useState(task?.description ?? "");
-  const [status, setStatus] = useState<PlannerTaskStatus>(task?.status ?? defaultStatus ?? "backlog");
-  const [priority, setPriority] = useState<PlannerTaskPriority>(task?.priority ?? "medium");
-  const [objectId, setObjectId] = useState<string | null>(task?.object_id ?? defaultObjectId ?? null);
-  const [stageId, setStageId] = useState<string | null>(task?.stage_id ?? null);
-  const [assigneeId, setAssigneeId] = useState<string | null>(task?.assignee_id ?? null);
-  const [assigneeName, setAssigneeName] = useState<string>((task as any)?.assignee_name ?? "");
-  const [startDate, setStartDate] = useState(task?.start_date?.slice(0, 10) ?? "");
-  const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
-  const [dueTime, setDueTime] = useState<string>((task as any)?.due_time?.slice(0, 5) ?? "");
-  const [equipmentId, setEquipmentId] = useState<string | null>(task?.equipment_id ?? null);
-  const [requestId, setRequestId] = useState<string | null>(task?.request_id ?? defaultRequestId ?? null);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(task?.checklist ?? []);
-  const [attachments, setAttachments] = useState<PlannerAttachment[]>(task?.attachments ?? []);
-  const [isPrivate, setIsPrivate] = useState(task?.is_private ?? false);
-  const [recurrence, setRecurrence] = useState<PlannerRecurrence | null>(task?.recurrence ?? null);
-  const [estimatedHours, setEstimatedHours] = useState<string>(task?.estimated_hours?.toString() ?? "");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<PlannerTaskStatus>("backlog");
+  const [priority, setPriority] = useState<PlannerTaskPriority>("medium");
+  const [objectId, setObjectId] = useState<string | null>(null);
+  const [stageId, setStageId] = useState<string | null>(null);
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState<string>("");
+  const [equipmentIds, setEquipmentIds] = useState<string[]>([]);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [attachments, setAttachments] = useState<PlannerAttachment[]>([]);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [recurrence, setRecurrence] = useState<PlannerRecurrence | null>(null);
+  const [estimatedHours, setEstimatedHours] = useState<string>("");
   const [newCheckItem, setNewCheckItem] = useState("");
   const [tab, setTab] = useState("details");
-  const [newComment, setNewComment] = useState("");
   const [templateId, setTemplateId] = useState<string>("");
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  // CRITICAL: reset state whenever dialog opens or task changes.
+  // Fixes "fields cleared/reset when editing" bug caused by useState initializers only running once.
+  useEffect(() => {
+    if (!open) return;
+    setTitle(task?.title ?? "");
+    setDescription(task?.description ?? "");
+    setStatus(task?.status ?? defaultStatus ?? "backlog");
+    setPriority(task?.priority ?? "medium");
+    setObjectId(task?.object_id ?? defaultObjectId ?? null);
+    setStageId(task?.stage_id ?? null);
+    setAssigneeId(task?.assignee_id ?? null);
+    setStartDate(task?.start_date?.slice(0, 10) ?? "");
+    setDueDate(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
+    setDueTime((task as any)?.due_time?.slice(0, 5) ?? "");
+    const initialEq = task?.equipment_ids?.length
+      ? task.equipment_ids
+      : (task?.equipment_id ? [task.equipment_id] : []);
+    setEquipmentIds(initialEq);
+    setRequestId(task?.request_id ?? defaultRequestId ?? null);
+    setChecklist(task?.checklist ?? []);
+    setAttachments(task?.attachments ?? []);
+    setIsPrivate(task?.is_private ?? false);
+    setRecurrence(task?.recurrence ?? null);
+    setEstimatedHours(task?.estimated_hours?.toString() ?? "");
+    setErrors({});
+    setTab("details");
+    setTemplateId("");
+  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId]);
 
   const filteredStages = stages.filter((s) => !objectId || s.object_id === objectId || !s.object_id);
 
@@ -113,27 +148,21 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     enabled: !!currentOrgId && open,
   });
 
-  const equipmentLabel = (e: any) =>
-    [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
+  const equipmentById = useMemo(() => new Map(equipmentList.map((e: any) => [e.id, e])), [equipmentList]);
+  const selectedEquipment = equipmentIds.map((id) => equipmentById.get(id)).filter(Boolean);
 
-  // Filtered equipment if object pre-selected
-  const visibleEquipment = objectId && !equipmentId
-    ? equipmentList.filter((e: any) => e.current_object_id === objectId)
-    : equipmentList;
-
-  // Auto-fill object when equipment selected
-  const handleEquipmentChange = (val: string) => {
-    const next = val === "__none__" ? null : val;
-    setEquipmentId(next);
-    if (next) {
-      const eq = equipmentList.find((e: any) => e.id === next);
-      if (eq?.current_object_id && !objectId) {
-        setObjectId(eq.current_object_id);
+  // Auto-fill object from first selected equipment
+  const toggleEquipment = (id: string) => {
+    setEquipmentIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      const next = [...prev, id];
+      if (next.length === 1 && !objectId) {
+        const eq = equipmentById.get(id);
+        if (eq?.current_object_id) setObjectId(eq.current_object_id);
       }
-    }
+      return next;
+    });
   };
-
-  const selectedEquipment = equipmentId ? equipmentList.find((e: any) => e.id === equipmentId) : null;
 
   const { data: requestsList = [] } = useQuery({
     queryKey: ["planner-requests-pick", currentOrgId],
@@ -141,20 +170,21 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       if (!currentOrgId) return [];
       const { data } = await supabase
         .from("requests")
-        .select("id, request_number, description, status")
+        .select("id, request_number, description, status, executor, contractor, object_id")
         .eq("organization_id", currentOrgId)
         .eq("archived", false)
         .order("created_at", { ascending: false })
-        .limit(300);
+        .limit(500);
       return data ?? [];
     },
     enabled: !!currentOrgId && open,
   });
 
-  const { data: comments = [] } = usePlannerTaskComments(isEdit ? task!.id : null);
+  const objectsById = useMemo(() => new Map(objects.map((o: any) => [o.id, o])), [objects]);
+  const selectedRequest = requestId ? (requestsList as any[]).find((r) => r.id === requestId) : null;
+
   const { data: activity = [] } = usePlannerTaskActivity(isEdit ? task!.id : null);
   const { data: deps = [] } = usePlannerDependencies(isEdit ? task!.id : null);
-  const addComment = useAddPlannerComment();
   const addDep = useAddPlannerDependency();
   const removeDep = useRemovePlannerDependency();
   const [depCandidate, setDepCandidate] = useState("");
@@ -164,6 +194,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     const m = memberById(id);
     return m?.full_name || m?.email || "—";
   };
+  const selectedAssignee = assigneeId ? memberById(assigneeId) : null;
 
   const addCheck = () => {
     if (!newCheckItem.trim()) return;
@@ -186,8 +217,26 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     if (tpl.estimated_hours != null) setEstimatedHours(String(tpl.estimated_hours));
   };
 
+  const validate = (): { ok: boolean; missing: string[] } => {
+    const miss: string[] = [];
+    const errs: Record<string, boolean> = {};
+    if (!title.trim()) { miss.push("Название"); errs.title = true; }
+    if (!description.trim()) { miss.push("Описание"); errs.description = true; }
+    if (!status) { miss.push("Статус"); errs.status = true; }
+    if (!priority) { miss.push("Приоритет"); errs.priority = true; }
+    if (!assigneeId) { miss.push("Ответственный"); errs.assigneeId = true; }
+    if (!startDate) { miss.push("Дата начала"); errs.startDate = true; }
+    if (!dueDate) { miss.push("Дата окончания"); errs.dueDate = true; }
+    setErrors(errs);
+    return { ok: miss.length === 0, missing: miss };
+  };
+
   const handleSave = async () => {
-    if (!title.trim()) return;
+    const v = validate();
+    if (!v.ok) {
+      toast.error("Заполните обязательные поля", { description: v.missing.join(", ") });
+      return;
+    }
     const payload = {
       title: title.trim(),
       description: description.trim() || null,
@@ -196,12 +245,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       object_id: objectId,
       stage_id: stageId,
       request_id: requestId,
-      assignee_id: null,
-      assignee_name: assigneeName.trim() || null,
+      assignee_id: assigneeId,
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       due_time: dueTime || null,
-      equipment_id: equipmentId,
+      equipment_id: equipmentIds[0] ?? null,
+      equipment_ids: equipmentIds,
       checklist,
       attachments,
       is_private: isPrivate,
@@ -223,11 +272,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     onOpenChange(false);
   };
 
-  const handleSendComment = async () => {
-    if (!task || !newComment.trim()) return;
-    await addComment.mutateAsync({ taskId: task.id, content: newComment.trim() });
-    setNewComment("");
-  };
+  const errCls = (k: string) => errors[k] ? "border-destructive focus-visible:ring-destructive" : "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -242,12 +287,9 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
         <Tabs value={tab} onValueChange={setTab}>
           {isEdit && (
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Детали</TabsTrigger>
               <TabsTrigger value="deps">Связи {deps.length > 0 && <span className="ml-1 text-xs opacity-70">({deps.length})</span>}</TabsTrigger>
-              <TabsTrigger value="comments">
-                Чат {comments.length > 0 && <span className="ml-1 text-xs opacity-70">({comments.length})</span>}
-              </TabsTrigger>
               <TabsTrigger value="activity">История</TabsTrigger>
             </TabsList>
           )}
@@ -267,26 +309,26 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
             )}
 
             <div className="space-y-1.5">
-              <Label>Название *</Label>
+              <Label>Название <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" autoFocus />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" autoFocus className={errCls("title")} />
                 <VoiceInputButton onResult={(t) => setTitle((p) => (p ? p + " " : "") + t)} />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Описание</Label>
+              <Label>Описание <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Детали…" />
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Детали…" className={errCls("description")} />
                 <VoiceInputButton onResult={(t) => setDescription((p) => (p ? p + " " : "") + t)} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Статус</Label>
+                <Label>Статус <span className="text-destructive">*</span></Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as PlannerTaskStatus)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={errCls("status")}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PLANNER_COLUMNS.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
                   </SelectContent>
@@ -294,9 +336,9 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Приоритет</Label>
+                <Label>Приоритет <span className="text-destructive">*</span></Label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as PlannerTaskPriority)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={errCls("priority")}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(Object.keys(PRIORITY_META) as PlannerTaskPriority[]).map((p) =>
                       <SelectItem key={p} value={p}>{PRIORITY_META[p].label}</SelectItem>)}
@@ -305,12 +347,41 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Ответственный</Label>
-                <Input
-                  value={assigneeName}
-                  onChange={(e) => setAssigneeName(e.target.value)}
-                  placeholder="ФИО"
-                />
+                <Label>Ответственный <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className={cn("w-full justify-between font-normal", errCls("assigneeId"))}>
+                      <span className="truncate">
+                        {selectedAssignee ? (selectedAssignee.full_name || selectedAssignee.email) : "Выберите…"}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Поиск сотрудника…" />
+                      <CommandList>
+                        <CommandEmpty>Не найдено</CommandEmpty>
+                        <CommandGroup>
+                          {members.map((m) => (
+                            <CommandItem
+                              key={m.user_id}
+                              value={`${m.full_name ?? ""} ${m.email ?? ""}`}
+                              onSelect={() => setAssigneeId(m.user_id)}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", assigneeId === m.user_id ? "opacity-100" : "opacity-0")} />
+                              <Avatar className="h-6 w-6 mr-2"><AvatarFallback className="text-[10px]">{initialsOf(m)}</AvatarFallback></Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm truncate">{m.full_name || m.email}</div>
+                                {m.position && <div className="text-[10px] text-muted-foreground truncate">{m.position}</div>}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-1.5">
@@ -324,15 +395,14 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 </Select>
               </div>
 
-
               <div className="space-y-1.5">
-                <Label>Начало</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <Label>Дата начала <span className="text-destructive">*</span></Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={errCls("startDate")} />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Дата выполнения</Label>
-                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                <Label>Дата окончания <span className="text-destructive">*</span></Label>
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={errCls("dueDate")} />
               </div>
 
               <div className="space-y-1.5">
@@ -341,45 +411,115 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Техника</Label>
-                <Select value={equipmentId ?? "__none__"} onValueChange={handleEquipmentChange}>
-                  <SelectTrigger><SelectValue placeholder="Без техники" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">—</SelectItem>
-                    {visibleEquipment.map((e: any) => (
-                      <SelectItem key={e.id} value={e.id}>
-                        {equipmentLabel(e)}
-                        {e.plate_number ? ` · ${e.plate_number}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedEquipment && (
-                  <div className="rounded-md border border-border/60 bg-muted/30 p-2 text-[11px] space-y-0.5 mt-1">
-                    <div className="font-medium">{equipmentLabel(selectedEquipment)}</div>
-                    {selectedEquipment.plate_number && <div>Гос. №: {selectedEquipment.plate_number}</div>}
-                    {selectedEquipment.vin && <div>VIN: {selectedEquipment.vin}</div>}
-                    {selectedEquipment.current_object_id && (
-                      <div>Объект: {objects.find((o: any) => o.id === selectedEquipment.current_object_id)?.name ?? "—"}</div>
-                    )}
-                    {selectedEquipment.responsible_name && <div>Ответственный: {selectedEquipment.responsible_name}</div>}
-                  </div>
-                )}
+                <Label>Техника (можно несколько)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal min-h-10 h-auto py-2">
+                      <div className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+                        {selectedEquipment.length === 0 && <span className="text-muted-foreground text-sm">Без техники</span>}
+                        {selectedEquipment.map((e: any) => (
+                          <Badge key={e.id} variant="secondary" className="gap-1 max-w-full">
+                            <Truck className="h-3 w-3" />
+                            <span className="truncate">
+                              {equipmentLabelLocal(e)}{e.plate_number ? ` · ${e.plate_number}` : ""}
+                            </span>
+                            <button
+                              onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); toggleEquipment(e.id); }}
+                              className="hover:text-destructive"
+                              aria-label="Убрать"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Марка, модель, гос.№, инвентарный, VIN…" />
+                      <CommandList className="max-h-72">
+                        <CommandEmpty>Техника не найдена</CommandEmpty>
+                        <CommandGroup>
+                          {equipmentList.map((e: any) => {
+                            const hay = [e.brand, e.model, e.plate_number, e.vin, e.responsible_name]
+                              .filter(Boolean).join(" ");
+                            return (
+                              <CommandItem
+                                key={e.id}
+                                value={hay}
+                                onSelect={() => toggleEquipment(e.id)}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", equipmentIds.includes(e.id) ? "opacity-100" : "opacity-0")} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm truncate">
+                                    {equipmentLabelLocal(e)}
+                                    {e.plate_number && <span className="text-muted-foreground"> · {e.plate_number}</span>}
+                                  </div>
+                                  {e.responsible_name && (
+                                    <div className="text-[10px] text-muted-foreground truncate">
+                                      {e.responsible_name}
+                                    </div>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Связать с заявкой CRM</Label>
-                <Select value={requestId ?? "none"} onValueChange={(v) => setRequestId(v === "none" ? null : v)}>
-                  <SelectTrigger><SelectValue placeholder="Без заявки" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {requestsList.map((r: any) => (
-                      <SelectItem key={r.id} value={r.id}>
-                        {r.description || `Заявка ${r.request_number}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">
+                        {selectedRequest ? (selectedRequest.description || "Без названия") : "Без заявки"}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0}
+                    >
+                      <CommandInput placeholder="Название, объект, техника, исполнитель, поставщик…" />
+                      <CommandList className="max-h-80">
+                        <CommandEmpty>Заявка не найдена</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem value="__none__" onSelect={() => setRequestId(null)}>
+                            <Check className={cn("mr-2 h-4 w-4", !requestId ? "opacity-100" : "opacity-0")} />
+                            <span className="text-muted-foreground">— Без заявки —</span>
+                          </CommandItem>
+                          {(requestsList as any[]).map((r) => {
+                            const objName = r.object_id ? (objectsById.get(r.object_id) as any)?.name : null;
+                            const hay = [r.description, objName, r.executor, r.contractor].filter(Boolean).join(" ");
+                            return (
+                              <CommandItem key={r.id} value={hay} onSelect={() => setRequestId(r.id)}>
+                                <Check className={cn("mr-2 h-4 w-4", requestId === r.id ? "opacity-100" : "opacity-0")} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm truncate">{r.description || "Без названия"}</div>
+                                  <div className="text-[10px] text-muted-foreground truncate">
+                                    {[objName, r.executor, r.contractor].filter(Boolean).join(" · ") || r.status}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <p className="text-[11px] text-muted-foreground">Личная задача — статус заявки не меняется автоматически</p>
               </div>
             </div>
@@ -478,46 +618,6 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
           )}
 
           {isEdit && (
-            <TabsContent value="comments" className="mt-4">
-              <ScrollArea className="h-[320px] pr-2">
-                <div className="space-y-3">
-                  {comments.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Ещё нет комментариев</p>}
-                  {comments.map((c) => {
-                    const m = memberById(c.user_id);
-                    return (
-                      <div key={c.id} className="flex gap-2">
-                        <Avatar className="h-7 w-7 shrink-0">
-                          <AvatarFallback className="text-[10px]">{initialsOf(m ?? {})}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 rounded-lg bg-muted/40 px-3 py-2">
-                          <div className="flex items-baseline gap-2 mb-0.5">
-                            <span className="text-xs font-medium">{memberLabel(c.user_id)}</span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {format(new Date(c.created_at), "d MMM, HH:mm", { locale: ru })}
-                            </span>
-                          </div>
-                          <div className="text-sm whitespace-pre-wrap">{c.content}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-              <div className="flex gap-2 mt-3">
-                <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Написать комментарий…" rows={2}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSendComment(); }
-                  }} />
-                <VoiceInputButton onResult={(t) => setNewComment((p) => (p ? p + " " : "") + t)} />
-                <Button onClick={handleSendComment} disabled={!newComment.trim() || addComment.isPending} size="icon">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </TabsContent>
-          )}
-
-          {isEdit && (
             <TabsContent value="activity" className="mt-4">
               <ScrollArea className="h-[360px] pr-2">
                 <div className="space-y-2">
@@ -547,7 +647,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
-            <Button onClick={handleSave} disabled={!title.trim() || create.isPending || update.isPending}>
+            <Button onClick={handleSave} disabled={create.isPending || update.isPending}>
               {isEdit ? "Сохранить" : "Создать"}
             </Button>
           </div>

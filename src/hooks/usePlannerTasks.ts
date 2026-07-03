@@ -36,6 +36,7 @@ export interface PlannerTask {
   stage_id: string | null;
   request_id: string | null;
   equipment_id: string | null;
+  equipment_ids: string[];
   parent_task_id: string | null;
   title: string;
   description: string | null;
@@ -148,6 +149,7 @@ export const useCreatePlannerTask = () => {
         stage_id: input.stage_id ?? null,
         request_id: input.request_id ?? null,
         equipment_id: input.equipment_id ?? null,
+        equipment_ids: (input as any).equipment_ids ?? [],
         start_date: input.start_date ?? null,
         due_date: input.due_date ?? null,
         tags: input.tags ?? [],
