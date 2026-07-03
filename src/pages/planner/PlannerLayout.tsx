@@ -11,23 +11,27 @@ import {
   CalendarRange,
   Truck,
   MapPin,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
 import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
+import { PlannerViewAsProvider, usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
+import { ViewAsSelect } from "@/components/planner/ViewAsSelect";
 import {
   PlannerScopeProvider,
   plannerBasePath,
   type PlannerScope,
 } from "@/contexts/PlannerScopeContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Props {
   scope?: PlannerScope;
 }
 
-function buildNav(base: string) {
-  return [
+function buildNav(base: string, isAdmin: boolean, isManual: boolean) {
+  const items = [
     { to: `${base}`, label: "Сегодня", icon: Sun, end: true },
     { to: `${base}/dashboard`, label: "Обзор", icon: LayoutDashboard },
     { to: `${base}/board`, label: "Доска задач", icon: KanbanSquare },
@@ -38,12 +42,17 @@ function buildNav(base: string) {
     { to: `${base}/by-object`, label: "По объектам", icon: MapPin },
     { to: `${base}/templates`, label: "Шаблоны", icon: FileText },
   ];
+  if (isAdmin && isManual) {
+    items.splice(2, 0, { to: `${base}/workload`, label: "Загрузка сотрудников", icon: Users });
+  }
+  return items;
 }
 
 export default function PlannerLayout({ scope = "auto" }: Props) {
   const base = plannerBasePath(scope);
-  const nav = buildNav(base);
   const isManual = scope === "manual";
+  const { isAdmin } = useUserRole();
+  const nav = buildNav(base, isAdmin, isManual);
   const title = isManual ? "Мой планировщик" : "Планировщик CRM";
   const subtitle = isManual
     ? "Личные задачи: звонки, встречи, поездки и напоминания"
@@ -52,6 +61,7 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
 
   return (
     <PlannerScopeProvider scope={scope}>
+      <PlannerViewAsProvider>
       <PlannerFiltersProvider>
         <div className="flex flex-col h-full min-h-[calc(100dvh-3.5rem)]">
           <div className="border-b border-border/40 bg-background/60 backdrop-blur sticky top-0 z-10">
@@ -85,6 +95,7 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
               ))}
             </nav>
             <PlannerFiltersBar />
+            <ViewAsBanner />
           </div>
 
           <div className="flex-1 min-h-0 p-3 sm:p-6">
@@ -94,9 +105,32 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
           {isManual && <PlannerQuickFab />}
         </div>
       </PlannerFiltersProvider>
+      </PlannerViewAsProvider>
     </PlannerScopeProvider>
   );
 }
+
+function ViewAsBanner() {
+  const { canSwitch, viewedUserId, currentUserId, setViewedUserId, isSelf } = usePlannerViewAs();
+  if (!canSwitch) return null;
+  return (
+    <div className="px-3 sm:px-6 py-1.5 flex items-center gap-2 bg-muted/10 border-t border-border/40">
+      <Users className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-[11px] text-muted-foreground">Просмотр планировщика:</span>
+      <ViewAsSelect />
+      {!isSelf && (
+        <button
+          type="button"
+          onClick={() => setViewedUserId(currentUserId)}
+          className="text-[11px] text-primary hover:underline ml-auto"
+        >
+          Вернуться к моему
+        </button>
+      )}
+    </div>
+  );
+}
+
 
 // Convenience wrappers used in route configuration
 export function CrmPlannerLayout() {

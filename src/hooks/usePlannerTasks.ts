@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { usePlannerScope } from "@/contexts/PlannerScopeContext";
+import { usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
@@ -84,16 +85,24 @@ export const PRIORITY_META: Record<
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
   const scope = usePlannerScope();
+  const { viewedUserId: ctxViewedUserId } = usePlannerViewAs();
+  const { data: fallbackUserId } = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+    staleTime: 60_000,
+  });
+  const viewedUserId = ctxViewedUserId ?? fallbackUserId ?? null;
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["planner-tasks", currentOrgId, scope],
+    queryKey: ["planner-tasks", currentOrgId, scope, viewedUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
-      if (!currentOrgId) return [];
+      if (!currentOrgId || !viewedUserId) return [];
       let q = supabase
         .from("planner_tasks")
         .select("*")
-        .eq("organization_id", currentOrgId);
+        .eq("organization_id", currentOrgId)
+        .or(`assignee_id.eq.${viewedUserId},created_by.eq.${viewedUserId}`);
       if (scope === "auto") {
         q = q.eq("source", "auto_rule");
       } else {
@@ -105,7 +114,7 @@ export const usePlannerTasks = () => {
       if (error) throw error;
       return (data ?? []) as unknown as PlannerTask[];
     },
-    enabled: !!currentOrgId,
+    enabled: !!currentOrgId && !!viewedUserId,
   });
 
   // Realtime
@@ -117,7 +126,7 @@ export const usePlannerTasks = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "planner_tasks", filter: `organization_id=eq.${currentOrgId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["planner-tasks", currentOrgId, scope] });
+          queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
         }
       )
       .subscribe();
