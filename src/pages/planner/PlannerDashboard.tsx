@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarClock, KanbanSquare, ListTodo, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CalendarClock, KanbanSquare, ListTodo, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
 import { usePlannerTasks, PRIORITY_META, PLANNER_COLUMNS } from "@/hooks/usePlannerTasks";
-import { format, isPast, isToday } from "date-fns";
+import { format, isPast, isToday, isAfter, startOfDay, differenceInCalendarDays } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
