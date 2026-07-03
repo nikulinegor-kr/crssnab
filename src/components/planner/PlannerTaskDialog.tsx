@@ -97,6 +97,9 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [tab, setTab] = useState("details");
   const [templateId, setTemplateId] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [onlyFreeEquipment, setOnlyFreeEquipment] = useState(true);
+  const [overriddenConflicts, setOverriddenConflicts] = useState<Set<string>>(new Set());
+  const { isAdmin } = useUserRole();
 
   // CRITICAL: reset state whenever dialog opens or task changes.
   // Fixes "fields cleared/reset when editing" bug caused by useState initializers only running once.
