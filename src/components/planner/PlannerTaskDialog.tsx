@@ -165,7 +165,40 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const equipmentById = useMemo(() => new Map(equipmentList.map((e: any) => [e.id, e])), [equipmentList]);
   const selectedEquipment = equipmentIds.map((id) => equipmentById.get(id)).filter(Boolean);
 
-  // Auto-fill object from first selected equipment
+  // --- Equipment busy detection ---
+  const targetStartIso = startDate ? new Date(startDate).toISOString() : null;
+  const targetEndIso = dueDate ? new Date(dueDate).toISOString() : null;
+  const excludeId = task?.id ?? null;
+
+  const activeByEquipment = useMemo(
+    () => activeTasksByEquipment(allTasks, excludeId),
+    [allTasks, excludeId],
+  );
+
+  const equipmentStatuses = useMemo(() => {
+    const m = new Map<string, EquipmentBusyStatus>();
+    for (const e of equipmentList as any[]) {
+      m.set(e.id, equipmentStatusFromTasks(activeByEquipment.get(e.id) ?? []));
+    }
+    return m;
+  }, [equipmentList, activeByEquipment]);
+
+  // Conflicts against target interval for each equipment currently selected.
+  const selectedConflicts = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof findEquipmentConflicts>>();
+    for (const eid of equipmentIds) {
+      const c = findEquipmentConflicts(allTasks, eid, targetStartIso, targetEndIso, excludeId);
+      if (c.length > 0) m.set(eid, c);
+    }
+    return m;
+  }, [equipmentIds, allTasks, targetStartIso, targetEndIso, excludeId]);
+
+  const pickerConflict = (eid: string) =>
+    findEquipmentConflicts(allTasks, eid, targetStartIso, targetEndIso, excludeId);
+
+  // Auto-fill object from first selected equipment. Conflicts render as an
+  // inline warning under the picker — user can override with the "Всё равно
+  // добавить" button (admins/owners only).
   const toggleEquipment = (id: string) => {
     setEquipmentIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
