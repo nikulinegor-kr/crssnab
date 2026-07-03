@@ -75,6 +75,8 @@ const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalen
 const PlannerTimeline = lazyWithRetry(() => import("./pages/planner/PlannerTimeline"));
 const PlannerStages = lazyWithRetry(() => import("./pages/planner/PlannerStages"));
 const PlannerTemplates = lazyWithRetry(() => import("./pages/planner/PlannerTemplates"));
+const PlannerEquipmentLoad = lazyWithRetry(() => import("./pages/planner/PlannerEquipmentLoad"));
+const PlannerByObject = lazyWithRetry(() => import("./pages/planner/PlannerByObject"));
 const AnalyticsExecutorsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorsPage"));
 const AnalyticsExecutorDetailPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorDetailPage"));
 const AnalyticsRequestsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsRequestsPage"));
