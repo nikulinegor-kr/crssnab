@@ -29,8 +29,8 @@ interface Props {
   scope?: PlannerScope;
 }
 
-function buildNav(base: string) {
-  return [
+function buildNav(base: string, isAdmin: boolean, isManual: boolean) {
+  const items = [
     { to: `${base}`, label: "Сегодня", icon: Sun, end: true },
     { to: `${base}/dashboard`, label: "Обзор", icon: LayoutDashboard },
     { to: `${base}/board`, label: "Доска задач", icon: KanbanSquare },
@@ -41,6 +41,10 @@ function buildNav(base: string) {
     { to: `${base}/by-object`, label: "По объектам", icon: MapPin },
     { to: `${base}/templates`, label: "Шаблоны", icon: FileText },
   ];
+  if (isAdmin && isManual) {
+    items.splice(2, 0, { to: `${base}/workload`, label: "Загрузка сотрудников", icon: Users });
+  }
+  return items;
 }
 
 export default function PlannerLayout({ scope = "auto" }: Props) {
