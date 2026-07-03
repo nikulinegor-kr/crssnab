@@ -44,7 +44,7 @@ export function MyPlannerTasksWidget() {
             Активных: {mine.length}{overdue > 0 && <> · <span className="text-destructive">просрочено: {overdue}</span></>}
           </p>
         </div>
-        <Link to="/planner/tasks" className="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
+        <Link to="/my-planner" className="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
           Все <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
