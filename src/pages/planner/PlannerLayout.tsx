@@ -60,6 +60,7 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
 
   return (
     <PlannerScopeProvider scope={scope}>
+      <PlannerViewAsProvider>
       <PlannerFiltersProvider>
         <div className="flex flex-col h-full min-h-[calc(100dvh-3.5rem)]">
           <div className="border-b border-border/40 bg-background/60 backdrop-blur sticky top-0 z-10">
