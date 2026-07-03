@@ -73,6 +73,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const update = useUpdatePlannerTask();
   const del = useDeletePlannerTask();
   const { data: members = [] } = useOrgMembers();
+  const navigate = useNavigate();
   const { data: stages = [] } = usePlannerStages();
   const { data: templates = [] } = usePlannerTemplates();
   const { data: allTasks = [] } = usePlannerTasks();
