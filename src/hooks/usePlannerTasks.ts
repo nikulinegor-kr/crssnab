@@ -149,6 +149,7 @@ export const useCreatePlannerTask = () => {
         stage_id: input.stage_id ?? null,
         request_id: input.request_id ?? null,
         equipment_id: input.equipment_id ?? null,
+        equipment_ids: (input as any).equipment_ids ?? [],
         start_date: input.start_date ?? null,
         due_date: input.due_date ?? null,
         tags: input.tags ?? [],
