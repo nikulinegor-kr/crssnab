@@ -11,16 +11,19 @@ import {
   CalendarRange,
   Truck,
   MapPin,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
 import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
+import { PlannerViewAsProvider, usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
 import {
   PlannerScopeProvider,
   plannerBasePath,
   type PlannerScope,
 } from "@/contexts/PlannerScopeContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Props {
   scope?: PlannerScope;
