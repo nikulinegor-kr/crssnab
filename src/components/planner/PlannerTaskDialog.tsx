@@ -42,6 +42,15 @@ import { usePlannerTemplates } from "@/hooks/usePlannerTemplates";
 import { usePlannerDependencies, useAddPlannerDependency, useRemovePlannerDependency } from "@/hooks/usePlannerDependencies";
 import { PlannerAttachmentsField } from "./PlannerAttachmentsField";
 import { VoiceInputButton } from "./VoiceInputButton";
+import { useUserRole } from "@/hooks/useUserRole";
+import {
+  ACTIVE_STATUSES,
+  BUSY_STATUS_META,
+  activeTasksByEquipment,
+  equipmentStatusFromTasks,
+  findEquipmentConflicts,
+  type EquipmentBusyStatus,
+} from "@/lib/plannerEquipmentBusy";
 
 interface Props {
   open: boolean;
