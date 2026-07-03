@@ -78,6 +78,24 @@ export default function PlannerDashboard() {
       </div>
 
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" /> Ближайшие задачи
+          </CardTitle>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="../calendar" relative="path">Календарь</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {stats.upcoming.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Нет запланированных задач</p>
+          ) : (
+            stats.upcoming.slice(0, 8).map((t) => <UpcomingRow key={t.id} task={t} />)
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">По колонкам</CardTitle>
         </CardHeader>
