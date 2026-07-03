@@ -1,0 +1,2 @@
+ALTER TABLE public.planner_tasks ADD COLUMN IF NOT EXISTS equipment_ids uuid[] NOT NULL DEFAULT '{}'::uuid[];
+CREATE INDEX IF NOT EXISTS idx_planner_tasks_equipment_ids ON public.planner_tasks USING GIN (equipment_ids);
