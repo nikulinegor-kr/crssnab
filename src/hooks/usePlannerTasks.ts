@@ -85,16 +85,18 @@ export const PRIORITY_META: Record<
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
   const scope = usePlannerScope();
+  const { viewedUserId } = usePlannerViewAs();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["planner-tasks", currentOrgId, scope],
+    queryKey: ["planner-tasks", currentOrgId, scope, viewedUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
-      if (!currentOrgId) return [];
+      if (!currentOrgId || !viewedUserId) return [];
       let q = supabase
         .from("planner_tasks")
         .select("*")
-        .eq("organization_id", currentOrgId);
+        .eq("organization_id", currentOrgId)
+        .or(`assignee_id.eq.${viewedUserId},created_by.eq.${viewedUserId}`);
       if (scope === "auto") {
         q = q.eq("source", "auto_rule");
       } else {
@@ -106,7 +108,7 @@ export const usePlannerTasks = () => {
       if (error) throw error;
       return (data ?? []) as unknown as PlannerTask[];
     },
-    enabled: !!currentOrgId,
+    enabled: !!currentOrgId && !!viewedUserId,
   });
 
   // Realtime
