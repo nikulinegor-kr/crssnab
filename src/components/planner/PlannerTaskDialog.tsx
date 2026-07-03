@@ -461,10 +461,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                                     {equipmentLabelLocal(e)}
                                     {e.plate_number && <span className="text-muted-foreground"> · {e.plate_number}</span>}
                                   </div>
-                                  {(e.inventory_number || e.responsible_name) && (
+                                  {e.responsible_name && (
                                     <div className="text-[10px] text-muted-foreground truncate">
-                                      {e.inventory_number && `Инв. ${e.inventory_number}`}
-                                      {e.inventory_number && e.responsible_name && " · "}
                                       {e.responsible_name}
                                     </div>
                                   )}
