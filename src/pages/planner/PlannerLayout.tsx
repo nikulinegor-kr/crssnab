@@ -34,6 +34,8 @@ function buildNav(base: string) {
     { to: `${base}/calendar`, label: "Календарь", icon: CalendarDays },
     { to: `${base}/timeline`, label: "План по времени", icon: GanttChartSquare },
     { to: `${base}/tasks`, label: "Список", icon: ListTodo },
+    { to: `${base}/equipment`, label: "Где техника", icon: Truck },
+    { to: `${base}/by-object`, label: "По объектам", icon: MapPin },
     { to: `${base}/templates`, label: "Шаблоны", icon: FileText },
   ];
 }
