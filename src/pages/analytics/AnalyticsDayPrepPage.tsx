@@ -18,6 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { AiDayBrief } from "@/components/analytics/AiDayBrief";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
