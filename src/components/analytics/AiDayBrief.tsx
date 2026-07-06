@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle,
   ChevronRight,
   Clock,
   Loader2,
   Receipt,
+  RefreshCw,
   Save,
   Sparkles,
   Truck,
@@ -85,16 +87,31 @@ type BucketRow = {
   amount: number | null;
 };
 
-type Metric = {
+type BucketMeta = {
   key: BucketKey;
-  icon: string; // icon key
+  label: string;
+  icon: keyof typeof ICONS;
   tone: "default" | "warning" | "danger" | "success";
-  text: string; // full short line
-  count: number;
+  showAmount: boolean;
+};
+
+type SnapshotSummary = {
+  emergency_total: number;
+  emergency_new_today: number;
+  overdue_total: number;
+  overdue_max_days: number;
+  accounting_total: number;
+  accounting_amount: number;
+  accounting_avg_days: number;
+  accounting_over_week: number;
+  stalled_total: number;
+  arrive_today_total: number;
+  arrive_today_new_emergency: number;
+  no_supplier_total: number;
 };
 
 type BriefSnapshot = {
-  metrics: Metric[];
+  summary: SnapshotSummary;
   buckets: Record<BucketKey, BucketRow[]>;
 };
 
@@ -103,7 +120,8 @@ type SavedBrief = {
   brief_date: string;
   generated_at: string;
   created_by_name: string | null;
-  metrics: Metric[];
+  narrative: string | null;
+  metrics: SnapshotSummary;
   buckets: Record<BucketKey, BucketRow[]>;
 };
 
@@ -116,7 +134,16 @@ const ICONS = {
   Receipt,
 } as const;
 
-const toneClass = (t: Metric["tone"]) =>
+const BUCKET_META: BucketMeta[] = [
+  { key: "emergency", label: "Аварийные заявки", icon: "AlertTriangle", tone: "danger", showAmount: false },
+  { key: "overdue", label: "Просроченные заявки", icon: "AlertTriangle", tone: "danger", showAmount: false },
+  { key: "accounting", label: "Счета в бухгалтерии", icon: "Wallet", tone: "warning", showAmount: true },
+  { key: "stalled", label: `Без движения более ${STALE_DAYS} дней`, icon: "Clock", tone: "warning", showAmount: false },
+  { key: "arrive_today", label: "Поступления сегодня", icon: "Truck", tone: "success", showAmount: false },
+  { key: "no_supplier", label: "Без поставщика", icon: "UserX", tone: "warning", showAmount: false },
+];
+
+const toneClass = (t: BucketMeta["tone"]) =>
   ({
     default: "text-primary",
     warning: "text-amber-500",
@@ -151,8 +178,8 @@ export function buildBriefSnapshot(
 
   // Emergency
   const emergencyList = open.filter(isEmergency);
-  const emergencyNew = emergencyList.filter(
-    (r) => (daysBetween(r.created_at, new Date().toISOString()) ?? 0) === 0,
+  const emergencyNewToday = emergencyList.filter((r) =>
+    sameDay(r.created_at, todayStart),
   ).length;
   const emergencyRows = emergencyList
     .map((r) => rowBase(r, r.status ?? "в работе", ageDays(r)))
@@ -164,12 +191,7 @@ export function buildBriefSnapshot(
     .map((r) => {
       const target = r.delivery_date ?? r.planned_delivery_date;
       const days = target
-        ? Math.max(
-            0,
-            Math.round(
-              (Date.now() - new Date(target).getTime()) / 86400000,
-            ),
-          )
+        ? Math.max(0, Math.round((Date.now() - new Date(target).getTime()) / 86400000))
         : 0;
       return { r, days };
     })
@@ -180,24 +202,22 @@ export function buildBriefSnapshot(
   const maxOverdue = overdueEntries[0]?.days ?? 0;
 
   // Accounting
-  const accountingList = open.filter((r) =>
-    ACCOUNTING_STATUSES.has(r.status ?? ""),
-  );
+  const accountingList = open.filter((r) => ACCOUNTING_STATUSES.has(r.status ?? ""));
   const accountingRows = accountingList
     .map((r) => rowBase(r, "в бухгалтерии", ageDays(r)))
     .sort((a, b) => (b.days ?? 0) - (a.days ?? 0));
-  const accountingSum = accountingList.reduce(
+  const accountingAmount = accountingList.reduce(
     (s, r) => s + (totalAmount(r) || 0),
     0,
   );
   const accountingAvg = accountingList.length
     ? Math.round(
-        accountingList.reduce((s, r) => s + ageDays(r), 0) /
-          accountingList.length,
+        accountingList.reduce((s, r) => s + ageDays(r), 0) / accountingList.length,
       )
     : 0;
+  const accountingOverWeek = accountingList.filter((r) => ageDays(r) > 7).length;
 
-  // Stalled > 5 days
+  // Stalled
   const stalledList = open.filter((r) => ageDays(r) > STALE_DAYS);
   const stalledRows = stalledList
     .map((r) => rowBase(r, "нет движения", ageDays(r)))
@@ -209,9 +229,7 @@ export function buildBriefSnapshot(
       sameDay(r.delivery_date, todayStart) ||
       sameDay(r.planned_delivery_date, todayStart),
   );
-  const arriveRows = arriveList.map((r) =>
-    rowBase(r, "ожидается сегодня", 0),
-  );
+  const arriveRows = arriveList.map((r) => rowBase(r, "ожидается сегодня", 0));
 
   // No supplier
   const noSupplierList = open.filter((r) => !r.contractor);
@@ -219,69 +237,32 @@ export function buildBriefSnapshot(
     .map((r) => rowBase(r, "не назначен поставщик", ageDays(r)))
     .sort((a, b) => (b.days ?? 0) - (a.days ?? 0));
 
-  const metrics: Metric[] = [
-    {
-      key: "emergency",
-      icon: "AlertTriangle",
-      tone: "danger",
-      count: emergencyList.length,
-      text: `${emergencyList.length} аварийных заявок в работе${
-        emergencyNew > 0 ? `, из них ${emergencyNew} новых` : ""
-      }.`,
-    },
-    {
-      key: "overdue",
-      icon: "AlertTriangle",
-      tone: "danger",
-      count: overdueEntries.length,
-      text: `${overdueEntries.length} заявок просрочены${
-        maxOverdue > 0 ? ` (максимум на ${maxOverdue} дн.)` : ""
-      }.`,
-    },
-    {
-      key: "accounting",
-      icon: "Wallet",
-      tone: "warning",
-      count: accountingList.length,
-      text: `${accountingList.length} счетов на ${fmtMoney(
-        accountingSum,
-      )} зависли в бухгалтерии${
-        accountingAvg > 0 ? ` (в среднем ${accountingAvg} дн.)` : ""
-      }.`,
-    },
-    {
-      key: "stalled",
-      icon: "Clock",
-      tone: "warning",
-      count: stalledList.length,
-      text: `${stalledList.length} заявок не двигаются более ${STALE_DAYS} дней.`,
-    },
-    {
-      key: "arrive_today",
-      icon: "Truck",
-      tone: "success",
-      count: arriveList.length,
-      text: `Сегодня ожидается ${arriveList.length} поступлений товара.`,
-    },
-    {
-      key: "no_supplier",
-      icon: "UserX",
-      tone: "warning",
-      count: noSupplierList.length,
-      text: `${noSupplierList.length} заявок без назначенного поставщика.`,
-    },
-  ];
-
-  const buckets: BriefSnapshot["buckets"] = {
-    emergency: emergencyRows,
-    overdue: overdueRows,
-    accounting: accountingRows,
-    stalled: stalledRows,
-    arrive_today: arriveRows,
-    no_supplier: noSupplierRows,
+  const summary: SnapshotSummary = {
+    emergency_total: emergencyList.length,
+    emergency_new_today: emergencyNewToday,
+    overdue_total: overdueEntries.length,
+    overdue_max_days: maxOverdue,
+    accounting_total: accountingList.length,
+    accounting_amount: Math.round(accountingAmount),
+    accounting_avg_days: accountingAvg,
+    accounting_over_week: accountingOverWeek,
+    stalled_total: stalledList.length,
+    arrive_today_total: arriveList.length,
+    arrive_today_new_emergency: emergencyNewToday,
+    no_supplier_total: noSupplierList.length,
   };
 
-  return { metrics, buckets };
+  return {
+    summary,
+    buckets: {
+      emergency: emergencyRows,
+      overdue: overdueRows,
+      accounting: accountingRows,
+      stalled: stalledRows,
+      arrive_today: arriveRows,
+      no_supplier: noSupplierRows,
+    },
+  };
 }
 
 // ---------- UI ----------
@@ -351,24 +332,24 @@ function BucketTable({
   );
 }
 
-function MetricRow({
-  metric,
-  bucket,
+function BucketAccordionRow({
+  meta,
+  rows,
   expanded,
   onToggle,
-  showAllByKey,
-  onShowAll,
+  showAll,
+  onToggleShowAll,
 }: {
-  metric: Metric;
-  bucket: BucketRow[];
+  meta: BucketMeta;
+  rows: BucketRow[];
   expanded: boolean;
   onToggle: () => void;
-  showAllByKey: boolean;
-  onShowAll: () => void;
+  showAll: boolean;
+  onToggleShowAll: () => void;
 }) {
-  const Icon = (ICONS as any)[metric.icon] ?? Clock;
-  const showAmount = metric.key === "accounting";
-  const disabled = bucket.length === 0;
+  const Icon = ICONS[meta.icon];
+  const disabled = rows.length === 0;
+  const totalAmountSum = rows.reduce((s, r) => s + (r.amount || 0), 0);
 
   return (
     <div className="border border-border/60 rounded-lg overflow-hidden">
@@ -378,9 +359,7 @@ function MetricRow({
         disabled={disabled}
         className={cn(
           "w-full flex items-center gap-3 px-4 py-3 text-left transition",
-          disabled
-            ? "cursor-default opacity-60"
-            : "hover:bg-accent/40 cursor-pointer",
+          disabled ? "cursor-default opacity-60" : "hover:bg-accent/40 cursor-pointer",
         )}
       >
         <ChevronRight
@@ -390,33 +369,32 @@ function MetricRow({
             disabled && "opacity-0",
           )}
         />
-        <Icon className={cn("h-4 w-4 shrink-0", toneClass(metric.tone))} />
-        <div className="flex-1 text-sm">{metric.text}</div>
+        <Icon className={cn("h-4 w-4 shrink-0", toneClass(meta.tone))} />
+        <div className="flex-1 text-sm font-medium">{meta.label}</div>
+        {meta.showAmount && totalAmountSum > 0 && (
+          <div className="text-xs text-muted-foreground font-numeric">
+            {fmtMoney(totalAmountSum)}
+          </div>
+        )}
         <Badge
-          variant={metric.count > 0 ? "secondary" : "outline"}
+          variant={rows.length > 0 ? "secondary" : "outline"}
           className="font-numeric shrink-0"
         >
-          {metric.count}
+          {rows.length}
         </Badge>
       </button>
-      {expanded && bucket.length > 0 && (
+      {expanded && rows.length > 0 && (
         <div className="px-4 pb-4 bg-background">
-          <BucketTable
-            rows={bucket}
-            showAll={showAllByKey}
-            showAmount={showAmount}
-          />
-          {bucket.length > 5 && (
+          <BucketTable rows={rows} showAll={showAll} showAmount={meta.showAmount} />
+          {rows.length > 5 && (
             <div className="mt-2 flex justify-center">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onShowAll}
+                onClick={onToggleShowAll}
                 className="text-xs"
               >
-                {showAllByKey
-                  ? "Свернуть"
-                  : `Показать все (${bucket.length})`}
+                {showAll ? "Свернуть" : `Показать все (${rows.length})`}
               </Button>
             </div>
           )}
@@ -445,7 +423,7 @@ export function AiDayBrief({
   const [briefs, setBriefs] = useState<SavedBrief[]>([]);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
 
@@ -465,7 +443,7 @@ export function AiDayBrief({
       const { data, error } = await supabase
         .from("ai_day_briefs")
         .select(
-          "id, brief_date, generated_at, created_by_name, metrics, buckets",
+          "id, brief_date, generated_at, created_by_name, narrative, metrics, buckets",
         )
         .eq("organization_id", organizationId)
         .eq("brief_date", selectedDate)
@@ -476,37 +454,43 @@ export function AiDayBrief({
       } else {
         const list = (data ?? []) as unknown as SavedBrief[];
         setBriefs(list);
-        // Auto-select latest when browsing past dates; today defaults to live
-        if (!isToday && list.length > 0) {
-          setSelectedBriefId(list[0].id);
-        } else {
-          setSelectedBriefId(null);
-        }
+        // Auto-select latest saved version
+        setSelectedBriefId(list[0]?.id ?? null);
       }
       setLoadingList(false);
     })();
     return () => {
       cancel = true;
     };
-  }, [organizationId, selectedDate, isToday]);
+  }, [organizationId, selectedDate]);
 
   const activeBrief = selectedBriefId
     ? briefs.find((b) => b.id === selectedBriefId) ?? null
     : null;
 
-  const activeSnapshot: BriefSnapshot = activeBrief
-    ? { metrics: activeBrief.metrics, buckets: activeBrief.buckets }
-    : liveSnapshot;
+  // For details: use saved brief buckets if a saved brief is selected, else live buckets
+  const activeBuckets = activeBrief?.buckets ?? liveSnapshot.buckets;
 
   const todayHasBrief = isToday && briefs.length > 0;
 
-  const handleSave = async () => {
+  const handleGenerate = async () => {
     if (!organizationId) return;
-    setSaving(true);
+    setGenerating(true);
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Требуется вход");
       const snapshot = buildBriefSnapshot(requests, objectMap);
+
+      // Call AI for narrative
+      const { data: aiData, error: aiErr } = await supabase.functions.invoke(
+        "analytics-day-prep",
+        { body: { snapshot: { today: todayIso, ...snapshot.summary } } },
+      );
+      if (aiErr) throw aiErr;
+      const narrative: string = aiData?.content ?? "";
+      if (!narrative) throw new Error("AI вернул пустой ответ");
+
+      // Persist snapshot with narrative
       const { data, error } = await supabase
         .from("ai_day_briefs")
         .insert({
@@ -514,34 +498,39 @@ export function AiDayBrief({
           brief_date: todayIso,
           created_by: u.user.id,
           created_by_name: userName,
-          metrics: snapshot.metrics as any,
+          narrative,
+          metrics: snapshot.summary as any,
           buckets: snapshot.buckets as any,
         })
         .select(
-          "id, brief_date, generated_at, created_by_name, metrics, buckets",
+          "id, brief_date, generated_at, created_by_name, narrative, metrics, buckets",
         )
         .single();
       if (error) throw error;
       const saved = data as unknown as SavedBrief;
-      // Refresh only if we're on today
       if (isToday) {
         setBriefs((prev) => [saved, ...prev]);
-        setSelectedBriefId(null); // stay on live "текущее" by default
+        setSelectedBriefId(saved.id);
       }
       toast({
-        title: "AI-сводка сохранена",
+        title: todayHasBrief ? "AI-сводка обновлена" : "AI-сводка сформирована",
         description: format(new Date(saved.generated_at), "d MMMM, HH:mm", {
           locale: ru,
         }),
       });
     } catch (e: any) {
+      const msg = e?.message ?? "Не удалось сформировать сводку";
       toast({
-        title: "Ошибка сохранения",
-        description: e?.message ?? "Не удалось сохранить сводку",
+        title: "Ошибка",
+        description: msg.includes("402")
+          ? "Закончились кредиты Lovable AI"
+          : msg.includes("429")
+            ? "Слишком много запросов. Попробуйте позже."
+            : msg,
         variant: "destructive",
       });
     } finally {
-      setSaving(false);
+      setGenerating(false);
     }
   };
 
@@ -551,135 +540,142 @@ export function AiDayBrief({
     setSelectedDate(format(d, "yyyy-MM-dd"));
   };
 
-  const yesterdayIso = format(
-    new Date(Date.now() - 86400000),
-    "yyyy-MM-dd",
-  );
+  const yesterdayIso = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
 
-  const toggle = (k: string) =>
-    setExpanded((p) => ({ ...p, [k]: !p[k] }));
+  const toggle = (k: string) => setExpanded((p) => ({ ...p, [k]: !p[k] }));
   const toggleShowAll = (k: string) =>
     setShowAll((p) => ({ ...p, [k]: !p[k] }));
 
   return (
-    <Card className="p-4 md:p-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div className="flex items-start gap-2">
-          <div className="p-2 rounded-md bg-primary/10">
-            <Sparkles className="h-5 w-5 text-primary" />
+    <div className="space-y-4">
+      {/* AI narrative card */}
+      <Card className="p-4 md:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-2">
+            <div className="p-2 rounded-md bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="font-semibold text-base">AI-резюме дня</div>
+              <div className="text-xs text-muted-foreground">
+                {activeBrief
+                  ? `Снимок от ${format(
+                      new Date(activeBrief.generated_at),
+                      "d MMMM yyyy, HH:mm",
+                      { locale: ru },
+                    )}${
+                      activeBrief.created_by_name
+                        ? ` · ${activeBrief.created_by_name}`
+                        : ""
+                    }`
+                  : isToday
+                    ? "Ещё не сформировано за сегодня"
+                    : "Нет сохранённой сводки на выбранную дату"}
+              </div>
+            </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant={isToday ? "secondary" : "outline"}
+              onClick={() => setDateShortcut(0)}
+            >
+              Сегодня
+            </Button>
+            <Button
+              size="sm"
+              variant={selectedDate === yesterdayIso ? "secondary" : "outline"}
+              onClick={() => setDateShortcut(-1)}
+            >
+              Вчера
+            </Button>
+            <Input
+              type="date"
+              value={selectedDate}
+              max={todayIso}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="h-9 w-[150px]"
+            />
+            {briefs.length > 1 && (
+              <Select
+                value={selectedBriefId ?? ""}
+                onValueChange={(v) => setSelectedBriefId(v)}
+              >
+                <SelectTrigger className="h-9 w-[200px]">
+                  <SelectValue placeholder="Версия" />
+                </SelectTrigger>
+                <SelectContent>
+                  {briefs.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {format(new Date(b.generated_at), "HH:mm")}
+                      {b.created_by_name ? ` · ${b.created_by_name}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {isToday && (
+              <Button
+                size="sm"
+                onClick={handleGenerate}
+                disabled={generating}
+                className="gap-2"
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : todayHasBrief ? (
+                  <RefreshCw className="h-4 w-4" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {todayHasBrief ? "Обновить AI-сводку" : "Сформировать AI-сводку"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {loadingList || generating ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {generating ? "AI пишет сводку…" : "Загрузка…"}
+          </div>
+        ) : activeBrief?.narrative ? (
+          <article className="prose prose-sm dark:prose-invert max-w-none leading-relaxed">
+            <ReactMarkdown>{activeBrief.narrative}</ReactMarkdown>
+          </article>
+        ) : (
+          <div className="text-sm text-muted-foreground py-6 text-center">
+            {isToday
+              ? "Нажмите «Сформировать AI-сводку», чтобы получить короткое описание ситуации."
+              : "На эту дату сводка не сохранялась."}
+          </div>
+        )}
+      </Card>
+
+      {/* Details */}
+      <Card className="p-4 md:p-5">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <div>
-            <div className="font-semibold text-base">AI-резюме дня</div>
+            <div className="font-semibold text-base">Детализация сводки</div>
             <div className="text-xs text-muted-foreground">
-              {activeBrief
-                ? `Снимок от ${format(
-                    new Date(activeBrief.generated_at),
-                    "d MMMM yyyy, HH:mm",
-                    { locale: ru },
-                  )}${
-                    activeBrief.created_by_name
-                      ? ` · ${activeBrief.created_by_name}`
-                      : ""
-                  }`
-                : isToday
-                  ? "Текущее состояние — по данным CRM в реальном времени"
-                  : "Нет сохранённой сводки на выбранную дату"}
+              Раскройте раздел, чтобы увидеть конкретные заявки
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant={isToday ? "secondary" : "outline"}
-            onClick={() => setDateShortcut(0)}
-          >
-            Сегодня
-          </Button>
-          <Button
-            size="sm"
-            variant={selectedDate === yesterdayIso ? "secondary" : "outline"}
-            onClick={() => setDateShortcut(-1)}
-          >
-            Вчера
-          </Button>
-          <Input
-            type="date"
-            value={selectedDate}
-            max={todayIso}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="h-9 w-[150px]"
-          />
-          {briefs.length > 0 && (
-            <Select
-              value={selectedBriefId ?? "live"}
-              onValueChange={(v) =>
-                setSelectedBriefId(v === "live" ? null : v)
-              }
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue placeholder="Версия" />
-              </SelectTrigger>
-              <SelectContent>
-                {isToday && (
-                  <SelectItem value="live">Текущее состояние</SelectItem>
-                )}
-                {briefs.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {format(new Date(b.generated_at), "HH:mm")}
-                    {b.created_by_name ? ` · ${b.created_by_name}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {isToday && (
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saving}
-              className="gap-2"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {todayHasBrief ? "Обновить AI-сводку" : "Сформировать AI-сводку"}
-            </Button>
-          )}
+        <div className="space-y-2">
+          {BUCKET_META.map((meta) => (
+            <BucketAccordionRow
+              key={meta.key}
+              meta={meta}
+              rows={activeBuckets[meta.key] ?? []}
+              expanded={!!expanded[meta.key]}
+              onToggle={() => toggle(meta.key)}
+              showAll={!!showAll[meta.key]}
+              onToggleShowAll={() => toggleShowAll(meta.key)}
+            />
+          ))}
         </div>
-      </div>
-
-      {/* Content */}
-      {loadingList ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-          <Loader2 className="h-4 w-4 animate-spin" /> Загрузка…
-        </div>
-      ) : !isToday && !activeBrief ? (
-        <div className="text-sm text-muted-foreground py-6 text-center">
-          На эту дату сводка не сохранялась.
-        </div>
-      ) : (
-        <>
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">
-            Главное
-          </div>
-          <div className="space-y-2">
-            {activeSnapshot.metrics.map((m) => (
-              <MetricRow
-                key={m.key}
-                metric={m}
-                bucket={activeSnapshot.buckets[m.key] ?? []}
-                expanded={!!expanded[m.key]}
-                onToggle={() => toggle(m.key)}
-                showAllByKey={!!showAll[m.key]}
-                onShowAll={() => toggleShowAll(m.key)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </Card>
+      </Card>
+    </div>
   );
 }

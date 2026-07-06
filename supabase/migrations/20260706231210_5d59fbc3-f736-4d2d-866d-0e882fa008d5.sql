@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_day_briefs ADD COLUMN IF NOT EXISTS narrative TEXT;
