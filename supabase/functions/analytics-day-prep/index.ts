@@ -1,114 +1,58 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
+// Analytics day prep — short narrative AI summary
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-const MODEL = "google/gemini-3-flash-preview";
-
-function ok(body: unknown, init: ResponseInit = {}) {
-  return new Response(JSON.stringify(body), {
-    ...init,
-    headers: { ...corsHeaders, "Content-Type": "application/json", ...(init.headers ?? {}) },
-  });
-}
-function bad(status: number, message: string) {
-  return ok({ error: message }, { status });
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return bad(405, "Method not allowed");
-  if (!LOVABLE_API_KEY) return bad(500, "LOVABLE_API_KEY not configured");
+  if (req.method !== "POST")
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (!LOVABLE_API_KEY)
+    return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return bad(401, "Missing authorization");
+  const auth = req.headers.get("Authorization");
+  if (!auth)
+    return new Response(JSON.stringify({ error: "Missing authorization" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  let body: { organization_id?: string; snapshot?: unknown };
+  let body: { snapshot?: unknown };
   try {
     body = await req.json();
   } catch {
-    return bad(400, "Invalid JSON");
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-  const { organization_id, snapshot } = body ?? {};
-  if (!organization_id || !snapshot) {
-    return bad(400, "organization_id and snapshot required");
-  }
+  if (!body.snapshot)
+    return new Response(JSON.stringify({ error: "snapshot required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData.user) return bad(401, "Unauthorized");
+  const prompt = `Ты — управленческий помощник CRM «Снабжение». Тебе даны агрегированные показатели дня.
 
-  const { data: membership } = await userClient
-    .from("user_organizations")
-    .select("role")
-    .eq("user_id", userData.user.id)
-    .eq("organization_id", organization_id)
-    .maybeSingle();
-  if (!membership) return bad(403, "Not a member of this organization");
+Напиши короткое связное описание ситуации на русском языке (не список, не таблицу, не заголовки, не bullet-ы). 2 абзаца обычным текстом + короткий финальный абзац «Фокус руководителя:».
 
-  const prompt = `Ты — управленческий ассистент CRM «Снабжение». Формируешь КОРОТКОЕ AI-РЕЗЮМЕ ДНЯ, которое руководитель читает за 15–20 секунд.
+Требования к тексту:
+- Читается за 10–15 секунд, максимум ~120 слов на весь ответ.
+- Первый абзац: главная проблема дня и цифры по бухгалтерии, просрочкам, аварийным, застрявшим, без поставщика.
+- Второй абзац: что происходит сегодня (поступления, движения, новые аварийные).
+- Финальный абзац начинается со слов «**Фокус руководителя:**» и содержит 1–2 конкретных приоритета.
+- Самые важные числа и суммы выделяй **жирным** (Markdown).
+- Не упоминай метрику, если её значение 0.
+- Не выдумывай факты, используй только данные из snapshot.
+- Никаких заголовков, списков, таблиц, эмодзи, ссылок.
 
-ДАННЫЕ (JSON):
+ДАННЫЕ:
 \`\`\`json
-${JSON.stringify(snapshot, null, 2)}
-\`\`\`
-
-ЦЕЛЬ РЕЗЮМЕ — ответить на 3 вопроса:
-1. Что горит?
-2. Что изменилось сегодня?
-3. Куда нужно вмешаться руководителю?
-
-ЖЁСТКИЕ ПРАВИЛА:
-- Кратко. Без длинных объяснений и пересказа базы. Анализируй, а не перечисляй.
-- В каждом списковом разделе — МАКСИМУМ 5 позиций, отсортированных по критичности (дни без движения / просрочка / сумма). Остальное НЕ выводи — фронт сам покажет «Показать ещё».
-- Не повторяй в каждой строке объект, исполнителя, контрагента, статус и прочие поля. В строке заявки — только название (ссылка) и ОДНА ключевая метрика: «X дней без движения», «просрочка X дн.», «сумма X ₽» и т.п.
-- Название заявки — кликабельная ссылка строго в формате \`[{description}](/requests/{id})\`. Если description пустое — «Без названия». Не показывай REQ-номера.
-- Не выдумывай данные. Если раздел пуст — пропусти его целиком.
-- Суммы — с разделителем тысяч и «₽».
-- Только русский, Markdown. Никаких лишних заголовков сверх указанных.
-
-СТРОГАЯ СТРУКТУРА (соблюдай заголовки и порядок дословно):
-
-# AI-резюме дня
-
-## Главное
-4–5 коротких строк-фактов с цифрами из данных. Пример: «27 аварийных заявок требуют контроля.», «5 заявок просрочены.», «8 заявок без движения более 5 дней.», «Сегодня ожидается 3 поставки.». Без ссылок.
-
-## 🔴 Требуют решения — {N}
-До 5 самых критичных заявок (максимальное число дней без движения / наибольшая просрочка). Каждая строка:
-- [{description}](/requests/{id}) — {краткая метрика, напр. «25 дней без движения»}
-
-## 🟠 Риски
-До 5 коротких строк-агрегатов о рисках: задерживающиеся поставки, заявки без исполнителя, счета в ожидании оплаты, зависшая бухгалтерия и т.п. Только цифры и суть, без списков заявок. Если рисков нет — пропусти раздел.
-
-## 🟢 Сегодня
-До 5 строк о движении за сегодня: ожидаемые поставки, завершённые заявки, новые аварийные, оплаченные счета. Только цифры. Если данных за сегодня нет — пропусти раздел.
-
-## Фокус руководителя
-Одна короткая фраза (1–2 предложения): куда именно вмешаться прямо сейчас, с числами. Без списка.`;
+${JSON.stringify(body.snapshot, null, 2)}
+\`\`\``;
 
   const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": LOVABLE_API_KEY,
-    },
+    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY },
     body: JSON.stringify({
-      model: MODEL,
+      model: "google/gemini-3-flash-preview",
       messages: [
-        {
-          role: "system",
-          content:
-            "Ты — деловой управленческий ассистент. Формируешь итемизированные управленческие отчёты. Каждый пункт — с деталями и кликабельной ссылкой на карточку заявки. Не пишешь общими фразами. Не выдумываешь данные.",
-        },
+        { role: "system", content: "Ты — деловой ассистент. Пиши коротко, связным человеческим текстом, без списков и таблиц." },
         { role: "user", content: prompt },
       ],
     }),
@@ -116,13 +60,10 @@ ${JSON.stringify(snapshot, null, 2)}
 
   if (!aiRes.ok) {
     const txt = await aiRes.text();
-    if (aiRes.status === 429) return bad(429, "AI rate limited: " + txt);
-    if (aiRes.status === 402) return bad(402, "AI credits exhausted: " + txt);
-    return bad(500, `AI gateway error ${aiRes.status}: ${txt}`);
+    const code = aiRes.status === 402 ? 402 : aiRes.status === 429 ? 429 : 500;
+    return new Response(JSON.stringify({ error: `AI ${aiRes.status}: ${txt}` }), { status: code, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
   const aiJson = await aiRes.json();
   const content: string = aiJson.choices?.[0]?.message?.content ?? "";
-  if (!content) return bad(500, "Empty AI response");
-
-  return ok({ content });
+  return new Response(JSON.stringify({ content }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 });
