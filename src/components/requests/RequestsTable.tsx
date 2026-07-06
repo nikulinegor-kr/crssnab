@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
-import { RequestShipmentsPanel, ShipmentsSummaryChips } from "./RequestShipmentsPanel";
+import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
+import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { useShipmentsSummary } from "@/hooks/useRequestShipments";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -708,14 +709,14 @@ export const RequestsTable = ({
                     }} 
                   />
                   {(() => {
-                    const hasMulti = (shipmentsSummary?.[request.id]?.total ?? 0) >= 2;
+                    const hasShipments = (shipmentsSummary?.[request.id]?.total ?? 0) >= 1;
                     return (
                       <TableCell
                         className="p-0 border-r border-b text-center align-middle"
                         style={{ width: 28, minWidth: 28, maxWidth: 28 }}
-                        onClick={(e) => { if (hasMulti) { e.stopPropagation(); toggleExpand(request.id); } }}
+                        onClick={(e) => { if (hasShipments) { e.stopPropagation(); toggleExpand(request.id); } }}
                       >
-                        {hasMulti && (
+                        {hasShipments && (
                           <button
                             type="button"
                             className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
@@ -780,7 +781,13 @@ export const RequestsTable = ({
                                   </div>
                                 </RequestQuickPreview>
                                 {shipmentsSummary?.[request.id] && (
-                                  <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <ShipmentsProgressChip
+                                      total={shipmentsSummary[request.id].total}
+                                      delivered={shipmentsSummary[request.id].delivered}
+                                    />
+                                    <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                  </div>
                                 )}
                               </div>
                             }
@@ -1079,11 +1086,7 @@ export const RequestsTable = ({
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={100} className="p-0 border-b">
-                      <RequestShipmentsPanel
-                        requestId={request.id}
-                        organizationId={(request as any).organization_id}
-                        canEdit={true}
-                      />
+                      <RequestShipmentsTree requestId={request.id} />
                     </TableCell>
                   </TableRow>
                 )}
