@@ -781,7 +781,13 @@ export const RequestsTable = ({
                                   </div>
                                 </RequestQuickPreview>
                                 {shipmentsSummary?.[request.id] && (
-                                  <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <ShipmentsProgressChip
+                                      total={shipmentsSummary[request.id].total}
+                                      delivered={shipmentsSummary[request.id].delivered}
+                                    />
+                                    <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
+                                  </div>
                                 )}
                               </div>
                             }
