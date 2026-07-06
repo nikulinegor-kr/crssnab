@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://cfdwsdydbtwaljnidirf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "crss-snab-mcp",
+      "version": "0.1.0",
+      "title": "CRSS Снаб — Agent Integration"
+    },
+    "tools": [
+      {
+        "name": "list_requests",
+        "title": "Список заявок",
+        "description": "Возвращает список заявок (снабжение) организации пользователя. Поддерживает фильтр по статусу, приоритету, поисковой строке и лимит.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Фильтр по статусу, напр. 'В работе', 'Доставлено'."
+            },
+            "priority": {
+              "type": "string",
+              "description": "Фильтр по приоритету: 'Аварийно', 'Приоритетно', 'Планово'."
+            },
+            "search": {
+              "type": "string",
+              "description": "Поиск по описанию/контрагенту."
+            },
+            "archived": {
+              "type": "boolean",
+              "description": "Показывать архивные (по умолчанию false)."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Максимум записей (по умолчанию 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_request",
+        "title": "Детали заявки",
+        "description": "Возвращает полную карточку заявки по её id: описание, статус, суммы, контрагент, даты отгрузки/доставки, комментарии.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID заявки."
+            }
+          },
+          "required": [
+            "request_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_objects",
+        "title": "Список объектов",
+        "description": "Возвращает объекты (стройплощадки/склады) организации пользователя. Полезно для контекста при создании задач/заявок.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Поиск по имени объекта."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Максимум записей (по умолчанию 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_planner_tasks",
+        "title": "Мои задачи планировщика",
+        "description": "Возвращает задачи персонального планировщика текущего пользователя. Можно отфильтровать по статусу и диапазону 'today'/'upcoming'/'overdue'/'all'.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Статус задачи: 'todo', 'in_progress', 'done' и т.п."
+            },
+            "scope": {
+              "type": "string",
+              "enum": [
+                "today",
+                "upcoming",
+                "overdue",
+                "all"
+              ],
+              "description": "Временной срез: сегодня/ближайшие/просроченные/все."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Максимум записей (по умолчанию 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_planner_task",
+        "title": "Создать задачу в планировщике",
+        "description": "Создаёт новую задачу в персональном планировщике текущего пользователя (назначается ему же).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "description": "Название задачи."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 5000,
+              "description": "Подробное описание."
+            },
+            "due_date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO-дата дедлайна, напр. '2026-07-10T15:00:00Z'."
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "urgent"
+              ],
+              "description": "Приоритет."
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "description": "Метки."
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
