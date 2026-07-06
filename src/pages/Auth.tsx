@@ -131,7 +131,7 @@ export default function Auth() {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}${next}`,
           data: {
             organization_name: data.organizationName,
             inn: data.inn,
