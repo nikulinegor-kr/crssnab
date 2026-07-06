@@ -423,6 +423,50 @@ export type Database = {
           },
         ]
       }
+      ai_day_briefs: {
+        Row: {
+          brief_date: string
+          buckets: Json
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          generated_at: string
+          id: string
+          metrics: Json
+          organization_id: string
+        }
+        Insert: {
+          brief_date: string
+          buckets?: Json
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          generated_at?: string
+          id?: string
+          metrics?: Json
+          organization_id: string
+        }
+        Update: {
+          brief_date?: string
+          buckets?: Json
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          generated_at?: string
+          id?: string
+          metrics?: Json
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_day_briefs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_messages: {
         Row: {
           content: string
