@@ -709,14 +709,14 @@ export const RequestsTable = ({
                     }} 
                   />
                   {(() => {
-                    const hasMulti = (shipmentsSummary?.[request.id]?.total ?? 0) >= 2;
+                    const hasShipments = (shipmentsSummary?.[request.id]?.total ?? 0) >= 1;
                     return (
                       <TableCell
                         className="p-0 border-r border-b text-center align-middle"
                         style={{ width: 28, minWidth: 28, maxWidth: 28 }}
-                        onClick={(e) => { if (hasMulti) { e.stopPropagation(); toggleExpand(request.id); } }}
+                        onClick={(e) => { if (hasShipments) { e.stopPropagation(); toggleExpand(request.id); } }}
                       >
-                        {hasMulti && (
+                        {hasShipments && (
                           <button
                             type="button"
                             className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
