@@ -97,16 +97,20 @@ export const usePlannerTasks = () => {
   const query = useQuery({
     queryKey: ["planner-tasks", currentOrgId, scope, viewedUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
-      if (!currentOrgId || !viewedUserId) return [];
+      if (!currentOrgId) return [];
       let q = supabase
         .from("planner_tasks")
         .select("*")
-        .eq("organization_id", currentOrgId)
-        .or(`assignee_id.eq.${viewedUserId},created_by.eq.${viewedUserId}`);
+        .eq("organization_id", currentOrgId);
       if (scope === "auto") {
+        // CRM planner: organization-wide view of auto-generated tasks
         q = q.eq("source", "auto_rule");
       } else {
-        q = q.or("source.is.null,source.eq.manual");
+        // Personal planner: only tasks assigned to or created by the viewed user
+        if (!viewedUserId) return [];
+        q = q
+          .or("source.is.null,source.eq.manual")
+          .or(`assignee_id.eq.${viewedUserId},created_by.eq.${viewedUserId}`);
       }
       const { data, error } = await q
         .order("position", { ascending: true })
@@ -114,7 +118,7 @@ export const usePlannerTasks = () => {
       if (error) throw error;
       return (data ?? []) as unknown as PlannerTask[];
     },
-    enabled: !!currentOrgId && !!viewedUserId,
+    enabled: !!currentOrgId && (scope === "auto" || !!viewedUserId),
   });
 
   // Realtime
