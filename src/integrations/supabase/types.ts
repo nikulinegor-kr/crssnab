@@ -433,6 +433,7 @@ export type Database = {
           generated_at: string
           id: string
           metrics: Json
+          narrative: string | null
           organization_id: string
         }
         Insert: {
@@ -444,6 +445,7 @@ export type Database = {
           generated_at?: string
           id?: string
           metrics?: Json
+          narrative?: string | null
           organization_id: string
         }
         Update: {
@@ -455,6 +457,7 @@ export type Database = {
           generated_at?: string
           id?: string
           metrics?: Json
+          narrative?: string | null
           organization_id?: string
         }
         Relationships: [
