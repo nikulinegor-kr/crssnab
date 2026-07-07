@@ -21,7 +21,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/chat": "Чат команды",
   "/documents": "Документы",
   "/material-statements": "Ведомости материалов",
-  "/budgets": "Бюджеты",
+  
   "/ai-assistant": "AI-ассистент",
   "/organization/settings": "Настройки",
   "/profile": "Профиль",
