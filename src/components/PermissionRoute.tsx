@@ -20,7 +20,7 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     "/equipment",
     "/suppliers",
     "/shipments",
-    "/budgets",
+    
     "/agent-report",
     "/agent-act-report",
     "/percent-calculator",

@@ -82,13 +82,6 @@ const menuGroups = [
     ],
   },
   {
-    label: "Финансы",
-    icon: Wallet,
-    items: [
-      { title: "Бюджеты", url: "/budgets", icon: Wallet, badge: "скоро" },
-    ],
-  },
-  {
     label: "Отчет Агента",
     icon: FileBarChart,
     items: [
