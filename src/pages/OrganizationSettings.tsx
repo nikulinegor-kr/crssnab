@@ -36,7 +36,7 @@ const OrganizationSettings = () => {
 
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "access", "notifications", "subscription"]
+    ? ["profile", "general", "access", "notifications", "subscription", "errorlogs"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"];
