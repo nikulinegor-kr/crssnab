@@ -230,6 +230,14 @@ const OrganizationSettings = () => {
             </SettingsSection>
           </TabsContent>
         )}
+
+        {visibleTabs.includes("errorlogs") && (
+          <TabsContent value="errorlogs">
+            <SettingsSection title="Журнал ошибок" description="Системный журнал ошибок приложения" icon={ShieldAlert}>
+              <ErrorLogsPage />
+            </SettingsSection>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
