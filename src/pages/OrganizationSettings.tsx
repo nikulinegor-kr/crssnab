@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock } from "lucide-react";
+import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock, ShieldAlert } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
