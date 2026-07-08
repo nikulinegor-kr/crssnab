@@ -18,8 +18,6 @@ import {
   FolderOpen,
   FileSpreadsheet,
   Files,
-  Bot,
-  ShieldAlert,
   KanbanSquare,
   Sparkles,
   ClipboardList,
