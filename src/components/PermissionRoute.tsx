@@ -26,7 +26,7 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     "/percent-calculator",
     "/team-performance",
     "/action-log",
-    "/ai-assistant",
+    
     "/organization/settings",
   ];
 
