@@ -23,6 +23,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
 import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 import { SettingsSection } from "@/components/settings/SettingsSection";
+import ErrorLogsPage from "@/pages/ErrorLogsPage";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
