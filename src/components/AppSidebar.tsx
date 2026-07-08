@@ -106,7 +106,6 @@ const menuGroups = [
     items: [
       { title: "Производительность команды", url: "/team-performance", icon: Users },
       { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
-      { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
   {
@@ -117,10 +116,6 @@ const menuGroups = [
       { title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
     ],
   },
-];
-
-const adminMenuItems = [
-  { title: "Журнал ошибок", url: "/admin/error-logs", icon: ShieldAlert },
 ];
 
 const settingsMenuItems = [
