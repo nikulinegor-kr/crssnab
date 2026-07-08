@@ -270,22 +270,6 @@ export function AppSidebar() {
           );
         })}
 
-        {/* Админ-раздел */}
-        {isAdmin && !isDemoMode && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup>
-              {showText && (
-                <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
-                  Администрирование
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>{renderMenuItems(adminMenuItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
 
         {/* Настройки — скрыты для наблюдателей */}
         {!isViewer && (
