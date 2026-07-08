@@ -22,7 +22,6 @@ const PAGE_NAMES: Record<string, string> = {
   "/documents": "Документы",
   "/material-statements": "Ведомости материалов",
   
-  "/ai-assistant": "AI-ассистент",
   "/organization/settings": "Настройки",
   "/profile": "Профиль",
 };

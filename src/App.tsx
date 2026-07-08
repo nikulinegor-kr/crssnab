@@ -61,7 +61,7 @@ const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
 const EmployeeLogin = lazyWithRetry(() => import("./pages/EmployeeLogin"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const OAuthConsent = lazyWithRetry(() => import("./pages/OAuthConsent"));
-const AIAssistantPage = lazyWithRetry(() => import("./pages/AIAssistantPage"));
+
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
@@ -232,16 +232,6 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <ChatPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ai-assistant"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AIAssistantPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

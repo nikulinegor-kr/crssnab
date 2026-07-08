@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock } from "lucide-react";
+import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock, ShieldAlert } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
@@ -23,6 +23,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminderSettings";
 import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 import { SettingsSection } from "@/components/settings/SettingsSection";
+import ErrorLogsPage from "@/pages/ErrorLogsPage";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const OrganizationSettings = () => {
 
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "access", "notifications", "subscription"]
+    ? ["profile", "general", "access", "notifications", "subscription", "errorlogs"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"];
@@ -130,6 +131,11 @@ const OrganizationSettings = () => {
                 <CreditCard className="h-4 w-4" /><span className="hidden sm:inline">Подписка</span>
               </TabsTrigger>
             )}
+            {visibleTabs.includes("errorlogs") && (
+              <TabsTrigger value="errorlogs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
+                <ShieldAlert className="h-4 w-4" /><span className="hidden sm:inline">Журнал ошибок</span>
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -221,6 +227,14 @@ const OrganizationSettings = () => {
           <TabsContent value="subscription">
             <SettingsSection title="Подписка" description="Управление тарифным планом" icon={CreditCard}>
               <SubscriptionSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("errorlogs") && (
+          <TabsContent value="errorlogs">
+            <SettingsSection title="Журнал ошибок" description="Системный журнал ошибок приложения" icon={ShieldAlert}>
+              <ErrorLogsPage />
             </SettingsSection>
           </TabsContent>
         )}

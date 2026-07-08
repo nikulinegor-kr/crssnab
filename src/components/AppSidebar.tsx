@@ -18,8 +18,6 @@ import {
   FolderOpen,
   FileSpreadsheet,
   Files,
-  Bot,
-  ShieldAlert,
   KanbanSquare,
   Sparkles,
   ClipboardList,
@@ -108,7 +106,6 @@ const menuGroups = [
     items: [
       { title: "Производительность команды", url: "/team-performance", icon: Users },
       { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
-      { title: "AI-ассистент", url: "/ai-assistant", icon: Bot },
     ],
   },
   {
@@ -119,10 +116,6 @@ const menuGroups = [
       { title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
     ],
   },
-];
-
-const adminMenuItems = [
-  { title: "Журнал ошибок", url: "/admin/error-logs", icon: ShieldAlert },
 ];
 
 const settingsMenuItems = [
@@ -277,22 +270,6 @@ export function AppSidebar() {
           );
         })}
 
-        {/* Админ-раздел */}
-        {isAdmin && !isDemoMode && (
-          <>
-            <SidebarSeparator />
-            <SidebarGroup>
-              {showText && (
-                <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
-                  Администрирование
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>{renderMenuItems(adminMenuItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
 
         {/* Настройки — скрыты для наблюдателей */}
         {!isViewer && (
