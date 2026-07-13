@@ -44,46 +44,41 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
       ? "Extract the contractor name, invoice number, and total amount from this document:"
       : "Extract all line items (article, name, quantity) from this document:";
 
-    // Parse the base64 data URL to extract mime type and raw base64
-    // Format: "data:<mime>;base64,<data>"
-    let mimeType = fileType || "image/png";
-    let base64Data = file;
-
-    if (file.startsWith("data:")) {
-      const match = file.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
-        mimeType = match[1];
-        base64Data = match[2];
-      }
-    }
-
-    const isPdf = mimeType === "application/pdf" || fileName?.toLowerCase()?.endsWith(".pdf");
-
-    // Build the user message content
-    const userContent: any[] = [
-      { type: "text", text: userPrompt },
-    ];
-
-    if (isPdf) {
-      // For PDFs, use inline_data format which Gemini supports natively
-      userContent.push({
-        type: "image_url",
-        image_url: {
-          url: `data:application/pdf;base64,${base64Data}`,
-        },
-      });
-    } else {
-      // For images, use the original data URL
-      userContent.push({
-        type: "image_url",
-        image_url: { url: file },
-      });
-    }
-
     const messages: any[] = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
     ];
+
+    let mimeType = fileType || "image/png";
+    let base64Data = file;
+    let isPdf = false;
+
+    if (textContent) {
+      messages.push({
+        role: "user",
+        content: `${userPrompt}\n\n---\n${textContent}\n---`,
+      });
+    } else {
+      if (typeof file === "string" && file.startsWith("data:")) {
+        const match = file.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          mimeType = match[1];
+          base64Data = match[2];
+        }
+      }
+      isPdf = mimeType === "application/pdf" || fileName?.toLowerCase()?.endsWith(".pdf");
+
+      const userContent: any[] = [{ type: "text", text: userPrompt }];
+      if (isPdf) {
+        userContent.push({
+          type: "image_url",
+          image_url: { url: `data:application/pdf;base64,${base64Data}` },
+        });
+      } else {
+        userContent.push({ type: "image_url", image_url: { url: file } });
+      }
+      messages.push({ role: "user", content: userContent });
+    }
+
 
     console.log("Sending request to AI gateway, mimeType:", mimeType, "isPdf:", isPdf, "mode:", mode || "items");
 
