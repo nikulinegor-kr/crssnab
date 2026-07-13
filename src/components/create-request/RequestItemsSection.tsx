@@ -177,7 +177,7 @@ export const RequestItemsSection = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,image/*"
+            accept=".pdf,.xlsx,.xls,.csv,.ods,image/*"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
