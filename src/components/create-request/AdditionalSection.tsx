@@ -148,9 +148,15 @@ export const AdditionalSection = ({
 
       const modifiedPdf = await pdfDoc.save();
       const blob = new Blob([modifiedPdf.buffer as ArrayBuffer], { type: "application/pdf" });
-      // Name file after the request description with -ZRS suffix
-      const sanitize = (s: string) => s.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
-      const baseName = sanitize(formValues.description || "Заявка") || "Заявка";
+      // Name file safely with -ZRS suffix (ASCII-only for storage compatibility)
+      const asciiSafe = (formValues.description || "")
+        .replace(/[^\x00-\x7F]/g, "")
+        .replace(/[\\/:*?"<>|]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/_{2,}/g, "_")
+        .replace(/^[_.-]+|[_.-]+$/g, "")
+        .slice(0, 60);
+      const baseName = asciiSafe || `Request-${Date.now()}`;
       const newFileName = `${baseName}-ZRS.pdf`;
       const modifiedFile = new File([blob], newFileName, { type: "application/pdf" });
 
