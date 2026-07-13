@@ -324,23 +324,24 @@ export default function RequestDetail() {
     try {
       const newUrls: string[] = [];
       
-      for (let i = 0; i < Array.from(files).length; i++) {
-        const file = Array.from(files)[i];
-        const extension = file.name.split('.').pop() || '';
-        const baseName = sanitizeFilename(request.description);
-        const suffix = files.length > 1 ? `_${i + 1}` : '';
-        const fileName = `${id}-${Date.now()}-${baseName}${suffix}.${extension}`;
-        
+      const filesArr = Array.from(files);
+      for (let i = 0; i < filesArr.length; i++) {
+        const file = filesArr[i];
+        const dotIdx = file.name.lastIndexOf('.');
+        const extension = dotIdx >= 0 ? file.name.slice(dotIdx + 1).toLowerCase() : 'bin';
+        const safeExt = extension.replace(/[^a-z0-9]/gi, '') || 'bin';
+        const fileName = `${id}-${Date.now()}-${i}.${safeExt}`;
+
         const { error: uploadError } = await supabase.storage
           .from("request-documents")
-          .upload(fileName, file);
+          .upload(fileName, file, { contentType: file.type || undefined });
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from("request-documents")
           .getPublicUrl(fileName);
-          
+
         newUrls.push(publicUrl);
       }
 
@@ -607,11 +608,10 @@ export default function RequestDetail() {
         const newUrls: string[] = [];
         for (let i = 0; i < docFiles.length; i++) {
           const file = docFiles[i];
-          const ext = file.name.split('.').pop() || '';
-          const base = sanitizeFilename(request.description);
-          const sfx = docFiles.length > 1 ? `_${i + 1}` : '';
-          const fName = `${request.request_number}/${Date.now()}-${base}${sfx}.${ext}`;
-          const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file);
+          const dotIdx = file.name.lastIndexOf('.');
+          const ext = (dotIdx >= 0 ? file.name.slice(dotIdx + 1).toLowerCase() : 'bin').replace(/[^a-z0-9]/gi, '') || 'bin';
+          const fName = `${request.request_number}/${Date.now()}-${i}.${ext}`;
+          const { error: ue } = await supabase.storage.from("request-documents").upload(fName, file, { contentType: file.type || undefined });
           if (ue) throw ue;
           const { data: { publicUrl } } = supabase.storage.from("request-documents").getPublicUrl(fName);
           newUrls.push(publicUrl);
@@ -926,7 +926,7 @@ export default function RequestDetail() {
                           <span className="hidden sm:inline text-xs">{isUploadingDoc ? "..." : "Документ"}</span>
                           <input
                             type="file"
-                            accept=".pdf,.doc,.docx,.xls,.xlsx"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods"
                             multiple
                             onChange={handleDocumentUpload}
                             className="hidden"

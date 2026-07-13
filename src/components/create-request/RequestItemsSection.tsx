@@ -44,11 +44,25 @@ export const RequestItemsSection = ({
   const handleRecognizeInvoice = async (file: File) => {
     setIsRecognizing(true);
     try {
-      const base64 = await fileToBase64(file);
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      const isExcel = ext === "xlsx" || ext === "xls" || ext === "csv" || ext === "ods";
+      let body: any;
 
-      const { data, error } = await supabase.functions.invoke("recognize-invoice", {
-        body: { file: base64, fileName: file.name, fileType: file.type },
-      });
+      if (isExcel) {
+        const XLSX = await import("xlsx");
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: "array" });
+        const sheets = wb.SheetNames.map((n) => {
+          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[n]);
+          return `# Sheet: ${n}\n${csv}`;
+        }).join("\n\n");
+        body = { textContent: sheets, fileName: file.name };
+      } else {
+        const base64 = await fileToBase64(file);
+        body = { file: base64, fileName: file.name, fileType: file.type };
+      }
+
+      const { data, error } = await supabase.functions.invoke("recognize-invoice", { body });
 
       if (error) throw error;
 
@@ -163,7 +177,7 @@ export const RequestItemsSection = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,image/*"
+            accept=".pdf,.xlsx,.xls,.csv,.ods,image/*"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
