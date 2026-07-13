@@ -927,7 +927,7 @@ export default function RequestDetail() {
                           <span className="hidden sm:inline text-xs">{isUploadingDoc ? "..." : "Документ"}</span>
                           <input
                             type="file"
-                            accept=".pdf,.doc,.docx,.xls,.xlsx"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods"
                             multiple
                             onChange={handleDocumentUpload}
                             className="hidden"
