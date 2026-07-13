@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { file, fileName, fileType, mode } = await req.json();
+    const { file, fileName, fileType, mode, textContent } = await req.json();
 
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
