@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   try {
     const { file, fileName, fileType, mode, textContent } = await req.json();
 
-    if (!file) {
+    if (!file && !textContent) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
