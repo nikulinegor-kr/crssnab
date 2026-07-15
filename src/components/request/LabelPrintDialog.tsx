@@ -4,9 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Tag, Printer } from "lucide-react";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface LabelPrintDialogProps {
   open: boolean;
@@ -17,29 +14,8 @@ interface LabelPrintDialogProps {
 
 export function LabelPrintDialog({ open, onOpenChange, description, applicant }: LabelPrintDialogProps) {
   const { toast } = useToast();
-  const { currentOrgId } = useCurrentOrganization();
 
-  const { data: orgData } = useQuery({
-    queryKey: ["organization-label", currentOrgId],
-    queryFn: async () => {
-      if (!currentOrgId) return null;
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("name, contact_phone")
-        .eq("id", currentOrgId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!currentOrgId && open,
-  });
-
-  const labelText = [
-    orgData?.name || "",
-    orgData?.contact_phone || "",
-    description || "",
-    applicant || "",
-  ].join("\t");
+  const labelText = [description || "", applicant || ""].join("\n");
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -61,16 +37,12 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             .label { border: 1px solid #ccc; padding: 16px; max-width: 300px; }
-            .org { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
-            .phone { font-size: 12px; color: #666; margin-bottom: 12px; }
             .desc { font-size: 13px; margin-bottom: 8px; word-break: break-word; }
             .applicant { font-size: 12px; color: #333; }
           </style>
         </head>
         <body>
           <div class="label">
-            <div class="org">${orgData?.name || ""}</div>
-            <div class="phone">${orgData?.contact_phone || ""}</div>
             <div class="desc">${description || ""}</div>
             <div class="applicant">${applicant || ""}</div>
           </div>
@@ -92,22 +64,6 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Организация</Label>
-            <div className="flex gap-2">
-              <Input readOnly value={orgData?.name || "—"} className="bg-muted/50" />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard(orgData?.name || "", "Организация скопирована")}
-                disabled={!orgData?.name}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <Label className="text-xs">Название заявки</Label>
             <div className="flex gap-2">
@@ -141,7 +97,7 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Формат для этикетки (табуляция)</Label>
+            <Label className="text-xs">Формат для этикетки</Label>
             <div className="flex gap-2">
               <Input readOnly value={labelText} className="bg-muted/50 text-xs" />
               <Button
