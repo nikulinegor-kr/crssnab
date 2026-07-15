@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -45,6 +45,7 @@ import { InlineEditCell } from "./InlineEditCell";
 import { InlineExecutorCell } from "./InlineExecutorCell";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
+import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -216,6 +217,15 @@ export const RequestsTable = ({
 
   const closeQuickView = useCallback(() => {
     setQuickViewOpen(false);
+  }, []);
+
+  // Label print dialog state
+  const [labelRequest, setLabelRequest] = useState<Request | null>(null);
+  const openLabelPrint = useCallback((request: Request) => {
+    setLabelRequest(request);
+  }, []);
+  const closeLabelPrint = useCallback(() => {
+    setLabelRequest(null);
   }, []);
 
   const handleColumnResize = useCallback((column: string, width: number) => {
@@ -1071,6 +1081,10 @@ export const RequestsTable = ({
                           <ShoppingCart className="h-4 w-4 mr-2" />
                           Создать поставку
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openLabelPrint(request)}>
+                          <Tag className="h-4 w-4 mr-2" />
+                          Печать этикетки
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
@@ -1106,6 +1120,15 @@ export const RequestsTable = ({
         open={quickViewOpen}
         onClose={closeQuickView}
         onEdit={onEditClick}
+      />
+
+      <LabelPrintDialog
+        open={!!labelRequest}
+        onOpenChange={(open) => {
+          if (!open) closeLabelPrint();
+        }}
+        description={labelRequest?.description || null}
+        applicant={labelRequest?.applicant || null}
       />
     </div>
   );
