@@ -1082,6 +1082,32 @@ export default function RequestDetail() {
 
             {/* 6. Activity Feed - System history separated */}
             <RequestActivityFeed activities={activities} />
+
+            {/* 7. Label Print - at the end of the request */}
+            <Card className="glassmorphism border-border/40">
+              <CardContent className="pt-5 pb-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-primary" />
+                      Печать этикетки
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Скопируйте название заявки и заявителя для этикетки
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setLabelDialogOpen(true)}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Скопировать для этикетки
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Sidebar */}
