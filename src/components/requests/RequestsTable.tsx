@@ -1121,6 +1121,15 @@ export const RequestsTable = ({
         onClose={closeQuickView}
         onEdit={onEditClick}
       />
+
+      <LabelPrintDialog
+        open={!!labelRequest}
+        onOpenChange={(open) => {
+          if (!open) closeLabelPrint();
+        }}
+        description={labelRequest?.description || null}
+        applicant={labelRequest?.applicant || null}
+      />
     </div>
   );
 };
