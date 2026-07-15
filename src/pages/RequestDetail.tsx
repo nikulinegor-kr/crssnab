@@ -27,7 +27,8 @@ import {
   User,
   Building2,
   Receipt,
-  CreditCard
+  CreditCard,
+  Tag
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -53,6 +54,7 @@ import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
+import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 
 interface Activity {
   id: string;
@@ -95,6 +97,7 @@ export default function RequestDetail() {
   const [receivedByDialogOpen, setReceivedByDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
   const dragCounterRef = useRef(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1080,6 +1083,32 @@ export default function RequestDetail() {
 
             {/* 6. Activity Feed - System history separated */}
             <RequestActivityFeed activities={activities} />
+
+            {/* 7. Label Print - at the end of the request */}
+            <Card className="glassmorphism border-border/40">
+              <CardContent className="pt-5 pb-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-primary" />
+                      Печать этикетки
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Скопируйте название заявки и заявителя для этикетки
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setLabelDialogOpen(true)}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Скопировать для этикетки
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Sidebar */}
@@ -1195,6 +1224,13 @@ export default function RequestDetail() {
         defaultValue={(request as any)?.received_by}
         onCancel={() => setReceivedByDialogOpen(false)}
         onConfirm={handleReceivedByConfirm}
+      />
+
+      <LabelPrintDialog
+        open={labelDialogOpen}
+        onOpenChange={setLabelDialogOpen}
+        description={request?.description || null}
+        applicant={request?.applicant || null}
       />
     </div>
   );
