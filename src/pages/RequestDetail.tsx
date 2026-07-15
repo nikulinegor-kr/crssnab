@@ -27,7 +27,8 @@ import {
   User,
   Building2,
   Receipt,
-  CreditCard
+  CreditCard,
+  Tag
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
