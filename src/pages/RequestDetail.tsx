@@ -1225,6 +1225,13 @@ export default function RequestDetail() {
         onCancel={() => setReceivedByDialogOpen(false)}
         onConfirm={handleReceivedByConfirm}
       />
+
+      <LabelPrintDialog
+        open={labelDialogOpen}
+        onOpenChange={setLabelDialogOpen}
+        description={request?.description || null}
+        applicant={request?.applicant || null}
+      />
     </div>
   );
 }
