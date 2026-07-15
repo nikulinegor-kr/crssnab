@@ -53,6 +53,7 @@ import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
 import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
+import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 
 interface Activity {
   id: string;
@@ -95,6 +96,7 @@ export default function RequestDetail() {
   const [receivedByDialogOpen, setReceivedByDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
   const dragCounterRef = useRef(0);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
