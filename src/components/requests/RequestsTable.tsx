@@ -1081,6 +1081,10 @@ export const RequestsTable = ({
                           <ShoppingCart className="h-4 w-4 mr-2" />
                           Создать поставку
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openLabelPrint(request)}>
+                          <Tag className="h-4 w-4 mr-2" />
+                          Печать этикетки
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
