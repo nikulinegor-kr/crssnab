@@ -219,6 +219,15 @@ export const RequestsTable = ({
     setQuickViewOpen(false);
   }, []);
 
+  // Label print dialog state
+  const [labelRequest, setLabelRequest] = useState<Request | null>(null);
+  const openLabelPrint = useCallback((request: Request) => {
+    setLabelRequest(request);
+  }, []);
+  const closeLabelPrint = useCallback(() => {
+    setLabelRequest(null);
+  }, []);
+
   const handleColumnResize = useCallback((column: string, width: number) => {
     updateWidth(column as keyof ColumnWidths, width);
   }, [updateWidth]);
