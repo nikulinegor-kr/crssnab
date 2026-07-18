@@ -134,7 +134,24 @@ export function PartAiSuggestions({
     }
   };
 
-  // AI runs only on explicit button click (no auto-run)
+  // Auto-run only when article is entered — fills name & manufacturer automatically
+  const autoKeyRef = useRef<string>("");
+  useEffect(() => {
+    const art = article.trim();
+    if (!orgId || art.length < 3) return;
+    const autoKey = `${art}|${(manufacturer ?? "").trim()}`;
+    if (autoKey === autoKeyRef.current) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      autoKeyRef.current = autoKey;
+      lastKeyRef.current = "";
+      await runAnalysis();
+    }, 800);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article, manufacturer, orgId]);
 
   const handlePhoto = async (file: File | null) => {
     if (!file) return;
