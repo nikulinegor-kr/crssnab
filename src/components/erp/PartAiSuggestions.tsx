@@ -348,9 +348,25 @@ export function PartAiSuggestions({
                 Официальная информация
               </div>
               <div className="text-xs text-muted-foreground space-y-0.5">
-                {(ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en) && <div>Производитель: <span className="text-foreground">{ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en}</span></div>}
-                {(ai.official_info.name_ru || ai.official_info.name_en) && <div>Наименование: <span className="text-foreground">{ai.official_info.name_ru || ai.official_info.name_en}</span></div>}
-                {ai.official_info.name_en && ai.official_info.name_ru && <div className="italic opacity-70">EN: {ai.official_info.name_en}</div>}
+                {(ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en) && (
+                  <div>
+                    Производитель: <span className="text-foreground">{ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en}</span>
+                    {ai.official_info.manufacturer_source && (
+                      <span className="ms-1 italic opacity-70">— источник: {ai.official_info.manufacturer_source}</span>
+                    )}
+                  </div>
+                )}
+                {(ai.official_info.name_ru || ai.official_info.name_en) && (
+                  <div>
+                    Наименование: <span className="text-foreground">{ai.official_info.name_ru || ai.official_info.name_en}</span>
+                  </div>
+                )}
+                {ai.official_info.name_en && (
+                  <div className="italic opacity-70">Оригинальное название: {ai.official_info.name_en}</div>
+                )}
+                {ai.official_info.name_source && (
+                  <div className="italic opacity-70">Источник наименования: {ai.official_info.name_source}</div>
+                )}
                 {ai.official_info.part_type_ru && <div>Тип: <span className="text-foreground">{ai.official_info.part_type_ru}</span></div>}
                 {ai.article_normalized && <div>Артикул: <span className="text-foreground font-mono">{ai.article_normalized}</span></div>}
                 {ai.official_info.description_ru && <div className="text-foreground">{ai.official_info.description_ru}</div>}
