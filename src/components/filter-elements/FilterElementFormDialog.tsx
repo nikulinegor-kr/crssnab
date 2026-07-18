@@ -115,7 +115,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         article: form.article.trim() || null,
         manufacturer: form.manufacturer.trim() || null,
         unit: form.unit || "шт",
-        min_stock: Number(form.min_stock) || 0,
         storage_location: form.storage_location.trim() || null,
         notes: form.notes.trim() || null,
         cross_numbers: crossNums,
@@ -137,7 +136,30 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             .insert(equipmentIds.map((eid) => ({ filter_element_id: id, equipment_id: eid })));
         }
       }
+      // Первичное оприходование — только при создании и если указано количество
+      if (!editing && id) {
+        const q = Number(receipt.quantity);
+        if (q && q > 0) {
+          const price = receipt.unit_price.trim() ? Number(receipt.unit_price) : null;
+          if (price != null && (Number.isNaN(price) || price < 0)) {
+            throw new Error("Цена должна быть неотрицательной");
+          }
+          const { error: mErr } = await (supabase as any).from("filter_element_movements").insert({
+            organization_id: orgId,
+            filter_element_id: id,
+            type: "IN",
+            quantity: q,
+            unit_price: price,
+            supplier: receipt.supplier.trim() || null,
+            document_number: receipt.document_number.trim() || null,
+            receipt_date: receipt.receipt_date ? new Date(receipt.receipt_date).toISOString() : null,
+            comment: receipt.comment.trim() || null,
+          });
+          if (mErr) throw mErr;
+        }
+      }
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["filter-elements-list"] });
       toast.success(editing ? "Обновлено" : "Добавлено");
