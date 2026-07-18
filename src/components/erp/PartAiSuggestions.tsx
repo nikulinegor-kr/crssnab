@@ -174,8 +174,9 @@ export function PartAiSuggestions({
     if (!data?.ai?.official_info) return;
     const oi = data.ai.official_info;
     onAccept({
-      manufacturer: oi.manufacturer ?? undefined,
-      name: oi.name ?? undefined,
+      manufacturer: oi.manufacturer_ru ?? oi.manufacturer_en ?? undefined,
+      name: oi.name_ru ?? oi.name_en ?? undefined,
+      article: data.ai.article_normalized ?? undefined,
       cross_numbers: oi.cross_numbers?.length ? oi.cross_numbers : undefined,
       equipment_ids: Array.from(selectedIds),
     });
