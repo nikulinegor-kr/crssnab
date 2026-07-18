@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive } from "lucide-react";
 import { FilterElementFormDialog } from "@/components/filter-elements/FilterElementFormDialog";
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
@@ -26,6 +27,12 @@ import { FilterElementWriteOffDialog } from "@/components/filter-elements/Filter
 import { FilterMoveToDeadstockDialog } from "@/components/filter-elements/FilterMoveToDeadstockDialog";
 import { FilterElementsDeadstockTab } from "@/components/filter-elements/FilterElementsDeadstockTab";
 import { toast } from "sonner";
+
+const formatEq = (e: { brand: string | null; model: string | null }) =>
+  [e.brand, e.model].filter(Boolean).join(" ").trim() || "—";
+const fmtRub = (v: number | null | undefined) =>
+  v == null ? "—" : `${Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽`;
+
 
 export default function FilterElementsPage() {
   const { currentOrgId } = useCurrentOrganization();
@@ -165,6 +172,7 @@ export default function FilterElementsPage() {
             </div>
 
             <div className="rounded-md border overflow-x-auto">
+              <TooltipProvider delayDuration={150}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -172,20 +180,19 @@ export default function FilterElementsPage() {
                     <TableHead>Наименование</TableHead>
                     <TableHead>Артикул</TableHead>
                     <TableHead>Кросс-номер</TableHead>
-                    <TableHead>Совместимость</TableHead>
+                    <TableHead>Совместимость с техникой</TableHead>
                     <TableHead className="text-right">Остаток</TableHead>
-                    <TableHead className="text-right">Мин.</TableHead>
-                    <TableHead>Ед.</TableHead>
-                    <TableHead>Место хранения</TableHead>
+                    <TableHead className="text-right">Мин. остаток</TableHead>
+                    <TableHead className="text-right">Цена</TableHead>
                     <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <Filter className="h-8 w-8 text-muted-foreground/40" />
                           <span>Ничего не найдено</span>
@@ -197,6 +204,8 @@ export default function FilterElementsPage() {
                       const low = (i.stock ?? 0) <= (i.min_stock ?? 0);
                       const eqs = i.equipment ?? [];
                       const crosses = i.cross_numbers ?? [];
+                      const firstEq = eqs[0];
+                      const extra = Math.max(0, eqs.length - 1);
                       return (
                         <TableRow key={i.id} className="hover:bg-accent/50">
                           <TableCell className="text-xs">{i.manufacturer || "—"}</TableCell>
@@ -205,27 +214,74 @@ export default function FilterElementsPage() {
                           <TableCell>
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {crosses.slice(0, 2).map((c) => <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>)}
-                              {crosses.length > 2 && <Badge variant="outline" className="text-xs">+{crosses.length - 2}</Badge>}
+                              {crosses.length > 2 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="text-xs cursor-help">+{crosses.length - 2}</Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <div className="flex flex-wrap gap-1">
+                                      {crosses.slice(2).map((c) => <span key={c} className="text-xs">{c}</span>)}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {crosses.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-wrap gap-1 max-w-[240px]">
-                              {eqs.slice(0, 2).map((e) => (
-                                <Badge key={e.id} variant="outline" className="text-xs">
-                                  {e.brand} {e.model}
-                                </Badge>
-                              ))}
-                              {eqs.length > 2 && <Badge variant="outline" className="text-xs">+{eqs.length - 2}</Badge>}
-                              {eqs.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
-                            </div>
+                            {eqs.length === 0 ? (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="inline-flex items-center gap-1 cursor-help">
+                                    <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                      {formatEq(firstEq)}
+                                    </Badge>
+                                    {extra > 0 && (
+                                      <span className="text-xs text-muted-foreground">(+{extra})</span>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <div className="text-xs font-medium mb-1">Совместимая техника ({eqs.length})</div>
+                                  <div className="flex flex-col gap-0.5">
+                                    {eqs.map((e) => (
+                                      <div key={e.id} className="text-xs">
+                                        {formatEq(e)}{e.plate_number ? ` • ${e.plate_number}` : ""}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                           </TableCell>
                           <TableCell className="text-right font-numeric">
                             <Badge variant={low ? "destructive" : "secondary"}>{i.stock ?? 0}</Badge>
+                            <span className="text-[10px] text-muted-foreground ml-1">{i.unit}</span>
                           </TableCell>
                           <TableCell className="text-right font-numeric text-muted-foreground text-xs">{i.min_stock ?? 0}</TableCell>
-                          <TableCell className="text-xs">{i.unit}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{i.storage_location || "—"}</TableCell>
+                          <TableCell className="text-right">
+                            {i.last_price == null && i.avg_price == null ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="inline-flex flex-col items-end cursor-help leading-tight">
+                                    <span className="font-numeric text-sm">{fmtRub(i.last_price)}</span>
+                                    <span className="text-[10px] text-muted-foreground font-numeric">
+                                      ср. {fmtRub(i.avg_price)}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="text-xs">Последняя закупочная цена</div>
+                                  <div className="text-xs">Средняя за {i.purchase_count ?? 0} закупок: {fmtRub(i.avg_price)}</div>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -260,8 +316,10 @@ export default function FilterElementsPage() {
                   )}
                 </TableBody>
               </Table>
+              </TooltipProvider>
             </div>
           </TabsContent>
+
 
           <TabsContent value="deadstock">
             {currentOrgId && <FilterElementsDeadstockTab orgId={currentOrgId} />}

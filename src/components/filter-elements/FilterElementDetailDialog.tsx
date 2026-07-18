@@ -1,9 +1,12 @@
+import { useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFilterElementMovements, type FilterElementRow } from "@/hooks/useFilterElements";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { Link } from "react-router-dom";
 
 interface Props {
   open: boolean;
@@ -18,8 +21,16 @@ const TYPE_LABEL: Record<string, { label: string; variant: "default" | "secondar
   RETURN: { label: "Возврат", variant: "outline" },
 };
 
+const fmtRub = (v: number | null | undefined) =>
+  v == null ? "—" : `${Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽`;
+
 export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
   const { data: movements = [] } = useFilterElementMovements(open ? item.id : null);
+
+  const priceHistory = useMemo(
+    () => (movements as any[]).filter((m) => m.type === "IN" && m.unit_price != null && Number(m.unit_price) > 0),
+    [movements],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,6 +47,27 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
             <div><div className="text-xs text-muted-foreground">Остаток</div><div className="font-numeric">{item.stock ?? 0}</div></div>
             <div><div className="text-xs text-muted-foreground">Мин. остаток</div><div className="font-numeric">{item.min_stock}</div></div>
             <div><div className="text-xs text-muted-foreground">Место хранения</div><div>{item.storage_location || "—"}</div></div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="p-3">
+              <div className="text-xs text-muted-foreground">Последняя цена</div>
+              <div className="text-lg font-semibold font-numeric">{fmtRub(item.last_price)}</div>
+              {item.last_purchase_at && (
+                <div className="text-[10px] text-muted-foreground">
+                  {format(new Date(item.last_purchase_at), "dd.MM.yyyy", { locale: ru })}
+                </div>
+              )}
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs text-muted-foreground">Средняя закупочная</div>
+              <div className="text-lg font-semibold font-numeric">{fmtRub(item.avg_price)}</div>
+              <div className="text-[10px] text-muted-foreground">Автоматический пересчёт</div>
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs text-muted-foreground">Закупок учтено</div>
+              <div className="text-lg font-semibold font-numeric">{item.purchase_count ?? 0}</div>
+            </Card>
           </div>
 
           {(item.cross_numbers?.length ?? 0) > 0 && (
@@ -61,7 +93,52 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
           )}
 
           <div>
-            <div className="text-xs text-muted-foreground mb-2">История движений</div>
+            <div className="text-xs text-muted-foreground mb-2">История цен (закупки)</div>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Заявка</TableHead>
+                    <TableHead>Поставщик</TableHead>
+                    <TableHead className="text-right">Кол-во</TableHead>
+                    <TableHead className="text-right">Цена закупки</TableHead>
+                    <TableHead className="text-right">Сумма</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {priceHistory.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                      Закупочные цены ещё не фиксировались. Укажите цену в диалоге «Пополнить».
+                    </TableCell></TableRow>
+                  ) : (
+                    priceHistory.map((m: any) => {
+                      const total = Number(m.unit_price) * Number(m.quantity);
+                      return (
+                        <TableRow key={m.id}>
+                          <TableCell className="text-xs">{format(new Date(m.created_at), "dd.MM.yyyy", { locale: ru })}</TableCell>
+                          <TableCell className="text-xs">
+                            {m.request ? (
+                              <Link to={`/requests/${m.request.id}`} className="text-primary hover:underline">
+                                {m.request.description ?? "Заявка"}
+                              </Link>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell className="text-xs">{m.supplier ?? "—"}</TableCell>
+                          <TableCell className="text-right font-numeric text-xs">{m.quantity}</TableCell>
+                          <TableCell className="text-right font-numeric">{fmtRub(m.unit_price)}</TableCell>
+                          <TableCell className="text-right font-numeric text-muted-foreground">{fmtRub(total)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Все движения</div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -76,10 +153,10 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {movements.length === 0 ? (
+                  {(movements as any[]).length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Пока нет операций</TableCell></TableRow>
                   ) : (
-                    movements.map((m: any) => {
+                    (movements as any[]).map((m: any) => {
                       const t = TYPE_LABEL[m.type] ?? { label: m.type, variant: "outline" as const };
                       return (
                         <TableRow key={m.id}>

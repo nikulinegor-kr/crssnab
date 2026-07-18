@@ -1174,8 +1174,11 @@ export type Database = {
           object_id: string | null
           organization_id: string
           quantity: number
+          request_id: string | null
           responsible_user_id: string | null
+          supplier: string | null
           type: string
+          unit_price: number | null
         }
         Insert: {
           comment?: string | null
@@ -1187,8 +1190,11 @@ export type Database = {
           object_id?: string | null
           organization_id: string
           quantity: number
+          request_id?: string | null
           responsible_user_id?: string | null
+          supplier?: string | null
           type: string
+          unit_price?: number | null
         }
         Update: {
           comment?: string | null
@@ -1200,8 +1206,11 @@ export type Database = {
           object_id?: string | null
           organization_id?: string
           quantity?: number
+          request_id?: string | null
           responsible_user_id?: string | null
+          supplier?: string | null
           type?: string
+          unit_price?: number | null
         }
         Relationships: [
           {
@@ -1230,6 +1239,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_movements_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
             referencedColumns: ["id"]
           },
         ]
