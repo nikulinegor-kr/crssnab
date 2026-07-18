@@ -97,6 +97,7 @@ export function PartAiSuggestions({
     if (!orgId) return;
     setLoading(true);
     setError(null);
+    setDismissed(false);
     try {
       const { data: res, error } = await supabase.functions.invoke("analyze-part", {
         body: {
