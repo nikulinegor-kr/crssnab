@@ -134,24 +134,7 @@ export function PartAiSuggestions({
     }
   };
 
-  // Auto-run on debounced text change
-  useEffect(() => {
-    const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3;
-    if (!hasInput || !orgId) {
-      setData(null);
-      return;
-    }
-    if (key === lastKeyRef.current) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      lastKeyRef.current = key;
-      runAnalysis();
-    }, 700);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, orgId, kind]);
+  // AI runs only on explicit button click (no auto-run)
 
   const handlePhoto = async (file: File | null) => {
     if (!file) return;
