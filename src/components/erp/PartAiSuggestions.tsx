@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info, Camera, Wand2, X, BookOpen, Building2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Info, Camera, Wand2, X, BookOpen, Building2, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export interface PartAiSuggestion {
   duplicate: null | {
@@ -32,22 +32,36 @@ export interface PartAiSuggestion {
   ai: null | {
     article_found: boolean;
     not_found: boolean;
+    article_normalized: string | null;
     sources: Array<{ name: string; trust?: string }>;
     official_info: null | {
-      part_type: string | null;
-      description: string | null;
-      manufacturer: string | null;
-      name: string | null;
+      part_type_ru: string | null;
+      name_en: string | null;
+      name_ru: string | null;
+      manufacturer_en: string | null;
+      manufacturer_ru: string | null;
+      description_ru: string | null;
       oems: string[];
       cross_numbers: string[];
     };
     catalog_compatibility: Array<{ brand: string; model: string; years?: string | null; engine?: string | null; source?: string | null }>;
-    company_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null; source?: string | null }>;
+    company_equipment: Array<{
+      id: string;
+      brand: string | null;
+      model: string | null;
+      plate_number: string | null;
+      year: number | null;
+      source?: string | null;
+      sources?: string[];
+      sources_count?: number;
+      confirmation_type?: "OEM" | "Cross Reference" | null;
+    }>;
     trust_level: "green" | "yellow" | "orange" | "red" | null;
     trust_reason: string | null;
     note: string | null;
   };
 }
+
 
 export interface PartAiAccept {
   manufacturer?: string;
