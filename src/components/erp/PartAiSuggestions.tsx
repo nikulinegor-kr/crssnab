@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info, Camera, Wand2, X } from "lucide-react";
 
 export interface PartAiSuggestion {
   duplicate: null | {
@@ -23,6 +23,12 @@ export interface PartAiSuggestion {
     suppliers: string[];
     purchase_count: number;
   };
+  vision: null | {
+    article: string | null;
+    manufacturer: string | null;
+    name: string | null;
+    cross_numbers: string[];
+  };
   ai: null | {
     manufacturer: string | null;
     name: string | null;
@@ -41,6 +47,7 @@ export interface PartAiAccept {
   category?: string;
   cross_numbers?: string[];
   equipment_ids?: string[];
+  article?: string;
 }
 
 interface Props {
@@ -53,6 +60,11 @@ interface Props {
   onAccept: (data: PartAiAccept) => void;
   onOpenDuplicate?: (id: string) => void;
   onMoveToDeadstock?: () => void;
+}
+
+function isMobile() {
+  if (typeof navigator === "undefined") return false;
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 export function PartAiSuggestions({
@@ -69,14 +81,55 @@ export function PartAiSuggestions({
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PartAiSuggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastKeyRef = useRef<string>("");
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
 
   const key = useMemo(
     () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim()]),
     [article, crossNumbers, name]
   );
 
+  const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string; force?: boolean }) => {
+    if (!orgId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("analyze-part", {
+        body: {
+          orgId,
+          kind,
+          article: article.trim() || undefined,
+          cross_number: crossNumbers[0] || undefined,
+          name: name.trim() || undefined,
+          excludeId,
+          image_base64: extras?.image_base64,
+          image_mime: extras?.image_mime,
+        },
+      });
+      if (error) throw error;
+      const suggestion = res as PartAiSuggestion;
+      setData(suggestion);
+      // Auto-fill from photo vision
+      if (suggestion?.vision) {
+        onAccept({
+          manufacturer: suggestion.vision.manufacturer ?? undefined,
+          name: suggestion.vision.name ?? undefined,
+          article: suggestion.vision.article ?? undefined,
+          cross_numbers: suggestion.vision.cross_numbers?.length ? suggestion.vision.cross_numbers : undefined,
+        });
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Ошибка AI");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-run on debounced text change
   useEffect(() => {
     const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3;
     if (!hasInput || !orgId) {
@@ -85,59 +138,30 @@ export function PartAiSuggestions({
     }
     if (key === lastKeyRef.current) return;
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
+    timerRef.current = setTimeout(() => {
       lastKeyRef.current = key;
-      setLoading(true);
-      setError(null);
-      try {
-        const { data: res, error } = await supabase.functions.invoke("analyze-part", {
-          body: {
-            orgId,
-            kind,
-            article: article.trim() || undefined,
-            cross_number: crossNumbers[0] || undefined,
-            name: name.trim() || undefined,
-            excludeId,
-          },
-        });
-        if (error) throw error;
-        setData(res as PartAiSuggestion);
-      } catch (e: any) {
-        setError(e?.message ?? "Ошибка AI");
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
+      runAnalysis();
     }, 700);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [key, orgId, kind, article, crossNumbers, name, excludeId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, orgId, kind]);
 
-  const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3;
-  if (!hasInput) return null;
-
-  if (loading && !data) {
-    return (
-      <div className="rounded-md border bg-muted/30 px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        AI анализирует…
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-        {error}
-      </div>
-    );
-  }
-
-  if (!data) return null;
+  const handlePhoto = async (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || "");
+      setPhotoUrl(dataUrl);
+      const base64 = dataUrl.split(",")[1] || "";
+      await runAnalysis({ image_base64: base64, image_mime: file.type || "image/jpeg" });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const applyAi = () => {
-    if (!data.ai) return;
+    if (!data?.ai) return;
     onAccept({
       manufacturer: data.ai.manufacturer ?? undefined,
       name: data.ai.name ?? undefined,
@@ -147,16 +171,89 @@ export function PartAiSuggestions({
     });
   };
 
-  const noCompat = data.ai && (!data.ai.suggested_equipment || data.ai.suggested_equipment.length === 0);
+  const noCompat = !!data?.ai && (!data.ai.suggested_equipment || data.ai.suggested_equipment.length === 0);
+  const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3;
 
   return (
     <div className="space-y-2">
-      {data.duplicate && (
+      {/* Top action bar */}
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium">AI помощник</span>
+        <div className="ms-auto flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            className="h-8 gap-1"
+            disabled={loading || !hasInput}
+            onClick={() => { lastKeyRef.current = ""; runAnalysis(); }}
+          >
+            <Wand2 className="h-4 w-4" />
+            🤖 AI определить
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1"
+            disabled={loading}
+            onClick={() => (isMobile() ? cameraRef.current?.click() : fileRef.current?.click())}
+          >
+            <Camera className="h-4 w-4" />
+            📷 Распознать по фото
+          </Button>
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)}
+          />
+        </div>
+      </div>
+
+      {photoUrl && (
+        <div className="relative inline-block">
+          <img src={photoUrl} alt="Фото детали" className="max-h-32 rounded-md border" />
+          <button
+            type="button"
+            onClick={() => setPhotoUrl(null)}
+            className="absolute -top-2 -right-2 rounded-full bg-background border p-0.5 shadow"
+            aria-label="Убрать фото"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-md border bg-muted/30 px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          AI анализирует…
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {data?.duplicate && (
         <div className="rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm">
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="font-medium">Такая запчасть уже существует</div>
+              <div className="font-medium">Такая позиция уже есть в CRM</div>
               <div className="text-muted-foreground mt-1">
                 {data.duplicate.name}
                 {data.duplicate.article ? ` • арт. ${data.duplicate.article}` : ""}
@@ -175,22 +272,27 @@ export function PartAiSuggestions({
                   ))}
                 </div>
               )}
-              {onOpenDuplicate && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-2 h-7"
-                  onClick={() => onOpenDuplicate(data.duplicate!.id)}
-                >
-                  Пополнить остаток
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7"
+                onClick={() => {
+                  if (onOpenDuplicate) onOpenDuplicate(data.duplicate!.id);
+                  else {
+                    window.dispatchEvent(new CustomEvent("open-part-detail", {
+                      detail: { kind, id: data.duplicate!.id },
+                    }));
+                  }
+                }}
+              >
+                ✅ Пополнить остаток
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {data.ai && (
+      {data?.ai && (
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -211,7 +313,7 @@ export function PartAiSuggestions({
 
           {data.ai.suggested_equipment.length > 0 ? (
             <div>
-              <div className="text-xs text-muted-foreground mb-1">Подходит:</div>
+              <div className="text-xs text-muted-foreground mb-1">Совместимая техника (заполнено автоматически):</div>
               <div className="flex flex-wrap gap-1">
                 {data.ai.suggested_equipment.map((e) => (
                   <Badge key={e.id} variant="secondary" className="text-xs">
@@ -223,9 +325,14 @@ export function PartAiSuggestions({
               </div>
             </div>
           ) : (
-            <div className="text-xs text-amber-700 dark:text-amber-400 flex items-start gap-1">
-              <Info className="h-3.5 w-3.5 mt-0.5" />
-              Не удалось определить совместимость с техникой CRM.
+            <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+              <div className="flex items-start gap-1">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>
+                  ⚠️ Совместимость с техникой компании не найдена. Добавьте совместимость вручную ниже
+                  или переместите позицию в склад неликвида.
+                </div>
+              </div>
             </div>
           )}
 
@@ -244,7 +351,7 @@ export function PartAiSuggestions({
 
           {data.ai.analogs.length > 0 && (
             <div className="text-xs text-muted-foreground">
-              Возможно, вы имели в виду: {data.ai.analogs.slice(0, 5).join(", ")}
+              Аналоги: {data.ai.analogs.slice(0, 5).join(", ")}
             </div>
           )}
 
@@ -256,6 +363,9 @@ export function PartAiSuggestions({
               {data.price.last_supplier ? ` • ${data.price.last_supplier}` : ""}
               {data.price.avg_price ? ` • средняя ${Math.round(data.price.avg_price).toLocaleString("ru-RU")} ₽` : ""}
               {" • закупок: "}{data.price.purchase_count}
+              {data.price.suppliers.length > 1 && (
+                <> • поставщики: {data.price.suppliers.slice(0, 3).join(", ")}</>
+              )}
             </div>
           )}
 
