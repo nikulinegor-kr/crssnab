@@ -13,6 +13,7 @@ interface Payload {
   article?: string;
   cross_number?: string;
   name?: string;
+  manufacturer?: string;
   excludeId?: string;
   image_base64?: string; // raw base64 (no data: prefix) OR data URL
   image_mime?: string;   // e.g. image/jpeg
