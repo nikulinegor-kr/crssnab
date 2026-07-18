@@ -1168,15 +1168,20 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string | null
+          document_number: string | null
           equipment_id: string | null
           filter_element_id: string
+          from_location: string | null
           id: string
           object_id: string | null
           organization_id: string
           quantity: number
+          reason: string | null
+          receipt_date: string | null
           request_id: string | null
           responsible_user_id: string | null
           supplier: string | null
+          to_location: string | null
           type: string
           unit_price: number | null
         }
@@ -1184,15 +1189,20 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          document_number?: string | null
           equipment_id?: string | null
           filter_element_id: string
+          from_location?: string | null
           id?: string
           object_id?: string | null
           organization_id: string
           quantity: number
+          reason?: string | null
+          receipt_date?: string | null
           request_id?: string | null
           responsible_user_id?: string | null
           supplier?: string | null
+          to_location?: string | null
           type: string
           unit_price?: number | null
         }
@@ -1200,15 +1210,20 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          document_number?: string | null
           equipment_id?: string | null
           filter_element_id?: string
+          from_location?: string | null
           id?: string
           object_id?: string | null
           organization_id?: string
           quantity?: number
+          reason?: string | null
+          receipt_date?: string | null
           request_id?: string | null
           responsible_user_id?: string | null
           supplier?: string | null
+          to_location?: string | null
           type?: string
           unit_price?: number | null
         }
