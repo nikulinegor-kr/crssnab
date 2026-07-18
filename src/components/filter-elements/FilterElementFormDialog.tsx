@@ -173,6 +173,29 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             </div>
           </div>
 
+          <PartAiSuggestions
+            orgId={orgId}
+            kind="filter"
+            article={form.article}
+            crossNumbers={crossNums}
+            name={form.name}
+            excludeId={item?.id}
+            onAccept={(d) => {
+              setForm((f) => ({
+                ...f,
+                manufacturer: f.manufacturer || d.manufacturer || "",
+                name: f.name || d.name || "",
+              }));
+              if (d.cross_numbers?.length) {
+                setCrossNums((prev) => Array.from(new Set([...prev, ...d.cross_numbers!])));
+              }
+              if (d.equipment_ids?.length) {
+                setEquipmentIds((prev) => Array.from(new Set([...prev, ...d.equipment_ids!])));
+              }
+              toast.success("Данные подставлены");
+            }}
+          />
+
           <div>
             <Label>Кросс-номера</Label>
             <div className="flex gap-2 mb-2">
