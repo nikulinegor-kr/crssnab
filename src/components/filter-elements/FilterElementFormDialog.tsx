@@ -152,6 +152,7 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             article={form.article}
             crossNumbers={crossNums}
             name={form.name}
+            manufacturer={form.manufacturer}
             excludeId={item?.id}
             onOpenDuplicate={(id) => {
               window.dispatchEvent(new CustomEvent("open-part-detail", { detail: { kind: "filter", id } }));
