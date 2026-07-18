@@ -140,7 +140,7 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
           </div>
 
           <div>
-            <div className="text-xs text-muted-foreground mb-2">Все движения</div>
+            <div className="text-xs text-muted-foreground mb-2">Движение</div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -148,27 +148,37 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
                     <TableHead>Дата</TableHead>
                     <TableHead>Операция</TableHead>
                     <TableHead className="text-right">Кол-во</TableHead>
-                    <TableHead>Техника</TableHead>
-                    <TableHead>Объект</TableHead>
+                    <TableHead>Документ</TableHead>
+                    <TableHead>Со склада → на склад</TableHead>
+                    <TableHead>Техника / объект</TableHead>
                     <TableHead>Ответственный</TableHead>
-                    <TableHead>Комментарий</TableHead>
+                    <TableHead>Причина / комментарий</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(movements as any[]).length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Пока нет операций</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Пока нет операций</TableCell></TableRow>
                   ) : (
                     (movements as any[]).map((m: any) => {
                       const t = TYPE_LABEL[m.type] ?? { label: m.type, variant: "outline" as const };
+                      const move = m.type === "MOVE"
+                        ? `${m.from_location ?? "—"} → ${m.to_location ?? "—"}`
+                        : "—";
+                      const eqObj = [
+                        m.equipment ? `${m.equipment.brand ?? ""} ${m.equipment.model ?? ""}`.trim() : null,
+                        m.object?.name ?? null,
+                      ].filter(Boolean).join(" • ") || "—";
+                      const reasonComment = [m.reason, m.comment].filter(Boolean).join(" — ") || "—";
                       return (
                         <TableRow key={m.id}>
                           <TableCell className="text-xs">{format(new Date(m.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}</TableCell>
                           <TableCell><Badge variant={t.variant}>{t.label}</Badge></TableCell>
                           <TableCell className="text-right font-numeric">{m.quantity}</TableCell>
-                          <TableCell className="text-xs">{m.equipment ? `${m.equipment.brand ?? ""} ${m.equipment.model ?? ""}`.trim() : "—"}</TableCell>
-                          <TableCell className="text-xs">{m.object?.name ?? "—"}</TableCell>
+                          <TableCell className="text-xs">{m.document_number ?? "—"}</TableCell>
+                          <TableCell className="text-xs">{move}</TableCell>
+                          <TableCell className="text-xs">{eqObj}</TableCell>
                           <TableCell className="text-xs">{m.responsible?.full_name ?? "—"}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-[220px] truncate">{m.comment ?? "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[240px] truncate">{reasonComment}</TableCell>
                         </TableRow>
                       );
                     })
@@ -177,6 +187,7 @@ export function FilterElementDetailDialog({ open, onOpenChange, item }: Props) {
               </Table>
             </div>
           </div>
+
         </div>
       </DialogContent>
     </Dialog>
