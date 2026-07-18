@@ -311,6 +311,9 @@ export default function FilterElementsPage() {
                                   <Archive className="h-4 w-4 mr-2" />В неликвид
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setLabelItem(i)}>
+                                  <Tag className="h-4 w-4 mr-2" />Печать этикетки
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setEditItem(i); setFormOpen(true); }}>
                                   <Pencil className="h-4 w-4 mr-2" />Редактировать
                                 </DropdownMenuItem>
