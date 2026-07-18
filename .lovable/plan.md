@@ -1,60 +1,127 @@
 
-# Переработка модуля «Мой планировщик»
+# Модуль «Склад запасных частей»
 
-Работа большая — 11 пунктов затрагивают базу данных, диалог задачи, все режимы отображения и добавляют 2 новых представления. Разбиваю на 4 этапа. Всё делается фронтом + одна миграция для мультитехники.
+Разрабатываем полноценный модуль учёта запчастей с привязкой к технике, отдельный раздел неликвида, историю движения, списание, продажу и аналитику. Существующий `spare_parts` (страница `SpareParts.tsx`) переработаем/расширим под новую модель, а `deadstock_items` используем как основу для неликвида запчастей.
 
-## Этап 1. База данных (миграция)
+## 1. Разделы в боковом меню (группа ERP)
 
-Добавить поле для нескольких единиц техники и вспомогательные для отображения:
+- «Склад запчастей» → `/spare-parts`
+- «Неликвид запчастей» → `/spare-parts/deadstock`
+- Обе страницы с адаптивной таблицей, быстрыми фильтрами слева/сверху, кнопкой «+ Добавить».
 
-- `planner_tasks.equipment_ids uuid[]` — массив ID техники (старое поле `equipment_id` сохраняется как «основная техника» для обратной совместимости и авто-подстановки объекта).
-- Индекс GIN по `equipment_ids` для быстрых выборок «где работает техника».
+## 2. Схема БД (миграция)
 
-Данных не переносим (заполнится при следующем редактировании), старая логика продолжит работать.
+Новые таблицы (public, с GRANT + RLS через `user_has_org_access`):
 
-## Этап 2. Диалог задачи (`PlannerTaskDialog.tsx`) — п. 3, 4, 5, 6, 7, 8
+```text
+spare_parts
+  id, organization_id, name, article, manufacturer, category,
+  unit, min_stock, storage_location, rack, shelf, cell,
+  purchase_price, avg_cost, last_receipt_at, note,
+  photos text[], is_archived, created_at, updated_at
+  (текущую таблицу spare_parts проверим и расширим ALTER-ами; фото уже поле photo_url — добавим photos text[])
 
-1. **Фикс редактирования (критично).** Сейчас `useState(task?.…)` инициализируется один раз, при повторном открытии диалога с другой задачей поля не обновляются → часть «сбрасывается». Добавлю `useEffect([task, open])`, который заново заливает все поля из `task` при каждом открытии. Также подтяну `equipment_ids`, `assignee_id` (сейчас всегда сохраняется `null`).
-2. **Ответственный.** Верну выбор из членов организации (Combobox с поиском) вместо голого текстового `ФИО`. Сохраняем `assignee_id`.
-3. **Техника — Combobox с поиском + мультивыбор** (п. 4, 5). Поиск по марке/модели/гос.номеру/VIN. Чипы выбранных единиц с × для удаления. Первая выбранная используется как «основная» (`equipment_id`), все — в `equipment_ids`.
-4. **Связанная заявка — Combobox с поиском** (п. 6). Поиск по описанию/объекту/технике/исполнителю/поставщику. В строке показываем описание + мелкую подпись «объект · исполнитель». Номер заявки не отображаем.
-5. **Обязательные поля** (п. 7): Название, Описание, Статус, Приоритет, Ответственный, Дата начала, Дата окончания. При попытке сохранить — валидация + `toast` с перечнем незаполненных полей, красная рамка + текст ошибки под каждым полем. Кнопка «Сохранить» disabled пока не заполнено.
-6. **Убрать вкладку «Чат»** (п. 8) — удалить `TabsTrigger value="comments"` и весь `TabsContent`. Останется: Детали · Связи · История.
+spare_part_cross_numbers
+  id, spare_part_id, cross_number
+  (или text[] cross_numbers на самой карточке — проще: text[])
+  Решение: cross_numbers text[] в spare_parts.
 
-## Этап 3. Отображение задач и поиск — п. 1, 2, 11
+spare_part_equipment  (совместимость N:N)
+  id, spare_part_id, equipment_id, created_at
+  UNIQUE(spare_part_id, equipment_id)
 
-1. **Компонент `TaskMetaChips`** — единый рендер строки метаданных (Объект · Техника[+N] · Приоритет · Исполнитель · Период). Встраиваю в `KanbanColumn`/`BoardCard`, `PlannerTasksList`, `PlannerCalendar` (в поповер события), `PlannerTimeline`, `PlannerToday`, `PlannerMyPlan`, `MyPlannerTasksWidget`.
-2. **Поиск задач** (п. 1, 2). Добавляю поле поиска в `PlannerFiltersBar` (уже есть общий контекст фильтров). Расширяю `PlannerFiltersContext`:
-   - `searchQuery: string`
-   - `apply()` фильтрует по: title, description, объекту (имя), технике (марка/модель/номер), исполнителю (ФИО/email), связанной заявке (описание/поставщик).
-   - Работает мгновенно (in-memory), не привязан к текущему периоду — «глобальный» по всем задачам организации, которые уже приходят из `usePlannerTasks`.
-3. Строка поиска показывается во **всех** режимах планировщика через `PlannerLayout`.
+spare_part_movements  (единая история)
+  id, organization_id, spare_part_id, type
+    ('IN','WRITE_OFF','MOVE','SALE','RETURN','ADJUST'),
+  quantity, equipment_id, object_id, responsible_user_id,
+  reason, comment, unit_price, buyer, created_by, created_at
 
-## Этап 4. Новые представления — п. 9, 10
+spare_part_deadstock
+  id, organization_id, name, article, cross_numbers text[],
+  manufacturer, quantity, reason, market_price, min_sale_price,
+  sale_price, sold_at, buyer, comment, photos text[],
+  is_archived, created_at, updated_at
+  (используем существующую deadstock_items если совпадает по полям — да, у неё уже есть sold_at/buyer/invoice_number; создадим отдельно во избежание пересечений с деловым неликвидом)
+```
 
-1. **«Где работает техника»** — новая страница `PlannerEquipmentLoad.tsx`, маршрут `/my-planner/equipment`. Для каждой единицы техники, у которой есть активные (не done) задачи:
-   - плашка: Марка · Модель · Гос.№
-   - Объект (из `current_object_id` или из задач)
-   - Ответственный
-   - Список задач (название, статус, период)
-   - Клик по задаче открывает диалог редактирования.
-   Пустое состояние — «Нет активной техники в работе».
-2. **Представление «По объектам»** — новая страница `PlannerByObject.tsx`, маршрут `/my-planner/by-object`. Иерархия: Объект → Техника (все, что фигурирует в задачах этого объекта) → Задачи. Задачи без техники группируются под «Без техники». Свернутые аккордеоны, поиск из общего фильтра тоже применяется.
-3. Обе страницы добавляются в навигацию `PlannerLayout` (вкладки/сайдбар планировщика).
+Остаток вычисляется как сумма движений (`IN + RETURN - WRITE_OFF - SALE ± ADJUST`) через view/RPC `get_spare_part_stock(spare_part_id)`; поле `last_receipt_at` обновляется триггером при `type='IN'`.
+
+RLS: все таблицы ограничены `user_has_org_access(auth.uid(), organization_id)`. Storage bucket `spare-parts-photos` (private, signed URLs через существующий `SignedImage`).
+
+## 3. Фронтенд
+
+Новые файлы:
+
+- `src/pages/SparePartsPage.tsx` — таблица + фильтры + модалка карточки.
+- `src/pages/SparePartsDeadstockPage.tsx` — таблица неликвида запчастей.
+- `src/pages/SparePartDetailPage.tsx` — карточка детали: инфо, фото, совместимость (мульти-селект техники), история движения (вкладки).
+- `src/components/spare-parts/`
+  - `SparePartFormDialog.tsx` — создать/редактировать (все поля из ТЗ, мульти-фото загрузка, cross-numbers как теги, совместимость через `EquipmentMultiSelect`).
+  - `EquipmentMultiSelect.tsx` — поиск+чекбоксы по `equipment` (по марка/модель/гос.номер).
+  - `WriteOffDialog.tsx` — списание (техника из списка совместимости, объект, ответственный, кол-во, причина, комментарий).
+  - `SaleDialog.tsx` — продажа неликвида (покупатель, дата, кол-во, цена, комментарий); при остаток=0 → `is_archived=true`.
+  - `MovementHistoryTable.tsx` — журнал движения детали.
+  - `SparePartFilters.tsx` — быстрые фильтры (производитель, модель техники, категория, место хранения, наличие: >min / ≤min / =0, совместимость с конкретной единицей техники).
+  - `StockStatusBadge.tsx` — «В наличии / Заканчивается / Нет».
+- `src/hooks/useSpareParts.ts`, `useSparePartMovements.ts`, `useSparePartCompatibility.ts`.
+- Расширение `src/pages/EquipmentDetailPage.tsx` — секция «Подходящие запчасти» (список через join `spare_part_equipment`).
+
+## 4. Интеграция с заявками
+
+В `CreateRequestDialog` / `RequestItemsSection` при выборе позиции добавляется проверка `spare_parts` по артикулу/названию:
+
+- если найдено с остатком > 0 → блок «На складе N шт., место X» + кнопка «Списать со склада» (открывает `WriteOffDialog` с привязкой к текущей заявке и `object_id`);
+- если нет — стандартный флоу закупки.
+
+Компонент `SparePartAvailability` показывается в `RequestItemsSection`.
+
+## 5. Глобальный поиск
+
+Расширить `GlobalSearch.tsx` — искать в `spare_parts` (name, article, cross_numbers, manufacturer) и по совместимой технике (join с equipment); чипы с переходом в `SparePartDetailPage`.
+
+## 6. Аналитика
+
+В `ErpAnalyticsPage` (или новая вкладка `SparePartsAnalytics`):
+
+- Общая стоимость склада (`Σ остаток × avg_cost`).
+- Стоимость неликвида.
+- Кол-во позиций, кол-во ниже min_stock.
+- Топ-10 самых часто списываемых (агрегат по movements WRITE_OFF).
+- Топ-10 самых дорогих.
+- Без движения > 180 дней (`max(created_at) < now() - 180d` в movements).
+- Продано неликвида за период (с фильтром дат).
+
+## 7. Роуты и меню
+
+- `App.tsx`: добавить `/spare-parts`, `/spare-parts/:id`, `/spare-parts/deadstock` под `PermissionRoute`.
+- `AppSidebar.tsx`: в группе ERP заменить/добавить пункты «Склад запчастей» и «Неликвид запчастей».
+- Права: новый ключ `spare_parts` в `useUserPermissions`/`ROUTE_PERMISSION_MAP`.
+
+## 8. UX-принципы
+
+- Manrope, tabular-nums, mobile-first Drawer 90dvh на мобилке для карточек.
+- Быстрый поиск (300 мс debounce) по артикулу/кросс/названию/технике — фокус по `/` и автофокус на открытии.
+- Место хранения показываем компактно `A-3-2` (стеллаж-полка-ячейка) с тултипом.
+- Значки статуса остатка: зелёный/жёлтый/красный.
+- Фото — превью 40×40 в таблице, галерея в карточке (`ImageGallery`+`SignedImage`).
 
 ## Технические детали
 
-- Combobox: используем `@/components/ui/command` + `Popover` (уже есть в проекте, паттерн из `ObjectSelectWithAdd`).
-- Multi-select техники: массив `equipmentIds: string[]`, в SelectContent чекбоксы, снаружи чипы.
-- `useOrgMembers` уже возвращает members организации.
-- Данные заявок для поиска — расширяю `queryKey: ["planner-requests-pick"]` полями `object_id, executor, contractor` (через join `request_objects(name)`).
-- Все правки — фронт + одна миграция БД (добавление колонки и индекса).
-- Realtime уже есть в `usePlannerTasks`, новые представления получают обновления автоматически.
+- Миграция одним вызовом `supabase--migration`: create tables, grants, RLS policies, триггеры (`update_updated_at`, `update_last_receipt_at`), RPC `spare_part_stock(uuid)`.
+- Bucket `spare-parts-photos` (private) через `supabase--storage_create_bucket` + policies (auth users same-org).
+- Все запросы через TanStack Query с ключами `['spare-parts', orgId, filters]`.
+- Пагинация >1000 через `.range()`-цикл (см. правило Supabase Pagination Resilience).
 
-## Что НЕ входит в этот план
+## Порядок работ
 
-- Изменение AI-отчёта дневной подготовки (это отдельный модуль).
-- Массовое удаление данных.
-- Правки серверных триггеров планировщика (`sync_request_to_planner` не трогаем).
+1. Миграция БД + bucket.
+2. Хуки + типы.
+3. Страница списка + фильтры + карточка формы.
+4. Детальная страница + совместимость + история.
+5. Списание + Продажа.
+6. Неликвид (отдельный роут и таблица).
+7. Интеграция с EquipmentDetail + CreateRequest.
+8. Глобальный поиск + аналитика.
+9. Sidebar/роуты/права.
 
-После апрува начну с миграции и диалога, потом поиск/чипы, потом два новых представления.
+Объём большой — предлагаю утвердить план и делать поэтапно, начиная с миграции и базовых экранов (шаги 1–4).

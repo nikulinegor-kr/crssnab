@@ -3446,55 +3446,312 @@ export type Database = {
           },
         ]
       }
+      spare_part_deadstock: {
+        Row: {
+          article: string | null
+          buyer: string | null
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          cross_numbers: string[]
+          id: string
+          is_archived: boolean
+          manufacturer: string | null
+          market_price: number | null
+          min_sale_price: number | null
+          name: string
+          organization_id: string
+          photos: string[]
+          quantity: number
+          reason: string | null
+          sale_price: number | null
+          sold_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          article?: string | null
+          buyer?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          id?: string
+          is_archived?: boolean
+          manufacturer?: string | null
+          market_price?: number | null
+          min_sale_price?: number | null
+          name: string
+          organization_id: string
+          photos?: string[]
+          quantity?: number
+          reason?: string | null
+          sale_price?: number | null
+          sold_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          article?: string | null
+          buyer?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          id?: string
+          is_archived?: boolean
+          manufacturer?: string | null
+          market_price?: number | null
+          min_sale_price?: number | null
+          name?: string
+          organization_id?: string
+          photos?: string[]
+          quantity?: number
+          reason?: string | null
+          sale_price?: number | null
+          sold_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_deadstock_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_deadstock_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spare_part_equipment: {
+        Row: {
+          created_at: string
+          equipment_id: string
+          id: string
+          organization_id: string
+          spare_part_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_id: string
+          id?: string
+          organization_id: string
+          spare_part_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string
+          id?: string
+          organization_id?: string
+          spare_part_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_equipment_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_equipment_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_equipment_spare_part_id_fkey"
+            columns: ["spare_part_id"]
+            isOneToOne: false
+            referencedRelation: "spare_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spare_part_movements: {
+        Row: {
+          buyer: string | null
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          equipment_id: string | null
+          id: string
+          object_id: string | null
+          organization_id: string
+          quantity: number
+          reason: string | null
+          responsible_user_id: string | null
+          spare_part_id: string
+          type: string
+          unit_price: number | null
+        }
+        Insert: {
+          buyer?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: string | null
+          id?: string
+          object_id?: string | null
+          organization_id: string
+          quantity: number
+          reason?: string | null
+          responsible_user_id?: string | null
+          spare_part_id: string
+          type: string
+          unit_price?: number | null
+        }
+        Update: {
+          buyer?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: string | null
+          id?: string
+          object_id?: string | null
+          organization_id?: string
+          quantity?: number
+          reason?: string | null
+          responsible_user_id?: string | null
+          spare_part_id?: string
+          type?: string
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_movements_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_movements_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_movements_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_movements_spare_part_id_fkey"
+            columns: ["spare_part_id"]
+            isOneToOne: false
+            referencedRelation: "spare_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spare_parts: {
         Row: {
           article: string
+          avg_cost: number | null
           category: string | null
+          cell: string | null
           created_at: string
           created_by: string | null
+          cross_numbers: string[]
           equipment_model: string | null
           equipment_number: string | null
           equipment_type: string | null
           id: string
+          is_archived: boolean
+          last_receipt_at: string | null
+          manufacturer: string | null
+          min_stock: number
           name: string
           notes: string | null
           organization_id: string
+          photos: string[]
           price: number | null
+          purchase_price: number | null
           quantity: number | null
+          rack: string | null
+          shelf: string | null
+          storage_location: string | null
           unit: string | null
           updated_at: string
         }
         Insert: {
           article: string
+          avg_cost?: number | null
           category?: string | null
+          cell?: string | null
           created_at?: string
           created_by?: string | null
+          cross_numbers?: string[]
           equipment_model?: string | null
           equipment_number?: string | null
           equipment_type?: string | null
           id?: string
+          is_archived?: boolean
+          last_receipt_at?: string | null
+          manufacturer?: string | null
+          min_stock?: number
           name: string
           notes?: string | null
           organization_id: string
+          photos?: string[]
           price?: number | null
+          purchase_price?: number | null
           quantity?: number | null
+          rack?: string | null
+          shelf?: string | null
+          storage_location?: string | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
           article?: string
+          avg_cost?: number | null
           category?: string | null
+          cell?: string | null
           created_at?: string
           created_by?: string | null
+          cross_numbers?: string[]
           equipment_model?: string | null
           equipment_number?: string | null
           equipment_type?: string | null
           id?: string
+          is_archived?: boolean
+          last_receipt_at?: string | null
+          manufacturer?: string | null
+          min_stock?: number
           name?: string
           notes?: string | null
           organization_id?: string
+          photos?: string[]
           price?: number | null
+          purchase_price?: number | null
           quantity?: number | null
+          rack?: string | null
+          shelf?: string | null
+          storage_location?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -4433,6 +4690,7 @@ export type Database = {
         Args: { _org_id: string }
         Returns: undefined
       }
+      spare_part_stock: { Args: { _id: string }; Returns: number }
       telegram_bot_configured: { Args: { _org_id: string }; Returns: boolean }
       user_can_create_requests: {
         Args: { _org_id: string; _user_id: string }

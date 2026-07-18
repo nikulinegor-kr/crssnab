@@ -22,6 +22,7 @@ import {
   Sparkles,
   ClipboardList,
   CalendarRange,
+  Wrench,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
@@ -75,6 +76,7 @@ const menuGroups = [
       { title: "Номенклатура", url: "/nomenclature", icon: Layers },
       { title: "Склад", url: "/warehouse", icon: Warehouse },
       { title: "Техника", url: "/equipment", icon: Truck },
+      { title: "Запчасти", url: "/spare-parts", icon: Wrench },
       { title: "Поставщики", url: "/suppliers", icon: Users },
       { title: "Поставки", url: "/shipments", icon: Truck },
     ],
