@@ -1040,6 +1040,259 @@ export type Database = {
           },
         ]
       }
+      filter_element_deadstock: {
+        Row: {
+          actual_sale_price: number | null
+          article: string | null
+          buyer: string | null
+          compatibility: string | null
+          created_at: string
+          created_by: string | null
+          cross_numbers: string[]
+          filter_element_id: string | null
+          id: string
+          is_archived: boolean
+          manufacturer: string | null
+          market_price: number | null
+          name: string
+          notes: string | null
+          organization_id: string
+          quantity: number
+          sale_comment: string | null
+          sold_at: string | null
+          status: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          actual_sale_price?: number | null
+          article?: string | null
+          buyer?: string | null
+          compatibility?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          filter_element_id?: string | null
+          id?: string
+          is_archived?: boolean
+          manufacturer?: string | null
+          market_price?: number | null
+          name: string
+          notes?: string | null
+          organization_id: string
+          quantity?: number
+          sale_comment?: string | null
+          sold_at?: string | null
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_sale_price?: number | null
+          article?: string | null
+          buyer?: string | null
+          compatibility?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          filter_element_id?: string | null
+          id?: string
+          is_archived?: boolean
+          manufacturer?: string | null
+          market_price?: number | null
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          quantity?: number
+          sale_comment?: string | null
+          sold_at?: string | null
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filter_element_deadstock_filter_element_id_fkey"
+            columns: ["filter_element_id"]
+            isOneToOne: false
+            referencedRelation: "filter_elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_deadstock_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filter_element_equipment: {
+        Row: {
+          created_at: string
+          equipment_id: string
+          filter_element_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_id: string
+          filter_element_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string
+          filter_element_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filter_element_equipment_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_equipment_filter_element_id_fkey"
+            columns: ["filter_element_id"]
+            isOneToOne: false
+            referencedRelation: "filter_elements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filter_element_movements: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          equipment_id: string | null
+          filter_element_id: string
+          id: string
+          object_id: string | null
+          organization_id: string
+          quantity: number
+          responsible_user_id: string | null
+          type: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: string | null
+          filter_element_id: string
+          id?: string
+          object_id?: string | null
+          organization_id: string
+          quantity: number
+          responsible_user_id?: string | null
+          type: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: string | null
+          filter_element_id?: string
+          id?: string
+          object_id?: string | null
+          organization_id?: string
+          quantity?: number
+          responsible_user_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filter_element_movements_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_movements_filter_element_id_fkey"
+            columns: ["filter_element_id"]
+            isOneToOne: false
+            referencedRelation: "filter_elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_movements_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "filter_element_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filter_elements: {
+        Row: {
+          article: string | null
+          created_at: string
+          created_by: string | null
+          cross_numbers: string[]
+          id: string
+          manufacturer: string | null
+          min_stock: number
+          name: string
+          notes: string | null
+          organization_id: string
+          photo_url: string | null
+          storage_location: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          article?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          id?: string
+          manufacturer?: string | null
+          min_stock?: number
+          name: string
+          notes?: string | null
+          organization_id: string
+          photo_url?: string | null
+          storage_location?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          article?: string | null
+          created_at?: string
+          created_by?: string | null
+          cross_numbers?: string[]
+          id?: string
+          manufacturer?: string | null
+          min_stock?: number
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          photo_url?: string | null
+          storage_location?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filter_elements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kp_supplier_prices: {
         Row: {
           created_at: string
@@ -4576,6 +4829,7 @@ export type Database = {
         Args: { _org_name?: string }
         Returns: undefined
       }
+      filter_element_stock: { Args: { _id: string }; Returns: number }
       find_user_by_full_name: {
         Args: { _name: string; _org_id: string }
         Returns: string
