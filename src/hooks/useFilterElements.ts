@@ -17,6 +17,14 @@ export interface FilterElementRow {
   updated_at: string;
   stock?: number;
   equipment?: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null }>;
+  /** Средняя закупочная цена по всем IN-движениям с указанной ценой */
+  avg_price?: number | null;
+  /** Последняя закупочная цена */
+  last_price?: number | null;
+  /** Дата последней закупки */
+  last_purchase_at?: string | null;
+  /** Кол-во учтённых закупок */
+  purchase_count?: number;
 }
 
 export interface FilterElementMovement {
@@ -30,6 +38,9 @@ export interface FilterElementMovement {
   comment: string | null;
   created_at: string;
   created_by: string | null;
+  unit_price?: number | null;
+  supplier?: string | null;
+  request_id?: string | null;
 }
 
 export const useFilterElementsList = (orgId: string | null) =>
@@ -49,7 +60,11 @@ export const useFilterElementsList = (orgId: string | null) =>
       if (!ids.length) return items;
 
       const [movsRes, compatRes] = await Promise.all([
-        client.from("filter_element_movements").select("filter_element_id, type, quantity").in("filter_element_id", ids),
+        client
+          .from("filter_element_movements")
+          .select("filter_element_id, type, quantity, unit_price, created_at")
+          .in("filter_element_id", ids)
+          .order("created_at", { ascending: false }),
         client
           .from("filter_element_equipment")
           .select("filter_element_id, equipment:equipment_id(id, brand, model, plate_number)")
@@ -57,12 +72,24 @@ export const useFilterElementsList = (orgId: string | null) =>
       ]);
 
       const stockMap = new Map<string, number>();
+      const priceAgg = new Map<string, { sum: number; qty: number; count: number; last?: { price: number; at: string } }>();
       (movsRes.data ?? []).forEach((m: any) => {
         const q = Number(m.quantity) || 0;
         let d = 0;
         if (m.type === "IN" || m.type === "RETURN" || m.type === "ADJUST") d = q;
         else if (m.type === "WRITE_OFF") d = -q;
         stockMap.set(m.filter_element_id, (stockMap.get(m.filter_element_id) ?? 0) + d);
+
+        if (m.type === "IN" && m.unit_price != null && Number(m.unit_price) > 0) {
+          const price = Number(m.unit_price);
+          const cur = priceAgg.get(m.filter_element_id) ?? { sum: 0, qty: 0, count: 0 };
+          cur.sum += price * q;
+          cur.qty += q;
+          cur.count += 1;
+          // movements are ordered DESC, so first seen = latest
+          if (!cur.last) cur.last = { price, at: m.created_at };
+          priceAgg.set(m.filter_element_id, cur);
+        }
       });
 
       const eqMap = new Map<string, FilterElementRow["equipment"]>();
@@ -72,14 +99,22 @@ export const useFilterElementsList = (orgId: string | null) =>
         eqMap.set(r.filter_element_id, arr);
       });
 
-      return items.map((r) => ({
-        ...r,
-        stock: stockMap.get(r.id) ?? 0,
-        equipment: eqMap.get(r.id) ?? [],
-      }));
+      return items.map((r) => {
+        const agg = priceAgg.get(r.id);
+        return {
+          ...r,
+          stock: stockMap.get(r.id) ?? 0,
+          equipment: eqMap.get(r.id) ?? [],
+          avg_price: agg && agg.qty > 0 ? agg.sum / agg.qty : null,
+          last_price: agg?.last?.price ?? null,
+          last_purchase_at: agg?.last?.at ?? null,
+          purchase_count: agg?.count ?? 0,
+        };
+      });
     },
     enabled: !!orgId,
   });
+
 
 export const useFilterElementMovements = (id: string | null) =>
   useQuery({
