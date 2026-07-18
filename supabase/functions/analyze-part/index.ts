@@ -32,6 +32,10 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    // Normalize article: strip spaces, dashes, dots, slashes, underscores, upper-case
+    const normalizeArticle = (s?: string) => (s ?? "").toUpperCase().replace(/[\s\-_./]/g, "").trim();
+    const articleNorm = normalizeArticle(article);
+
     const table = kind === "filter" ? "filter_elements" : "spare_parts";
     const movTable = kind === "filter" ? "filter_element_movements" : "spare_part_movements";
     const compatTable = kind === "filter" ? "filter_element_equipment" : "spare_part_equipment";
