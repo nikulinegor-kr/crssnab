@@ -249,14 +249,11 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
               <Label>Ед. изм.</Label>
               <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
             </div>
-            <div>
-              <Label>Мин. остаток</Label>
-              <Input type="number" value={form.min_stock} onChange={(e) => setForm({ ...form, min_stock: e.target.value })} />
-            </div>
             <div className="col-span-2">
               <Label>Место хранения</Label>
               <Input value={form.storage_location} onChange={(e) => setForm({ ...form, storage_location: e.target.value })} />
             </div>
+
           </div>
 
 
