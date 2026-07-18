@@ -91,8 +91,8 @@ export function PartAiSuggestions({
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
   const key = useMemo(
-    () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim()]),
-    [article, crossNumbers, name]
+    () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim(), (manufacturer ?? "").trim()]),
+    [article, crossNumbers, name, manufacturer]
   );
 
   const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string; force?: boolean }) => {
