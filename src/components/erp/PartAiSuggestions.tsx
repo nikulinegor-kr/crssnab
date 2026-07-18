@@ -82,6 +82,7 @@ export function PartAiSuggestions({
   const [data, setData] = useState<PartAiSuggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastKeyRef = useRef<string>("");
   const fileRef = useRef<HTMLInputElement | null>(null);
