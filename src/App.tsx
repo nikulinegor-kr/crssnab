@@ -29,6 +29,7 @@ const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
 const SelectOrganization = lazyWithRetry(() => import("./pages/SelectOrganization"));
 const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSettings"));
+const SidebarSettings = lazyWithRetry(() => import("./pages/SidebarSettings"));
 const AgentReport = lazyWithRetry(() => import("./pages/AgentReport"));
 const AgentActReport = lazyWithRetry(() => import("./pages/AgentActReport"));
 const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"));
@@ -253,6 +254,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <OrganizationSettings />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/sidebar"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SidebarSettings />
                   </AppLayout>
                 </ProtectedRoute>
               }
