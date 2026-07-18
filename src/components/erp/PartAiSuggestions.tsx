@@ -126,6 +126,7 @@ export function PartAiSuggestions({
       if (error) throw error;
       const suggestion = res as PartAiSuggestion;
       setData(suggestion);
+      setSelectedIds(new Set()); // never auto-select — user must pick
       // Photo vision: auto-fill only identifiers (never compatibility)
       if (suggestion?.vision) {
         onAccept({
