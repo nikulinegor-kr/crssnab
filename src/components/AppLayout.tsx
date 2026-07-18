@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./GlobalSearch";
