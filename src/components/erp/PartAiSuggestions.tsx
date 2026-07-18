@@ -444,9 +444,28 @@ export function PartAiSuggestions({
                           onChange={() => toggleId(e.id)}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm">{label}</div>
-                          {e.source && (
-                            <div className="text-xs text-muted-foreground">Источник: {e.source}</div>
+                          <div className="flex flex-wrap items-center gap-1.5 text-sm">
+                            <span>{label}</span>
+                            {e.confirmation_type && (
+                              <Badge
+                                variant={e.confirmation_type === "OEM" ? "default" : "secondary"}
+                                className="text-[10px] h-4 px-1.5"
+                              >
+                                {e.confirmation_type}
+                              </Badge>
+                            )}
+                            {typeof e.sources_count === "number" && e.sources_count > 0 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                • подтв.: {e.sources_count}
+                              </span>
+                            )}
+                          </div>
+                          {(e.sources && e.sources.length > 0
+                            ? e.sources.join(", ")
+                            : e.source) && (
+                            <div className="text-xs text-muted-foreground">
+                              Источник: {e.sources && e.sources.length > 0 ? e.sources.join(", ") : e.source}
+                            </div>
                           )}
                         </div>
                       </label>
