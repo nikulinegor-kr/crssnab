@@ -56,6 +56,7 @@ interface Props {
   article: string;
   crossNumbers: string[];
   name: string;
+  manufacturer?: string;
   excludeId?: string;
   onAccept: (data: PartAiAccept) => void;
   onOpenDuplicate?: (id: string) => void;
@@ -73,6 +74,7 @@ export function PartAiSuggestions({
   article,
   crossNumbers,
   name,
+  manufacturer,
   excludeId,
   onAccept,
   onOpenDuplicate,
@@ -82,20 +84,22 @@ export function PartAiSuggestions({
   const [data, setData] = useState<PartAiSuggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastKeyRef = useRef<string>("");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
   const key = useMemo(
-    () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim()]),
-    [article, crossNumbers, name]
+    () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim(), (manufacturer ?? "").trim()]),
+    [article, crossNumbers, name, manufacturer]
   );
 
   const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string; force?: boolean }) => {
     if (!orgId) return;
     setLoading(true);
     setError(null);
+    setDismissed(false);
     try {
       const { data: res, error } = await supabase.functions.invoke("analyze-part", {
         body: {
@@ -104,6 +108,7 @@ export function PartAiSuggestions({
           article: article.trim() || undefined,
           cross_number: crossNumbers[0] || undefined,
           name: name.trim() || undefined,
+          manufacturer: manufacturer?.trim() || undefined,
           excludeId,
           image_base64: extras?.image_base64,
           image_mime: extras?.image_mime,
@@ -248,7 +253,7 @@ export function PartAiSuggestions({
         </div>
       )}
 
-      {data?.duplicate && (
+      {!dismissed && data?.duplicate && (
         <div className="rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm">
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -292,7 +297,7 @@ export function PartAiSuggestions({
         </div>
       )}
 
-      {data?.ai && (
+      {!dismissed && data?.ai && (
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -376,6 +381,9 @@ export function PartAiSuggestions({
           <div className="flex flex-wrap gap-2 pt-1">
             <Button size="sm" onClick={applyAi} className="h-7">
               Принять рекомендации
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7" onClick={() => { setDismissed(true); setData(null); }}>
+              Не принимать
             </Button>
             {noCompat && onMoveToDeadstock && (
               <Button size="sm" variant="outline" className="h-7" onClick={onMoveToDeadstock}>

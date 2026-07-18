@@ -13,6 +13,7 @@ interface Payload {
   article?: string;
   cross_number?: string;
   name?: string;
+  manufacturer?: string;
   excludeId?: string;
   image_base64?: string; // raw base64 (no data: prefix) OR data URL
   image_mime?: string;   // e.g. image/jpeg
@@ -22,7 +23,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body: Payload = await req.json();
-    let { orgId, kind, article, cross_number, name, excludeId, image_base64, image_mime } = body;
+    let { orgId, kind, article, cross_number, name, manufacturer, excludeId, image_base64, image_mime } = body;
     if (!orgId) throw new Error("orgId required");
     const key = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -174,27 +175,34 @@ Deno.serve(async (req) => {
         id: e.id,
         label: `${e.brand ?? ""} ${e.model ?? ""}`.trim() + (e.plate_number ? ` (${e.plate_number})` : ""),
       }));
-      const prompt = `Ты эксперт по запчастям и фильтрам для спецтехники. По введённым идентификаторам определи данные запчасти и подбери совместимую технику из СПИСКА НИЖЕ.
+      const prompt = `Ты эксперт по запчастям и фильтрам для спецтехники (экскаваторы, погрузчики, самосвалы, тракторы, дизельные двигатели, генераторы). Используй свои знания о производителях, каталогах OEM/aftermarket и типовых применениях (Donaldson, Baldwin, MANN, Fleetguard, SF-Filter, WIX, Sakura, Hifi, Bosch, Cat, Komatsu, Hitachi, Volvo, JCB, Case, John Deere, Hyundai, Doosan, Liebherr, Shantui, XCMG, SDLG, LiuGong и т.п.). По артикулу, производителю и/или кросс-номерам определи, к каким моделям техники обычно подходит эта деталь, затем СОПОСТАВЬ с нашим парком техники и верни ТОЛЬКО id из списка ниже.
 
 Ввод:
 - Артикул: ${article || "—"}
+- Производитель: ${manufacturer || "—"}
 - Кросс-номер: ${cross_number || "—"}
 - Наименование: ${name || "—"}
 - Тип: ${kind === "filter" ? "фильтрующий элемент" : "запасная часть"}
 
-Список нашей техники (выбирай ТОЛЬКО из этих id):
+Список нашей техники (выбирай ТОЛЬКО из этих id, сопоставляй по brand/model):
 ${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
+
+Логика:
+1) По артикулу и производителю восстанови полное название детали и типовые применения (какие двигатели/модели техники используют эту деталь).
+2) Найди в нашем списке техники все brand+model, у которых эти применения совпадают, — верни их id.
+3) Если по артикулу известны альтернативные номера (OEM/аналоги) — перечисли их в cross_numbers и analogs.
+4) Уверенность high — если артикул однозначно узнаваем; medium — если совпадение по кросс-номеру или семейству; low — если только по имени.
 
 Верни строго JSON:
 {
   "manufacturer": "производитель или null",
   "name": "полное наименование или null",
   "category": "категория или null",
-  "cross_numbers": ["массив известных кросс-номеров"],
-  "compatible_equipment_ids": ["id из списка выше, для которых деталь подходит"],
-  "analogs": ["строки-аналоги, если применимо"],
+  "cross_numbers": ["известные OEM/кросс-номера"],
+  "compatible_equipment_ids": ["id из списка выше"],
+  "analogs": ["аналоги других производителей"],
   "confidence": "high|medium|low",
-  "note": "короткий комментарий на русском или null"
+  "note": "короткий комментарий на русском (к чему обычно подходит) или null"
 }
 Никаких пояснений вне JSON.`;
 
