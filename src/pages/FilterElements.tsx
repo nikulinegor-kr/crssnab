@@ -376,6 +376,16 @@ export default function FilterElementsPage() {
             item={toDeadstockItem}
           />
         )}
+        {labelItem && (
+          <PartLabelPrintDialog
+            open={!!labelItem}
+            onOpenChange={(v) => !v && setLabelItem(null)}
+            name={labelItem.name}
+            article={labelItem.article}
+            manufacturer={labelItem.manufacturer}
+            storageLocation={labelItem.storage_location}
+          />
+        )}
       </div>
     </AppLayout>
   );
