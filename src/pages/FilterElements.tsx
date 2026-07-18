@@ -51,6 +51,7 @@ export default function FilterElementsPage() {
   const [inItem, setInItem] = useState<FilterElementRow | null>(null);
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
+  const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
