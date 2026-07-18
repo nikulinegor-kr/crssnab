@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body: Payload = await req.json();
-    const { orgId, kind, article, cross_number, name, excludeId } = body;
+    let { orgId, kind, article, cross_number, name, excludeId, image_base64, image_mime } = body;
     if (!orgId) throw new Error("orgId required");
     const key = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -33,6 +33,48 @@ Deno.serve(async (req) => {
     const movTable = kind === "filter" ? "filter_element_movements" : "spare_part_movements";
     const compatTable = kind === "filter" ? "filter_element_equipment" : "spare_part_equipment";
     const fkCol = kind === "filter" ? "filter_element_id" : "spare_part_id";
+
+    // 0. Photo recognition (if provided) — extract article/manufacturer/name/cross-numbers via Gemini vision
+    let vision: any = null;
+    if (key && image_base64) {
+      try {
+        const dataUrl = image_base64.startsWith("data:")
+          ? image_base64
+          : `data:${image_mime || "image/jpeg"};base64,${image_base64}`;
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [{
+              role: "user",
+              content: [
+                { type: "text", text: `Ты эксперт по маркировке запчастей и фильтров для спецтехники. С фото детали извлеки видимые идентификаторы. Верни СТРОГО JSON: {"article": string|null, "manufacturer": string|null, "name": string|null, "cross_numbers": string[]}. Никаких пояснений вне JSON.` },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            }],
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (r.ok) {
+          const j = await r.json();
+          const text = j?.choices?.[0]?.message?.content ?? "{}";
+          try { vision = JSON.parse(text); }
+          catch { const m = text.match(/\{[\s\S]*\}/); if (m) vision = JSON.parse(m[0]); }
+          if (vision) {
+            article = article || vision.article || undefined;
+            name = name || vision.name || undefined;
+            if (!cross_number && Array.isArray(vision.cross_numbers) && vision.cross_numbers[0]) {
+              cross_number = vision.cross_numbers[0];
+            }
+          }
+        } else {
+          console.error("vision error", r.status, await r.text());
+        }
+      } catch (e) {
+        console.error("vision failed", e);
+      }
+    }
 
     // 1. Look for existing duplicates
     const searchTerms = [article, cross_number, name].map((t) => (t ?? "").trim()).filter(Boolean);
