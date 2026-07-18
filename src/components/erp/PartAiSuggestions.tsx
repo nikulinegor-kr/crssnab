@@ -108,6 +108,7 @@ export function PartAiSuggestions({
           article: article.trim() || undefined,
           cross_number: crossNumbers[0] || undefined,
           name: name.trim() || undefined,
+          manufacturer: manufacturer?.trim() || undefined,
           excludeId,
           image_base64: extras?.image_base64,
           image_mime: extras?.image_mime,
