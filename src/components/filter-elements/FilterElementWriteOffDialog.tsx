@@ -24,13 +24,15 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
   const [responsibleId, setResponsibleId] = useState<string>("");
   const [objectId, setObjectId] = useState<string>("");
   const [qty, setQty] = useState("");
+  const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
 
   useEffect(() => {
     if (!open) {
-      setEquipmentId(""); setResponsibleId(""); setObjectId(""); setQty(""); setComment("");
+      setEquipmentId(""); setResponsibleId(""); setObjectId(""); setQty(""); setReason(""); setComment("");
     }
   }, [open]);
+
 
   // Only compatible equipment
   const { data: compatibleEquipment = [] } = useQuery({
