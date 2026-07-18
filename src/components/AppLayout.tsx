@@ -5,7 +5,7 @@ import { SubscriptionBanner } from "./SubscriptionBanner";
 import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./GlobalSearch";
 import { PermissionRoute } from "./PermissionRoute";
-import { FloatingAiChat } from "./FloatingAiChat";
+// FloatingAiChat is intentionally not rendered by default — accessible via specific pages/dialogs when needed.
 import { MobileBottomNav } from "./MobileBottomNav";
 import { QuickRequestFab } from "./quick-request/QuickRequestFab";
 import { cn } from "@/lib/utils";
@@ -100,7 +100,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
           {/* Bottom spacer so content isn't hidden behind mobile nav */}
           <div className="h-16 md:hidden" aria-hidden />
         </div>
-        <FloatingAiChat />
+        {/* AI chat panel removed from default layout per user preference. */}
         <QuickRequestFab />
         <MobileBottomNav />
       </div>
