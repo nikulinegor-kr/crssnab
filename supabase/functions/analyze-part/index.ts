@@ -243,6 +243,14 @@ ${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
       JSON.stringify({
         duplicate: duplicateInfo,
         price: priceInfo,
+        vision: vision
+          ? {
+              article: vision.article ?? null,
+              manufacturer: vision.manufacturer ?? null,
+              name: vision.name ?? null,
+              cross_numbers: Array.isArray(vision.cross_numbers) ? vision.cross_numbers : [],
+            }
+          : null,
         ai: ai
           ? {
               manufacturer: ai.manufacturer ?? null,
