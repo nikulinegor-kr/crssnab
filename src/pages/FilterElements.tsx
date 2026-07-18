@@ -51,6 +51,17 @@ export default function FilterElementsPage() {
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.kind !== "filter") return;
+      const found = (items as any[]).find((x) => x.id === detail.id);
+      if (found) setDetailItem(found as FilterElementRow);
+    };
+    window.addEventListener("open-part-detail", handler);
+    return () => window.removeEventListener("open-part-detail", handler);
+  }, [items]);
+
   const { data: equipmentAll = [] } = useQuery({
     queryKey: ["equipment-list-simple", currentOrgId],
     queryFn: async () => {
