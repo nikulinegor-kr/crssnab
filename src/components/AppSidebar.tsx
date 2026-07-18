@@ -1,32 +1,12 @@
 import {
-  LayoutGrid,
-  FileText,
-  Users,
-  Settings,
-  LogOut,
-  FileBarChart,
-  Percent,
   Sun,
   Moon,
-  Building2,
-  BarChart3,
-  Warehouse,
-  Wallet,
-  Truck,
-  Layers,
-  FolderOpen,
-  FileSpreadsheet,
-  Files,
-  KanbanSquare,
-  Sparkles,
-  ClipboardList,
-  CalendarRange,
-  Wrench,
-  Filter,
+  LogOut,
   ChevronRight,
-  ShieldCheck,
+  Star,
+  FileText,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Collapsible,
@@ -56,116 +36,10 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { menuGroups, findItemById, type MenuItem, type MenuGroup } from "@/config/sidebarMenu";
+import { useSidebarPrefs } from "@/hooks/useSidebarPrefs";
 
-type MenuItem = {
-  title: string;
-  url: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-};
-
-type MenuGroup = {
-  key: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: MenuItem[];
-};
-
-const menuGroups: MenuGroup[] = [
-  {
-    key: "crm",
-    label: "CRM",
-    icon: FileText,
-    items: [
-      { title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
-      { title: "Заявки", url: "/requests", icon: FileText },
-      { title: "Доска", url: "/board", icon: KanbanSquare },
-    ],
-  },
-  {
-    key: "project",
-    label: "Проект",
-    icon: FolderOpen,
-    items: [
-      { title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
-      { title: "Документы", url: "/documents", icon: Files },
-    ],
-  },
-  {
-    key: "erp",
-    label: "ERP",
-    icon: Layers,
-    items: [
-      { title: "Объекты", url: "/objects", icon: Building2 },
-      { title: "Номенклатура", url: "/nomenclature", icon: Layers },
-      { title: "Склад", url: "/warehouse", icon: Warehouse },
-      { title: "Техника", url: "/equipment", icon: Truck },
-      { title: "Запчасти", url: "/spare-parts", icon: Wrench },
-      { title: "Фильтрующие элементы", url: "/filter-elements", icon: Filter },
-    ],
-  },
-  {
-    key: "logistics",
-    label: "Логистика",
-    icon: Truck,
-    items: [
-      { title: "Поставки", url: "/shipments", icon: Truck },
-      { title: "Поставщики", url: "/suppliers", icon: Users },
-    ],
-  },
-  {
-    key: "finance",
-    label: "Финансы",
-    icon: Wallet,
-    items: [
-      { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
-      { title: "Акт агента", url: "/agent-act-report", icon: FileBarChart },
-      { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
-    ],
-  },
-  {
-    key: "analytics",
-    label: "Аналитика",
-    icon: BarChart3,
-    items: [
-      { title: "Подготовка к дню", url: "/analytics/day-prep", icon: ClipboardList },
-      { title: "Исполнители", url: "/analytics/executors", icon: Users },
-      { title: "Заявки", url: "/analytics/requests", icon: FileText },
-      { title: "Финансы", url: "/analytics/finance", icon: Wallet },
-      { title: "Объекты", url: "/analytics/objects", icon: Building2 },
-      { title: "Логистика", url: "/analytics/logistics", icon: Truck },
-      { title: "AI Аналитик", url: "/analytics/ai", icon: Sparkles },
-    ],
-  },
-  {
-    key: "planner",
-    label: "Планировщик",
-    icon: CalendarRange,
-    items: [
-      { title: "Планировщик CRM", url: "/planner", icon: ClipboardList },
-      { title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
-    ],
-  },
-  {
-    key: "journals",
-    label: "Журналы",
-    icon: FileBarChart,
-    items: [
-      { title: "Производительность", url: "/team-performance", icon: Users },
-      { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
-    ],
-  },
-  {
-    key: "system",
-    label: "Система",
-    icon: ShieldCheck,
-    items: [
-      { title: "Настройки", url: "/organization/settings", icon: Settings },
-    ],
-  },
-];
-
-const STORAGE_KEY = "sidebar:groups-open:v1";
+const OPEN_KEY = "sidebar:groups-open:v1";
 
 function ThemeToggle({ showText }: { showText: boolean }) {
   const { theme, setTheme } = useTheme();
@@ -190,20 +64,62 @@ export function AppSidebar() {
   const { isViewer } = useUserRole();
   const { hasRouteAccess } = useUserPermissions();
   const totalUnread = useUnreadMessages();
+  const { prefs } = useSidebarPrefs();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
   const showText = isMobile || !collapsed;
 
-  // Which group contains the currently active route
+  // Apply prefs (hide + reorder) then role filter
+  const visibleGroups: MenuGroup[] = useMemo(() => {
+    if (isViewer) {
+      return [
+        {
+          key: "crm",
+          label: "CRM",
+          icon: FileText,
+          items: [{ id: "requests", title: "Заявки", url: "/requests", icon: FileText }],
+        },
+      ];
+    }
+    return menuGroups
+      .map((g) => {
+        const savedOrder = prefs.order[g.key];
+        let items = g.items.filter(
+          (i) => hasRouteAccess(i.url) && !prefs.hidden.includes(i.id),
+        );
+        if (savedOrder) {
+          const map = new Map(items.map((i) => [i.id, i]));
+          const seen = new Set<string>();
+          const ordered: MenuItem[] = [];
+          for (const id of savedOrder) {
+            const it = map.get(id);
+            if (it) { ordered.push(it); seen.add(id); }
+          }
+          for (const it of items) if (!seen.has(it.id)) ordered.push(it);
+          items = ordered;
+        }
+        return { ...g, items };
+      })
+      .filter((g) => g.items.length > 0);
+  }, [isViewer, hasRouteAccess, prefs]);
+
+  const favoriteItems = useMemo(
+    () =>
+      prefs.favorites
+        .map(findItemById)
+        .filter((i): i is MenuItem => !!i && hasRouteAccess(i.url) && !prefs.hidden.includes(i.id)),
+    [prefs, hasRouteAccess],
+  );
+
   const activeGroupKey =
-    menuGroups.find((g) =>
-      g.items.some((i) => currentPath === i.url || currentPath.startsWith(i.url + "/"))
+    visibleGroups.find((g) =>
+      g.items.some((i) => currentPath === i.url || currentPath.startsWith(i.url + "/")),
     )?.key ?? null;
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      const raw = typeof window !== "undefined" ? localStorage.getItem(OPEN_KEY) : null;
       if (raw) return JSON.parse(raw);
     } catch {
       // ignore
@@ -211,7 +127,6 @@ export function AppSidebar() {
     return {};
   });
 
-  // Ensure the active group is expanded whenever the route changes
   useEffect(() => {
     if (!activeGroupKey) return;
     setOpenGroups((prev) => (prev[activeGroupKey] ? prev : { ...prev, [activeGroupKey]: true }));
@@ -219,24 +134,17 @@ export function AppSidebar() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(openGroups));
+      localStorage.setItem(OPEN_KEY, JSON.stringify(openGroups));
     } catch {
       // ignore
     }
   }, [openGroups]);
 
   const handleLogout = async () => {
-    if (isDemoMode) {
-      navigate("/");
-      return;
-    }
+    if (isDemoMode) { navigate("/"); return; }
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось выйти из системы",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка", description: "Не удалось выйти из системы", variant: "destructive" });
     } else {
       navigate("/auth");
     }
@@ -279,7 +187,7 @@ export function AppSidebar() {
     );
 
     return (
-      <SidebarMenuItem key={item.title}>
+      <SidebarMenuItem key={`${item.id}-${item.url}`}>
         {collapsed && !isMobile ? (
           <Tooltip>
             <TooltipTrigger asChild>{button}</TooltipTrigger>
@@ -292,21 +200,6 @@ export function AppSidebar() {
     );
   };
 
-  const visibleGroups = (
-    isViewer
-      ? [
-          {
-            key: "crm",
-            label: "CRM",
-            icon: FileText,
-            items: [{ title: "Заявки", url: "/requests", icon: FileText }],
-          } as MenuGroup,
-        ]
-      : menuGroups
-  )
-    .map((g) => ({ ...g, items: g.items.filter((i) => hasRouteAccess(i.url)) }))
-    .filter((g) => g.items.length > 0);
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border/40 p-4">
@@ -318,11 +211,25 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Favorites first */}
+        {favoriteItems.length > 0 && (
+          <SidebarGroup className="py-0">
+            {(!collapsed || isMobile) && (
+              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <Star className="h-3.5 w-3.5 fill-current" />
+                Избранное
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>{favoriteItems.map(renderItem)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {visibleGroups.map((group) => {
           const isGroupActive = group.key === activeGroupKey;
           const isOpen = collapsed && !isMobile ? true : !!openGroups[group.key];
 
-          // Collapsed rail: render items directly as icons, no group toggle.
           if (collapsed && !isMobile) {
             return (
               <SidebarGroup key={group.key}>
@@ -337,9 +244,7 @@ export function AppSidebar() {
             <SidebarGroup key={group.key} className="py-0">
               <Collapsible
                 open={isOpen}
-                onOpenChange={(o) =>
-                  setOpenGroups((prev) => ({ ...prev, [group.key]: o }))
-                }
+                onOpenChange={(o) => setOpenGroups((prev) => ({ ...prev, [group.key]: o }))}
               >
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel
