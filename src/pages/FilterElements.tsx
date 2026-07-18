@@ -186,6 +186,15 @@ export default function FilterElementsPage() {
                 <AlertTriangle className="h-4 w-4 mr-1" />Ниже минимума
               </Button>
               <Badge variant="secondary">{filtered.length} из {items.length}</Badge>
+              {selectedIds.size > 0 && (
+                <div className="ml-auto flex items-center gap-2">
+                  <Badge>{selectedIds.size} выбрано</Badge>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedIds(new Set())}>Снять</Button>
+                  <Button size="sm" onClick={() => setBulkLabelOpen(true)}>
+                    <Printer className="h-4 w-4 mr-1" />Печать этикеток
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="rounded-md border overflow-x-auto">
