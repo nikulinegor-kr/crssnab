@@ -161,6 +161,7 @@ export function SparePartFormDialog({ open, onOpenChange, orgId, part }: Props) 
             article={form.article}
             crossNumbers={crossNums}
             name={form.name}
+            manufacturer={form.manufacturer}
             excludeId={part?.id}
             onOpenDuplicate={(id) => {
               window.dispatchEvent(new CustomEvent("open-part-detail", { detail: { kind: "spare", id } }));
