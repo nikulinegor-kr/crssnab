@@ -124,8 +124,9 @@ export const useFilterElementMovements = (id: string | null) =>
       const { data, error } = await (supabase as any)
         .from("filter_element_movements")
         .select(
-          "*, equipment:equipment_id(id, brand, model, plate_number), object:object_id(id, name), responsible:responsible_user_id(id, full_name)"
+          "*, equipment:equipment_id(id, brand, model, plate_number), object:object_id(id, name), responsible:responsible_user_id(id, full_name), request:request_id(id, request_number, description)"
         )
+
         .eq("filter_element_id", id)
         .order("created_at", { ascending: false });
       if (error) throw error;
