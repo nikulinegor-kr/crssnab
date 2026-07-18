@@ -80,6 +80,7 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
       if (!objectId) throw new Error("Выберите объект");
       if (!q || q <= 0) throw new Error("Количество должно быть больше 0");
       if (q > currentStock) throw new Error(`Недостаточно на складе (остаток ${currentStock})`);
+      if (!reason.trim()) throw new Error("Укажите причину списания");
       const { error } = await (supabase as any).from("filter_element_movements").insert({
         organization_id: orgId,
         filter_element_id: filterElementId,
@@ -88,9 +89,11 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
         equipment_id: equipmentId,
         responsible_user_id: responsibleId,
         object_id: objectId,
+        reason: reason.trim(),
         comment: comment.trim() || null,
       });
       if (error) throw error;
+
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["filter-elements-list"] });
