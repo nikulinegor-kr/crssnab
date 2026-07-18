@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body: Payload = await req.json();
-    let { orgId, kind, article, cross_number, name, excludeId, image_base64, image_mime } = body;
+    let { orgId, kind, article, cross_number, name, manufacturer, excludeId, image_base64, image_mime } = body;
     if (!orgId) throw new Error("orgId required");
     const key = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
