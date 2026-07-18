@@ -77,6 +77,7 @@ const menuGroups = [
       { title: "Склад", url: "/warehouse", icon: Warehouse },
       { title: "Техника", url: "/equipment", icon: Truck },
       { title: "Запчасти", url: "/spare-parts", icon: Wrench },
+      { title: "Фильтрующие элементы", url: "/filter-elements", icon: Filter },
       { title: "Поставщики", url: "/suppliers", icon: Users },
       { title: "Поставки", url: "/shipments", icon: Truck },
     ],
