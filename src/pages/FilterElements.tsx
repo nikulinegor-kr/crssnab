@@ -19,7 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag } from "lucide-react";
+import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
 import { FilterElementFormDialog } from "@/components/filter-elements/FilterElementFormDialog";
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
 import { FilterElementMovementDialog } from "@/components/filter-elements/FilterElementMovementDialog";
