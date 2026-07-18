@@ -19,7 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag } from "lucide-react";
+import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
 import { FilterElementFormDialog } from "@/components/filter-elements/FilterElementFormDialog";
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
 import { FilterElementMovementDialog } from "@/components/filter-elements/FilterElementMovementDialog";
@@ -50,6 +51,7 @@ export default function FilterElementsPage() {
   const [inItem, setInItem] = useState<FilterElementRow | null>(null);
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
+  const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -309,6 +311,9 @@ export default function FilterElementsPage() {
                                   <Archive className="h-4 w-4 mr-2" />В неликвид
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setLabelItem(i)}>
+                                  <Tag className="h-4 w-4 mr-2" />Печать этикетки
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setEditItem(i); setFormOpen(true); }}>
                                   <Pencil className="h-4 w-4 mr-2" />Редактировать
                                 </DropdownMenuItem>
@@ -369,6 +374,16 @@ export default function FilterElementsPage() {
             onOpenChange={(v) => !v && setToDeadstockItem(null)}
             orgId={currentOrgId}
             item={toDeadstockItem}
+          />
+        )}
+        {labelItem && (
+          <PartLabelPrintDialog
+            open={!!labelItem}
+            onOpenChange={(v) => !v && setLabelItem(null)}
+            name={labelItem.name}
+            article={labelItem.article}
+            manufacturer={labelItem.manufacturer}
+            storageLocation={labelItem.storage_location}
           />
         )}
       </div>
