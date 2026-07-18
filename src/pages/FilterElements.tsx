@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive } from "lucide-react";
 import { FilterElementFormDialog } from "@/components/filter-elements/FilterElementFormDialog";
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
@@ -26,6 +27,12 @@ import { FilterElementWriteOffDialog } from "@/components/filter-elements/Filter
 import { FilterMoveToDeadstockDialog } from "@/components/filter-elements/FilterMoveToDeadstockDialog";
 import { FilterElementsDeadstockTab } from "@/components/filter-elements/FilterElementsDeadstockTab";
 import { toast } from "sonner";
+
+const formatEq = (e: { brand: string | null; model: string | null }) =>
+  [e.brand, e.model].filter(Boolean).join(" ").trim() || "—";
+const fmtRub = (v: number | null | undefined) =>
+  v == null ? "—" : `${Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽`;
+
 
 export default function FilterElementsPage() {
   const { currentOrgId } = useCurrentOrganization();
