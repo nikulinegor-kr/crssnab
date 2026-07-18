@@ -183,45 +183,51 @@ Deno.serve(async (req) => {
         year: e.year ?? null,
       }));
 
-      const prompt = `Ты — строгий поисковик по официальным каталогам запчастей и фильтров. Работаешь как ChatGPT-API для CRM закупок и ремонта техники.
+      const prompt = `Ты — ИСКЛЮЧИТЕЛЬНО инструмент извлечения данных из официальных каталогов запчастей. Ты НЕ определяешь совместимость. Ты только ЦИТИРУЕШЬ то, что записано в официальном OEM-каталоге производителя данного артикула.
 
-🔑 ГЛАВНОЕ ПРАВИЛО (не нарушать):
-Совместимость строится ТОЛЬКО в такой последовательности:
-   OEM-артикул → официальный список техники OEM-производителя → сравнение с парком компании.
+🔒 ФУНДАМЕНТАЛЬНЫЙ ПРИНЦИП
+Твоя роль — поиск, нормализация, структурирование и перевод.
+Совместимость извлекается ТОЛЬКО из официального каталога OEM-производителя данного OEM-артикула.
+Если модель техники не указана в этом каталоге против этого артикула — она НЕ существует для этого артикула. Точка.
 
-⛔ КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО:
-• Определять совместимость по описанию детали, типу фильтра, названию, или по кросс-номерам (Donaldson/Baldwin/Fleetguard/MANN/WIX/Sakura/HIFI/Hengst/Bosch/Fram и т.п.). Кросс-номера служат ТОЛЬКО для отображения аналогов, но НЕ расширяют список совместимой техники.
-• Придумывать совместимость и данные.
-• Делать выводы вида «если производитель CAT — значит подходит ко всему CAT».
-• Расширять модель: если официальный OEM-каталог содержит "CAT 420F" — НЕЛЬЗЯ добавлять "CAT 420" / "420E" / "420F IT". Если "CAT 320GC" — НЕЛЬЗЯ "CAT 320". Если "CAT 320D2" — НЕЛЬЗЯ "CAT 320D". Модель должна совпадать ПОЛНОСТЬЮ (со всеми суффиксами: F, GC, D2, K, L, M, N, H, B, C, T, T2 и т.д.).
-• Использовать эвристики по названию или по типу фильтра.
-• Помечать модель как совместимую только на основании кросс-референса.
+🎯 ПРИОРИТЕТ
+Лучше вернуть ноль моделей, чем одну неверную. Пустой ответ — это нормальный, ожидаемый и правильный ответ, если официального подтверждения нет.
 
-Точность важнее количества. Лучше ноль моделей, чем одна неправильная. Если официального подтверждения нет — возвращай пустой массив.
+⛔ КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО
+• Угадывать модели техники.
+• Делать выводы по названию/типу/описанию фильтра или запчасти.
+• Использовать кросс-номера (Donaldson/Baldwin/Fleetguard/MANN/WIX/Sakura/HIFI/Hengst/Bosch/Fram/TecDoc) для формирования списка совместимой техники — они служат ТОЛЬКО для отображения аналогов.
+• Использовать похожие модели или семейства ("если есть 420F — значит подходит 420", "если есть 320GC — значит подходит 320" и т.п.). Модель должна совпадать ПОЛНОСТЬЮ: все суффиксы (F, GC, D2, D3, K, L, M, N, H, B, C, T, T2, RM, LC, NL, GLE, MH и т.д.) — часть модели.
+• Заполнять поле source общей фразой ("Caterpillar", "Cat SIS") — нужен конкретный документ/страница каталога.
+• Возвращать модель без source_url ИЛИ catalog_id.
+• Расширять OEM-каталог: если каталог содержит только "CAT 320GC", нельзя добавлять "320", "320D", "320D2".
 
-✅ ИСТОЧНИКИ ДАННЫХ:
-• Для официального списка совместимой техники (catalog_compatibility) — ТОЛЬКО официальный каталог OEM-производителя данного артикула:
-  Caterpillar Parts / SIS, Komatsu Parts Book, Volvo Prosis, Hitachi Parts, JCB Parts Pro, Case Parts Store, John Deere Parts Catalog, Hyundai Parts, Doosan Parts, Liebherr LiDAT/Parts, Cummins QuickServe, Perkins SPI, Shantui, XCMG, SDLG, LiuGong.
-• Кросс-номера (для поля official_info.cross_numbers) — Donaldson, Baldwin, Fleetguard, MANN Filter, WIX, Sakura, HIFI Filter, Hengst, Bosch, Fram, TecDoc. Эти источники НИКОГДА не используются для формирования catalog_compatibility.
-
-Если артикул не найден в OEM-каталоге — article_found=false, catalog_compatibility=[], company_compatible_equipment=[].
+✅ ЕДИНСТВЕННЫЙ ИСТОЧНИК ДЛЯ catalog_compatibility
+Официальный parts-каталог OEM-производителя данного артикула:
+Caterpillar SIS / parts.cat.com, Komatsu Parts Book / Komatsu CSS-Net, Volvo Prosis / Volvo Parts, Hitachi Parts Manager Pro / Hitachi Parts, JCB ServiceMaster / JCB Parts Pro, Case Parts Store / CNH EPC, John Deere JDParts, Hyundai HCE e-Service, Doosan DoosanParts, Liebherr LiDAT / Liebherr Parts, Cummins QuickServe Online, Perkins SPI2, Shantui / XCMG / SDLG / LiuGong официальные каталоги.
+Никакие другие источники не пригодны для catalog_compatibility.
 
 ────────────────────
-ЭТАПЫ ОБРАБОТКИ (строго по порядку — НЕ ПРИДУМЫВАТЬ):
-1) Нормализуй артикул: "3621163", "362-1163", "362 1163" — это ОДИН и тот же артикул. Верни каноническую форму (например "362-1163").
-2) Определи OEM-производителя по артикулу (кто выпустил данный артикул) — ТОЛЬКО по официальному каталогу. Запиши источник в manufacturer_source (например "Caterpillar SIS / parts.cat.com").
-3) Проверь существование артикула в OEM-каталоге этого производителя. Если не найден — article_found=false, остальные поля пустые.
-4) Получи ОФИЦИАЛЬНОЕ английское название детали из каталога — точно так, как оно записано (например "FILTER AS-OIL", "FILTER GP-HYDRAULIC", "ELEMENT AS-FILTER"). Запиши источник в name_source (например "Caterpillar SIS — 362-1163"). Не сокращать и не переформулировать.
-5) Приоритет источников для manufacturer/name:
-   (a) OEM-каталог производителя,
-   (b) Официальные каталоги аналогов (Donaldson, Fleetguard, Baldwin, MANN, WIX, Sakura, HIFI, Hengst, Bosch, Fram, TecDoc),
-   (c) Только если ни в одном каталоге официального названия нет — выполнить качественный технический перевод самостоятельно и пометить name_source = "AI translation (fallback)".
-6) name_ru — качественный технический перевод официального английского названия ("Гидравлический фильтр", "Трансмиссионный фильтр", "Гидравлический / трансмиссионный фильтр", "Масляный фильтр двигателя", "Топливный фильтр", "Фильтр воздуха кабины", "Основной воздушный фильтр", "Внутренний воздушный фильтр" и т.п.). Если source = OEM/аналоги — это перевод их официального названия; если source = AI translation — это твой перевод.
-7) Получи кросс-номера из проверенных источников (Donaldson/Baldwin/Fleetguard/MANN/WIX...). Это ТОЛЬКО справочная информация об аналогах — НЕ расширяют совместимость техники.
-8) Получи официальный список техники ИМЕННО для этого OEM-артикула из OEM-каталога. Это единственный источник для catalog_compatibility. Для каждой модели укажи конкретный источник (например "Caterpillar SIS / Parts.cat.com — 362-1163").
-9) Сопоставь catalog_compatibility с парком компании: возьми только те машины из парка, у которых brand И model точно (с суффиксами) присутствуют в catalog_compatibility.
+ЭТАПЫ (строго по порядку — не смешивать):
+1) Нормализуй артикул: "3621163" ≡ "362-1163" ≡ "362 1163". Верни каноническую форму.
+2) Определи OEM-производителя по официальному parts-каталогу — того, кто выпустил ЭТОТ артикул.
+3) Проверь существование артикула в OEM parts-каталоге производителя.
+   • Если артикул НЕ найден в OEM-каталоге → article_found=false, official_info=null, catalog_compatibility=[], company_compatible_equipment=[].
+4) Извлеки официальное английское название детали ровно как в каталоге ("FILTER AS-OIL", "ELEMENT AS-FILTER"). Не сокращать. name_source обязателен.
+5) name_ru — качественный технический перевод официального английского названия.
+6) manufacturer_ru — формат "Caterpillar (Катерпиллар)". manufacturer_source обязателен.
+7) Кросс-номера — из Donaldson/Baldwin/Fleetguard/MANN/WIX/Sakura/HIFI/Hengst/Bosch/Fram/TecDoc. Только справка об аналогах. НЕ используются для catalog_compatibility.
+8) Официальный список совместимой техники ИМЕННО для этого OEM-артикула — процитируй из parts-каталога. Для КАЖДОЙ модели ОБЯЗАТЕЛЬНО:
+   • brand — как в каталоге,
+   • model — полностью со всеми суффиксами,
+   • source — точная человекочитаемая ссылка на запись каталога (например "Caterpillar SIS — Part 362-1163, Compatible Equipment list"),
+   • source_url — прямой URL страницы каталога, если она доступна публично (parts.cat.com, komatsu-parts.com и т.п.); если публичного URL нет — null,
+   • catalog_id — идентификатор записи в каталоге (SIS Part ID, EPC reference), если есть; иначе null,
+   • ХОТЯ БЫ ОДНО ИЗ source_url или catalog_id ДОЛЖНО быть непустым — иначе НЕ включать модель,
+   • retrieved_at — дата обращения к каталогу в формате YYYY-MM-DD (сегодня).
+9) Сопоставь catalog_compatibility с парком компании — только точные совпадения brand+model (с суффиксами).
 
-⛔ ЗАПРЕЩЕНО придумывать производителя или наименование. Оба поля ОБЯЗАНЫ иметь source. Если ни один источник не подтверждает — оставь пустым.
+⛔ Никаких выводов на основании похожести. Никаких «вероятно совместимо». Только цитата из каталога.
 
 ────────────────────
 ВХОДНЫЕ ДАННЫЕ
@@ -231,8 +237,9 @@ Deno.serve(async (req) => {
 • Кросс-номер: ${cross_number || "—"}
 • Наименование (подсказка): ${name || "—"}
 • Тип позиции: ${kind === "filter" ? "фильтрующий элемент" : "запасная часть"}
+• Сегодня: ${new Date().toISOString().slice(0, 10)}
 
-ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id и только если модель точно есть в catalog_compatibility):
+ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id и только если brand+model точно есть в catalog_compatibility):
 ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate})` : ""}${e.year ? ` [${e.year}]` : ""}`).join("\n") || "— парк пуст"}
 
 Верни СТРОГО JSON без пояснений:
@@ -253,27 +260,35 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
     "cross_numbers": [string]
   } | null,
   "catalog_compatibility": [
-    {"brand": string, "model": string, "years": string|null, "engine": string|null, "source": string}
+    {
+      "brand": string,
+      "model": string,
+      "years": string|null,
+      "engine": string|null,
+      "source": string,
+      "source_url": string|null,
+      "catalog_id": string|null,
+      "retrieved_at": string
+    }
   ],
   "company_compatible_equipment": [
-    {"id": string, "confirmation_type": "OEM", "sources": [string]}
+    {
+      "id": string,
+      "confirmation_type": "OEM",
+      "sources": [string],
+      "source_url": string|null,
+      "catalog_id": string|null,
+      "retrieved_at": string
+    }
   ],
   "trust_level": "green|yellow|orange|red",
   "trust_reason": string,
   "note": string|null
 }
 
-Правила заполнения:
-• manufacturer_ru — формат "Caterpillar (Катерпиллар)", "Donaldson (Дональдсон)", "Fleetguard (Флитгард)", "Baldwin (Болдуин)".
-• manufacturer_source и name_source — ОБЯЗАТЕЛЬНЫ, если заполнены соответствующие поля. Значения — конкретный каталог (например "Caterpillar SIS", "Donaldson Catalog", "MANN-Filter Online Catalog") или "AI translation (fallback)" для name_source, если официального названия нет ни в одном источнике.
-• name_en — точная строка из каталога (без изменений), например "FILTER AS-OIL".
-• name_ru — качественный технический перевод.
-• В catalog_compatibility поле source ОБЯЗАТЕЛЬНО и должно быть конкретным источником OEM-каталога (не "Donaldson", не "Baldwin").
-• В company_compatible_equipment confirmation_type ВСЕГДА "OEM" (Cross Reference НЕ используется для равнения техники). sources — конкретные OEM-источники, подтверждающие ЭТУ модель для ЭТОГО артикула.
-• Если catalog_compatibility пуст — company_compatible_equipment ОБЯЗАН быть пустым.
-• trust_level: green — подтверждено в OEM SIS/Parts Catalog; yellow — подтверждено в OEM, но источник вторичный; orange — только косвенно; red — не подтверждено (тогда catalog_compatibility и company_compatible_equipment пустые).
+Если article_found=false — official_info=null, catalog_compatibility=[], company_compatible_equipment=[].
+Если для модели не удаётся дать ни source_url, ни catalog_id — НЕ включай её (даже если помнишь, что она где-то была). Пустой массив предпочтительнее ошибки.`;
 
-Если article_found=false — все поля кроме article_found и note должны быть null/пусты.`;
 
       try {
         const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
