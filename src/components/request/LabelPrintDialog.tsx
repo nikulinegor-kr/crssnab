@@ -46,8 +46,8 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
         </head>
         <body>
           <div class="label">
-            <div class="desc">${description || ""}</div>
-            <div class="applicant">${applicant || ""}</div>
+            <div class="desc">${escapeHtml(description || "")}</div>
+            <div class="applicant">${escapeHtml(applicant || "")}</div>
           </div>
           <script>window.onload = () => { setTimeout(() => window.print(), 200); };</script>
         </body>
