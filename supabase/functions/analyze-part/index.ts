@@ -283,26 +283,42 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
           if (ai) {
             notFound = ai.article_found === false;
-            const valid = new Set((equipment ?? []).map((e: any) => e.id));
+            const valid = new Map((equipment ?? []).map((e: any) => [e.id, e]));
+            const catalog: any[] = Array.isArray(ai.catalog_compatibility) ? ai.catalog_compatibility : [];
+            const normModel = (s: any) => String(s ?? "").toUpperCase().replace(/[\s\-_./]/g, "").trim();
+            // Only catalog entries with a concrete OEM source count
+            const validCatalog = catalog.filter(
+              (c) => c && c.brand && c.model && typeof c.source === "string" && c.source.trim()
+            );
+            const catalogKeys = new Set(
+              validCatalog.map((c) => `${normModel(c.brand)}|${normModel(c.model)}`)
+            );
+            ai.catalog_compatibility = validCatalog;
+
             const rawEntries: any[] = Array.isArray(ai.company_compatible_equipment)
               ? ai.company_compatible_equipment
-              : Array.isArray(ai.company_compatible_equipment_ids)
-                ? ai.company_compatible_equipment_ids.map((id: string) => ({ id, sources: [], confirmation_type: null }))
-                : [];
-            ai.company_compatible_equipment = rawEntries
-              .filter((e: any) => e && typeof e.id === "string" && valid.has(e.id))
-              .map((e: any) => {
-                const sources: string[] = Array.isArray(e.sources)
-                  ? e.sources.filter(Boolean)
-                  : e.source ? [e.source] : [];
-                return {
-                  id: e.id,
-                  confirmation_type: e.confirmation_type ?? null,
-                  sources,
-                };
-              });
+              : [];
 
-            if (ai.trust_level === "red") {
+            ai.company_compatible_equipment = rawEntries
+              .filter((e: any) => {
+                if (!e || typeof e.id !== "string") return false;
+                const eq = valid.get(e.id);
+                if (!eq) return false;
+                // OEM-only confirmation
+                if (e.confirmation_type && e.confirmation_type !== "OEM") return false;
+                // Model must be present in the OEM catalog list (exact brand+model match)
+                const key = `${normModel(eq.brand)}|${normModel(eq.model)}`;
+                if (!catalogKeys.has(key)) return false;
+                const sources: string[] = Array.isArray(e.sources) ? e.sources.filter(Boolean) : [];
+                return sources.length > 0;
+              })
+              .map((e: any) => ({
+                id: e.id,
+                confirmation_type: "OEM",
+                sources: (Array.isArray(e.sources) ? e.sources : []).filter(Boolean),
+              }));
+
+            if (ai.trust_level === "red" || catalogKeys.size === 0) {
               ai.company_compatible_equipment = [];
             }
           }
@@ -327,7 +343,7 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
             source: sources[0] ?? null,
             sources,
             sources_count: sources.length,
-            confirmation_type: entry.confirmation_type ?? null,
+            confirmation_type: "OEM",
           };
         })
         .filter(Boolean);
