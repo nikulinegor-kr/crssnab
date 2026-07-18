@@ -41,8 +41,8 @@ export interface PartAiSuggestion {
       oems: string[];
       cross_numbers: string[];
     };
-    catalog_compatibility: Array<{ brand: string; model: string; years?: string | null; engine?: string | null }>;
-    company_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null }>;
+    catalog_compatibility: Array<{ brand: string; model: string; years?: string | null; engine?: string | null; source?: string | null }>;
+    company_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null; source?: string | null }>;
     trust_level: "green" | "yellow" | "orange" | "red" | null;
     trust_reason: string | null;
     note: string | null;
