@@ -54,6 +54,8 @@ export default function FilterElementsPage() {
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
   const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLabelOpen, setBulkLabelOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
