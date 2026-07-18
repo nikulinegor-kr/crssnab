@@ -259,16 +259,20 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
           if (ai) {
             notFound = ai.article_found === false;
-            // Validate CRM equipment ids
+            // Validate CRM equipment ids and normalize entries
             const valid = new Set((equipment ?? []).map((e: any) => e.id));
-            const rawIds: string[] = Array.isArray(ai.company_compatible_equipment_ids)
-              ? ai.company_compatible_equipment_ids
-              : [];
-            ai.company_compatible_equipment_ids = rawIds.filter((id: string) => valid.has(id));
+            const rawEntries: any[] = Array.isArray(ai.company_compatible_equipment)
+              ? ai.company_compatible_equipment
+              : Array.isArray(ai.company_compatible_equipment_ids)
+                ? ai.company_compatible_equipment_ids.map((id: string) => ({ id, source: null }))
+                : [];
+            ai.company_compatible_equipment = rawEntries
+              .filter((e: any) => e && typeof e.id === "string" && valid.has(e.id))
+              .map((e: any) => ({ id: e.id, source: e.source ?? null }));
 
             // Enforce: if red trust — no company matches allowed
             if (ai.trust_level === "red") {
-              ai.company_compatible_equipment_ids = [];
+              ai.company_compatible_equipment = [];
             }
           }
         } else {
@@ -281,12 +285,16 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
     // Attach labels for company-compatible equipment
     let company_equipment: any[] = [];
-    if (ai?.company_compatible_equipment_ids?.length) {
+    if (ai?.company_compatible_equipment?.length) {
       const eqMap = new Map((equipment ?? []).map((e: any) => [e.id, e]));
-      company_equipment = ai.company_compatible_equipment_ids
-        .map((id: string) => eqMap.get(id))
+      company_equipment = ai.company_compatible_equipment
+        .map((entry: any) => {
+          const eq = eqMap.get(entry.id);
+          return eq ? { ...eq, source: entry.source ?? null } : null;
+        })
         .filter(Boolean);
     }
+
 
     return new Response(
       JSON.stringify({
