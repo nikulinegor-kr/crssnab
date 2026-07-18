@@ -348,10 +348,14 @@ export default function FilterElementsPage() {
                                 <DropdownMenuItem onClick={() => setWriteOffItem(i)} disabled={(i.stock ?? 0) <= 0}>
                                   <PackageMinus className="h-4 w-4 mr-2" />Списать
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setMoveItem(i)} disabled={(i.stock ?? 0) <= 0}>
+                                  <ArrowLeftRight className="h-4 w-4 mr-2" />Перемещение
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setToDeadstockItem(i)} disabled={(i.stock ?? 0) <= 0}>
                                   <Archive className="h-4 w-4 mr-2" />В неликвид
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+
                                 <DropdownMenuItem onClick={() => setLabelItem(i)}>
                                   <Tag className="h-4 w-4 mr-2" />Печать этикетки
                                 </DropdownMenuItem>
