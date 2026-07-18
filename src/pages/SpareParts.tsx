@@ -167,6 +167,9 @@ export default function SpareParts() {
         </Tabs>
 
         {currentOrgId && <SparePartFormDialog open={formOpen} onOpenChange={setFormOpen} orgId={currentOrgId} />}
+        {currentOrgId && (
+          <SparePartsPrintDialog open={printOpen} onOpenChange={setPrintOpen} orgId={currentOrgId} parts={filtered} />
+        )}
         {currentOrgId && detailPart && (
           <SparePartDetailDialog open={!!detailPart} onOpenChange={(v) => !v && setDetailPart(null)} part={detailPart} orgId={currentOrgId} />
         )}
