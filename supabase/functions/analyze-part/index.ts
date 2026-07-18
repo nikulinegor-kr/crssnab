@@ -276,18 +276,25 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
           if (ai) {
             notFound = ai.article_found === false;
-            // Validate CRM equipment ids and normalize entries
             const valid = new Set((equipment ?? []).map((e: any) => e.id));
             const rawEntries: any[] = Array.isArray(ai.company_compatible_equipment)
               ? ai.company_compatible_equipment
               : Array.isArray(ai.company_compatible_equipment_ids)
-                ? ai.company_compatible_equipment_ids.map((id: string) => ({ id, source: null }))
+                ? ai.company_compatible_equipment_ids.map((id: string) => ({ id, sources: [], confirmation_type: null }))
                 : [];
             ai.company_compatible_equipment = rawEntries
               .filter((e: any) => e && typeof e.id === "string" && valid.has(e.id))
-              .map((e: any) => ({ id: e.id, source: e.source ?? null }));
+              .map((e: any) => {
+                const sources: string[] = Array.isArray(e.sources)
+                  ? e.sources.filter(Boolean)
+                  : e.source ? [e.source] : [];
+                return {
+                  id: e.id,
+                  confirmation_type: e.confirmation_type ?? null,
+                  sources,
+                };
+              });
 
-            // Enforce: if red trust — no company matches allowed
             if (ai.trust_level === "red") {
               ai.company_compatible_equipment = [];
             }
@@ -300,14 +307,21 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
       }
     }
 
-    // Attach labels for company-compatible equipment
     let company_equipment: any[] = [];
     if (ai?.company_compatible_equipment?.length) {
       const eqMap = new Map((equipment ?? []).map((e: any) => [e.id, e]));
       company_equipment = ai.company_compatible_equipment
         .map((entry: any) => {
           const eq = eqMap.get(entry.id);
-          return eq ? { ...eq, source: entry.source ?? null } : null;
+          if (!eq) return null;
+          const sources: string[] = entry.sources ?? [];
+          return {
+            ...eq,
+            source: sources[0] ?? null,
+            sources,
+            sources_count: sources.length,
+            confirmation_type: entry.confirmation_type ?? null,
+          };
         })
         .filter(Boolean);
     }
@@ -329,6 +343,7 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
           ? {
               article_found: ai.article_found !== false,
               not_found: notFound,
+              article_normalized: ai.article_normalized ?? articleNorm ?? null,
               sources: Array.isArray(ai.sources) ? ai.sources : [],
               official_info: ai.official_info ?? null,
               catalog_compatibility: Array.isArray(ai.catalog_compatibility) ? ai.catalog_compatibility : [],
