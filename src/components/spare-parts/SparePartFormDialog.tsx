@@ -197,6 +197,30 @@ export function SparePartFormDialog({ open, onOpenChange, orgId, part }: Props) 
             </div>
           </div>
 
+          <PartAiSuggestions
+            orgId={orgId}
+            kind="spare"
+            article={form.article}
+            crossNumbers={crossNums}
+            name={form.name}
+            excludeId={part?.id}
+            onAccept={(d) => {
+              setForm((f) => ({
+                ...f,
+                manufacturer: f.manufacturer || d.manufacturer || "",
+                name: f.name || d.name || "",
+                category: f.category || d.category || "",
+              }));
+              if (d.cross_numbers?.length) {
+                setCrossNums((prev) => Array.from(new Set([...prev, ...d.cross_numbers!])));
+              }
+              if (d.equipment_ids?.length) {
+                setEquipmentIds((prev) => Array.from(new Set([...prev, ...d.equipment_ids!])));
+              }
+              toast.success("Данные подставлены");
+            }}
+          />
+
           <div>
             <Label>Кросс-номера</Label>
             <div className="flex gap-2 mb-2">
