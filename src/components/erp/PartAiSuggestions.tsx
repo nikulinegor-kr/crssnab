@@ -117,6 +117,21 @@ export function PartAiSuggestions({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
+  const autoRanFor = useRef<string>("");
+
+  // Auto-run when OEM article is entered / changed (debounced)
+  useEffect(() => {
+    const norm = article.toUpperCase().replace(/[\s\-_./]/g, "").trim();
+    if (norm.length < 4) return;
+    if (autoRanFor.current === norm) return;
+    if (loading) return;
+    const timer = setTimeout(() => {
+      autoRanFor.current = norm;
+      runAnalysis();
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article]);
 
   const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string }) => {
     if (!orgId) return;
