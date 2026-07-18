@@ -30,7 +30,7 @@ export interface FilterElementRow {
 export interface FilterElementMovement {
   id: string;
   filter_element_id: string;
-  type: "IN" | "WRITE_OFF" | "ADJUST" | "RETURN";
+  type: "IN" | "WRITE_OFF" | "ADJUST" | "RETURN" | "MOVE";
   quantity: number;
   equipment_id: string | null;
   responsible_user_id: string | null;
@@ -41,7 +41,13 @@ export interface FilterElementMovement {
   unit_price?: number | null;
   supplier?: string | null;
   request_id?: string | null;
+  document_number?: string | null;
+  reason?: string | null;
+  from_location?: string | null;
+  to_location?: string | null;
+  receipt_date?: string | null;
 }
+
 
 export const useFilterElementsList = (orgId: string | null) =>
   useQuery({
