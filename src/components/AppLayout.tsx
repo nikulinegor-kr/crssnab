@@ -8,6 +8,7 @@ import { PermissionRoute } from "./PermissionRoute";
 // FloatingAiChat is intentionally not rendered by default — accessible via specific pages/dialogs when needed.
 import { MobileBottomNav } from "./MobileBottomNav";
 import { QuickRequestFab } from "./quick-request/QuickRequestFab";
+import { QuickAddErpMenu } from "./erp/QuickAddErpMenu";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
@@ -74,8 +75,12 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
             <div className="flex-1 flex justify-center px-2">
               <GlobalSearch />
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-1">
+              <QuickAddErpMenu />
+              <NotificationBell />
+            </div>
           </header>
+
 
           <main id="main-content" className={cn(
             "flex-1 min-w-0 overflow-x-hidden",
