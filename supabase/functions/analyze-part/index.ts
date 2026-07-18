@@ -1,5 +1,7 @@
 // Analyze a part (filter element or spare part) using Lovable AI
-// Returns duplicates, compatible equipment suggestions, purchase history and analogs.
+// STRICT CATALOG MODE: AI is not allowed to guess compatibility.
+// It must rely only on official OEM catalogs and verified cross-reference sources
+// (Donaldson, Baldwin, Fleetguard, MANN, WIX, Sakura, HIFI, Hengst, Bosch, Fram).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -15,8 +17,8 @@ interface Payload {
   name?: string;
   manufacturer?: string;
   excludeId?: string;
-  image_base64?: string; // raw base64 (no data: prefix) OR data URL
-  image_mime?: string;   // e.g. image/jpeg
+  image_base64?: string;
+  image_mime?: string;
 }
 
 Deno.serve(async (req) => {
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
     const compatTable = kind === "filter" ? "filter_element_equipment" : "spare_part_equipment";
     const fkCol = kind === "filter" ? "filter_element_id" : "spare_part_id";
 
-    // 0. Photo recognition (if provided) — extract article/manufacturer/name/cross-numbers via Gemini vision
+    // 0. Photo vision — only extracts identifiers (article/manufacturer/name/cross), never compatibility
     let vision: any = null;
     if (key && image_base64) {
       try {
@@ -50,7 +52,7 @@ Deno.serve(async (req) => {
             messages: [{
               role: "user",
               content: [
-                { type: "text", text: `Ты эксперт по маркировке запчастей и фильтров для спецтехники. С фото детали извлеки видимые идентификаторы. Верни СТРОГО JSON: {"article": string|null, "manufacturer": string|null, "name": string|null, "cross_numbers": string[]}. Никаких пояснений вне JSON.` },
+                { type: "text", text: `Ты эксперт по маркировке запчастей и фильтров. С фото извлеки ТОЛЬКО видимые идентификаторы. НЕ придумывай данные. Верни строго JSON: {"article": string|null, "manufacturer": string|null, "name": string|null, "cross_numbers": string[]}.` },
                 { type: "image_url", image_url: { url: dataUrl } },
               ],
             }],
@@ -64,20 +66,19 @@ Deno.serve(async (req) => {
           catch { const m = text.match(/\{[\s\S]*\}/); if (m) vision = JSON.parse(m[0]); }
           if (vision) {
             article = article || vision.article || undefined;
+            manufacturer = manufacturer || vision.manufacturer || undefined;
             name = name || vision.name || undefined;
             if (!cross_number && Array.isArray(vision.cross_numbers) && vision.cross_numbers[0]) {
               cross_number = vision.cross_numbers[0];
             }
           }
-        } else {
-          console.error("vision error", r.status, await r.text());
         }
       } catch (e) {
         console.error("vision failed", e);
       }
     }
 
-    // 1. Look for existing duplicates
+    // 1. Duplicates in CRM
     const searchTerms = [article, cross_number, name].map((t) => (t ?? "").trim()).filter(Boolean);
     let duplicate: any = null;
     let candidates: any[] = [];
@@ -106,7 +107,6 @@ Deno.serve(async (req) => {
       duplicate = candidates[0] ?? null;
     }
 
-    // 2. Build data for duplicate: stock, compatible equipment
     let duplicateInfo: any = null;
     if (duplicate) {
       const [{ data: movs }, { data: comp }] = await Promise.all([
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       };
     }
 
-    // 3. Purchase history — use IN movements matching the identifiers via same part records
+    // Purchase history
     const partIdsForHistory = candidates.map((c) => c.id);
     let priceInfo: any = null;
     if (partIdsForHistory.length) {
@@ -160,51 +160,84 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 4. Fetch equipment list for compatibility suggestion
+    // CRM equipment
     const { data: equipment } = await supabase
       .from("equipment")
       .select("id, brand, model, plate_number, year")
       .eq("organization_id", orgId)
-      .limit(200);
+      .limit(500);
 
-    // 5. Ask AI
+    // Catalog lookup via AI (strict mode)
     let ai: any = null;
-    if (key && searchTerms.length && (equipment?.length ?? 0) > 0) {
-      const eqLabels = (equipment ?? []).map((e: any, i: number) => ({
-        idx: i,
+    let notFound = false;
+    if (key && (article?.trim() || cross_number?.trim())) {
+      const eqLabels = (equipment ?? []).map((e: any) => ({
         id: e.id,
-        label: `${e.brand ?? ""} ${e.model ?? ""}`.trim() + (e.plate_number ? ` (${e.plate_number})` : ""),
+        brand: e.brand ?? "",
+        model: e.model ?? "",
+        plate: e.plate_number ?? "",
+        year: e.year ?? null,
       }));
-      const prompt = `Ты эксперт по запчастям и фильтрам для спецтехники (экскаваторы, погрузчики, самосвалы, тракторы, дизельные двигатели, генераторы). Используй свои знания о производителях, каталогах OEM/aftermarket и типовых применениях (Donaldson, Baldwin, MANN, Fleetguard, SF-Filter, WIX, Sakura, Hifi, Bosch, Cat, Komatsu, Hitachi, Volvo, JCB, Case, John Deere, Hyundai, Doosan, Liebherr, Shantui, XCMG, SDLG, LiuGong и т.п.). По артикулу, производителю и/или кросс-номерам определи, к каким моделям техники обычно подходит эта деталь, затем СОПОСТАВЬ с нашим парком техники и верни ТОЛЬКО id из списка ниже.
 
-Ввод:
-- Артикул: ${article || "—"}
-- Производитель: ${manufacturer || "—"}
-- Кросс-номер: ${cross_number || "—"}
-- Наименование: ${name || "—"}
-- Тип: ${kind === "filter" ? "фильтрующий элемент" : "запасная часть"}
+      const prompt = `Ты — строгий поисковик по официальным каталогам запчастей и фильтров.
 
-Список нашей техники (выбирай ТОЛЬКО из этих id, сопоставляй по brand/model):
-${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
+⛔ ЗАПРЕЩЕНО:
+• Придумывать совместимость.
+• Делать выводы вида «если производитель CAT — значит подходит ко всему CAT».
+• Использовать эвристики по названию модели.
 
-Логика:
-1) По артикулу и производителю восстанови полное название детали и типовые применения (какие двигатели/модели техники используют эту деталь).
-2) Найди в нашем списке техники все brand+model, у которых эти применения совпадают, — верни их id.
-3) Если по артикулу известны альтернативные номера (OEM/аналоги) — перечисли их в cross_numbers и analogs.
-4) Уверенность high — если артикул однозначно узнаваем; medium — если совпадение по кросс-номеру или семейству; low — если только по имени.
+✅ РАЗРЕШЕНО ТОЛЬКО:
+Данные из официальных каталогов и проверенных кросс-референсов.
+Приоритет источников:
+1) OEM (производитель техники — Caterpillar/CAT Parts, Komatsu, Volvo, Hitachi, JCB, Case, John Deere, Hyundai, Doosan, Liebherr, Shantui, XCMG, SDLG, LiuGong и т.п.)
+2) Donaldson  3) Baldwin  4) Fleetguard  5) MANN Filter  6) WIX  7) Sakura  8) HIFI Filter  9) Hengst  10) Bosch  11) Fram
 
-Верни строго JSON:
+Если артикул НЕ найден ни в одном из этих источников — верни article_found=false и НЕ заполняй остальные поля.
+
+────────────────────
+ВХОДНЫЕ ДАННЫЕ
+• Производитель: ${manufacturer || "—"}
+• Артикул: ${article || "—"}
+• Кросс-номер: ${cross_number || "—"}
+• Наименование: ${name || "—"}
+• Тип позиции: ${kind === "filter" ? "фильтрующий элемент" : "запасная часть"}
+
+ЭТАПЫ:
+1) Проверь, существует ли такой артикул у указанного производителя в перечисленных каталогах.
+2) Если существует — извлеки: тип детали, описание, OEM-номера, кросс-номера, ОФИЦИАЛЬНЫЙ список совместимой техники (brand + model + при наличии годы/двигатель).
+3) Сравни официальный список совместимости с парком техники компании и укажи id ТОЛЬКО тех единиц, у которых brand+model совпадают с официальным списком.
+
+ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id):
+${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate})` : ""}${e.year ? ` [${e.year}]` : ""}`).join("\n") || "— парк пуст"}
+
+Верни СТРОГО JSON без пояснений:
 {
-  "manufacturer": "производитель или null",
-  "name": "полное наименование или null",
-  "category": "категория или null",
-  "cross_numbers": ["известные OEM/кросс-номера"],
-  "compatible_equipment_ids": ["id из списка выше"],
-  "analogs": ["аналоги других производителей"],
-  "confidence": "high|medium|low",
-  "note": "короткий комментарий на русском (к чему обычно подходит) или null"
+  "article_found": true|false,
+  "sources": [{"name": "Caterpillar Parts", "trust": "green|yellow|orange|red"}],
+  "official_info": {
+    "part_type": string|null,
+    "description": string|null,
+    "manufacturer": string|null,
+    "name": string|null,
+    "oems": [string],
+    "cross_numbers": [string]
+  } | null,
+  "catalog_compatibility": [
+    {"brand": string, "model": string, "years": string|null, "engine": string|null}
+  ],
+  "company_compatible_equipment_ids": [string],
+  "trust_level": "green|yellow|orange|red",
+  "trust_reason": string,
+  "note": string|null
 }
-Никаких пояснений вне JSON.`;
+
+Требования к trust_level:
+• green — подтверждено официальным каталогом OEM или Donaldson.
+• yellow — подтверждено Baldwin / Fleetguard / MANN / WIX / другим проверенным.
+• orange — подтверждено несколькими сторонними каталогами, но не OEM.
+• red — совместимость НЕ подтверждена официальными источниками (в этом случае company_compatible_equipment_ids должен быть пустым).
+
+Если article_found=false — все поля кроме article_found и note должны быть null/пусты.`;
 
       try {
         const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -219,16 +252,22 @@ ${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
         if (r.ok) {
           const j = await r.json();
           const text = j?.choices?.[0]?.message?.content ?? "{}";
-          try {
-            ai = JSON.parse(text);
-          } catch {
-            const m = text.match(/\{[\s\S]*\}/);
-            if (m) ai = JSON.parse(m[0]);
-          }
-          // validate ids
-          if (ai?.compatible_equipment_ids) {
+          try { ai = JSON.parse(text); }
+          catch { const m = text.match(/\{[\s\S]*\}/); if (m) ai = JSON.parse(m[0]); }
+
+          if (ai) {
+            notFound = ai.article_found === false;
+            // Validate CRM equipment ids
             const valid = new Set((equipment ?? []).map((e: any) => e.id));
-            ai.compatible_equipment_ids = ai.compatible_equipment_ids.filter((id: string) => valid.has(id));
+            const rawIds: string[] = Array.isArray(ai.company_compatible_equipment_ids)
+              ? ai.company_compatible_equipment_ids
+              : [];
+            ai.company_compatible_equipment_ids = rawIds.filter((id: string) => valid.has(id));
+
+            // Enforce: if red trust — no company matches allowed
+            if (ai.trust_level === "red") {
+              ai.company_compatible_equipment_ids = [];
+            }
           }
         } else {
           console.error("AI error", r.status, await r.text());
@@ -238,11 +277,11 @@ ${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
       }
     }
 
-    // Attach labels for suggested equipment
-    let suggested_equipment: any[] = [];
-    if (ai?.compatible_equipment_ids?.length) {
+    // Attach labels for company-compatible equipment
+    let company_equipment: any[] = [];
+    if (ai?.company_compatible_equipment_ids?.length) {
       const eqMap = new Map((equipment ?? []).map((e: any) => [e.id, e]));
-      suggested_equipment = ai.compatible_equipment_ids
+      company_equipment = ai.company_compatible_equipment_ids
         .map((id: string) => eqMap.get(id))
         .filter(Boolean);
     }
@@ -261,14 +300,15 @@ ${eqLabels.map((e) => `${e.id} — ${e.label}`).join("\n")}
           : null,
         ai: ai
           ? {
-              manufacturer: ai.manufacturer ?? null,
-              name: ai.name ?? null,
-              category: ai.category ?? null,
-              cross_numbers: Array.isArray(ai.cross_numbers) ? ai.cross_numbers : [],
-              analogs: Array.isArray(ai.analogs) ? ai.analogs : [],
-              confidence: ai.confidence ?? null,
+              article_found: ai.article_found !== false,
+              not_found: notFound,
+              sources: Array.isArray(ai.sources) ? ai.sources : [],
+              official_info: ai.official_info ?? null,
+              catalog_compatibility: Array.isArray(ai.catalog_compatibility) ? ai.catalog_compatibility : [],
+              company_equipment,
+              trust_level: ai.trust_level ?? null,
+              trust_reason: ai.trust_reason ?? null,
               note: ai.note ?? null,
-              suggested_equipment,
             }
           : null,
       }),
