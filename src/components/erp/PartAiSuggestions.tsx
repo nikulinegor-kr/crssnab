@@ -38,8 +38,10 @@ export interface PartAiSuggestion {
       part_type_ru: string | null;
       name_en: string | null;
       name_ru: string | null;
+      name_source: string | null;
       manufacturer_en: string | null;
       manufacturer_ru: string | null;
+      manufacturer_source: string | null;
       description_ru: string | null;
       oems: string[];
       cross_numbers: string[];
