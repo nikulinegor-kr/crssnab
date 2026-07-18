@@ -202,6 +202,16 @@ export default function FilterElementsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-9">
+                      <Checkbox
+                        checked={filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id))}
+                        onCheckedChange={(v) => {
+                          if (v) setSelectedIds(new Set(filtered.map((i) => i.id)));
+                          else setSelectedIds(new Set());
+                        }}
+                        aria-label="Выбрать все"
+                      />
+                    </TableHead>
                     <TableHead>Производитель</TableHead>
                     <TableHead>Наименование</TableHead>
                     <TableHead>Артикул</TableHead>
@@ -215,10 +225,10 @@ export default function FilterElementsPage() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <Filter className="h-8 w-8 text-muted-foreground/40" />
                           <span>Ничего не найдено</span>
@@ -232,8 +242,22 @@ export default function FilterElementsPage() {
                       const crosses = i.cross_numbers ?? [];
                       const firstEq = eqs[0];
                       const extra = Math.max(0, eqs.length - 1);
+                      const checked = selectedIds.has(i.id);
                       return (
-                        <TableRow key={i.id} className="hover:bg-accent/50">
+                        <TableRow key={i.id} className="hover:bg-accent/50" data-state={checked ? "selected" : undefined}>
+                          <TableCell className="w-9" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                setSelectedIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (v) next.add(i.id); else next.delete(i.id);
+                                  return next;
+                                });
+                              }}
+                              aria-label="Выбрать"
+                            />
+                          </TableCell>
                           <TableCell className="text-xs">{i.manufacturer || "—"}</TableCell>
                           <TableCell className="font-medium cursor-pointer" onClick={() => setDetailItem(i)}>{i.name}</TableCell>
                           <TableCell className="text-xs">{i.article || "—"}</TableCell>
