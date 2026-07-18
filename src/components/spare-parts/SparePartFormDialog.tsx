@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import type { SparePartRow } from "@/hooks/useSpareParts";
+import { PartAiSuggestions } from "@/components/erp/PartAiSuggestions";
 
 interface Props {
   open: boolean;
