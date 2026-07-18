@@ -28,7 +28,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
     article: "",
     manufacturer: "",
     unit: "шт",
-    min_stock: "0",
     storage_location: "",
     notes: "",
   });
@@ -36,6 +35,16 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
   const [crossInput, setCrossInput] = useState("");
   const [equipmentIds, setEquipmentIds] = useState<string[]>([]);
   const [eqSearch, setEqSearch] = useState("");
+
+  // Оприходование (только при создании)
+  const [receipt, setReceipt] = useState({
+    quantity: "",
+    unit_price: "",
+    supplier: "",
+    receipt_date: new Date().toISOString().slice(0, 10),
+    document_number: "",
+    comment: "",
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -45,7 +54,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         article: item.article ?? "",
         manufacturer: item.manufacturer ?? "",
         unit: item.unit ?? "шт",
-        min_stock: String(item.min_stock ?? 0),
         storage_location: item.storage_location ?? "",
         notes: item.notes ?? "",
       });
@@ -58,13 +66,22 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         setEquipmentIds((data ?? []).map((d: any) => d.equipment_id));
       })();
     } else {
-      setForm({ name: "", article: "", manufacturer: "", unit: "шт", min_stock: "0", storage_location: "", notes: "" });
+      setForm({ name: "", article: "", manufacturer: "", unit: "шт", storage_location: "", notes: "" });
       setCrossNums([]);
       setEquipmentIds([]);
     }
+    setReceipt({
+      quantity: "",
+      unit_price: "",
+      supplier: "",
+      receipt_date: new Date().toISOString().slice(0, 10),
+      document_number: "",
+      comment: "",
+    });
     setCrossInput("");
     setEqSearch("");
   }, [open, item]);
+
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment-for-filters", orgId],
