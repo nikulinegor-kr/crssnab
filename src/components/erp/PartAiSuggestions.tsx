@@ -74,6 +74,7 @@ export function PartAiSuggestions({
   article,
   crossNumbers,
   name,
+  manufacturer,
   excludeId,
   onAccept,
   onOpenDuplicate,
