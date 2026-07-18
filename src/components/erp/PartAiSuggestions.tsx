@@ -465,7 +465,7 @@ export function PartAiSuggestions({
           <div className="flex flex-wrap gap-2">
             {ai.official_info && (
               <Button size="sm" onClick={applyOfficial} className="h-7">
-                Принять данные каталога
+                Принять рекомендации{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
               </Button>
             )}
             <Button size="sm" variant="ghost" className="h-7" onClick={() => { setDismissed(true); setData(null); }}>
