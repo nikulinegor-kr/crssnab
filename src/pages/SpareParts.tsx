@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Package, AlertTriangle, RussianRuble } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, RussianRuble, Printer } from "lucide-react";
 import { SparePartFormDialog } from "@/components/spare-parts/SparePartFormDialog";
 import { SparePartDetailDialog } from "@/components/spare-parts/SparePartDetailDialog";
 import { SparePartsDeadstockTab } from "@/components/spare-parts/SparePartsDeadstockTab";
+import { SparePartsPrintDialog } from "@/components/spare-parts/SparePartsPrintDialog";
 
 export default function SpareParts() {
   const { currentOrgId } = useCurrentOrganization();
@@ -21,6 +22,7 @@ export default function SpareParts() {
   const [category, setCategory] = useState<string>("all");
   const [lowOnly, setLowOnly] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const [detailPart, setDetailPart] = useState<SparePartRow | null>(null);
 
   const categories = useMemo(() => {
@@ -54,9 +56,14 @@ export default function SpareParts() {
             </h1>
             <p className="text-sm text-muted-foreground">Каталог, остатки, движения и неликвид</p>
           </div>
-          <Button onClick={() => setFormOpen(true)} disabled={!currentOrgId}>
-            <Plus className="h-4 w-4 mr-1" />Добавить запчасть
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setPrintOpen(true)} disabled={!currentOrgId || parts.length === 0}>
+              <Printer className="h-4 w-4 mr-1" />Печать ведомости
+            </Button>
+            <Button onClick={() => setFormOpen(true)} disabled={!currentOrgId}>
+              <Plus className="h-4 w-4 mr-1" />Добавить запчасть
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="catalog">
@@ -160,6 +167,9 @@ export default function SpareParts() {
         </Tabs>
 
         {currentOrgId && <SparePartFormDialog open={formOpen} onOpenChange={setFormOpen} orgId={currentOrgId} />}
+        {currentOrgId && (
+          <SparePartsPrintDialog open={printOpen} onOpenChange={setPrintOpen} orgId={currentOrgId} parts={filtered} />
+        )}
         {currentOrgId && detailPart && (
           <SparePartDetailDialog open={!!detailPart} onOpenChange={(v) => !v && setDetailPart(null)} part={detailPart} orgId={currentOrgId} />
         )}
