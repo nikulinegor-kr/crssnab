@@ -30,13 +30,17 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
   const [comment, setComment] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [supplier, setSupplier] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0, 10));
   const [requestId, setRequestId] = useState<string | null>(null);
   const [requestSearch, setRequestSearch] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setQty(""); setComment(""); setUnitPrice(""); setSupplier(""); setRequestId(null); setRequestSearch("");
+      setQty(""); setComment(""); setUnitPrice(""); setSupplier("");
+      setDocumentNumber(""); setReceiptDate(new Date().toISOString().slice(0, 10));
+      setRequestId(null); setRequestSearch("");
     }
   }, [open]);
 
@@ -82,6 +86,8 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
         payload.unit_price = price;
         payload.supplier = supplier.trim() || null;
         payload.request_id = requestId;
+        payload.document_number = documentNumber.trim() || null;
+        payload.receipt_date = receiptDate ? new Date(receiptDate).toISOString() : null;
       }
       const { error } = await (supabase as any).from("filter_element_movements").insert(payload);
       if (error) throw error;
@@ -94,6 +100,7 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
     },
     onError: (e: any) => toast.error(e.message ?? "Ошибка"),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
