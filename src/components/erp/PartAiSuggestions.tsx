@@ -163,9 +163,17 @@ export function PartAiSuggestions({
       manufacturer: oi.manufacturer ?? undefined,
       name: oi.name ?? undefined,
       cross_numbers: oi.cross_numbers?.length ? oi.cross_numbers : undefined,
-      equipment_ids: data.ai.company_equipment?.map((e) => e.id),
+      equipment_ids: Array.from(selectedIds),
     });
   };
+
+  const toggleId = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const ai = data?.ai;
   const noCompany = !!ai && (!ai.company_equipment || ai.company_equipment.length === 0);
