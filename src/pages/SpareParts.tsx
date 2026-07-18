@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Package, AlertTriangle, RussianRuble } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, RussianRuble, Printer } from "lucide-react";
 import { SparePartFormDialog } from "@/components/spare-parts/SparePartFormDialog";
 import { SparePartDetailDialog } from "@/components/spare-parts/SparePartDetailDialog";
 import { SparePartsDeadstockTab } from "@/components/spare-parts/SparePartsDeadstockTab";
+import { SparePartsPrintDialog } from "@/components/spare-parts/SparePartsPrintDialog";
 
 export default function SpareParts() {
   const { currentOrgId } = useCurrentOrganization();
@@ -21,6 +22,7 @@ export default function SpareParts() {
   const [category, setCategory] = useState<string>("all");
   const [lowOnly, setLowOnly] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const [detailPart, setDetailPart] = useState<SparePartRow | null>(null);
 
   const categories = useMemo(() => {
