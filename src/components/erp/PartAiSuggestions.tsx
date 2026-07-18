@@ -360,31 +360,93 @@ export function PartAiSuggestions({
             </div>
           )}
 
-          {/* Block 3: Company compatibility */}
-          <div className="rounded-md border bg-card px-3 py-2 text-sm space-y-1">
+          {/* Block 3: Recommended compatibility — user selects */}
+          <div className="rounded-md border bg-card px-3 py-2 text-sm space-y-2">
             <div className="flex items-center gap-2 font-medium">
               <Building2 className="h-4 w-4 text-primary" />
-              Совместимость с техникой компании
+              Рекомендованная совместимость
+              {ai.company_equipment?.length > 0 && (
+                <Badge variant="outline" className="text-xs ms-auto">
+                  Выбрано: {selectedIds.size} / {ai.company_equipment.length}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Отметьте технику, к которой действительно относится эта позиция. AI не выбирает за вас.
             </div>
             {ai.company_equipment?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {ai.company_equipment.map((e) => (
-                  <Badge key={e.id} variant="secondary" className="text-xs">
-                    <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" />
-                    {[e.brand, e.model].filter(Boolean).join(" ")}
-                    {e.plate_number ? ` • ${e.plate_number}` : ""}
-                  </Badge>
-                ))}
-              </div>
+              <>
+                <div className="flex flex-wrap gap-2 pb-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-xs"
+                    onClick={() => setSelectedIds(new Set(ai.company_equipment.map((e) => e.id)))}
+                  >
+                    Выбрать все
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-xs"
+                    onClick={() => setSelectedIds(new Set())}
+                  >
+                    Снять всё
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {ai.company_equipment.map((e) => {
+                    const label = [e.brand, e.model].filter(Boolean).join(" ") + (e.plate_number ? ` • ${e.plate_number}` : "");
+                    const checked = selectedIds.has(e.id);
+                    return (
+                      <label
+                        key={e.id}
+                        className="flex items-start gap-2 cursor-pointer hover:bg-accent/50 rounded px-2 py-1"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-0.5"
+                          checked={checked}
+                          onChange={() => toggleId(e.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm">{label}</div>
+                          {e.source && (
+                            <div className="text-xs text-muted-foreground">Источник: {e.source}</div>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
-              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300 space-y-2">
                 <div className="flex items-start gap-1">
                   <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <div>Совместимость с техникой компании не найдена. Добавьте вручную или переместите в склад неликвида.</div>
+                  <div>Совместимость с техникой компании не найдена.</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7"
+                    onClick={() => { setDismissed(true); setData(null); }}
+                  >
+                    Добавить совместимость вручную
+                  </Button>
+                  {onMoveToDeadstock && (
+                    <Button size="sm" variant="outline" className="h-7" onClick={onMoveToDeadstock}>
+                      Переместить в склад неликвида
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
           </div>
+
 
           {/* Purchase history */}
           {data?.price && (
