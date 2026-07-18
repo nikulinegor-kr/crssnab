@@ -423,6 +423,19 @@ export default function FilterElementsPage() {
             storageLocation={labelItem.storage_location}
           />
         )}
+        <BulkPartLabelPrintDialog
+          open={bulkLabelOpen}
+          onOpenChange={setBulkLabelOpen}
+          items={filtered
+            .filter((i) => selectedIds.has(i.id))
+            .map((i) => ({
+              id: i.id,
+              name: i.name,
+              article: i.article,
+              manufacturer: i.manufacturer,
+              storage_location: i.storage_location,
+            }))}
+        />
       </div>
     </AppLayout>
   );
