@@ -30,13 +30,17 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
   const [comment, setComment] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [supplier, setSupplier] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0, 10));
   const [requestId, setRequestId] = useState<string | null>(null);
   const [requestSearch, setRequestSearch] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setQty(""); setComment(""); setUnitPrice(""); setSupplier(""); setRequestId(null); setRequestSearch("");
+      setQty(""); setComment(""); setUnitPrice(""); setSupplier("");
+      setDocumentNumber(""); setReceiptDate(new Date().toISOString().slice(0, 10));
+      setRequestId(null); setRequestSearch("");
     }
   }, [open]);
 
@@ -82,6 +86,8 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
         payload.unit_price = price;
         payload.supplier = supplier.trim() || null;
         payload.request_id = requestId;
+        payload.document_number = documentNumber.trim() || null;
+        payload.receipt_date = receiptDate ? new Date(receiptDate).toISOString() : null;
       }
       const { error } = await (supabase as any).from("filter_element_movements").insert(payload);
       if (error) throw error;
@@ -94,6 +100,7 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
     },
     onError: (e: any) => toast.error(e.message ?? "Ошибка"),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,10 +130,21 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
 
           {type === "IN" && (
             <>
-              <div>
-                <Label>Поставщик</Label>
-                <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Наименование поставщика" />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Поставщик</Label>
+                  <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Наименование поставщика" />
+                </div>
+                <div>
+                  <Label>Дата поступления</Label>
+                  <Input type="date" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Номер УПД / накладной</Label>
+                  <Input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} />
+                </div>
               </div>
+
               <div>
                 <Label>Заявка (необязательно)</Label>
                 <Popover open={requestOpen} onOpenChange={setRequestOpen}>

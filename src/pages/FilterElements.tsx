@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer, ArrowLeftRight } from "lucide-react";
 import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
 import { BulkPartLabelPrintDialog } from "@/components/erp/BulkPartLabelPrintDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +27,9 @@ import { FilterElementFormDialog } from "@/components/filter-elements/FilterElem
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
 import { FilterElementMovementDialog } from "@/components/filter-elements/FilterElementMovementDialog";
 import { FilterElementWriteOffDialog } from "@/components/filter-elements/FilterElementWriteOffDialog";
+import { FilterElementMoveDialog } from "@/components/filter-elements/FilterElementMoveDialog";
 import { FilterMoveToDeadstockDialog } from "@/components/filter-elements/FilterMoveToDeadstockDialog";
+
 import { FilterElementsDeadstockTab } from "@/components/filter-elements/FilterElementsDeadstockTab";
 import { toast } from "sonner";
 
@@ -53,6 +55,8 @@ export default function FilterElementsPage() {
   const [inItem, setInItem] = useState<FilterElementRow | null>(null);
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
+  const [moveItem, setMoveItem] = useState<FilterElementRow | null>(null);
+
   const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLabelOpen, setBulkLabelOpen] = useState(false);
@@ -344,10 +348,14 @@ export default function FilterElementsPage() {
                                 <DropdownMenuItem onClick={() => setWriteOffItem(i)} disabled={(i.stock ?? 0) <= 0}>
                                   <PackageMinus className="h-4 w-4 mr-2" />Списать
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setMoveItem(i)} disabled={(i.stock ?? 0) <= 0}>
+                                  <ArrowLeftRight className="h-4 w-4 mr-2" />Перемещение
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setToDeadstockItem(i)} disabled={(i.stock ?? 0) <= 0}>
                                   <Archive className="h-4 w-4 mr-2" />В неликвид
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+
                                 <DropdownMenuItem onClick={() => setLabelItem(i)}>
                                   <Tag className="h-4 w-4 mr-2" />Печать этикетки
                                 </DropdownMenuItem>
@@ -405,6 +413,19 @@ export default function FilterElementsPage() {
             currentStock={writeOffItem.stock ?? 0}
           />
         )}
+        {currentOrgId && moveItem && (
+          <FilterElementMoveDialog
+            open={!!moveItem}
+            onOpenChange={(v) => !v && setMoveItem(null)}
+            orgId={currentOrgId}
+            filterElementId={moveItem.id}
+            filterName={moveItem.name}
+            currentLocation={moveItem.storage_location}
+            currentStock={moveItem.stock ?? 0}
+          />
+        )}
+
+
         {currentOrgId && toDeadstockItem && (
           <FilterMoveToDeadstockDialog
             open={!!toDeadstockItem}

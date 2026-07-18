@@ -24,13 +24,15 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
   const [responsibleId, setResponsibleId] = useState<string>("");
   const [objectId, setObjectId] = useState<string>("");
   const [qty, setQty] = useState("");
+  const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
 
   useEffect(() => {
     if (!open) {
-      setEquipmentId(""); setResponsibleId(""); setObjectId(""); setQty(""); setComment("");
+      setEquipmentId(""); setResponsibleId(""); setObjectId(""); setQty(""); setReason(""); setComment("");
     }
   }, [open]);
+
 
   // Only compatible equipment
   const { data: compatibleEquipment = [] } = useQuery({
@@ -78,6 +80,7 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
       if (!objectId) throw new Error("Выберите объект");
       if (!q || q <= 0) throw new Error("Количество должно быть больше 0");
       if (q > currentStock) throw new Error(`Недостаточно на складе (остаток ${currentStock})`);
+      if (!reason.trim()) throw new Error("Укажите причину списания");
       const { error } = await (supabase as any).from("filter_element_movements").insert({
         organization_id: orgId,
         filter_element_id: filterElementId,
@@ -86,9 +89,11 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
         equipment_id: equipmentId,
         responsible_user_id: responsibleId,
         object_id: objectId,
+        reason: reason.trim(),
         comment: comment.trim() || null,
       });
       if (error) throw error;
+
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["filter-elements-list"] });
@@ -156,9 +161,15 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
           </div>
 
           <div>
-            <Label>Комментарий *</Label>
+            <Label>Причина списания *</Label>
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Износ, замена по регламенту, брак..." />
+          </div>
+
+          <div>
+            <Label>Комментарий</Label>
             <Textarea rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
           </div>
+
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>

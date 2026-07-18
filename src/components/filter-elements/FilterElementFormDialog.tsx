@@ -28,7 +28,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
     article: "",
     manufacturer: "",
     unit: "шт",
-    min_stock: "0",
     storage_location: "",
     notes: "",
   });
@@ -36,6 +35,16 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
   const [crossInput, setCrossInput] = useState("");
   const [equipmentIds, setEquipmentIds] = useState<string[]>([]);
   const [eqSearch, setEqSearch] = useState("");
+
+  // Оприходование (только при создании)
+  const [receipt, setReceipt] = useState({
+    quantity: "",
+    unit_price: "",
+    supplier: "",
+    receipt_date: new Date().toISOString().slice(0, 10),
+    document_number: "",
+    comment: "",
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -45,7 +54,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         article: item.article ?? "",
         manufacturer: item.manufacturer ?? "",
         unit: item.unit ?? "шт",
-        min_stock: String(item.min_stock ?? 0),
         storage_location: item.storage_location ?? "",
         notes: item.notes ?? "",
       });
@@ -58,13 +66,22 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         setEquipmentIds((data ?? []).map((d: any) => d.equipment_id));
       })();
     } else {
-      setForm({ name: "", article: "", manufacturer: "", unit: "шт", min_stock: "0", storage_location: "", notes: "" });
+      setForm({ name: "", article: "", manufacturer: "", unit: "шт", storage_location: "", notes: "" });
       setCrossNums([]);
       setEquipmentIds([]);
     }
+    setReceipt({
+      quantity: "",
+      unit_price: "",
+      supplier: "",
+      receipt_date: new Date().toISOString().slice(0, 10),
+      document_number: "",
+      comment: "",
+    });
     setCrossInput("");
     setEqSearch("");
   }, [open, item]);
+
 
   const { data: equipment = [] } = useQuery({
     queryKey: ["equipment-for-filters", orgId],
@@ -98,7 +115,6 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
         article: form.article.trim() || null,
         manufacturer: form.manufacturer.trim() || null,
         unit: form.unit || "шт",
-        min_stock: Number(form.min_stock) || 0,
         storage_location: form.storage_location.trim() || null,
         notes: form.notes.trim() || null,
         cross_numbers: crossNums,
@@ -120,7 +136,30 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             .insert(equipmentIds.map((eid) => ({ filter_element_id: id, equipment_id: eid })));
         }
       }
+      // Первичное оприходование — только при создании и если указано количество
+      if (!editing && id) {
+        const q = Number(receipt.quantity);
+        if (q && q > 0) {
+          const price = receipt.unit_price.trim() ? Number(receipt.unit_price) : null;
+          if (price != null && (Number.isNaN(price) || price < 0)) {
+            throw new Error("Цена должна быть неотрицательной");
+          }
+          const { error: mErr } = await (supabase as any).from("filter_element_movements").insert({
+            organization_id: orgId,
+            filter_element_id: id,
+            type: "IN",
+            quantity: q,
+            unit_price: price,
+            supplier: receipt.supplier.trim() || null,
+            document_number: receipt.document_number.trim() || null,
+            receipt_date: receipt.receipt_date ? new Date(receipt.receipt_date).toISOString() : null,
+            comment: receipt.comment.trim() || null,
+          });
+          if (mErr) throw mErr;
+        }
+      }
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["filter-elements-list"] });
       toast.success(editing ? "Обновлено" : "Добавлено");
@@ -210,14 +249,11 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
               <Label>Ед. изм.</Label>
               <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
             </div>
-            <div>
-              <Label>Мин. остаток</Label>
-              <Input type="number" value={form.min_stock} onChange={(e) => setForm({ ...form, min_stock: e.target.value })} />
-            </div>
             <div className="col-span-2">
               <Label>Место хранения</Label>
               <Input value={form.storage_location} onChange={(e) => setForm({ ...form, storage_location: e.target.value })} />
             </div>
+
           </div>
 
 
@@ -272,6 +308,71 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             <Label>Примечание</Label>
             <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
+
+          {!editing && (
+            <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">📦 Оприходование</div>
+                <div className="text-[11px] text-muted-foreground">Первое поступление на склад</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Количество *</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={receipt.quantity}
+                    onChange={(e) => setReceipt({ ...receipt, quantity: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label>Цена за единицу</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={receipt.unit_price}
+                    onChange={(e) => setReceipt({ ...receipt, unit_price: e.target.value })}
+                    placeholder="₽"
+                  />
+                </div>
+                <div>
+                  <Label>Поставщик</Label>
+                  <Input
+                    value={receipt.supplier}
+                    onChange={(e) => setReceipt({ ...receipt, supplier: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Дата поступления</Label>
+                  <Input
+                    type="date"
+                    value={receipt.receipt_date}
+                    onChange={(e) => setReceipt({ ...receipt, receipt_date: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>Номер УПД / накладной</Label>
+                  <Input
+                    value={receipt.document_number}
+                    onChange={(e) => setReceipt({ ...receipt, document_number: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>Комментарий</Label>
+                  <Textarea
+                    rows={2}
+                    value={receipt.comment}
+                    onChange={(e) => setReceipt({ ...receipt, comment: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                Если количество указано — при сохранении будет автоматически создано движение «Поступление».
+              </div>
+            </div>
+          )}
+
         </div>
 
         <DialogFooter>
