@@ -19,7 +19,9 @@ const TYPE_LABEL: Record<string, { label: string; variant: "default" | "secondar
   WRITE_OFF: { label: "Списание", variant: "destructive" },
   ADJUST: { label: "Корректировка", variant: "secondary" },
   RETURN: { label: "Возврат", variant: "outline" },
+  MOVE: { label: "Перемещение", variant: "secondary" },
 };
+
 
 const fmtRub = (v: number | null | undefined) =>
   v == null ? "—" : `${Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽`;
