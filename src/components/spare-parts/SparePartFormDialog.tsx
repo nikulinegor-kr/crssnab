@@ -155,6 +155,53 @@ export function SparePartFormDialog({ open, onOpenChange, orgId, part }: Props) 
         </DialogHeader>
 
         <div className="space-y-4">
+          <PartAiSuggestions
+            orgId={orgId}
+            kind="spare"
+            article={form.article}
+            crossNumbers={crossNums}
+            name={form.name}
+            excludeId={part?.id}
+            onOpenDuplicate={(id) => {
+              window.dispatchEvent(new CustomEvent("open-part-detail", { detail: { kind: "spare", id } }));
+              onOpenChange(false);
+            }}
+            onMoveToDeadstock={async () => {
+              if (!form.name.trim()) { toast.error("Укажите наименование"); return; }
+              const { error } = await (supabase as any).from("spare_part_deadstock").insert({
+                organization_id: orgId,
+                name: form.name.trim(),
+                article: form.article.trim() || null,
+                manufacturer: form.manufacturer.trim() || null,
+                cross_numbers: crossNums,
+                compatibility: null,
+                quantity: 0,
+                unit: form.unit || "шт",
+                status: "for_sale",
+                notes: "Создано из формы: совместимость с техникой не найдена",
+              });
+              if (error) { toast.error(error.message); return; }
+              qc.invalidateQueries({ queryKey: ["spare-part-deadstock"] });
+              toast.success("Позиция создана в складе неликвида");
+              onOpenChange(false);
+            }}
+            onAccept={(d) => {
+              setForm((f) => ({
+                ...f,
+                manufacturer: d.manufacturer || f.manufacturer,
+                name: d.name || f.name,
+                article: d.article || f.article,
+                category: d.category || f.category,
+              }));
+              if (d.cross_numbers?.length) {
+                setCrossNums((prev) => Array.from(new Set([...prev, ...d.cross_numbers!])));
+              }
+              if (d.equipment_ids?.length) {
+                setEquipmentIds((prev) => Array.from(new Set([...prev, ...d.equipment_ids!])));
+              }
+            }}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label>Название *</Label>
@@ -197,29 +244,6 @@ export function SparePartFormDialog({ open, onOpenChange, orgId, part }: Props) 
             </div>
           </div>
 
-          <PartAiSuggestions
-            orgId={orgId}
-            kind="spare"
-            article={form.article}
-            crossNumbers={crossNums}
-            name={form.name}
-            excludeId={part?.id}
-            onAccept={(d) => {
-              setForm((f) => ({
-                ...f,
-                manufacturer: f.manufacturer || d.manufacturer || "",
-                name: f.name || d.name || "",
-                category: f.category || d.category || "",
-              }));
-              if (d.cross_numbers?.length) {
-                setCrossNums((prev) => Array.from(new Set([...prev, ...d.cross_numbers!])));
-              }
-              if (d.equipment_ids?.length) {
-                setEquipmentIds((prev) => Array.from(new Set([...prev, ...d.equipment_ids!])));
-              }
-              toast.success("Данные подставлены");
-            }}
-          />
 
           <div>
             <Label>Кросс-номера</Label>

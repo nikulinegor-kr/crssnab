@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useSparePartsList, type SparePartRow } from "@/hooks/useSpareParts";
@@ -24,6 +24,17 @@ export default function SpareParts() {
   const [formOpen, setFormOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   const [detailPart, setDetailPart] = useState<SparePartRow | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.kind !== "spare") return;
+      const found = (parts as any[]).find((x) => x.id === detail.id);
+      if (found) setDetailPart(found as SparePartRow);
+    };
+    window.addEventListener("open-part-detail", handler);
+    return () => window.removeEventListener("open-part-detail", handler);
+  }, [parts]);
 
   const categories = useMemo(() => {
     const s = new Set<string>();

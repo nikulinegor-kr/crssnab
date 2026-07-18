@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -50,6 +50,17 @@ export default function FilterElementsPage() {
   const [inItem, setInItem] = useState<FilterElementRow | null>(null);
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.kind !== "filter") return;
+      const found = (items as any[]).find((x) => x.id === detail.id);
+      if (found) setDetailItem(found as FilterElementRow);
+    };
+    window.addEventListener("open-part-detail", handler);
+    return () => window.removeEventListener("open-part-detail", handler);
+  }, [items]);
 
   const { data: equipmentAll = [] } = useQuery({
     queryKey: ["equipment-list-simple", currentOrgId],
