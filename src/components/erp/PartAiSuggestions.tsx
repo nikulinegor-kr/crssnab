@@ -126,6 +126,13 @@ export function PartAiSuggestions({
           cross_numbers: suggestion.vision.cross_numbers?.length ? suggestion.vision.cross_numbers : undefined,
         });
       }
+      // Auto-fill name & manufacturer from AI (article lookup)
+      if (suggestion?.ai && !suggestion.vision) {
+        const patch: PartAiAccept = {};
+        if (!name.trim() && suggestion.ai.name) patch.name = suggestion.ai.name;
+        if (!manufacturer?.trim() && suggestion.ai.manufacturer) patch.manufacturer = suggestion.ai.manufacturer;
+        if (Object.keys(patch).length) onAccept(patch);
+      }
     } catch (e: any) {
       setError(e?.message ?? "Ошибка AI");
       setData(null);
@@ -134,7 +141,24 @@ export function PartAiSuggestions({
     }
   };
 
-  // AI runs only on explicit button click (no auto-run)
+  // Auto-run only when article is entered — fills name & manufacturer automatically
+  const autoKeyRef = useRef<string>("");
+  useEffect(() => {
+    const art = article.trim();
+    if (!orgId || art.length < 3) return;
+    const autoKey = `${art}|${(manufacturer ?? "").trim()}`;
+    if (autoKey === autoKeyRef.current) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      autoKeyRef.current = autoKey;
+      lastKeyRef.current = "";
+      await runAnalysis();
+    }, 800);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article, manufacturer, orgId]);
 
   const handlePhoto = async (file: File | null) => {
     if (!file) return;
