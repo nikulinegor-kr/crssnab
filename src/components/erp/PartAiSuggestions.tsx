@@ -57,7 +57,11 @@ export interface PartAiSuggestion {
       sources?: string[];
       sources_count?: number;
       confirmation_type?: "OEM" | "Cross Reference" | null;
+      source_url?: string | null;
+      catalog_id?: string | null;
+      retrieved_at?: string | null;
     }>;
+
     trust_level: "green" | "yellow" | "orange" | "red" | null;
     trust_reason: string | null;
     note: string | null;
