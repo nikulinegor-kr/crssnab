@@ -19,8 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer } from "lucide-react";
 import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
+import { BulkPartLabelPrintDialog } from "@/components/erp/BulkPartLabelPrintDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FilterElementFormDialog } from "@/components/filter-elements/FilterElementFormDialog";
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
 import { FilterElementMovementDialog } from "@/components/filter-elements/FilterElementMovementDialog";
@@ -52,6 +54,8 @@ export default function FilterElementsPage() {
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
   const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLabelOpen, setBulkLabelOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -182,6 +186,15 @@ export default function FilterElementsPage() {
                 <AlertTriangle className="h-4 w-4 mr-1" />Ниже минимума
               </Button>
               <Badge variant="secondary">{filtered.length} из {items.length}</Badge>
+              {selectedIds.size > 0 && (
+                <div className="ml-auto flex items-center gap-2">
+                  <Badge>{selectedIds.size} выбрано</Badge>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedIds(new Set())}>Снять</Button>
+                  <Button size="sm" onClick={() => setBulkLabelOpen(true)}>
+                    <Printer className="h-4 w-4 mr-1" />Печать этикеток
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="rounded-md border overflow-x-auto">
@@ -189,6 +202,16 @@ export default function FilterElementsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-9">
+                      <Checkbox
+                        checked={filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id))}
+                        onCheckedChange={(v) => {
+                          if (v) setSelectedIds(new Set(filtered.map((i) => i.id)));
+                          else setSelectedIds(new Set());
+                        }}
+                        aria-label="Выбрать все"
+                      />
+                    </TableHead>
                     <TableHead>Производитель</TableHead>
                     <TableHead>Наименование</TableHead>
                     <TableHead>Артикул</TableHead>
@@ -202,10 +225,10 @@ export default function FilterElementsPage() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Загрузка...</TableCell></TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <Filter className="h-8 w-8 text-muted-foreground/40" />
                           <span>Ничего не найдено</span>
@@ -219,8 +242,22 @@ export default function FilterElementsPage() {
                       const crosses = i.cross_numbers ?? [];
                       const firstEq = eqs[0];
                       const extra = Math.max(0, eqs.length - 1);
+                      const checked = selectedIds.has(i.id);
                       return (
-                        <TableRow key={i.id} className="hover:bg-accent/50">
+                        <TableRow key={i.id} className="hover:bg-accent/50" data-state={checked ? "selected" : undefined}>
+                          <TableCell className="w-9" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(v) => {
+                                setSelectedIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (v) next.add(i.id); else next.delete(i.id);
+                                  return next;
+                                });
+                              }}
+                              aria-label="Выбрать"
+                            />
+                          </TableCell>
                           <TableCell className="text-xs">{i.manufacturer || "—"}</TableCell>
                           <TableCell className="font-medium cursor-pointer" onClick={() => setDetailItem(i)}>{i.name}</TableCell>
                           <TableCell className="text-xs">{i.article || "—"}</TableCell>
@@ -386,6 +423,19 @@ export default function FilterElementsPage() {
             storageLocation={labelItem.storage_location}
           />
         )}
+        <BulkPartLabelPrintDialog
+          open={bulkLabelOpen}
+          onOpenChange={setBulkLabelOpen}
+          items={filtered
+            .filter((i) => selectedIds.has(i.id))
+            .map((i) => ({
+              id: i.id,
+              name: i.name,
+              article: i.article,
+              manufacturer: i.manufacturer,
+              storage_location: i.storage_location,
+            }))}
+        />
       </div>
     </AppLayout>
   );
