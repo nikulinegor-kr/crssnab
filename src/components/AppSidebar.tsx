@@ -1,14 +1,13 @@
-import { 
-  LayoutGrid, 
-  FileText, 
-  Users, 
-  Settings, 
+import {
+  LayoutGrid,
+  FileText,
+  Users,
+  Settings,
   LogOut,
   FileBarChart,
   Percent,
   Sun,
   Moon,
-  
   Building2,
   BarChart3,
   Warehouse,
@@ -24,8 +23,16 @@ import {
   CalendarRange,
   Wrench,
   Filter,
+  ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -35,7 +42,7 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { useUserPermissions, ROUTE_PERMISSION_MAP } from "@/hooks/useUserPermissions";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -48,11 +55,25 @@ import {
   SidebarHeader,
   SidebarFooter,
   useSidebar,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const menuGroups = [
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+};
+
+type MenuGroup = {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: MenuItem[];
+};
+
+const menuGroups: MenuGroup[] = [
   {
+    key: "crm",
     label: "CRM",
     icon: FileText,
     items: [
@@ -62,6 +83,7 @@ const menuGroups = [
     ],
   },
   {
+    key: "project",
     label: "Проект",
     icon: FolderOpen,
     items: [
@@ -70,6 +92,7 @@ const menuGroups = [
     ],
   },
   {
+    key: "erp",
     label: "ERP",
     icon: Layers,
     items: [
@@ -79,19 +102,29 @@ const menuGroups = [
       { title: "Техника", url: "/equipment", icon: Truck },
       { title: "Запчасти", url: "/spare-parts", icon: Wrench },
       { title: "Фильтрующие элементы", url: "/filter-elements", icon: Filter },
-      { title: "Поставщики", url: "/suppliers", icon: Users },
-      { title: "Поставки", url: "/shipments", icon: Truck },
     ],
   },
   {
-    label: "Отчет Агента",
-    icon: FileBarChart,
+    key: "logistics",
+    label: "Логистика",
+    icon: Truck,
+    items: [
+      { title: "Поставки", url: "/shipments", icon: Truck },
+      { title: "Поставщики", url: "/suppliers", icon: Users },
+    ],
+  },
+  {
+    key: "finance",
+    label: "Финансы",
+    icon: Wallet,
     items: [
       { title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
+      { title: "Акт агента", url: "/agent-act-report", icon: FileBarChart },
       { title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
     ],
   },
   {
+    key: "analytics",
     label: "Аналитика",
     icon: BarChart3,
     items: [
@@ -105,34 +138,38 @@ const menuGroups = [
     ],
   },
   {
-    label: "Журналы",
-    icon: FileBarChart,
-    items: [
-      { title: "Производительность команды", url: "/team-performance", icon: Users },
-      { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
-    ],
-  },
-  {
+    key: "planner",
     label: "Планировщик",
-    icon: Sparkles,
+    icon: CalendarRange,
     items: [
       { title: "Планировщик CRM", url: "/planner", icon: ClipboardList },
       { title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
     ],
   },
+  {
+    key: "journals",
+    label: "Журналы",
+    icon: FileBarChart,
+    items: [
+      { title: "Производительность", url: "/team-performance", icon: Users },
+      { title: "Журнал действий", url: "/action-log", icon: FileBarChart },
+    ],
+  },
+  {
+    key: "system",
+    label: "Система",
+    icon: ShieldCheck,
+    items: [
+      { title: "Настройки", url: "/organization/settings", icon: Settings },
+    ],
+  },
 ];
 
-const settingsMenuItems = [
-  { title: "Настройки", url: "/organization/settings", icon: Settings },
-];
+const STORAGE_KEY = "sidebar:groups-open:v1";
 
 function ThemeToggle({ showText }: { showText: boolean }) {
   const { theme, setTheme } = useTheme();
-  
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   return (
     <SidebarMenuItem>
       <SidebarMenuButton onClick={toggleTheme} className="hover:bg-accent/50">
@@ -150,15 +187,43 @@ export function AppSidebar() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const { isAdmin, isViewer } = useUserRole();
-  const { hasPermission, hasRouteAccess } = useUserPermissions();
+  const { isViewer } = useUserRole();
+  const { hasRouteAccess } = useUserPermissions();
   const totalUnread = useUnreadMessages();
   const isDemoMode = searchParams.get("demo") === "true";
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
   const showText = isMobile || !collapsed;
 
-  const allPaths = menuGroups.flatMap(g => g.items.map(i => i.url));
+  // Which group contains the currently active route
+  const activeGroupKey =
+    menuGroups.find((g) =>
+      g.items.some((i) => currentPath === i.url || currentPath.startsWith(i.url + "/"))
+    )?.key ?? null;
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return {};
+  });
+
+  // Ensure the active group is expanded whenever the route changes
+  useEffect(() => {
+    if (!activeGroupKey) return;
+    setOpenGroups((prev) => (prev[activeGroupKey] ? prev : { ...prev, [activeGroupKey]: true }));
+  }, [activeGroupKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(openGroups));
+    } catch {
+      // ignore
+    }
+  }, [openGroups]);
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -177,64 +242,70 @@ export function AppSidebar() {
     }
   };
 
-  const renderMenuItems = (items: { title: string; url: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[]) => {
-    return items.filter(item => hasRouteAccess(item.url)).map((item) => {
-      const isActive = currentPath === item.url;
-      const url = isDemoMode ? `${item.url}?demo=true` : item.url;
-      const showUnread = item.url === "/chat" && totalUnread > 0;
+  const renderItem = (item: MenuItem) => {
+    const isActive = currentPath === item.url;
+    const url = isDemoMode ? `${item.url}?demo=true` : item.url;
+    const showUnread = item.url === "/chat" && totalUnread > 0;
 
-      const menuButton = (
-        <SidebarMenuButton asChild isActive={isActive}>
-          <NavLink 
-            to={url} 
-            end 
-            className="hover:bg-accent/50 transition-colors rounded-md relative"
-            activeClassName="bg-primary/20 text-primary font-medium"
-            aria-label={!showText ? item.title : undefined}
-          >
-            <div className="relative">
-              <item.icon className="h-4 w-4" />
-              {showUnread && (
-                <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
-                  {totalUnread > 9 ? "9+" : totalUnread}
-                </div>
-              )}
-            </div>
-            {showText && (
-              <span className="flex items-center gap-2">
-                {item.title}
-                {item.badge && (
-                  <span className="text-[9px] bg-muted text-muted-foreground rounded px-1 py-0.5 leading-none font-medium uppercase tracking-wide">
-                    {item.badge}
-                  </span>
-                )}
-                {showUnread && (
-                  <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-2 py-0.5 font-semibold">
-                    {totalUnread > 99 ? "99+" : totalUnread}
-                  </span>
-                )}
-              </span>
+    const button = (
+      <SidebarMenuButton asChild isActive={isActive}>
+        <NavLink
+          to={url}
+          end
+          className="hover:bg-accent/50 transition-colors rounded-md relative"
+          activeClassName="bg-primary/20 text-primary font-medium"
+          aria-label={!showText ? item.title : undefined}
+        >
+          <div className="relative">
+            <item.icon className="h-4 w-4" />
+            {showUnread && (
+              <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </div>
             )}
-          </NavLink>
-        </SidebarMenuButton>
-      );
-      
-      return (
-        <SidebarMenuItem key={item.title}>
-          {collapsed && !isMobile ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {menuButton}
-              </TooltipTrigger>
-              <TooltipContent side="right">{item.title}</TooltipContent>
-            </Tooltip>
-          ) : (
-            menuButton
+          </div>
+          {showText && (
+            <span className="flex items-center gap-2">
+              {item.title}
+              {item.badge && (
+                <span className="text-[9px] bg-muted text-muted-foreground rounded px-1 py-0.5 leading-none font-medium uppercase tracking-wide">
+                  {item.badge}
+                </span>
+              )}
+            </span>
           )}
-        </SidebarMenuItem>
-      );
-    });
+        </NavLink>
+      </SidebarMenuButton>
+    );
+
+    return (
+      <SidebarMenuItem key={item.title}>
+        {collapsed && !isMobile ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent side="right">{item.title}</TooltipContent>
+          </Tooltip>
+        ) : (
+          button
+        )}
+      </SidebarMenuItem>
+    );
   };
+
+  const visibleGroups = (
+    isViewer
+      ? [
+          {
+            key: "crm",
+            label: "CRM",
+            icon: FileText,
+            items: [{ title: "Заявки", url: "/requests", icon: FileText }],
+          } as MenuGroup,
+        ]
+      : menuGroups
+  )
+    .map((g) => ({ ...g, items: g.items.filter((i) => hasRouteAccess(i.url)) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <Sidebar collapsible="icon">
@@ -247,44 +318,57 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {(isViewer
-          ? [{ label: "CRM", icon: FileText, items: [{ title: "Заявки", url: "/requests", icon: FileText }] }]
-          : menuGroups
-        ).filter(group => {
-          // Filter groups where at least one item is accessible
-          return group.items.some(item => hasRouteAccess(item.url));
-        }).map((group, idx) => {
-          const isGroupActive = group.items.some(i => currentPath.startsWith(i.url));
-          return (
-            <div key={group.label}>
-              {idx > 0 && <SidebarSeparator />}
-              <SidebarGroup>
-                {showText && (
-                  <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 pt-2">
-                    {group.label}
-                  </SidebarGroupLabel>
-                )}
+        {visibleGroups.map((group) => {
+          const isGroupActive = group.key === activeGroupKey;
+          const isOpen = collapsed && !isMobile ? true : !!openGroups[group.key];
+
+          // Collapsed rail: render items directly as icons, no group toggle.
+          if (collapsed && !isMobile) {
+            return (
+              <SidebarGroup key={group.key}>
                 <SidebarGroupContent>
-                  <SidebarMenu>
-                    {renderMenuItems(group.items)}
-                  </SidebarMenu>
+                  <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
-            </div>
+            );
+          }
+
+          return (
+            <SidebarGroup key={group.key} className="py-0">
+              <Collapsible
+                open={isOpen}
+                onOpenChange={(o) =>
+                  setOpenGroups((prev) => ({ ...prev, [group.key]: o }))
+                }
+              >
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel
+                    className={
+                      "group/label flex h-8 cursor-pointer items-center justify-between px-3 text-[10px] uppercase tracking-wider text-muted-foreground/70 hover:text-foreground transition-colors " +
+                      (isGroupActive ? "text-foreground" : "")
+                    }
+                  >
+                    <span className="flex items-center gap-2">
+                      <group.icon className="h-3.5 w-3.5" />
+                      {group.label}
+                    </span>
+                    <ChevronRight
+                      className={
+                        "h-3.5 w-3.5 transition-transform duration-200 " +
+                        (isOpen ? "rotate-90" : "")
+                      }
+                    />
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                  <SidebarGroupContent>
+                    <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarGroup>
           );
         })}
-
-
-        {/* Настройки — скрыты для наблюдателей */}
-        {!isViewer && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {!isDemoMode && renderMenuItems(settingsMenuItems)}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-2">
