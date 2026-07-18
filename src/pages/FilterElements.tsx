@@ -413,6 +413,17 @@ export default function FilterElementsPage() {
             currentStock={writeOffItem.stock ?? 0}
           />
         )}
+        {currentOrgId && moveItem && (
+          <FilterElementMoveDialog
+            open={!!moveItem}
+            onOpenChange={(v) => !v && setMoveItem(null)}
+            orgId={currentOrgId}
+            filterElementId={moveItem.id}
+            filterName={moveItem.name}
+            currentLocation={moveItem.storage_location}
+            currentStock={moveItem.stock ?? 0}
+          />
+
         {currentOrgId && toDeadstockItem && (
           <FilterMoveToDeadstockDialog
             open={!!toDeadstockItem}
