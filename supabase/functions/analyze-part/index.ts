@@ -390,7 +390,11 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
             sources,
             sources_count: sources.length,
             confirmation_type: "OEM",
+            source_url: entry.source_url ?? null,
+            catalog_id: entry.catalog_id ?? null,
+            retrieved_at: entry.retrieved_at ?? null,
           };
+
         })
         .filter(Boolean);
     }
