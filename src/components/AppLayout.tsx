@@ -75,8 +75,12 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
             <div className="flex-1 flex justify-center px-2">
               <GlobalSearch />
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-1">
+              <QuickAddErpMenu />
+              <NotificationBell />
+            </div>
           </header>
+
 
           <main id="main-content" className={cn(
             "flex-1 min-w-0 overflow-x-hidden",
