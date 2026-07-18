@@ -223,9 +223,11 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
     "cross_numbers": [string]
   } | null,
   "catalog_compatibility": [
-    {"brand": string, "model": string, "years": string|null, "engine": string|null}
+    {"brand": string, "model": string, "years": string|null, "engine": string|null, "source": string|null}
   ],
-  "company_compatible_equipment_ids": [string],
+  "company_compatible_equipment": [
+    {"id": string, "source": string}
+  ],
   "trust_level": "green|yellow|orange|red",
   "trust_reason": string,
   "note": string|null
