@@ -56,9 +56,14 @@ export default function SpareParts() {
             </h1>
             <p className="text-sm text-muted-foreground">Каталог, остатки, движения и неликвид</p>
           </div>
-          <Button onClick={() => setFormOpen(true)} disabled={!currentOrgId}>
-            <Plus className="h-4 w-4 mr-1" />Добавить запчасть
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setPrintOpen(true)} disabled={!currentOrgId || parts.length === 0}>
+              <Printer className="h-4 w-4 mr-1" />Печать ведомости
+            </Button>
+            <Button onClick={() => setFormOpen(true)} disabled={!currentOrgId}>
+              <Plus className="h-4 w-4 mr-1" />Добавить запчасть
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="catalog">
