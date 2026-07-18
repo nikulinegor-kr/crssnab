@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info, Camera, Wand2, X } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info, Camera, Wand2, X, BookOpen, Building2, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export interface PartAiSuggestion {
   duplicate: null | {
@@ -30,14 +30,22 @@ export interface PartAiSuggestion {
     cross_numbers: string[];
   };
   ai: null | {
-    manufacturer: string | null;
-    name: string | null;
-    category: string | null;
-    cross_numbers: string[];
-    analogs: string[];
-    confidence: string | null;
+    article_found: boolean;
+    not_found: boolean;
+    sources: Array<{ name: string; trust?: string }>;
+    official_info: null | {
+      part_type: string | null;
+      description: string | null;
+      manufacturer: string | null;
+      name: string | null;
+      oems: string[];
+      cross_numbers: string[];
+    };
+    catalog_compatibility: Array<{ brand: string; model: string; years?: string | null; engine?: string | null }>;
+    company_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null }>;
+    trust_level: "green" | "yellow" | "orange" | "red" | null;
+    trust_reason: string | null;
     note: string | null;
-    suggested_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null }>;
   };
 }
 
@@ -68,6 +76,13 @@ function isMobile() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
+const TRUST_META: Record<string, { icon: string; label: string; className: string }> = {
+  green: { icon: "🟢", label: "Проверено по официальному каталогу", className: "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300" },
+  yellow: { icon: "🟡", label: "Проверено по проверенному каталогу", className: "border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300" },
+  orange: { icon: "🟠", label: "Проверено по нескольким сторонним каталогам", className: "border-orange-500/50 bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300" },
+  red: { icon: "🔴", label: "Совместимость не подтверждена", className: "border-red-500/50 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-300" },
+};
+
 export function PartAiSuggestions({
   orgId,
   kind,
@@ -85,17 +100,10 @@ export function PartAiSuggestions({
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastKeyRef = useRef<string>("");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
-  const key = useMemo(
-    () => JSON.stringify([article.trim(), [...crossNumbers].sort(), name.trim(), (manufacturer ?? "").trim()]),
-    [article, crossNumbers, name, manufacturer]
-  );
-
-  const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string; force?: boolean }) => {
+  const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string }) => {
     if (!orgId) return;
     setLoading(true);
     setError(null);
@@ -117,7 +125,7 @@ export function PartAiSuggestions({
       if (error) throw error;
       const suggestion = res as PartAiSuggestion;
       setData(suggestion);
-      // Auto-fill from photo vision
+      // Photo vision: auto-fill only identifiers (never compatibility)
       if (suggestion?.vision) {
         onAccept({
           manufacturer: suggestion.vision.manufacturer ?? undefined,
@@ -126,13 +134,6 @@ export function PartAiSuggestions({
           cross_numbers: suggestion.vision.cross_numbers?.length ? suggestion.vision.cross_numbers : undefined,
         });
       }
-      // Auto-fill name & manufacturer from AI (article lookup)
-      if (suggestion?.ai && !suggestion.vision) {
-        const patch: PartAiAccept = {};
-        if (!name.trim() && suggestion.ai.name) patch.name = suggestion.ai.name;
-        if (!manufacturer?.trim() && suggestion.ai.manufacturer) patch.manufacturer = suggestion.ai.manufacturer;
-        if (Object.keys(patch).length) onAccept(patch);
-      }
     } catch (e: any) {
       setError(e?.message ?? "Ошибка AI");
       setData(null);
@@ -140,25 +141,6 @@ export function PartAiSuggestions({
       setLoading(false);
     }
   };
-
-  // Auto-run only when article is entered — fills name & manufacturer automatically
-  const autoKeyRef = useRef<string>("");
-  useEffect(() => {
-    const art = article.trim();
-    if (!orgId || art.length < 3) return;
-    const autoKey = `${art}|${(manufacturer ?? "").trim()}`;
-    if (autoKey === autoKeyRef.current) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
-      autoKeyRef.current = autoKey;
-      lastKeyRef.current = "";
-      await runAnalysis();
-    }, 800);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [article, manufacturer, orgId]);
 
   const handlePhoto = async (file: File | null) => {
     if (!file) return;
@@ -172,26 +154,29 @@ export function PartAiSuggestions({
     reader.readAsDataURL(file);
   };
 
-  const applyAi = () => {
-    if (!data?.ai) return;
+  const applyOfficial = () => {
+    if (!data?.ai?.official_info) return;
+    const oi = data.ai.official_info;
     onAccept({
-      manufacturer: data.ai.manufacturer ?? undefined,
-      name: data.ai.name ?? undefined,
-      category: data.ai.category ?? undefined,
-      cross_numbers: data.ai.cross_numbers?.length ? data.ai.cross_numbers : undefined,
-      equipment_ids: data.ai.suggested_equipment?.map((e) => e.id),
+      manufacturer: oi.manufacturer ?? undefined,
+      name: oi.name ?? undefined,
+      cross_numbers: oi.cross_numbers?.length ? oi.cross_numbers : undefined,
+      equipment_ids: data.ai.company_equipment?.map((e) => e.id),
     });
   };
 
-  const noCompat = !!data?.ai && (!data.ai.suggested_equipment || data.ai.suggested_equipment.length === 0);
-  const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3;
+  const ai = data?.ai;
+  const noCompany = !!ai && (!ai.company_equipment || ai.company_equipment.length === 0);
+  const notFound = !!ai && (ai.not_found || !ai.article_found);
+  const trust = ai?.trust_level ? TRUST_META[ai.trust_level] : null;
+  const hasInput = article.trim().length >= 2 || crossNumbers.length > 0 || name.trim().length >= 3 || (manufacturer?.trim().length ?? 0) >= 2;
 
   return (
     <div className="space-y-2">
-      {/* Top action bar */}
+      {/* Action bar */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium">AI помощник</span>
+        <span className="text-sm font-medium">AI — поиск по официальным каталогам</span>
         <div className="ms-auto flex flex-wrap gap-2">
           <Button
             type="button"
@@ -199,7 +184,7 @@ export function PartAiSuggestions({
             variant="default"
             className="h-8 gap-1"
             disabled={loading || !hasInput}
-            onClick={() => { lastKeyRef.current = ""; runAnalysis(); }}
+            onClick={() => runAnalysis()}
           >
             <Wand2 className="h-4 w-4" />
             🤖 AI определить
@@ -215,33 +200,15 @@ export function PartAiSuggestions({
             <Camera className="h-4 w-4" />
             📷 Распознать по фото
           </Button>
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)}
-          />
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)}
-          />
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)} />
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)} />
         </div>
       </div>
 
       {photoUrl && (
         <div className="relative inline-block">
           <img src={photoUrl} alt="Фото детали" className="max-h-32 rounded-md border" />
-          <button
-            type="button"
-            onClick={() => setPhotoUrl(null)}
-            className="absolute -top-2 -right-2 rounded-full bg-background border p-0.5 shadow"
-            aria-label="Убрать фото"
-          >
+          <button type="button" onClick={() => setPhotoUrl(null)} className="absolute -top-2 -right-2 rounded-full bg-background border p-0.5 shadow" aria-label="Убрать фото">
             <X className="h-3 w-3" />
           </button>
         </div>
@@ -250,7 +217,7 @@ export function PartAiSuggestions({
       {loading && (
         <div className="rounded-md border bg-muted/30 px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          AI анализирует…
+          AI ищет по каталогам OEM / Donaldson / Baldwin / Fleetguard / MANN / WIX / Sakura / HIFI / Hengst / Bosch / Fram…
         </div>
       )}
 
@@ -260,6 +227,7 @@ export function PartAiSuggestions({
         </div>
       )}
 
+      {/* Duplicate warning */}
       {!dismissed && data?.duplicate && (
         <div className="rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm">
           <div className="flex items-start gap-2">
@@ -274,28 +242,11 @@ export function PartAiSuggestions({
                 Остаток: <span className="font-medium text-foreground">{data.duplicate.stock}</span>
                 {data.duplicate.storage_location ? ` • ${data.duplicate.storage_location}` : ""}
               </div>
-              {data.duplicate.equipment.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {data.duplicate.equipment.slice(0, 5).map((e) => (
-                    <Badge key={e.id} variant="secondary" className="text-xs">
-                      {[e.brand, e.model].filter(Boolean).join(" ")}
-                      {e.plate_number ? ` • ${e.plate_number}` : ""}
-                    </Badge>
-                  ))}
-                </div>
-              )}
               <Button
                 size="sm"
                 variant="outline"
                 className="mt-2 h-7"
-                onClick={() => {
-                  if (onOpenDuplicate) onOpenDuplicate(data.duplicate!.id);
-                  else {
-                    window.dispatchEvent(new CustomEvent("open-part-detail", {
-                      detail: { kind, id: data.duplicate!.id },
-                    }));
-                  }
-                }}
+                onClick={() => onOpenDuplicate?.(data.duplicate!.id)}
               >
                 ✅ Пополнить остаток
               </Button>
@@ -304,30 +255,110 @@ export function PartAiSuggestions({
         </div>
       )}
 
-      {!dismissed && data?.ai && (
-        <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm space-y-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="font-medium">AI-рекомендации</span>
-            {data.ai.confidence && (
-              <Badge variant="outline" className="text-xs">
-                {data.ai.confidence === "high" ? "высокая уверенность" : data.ai.confidence === "medium" ? "средняя" : "низкая"}
-              </Badge>
-            )}
+      {/* Article not found */}
+      {!dismissed && ai && notFound && (
+        <div className="rounded-md border border-red-500/50 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-sm">
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+            <div className="flex-1">
+              <div className="font-medium text-red-800 dark:text-red-300">Артикул не найден в официальных каталогах</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Проверьте правильность артикула и производителя. AI не имеет права придумывать совместимость.
+              </div>
+              {ai.note && <div className="text-xs mt-1 italic text-muted-foreground">{ai.note}</div>}
+              <div className="flex gap-2 mt-2">
+                {onMoveToDeadstock && (
+                  <Button size="sm" variant="outline" className="h-7" onClick={onMoveToDeadstock}>
+                    В склад неликвида
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7" onClick={() => setDismissed(true)}>Скрыть</Button>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
 
-          {(data.ai.manufacturer || data.ai.name) && (
-            <div className="text-xs text-muted-foreground">
-              {data.ai.manufacturer && <>Производитель: <span className="text-foreground">{data.ai.manufacturer}</span> </>}
-              {data.ai.name && <>• Название: <span className="text-foreground">{data.ai.name}</span></>}
+      {/* Main result */}
+      {!dismissed && ai && !notFound && (
+        <div className="space-y-2">
+          {/* Trust badge */}
+          {trust && (
+            <div className={`rounded-md border px-3 py-2 text-xs flex items-start gap-2 ${trust.className}`}>
+              <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <div className="font-medium">{trust.icon} {trust.label}</div>
+                {ai.sources.length > 0 && (
+                  <div className="mt-1 opacity-80">
+                    Источники: {ai.sources.map((s) => s.name).join(", ")}
+                  </div>
+                )}
+                {ai.trust_reason && <div className="mt-0.5 opacity-80">{ai.trust_reason}</div>}
+              </div>
             </div>
           )}
 
-          {data.ai.suggested_equipment.length > 0 ? (
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Совместимая техника (заполнено автоматически):</div>
+          {/* Block 1: Official info */}
+          {ai.official_info && (
+            <div className="rounded-md border bg-card px-3 py-2 text-sm space-y-1">
+              <div className="flex items-center gap-2 font-medium">
+                <BookOpen className="h-4 w-4 text-primary" />
+                Официальная информация
+              </div>
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                {ai.official_info.manufacturer && <div>Производитель: <span className="text-foreground">{ai.official_info.manufacturer}</span></div>}
+                {ai.official_info.name && <div>Наименование: <span className="text-foreground">{ai.official_info.name}</span></div>}
+                {ai.official_info.part_type && <div>Тип: <span className="text-foreground">{ai.official_info.part_type}</span></div>}
+                {ai.official_info.description && <div className="text-foreground">{ai.official_info.description}</div>}
+              </div>
+              {ai.official_info.oems?.length > 0 && (
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">OEM-номера:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {ai.official_info.oems.map((c) => <Badge key={c} variant="outline" className="text-xs">{c}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {ai.official_info.cross_numbers?.length > 0 && (
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Кросс-номера:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {ai.official_info.cross_numbers.map((c) => <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Block 2: Catalog compatibility */}
+          {ai.catalog_compatibility?.length > 0 && (
+            <div className="rounded-md border bg-card px-3 py-2 text-sm space-y-1">
+              <div className="flex items-center gap-2 font-medium">
+                <BookOpen className="h-4 w-4 text-primary" />
+                Совместимость по каталогу
+                <Badge variant="outline" className="text-xs ms-auto">{ai.catalog_compatibility.length}</Badge>
+              </div>
               <div className="flex flex-wrap gap-1">
-                {data.ai.suggested_equipment.map((e) => (
+                {ai.catalog_compatibility.slice(0, 30).map((c, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    {c.brand} {c.model}
+                    {c.years ? ` • ${c.years}` : ""}
+                    {c.engine ? ` • ${c.engine}` : ""}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Block 3: Company compatibility */}
+          <div className="rounded-md border bg-card px-3 py-2 text-sm space-y-1">
+            <div className="flex items-center gap-2 font-medium">
+              <Building2 className="h-4 w-4 text-primary" />
+              Совместимость с техникой компании
+            </div>
+            {ai.company_equipment?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {ai.company_equipment.map((e) => (
                   <Badge key={e.id} variant="secondary" className="text-xs">
                     <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-600" />
                     {[e.brand, e.model].filter(Boolean).join(" ")}
@@ -335,64 +366,40 @@ export function PartAiSuggestions({
                   </Badge>
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-              <div className="flex items-start gap-1">
-                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <div>
-                  ⚠️ Совместимость с техникой компании не найдена. Добавьте совместимость вручную ниже
-                  или переместите позицию в склад неликвида.
+            ) : (
+              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+                <div className="flex items-start gap-1">
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <div>Совместимость с техникой компании не найдена. Добавьте вручную или переместите в склад неликвида.</div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {data.ai.cross_numbers.length > 0 && (
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">
-                Кросс-номера ({data.ai.cross_numbers.length}):
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {data.ai.cross_numbers.slice(0, 10).map((c) => (
-                  <Badge key={c} variant="outline" className="text-xs">{c}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {data.ai.analogs.length > 0 && (
-            <div className="text-xs text-muted-foreground">
-              Аналоги: {data.ai.analogs.slice(0, 5).join(", ")}
-            </div>
-          )}
-
-          {data.price && (
-            <div className="text-xs text-muted-foreground border-t pt-2">
+          {/* Purchase history */}
+          {data?.price && (
+            <div className="text-xs text-muted-foreground px-1">
               Последняя закупка: {new Date(data.price.last_at).toLocaleDateString("ru-RU")}
               {" • "}
               <span className="text-foreground">{data.price.last_price.toLocaleString("ru-RU")} ₽</span>
               {data.price.last_supplier ? ` • ${data.price.last_supplier}` : ""}
               {data.price.avg_price ? ` • средняя ${Math.round(data.price.avg_price).toLocaleString("ru-RU")} ₽` : ""}
               {" • закупок: "}{data.price.purchase_count}
-              {data.price.suppliers.length > 1 && (
-                <> • поставщики: {data.price.suppliers.slice(0, 3).join(", ")}</>
-              )}
             </div>
           )}
 
-          {data.ai.note && (
-            <div className="text-xs text-muted-foreground italic">{data.ai.note}</div>
-          )}
+          {ai.note && <div className="text-xs text-muted-foreground italic px-1">{ai.note}</div>}
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button size="sm" onClick={applyAi} className="h-7">
-              Принять рекомендации
-            </Button>
+          <div className="flex flex-wrap gap-2">
+            {ai.official_info && (
+              <Button size="sm" onClick={applyOfficial} className="h-7">
+                Принять данные каталога
+              </Button>
+            )}
             <Button size="sm" variant="ghost" className="h-7" onClick={() => { setDismissed(true); setData(null); }}>
               Не принимать
             </Button>
-            {noCompat && onMoveToDeadstock && (
+            {noCompany && onMoveToDeadstock && (
               <Button size="sm" variant="outline" className="h-7" onClick={onMoveToDeadstock}>
                 В склад неликвида
               </Button>
