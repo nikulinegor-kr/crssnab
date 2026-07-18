@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, Info, Camera, Wand2, X, BookOpen, Building2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Sparkles, Loader2, AlertTriangle, Info, Camera, Wand2, X, BookOpen, Building2, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export interface PartAiSuggestion {
   duplicate: null | {
@@ -32,22 +32,36 @@ export interface PartAiSuggestion {
   ai: null | {
     article_found: boolean;
     not_found: boolean;
+    article_normalized: string | null;
     sources: Array<{ name: string; trust?: string }>;
     official_info: null | {
-      part_type: string | null;
-      description: string | null;
-      manufacturer: string | null;
-      name: string | null;
+      part_type_ru: string | null;
+      name_en: string | null;
+      name_ru: string | null;
+      manufacturer_en: string | null;
+      manufacturer_ru: string | null;
+      description_ru: string | null;
       oems: string[];
       cross_numbers: string[];
     };
     catalog_compatibility: Array<{ brand: string; model: string; years?: string | null; engine?: string | null; source?: string | null }>;
-    company_equipment: Array<{ id: string; brand: string | null; model: string | null; plate_number: string | null; year: number | null; source?: string | null }>;
+    company_equipment: Array<{
+      id: string;
+      brand: string | null;
+      model: string | null;
+      plate_number: string | null;
+      year: number | null;
+      source?: string | null;
+      sources?: string[];
+      sources_count?: number;
+      confirmation_type?: "OEM" | "Cross Reference" | null;
+    }>;
     trust_level: "green" | "yellow" | "orange" | "red" | null;
     trust_reason: string | null;
     note: string | null;
   };
 }
+
 
 export interface PartAiAccept {
   manufacturer?: string;
@@ -103,6 +117,21 @@ export function PartAiSuggestions({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
+  const autoRanFor = useRef<string>("");
+
+  // Auto-run when OEM article is entered / changed (debounced)
+  useEffect(() => {
+    const norm = article.toUpperCase().replace(/[\s\-_./]/g, "").trim();
+    if (norm.length < 4) return;
+    if (autoRanFor.current === norm) return;
+    if (loading) return;
+    const timer = setTimeout(() => {
+      autoRanFor.current = norm;
+      runAnalysis();
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article]);
 
   const runAnalysis = async (extras?: { image_base64?: string; image_mime?: string }) => {
     if (!orgId) return;
@@ -160,8 +189,9 @@ export function PartAiSuggestions({
     if (!data?.ai?.official_info) return;
     const oi = data.ai.official_info;
     onAccept({
-      manufacturer: oi.manufacturer ?? undefined,
-      name: oi.name ?? undefined,
+      manufacturer: oi.manufacturer_ru ?? oi.manufacturer_en ?? undefined,
+      name: oi.name_ru ?? oi.name_en ?? undefined,
+      article: data.ai.article_normalized ?? undefined,
       cross_numbers: oi.cross_numbers?.length ? oi.cross_numbers : undefined,
       equipment_ids: Array.from(selectedIds),
     });
@@ -316,10 +346,12 @@ export function PartAiSuggestions({
                 Официальная информация
               </div>
               <div className="text-xs text-muted-foreground space-y-0.5">
-                {ai.official_info.manufacturer && <div>Производитель: <span className="text-foreground">{ai.official_info.manufacturer}</span></div>}
-                {ai.official_info.name && <div>Наименование: <span className="text-foreground">{ai.official_info.name}</span></div>}
-                {ai.official_info.part_type && <div>Тип: <span className="text-foreground">{ai.official_info.part_type}</span></div>}
-                {ai.official_info.description && <div className="text-foreground">{ai.official_info.description}</div>}
+                {(ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en) && <div>Производитель: <span className="text-foreground">{ai.official_info.manufacturer_ru || ai.official_info.manufacturer_en}</span></div>}
+                {(ai.official_info.name_ru || ai.official_info.name_en) && <div>Наименование: <span className="text-foreground">{ai.official_info.name_ru || ai.official_info.name_en}</span></div>}
+                {ai.official_info.name_en && ai.official_info.name_ru && <div className="italic opacity-70">EN: {ai.official_info.name_en}</div>}
+                {ai.official_info.part_type_ru && <div>Тип: <span className="text-foreground">{ai.official_info.part_type_ru}</span></div>}
+                {ai.article_normalized && <div>Артикул: <span className="text-foreground font-mono">{ai.article_normalized}</span></div>}
+                {ai.official_info.description_ru && <div className="text-foreground">{ai.official_info.description_ru}</div>}
               </div>
               {ai.official_info.oems?.length > 0 && (
                 <div>
@@ -412,9 +444,28 @@ export function PartAiSuggestions({
                           onChange={() => toggleId(e.id)}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm">{label}</div>
-                          {e.source && (
-                            <div className="text-xs text-muted-foreground">Источник: {e.source}</div>
+                          <div className="flex flex-wrap items-center gap-1.5 text-sm">
+                            <span>{label}</span>
+                            {e.confirmation_type && (
+                              <Badge
+                                variant={e.confirmation_type === "OEM" ? "default" : "secondary"}
+                                className="text-[10px] h-4 px-1.5"
+                              >
+                                {e.confirmation_type}
+                              </Badge>
+                            )}
+                            {typeof e.sources_count === "number" && e.sources_count > 0 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                • подтв.: {e.sources_count}
+                              </span>
+                            )}
+                          </div>
+                          {(e.sources && e.sources.length > 0
+                            ? e.sources.join(", ")
+                            : e.source) && (
+                            <div className="text-xs text-muted-foreground">
+                              Источник: {e.sources && e.sources.length > 0 ? e.sources.join(", ") : e.source}
+                            </div>
                           )}
                         </div>
                       </label>
