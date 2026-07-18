@@ -126,6 +126,13 @@ export function PartAiSuggestions({
           cross_numbers: suggestion.vision.cross_numbers?.length ? suggestion.vision.cross_numbers : undefined,
         });
       }
+      // Auto-fill name & manufacturer from AI (article lookup)
+      if (suggestion?.ai && !suggestion.vision) {
+        const patch: PartAiAccept = {};
+        if (!name.trim() && suggestion.ai.name) patch.name = suggestion.ai.name;
+        if (!manufacturer?.trim() && suggestion.ai.manufacturer) patch.manufacturer = suggestion.ai.manufacturer;
+        if (Object.keys(patch).length) onAccept(patch);
+      }
     } catch (e: any) {
       setError(e?.message ?? "Ошибка AI");
       setData(null);
