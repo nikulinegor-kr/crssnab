@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer, ArrowLeftRight } from "lucide-react";
 import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
 import { BulkPartLabelPrintDialog } from "@/components/erp/BulkPartLabelPrintDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +27,9 @@ import { FilterElementFormDialog } from "@/components/filter-elements/FilterElem
 import { FilterElementDetailDialog } from "@/components/filter-elements/FilterElementDetailDialog";
 import { FilterElementMovementDialog } from "@/components/filter-elements/FilterElementMovementDialog";
 import { FilterElementWriteOffDialog } from "@/components/filter-elements/FilterElementWriteOffDialog";
+import { FilterElementMoveDialog } from "@/components/filter-elements/FilterElementMoveDialog";
 import { FilterMoveToDeadstockDialog } from "@/components/filter-elements/FilterMoveToDeadstockDialog";
+
 import { FilterElementsDeadstockTab } from "@/components/filter-elements/FilterElementsDeadstockTab";
 import { toast } from "sonner";
 
