@@ -130,10 +130,21 @@ export function FilterElementMovementDialog({ open, onOpenChange, orgId, filterE
 
           {type === "IN" && (
             <>
-              <div>
-                <Label>Поставщик</Label>
-                <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Наименование поставщика" />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Поставщик</Label>
+                  <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Наименование поставщика" />
+                </div>
+                <div>
+                  <Label>Дата поступления</Label>
+                  <Input type="date" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Номер УПД / накладной</Label>
+                  <Input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} />
+                </div>
               </div>
+
               <div>
                 <Label>Заявка (необязательно)</Label>
                 <Popover open={requestOpen} onOpenChange={setRequestOpen}>
