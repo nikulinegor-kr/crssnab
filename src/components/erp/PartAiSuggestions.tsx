@@ -57,7 +57,11 @@ export interface PartAiSuggestion {
       sources?: string[];
       sources_count?: number;
       confirmation_type?: "OEM" | "Cross Reference" | null;
+      source_url?: string | null;
+      catalog_id?: string | null;
+      retrieved_at?: string | null;
     }>;
+
     trust_level: "green" | "yellow" | "orange" | "red" | null;
     trust_reason: string | null;
     note: string | null;
@@ -485,6 +489,24 @@ export function PartAiSuggestions({
                               Источник: {e.sources && e.sources.length > 0 ? e.sources.join(", ") : e.source}
                             </div>
                           )}
+                          {(e.source_url || e.catalog_id || e.retrieved_at) && (
+                            <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5">
+                              {e.source_url && (
+                                <a
+                                  href={e.source_url}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                  className="underline hover:text-foreground truncate max-w-[280px]"
+                                  onClick={(ev) => ev.stopPropagation()}
+                                >
+                                  {e.source_url}
+                                </a>
+                              )}
+                              {e.catalog_id && <span>ID: {e.catalog_id}</span>}
+                              {e.retrieved_at && <span>· {e.retrieved_at}</span>}
+                            </div>
+                          )}
+
                         </div>
                       </label>
                     );
