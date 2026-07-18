@@ -56,6 +56,7 @@ interface Props {
   article: string;
   crossNumbers: string[];
   name: string;
+  manufacturer?: string;
   excludeId?: string;
   onAccept: (data: PartAiAccept) => void;
   onOpenDuplicate?: (id: string) => void;
