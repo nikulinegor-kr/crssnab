@@ -21,8 +21,28 @@ interface AppLayoutProps {
 export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLayoutProps) {
   const { logoUrl, orgName } = useOrgBranding();
 
+  const SIDEBAR_STATE_KEY = "sidebar:open:v1";
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem(SIDEBAR_STATE_KEY);
+      if (raw !== null) return raw === "true";
+    } catch {
+      // ignore
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STATE_KEY, String(sidebarOpen));
+    } catch {
+      // ignore
+    }
+  }, [sidebarOpen]);
+
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md">
         Перейти к основному содержимому
       </a>
