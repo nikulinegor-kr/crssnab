@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import type { FilterElementRow } from "@/hooks/useFilterElements";
+import { PartAiSuggestions } from "@/components/erp/PartAiSuggestions";
 
 interface Props {
   open: boolean;
@@ -171,6 +172,29 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
               <Input value={form.storage_location} onChange={(e) => setForm({ ...form, storage_location: e.target.value })} />
             </div>
           </div>
+
+          <PartAiSuggestions
+            orgId={orgId}
+            kind="filter"
+            article={form.article}
+            crossNumbers={crossNums}
+            name={form.name}
+            excludeId={item?.id}
+            onAccept={(d) => {
+              setForm((f) => ({
+                ...f,
+                manufacturer: f.manufacturer || d.manufacturer || "",
+                name: f.name || d.name || "",
+              }));
+              if (d.cross_numbers?.length) {
+                setCrossNums((prev) => Array.from(new Set([...prev, ...d.cross_numbers!])));
+              }
+              if (d.equipment_ids?.length) {
+                setEquipmentIds((prev) => Array.from(new Set([...prev, ...d.equipment_ids!])));
+              }
+              toast.success("Данные подставлены");
+            }}
+          />
 
           <div>
             <Label>Кросс-номера</Label>
