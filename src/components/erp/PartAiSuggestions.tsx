@@ -378,6 +378,9 @@ export function PartAiSuggestions({
             <Button size="sm" onClick={applyAi} className="h-7">
               Принять рекомендации
             </Button>
+            <Button size="sm" variant="ghost" className="h-7" onClick={() => { setDismissed(true); setData(null); }}>
+              Не принимать
+            </Button>
             {noCompat && onMoveToDeadstock && (
               <Button size="sm" variant="outline" className="h-7" onClick={onMoveToDeadstock}>
                 В склад неликвида
