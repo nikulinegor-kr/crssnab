@@ -55,6 +55,8 @@ export default function FilterElementsPage() {
   const [inItem, setInItem] = useState<FilterElementRow | null>(null);
   const [writeOffItem, setWriteOffItem] = useState<FilterElementRow | null>(null);
   const [toDeadstockItem, setToDeadstockItem] = useState<FilterElementRow | null>(null);
+  const [moveItem, setMoveItem] = useState<FilterElementRow | null>(null);
+
   const [labelItem, setLabelItem] = useState<FilterElementRow | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLabelOpen, setBulkLabelOpen] = useState(false);
