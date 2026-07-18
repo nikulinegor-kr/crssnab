@@ -161,9 +161,15 @@ export function FilterElementWriteOffDialog({ open, onOpenChange, orgId, filterE
           </div>
 
           <div>
-            <Label>Комментарий *</Label>
+            <Label>Причина списания *</Label>
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Износ, замена по регламенту, брак..." />
+          </div>
+
+          <div>
+            <Label>Комментарий</Label>
             <Textarea rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
           </div>
+
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
