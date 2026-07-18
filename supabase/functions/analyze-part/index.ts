@@ -204,8 +204,8 @@ Deno.serve(async (req) => {
 
 ЭТАПЫ:
 1) Проверь, существует ли такой артикул у указанного производителя в перечисленных каталогах.
-2) Если существует — извлеки: тип детали, описание, OEM-номера, кросс-номера, ОФИЦИАЛЬНЫЙ список совместимой техники (brand + model + при наличии годы/двигатель).
-3) Сравни официальный список совместимости с парком техники компании и укажи id ТОЛЬКО тех единиц, у которых brand+model совпадают с официальным списком.
+2) Если существует — извлеки: тип детали, описание, OEM-номера, кросс-номера, ОФИЦИАЛЬНЫЙ список совместимой техники (brand + model + при наличии годы/двигатель + источник для каждой позиции).
+3) Сравни официальный список совместимости с парком техники компании и укажи id ТОЛЬКО тех единиц, у которых brand+model совпадают с официальным списком. Для КАЖДОЙ подобранной единицы обязательно укажи конкретный источник (например "Caterpillar Parts", "Donaldson Cross Reference", "Fleetguard").
 
 ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id):
 ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate})` : ""}${e.year ? ` [${e.year}]` : ""}`).join("\n") || "— парк пуст"}
@@ -223,9 +223,11 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
     "cross_numbers": [string]
   } | null,
   "catalog_compatibility": [
-    {"brand": string, "model": string, "years": string|null, "engine": string|null}
+    {"brand": string, "model": string, "years": string|null, "engine": string|null, "source": string|null}
   ],
-  "company_compatible_equipment_ids": [string],
+  "company_compatible_equipment": [
+    {"id": string, "source": string}
+  ],
   "trust_level": "green|yellow|orange|red",
   "trust_reason": string,
   "note": string|null
@@ -257,16 +259,20 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
           if (ai) {
             notFound = ai.article_found === false;
-            // Validate CRM equipment ids
+            // Validate CRM equipment ids and normalize entries
             const valid = new Set((equipment ?? []).map((e: any) => e.id));
-            const rawIds: string[] = Array.isArray(ai.company_compatible_equipment_ids)
-              ? ai.company_compatible_equipment_ids
-              : [];
-            ai.company_compatible_equipment_ids = rawIds.filter((id: string) => valid.has(id));
+            const rawEntries: any[] = Array.isArray(ai.company_compatible_equipment)
+              ? ai.company_compatible_equipment
+              : Array.isArray(ai.company_compatible_equipment_ids)
+                ? ai.company_compatible_equipment_ids.map((id: string) => ({ id, source: null }))
+                : [];
+            ai.company_compatible_equipment = rawEntries
+              .filter((e: any) => e && typeof e.id === "string" && valid.has(e.id))
+              .map((e: any) => ({ id: e.id, source: e.source ?? null }));
 
             // Enforce: if red trust — no company matches allowed
             if (ai.trust_level === "red") {
-              ai.company_compatible_equipment_ids = [];
+              ai.company_compatible_equipment = [];
             }
           }
         } else {
@@ -279,12 +285,16 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
 
     // Attach labels for company-compatible equipment
     let company_equipment: any[] = [];
-    if (ai?.company_compatible_equipment_ids?.length) {
+    if (ai?.company_compatible_equipment?.length) {
       const eqMap = new Map((equipment ?? []).map((e: any) => [e.id, e]));
-      company_equipment = ai.company_compatible_equipment_ids
-        .map((id: string) => eqMap.get(id))
+      company_equipment = ai.company_compatible_equipment
+        .map((entry: any) => {
+          const eq = eqMap.get(entry.id);
+          return eq ? { ...eq, source: entry.source ?? null } : null;
+        })
         .filter(Boolean);
     }
+
 
     return new Response(
       JSON.stringify({
