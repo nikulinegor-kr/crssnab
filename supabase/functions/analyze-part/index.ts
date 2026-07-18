@@ -183,46 +183,58 @@ Deno.serve(async (req) => {
         year: e.year ?? null,
       }));
 
-      const prompt = `Ты — строгий поисковик по официальным каталогам запчастей и фильтров.
+      const prompt = `Ты — строгий поисковик по официальным каталогам запчастей и фильтров. Работаешь как ChatGPT-API для CRM закупок и ремонта техники.
 
-⛔ ЗАПРЕЩЕНО:
-• Придумывать совместимость.
+⛔ КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО:
+• Придумывать совместимость и данные.
 • Делать выводы вида «если производитель CAT — значит подходит ко всему CAT».
-• Использовать эвристики по названию модели.
+• Расширять модель: если каталог содержит "CAT 420F" — НЕЛЬЗЯ добавлять "CAT 420". Если "CAT 320GC" — НЕЛЬЗЯ "CAT 320". Если "CAT 320D2" — НЕЛЬЗЯ "CAT 320D". Модель должна совпадать ПОЛНОСТЬЮ (со всеми суффиксами: F, GC, D2, K, L, M, N, H, B, C и т.д.).
+• Использовать эвристики по названию.
+
+Точность важнее количества. Лучше ноль моделей, чем одна неправильная.
 
 ✅ РАЗРЕШЕНО ТОЛЬКО:
-Данные из официальных каталогов и проверенных кросс-референсов.
-Приоритет источников:
-1) OEM (производитель техники — Caterpillar/CAT Parts, Komatsu, Volvo, Hitachi, JCB, Case, John Deere, Hyundai, Doosan, Liebherr, Shantui, XCMG, SDLG, LiuGong и т.п.)
-2) Donaldson  3) Baldwin  4) Fleetguard  5) MANN Filter  6) WIX  7) Sakura  8) HIFI Filter  9) Hengst  10) Bosch  11) Fram
+Данные из официальных каталогов и проверенных кросс-референсов:
+1) OEM (Caterpillar Parts, Komatsu, Volvo, Hitachi, JCB, Case, John Deere, Hyundai, Doosan, Liebherr, Cummins, Perkins, Shantui, XCMG, SDLG, LiuGong)
+2) Donaldson  3) Fleetguard  4) Baldwin  5) MANN Filter  6) WIX  7) Sakura  8) HIFI Filter  9) Hengst  10) Bosch  11) Fram  12) TecDoc
 
 Если артикул НЕ найден ни в одном из этих источников — верни article_found=false и НЕ заполняй остальные поля.
 
 ────────────────────
+ЭТАПЫ ОБРАБОТКИ:
+1) Нормализуй артикул: "3621163", "362-1163", "362 1163" — это ОДИН и тот же артикул. Верни его каноническую форму (с дефисом по стандарту OEM, например "362-1163").
+2) Определи производителя по артикулу.
+3) Проверь существование артикула в каталогах.
+4) Найди официальное английское название детали.
+5) Выполни качественный технический перевод названия на русский язык (используй профессиональные термины: "Гидравлический фильтр", "Трансмиссионный фильтр", "Гидравлический / трансмиссионный фильтр", "Масляный фильтр двигателя", "Топливный фильтр", "Фильтр воздуха кабины", "Основной воздушный фильтр", "Внутренний воздушный фильтр" и т.п.).
+6) Найди кросс-номера (Donaldson/Baldwin/Fleetguard/MANN/WIX...).
+7) Найди совместимость СТРОГО по официальным каталогам, с точным совпадением моделей.
+8) Сопоставь с парком компании — только точное совпадение brand + model (с суффиксами).
+
+────────────────────
 ВХОДНЫЕ ДАННЫЕ
-• Производитель: ${manufacturer || "—"}
-• Артикул: ${article || "—"}
+• Артикул (сырой): ${article || "—"}
+• Артикул (нормализованный): ${articleNorm || "—"}
+• Производитель (подсказка): ${manufacturer || "—"}
 • Кросс-номер: ${cross_number || "—"}
-• Наименование: ${name || "—"}
+• Наименование (подсказка): ${name || "—"}
 • Тип позиции: ${kind === "filter" ? "фильтрующий элемент" : "запасная часть"}
 
-ЭТАПЫ:
-1) Проверь, существует ли такой артикул у указанного производителя в перечисленных каталогах.
-2) Если существует — извлеки: тип детали, описание, OEM-номера, кросс-номера, ОФИЦИАЛЬНЫЙ список совместимой техники (brand + model + при наличии годы/двигатель + источник для каждой позиции).
-3) Сравни официальный список совместимости с парком техники компании и укажи id ТОЛЬКО тех единиц, у которых brand+model совпадают с официальным списком. Для КАЖДОЙ подобранной единицы обязательно укажи конкретный источник (например "Caterpillar Parts", "Donaldson Cross Reference", "Fleetguard").
-
-ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id):
+ПАРК ТЕХНИКИ КОМПАНИИ (выбирай ТОЛЬКО из этих id, точное совпадение brand+model включая суффиксы):
 ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate})` : ""}${e.year ? ` [${e.year}]` : ""}`).join("\n") || "— парк пуст"}
 
 Верни СТРОГО JSON без пояснений:
 {
   "article_found": true|false,
+  "article_normalized": string|null,
   "sources": [{"name": "Caterpillar Parts", "trust": "green|yellow|orange|red"}],
   "official_info": {
-    "part_type": string|null,
-    "description": string|null,
-    "manufacturer": string|null,
-    "name": string|null,
+    "part_type_ru": string|null,
+    "name_en": string|null,
+    "name_ru": string|null,
+    "manufacturer_en": string|null,
+    "manufacturer_ru": string|null,
+    "description_ru": string|null,
     "oems": [string],
     "cross_numbers": [string]
   } | null,
@@ -230,18 +242,19 @@ ${eqLabels.map((e) => `${e.id} — ${e.brand} ${e.model}${e.plate ? ` (${e.plate
     {"brand": string, "model": string, "years": string|null, "engine": string|null, "source": string|null}
   ],
   "company_compatible_equipment": [
-    {"id": string, "source": string}
+    {"id": string, "confirmation_type": "OEM"|"Cross Reference", "sources": [string]}
   ],
   "trust_level": "green|yellow|orange|red",
   "trust_reason": string,
   "note": string|null
 }
 
-Требования к trust_level:
-• green — подтверждено официальным каталогом OEM или Donaldson.
-• yellow — подтверждено Baldwin / Fleetguard / MANN / WIX / другим проверенным.
-• orange — подтверждено несколькими сторонними каталогами, но не OEM.
-• red — совместимость НЕ подтверждена официальными источниками (в этом случае company_compatible_equipment_ids должен быть пустым).
+Правила:
+• manufacturer_ru — формат "Caterpillar (Катерпиллар)", "Donaldson (Дональдсон)", "Fleetguard (Флитгард)", "Baldwin (Болдуин)".
+• name_ru — грамотный технический перевод.
+• confirmation_type: "OEM" если модель указана в каталоге OEM производителя техники (Caterpillar Parts и т.п.), иначе "Cross Reference".
+• sources — массив конкретных названий источников, подтверждающих ЭТУ модель (например ["Caterpillar Parts", "Donaldson Cross Reference"]).
+• trust_level: green — OEM или Donaldson; yellow — Baldwin/Fleetguard/MANN/WIX; orange — несколько сторонних; red — не подтверждено (тогда company_compatible_equipment пуст).
 
 Если article_found=false — все поля кроме article_found и note должны быть null/пусты.`;
 
