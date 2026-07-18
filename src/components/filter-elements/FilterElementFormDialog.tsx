@@ -308,6 +308,71 @@ export function FilterElementFormDialog({ open, onOpenChange, orgId, item }: Pro
             <Label>Примечание</Label>
             <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
+
+          {!editing && (
+            <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">📦 Оприходование</div>
+                <div className="text-[11px] text-muted-foreground">Первое поступление на склад</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Количество *</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={receipt.quantity}
+                    onChange={(e) => setReceipt({ ...receipt, quantity: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label>Цена за единицу</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={receipt.unit_price}
+                    onChange={(e) => setReceipt({ ...receipt, unit_price: e.target.value })}
+                    placeholder="₽"
+                  />
+                </div>
+                <div>
+                  <Label>Поставщик</Label>
+                  <Input
+                    value={receipt.supplier}
+                    onChange={(e) => setReceipt({ ...receipt, supplier: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Дата поступления</Label>
+                  <Input
+                    type="date"
+                    value={receipt.receipt_date}
+                    onChange={(e) => setReceipt({ ...receipt, receipt_date: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>Номер УПД / накладной</Label>
+                  <Input
+                    value={receipt.document_number}
+                    onChange={(e) => setReceipt({ ...receipt, document_number: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>Комментарий</Label>
+                  <Textarea
+                    rows={2}
+                    value={receipt.comment}
+                    onChange={(e) => setReceipt({ ...receipt, comment: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                Если количество указано — при сохранении будет автоматически создано движение «Поступление».
+              </div>
+            </div>
+          )}
+
         </div>
 
         <DialogFooter>
