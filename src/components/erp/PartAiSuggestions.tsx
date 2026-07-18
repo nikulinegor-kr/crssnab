@@ -294,7 +294,7 @@ export function PartAiSuggestions({
         </div>
       )}
 
-      {data?.ai && (
+      {!dismissed && data?.ai && (
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
