@@ -423,6 +423,8 @@ export default function FilterElementsPage() {
             currentLocation={moveItem.storage_location}
             currentStock={moveItem.stock ?? 0}
           />
+        )}
+
 
         {currentOrgId && toDeadstockItem && (
           <FilterMoveToDeadstockDialog
