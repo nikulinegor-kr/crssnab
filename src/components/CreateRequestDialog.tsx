@@ -514,6 +514,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         executor: data.executor || null,
         object_id: data.object_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
+        order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
