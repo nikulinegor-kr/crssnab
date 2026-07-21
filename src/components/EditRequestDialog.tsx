@@ -89,6 +89,10 @@ const requestSchema = z.object({
     .min(0, "Не может быть отрицательным")
     .optional()
     .nullable(),
+  order_days: z.number()
+    .min(0, "Не может быть отрицательным")
+    .optional()
+    .nullable(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
