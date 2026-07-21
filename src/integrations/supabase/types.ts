@@ -3458,6 +3458,7 @@ export type Database = {
           invoice_routing: string | null
           object_id: string | null
           operation_type: string | null
+          order_days: number | null
           organization_id: string | null
           payment_percent: number | null
           payment_percentage: number | null
@@ -3516,6 +3517,7 @@ export type Database = {
           invoice_routing?: string | null
           object_id?: string | null
           operation_type?: string | null
+          order_days?: number | null
           organization_id?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
@@ -3574,6 +3576,7 @@ export type Database = {
           invoice_routing?: string | null
           object_id?: string | null
           operation_type?: string | null
+          order_days?: number | null
           organization_id?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
