@@ -13,6 +13,7 @@ export interface Request {
   executor: string | null;
   object_id: string | null;
   estimated_delivery_days: number | null;
+  order_days: number | null;
   availability_delivery_time: string | null;
   contractor: string | null;
   invoice_number: string | null;
