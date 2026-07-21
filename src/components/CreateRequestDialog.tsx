@@ -151,6 +151,7 @@ interface InitialRequestData {
   executor?: string;
   object_id?: string;
   estimated_delivery_days?: number | null;
+  order_days?: number | null;
   availability_delivery_time?: string;
   contractor?: string;
   invoice_number?: string;
