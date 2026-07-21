@@ -411,16 +411,17 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
           {form.watch("availability_delivery_time") === "Под заказ" && (
             <FormField
               control={form.control}
-              name="estimated_delivery_days"
+              name="order_days"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs">Срок (дней)</FormLabel>
+                  <FormLabel className="text-xs">Заказ (дней)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       min="1"
                       placeholder="кол-во дней"
                       className="h-9 select-all min-w-0 text-sm"
+                      title="Срок изготовления/поставки под заказ (не срок доставки ТК)"
                       disabled={disabled}
                       value={field.value ?? ""}
                       onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}

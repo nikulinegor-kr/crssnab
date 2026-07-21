@@ -684,6 +684,7 @@ export default function RequestDetail() {
           executor: request.executor || undefined,
           object_id: request.object_id || undefined,
           estimated_delivery_days: request.estimated_delivery_days,
+          order_days: (request as any).order_days ?? null,
           availability_delivery_time: request.availability_delivery_time || undefined,
           contractor: request.contractor || undefined,
           transport_company: request.transport_company || undefined,

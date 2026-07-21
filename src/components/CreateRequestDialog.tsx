@@ -85,6 +85,10 @@ const requestSchema = z.object({
     .min(0, "Не может быть отрицательным")
     .optional()
     .nullable(),
+  order_days: z.number()
+    .min(0, "Не может быть отрицательным")
+    .optional()
+    .nullable(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -147,6 +151,7 @@ interface InitialRequestData {
   executor?: string;
   object_id?: string;
   estimated_delivery_days?: number | null;
+  order_days?: number | null;
   availability_delivery_time?: string;
   contractor?: string;
   invoice_number?: string;
@@ -337,6 +342,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       executor: initialData?.executor || "",
       object_id: initialData?.object_id || "",
       estimated_delivery_days: initialData?.estimated_delivery_days ?? null,
+      order_days: initialData?.order_days ?? null,
       availability_delivery_time: initialData?.availability_delivery_time || "",
       contractor: initialData?.contractor || "",
       invoice_number: "",
@@ -508,6 +514,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         executor: data.executor || null,
         object_id: data.object_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
+        order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,

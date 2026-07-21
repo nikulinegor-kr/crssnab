@@ -89,6 +89,10 @@ const requestSchema = z.object({
     .min(0, "Не может быть отрицательным")
     .optional()
     .nullable(),
+  order_days: z.number()
+    .min(0, "Не может быть отрицательным")
+    .optional()
+    .nullable(),
   availability_delivery_time: z.string()
     .max(200, "Максимум 200 символов")
     .optional(),
@@ -302,6 +306,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       executor: "",
       object_id: "",
       estimated_delivery_days: null,
+      order_days: null,
       availability_delivery_time: "",
       contractor: "",
       invoice_number: "",
@@ -339,6 +344,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       executor: request.executor || "",
       object_id: request.object_id || "",
       estimated_delivery_days: request.estimated_delivery_days,
+      order_days: (request as any).order_days ?? null,
       availability_delivery_time: request.availability_delivery_time || "",
       contractor: request.contractor || "",
       invoice_number: request.invoice_number || "",
@@ -399,6 +405,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: request.executor || "",
         object_id: request.object_id || "",
         estimated_delivery_days: request.estimated_delivery_days,
+      order_days: (request as any).order_days ?? null,
         availability_delivery_time: request.availability_delivery_time || "",
         contractor: request.contractor || "",
         invoice_number: request.invoice_number || "",
@@ -500,6 +507,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: data.executor || null,
         object_id: data.object_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
+        order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
@@ -628,6 +636,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: data.executor || "",
         object_id: data.object_id || "",
         estimated_delivery_days: data.estimated_delivery_days,
+        order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || "",
         contractor: data.contractor || "",
         invoice_number: data.invoice_number || "",
@@ -716,6 +725,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: data.executor || null,
         object_id: data.object_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
+        order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
         invoice_number: data.invoice_number || null,
