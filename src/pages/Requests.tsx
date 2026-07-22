@@ -30,7 +30,7 @@ import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
 
-import { AlertCircle, Plus, ShoppingCart, Star, Zap } from "lucide-react";
+import { AlertCircle, Plus, ShoppingCart, Star, Zap, Printer } from "lucide-react";
 import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
 import { cn } from "@/lib/utils";
 
