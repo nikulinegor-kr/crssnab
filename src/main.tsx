@@ -131,7 +131,7 @@ const bootstrapApp = async () => {
   let slowBootTimer: ReturnType<typeof setTimeout> | undefined;
 
   try {
-    slowBootTimer = window.setTimeout(() => {
+    slowBootTimer = setTimeout(() => {
       root.render(<BootstrapScreen state="slow" />);
       reportError({
         message: "Slow bootstrap: App import >4s",
