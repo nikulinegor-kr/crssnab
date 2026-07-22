@@ -382,6 +382,17 @@ const Requests = () => {
           {canCreate && activeTab === "active" && (
             <>
               <Button
+                onClick={downloadAllInvoices}
+                disabled={isDownloadingInvoices}
+                size="lg"
+                variant="outline"
+                title="Скачать все счета на оплату (ZIP)"
+                className="gap-2 px-3 text-sm font-semibold"
+              >
+                <Printer className="h-4 w-4" />
+                <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
+              </Button>
+              <Button
                 onClick={openQuickRequest}
                 size="lg"
                 title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
