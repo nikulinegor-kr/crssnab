@@ -57,6 +57,79 @@ const Requests = () => {
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
+  const [isDownloadingInvoices, setIsDownloadingInvoices] = useState(false);
+
+  const downloadAllInvoices = async () => {
+    if (!currentOrgId) return;
+    setIsDownloadingInvoices(true);
+    try {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("id, description, request_number, status, document_url")
+        .eq("organization_id", currentOrgId)
+        .in("status", ["Счёт", "Счёт в Бухгалтерии", "Обновить счёт"])
+        .eq("archived", false);
+      if (error) throw error;
+
+      const rows = (data || []).filter((r: any) => {
+        const urls = Array.isArray(r.document_url) ? r.document_url : (r.document_url ? [r.document_url] : []);
+        return urls.length > 0;
+      });
+      if (rows.length === 0) {
+        toast({ title: "Нет счетов", description: "Не найдено заявок со статусом «Счёт» с прикреплёнными файлами" });
+        return;
+      }
+
+      const { resolveSignedUrl } = await import("@/lib/storageUrl");
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      const sanitize = (s: string) =>
+        (s || "").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
+
+      let added = 0;
+      for (const r of rows as any[]) {
+        const urls: string[] = Array.isArray(r.document_url) ? r.document_url : [r.document_url];
+        const folder = sanitize(r.description) || `Заявка-${r.request_number}`;
+        for (let i = 0; i < urls.length; i++) {
+          try {
+            const signed = await resolveSignedUrl(urls[i]);
+            const resp = await fetch(signed);
+            if (!resp.ok) continue;
+            const blob = await resp.blob();
+            const urlPath = new URL(signed).pathname;
+            const origName = decodeURIComponent(urlPath.split("/").pop() || `file-${i + 1}`);
+            const ext = origName.includes(".") ? origName.split(".").pop() : "pdf";
+            const fileName = urls.length > 1 ? `${folder} (${i + 1}).${ext}` : `${folder}.${ext}`;
+            zip.file(`${folder}/${fileName}`, blob);
+            added++;
+          } catch (e) {
+            console.warn("Failed to fetch invoice file", urls[i], e);
+          }
+        }
+      }
+
+      if (added === 0) {
+        toast({ title: "Не удалось скачать", description: "Файлы счетов недоступны", variant: "destructive" });
+        return;
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Счета-на-оплату-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Готово", description: `Скачано файлов: ${added} (заявок: ${rows.length})` });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Ошибка", description: err.message || "Не удалось скачать счета", variant: "destructive" });
+    } finally {
+      setIsDownloadingInvoices(false);
+    }
+  };
 
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
