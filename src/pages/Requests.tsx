@@ -88,9 +88,10 @@ const Requests = () => {
         (s || "").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
 
       let added = 0;
+      const used = new Set<string>();
       for (const r of rows as any[]) {
         const urls: string[] = Array.isArray(r.document_url) ? r.document_url : [r.document_url];
-        const folder = sanitize(r.description) || `Заявка-${r.request_number}`;
+        const base = sanitize(r.description) || `Заявка-${r.request_number}`;
         for (let i = 0; i < urls.length; i++) {
           try {
             const signed = await resolveSignedUrl(urls[i]);
@@ -100,8 +101,13 @@ const Requests = () => {
             const urlPath = new URL(signed).pathname;
             const origName = decodeURIComponent(urlPath.split("/").pop() || `file-${i + 1}`);
             const ext = origName.includes(".") ? origName.split(".").pop() : "pdf";
-            const fileName = urls.length > 1 ? `${folder} (${i + 1}).${ext}` : `${folder}.${ext}`;
-            zip.file(`${folder}/${fileName}`, blob);
+            let fileName = urls.length > 1 ? `${base} (${i + 1}).${ext}` : `${base}.${ext}`;
+            let n = 2;
+            while (used.has(fileName)) {
+              fileName = `${base} (${n++}).${ext}`;
+            }
+            used.add(fileName);
+            zip.file(fileName, blob);
             added++;
           } catch (e) {
             console.warn("Failed to fetch invoice file", urls[i], e);
