@@ -87,7 +87,7 @@ export default function AnalyticsAiPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PeriodFilter value={period} onChange={setPeriod} />
+          <PeriodFilter value={period} onChange={setPeriod} withShort />
           <Button onClick={generate} disabled={loading} className="gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             Сформировать отчёт
