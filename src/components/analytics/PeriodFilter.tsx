@@ -17,14 +17,27 @@ export function presetPeriods(): Period[] {
   ];
 }
 
+export function shortPeriods(): Period[] {
+  const now = endOfDay(new Date());
+  return [
+    { label: "Сегодня", from: startOfDay(now), to: now },
+    { label: "2 дня", from: startOfDay(subDays(now, 1)), to: now },
+    { label: "3 дня", from: startOfDay(subDays(now, 2)), to: now },
+    { label: "4 дня", from: startOfDay(subDays(now, 3)), to: now },
+    { label: "Неделя", from: startOfDay(subDays(now, 6)), to: now },
+  ];
+}
+
 export function PeriodFilter({
   value,
   onChange,
+  withShort = false,
 }: {
   value: Period;
   onChange: (p: Period) => void;
+  withShort?: boolean;
 }) {
-  const presets = presetPeriods();
+  const presets = [...(withShort ? shortPeriods() : []), ...presetPeriods()];
   return (
     <div className="flex flex-wrap items-center gap-2">
       {presets.map((p) => {
