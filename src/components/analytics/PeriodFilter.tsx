@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, startOfMonth, startOfQuarter, startOfYear, subDays, endOfDay } from "date-fns";
+import { format, startOfMonth, startOfQuarter, startOfYear, subDays, endOfDay, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export type Period = { from: Date; to: Date; label: string };
