@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, startOfMonth, startOfQuarter, startOfYear, subDays, endOfDay } from "date-fns";
+import { format, startOfMonth, startOfQuarter, startOfYear, subDays, endOfDay, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 
 export type Period = { from: Date; to: Date; label: string };
@@ -17,14 +17,27 @@ export function presetPeriods(): Period[] {
   ];
 }
 
+export function shortPeriods(): Period[] {
+  const now = endOfDay(new Date());
+  return [
+    { label: "Сегодня", from: startOfDay(now), to: now },
+    { label: "2 дня", from: startOfDay(subDays(now, 1)), to: now },
+    { label: "3 дня", from: startOfDay(subDays(now, 2)), to: now },
+    { label: "4 дня", from: startOfDay(subDays(now, 3)), to: now },
+    { label: "Неделя", from: startOfDay(subDays(now, 6)), to: now },
+  ];
+}
+
 export function PeriodFilter({
   value,
   onChange,
+  withShort = false,
 }: {
   value: Period;
   onChange: (p: Period) => void;
+  withShort?: boolean;
 }) {
-  const presets = presetPeriods();
+  const presets = [...(withShort ? shortPeriods() : []), ...presetPeriods()];
   return (
     <div className="flex flex-wrap items-center gap-2">
       {presets.map((p) => {
