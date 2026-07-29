@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
+import { resolveSignedUrl } from "@/lib/storageUrl";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -405,7 +406,7 @@ export function IncomingUploads({
         // PDF — call recognize-materials edge function
         try {
           const { data: recData, error: recError } = await supabase.functions.invoke("recognize-materials", {
-            body: { fileUrl, statementId, organizationId: orgId },
+            body: { fileUrl: await resolveSignedUrl(fileUrl, 60 * 30), statementId, organizationId: orgId },
           });
           if (recError) throw recError;
           // Convert recognized materials to ExtractedRow format
@@ -579,7 +580,7 @@ export function IncomingUploads({
 
       if (file.fileType === "xlsx") {
         // Re-fetch file and parse
-        const response = await fetch(file.fileUrl);
+        const response = await fetch(await resolveSignedUrl(file.fileUrl, 60 * 30));
         const arrayBuffer = await response.arrayBuffer();
         const data = new Uint8Array(arrayBuffer);
         const workbook = (await import("xlsx")).read(data, { type: "array" });
@@ -616,7 +617,7 @@ export function IncomingUploads({
         }
       } else {
         const { data: recData, error: recError } = await supabase.functions.invoke("recognize-materials", {
-          body: { fileUrl: file.fileUrl, statementId: file.id, organizationId: orgId },
+          body: { fileUrl: await resolveSignedUrl(file.fileUrl, 60 * 30), statementId: file.id, organizationId: orgId },
         });
         if (recError) throw recError;
         const materials = recData?.materials || [];

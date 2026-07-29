@@ -54,8 +54,24 @@ Deno.serve(async (req) => {
         throw new Error(sourceTooLargeError);
       }
 
-      const pdfResponse = await fetch(url);
-      if (!pdfResponse.ok || !pdfResponse.body) throw new Error("Failed to download PDF");
+      let pdfResponse = await fetch(url);
+      if (!pdfResponse.ok || !pdfResponse.body) {
+        // Fallback: file may live in a private bucket and the link expired / is public-form.
+        const m = url.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/([^?]+)/);
+        if (m) {
+          const admin = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+          );
+          let path = m[2];
+          try { path = decodeURIComponent(path); } catch { /* keep raw */ }
+          const { data: signed } = await admin.storage.from(m[1]).createSignedUrl(path, 1800);
+          if (signed?.signedUrl) pdfResponse = await fetch(signed.signedUrl);
+        }
+      }
+      if (!pdfResponse.ok || !pdfResponse.body) {
+        throw new Error(`Не удалось скачать файл (HTTP ${pdfResponse.status}). Ссылка недействительна или файл недоступен.`);
+      }
 
       const lengthHeader = pdfResponse.headers.get("content-length");
       const declaredSize = lengthHeader ? Number(lengthHeader) : null;
