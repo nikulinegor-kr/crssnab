@@ -162,73 +162,15 @@ function findBestMatch(
 
 // ── Excel parsing ──
 
-function parseExcelFile(file: File): Promise<ExtractedRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target!.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-        if (json.length === 0) {
-          resolve([]);
-          return;
-        }
-
-        // Auto-detect column names
-        const cols = Object.keys(json[0]);
-        const findCol = (patterns: string[]): string | null => {
-          for (const col of cols) {
-            const lc = col.toLowerCase();
-            for (const p of patterns) {
-              if (lc.includes(p)) return col;
-            }
-          }
-          return null;
-        };
-
-        const nameCol = findCol(["наименование", "название", "name", "материал", "товар", "позиция"]);
-        const unitCol = findCol(["ед", "unit", "единица", "изм"]);
-        const qtyCol = findCol(["кол", "quantity", "количество"]);
-        const priceCol = findCol(["цена", "price", "стоимость за ед", "цена за ед"]);
-        const totalCol = findCol(["сумма", "стоимость", "total", "итого", "всего"]);
-
-        if (!nameCol) {
-          reject(new Error("Не найден столбец с наименованием"));
-          return;
-        }
-
-        const parseNum = (val: any): number | null => {
-          if (val === null || val === undefined || val === "") return null;
-          if (typeof val === "number") return Number.isFinite(val) ? val : null;
-          const s = String(val).replace(/\s/g, "").replace(",", ".");
-          const n = Number(s);
-          return Number.isFinite(n) ? n : null;
-        };
-
-        const rows: ExtractedRow[] = json
-          .map(row => ({
-            name: String(row[nameCol] || "").trim(),
-            unit: unitCol ? (String(row[unitCol] || "").trim() || null) : null,
-            quantity: qtyCol ? parseNum(row[qtyCol]) : null,
-            price: priceCol ? parseNum(row[priceCol]) : null,
-            total_price: totalCol ? parseNum(row[totalCol]) : null,
-          }))
-          .filter(r => r.name.length > 0);
-
-        console.log(`[parseExcel] Extracted ${rows.length} rows from "${sheetName}"`);
-        resolve(rows);
-      } catch (err) {
-        reject(err);
-      }
-    };
-    reader.onerror = () => reject(new Error("Ошибка чтения файла"));
-    reader.readAsArrayBuffer(file);
-  });
+async function parseExcelFile(file: File): Promise<ExtractedRow[]> {
+  const rows = await parseMaterialsExcelFile(file);
+  console.log(`[parseExcel] Extracted ${rows.length} rows from "${file.name}"`);
+  if (rows.length === 0) {
+    throw new Error("Не найден столбец с наименованием или таблица пуста");
+  }
+  return rows;
 }
+
 
 // ── Component ──
 
