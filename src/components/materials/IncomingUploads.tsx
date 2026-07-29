@@ -525,40 +525,10 @@ export function IncomingUploads({
       if (file.fileType === "xlsx") {
         // Re-fetch file and parse
         const response = await fetch(await resolveSignedUrl(file.fileUrl, 60 * 30));
+        if (!response.ok) throw new Error(`Не удалось скачать файл (HTTP ${response.status})`);
         const arrayBuffer = await response.arrayBuffer();
-        const data = new Uint8Array(arrayBuffer);
-        const workbook = (await import("xlsx")).read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json: any[] = (await import("xlsx")).utils.sheet_to_json(sheet, { defval: "" });
-
-        const cols = Object.keys(json[0] || {});
-        const findCol = (patterns: string[]): string | null => {
-          for (const col of cols) { const lc = col.toLowerCase(); for (const p of patterns) { if (lc.includes(p)) return col; } } return null;
-        };
-        const nameCol = findCol(["наименование", "название", "name", "материал", "товар", "позиция"]);
-        const unitCol = findCol(["ед", "unit", "единица", "изм"]);
-        const qtyCol = findCol(["кол", "quantity", "количество"]);
-        const priceCol = findCol(["цена", "price", "стоимость за ед", "цена за ед"]);
-        const totalCol = findCol(["сумма", "стоимость", "total", "итого", "всего"]);
-        const parseNum = (val: any): number | null => {
-          if (val === null || val === undefined || val === "") return null;
-          if (typeof val === "number") return Number.isFinite(val) ? val : null;
-          const s = String(val).replace(/\s/g, "").replace(",", ".");
-          const n = Number(s);
-          return Number.isFinite(n) ? n : null;
-        };
-        if (nameCol) {
-          extractedRows = json
-            .map(row => ({
-              name: String(row[nameCol] || "").trim(),
-              unit: unitCol ? (String(row[unitCol] || "").trim() || null) : null,
-              quantity: qtyCol ? parseNum(row[qtyCol]) : null,
-              price: priceCol ? parseNum(row[priceCol]) : null,
-              total_price: totalCol ? parseNum(row[totalCol]) : null,
-            }))
-            .filter(r => r.name.length > 0);
-        }
+        extractedRows = parseMaterialsWorkbook(new Uint8Array(arrayBuffer));
+        console.log(`[IncomingUploads] Excel re-parsed: ${extractedRows.length} rows from "${file.fileName}"`);
       } else {
         const { data: recData, error: recError } = await supabase.functions.invoke("recognize-materials", {
           body: { fileUrl: await resolveSignedUrl(file.fileUrl, 60 * 30), statementId: file.id, organizationId: orgId },
