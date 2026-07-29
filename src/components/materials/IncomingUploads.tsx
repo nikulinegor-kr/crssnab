@@ -13,6 +13,8 @@ import { HighlightText } from "@/components/HighlightText";
 import { matchesMaterialSearch } from "@/lib/materialSearch";
 import { resolveSignedUrl } from "@/lib/storageUrl";
 import { findBestParametricMatch } from "@/lib/materialParametricMatch";
+import { parseMaterialsExcelFile, parseMaterialsWorkbook } from "@/lib/parseMaterialsExcel";
+
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
