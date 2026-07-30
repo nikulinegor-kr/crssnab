@@ -14,10 +14,12 @@ import { format, subDays, startOfMonth, isAfter, differenceInDays } from "date-f
 import { ru } from "date-fns/locale";
 
 const PERIOD_OPTIONS = [
-  { value: "today", label: "Сегодня" },
-  { value: "7d", label: "7 дней" },
-  { value: "30d", label: "30 дней" },
+  { value: "today", label: "День" },
+  { value: "2d", label: "2 дня" },
+  { value: "3d", label: "3 дня" },
+  { value: "7d", label: "Неделя" },
   { value: "month", label: "Месяц" },
+  { value: "30d", label: "30 дней" },
   { value: "all", label: "Всё время" },
 ];
 
