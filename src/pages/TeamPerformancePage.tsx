@@ -261,6 +261,10 @@ const TeamPerformancePage = () => {
             </div>
           )}
 
+          <ExecutorDaySummary executorName={selectedExecutor} />
+
+
+
           {/* Status filter */}
           <div className="flex gap-2 flex-wrap">
             <Button
