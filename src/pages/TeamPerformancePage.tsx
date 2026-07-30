@@ -29,7 +29,9 @@ function getPeriodStart(period: string): Date | null {
   const now = new Date();
   switch (period) {
     case "today": return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    case "7d": return subDays(now, 7);
+    case "2d": return subDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1);
+    case "3d": return subDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 2);
+    case "7d": return subDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 6);
     case "30d": return subDays(now, 30);
     case "month": return startOfMonth(now);
     case "all": return null;
