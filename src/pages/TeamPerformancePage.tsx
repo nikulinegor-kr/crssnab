@@ -12,6 +12,7 @@ import { Users, ArrowLeft, FileText, CheckCircle, Clock, AlertTriangle, Trending
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, subDays, startOfMonth, isAfter, differenceInDays } from "date-fns";
 import { ru } from "date-fns/locale";
+import { ExecutorDaySummary } from "@/components/analytics/ExecutorDaySummary";
 
 const PERIOD_OPTIONS = [
   { value: "today", label: "День" },
@@ -259,6 +260,10 @@ const TeamPerformancePage = () => {
               ))}
             </div>
           )}
+
+          <ExecutorDaySummary executorName={selectedExecutor} />
+
+
 
           {/* Status filter */}
           <div className="flex gap-2 flex-wrap">
