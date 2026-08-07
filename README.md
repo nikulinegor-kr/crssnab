@@ -1,73 +1,140 @@
-# Welcome to your Lovable project
+# CRSS CRM
 
-## Project info
+Создай web-приложение под названием  «KR Заявки»
 
-**URL**: https://lovable.dev/projects/03d26285-f32f-457c-bdfe-b9b17be007d2
 
-## How can I edit this code?
 
-There are several ways of editing your application.
 
-**Use Lovable**
+[ОСНОВНАЯ ЦЕЛЬ]
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/03d26285-f32f-457c-bdfe-b9b17be007d2) and start prompting.
 
-Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Внутренний трекер заявок и задач для отдела снабжения, который собирает все обращения клиентов в одно место, позволяет отслеживать этапы обработки, сроки, ответственных и хранить связанную документацию.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Follow these steps:
+
+
+[ЦЕЛЕВАЯ АУДИТОРИЯ]
+
+
+
+
+Руководители и менеджеры по снабжению компаний 25–55 лет, которые работают с большим количеством заявок от клиентов и поставщиков. Им нужно быстро видеть статусы, приоритеты, дедлайны и историю работы по каждой заявке.
+
+
+
+
+[КЛЮЧЕВЫЕ ФУНКЦИИ]
+
+
+
+
+– Регистрация и вход пользователей через email и пароль, с разграничением ролей (руководитель, менеджер).
+– Создание, просмотр, редактирование и изменение статуса заявок (клиент, приоритет, дедлайн, ответственный, прикрепленные файлы).
+– Управление задачами по заявке (подзадачи, чек-лист, исполнитель, сроки, статусы).
+– Поиск и фильтрация по заявкам и задачам (по клиенту, статусу, приоритету, ответственному, дате).
+– Уведомления пользователям о новых заявках, изменении статуса, приближении дедлайна (email / внутри системы).
+– Статистика и отчёты: количество заявок по статусам, исполнителям, просрочкам, динамика за период.
+– История изменений (аудит-лог): кто и что поменял, когда добавил файл или комментарий.
+– Привязка и просмотр файлов (ТЗ, КП, счета, договоры) по заявке.
+
+
+
+
+[ДИЗАЙН СТИЛЬ]
+
+
+
+
+Примени минималистичный, современный dashboard-дизайн с тёмно-синей и светло-серой цветовой гаммой:
+основа — оттенки navy (#1A3C64 и более тёмные/светлые варианты), фон — светло-серый/белый, акценты — жёлтый #E5A100 для приоритетов и важных элементов.
+
+
+
+
+[ТЕХНИЧЕСКИЕ ВОЗМОЖНОСТИ]
+
+
+
+
+– База данных: Supabase для хранения пользователей, заявок, задач, файлов (метаданные), истории действий и настроек.
+– Вход в систему: вход по email и паролю с возможностью усиленной защиты (подтверждение по email / 2FA в будущем).
+– Реальное время: использование возможностей Supabase (real-time) для обновления статусов и списков без перезагрузки страницы.
+
+
+
+
+[СТРУКТУРА СТРАНИЦ]
+	1.	Главная страница (Дашборд):
+– Карточки с общей статистикой: всего заявок, новые сегодня, “Аварийно”, просроченные.
+– График/диаграммы по статусам и исполнителям.
+– Список последних активностей (изменения статусов, новые комментарии, загруженные файлы).
+	2.	Список заявок:
+– Таблица со столбцами: № заявки, клиент, приоритет, статус, ответственный, дедлайн.
+– Фильтры по статусу, приоритету, исполнителю, дате создания.
+– Быстрый поиск по клиенту, номеру заявки, телефону/email.
+– Кнопка создания новой заявки.
+	3.	Страница заявки (карточка):
+– Основной блок: данные клиента, контактная информация, приоритет, статус, дедлайн, ответственный.
+– Блок подзадач: чек-лист задач с исполнителем, сроком и статусом.
+– Таймлайн/лента истории: комментарии, изменения статуса, добавление файлов.
+– Блок файлов: список прикреплённых документов с возможностью скачивания/просмотра.
+	4.	Личный кабинет: настройки и профиль пользователя
+– Изменение имени, email, пароля.
+– Настройки уведомлений (по email, внутри системы).
+– Просмотр своих задач и активности.
+	5.	Дополнительные страницы по необходимости:
+– Страница “Отчёты”: выбор периода и просмотр статистики по заявкам и исполнителям.
+– Страница “Пользователи” (для руководителя): управление ролями и активностью пользователей.
+– Интеграции (например, настройка вебхуков/ключей для связки с Telegram-ботом).
+
+
+
+
+[ОСОБЫЕ ТРЕБОВАНИЯ]
+
+
+
+
+– Работает на телефонах, планшетах и компьютерах (адаптивная вёрстка).
+– Быстро загружается, данные защищены, архитектура позволяет системе расти вместе с бизнесом.
+– Обновления в реальном времени для заявок и задач (без ручного обновления страницы).
+– Поддержка как минимум двух языков (RU/EN) с возможностью расширения.
+– Подключения:
+– базовая интеграция с календарём (экспорт дедлайнов задач),
+– интеграция с Telegram-ботом для уведомлений и создания заявок,
+– сбор базовой статистики посещений и активности пользователей.
+
+
+
+
+[ПОЛЬЗОВАТЕЛЬСКИЙ ОПЫТ]
+
+
+
+
+Сделай интерфейс простым, понятным и быстрым, с акцентом на скорость работы менеджера и прозрачность статусов заявок. Минимум кликов до ключевых действий, удобные фильтры, хорошо читаемые таблицы и понятная цветовая индикация приоритетов и дедлайнов.
+
+This project was built with [Lovable](https://lovable.dev).
+
+**Live app**: https://crssnab.lovable.app
+
+## Build with Lovable
+
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/03d26285-f32f-457c-bdfe-b9b17be007d2).
+
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Development
+
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/03d26285-f32f-457c-bdfe-b9b17be007d2) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
