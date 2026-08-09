@@ -186,10 +186,14 @@ const AgentReport = () => {
         .filter((v) => v && String(v).trim().length > 0)
         .join(", ");
 
+    // Заявка относится ровно к одному отчётному месяцу:
+    // ключевая дата — дата доставки, если её нет — дата отгрузки
+    const anchorDate = (r: any) => r.delivery_date || r.shipment_date || null;
+
     const filtered = (requests || []).filter((r: Request) => {
       if (totalAmount(r) <= 0) return false;
       if (!ALLOWED_STATUSES.has((r as any).status)) return false;
-      return matchesMonth(r.delivery_date) || matchesMonth(r.shipment_date);
+      return matchesMonth(anchorDate(r));
     });
 
     return filtered.map((req: Request, index: number) => ({
