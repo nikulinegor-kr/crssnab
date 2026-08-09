@@ -187,7 +187,7 @@ const AgentReport = () => {
         .join(", ");
 
     // Заявка относится ровно к одному отчётному месяцу:
-    // ключевая дата — дата доставки, если её нет — дата отгрузки
+    // ключевая дата — дата отгрузки, если её нет — дата доставки
     const anchorDate = (r: any) => r.shipment_date || r.delivery_date || null;
 
     const filtered = (requests || []).filter((r: Request) => {
