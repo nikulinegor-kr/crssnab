@@ -187,8 +187,8 @@ const AgentReport = () => {
         .join(", ");
 
     // Заявка относится ровно к одному отчётному месяцу:
-    // ключевая дата — дата доставки, если её нет — дата отгрузки
-    const anchorDate = (r: any) => r.delivery_date || r.shipment_date || null;
+    // ключевая дата — дата отгрузки, если её нет — дата доставки
+    const anchorDate = (r: any) => r.shipment_date || r.delivery_date || null;
 
     const filtered = (requests || []).filter((r: Request) => {
       if (totalAmount(r) <= 0) return false;
@@ -555,7 +555,7 @@ const AgentReport = () => {
           };
           (linkedReqs || []).forEach((r: any) => {
             if (!r.invoice_number) return;
-            const anchor = r.delivery_date || r.shipment_date || null;
+            const anchor = r.shipment_date || r.delivery_date || null;
             if (!ALLOWED_STATUSES.has(r.status) || !inSelectedMonth(anchor)) {
               invalidInvoices.add(normInv(r.invoice_number));
             }
