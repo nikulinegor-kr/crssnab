@@ -2911,6 +2911,50 @@ export type Database = {
         }
         Relationships: []
       }
+      report_inclusions: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          note: string | null
+          organization_id: string
+          period: string
+          request_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          decision?: string
+          id?: string
+          note?: string | null
+          organization_id: string
+          period: string
+          request_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          note?: string | null
+          organization_id?: string
+          period?: string
+          request_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_inclusions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_activities: {
         Row: {
           action: string
@@ -3460,6 +3504,7 @@ export type Database = {
           operation_type: string | null
           order_days: number | null
           organization_id: string | null
+          payment_date: string | null
           payment_percent: number | null
           payment_percentage: number | null
           payment_status: string | null
@@ -3519,6 +3564,7 @@ export type Database = {
           operation_type?: string | null
           order_days?: number | null
           organization_id?: string | null
+          payment_date?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
           payment_status?: string | null
@@ -3578,6 +3624,7 @@ export type Database = {
           operation_type?: string | null
           order_days?: number | null
           organization_id?: string | null
+          payment_date?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
           payment_status?: string | null
