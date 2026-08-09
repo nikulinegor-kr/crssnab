@@ -186,10 +186,14 @@ const AgentReport = () => {
         .filter((v) => v && String(v).trim().length > 0)
         .join(", ");
 
+    // Заявка относится ровно к одному отчётному месяцу:
+    // ключевая дата — дата доставки, если её нет — дата отгрузки
+    const anchorDate = (r: any) => r.delivery_date || r.shipment_date || null;
+
     const filtered = (requests || []).filter((r: Request) => {
       if (totalAmount(r) <= 0) return false;
       if (!ALLOWED_STATUSES.has((r as any).status)) return false;
-      return matchesMonth(r.delivery_date) || matchesMonth(r.shipment_date);
+      return matchesMonth(anchorDate(r));
     });
 
     return filtered.map((req: Request, index: number) => ({
@@ -531,7 +535,7 @@ const AgentReport = () => {
         })) || [];
 
         // === AUTO-CLEANUP: убираем строки, у которых связанная заявка
-        // больше не имеет статус "В пути" или "Доставлено" ===
+        // больше не имеет статус "В пути"/"Доставлено" ИЛИ относится к другому месяцу ===
         const ALLOWED_STATUSES = new Set(["В пути", "Доставлено"]);
         const normInv = (s: string) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
         const invoiceNumbers = existingRaw
@@ -541,11 +545,18 @@ const AgentReport = () => {
         if (invoiceNumbers.length > 0) {
           const { data: linkedReqs } = await supabase
             .from("requests")
-            .select("invoice_number, status")
+            .select("invoice_number, status, shipment_date, delivery_date")
             .eq("organization_id", currentOrgId)
             .in("invoice_number", invoiceNumbers);
+          const inSelectedMonth = (dateStr: string | null) => {
+            if (!dateStr) return false;
+            const [y, m] = dateStr.split("-");
+            return y === selectedYear.toString() && String(parseInt(m, 10)) === selectedMonth.toString();
+          };
           (linkedReqs || []).forEach((r: any) => {
-            if (r.invoice_number && !ALLOWED_STATUSES.has(r.status)) {
+            if (!r.invoice_number) return;
+            const anchor = r.delivery_date || r.shipment_date || null;
+            if (!ALLOWED_STATUSES.has(r.status) || !inSelectedMonth(anchor)) {
               invalidInvoices.add(normInv(r.invoice_number));
             }
           });
@@ -553,7 +564,7 @@ const AgentReport = () => {
         const removedCount = existingRaw.filter(r => r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))).length;
         const existing = existingRaw.filter(r => !(r.invoice_number && invalidInvoices.has(normInv(r.invoice_number))));
         if (removedCount > 0) {
-          console.log(`[UU Report] Auto-removed ${removedCount} row(s) — request status no longer "В пути"/"Доставлено"`);
+          console.log(`[UU Report] Auto-removed ${removedCount} row(s) — статус или отчётный месяц не совпадают`);
         }
 
         // === MERGE-SYNC: дотягиваем недостающие заявки за период ===
