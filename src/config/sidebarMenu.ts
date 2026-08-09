@@ -85,6 +85,7 @@ export const menuGroups: MenuGroup[] = [
     label: "Финансы",
     icon: Wallet,
     items: [
+      { id: "finance-registry", title: "Реестр по периодам", url: "/finance/registry", icon: FileBarChart },
       { id: "agent-report", title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
       { id: "agent-act-report", title: "Акт агента", url: "/agent-act-report", icon: FileBarChart },
       { id: "percent-calculator", title: "Калькулятор %", url: "/percent-calculator", icon: Percent },

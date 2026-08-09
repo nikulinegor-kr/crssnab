@@ -85,6 +85,7 @@ const AnalyticsExecutorsPage = lazyWithRetry(() => import("./pages/analytics/Ana
 const AnalyticsExecutorDetailPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorDetailPage"));
 const AnalyticsRequestsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsRequestsPage"));
 const AnalyticsFinancePage = lazyWithRetry(() => import("./pages/analytics/AnalyticsFinancePage"));
+const RequestsRegistryPage = lazyWithRetry(() => import("./pages/finance/RequestsRegistryPage"));
 const AnalyticsObjectsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsObjectsPage"));
 const AnalyticsLogisticsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsLogisticsPage"));
 const AnalyticsAiPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsAiPage"));
@@ -400,6 +401,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <AnalyticsFinancePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/finance/registry"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RequestsRegistryPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
