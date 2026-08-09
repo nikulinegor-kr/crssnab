@@ -405,6 +405,16 @@ const App = () => {
               }
             />
             <Route
+              path="/finance/registry"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RequestsRegistryPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/analytics/objects"
               element={
                 <ProtectedRoute>
