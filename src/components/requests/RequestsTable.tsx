@@ -526,7 +526,16 @@ export const RequestsTable = ({
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
-        <div className="flex justify-end pb-1">
+        <div className="flex justify-end gap-1 pb-1">
+          <Toggle
+            pressed={groupByProject}
+            onPressedChange={toggleGroupByProject}
+            size="sm"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            По проектам
+          </Toggle>
           <Toggle
             pressed={groupByObject}
             onPressedChange={toggleGroupByObject}
@@ -537,7 +546,52 @@ export const RequestsTable = ({
             По объектам
           </Toggle>
         </div>
-        {groupByObject && groupedRequests ? (
+        {groupByProject && projectGroups ? (
+          <>
+            {projectGroups.list.map((g) => {
+              const open = expandedProjects.has(g.key);
+              const s = summarizeGroup(g.items);
+              return (
+                <div key={g.key} className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleProject(g.key)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
+                  >
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+                    <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                    <span className="truncate">{g.name}</span>
+                    <span className="ml-auto text-muted-foreground font-normal">
+                      {s.total} · {moneyShort(s.amount)}
+                    </span>
+                  </button>
+                  {open && g.items.map((request) => (
+                    <MobileRequestCard
+                      key={request.id}
+                      request={request}
+                      isSelected={selectedRequestIds.has(request.id)}
+                      onToggleSelection={() => toggleRequestSelection(request.id)}
+                      onRowClick={(e) => handleRowClick(request, e)}
+                      onDelete={(e) => onDeleteClick(request, e)}
+                      searchQuery={searchQuery}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+            {projectGroups.loose.map((request) => (
+              <MobileRequestCard
+                key={request.id}
+                request={request}
+                isSelected={selectedRequestIds.has(request.id)}
+                onToggleSelection={() => toggleRequestSelection(request.id)}
+                onRowClick={(e) => handleRowClick(request, e)}
+                onDelete={(e) => onDeleteClick(request, e)}
+                searchQuery={searchQuery}
+              />
+            ))}
+          </>
+        ) : groupByObject && groupedRequests ? (
           groupedRequests.map((g) => {
             const collapsed = collapsedGroups.has(g.key);
             return (
