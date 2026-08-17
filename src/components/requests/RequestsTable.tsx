@@ -365,8 +365,16 @@ export const RequestsTable = ({
 
     return [...requests].sort((a, b) => {
       const { field, direction } = sortConfig;
-      let aVal = a[field];
-      let bVal = b[field];
+      let aVal: any;
+      let bVal: any;
+
+      if (field === "object") {
+        aVal = (a as any).object_name;
+        bVal = (b as any).object_name;
+      } else {
+        aVal = a[field];
+        bVal = b[field];
+      }
 
       // Handle null/undefined
       if (aVal == null && bVal == null) return 0;
