@@ -81,6 +81,7 @@ const requestSchema = z.object({
     .max(200, "Максимум 200 символов")
     .optional(),
   object_id: z.string().optional(),
+  parent_request_id: z.string().optional(),
   estimated_delivery_days: z.number()
     .min(0, "Не может быть отрицательным")
     .optional()
@@ -150,6 +151,7 @@ interface InitialRequestData {
   applicant?: string;
   executor?: string;
   object_id?: string;
+  parent_request_id?: string;
   estimated_delivery_days?: number | null;
   order_days?: number | null;
   availability_delivery_time?: string;
@@ -341,6 +343,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       applicant: initialData?.applicant || "",
       executor: initialData?.executor || "",
       object_id: initialData?.object_id || "",
+      parent_request_id: (initialData as any)?.parent_request_id || "",
       estimated_delivery_days: initialData?.estimated_delivery_days ?? null,
       order_days: initialData?.order_days ?? null,
       availability_delivery_time: initialData?.availability_delivery_time || "",
@@ -513,6 +516,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         applicant_user_id: isCurrentUserApplicant ? user.id : null,
         executor: data.executor || null,
         object_id: data.object_id || null,
+        parent_request_id: data.parent_request_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
@@ -718,6 +722,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           form={form}
           objectsData={objectsData}
           currentOrgId={currentOrgId}
+          showProjectField
         />
 
         {/* 5. Status & Responsibles */}

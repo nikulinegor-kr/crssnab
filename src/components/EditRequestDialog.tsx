@@ -85,6 +85,7 @@ const requestSchema = z.object({
     .max(200, "Максимум 200 символов")
     .optional(),
   object_id: z.string().optional(),
+  parent_request_id: z.string().optional(),
   estimated_delivery_days: z.number()
     .min(0, "Не может быть отрицательным")
     .optional()
@@ -305,6 +306,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       applicant: "",
       executor: "",
       object_id: "",
+      parent_request_id: "",
       estimated_delivery_days: null,
       order_days: null,
       availability_delivery_time: "",
@@ -343,6 +345,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       applicant: request.applicant || "",
       executor: request.executor || "",
       object_id: request.object_id || "",
+      parent_request_id: (request as any).parent_request_id || "",
       estimated_delivery_days: request.estimated_delivery_days,
       order_days: (request as any).order_days ?? null,
       availability_delivery_time: request.availability_delivery_time || "",
@@ -404,6 +407,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         applicant: request.applicant || "",
         executor: request.executor || "",
         object_id: request.object_id || "",
+        parent_request_id: (request as any).parent_request_id || "",
         estimated_delivery_days: request.estimated_delivery_days,
       order_days: (request as any).order_days ?? null,
         availability_delivery_time: request.availability_delivery_time || "",
@@ -506,6 +510,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         applicant: data.applicant,
         executor: data.executor || null,
         object_id: data.object_id || null,
+        parent_request_id: data.parent_request_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
@@ -724,6 +729,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         applicant: data.applicant,
         executor: data.executor || null,
         object_id: data.object_id || null,
+        parent_request_id: data.parent_request_id || null,
         estimated_delivery_days: data.estimated_delivery_days || null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
@@ -1066,6 +1072,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
         {/* 3. Core Params: Date, Object */}
         <CoreParamsSection
+          showProjectField
           form={form}
           objectsData={objectsData}
           currentOrgId={request?.organization_id || null}

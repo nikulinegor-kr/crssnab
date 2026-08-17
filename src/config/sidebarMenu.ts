@@ -46,6 +46,7 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { id: "dashboard", title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { id: "requests", title: "Заявки", url: "/requests", icon: FileText },
+      { id: "projects", title: "Проекты", url: "/projects", icon: FolderOpen },
       { id: "board", title: "Доска", url: "/board", icon: KanbanSquare },
     ],
   },
