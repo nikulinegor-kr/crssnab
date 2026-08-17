@@ -854,8 +854,42 @@ export const RequestsTable = ({
                     </TableRow>
                   );
                 }
+                if (it.kind === "project") {
+                  const s = summarizeGroup(it.items);
+                  const open = expandedProjects.has(it.key);
+                  return (
+                    <TableRow
+                      key={`prj-${it.key}`}
+                      className="bg-primary/5 hover:bg-primary/10 cursor-pointer border-y-2 border-primary/30"
+                      onClick={() => toggleProject(it.key)}
+                    >
+                      <TableCell colSpan={100} className="px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                          <ChevronDown className={`h-4 w-4 transition-transform ${open ? '' : '-rotate-90'}`} />
+                          <FolderOpen className="h-4 w-4 text-primary" />
+                          <span className="font-semibold text-foreground">{it.name}</span>
+                          <Badge variant="outline" className="text-[10px]">{s.computedStatus}</Badge>
+                          <span className="text-muted-foreground">📦 {s.total}</span>
+                          <span className="text-muted-foreground">🏢 {s.suppliers}</span>
+                          <span className="text-muted-foreground">🧾 {s.invoices}</span>
+                          {s.inTransit > 0 && <span className="text-blue-600">🚛 {s.inTransit} в пути</span>}
+                          {s.delivered > 0 && <span className="text-emerald-600">✓ {s.delivered} доставлено</span>}
+                          {s.overdue > 0 && <span className="text-red-600 font-medium">⏰ {s.overdue} просрочено</span>}
+                          <span className="text-muted-foreground">📈 {s.progress}%</span>
+                          <span className="ml-auto font-semibold text-foreground font-numeric tabular-nums">
+                            {moneyShort(s.amount)}
+                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                              оплачено {moneyShort(s.paid)}
+                            </span>
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
                 const request = it.request;
                 const index = it.index;
+                const isChildRow = it.child === true;
                 const priorityColor = request.priority === "Аварийно"
                   ? "#ef4444"
                   : request.priority === "Приоритетно"
