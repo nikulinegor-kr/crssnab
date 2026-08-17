@@ -604,6 +604,33 @@ export const RequestsBulkActions = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Project (parent request) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3" disabled={isSending}>
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">В проект</span>
+                  <span className="sm:hidden">Проект</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                <DropdownMenuItem onClick={() => setCreateProjectOpen(true)}>
+                  <Plus className="mr-2 h-3.5 w-3.5" /> Новый проект…
+                </DropdownMenuItem>
+                {projectOptions.map((p) => (
+                  <DropdownMenuItem key={p.id} onClick={() => handleAttachToProject(p.id)}>
+                    {p.description || p.request_number}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem onClick={() => handleAttachToProject(null)}>
+                  <X className="mr-2 h-3.5 w-3.5" /> Убрать из проекта
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+
+
             {/* Export Selected */}
             <ExcelExportButton
               requests={requests || []}
