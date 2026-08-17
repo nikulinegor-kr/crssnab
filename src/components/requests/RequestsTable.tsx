@@ -186,6 +186,16 @@ const MobileRequestCard = memo(({
           <HighlightText text={request.description} searchQuery={searchQuery} />
         </div>
 
+        {/* Object */}
+        {(request as any).object_name && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
+            </span>
+          </div>
+        )}
+
         {/* Compact info row */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
           {request.contractor && (
