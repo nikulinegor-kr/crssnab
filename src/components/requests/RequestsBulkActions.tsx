@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft, CreditCard, AlertTriangle } from "lucide-react";
+import { Plus, Send, Trash2, Truck, ArchiveRestore, ShoppingCart, CheckCircle, Flag, UserPlus, X, ChevronDown, MapPin, ArrowRightLeft, CreditCard, AlertTriangle, FolderOpen } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useCreateProcurement } from "@/hooks/useProcurements";
+import { useProjectOptions, useAttachRequestsToProject } from "@/hooks/useProjects";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 
 interface RequestsBulkActionsProps {
   requests: Request[] | undefined;
@@ -62,6 +64,23 @@ export const RequestsBulkActions = ({
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [hardDeleteOpen, setHardDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const { data: projectOptions = [] } = useProjectOptions();
+  const attachToProject = useAttachRequestsToProject();
+
+  const handleAttachToProject = async (projectId: string | null) => {
+    if (selectedRequestIds.size === 0) return;
+    try {
+      await attachToProject.mutateAsync({ projectId, requestIds: Array.from(selectedRequestIds) });
+      toast({
+        title: projectId ? "Заявки добавлены в проект" : "Заявки убраны из проекта",
+        description: `Заявок: ${selectedRequestIds.size}`,
+      });
+      setSelectedRequestIds(new Set());
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleHardDelete = async () => {
     if (selectedRequestIds.size === 0) return;
@@ -736,6 +755,7 @@ export const RequestsBulkActions = ({
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
       <BulkTransferObjectDialog
         open={transferDialogOpen}
         onOpenChange={setTransferDialogOpen}
