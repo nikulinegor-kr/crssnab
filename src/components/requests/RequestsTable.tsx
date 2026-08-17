@@ -1021,6 +1021,17 @@ export const RequestsTable = ({
                       </div>
                     </TableCell>
                   )}
+                  {visibility.object && (
+                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.object, minWidth: widths.object, maxWidth: widths.object }}>
+                      {(request as any).object_name ? (
+                        <div className="line-clamp-2 leading-snug text-foreground" title={(request as any).object_name}>
+                          <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                      )}
+                    </TableCell>
+                  )}
                   {visibility.priority && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority, minWidth: widths.priority, maxWidth: widths.priority }}>
                       <InlineEditCell
