@@ -390,10 +390,11 @@ export const RequestsTable = ({
   }, [openQuickView, clickTimer]);
 
   // Pagination calculations — disabled in grouped mode (show all)
+  const grouped = groupByObject || groupByProject;
   const totalItems = sortedRequests?.length || 0;
-  const effectivePageSize = groupByObject ? Math.max(totalItems, 1) : pageSize;
-  const totalPages = groupByObject ? 1 : Math.ceil(totalItems / pageSize);
-  const startIndex = groupByObject ? 0 : (currentPage - 1) * pageSize;
+  const effectivePageSize = grouped ? Math.max(totalItems, 1) : pageSize;
+  const totalPages = grouped ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
@@ -409,6 +410,22 @@ export const RequestsTable = ({
     }
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }, [groupByObject, paginatedRequests]);
+
+  // Group by project (родительская заявка)
+  const projectGroups = useMemo(() => {
+    if (!groupByProject) return null;
+    const groups = new Map<string, { key: string; name: string; items: typeof paginatedRequests }>();
+    const loose: typeof paginatedRequests = [];
+    for (const r of paginatedRequests) {
+      const pid = (r as any).parent_request_id as string | null;
+      if (!pid) { loose.push(r); continue; }
+      const name = projectNames.get(pid) || "Проект";
+      if (!groups.has(pid)) groups.set(pid, { key: pid, name, items: [] });
+      groups.get(pid)!.items.push(r);
+    }
+    const list = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    return { list, loose };
+  }, [groupByProject, paginatedRequests, projectNames]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
