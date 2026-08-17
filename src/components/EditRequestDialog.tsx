@@ -408,7 +408,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: request.executor || "",
         object_id: request.object_id || "",
         parent_request_id: (request as any).parent_request_id || "",
-      parent_request_id: (request as any).parent_request_id || "",
         estimated_delivery_days: request.estimated_delivery_days,
       order_days: (request as any).order_days ?? null,
         availability_delivery_time: request.availability_delivery_time || "",
