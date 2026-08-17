@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -46,6 +46,40 @@ import { InlineExecutorCell } from "./InlineExecutorCell";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
+import { useProjectOptions } from "@/hooks/useProjects";
+
+const moneyShort = (n: number) =>
+  new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
+
+const DELIVERED_ST = ["Доставлено", "Выполнено", "Завершено"];
+const TRANSIT_ST = ["В пути", "Доставлено в ТК", "Отгружено"];
+
+function summarizeGroup(items: any[]) {
+  const now = new Date();
+  const suppliers = new Set<string>();
+  let amount = 0, paid = 0, invoices = 0, delivered = 0, inTransit = 0, overdue = 0, emergency = 0;
+  for (const r of items) {
+    const total = (Number(r.amount) || 0) + (Number(r.amount_2) || 0) + (Number(r.amount_3) || 0);
+    amount += total;
+    paid += (total * (Number(r.payment_percent) || 0)) / 100;
+    invoices += [r.invoice_number, r.invoice_number_2, r.invoice_number_3].filter((v: any) => v && String(v).trim()).length;
+    if (r.contractor?.trim()) suppliers.add(r.contractor.trim().toLowerCase());
+    const isDelivered = DELIVERED_ST.includes(r.status);
+    if (isDelivered) delivered += 1;
+    else if (TRANSIT_ST.includes(r.status)) inTransit += 1;
+    if (!isDelivered && r.delivery_date && new Date(r.delivery_date) < now) overdue += 1;
+    if (r.priority === "Аварийно") emergency += 1;
+  }
+  const total = items.length;
+  const progress = total ? Math.round((delivered / total) * 100) : 0;
+  let computedStatus = "В работе";
+  if (!total) computedStatus = "Нет заявок";
+  else if (delivered === total) computedStatus = "Проект завершён";
+  else if (emergency > 0) computedStatus = "Аварийная ситуация";
+  else if (inTransit > 0) computedStatus = "В пути";
+  else if (paid < amount - 0.5) computedStatus = "Ожидает оплаты";
+  return { total, suppliers: suppliers.size, invoices, amount, paid, unpaid: Math.max(amount - paid, 0), delivered, inTransit, overdue, emergency, progress, computedStatus };
+}
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -240,6 +274,10 @@ export const RequestsTable = ({
   const toggleGroupByObject = useCallback((v: boolean) => {
     setGroupByObject(v);
     localStorage.setItem("requests-group-by-object", v ? "1" : "0");
+    if (v) {
+      setGroupByProject(false);
+      localStorage.setItem("requests-group-by-project", "0");
+    }
   }, []);
   const toggleGroup = useCallback((key: string) => {
     setCollapsedGroups((prev) => {
@@ -248,6 +286,33 @@ export const RequestsTable = ({
       return next;
     });
   }, []);
+
+  // Group by project (родительская заявка → дочерние)
+  const [groupByProject, setGroupByProject] = useState<boolean>(() => {
+    return localStorage.getItem("requests-group-by-project") === "1";
+  });
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const toggleGroupByProject = useCallback((v: boolean) => {
+    setGroupByProject(v);
+    localStorage.setItem("requests-group-by-project", v ? "1" : "0");
+    if (v) {
+      setGroupByObject(false);
+      localStorage.setItem("requests-group-by-object", "0");
+    }
+  }, []);
+  const toggleProject = useCallback((key: string) => {
+    setExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+  const { data: projectOptions = [] } = useProjectOptions();
+  const projectNames = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of projectOptions) m.set(p.id, p.description || p.request_number);
+    return m;
+  }, [projectOptions]);
 
   // Shipments tree expansion (moved above early returns to satisfy hooks rules)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -358,10 +423,11 @@ export const RequestsTable = ({
   }, [openQuickView, clickTimer]);
 
   // Pagination calculations — disabled in grouped mode (show all)
+  const grouped = groupByObject || groupByProject;
   const totalItems = sortedRequests?.length || 0;
-  const effectivePageSize = groupByObject ? Math.max(totalItems, 1) : pageSize;
-  const totalPages = groupByObject ? 1 : Math.ceil(totalItems / pageSize);
-  const startIndex = groupByObject ? 0 : (currentPage - 1) * pageSize;
+  const effectivePageSize = grouped ? Math.max(totalItems, 1) : pageSize;
+  const totalPages = grouped ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
@@ -377,6 +443,22 @@ export const RequestsTable = ({
     }
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
   }, [groupByObject, paginatedRequests]);
+
+  // Group by project (родительская заявка)
+  const projectGroups = useMemo(() => {
+    if (!groupByProject) return null;
+    const groups = new Map<string, { key: string; name: string; items: typeof paginatedRequests }>();
+    const loose: typeof paginatedRequests = [];
+    for (const r of paginatedRequests) {
+      const pid = (r as any).parent_request_id as string | null;
+      if (!pid) { loose.push(r); continue; }
+      const name = projectNames.get(pid) || "Проект";
+      if (!groups.has(pid)) groups.set(pid, { key: pid, name, items: [] });
+      groups.get(pid)!.items.push(r);
+    }
+    const list = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    return { list, loose };
+  }, [groupByProject, paginatedRequests, projectNames]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
@@ -477,7 +559,16 @@ export const RequestsTable = ({
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
-        <div className="flex justify-end pb-1">
+        <div className="flex justify-end gap-1 pb-1">
+          <Toggle
+            pressed={groupByProject}
+            onPressedChange={toggleGroupByProject}
+            size="sm"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            По проектам
+          </Toggle>
           <Toggle
             pressed={groupByObject}
             onPressedChange={toggleGroupByObject}
@@ -488,7 +579,52 @@ export const RequestsTable = ({
             По объектам
           </Toggle>
         </div>
-        {groupByObject && groupedRequests ? (
+        {groupByProject && projectGroups ? (
+          <>
+            {projectGroups.list.map((g) => {
+              const open = expandedProjects.has(g.key);
+              const s = summarizeGroup(g.items);
+              return (
+                <div key={g.key} className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleProject(g.key)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
+                  >
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+                    <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                    <span className="truncate">{g.name}</span>
+                    <span className="ml-auto text-muted-foreground font-normal">
+                      {s.total} · {moneyShort(s.amount)}
+                    </span>
+                  </button>
+                  {open && g.items.map((request) => (
+                    <MobileRequestCard
+                      key={request.id}
+                      request={request}
+                      isSelected={selectedRequestIds.has(request.id)}
+                      onToggleSelection={() => toggleRequestSelection(request.id)}
+                      onRowClick={(e) => handleRowClick(request, e)}
+                      onDelete={(e) => onDeleteClick(request, e)}
+                      searchQuery={searchQuery}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+            {projectGroups.loose.map((request) => (
+              <MobileRequestCard
+                key={request.id}
+                request={request}
+                isSelected={selectedRequestIds.has(request.id)}
+                onToggleSelection={() => toggleRequestSelection(request.id)}
+                onRowClick={(e) => handleRowClick(request, e)}
+                onDelete={(e) => onDeleteClick(request, e)}
+                searchQuery={searchQuery}
+              />
+            ))}
+          </>
+        ) : groupByObject && groupedRequests ? (
           groupedRequests.map((g) => {
             const collapsed = collapsedGroups.has(g.key);
             return (
@@ -530,12 +666,22 @@ export const RequestsTable = ({
             />
           ))
         )}
-        {!groupByObject && <PaginationControls />}
+        {!grouped && <PaginationControls />}
       </div>
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
         <div className="flex items-center justify-end gap-2 mb-2">
+          <Toggle
+            pressed={groupByProject}
+            onPressedChange={toggleGroupByProject}
+            size="sm"
+            aria-label="Группировать по проектам"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Проекты
+          </Toggle>
           <Toggle
             pressed={groupByObject}
             onPressedChange={toggleGroupByObject}
@@ -631,9 +777,25 @@ export const RequestsTable = ({
             {(() => {
               type Item =
                 | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
-                | { kind: "row"; request: typeof paginatedRequests[number]; index: number };
+                | { kind: "project"; key: string; name: string; items: typeof paginatedRequests }
+                | { kind: "row"; request: typeof paginatedRequests[number]; index: number; child?: boolean };
               const items: Item[] = [];
-              if (groupByObject && groupedRequests) {
+              if (groupByProject && projectGroups) {
+                let idx = 0;
+                for (const g of projectGroups.list) {
+                  items.push({ kind: "project", key: g.key, name: g.name, items: g.items });
+                  if (expandedProjects.has(g.key)) {
+                    for (const r of g.items) {
+                      items.push({ kind: "row", request: r, index: idx++, child: true });
+                    }
+                  } else {
+                    idx += g.items.length;
+                  }
+                }
+                for (const r of projectGroups.loose) {
+                  items.push({ kind: "row", request: r, index: idx++ });
+                }
+              } else if (groupByObject && groupedRequests) {
                 let idx = 0;
                 for (const g of groupedRequests) {
                   items.push({ kind: "group", key: g.key, name: g.name, items: g.items });
@@ -692,8 +854,42 @@ export const RequestsTable = ({
                     </TableRow>
                   );
                 }
+                if (it.kind === "project") {
+                  const s = summarizeGroup(it.items);
+                  const open = expandedProjects.has(it.key);
+                  return (
+                    <TableRow
+                      key={`prj-${it.key}`}
+                      className="bg-primary/5 hover:bg-primary/10 cursor-pointer border-y-2 border-primary/30"
+                      onClick={() => toggleProject(it.key)}
+                    >
+                      <TableCell colSpan={100} className="px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                          <ChevronDown className={`h-4 w-4 transition-transform ${open ? '' : '-rotate-90'}`} />
+                          <FolderOpen className="h-4 w-4 text-primary" />
+                          <span className="font-semibold text-foreground">{it.name}</span>
+                          <Badge variant="outline" className="text-[10px]">{s.computedStatus}</Badge>
+                          <span className="text-muted-foreground">📦 {s.total}</span>
+                          <span className="text-muted-foreground">🏢 {s.suppliers}</span>
+                          <span className="text-muted-foreground">🧾 {s.invoices}</span>
+                          {s.inTransit > 0 && <span className="text-blue-600">🚛 {s.inTransit} в пути</span>}
+                          {s.delivered > 0 && <span className="text-emerald-600">✓ {s.delivered} доставлено</span>}
+                          {s.overdue > 0 && <span className="text-red-600 font-medium">⏰ {s.overdue} просрочено</span>}
+                          <span className="text-muted-foreground">📈 {s.progress}%</span>
+                          <span className="ml-auto font-semibold text-foreground font-numeric tabular-nums">
+                            {moneyShort(s.amount)}
+                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                              оплачено {moneyShort(s.paid)}
+                            </span>
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
                 const request = it.request;
                 const index = it.index;
+                const isChildRow = it.child === true;
                 const priorityColor = request.priority === "Аварийно"
                   ? "#ef4444"
                   : request.priority === "Приоритетно"
@@ -706,7 +902,7 @@ export const RequestsTable = ({
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''}`}
+                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: '40px' }}
@@ -1110,7 +1306,7 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
-        {!groupByObject && <PaginationControls />}
+        {!grouped && <PaginationControls />}
         </div>
       </div>
       </div>
