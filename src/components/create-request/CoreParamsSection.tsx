@@ -13,13 +13,23 @@ import { Label } from "@/components/ui/label";
 import { ObjectSelectWithAdd } from "@/components/ObjectSelectWithAdd";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { FormSectionCard } from "./FormSectionCard";
-import { CalendarDays, Wrench } from "lucide-react";
+import { CalendarDays, Wrench, FolderOpen } from "lucide-react";
+import { useProjectOptions } from "@/hooks/useProjects";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CoreParamsSectionProps {
   form: UseFormReturn<any>;
   objectsData: Array<{ id: string; name: string }> | undefined;
   currentOrgId: string | null;
   disabled?: boolean;
+  /** Показывать выбор проекта (родительской заявки) */
+  showProjectField?: boolean;
 }
 
 export const CoreParamsSection = ({
@@ -27,7 +37,9 @@ export const CoreParamsSection = ({
   objectsData,
   currentOrgId,
   disabled = false,
+  showProjectField = false,
 }: CoreParamsSectionProps) => {
+  const { data: projectOptions = [] } = useProjectOptions();
   const objectId = form.watch("object_id");
   const currentEquipmentId = form.watch("equipment_id");
   const [repairPurpose, setRepairPurpose] = useState<string>(
@@ -98,6 +110,43 @@ export const CoreParamsSection = ({
           )}
         />
       </div>
+
+      {showProjectField && (
+        <div className="mt-3">
+          <FormField
+            control={form.control}
+            name="parent_request_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1 text-xs">
+                  <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                  Проект
+                </FormLabel>
+                <Select
+                  value={field.value || "none"}
+                  onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                  disabled={disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Самостоятельная заявка" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Самостоятельная заявка</SelectItem>
+                    {projectOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.description || p.request_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
 
       {isRepairObject && (
         <div className="mt-3 space-y-3">
