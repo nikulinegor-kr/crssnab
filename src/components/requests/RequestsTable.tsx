@@ -673,6 +673,16 @@ export const RequestsTable = ({
       <div className="hidden lg:block">
         <div className="flex items-center justify-end gap-2 mb-2">
           <Toggle
+            pressed={groupByProject}
+            onPressedChange={toggleGroupByProject}
+            size="sm"
+            aria-label="Группировать по проектам"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Проекты
+          </Toggle>
+          <Toggle
             pressed={groupByObject}
             onPressedChange={toggleGroupByObject}
             size="sm"
