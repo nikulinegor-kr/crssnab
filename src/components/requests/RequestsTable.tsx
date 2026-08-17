@@ -46,6 +46,7 @@ import { InlineExecutorCell } from "./InlineExecutorCell";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
+import { useProjectOptions } from "@/hooks/useProjects";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
