@@ -43,16 +43,16 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
   const { data: items = [], isLoading } = useShipmentItems(open ? shipment.id : null);
 
   return (
-    <div className="border-b border-border/40 last:border-b-0">
+    <div className="rounded-md border bg-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 py-1.5 px-2 hover:bg-muted/40 text-left"
+        className="w-full flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 px-2 hover:bg-muted/40 text-left rounded-md"
       >
         <ChevronDown
-          className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
+          className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
         />
-        <TypeIcon type={shipment.transport_type} className="h-3.5 w-3.5 text-primary" />
+        <TypeIcon type={shipment.transport_type} className="h-3.5 w-3.5 shrink-0 text-primary" />
         <span className="text-xs font-semibold">Машина №{shipment.sequence_number}</span>
         {shipment.vehicle_number && (
           <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0">
@@ -60,14 +60,14 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
           </Badge>
         )}
         {shipment.transport_company && (
-          <span className="text-[11px] text-muted-foreground truncate">
+          <span className="text-[11px] text-muted-foreground truncate max-w-[180px]">
             {shipment.transport_company}
           </span>
         )}
         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusBadgeClass(shipment.status)}`}>
           {shipment.status}
         </Badge>
-        <div className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           {shipment.load_date && (
             <span>Отправка: <span className="text-foreground">{fmt(shipment.load_date)}</span></span>
           )}
@@ -86,7 +86,7 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
       </button>
 
       {open && (
-        <div className="pl-10 pr-3 py-1.5 bg-muted/20 border-t border-border/30">
+        <div className="pl-8 pr-3 py-1.5 bg-muted/20 border-t border-border/30 rounded-b-md">
           {isLoading ? (
             <div className="text-[11px] text-muted-foreground">Загрузка материалов…</div>
           ) : items.length === 0 ? (
@@ -128,13 +128,16 @@ export function RequestShipmentsTree({ requestId }: { requestId: string }) {
   }
 
   return (
-    <div className="bg-muted/20 border-l-4 border-primary/40">
-      {shipments.map((s) => (
-        <ShipmentRow key={s.id} shipment={s} />
-      ))}
+    <div className="bg-muted/20 border-l-4 border-primary/40 py-2 px-3">
+      <div className="max-w-3xl space-y-1.5">
+        {shipments.map((s) => (
+          <ShipmentRow key={s.id} shipment={s} />
+        ))}
+      </div>
     </div>
   );
 }
+
 
 /** Progress chip: X/Y машин прибыло */
 export function ShipmentsProgressChip({
