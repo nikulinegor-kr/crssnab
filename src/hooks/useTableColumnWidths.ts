@@ -7,6 +7,7 @@ export interface ColumnWidths {
   row_number: number;
   request_date: number;
   description: number;
+  object: number;
   priority: number;
   status: number;
   availability: number;
@@ -29,7 +30,8 @@ export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   checkbox: 40,
   row_number: 36,
   request_date: 90,
-  description: 250,
+  description: 220,
+  object: 140,
   priority: 110,
   status: 130,
   availability: 100,

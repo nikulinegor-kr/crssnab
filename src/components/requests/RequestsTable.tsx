@@ -88,6 +88,7 @@ const SORT_STORAGE_KEY = "requests-sort";
 type SortField = 
   | "request_date" 
   | "description" 
+  | "object"
   | "priority" 
   | "status" 
   | "contractor" 
@@ -184,6 +185,16 @@ const MobileRequestCard = memo(({
         <div className="font-medium text-xs leading-tight line-clamp-2">
           <HighlightText text={request.description} searchQuery={searchQuery} />
         </div>
+
+        {/* Object */}
+        {(request as any).object_name && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
+            </span>
+          </div>
+        )}
 
         {/* Compact info row */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
@@ -364,8 +375,16 @@ export const RequestsTable = ({
 
     return [...requests].sort((a, b) => {
       const { field, direction } = sortConfig;
-      let aVal = a[field];
-      let bVal = b[field];
+      let aVal: any;
+      let bVal: any;
+
+      if (field === "object") {
+        aVal = (a as any).object_name;
+        bVal = (b as any).object_name;
+      } else {
+        aVal = a[field];
+        bVal = b[field];
+      }
 
       // Handle null/undefined
       if (aVal == null && bVal == null) return 0;
@@ -720,6 +739,9 @@ export const RequestsTable = ({
               {visibility.description && (
                 <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
               )}
+              {visibility.object && (
+                <ResizableTableHeader column="object" label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
+              )}
               {visibility.priority && (
                 <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
               )}
@@ -1007,6 +1029,17 @@ export const RequestsTable = ({
                           <Eye className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-primary" />
                         </button>
                       </div>
+                    </TableCell>
+                  )}
+                  {visibility.object && (
+                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.object, minWidth: widths.object, maxWidth: widths.object }}>
+                      {(request as any).object_name ? (
+                        <div className="line-clamp-2 leading-snug text-foreground" title={(request as any).object_name}>
+                          <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
+                        </div>
+                      ) : (
+                        <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                      )}
                     </TableCell>
                   )}
                   {visibility.priority && (
