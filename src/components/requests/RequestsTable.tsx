@@ -240,6 +240,10 @@ export const RequestsTable = ({
   const toggleGroupByObject = useCallback((v: boolean) => {
     setGroupByObject(v);
     localStorage.setItem("requests-group-by-object", v ? "1" : "0");
+    if (v) {
+      setGroupByProject(false);
+      localStorage.setItem("requests-group-by-project", "0");
+    }
   }, []);
   const toggleGroup = useCallback((key: string) => {
     setCollapsedGroups((prev) => {
@@ -248,6 +252,33 @@ export const RequestsTable = ({
       return next;
     });
   }, []);
+
+  // Group by project (родительская заявка → дочерние)
+  const [groupByProject, setGroupByProject] = useState<boolean>(() => {
+    return localStorage.getItem("requests-group-by-project") === "1";
+  });
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const toggleGroupByProject = useCallback((v: boolean) => {
+    setGroupByProject(v);
+    localStorage.setItem("requests-group-by-project", v ? "1" : "0");
+    if (v) {
+      setGroupByObject(false);
+      localStorage.setItem("requests-group-by-object", "0");
+    }
+  }, []);
+  const toggleProject = useCallback((key: string) => {
+    setExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+  const { data: projectOptions = [] } = useProjectOptions();
+  const projectNames = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of projectOptions) m.set(p.id, p.description || p.request_number);
+    return m;
+  }, [projectOptions]);
 
   // Shipments tree expansion (moved above early returns to satisfy hooks rules)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
