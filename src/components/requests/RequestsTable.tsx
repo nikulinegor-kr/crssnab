@@ -42,6 +42,7 @@ import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
 import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
+import { InlineObjectCell } from "./InlineObjectCell";
 import { InlineExecutorCell } from "./InlineExecutorCell";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
