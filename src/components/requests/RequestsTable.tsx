@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -47,6 +47,39 @@ import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
+
+const moneyShort = (n: number) =>
+  new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
+
+const DELIVERED_ST = ["Доставлено", "Выполнено", "Завершено"];
+const TRANSIT_ST = ["В пути", "Доставлено в ТК", "Отгружено"];
+
+function summarizeGroup(items: any[]) {
+  const now = new Date();
+  const suppliers = new Set<string>();
+  let amount = 0, paid = 0, invoices = 0, delivered = 0, inTransit = 0, overdue = 0, emergency = 0;
+  for (const r of items) {
+    const total = (Number(r.amount) || 0) + (Number(r.amount_2) || 0) + (Number(r.amount_3) || 0);
+    amount += total;
+    paid += (total * (Number(r.payment_percent) || 0)) / 100;
+    invoices += [r.invoice_number, r.invoice_number_2, r.invoice_number_3].filter((v: any) => v && String(v).trim()).length;
+    if (r.contractor?.trim()) suppliers.add(r.contractor.trim().toLowerCase());
+    const isDelivered = DELIVERED_ST.includes(r.status);
+    if (isDelivered) delivered += 1;
+    else if (TRANSIT_ST.includes(r.status)) inTransit += 1;
+    if (!isDelivered && r.delivery_date && new Date(r.delivery_date) < now) overdue += 1;
+    if (r.priority === "Аварийно") emergency += 1;
+  }
+  const total = items.length;
+  const progress = total ? Math.round((delivered / total) * 100) : 0;
+  let computedStatus = "В работе";
+  if (!total) computedStatus = "Нет заявок";
+  else if (delivered === total) computedStatus = "Проект завершён";
+  else if (emergency > 0) computedStatus = "Аварийная ситуация";
+  else if (inTransit > 0) computedStatus = "В пути";
+  else if (paid < amount - 0.5) computedStatus = "Ожидает оплаты";
+  return { total, suppliers: suppliers.size, invoices, amount, paid, unpaid: Math.max(amount - paid, 0), delivered, inTransit, overdue, emergency, progress, computedStatus };
+}
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
@@ -633,7 +666,7 @@ export const RequestsTable = ({
             />
           ))
         )}
-        {!groupByObject && <PaginationControls />}
+        {!grouped && <PaginationControls />}
       </div>
 
       {/* Desktop Table View */}
@@ -1213,7 +1246,7 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
-        {!groupByObject && <PaginationControls />}
+        {!grouped && <PaginationControls />}
         </div>
       </div>
       </div>
