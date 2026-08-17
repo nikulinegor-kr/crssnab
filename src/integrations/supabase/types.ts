@@ -3500,10 +3500,12 @@ export type Database = {
           invoice_routed_at: string | null
           invoice_routed_by: string | null
           invoice_routing: string | null
+          is_project: boolean
           object_id: string | null
           operation_type: string | null
           order_days: number | null
           organization_id: string | null
+          parent_request_id: string | null
           payment_date: string | null
           payment_percent: number | null
           payment_percentage: number | null
@@ -3560,10 +3562,12 @@ export type Database = {
           invoice_routed_at?: string | null
           invoice_routed_by?: string | null
           invoice_routing?: string | null
+          is_project?: boolean
           object_id?: string | null
           operation_type?: string | null
           order_days?: number | null
           organization_id?: string | null
+          parent_request_id?: string | null
           payment_date?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
@@ -3620,10 +3624,12 @@ export type Database = {
           invoice_routed_at?: string | null
           invoice_routed_by?: string | null
           invoice_routing?: string | null
+          is_project?: boolean
           object_id?: string | null
           operation_type?: string | null
           order_days?: number | null
           organization_id?: string | null
+          parent_request_id?: string | null
           payment_date?: string | null
           payment_percent?: number | null
           payment_percentage?: number | null
@@ -3677,6 +3683,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_parent_request_id_fkey"
+            columns: ["parent_request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
             referencedColumns: ["id"]
           },
           {
