@@ -777,9 +777,25 @@ export const RequestsTable = ({
             {(() => {
               type Item =
                 | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
-                | { kind: "row"; request: typeof paginatedRequests[number]; index: number };
+                | { kind: "project"; key: string; name: string; items: typeof paginatedRequests }
+                | { kind: "row"; request: typeof paginatedRequests[number]; index: number; child?: boolean };
               const items: Item[] = [];
-              if (groupByObject && groupedRequests) {
+              if (groupByProject && projectGroups) {
+                let idx = 0;
+                for (const g of projectGroups.list) {
+                  items.push({ kind: "project", key: g.key, name: g.name, items: g.items });
+                  if (expandedProjects.has(g.key)) {
+                    for (const r of g.items) {
+                      items.push({ kind: "row", request: r, index: idx++, child: true });
+                    }
+                  } else {
+                    idx += g.items.length;
+                  }
+                }
+                for (const r of projectGroups.loose) {
+                  items.push({ kind: "row", request: r, index: idx++ });
+                }
+              } else if (groupByObject && groupedRequests) {
                 let idx = 0;
                 for (const g of groupedRequests) {
                   items.push({ kind: "group", key: g.key, name: g.name, items: g.items });
