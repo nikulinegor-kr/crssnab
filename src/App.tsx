@@ -21,6 +21,7 @@ const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
+const ProjectsPage = lazyWithRetry(() => import("./pages/ProjectsPage"));
 const Suppliers = lazyWithRetry(() => import("./pages/Suppliers"));
 const CalendarPage = lazyWithRetry(() => import("./pages/CalendarPage"));
 const TasksPage = lazyWithRetry(() => import("./pages/TasksPage"));
@@ -175,6 +176,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <Requests />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProjectsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

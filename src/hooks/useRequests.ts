@@ -51,6 +51,7 @@ export const useRequests = (showArchived: boolean = false) => {
           .from("requests")
           .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)")
           .eq("archived", showArchived)
+          .eq("is_project", false)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
 
