@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 export interface ColumnVisibility {
   request_date: boolean;
   description: boolean;
+  object: boolean;
   priority: boolean;
   status: boolean;
   availability: boolean;
@@ -33,6 +34,7 @@ export interface ColumnVisibility {
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   request_date: true,
   description: true,
+  object: true,
   priority: true,
   status: true,
   availability: false,
@@ -54,6 +56,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
 const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   request_date: "Дата",
   description: "Заявка",
+  object: "Объект",
   priority: "Приоритет",
   status: "Статус",
   availability: "Наличие",
