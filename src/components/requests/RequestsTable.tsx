@@ -88,6 +88,7 @@ const SORT_STORAGE_KEY = "requests-sort";
 type SortField = 
   | "request_date" 
   | "description" 
+  | "object"
   | "priority" 
   | "status" 
   | "contractor" 
