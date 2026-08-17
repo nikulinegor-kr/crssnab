@@ -722,6 +722,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           form={form}
           objectsData={objectsData}
           currentOrgId={currentOrgId}
+          showProjectField
         />
 
         {/* 5. Status & Responsibles */}
