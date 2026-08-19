@@ -65,7 +65,7 @@ export const AdditionalSection = ({
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}
 Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
+Наличие: ${availabilityText}
 Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
 Оплата: ${formValues.payment_percentage ?? 0}%
 Исполнил: ${formValues.executor || "-"}`;
@@ -89,7 +89,7 @@ export const AdditionalSection = ({
       `Заявка: ${formValues.description || "-"}`,
       `Заявитель: ${formValues.applicant || "-"}`,
       `Приоритет: ${formValues.priority || "-"}`,
-      `Наличие: ${formValues.availability_delivery_time || "-"}`,
+      `Наличие: ${availabilityText}`,
       `Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}`,
       `Оплата: ${formValues.payment_percentage ?? 0}%`,
       `Исполнил: ${formValues.executor || "-"}`,
@@ -298,7 +298,7 @@ export const AdditionalSection = ({
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}
 Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
+Наличие: ${availabilityText}
 Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
 Оплата: ${formValues.payment_percentage ?? 0}%
 Исполнил: ${formValues.executor || "-"}`}
