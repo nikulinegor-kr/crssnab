@@ -47,6 +47,15 @@ export const AdditionalSection = ({
   const [lastZrsFile, setLastZrsFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
 
+  // "Под заказ" + указанный срок изготовления показываем в одной строке ЗРС
+  const availabilityText = (() => {
+    const av = formValues.availability_delivery_time || "";
+    const days = formValues.order_days;
+    const isOrder = /заказ/i.test(av);
+    if (isOrder && days) return `${av} (${days} дн.)`;
+    return av || "-";
+  })();
+
   const handleCopyZRS = async () => {
     const reqDate = formValues.request_date
       ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
@@ -56,7 +65,7 @@ export const AdditionalSection = ({
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}
 Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
+Наличие: ${availabilityText}
 Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
 Оплата: ${formValues.payment_percentage ?? 0}%
 Исполнил: ${formValues.executor || "-"}`;
@@ -80,7 +89,7 @@ export const AdditionalSection = ({
       `Заявка: ${formValues.description || "-"}`,
       `Заявитель: ${formValues.applicant || "-"}`,
       `Приоритет: ${formValues.priority || "-"}`,
-      `Наличие: ${formValues.availability_delivery_time || "-"}`,
+      `Наличие: ${availabilityText}`,
       `Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}`,
       `Оплата: ${formValues.payment_percentage ?? 0}%`,
       `Исполнил: ${formValues.executor || "-"}`,
@@ -289,7 +298,7 @@ export const AdditionalSection = ({
 Заявка: ${formValues.description || "-"}
 Заявитель: ${formValues.applicant || "-"}
 Приоритет: ${formValues.priority || "-"}
-Наличие: ${formValues.availability_delivery_time || "-"}
+Наличие: ${availabilityText}
 Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
 Оплата: ${formValues.payment_percentage ?? 0}%
 Исполнил: ${formValues.executor || "-"}`}
