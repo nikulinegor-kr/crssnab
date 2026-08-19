@@ -47,6 +47,7 @@ import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { notifyTelegram, notifyTelegramInvoiceChat } from "@/lib/telegram";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
+import { RequestShipmentsSummary } from "@/components/request/RequestShipmentsSummary";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
 import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
@@ -840,6 +841,7 @@ export default function RequestDetail() {
               canEdit={canEdit}
               onUpdate={handleUpdate}
             />
+            <RequestShipmentsSummary requestId={request.id} />
             {/* Linked personal planner tasks */}
             <LinkedPlannerTasks
               requestId={request.id}
