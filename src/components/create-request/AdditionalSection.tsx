@@ -47,6 +47,15 @@ export const AdditionalSection = ({
   const [lastZrsFile, setLastZrsFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
 
+  // "Под заказ" + указанный срок изготовления показываем в одной строке ЗРС
+  const availabilityText = (() => {
+    const av = formValues.availability_delivery_time || "";
+    const days = formValues.order_days;
+    const isOrder = /заказ/i.test(av);
+    if (isOrder && days) return `${av} (${days} дн.)`;
+    return av || "-";
+  })();
+
   const handleCopyZRS = async () => {
     const reqDate = formValues.request_date
       ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
