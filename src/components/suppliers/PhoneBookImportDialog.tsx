@@ -233,6 +233,11 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
         });
         return;
       }
+      if (autoApply) {
+        // Режим «для всего списка сразу»: применяем все найденные совпадения без предпросмотра
+        await applyRows(found);
+        return;
+      }
       setMatches(found);
     } catch (e: any) {
       toast({ title: "Ошибка чтения файла", description: e?.message || String(e), variant: "destructive" });
