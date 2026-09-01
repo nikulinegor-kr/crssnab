@@ -742,6 +742,15 @@ export default function Suppliers() {
                 {isFormatting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 Формат названий
               </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={duplicateGroups.length === 0}
+                onClick={() => setIsMergeDialogOpen(true)}
+              >
+                <Building2 className="h-4 w-4" />
+                Дубли {duplicateGroups.length > 0 && `(${duplicateGroups.length})`}
+              </Button>
             </div>
           </div>
 
