@@ -104,14 +104,16 @@ export function formatPersonName(name: string): string {
   }
   
   if (parts.length === 2) {
-    // Фамилия + Имя или уже в формате "Фамилия И."
+    // Фамилия + Имя, "Фамилия И." или "Фамилия И.О."
     const [first, second] = parts;
-    
-    // Проверяем, не инициал ли второй элемент
-    if (/^[А-ЯЁA-Z]\.?$/i.test(second)) {
-      return `${capitalize(first)} ${second.charAt(0).toUpperCase()}.`;
+
+    // Сдвоенные инициалы: "А.А." / "А.А"
+    const doubleInitial = second.match(/^([А-ЯЁA-Z])\.([А-ЯЁA-Z])\.?$/i);
+    if (doubleInitial) {
+      return `${capitalize(first)} ${doubleInitial[1].toUpperCase()}.${doubleInitial[2].toUpperCase()}.`;
     }
-    
+
+    // Один инициал или полное имя
     return `${capitalize(first)} ${second.charAt(0).toUpperCase()}.`;
   }
   
