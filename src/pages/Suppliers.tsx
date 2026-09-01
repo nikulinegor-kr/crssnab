@@ -773,6 +773,25 @@ export default function Suppliers() {
               <ArrowUpDown className="h-4 w-4" />
               {sortDirection === "asc" ? "А → Я" : "Я → А"}
             </Button>
+            <div className="flex items-center border rounded-md overflow-hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-none"
+                onClick={() => setTableZoom((z) => Math.max(0.7, +(z - 0.1).toFixed(1)))}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="px-2 text-xs font-medium min-w-[3ch] text-center">{Math.round(tableZoom * 100)}%</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-none"
+                onClick={() => setTableZoom((z) => Math.min(1.3, +(z + 0.1).toFixed(1)))}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
               Фильтры
