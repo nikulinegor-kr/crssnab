@@ -787,14 +787,34 @@ export default function Suppliers() {
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
                       <div>
-                        <Badge className={getStatusColor(supplier.status)}>
-                          {supplier.status}
-                        </Badge>
+                        <Select
+                          value={supplier.status}
+                          onValueChange={(value) => handleInlineField(supplier.id, "status", value)}
+                        >
+                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getStatusColor(supplier.status))}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses.map((st) => (
+                              <SelectItem key={st} value={st}>{st}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
-                        <Badge className={getReliabilityColor(supplier.reliability)}>
-                          {supplier.reliability}
-                        </Badge>
+                        <Select
+                          value={supplier.reliability || "Не проверен"}
+                          onValueChange={(value) => handleInlineField(supplier.id, "reliability", value)}
+                        >
+                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getReliabilityColor(supplier.reliability))}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {reliabilities.map((r) => (
+                              <SelectItem key={r} value={r}>{r}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="text-center">
                         {stats?.count ? (
