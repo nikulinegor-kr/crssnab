@@ -148,7 +148,28 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
   const [isSaving, setIsSaving] = useState(false);
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [overwrite, setOverwrite] = useState(false);
+  const [autoApply, setAutoApply] = useState(true);
   const [fileName, setFileName] = useState("");
+
+  const applyRows = async (rows: MatchRow[]) => {
+    if (!rows.length) return;
+    setIsSaving(true);
+    let updated = 0;
+    try {
+      for (const m of rows) {
+        const { error } = await supabase.from("suppliers").update({ phone: m.newPhone }).eq("id", m.supplierId);
+        if (!error) updated++;
+      }
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${updated} из ${rows.length}` });
+      setMatches([]);
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Ошибка сохранения", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const selectedCount = useMemo(() => matches.filter((m) => m.selected).length, [matches]);
 
