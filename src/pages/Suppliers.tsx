@@ -1276,6 +1276,74 @@ export default function Suppliers() {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isMergeDialogOpen} onOpenChange={setIsMergeDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Дублирующиеся поставщики</DialogTitle>
+              <DialogDescription>
+                Найдено {duplicateGroups.length} групп дублей. Для каждой группы выберите основную запись — заявки и связи будут перенесены, остальные удалены.
+              </DialogDescription>
+            </DialogHeader>
+
+            {duplicateGroups.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">Дубли не найдены</div>
+            ) : (
+              <div className="space-y-4">
+                {duplicateGroups.map((group, idx) => (
+                  <div key={idx} className="border border-border/40 rounded-lg p-4 space-y-3">
+                    <div className="text-sm font-medium text-foreground">Группа {idx + 1}</div>
+                    <div className="space-y-2">
+                      {group.map((s) => {
+                        const stats = contractorStats.get(s.name.toLowerCase().trim());
+                        return (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between gap-3 text-sm px-3 py-2 rounded-md bg-muted/30"
+                          >
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{s.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {s.inn ? `ИНН ${s.inn}` : "без ИНН"} • {s.city || "—"} • {s.nomenclature || "—"}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              {stats?.count ? (
+                                <Badge variant="secondary" className="gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  {stats.count}
+                                </Badge>
+                              ) : null}
+                              {stats?.totalAmount ? (
+                                <span className="text-xs text-muted-foreground">
+                                  {stats.totalAmount.toLocaleString("ru-RU")} ₽
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMergeGroup(group)}
+                      disabled={isMerging}
+                    >
+                      {isMerging ? "Объединение..." : "Объединить группу"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsMergeDialogOpen(false)}>
+                Закрыть
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
