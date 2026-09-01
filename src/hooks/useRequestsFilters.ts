@@ -183,9 +183,10 @@ export const useRequestsFilters = (
     const isNew = searchParams.get("new");
     const filter = searchParams.get("filter") as SpecialDateFilter | null;
     const paymentStatus = searchParams.get("payment_status");
+    const contractor = searchParams.get("contractor");
 
     // If any URL param is present, reset everything to defaults first
-    if (status || priority || isNew || filter || paymentStatus) {
+    if (status || priority || isNew || filter || paymentStatus || contractor) {
       setSearchQuery("");
       setStatusFilter([]);
       setPriorityFilter("all");
@@ -195,6 +196,11 @@ export const useRequestsFilters = (
       setHideDelivered(false);
       setSpecialDateFilter(null);
     }
+
+    if (contractor) {
+      setSearchQuery(contractor);
+    }
+
 
     if (status) {
       if (status.startsWith("!")) {

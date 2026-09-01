@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2 } from "lucide-react";
+import { formatCompanyName } from "@/lib/companyFormat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -48,6 +49,8 @@ interface Supplier {
   status: string;
   reliability: string;
   address: string | null;
+  city: string | null;
+  nomenclature: string | null;
   inn: string | null;
   kpp: string | null;
   ogrn: string | null;
@@ -82,6 +85,8 @@ export default function Suppliers() {
     status: "Активный",
     reliability: "Не проверен",
     address: "",
+    city: "",
+    nomenclature: "",
     inn: "",
     kpp: "",
     ogrn: "",
@@ -211,6 +216,8 @@ export default function Suppliers() {
         status: supplier.status,
         reliability: supplier.reliability || "Не проверен",
         address: supplier.address || "",
+        city: supplier.city || "",
+        nomenclature: supplier.nomenclature || "",
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
         ogrn: supplier.ogrn || "",
@@ -235,6 +242,8 @@ export default function Suppliers() {
       status: "Активный",
       reliability: "Не проверен",
       address: "",
+      city: "",
+      nomenclature: "",
       inn: "",
       kpp: "",
       ogrn: "",
@@ -249,7 +258,7 @@ export default function Suppliers() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    mutation.mutate({ ...formData, name: formatCompanyName(formData.name) });
   };
 
   const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -411,11 +420,75 @@ export default function Suppliers() {
     });
   };
 
-  const filteredSuppliers = suppliers?.filter((supplier) =>
-    supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    supplier.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSuppliers = suppliers?.filter((supplier) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return q.split(/\s+/).every((term) =>
+      [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
+        .some((v) => v?.toLowerCase().includes(term))
+    );
+  });
+
+  const handleExportExcel = async () => {
+    const rows = filteredSuppliers || [];
+    if (!rows.length) {
+      toast({ title: "Нет данных для экспорта", variant: "destructive" });
+      return;
+    }
+    try {
+      const XLSX = await import("xlsx");
+      const data = rows.map((s) => {
+        const stats = contractorStats.get(s.name.toLowerCase().trim());
+        return {
+          "Название": s.name,
+          "Город": s.city || "",
+          "Номенклатура": s.nomenclature || "",
+          "ИНН": s.inn || "",
+          "КПП": s.kpp || "",
+          "ОГРН": s.ogrn || "",
+          "Контактное лицо": s.contact_person || "",
+          "Телефон": s.phone || "",
+          "Email": s.email || "",
+          "Категория": s.category || "",
+          "Статус": s.status || "",
+          "Благонадёжность": s.reliability || "",
+          "Адрес": s.address || "",
+          "Банк": s.bank_name || "",
+          "Расчётный счёт": s.bank_account || "",
+          "БИК": s.bik || "",
+          "Заявок": stats?.count || 0,
+          "Сумма закупок": stats?.totalAmount || 0,
+          "Примечания": s.notes || "",
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws["!cols"] = [{ wch: 38 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 40 }, { wch: 26 }, { wch: 24 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 30 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Поставщики");
+      XLSX.writeFile(wb, `поставщики_${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast({ title: "Экспорт завершён", description: `Выгружено поставщиков: ${rows.length}` });
+    } catch (e: any) {
+      toast({ title: "Ошибка экспорта", description: e?.message || String(e), variant: "destructive" });
+    }
+  };
+
+  const [isFormatting, setIsFormatting] = useState(false);
+
+  const handleNormalizeNames = async () => {
+    if (!suppliers?.length) return;
+    setIsFormatting(true);
+    let changed = 0;
+    for (const s of suppliers) {
+      const next = formatCompanyName(s.name);
+      if (next && next !== s.name) {
+        const { error } = await supabase.from("suppliers").update({ name: next }).eq("id", s.id);
+        if (!error) changed++;
+      }
+    }
+    setIsFormatting(false);
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    toast({ title: "Формат названий обновлён", description: `Изменено записей: ${changed}` });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -494,6 +567,14 @@ export default function Suppliers() {
                   ? `Обновляем ${batchProgress.current}/${batchProgress.total}...`
                   : "Заполнить реквизиты"}
               </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
+                <Download className="h-4 w-4" />
+                Экспорт Excel
+              </Button>
+              <Button variant="outline" className="gap-2" disabled={isFormatting} onClick={handleNormalizeNames}>
+                {isFormatting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                Формат названий
+              </Button>
             </div>
           </div>
 
@@ -517,9 +598,11 @@ export default function Suppliers() {
 
         {/* Таблица поставщиков */}
         <Card className="bg-card border-border/40">
-          <CardHeader className="border-b border-border/40">
-            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
+          <CardHeader className="border-b border-border/40 overflow-x-auto">
+            <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 text-xs font-medium text-muted-foreground uppercase">
               <div>Название</div>
+              <div>Город</div>
+              <div>Номенклатура</div>
               <div>ИНН</div>
               <div>Телефон / Email</div>
               <div>Статус</div>
@@ -529,34 +612,46 @@ export default function Suppliers() {
               <div className="text-right">Действия</div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Загрузка...
               </div>
             ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
-              <div className="divide-y divide-border/40">
+              <div className="divide-y divide-border/40 min-w-[1180px]">
                  {filteredSuppliers.map((supplier, index) => {
                     const stats = contractorStats.get(supplier.name.toLowerCase().trim());
                     return (
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center",
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 p-4 hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20"
                       )}
                     >
-                      <div>
-                        <div className="font-medium text-foreground">{supplier.name}</div>
+                      <div className="min-w-0">
+                        <button
+                          type="button"
+                          className="font-medium text-foreground text-left hover:text-primary hover:underline inline-flex items-center gap-1"
+                          title="Открыть заявки этого поставщика"
+                          onClick={() => navigate(`/requests?contractor=${encodeURIComponent(supplier.name)}`)}
+                        >
+                          <span className="truncate">{supplier.name}</span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                        </button>
                         {supplier.contact_person && (
-                          <div className="text-xs text-muted-foreground mt-0.5">{supplier.contact_person}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">{supplier.contact_person}</div>
                         )}
+                      </div>
+                      <div className="text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
+                      <div className="text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
+                        {supplier.nomenclature || "—"}
                       </div>
                       <div className="text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        <div>{supplier.phone || "—"}</div>
+                      <div className="text-sm text-muted-foreground min-w-0">
+                        <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
                       <div>
@@ -822,6 +917,27 @@ export default function Suppliers() {
                     value={formData.ogrn}
                     onChange={(e) => setFormData({ ...formData, ogrn: e.target.value })}
                     className="font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">Город</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="Например: Новосибирск"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nomenclature">Номенклатура</Label>
+                  <Input
+                    id="nomenclature"
+                    value={formData.nomenclature}
+                    onChange={(e) => setFormData({ ...formData, nomenclature: e.target.value })}
+                    placeholder="Что поставляет: фильтры, метизы, ГСМ…"
                   />
                 </div>
               </div>
