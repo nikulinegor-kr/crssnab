@@ -922,8 +922,8 @@ export default function Suppliers() {
                         )}
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
-                        {supplier.nomenclature || "—"}
+                      <div className="border-r border-border/40 px-1 py-2 min-w-0" title={supplier.nomenclature || ""}>
+                        <InlineNomenclatureCell supplierId={supplier.id} value={supplier.nomenclature} />
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
