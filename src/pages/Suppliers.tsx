@@ -421,14 +421,20 @@ export default function Suppliers() {
     });
   };
 
-  const filteredSuppliers = suppliers?.filter((supplier) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
-    return q.split(/\s+/).every((term) =>
-      [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
-        .some((v) => v?.toLowerCase().includes(term))
+  const filteredSuppliers = suppliers
+    ?.filter((supplier) => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return q.split(/\s+/).every((term) =>
+        [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
+          .some((v) => v?.toLowerCase().includes(term))
+      );
+    })
+    .sort((a, b) =>
+      sortDirection === "asc"
+        ? a.name.localeCompare(b.name, "ru-RU")
+        : b.name.localeCompare(a.name, "ru-RU")
     );
-  });
 
   const handleExportExcel = async () => {
     const rows = filteredSuppliers || [];
