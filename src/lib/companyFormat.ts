@@ -52,9 +52,42 @@ export function formatCompanyName(name: string): string {
     }
   }
   
-  // Если название начинается с кавычки, возможно это просто название без префикса
-  // Оставляем как есть
+  // Если нет организационно-правового префикса, но название похоже на ФИО
+  // (2-3 слова кириллицей) — считаем это ИП: "СЫТНИК АНДРЕЙ НИКОЛАЕВИЧ" -> "ИП Сытник А.Н."
+  if (looksLikePersonName(result)) {
+    return `ИП ${formatPersonName(result)}`;
+  }
+
+  // Иначе оставляем как есть
   return result;
+}
+
+/**
+ * Проверяет, похоже ли название на ФИО физического лица.
+ * Варианты:
+ *  - "Фамилия И.О." / "Фамилия И. О."
+ *  - "Фамилия Имя Отчество" (отчество: -вич/-вна/-ич/-овна/-евна/-ыч)
+ * Просто два слова ("Промышленные Сита") ИП не считаются — много ложных срабатываний.
+ */
+function looksLikePersonName(name: string): boolean {
+  const cleaned = name.trim();
+  if (!cleaned) return false;
+  if (/[0-9«»""'"]/.test(cleaned)) return false;
+  const parts = cleaned.split(/\s+/);
+  if (parts.length < 2 || parts.length > 4) return false;
+  const wordRe = /^[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*$/;
+  const initialRe = /^[А-ЯЁA-Z]\.?$/;
+
+  // "Фамилия И. О." — фамилия + один-два инициала
+  if (wordRe.test(parts[0]) && parts.slice(1).every((p) => initialRe.test(p))) return true;
+  // "Фамилия И.О." слитно: "Сидоров А.А."
+  if (parts.length === 2 && wordRe.test(parts[0]) && /^[А-ЯЁA-Z]\.[А-ЯЁA-Z]\.?$/.test(parts[1])) return true;
+  // Полное ФИО: 3 слова, последнее — отчество
+  if (parts.length === 3 && parts.every((p) => wordRe.test(p)) &&
+      /(вич|вна|ич|ична|овна|евна|ыч)$/i.test(parts[2])) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -71,14 +104,16 @@ export function formatPersonName(name: string): string {
   }
   
   if (parts.length === 2) {
-    // Фамилия + Имя или уже в формате "Фамилия И."
+    // Фамилия + Имя, "Фамилия И." или "Фамилия И.О."
     const [first, second] = parts;
-    
-    // Проверяем, не инициал ли второй элемент
-    if (/^[А-ЯЁA-Z]\.?$/i.test(second)) {
-      return `${capitalize(first)} ${second.charAt(0).toUpperCase()}.`;
+
+    // Сдвоенные инициалы: "А.А." / "А.А"
+    const doubleInitial = second.match(/^([А-ЯЁA-Z])\.([А-ЯЁA-Z])\.?$/i);
+    if (doubleInitial) {
+      return `${capitalize(first)} ${doubleInitial[1].toUpperCase()}.${doubleInitial[2].toUpperCase()}.`;
     }
-    
+
+    // Один инициал или полное имя
     return `${capitalize(first)} ${second.charAt(0).toUpperCase()}.`;
   }
   
