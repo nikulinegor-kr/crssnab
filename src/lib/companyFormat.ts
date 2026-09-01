@@ -63,16 +63,31 @@ export function formatCompanyName(name: string): string {
 }
 
 /**
- * Проверяет, похоже ли название на ФИО физического лица:
- * 2-3 слова, каждое — кириллица (возможно с дефисом), без цифр и кавычек.
+ * Проверяет, похоже ли название на ФИО физического лица.
+ * Варианты:
+ *  - "Фамилия И.О." / "Фамилия И. О."
+ *  - "Фамилия Имя Отчество" (отчество: -вич/-вна/-ич/-овна/-евна/-ыч)
+ * Просто два слова ("Промышленные Сита") ИП не считаются — много ложных срабатываний.
  */
 function looksLikePersonName(name: string): boolean {
   const cleaned = name.trim();
   if (!cleaned) return false;
   if (/[0-9«»""'"]/.test(cleaned)) return false;
   const parts = cleaned.split(/\s+/);
-  if (parts.length < 2 || parts.length > 3) return false;
-  return parts.every((p) => /^[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*\.?$/.test(p));
+  if (parts.length < 2 || parts.length > 4) return false;
+  const wordRe = /^[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*$/;
+  const initialRe = /^[А-ЯЁA-Z]\.?$/;
+
+  // "Фамилия И. О." — фамилия + один-два инициала
+  if (wordRe.test(parts[0]) && parts.slice(1).every((p) => initialRe.test(p))) return true;
+  // "Фамилия И.О." слитно: "Сидоров А.А."
+  if (parts.length === 2 && wordRe.test(parts[0]) && /^[А-ЯЁA-Z]\.[А-ЯЁA-Z]\.?$/.test(parts[1])) return true;
+  // Полное ФИО: 3 слова, последнее — отчество
+  if (parts.length === 3 && parts.every((p) => wordRe.test(p)) &&
+      /(вич|вна|ич|ична|овна|евна|ыч)$/i.test(parts[2])) {
+    return true;
+  }
+  return false;
 }
 
 /**
