@@ -601,8 +601,14 @@ export default function Suppliers() {
         return;
       }
 
+      const { data: authUser } = await supabase.auth.getUser();
+      const createdBy = authUser?.user?.id;
+      if (!createdBy) throw new Error("Не удалось определить пользователя");
+
       for (let i = 0; i < rows.length; i += 200) {
-        const { error } = await supabase.from("suppliers").insert(rows.slice(i, i + 200));
+        const { error } = await supabase
+          .from("suppliers")
+          .insert(rows.slice(i, i + 200).map((r) => ({ ...r, created_by: createdBy })));
         if (error) throw error;
       }
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
