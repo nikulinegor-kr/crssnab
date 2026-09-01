@@ -52,9 +52,27 @@ export function formatCompanyName(name: string): string {
     }
   }
   
-  // Если название начинается с кавычки, возможно это просто название без префикса
-  // Оставляем как есть
+  // Если нет организационно-правового префикса, но название похоже на ФИО
+  // (2-3 слова кириллицей) — считаем это ИП: "СЫТНИК АНДРЕЙ НИКОЛАЕВИЧ" -> "ИП Сытник А.Н."
+  if (looksLikePersonName(result)) {
+    return `ИП ${formatPersonName(result)}`;
+  }
+
+  // Иначе оставляем как есть
   return result;
+}
+
+/**
+ * Проверяет, похоже ли название на ФИО физического лица:
+ * 2-3 слова, каждое — кириллица (возможно с дефисом), без цифр и кавычек.
+ */
+function looksLikePersonName(name: string): boolean {
+  const cleaned = name.trim();
+  if (!cleaned) return false;
+  if (/[0-9«»""'"]/.test(cleaned)) return false;
+  const parts = cleaned.split(/\s+/);
+  if (parts.length < 2 || parts.length > 3) return false;
+  return parts.every((p) => /^[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*\.?$/.test(p));
 }
 
 /**
