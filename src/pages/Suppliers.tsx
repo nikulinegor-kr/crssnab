@@ -641,6 +641,56 @@ export default function Suppliers() {
     toast({ title: field === "status" ? "Статус обновлён" : "Благонадёжность обновлена" });
   };
 
+  const handleMergeGroup = async (group: Supplier[]) => {
+    if (!currentOrgId || group.length < 2) return;
+    setIsMerging(true);
+    try {
+      // Choose primary: more filled fields, then more requests, then earliest created
+      const score = (s: Supplier) => {
+        let points = 0;
+        if (s.inn) points += 3;
+        if (s.phone) points += 2;
+        if (s.email) points += 1;
+        if (s.city) points += 1;
+        if (s.nomenclature) points += 1;
+        const stats = contractorStats.get(s.name.toLowerCase().trim());
+        points += (stats?.count || 0) * 2;
+        return points;
+      };
+      const sorted = [...group].sort((a, b) => {
+        const diff = score(b) - score(a);
+        if (diff !== 0) return diff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      const [primary, ...duplicates] = sorted;
+
+      for (const dup of duplicates) {
+        // Update requests contractor names
+        await supabase
+          .from("requests")
+          .update({ contractor: primary.name })
+          .eq("organization_id", currentOrgId)
+          .eq("contractor", dup.name);
+        // Update FK-linked tables
+        await supabase.from("supplier_list_items").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
+        await supabase.from("kp_supplier_prices").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
+        // Delete duplicate
+        await supabase.from("suppliers").delete().eq("id", dup.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
+      toast({
+        title: "Дубли объединены",
+        description: `Сохранён «${primary.name}», удалено дублей: ${duplicates.length}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка объединения", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Активный": return "bg-success/20 text-success";
