@@ -216,6 +216,8 @@ export default function Suppliers() {
         status: supplier.status,
         reliability: supplier.reliability || "Не проверен",
         address: supplier.address || "",
+        city: supplier.city || "",
+        nomenclature: supplier.nomenclature || "",
         inn: supplier.inn || "",
         kpp: supplier.kpp || "",
         ogrn: supplier.ogrn || "",
@@ -240,6 +242,8 @@ export default function Suppliers() {
       status: "Активный",
       reliability: "Не проверен",
       address: "",
+      city: "",
+      nomenclature: "",
       inn: "",
       kpp: "",
       ogrn: "",
@@ -254,7 +258,7 @@ export default function Suppliers() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    mutation.mutate({ ...formData, name: formatCompanyName(formData.name) });
   };
 
   const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
