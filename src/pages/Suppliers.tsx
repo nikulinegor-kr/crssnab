@@ -76,6 +76,7 @@ export default function Suppliers() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [tableZoom, setTableZoom] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
   const [formData, setFormData] = useState({
