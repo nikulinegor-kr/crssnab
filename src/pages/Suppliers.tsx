@@ -842,6 +842,12 @@ export default function Suppliers() {
                 <Upload className="h-4 w-4" />
                 Загрузить контакты
               </Button>
+              {selectedIds.size >= 2 && (
+                <Button variant="default" className="gap-2" onClick={handleMergeSelected} disabled={isMerging}>
+                  {isMerging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building2 className="h-4 w-4" />}
+                  Объединить выбранные ({selectedIds.size})
+                </Button>
+              )}
             </div>
           </div>
 
