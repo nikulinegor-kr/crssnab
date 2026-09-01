@@ -36,7 +36,7 @@ interface ContractorSelectProps {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  onAddNew?: (name: string) => Promise<void>;
+  onAddNew?: (name: string, extra: { phone: string; nomenclature: string }) => Promise<void>;
   onDelete?: (value: string) => Promise<void>;
   onEdit?: (id: string, newName: string) => Promise<void>;
   disabled?: boolean;
@@ -57,6 +57,8 @@ export function ContractorSelect({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newNomenclature, setNewNomenclature] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ value: string; label: string } | null>(null);
