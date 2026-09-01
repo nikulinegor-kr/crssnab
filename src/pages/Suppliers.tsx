@@ -595,6 +595,16 @@ export default function Suppliers() {
     toast({ title: "Формат названий обновлён", description: `Изменено записей: ${changed}` });
   };
 
+  const handleInlineField = async (id: string, field: "status" | "reliability", value: string) => {
+    const { error } = await supabase.from("suppliers").update({ [field]: value }).eq("id", id);
+    if (error) {
+      toast({ title: "Ошибка обновления", description: error.message, variant: "destructive" });
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    toast({ title: field === "status" ? "Статус обновлён" : "Благонадёжность обновлена" });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Активный": return "bg-success/20 text-success";
