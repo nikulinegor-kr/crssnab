@@ -175,12 +175,11 @@ export function SparePartFormDialog({ open, onOpenChange, orgId, part }: Props) 
                 article: form.article.trim() || null,
                 manufacturer: form.manufacturer.trim() || null,
                 cross_numbers: crossNums,
-                compatibility: null,
                 quantity: 0,
-                unit: form.unit || "шт",
-                status: "for_sale",
-                notes: "Создано из формы: совместимость с техникой не найдена",
+                reason: "Совместимость с техникой не найдена",
+                comment: "Создано из формы добавления запчасти",
               });
+
               if (error) { toast.error(error.message); return; }
               qc.invalidateQueries({ queryKey: ["spare-part-deadstock"] });
               toast.success("Позиция создана в складе неликвида");
