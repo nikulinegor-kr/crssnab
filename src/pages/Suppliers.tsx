@@ -631,15 +631,6 @@ export default function Suppliers() {
     toast({ title: "Формат названий обновлён", description: `Изменено записей: ${changed}` });
   };
 
-  const handleInlineField = async (id: string, field: "status" | "reliability", value: string) => {
-    const { error } = await supabase.from("suppliers").update({ [field]: value }).eq("id", id);
-    if (error) {
-      toast({ title: "Ошибка обновления", description: error.message, variant: "destructive" });
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-    toast({ title: field === "status" ? "Статус обновлён" : "Благонадёжность обновлена" });
-  };
 
   const handleMergeGroup = async (group: Supplier[]) => {
     if (!currentOrgId || group.length < 2) return;
@@ -690,24 +681,6 @@ export default function Suppliers() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Активный": return "bg-success/20 text-success";
-      case "В ожидании": return "bg-warning/20 text-warning";
-      case "Неактивный": return "bg-destructive/20 text-destructive";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const getReliabilityColor = (reliability: string) => {
-    switch (reliability) {
-      case "Надёжный": return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
-      case "На проверке": return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
-      case "Риск": return "bg-orange-500/15 text-orange-600 dark:text-orange-400";
-      case "Заблокирован": return "bg-destructive/15 text-destructive";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -853,14 +826,12 @@ export default function Suppliers() {
           <div className="overflow-x-auto">
             <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
             <CardHeader className="border-b border-border/40 overflow-x-auto">
-              <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+              <div className="min-w-[980px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
                 <div className="border-r border-border/40 px-3 py-2 text-left">Название</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Город</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Номенклатура</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">ИНН</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Телефон / Email</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Статус</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Благонадёжность</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Заявки</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Сумма закупок</div>
                 <div className="px-3 py-2 text-right">Действия</div>
@@ -879,7 +850,7 @@ export default function Suppliers() {
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20",
                         duplicateIds.has(supplier.id) && "bg-amber-500/5"
                       )}
@@ -908,36 +879,6 @@ export default function Suppliers() {
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground min-w-0">
                         <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center">
-                        <Select
-                          value={supplier.status}
-                          onValueChange={(value) => handleInlineField(supplier.id, "status", value)}
-                        >
-                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getStatusColor(supplier.status))}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statuses.map((st) => (
-                              <SelectItem key={st} value={st}>{st}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center">
-                        <Select
-                          value={supplier.reliability || "Не проверен"}
-                          onValueChange={(value) => handleInlineField(supplier.id, "reliability", value)}
-                        >
-                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getReliabilityColor(supplier.reliability))}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {reliabilities.map((r) => (
-                              <SelectItem key={r} value={r}>{r}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center">
                         {stats?.count ? (
