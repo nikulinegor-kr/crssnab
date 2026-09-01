@@ -567,6 +567,14 @@ export default function Suppliers() {
                   ? `Обновляем ${batchProgress.current}/${batchProgress.total}...`
                   : "Заполнить реквизиты"}
               </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
+                <Download className="h-4 w-4" />
+                Экспорт Excel
+              </Button>
+              <Button variant="outline" className="gap-2" disabled={isFormatting} onClick={handleNormalizeNames}>
+                {isFormatting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                Формат названий
+              </Button>
             </div>
           </div>
 
