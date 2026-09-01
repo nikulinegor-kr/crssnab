@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2, ArrowUpDown, ZoomIn, ZoomOut } from "lucide-react";
 import { formatCompanyName } from "@/lib/companyFormat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,10 @@ export default function Suppliers() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [tableZoom, setTableZoom] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
   const [formData, setFormData] = useState({
@@ -421,6 +424,32 @@ export default function Suppliers() {
     });
   };
 
+  const normalizeDuplicateKey = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/['"«»“”]/g, "")
+      .replace(/\b(ооо|ао|пао|зао|ип|общество с ограниченной ответственностью|акционерное общество)\b/g, "")
+      .trim();
+
+  const duplicateGroups = useMemo(() => {
+    if (!suppliers) return [] as Supplier[][];
+    const map = new Map<string, Supplier[]>();
+    for (const s of suppliers) {
+      const key = normalizeDuplicateKey(s.name);
+      if (!key) continue;
+      const arr = map.get(key) || [];
+      arr.push(s);
+      map.set(key, arr);
+    }
+    return Array.from(map.values()).filter((g) => g.length > 1);
+  }, [suppliers]);
+
+  const duplicateIds = useMemo(
+    () => new Set(duplicateGroups.flatMap((g) => g.map((s) => s.id))),
+    [duplicateGroups]
+  );
+
   const filteredSuppliers = suppliers
     ?.filter((supplier) => {
       const q = searchQuery.toLowerCase().trim();
@@ -612,6 +641,55 @@ export default function Suppliers() {
     toast({ title: field === "status" ? "Статус обновлён" : "Благонадёжность обновлена" });
   };
 
+  const handleMergeGroup = async (group: Supplier[]) => {
+    if (!currentOrgId || group.length < 2) return;
+    setIsMerging(true);
+    try {
+      // Choose primary: more filled fields, then more requests, then earliest created
+      const score = (s: Supplier) => {
+        let points = 0;
+        if (s.inn) points += 3;
+        if (s.phone) points += 2;
+        if (s.email) points += 1;
+        if (s.city) points += 1;
+        if (s.nomenclature) points += 1;
+        const stats = contractorStats.get(s.name.toLowerCase().trim());
+        points += (stats?.count || 0) * 2;
+        return points;
+      };
+      const sorted = [...group].sort((a, b) => {
+        const diff = score(b) - score(a);
+        if (diff !== 0) return diff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      const [primary, ...duplicates] = sorted;
+
+      for (const dup of duplicates) {
+        // Update requests contractor names
+        const { error: reqErr } = await supabase
+          .from("requests")
+          .update({ contractor: primary.name })
+          .eq("organization_id", currentOrgId)
+          .eq("contractor", dup.name);
+        if (reqErr) throw reqErr;
+        // Delete duplicate (will fail if still referenced elsewhere)
+        const { error: delErr } = await supabase.from("suppliers").delete().eq("id", dup.id);
+        if (delErr) throw delErr;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
+      toast({
+        title: "Дубли объединены",
+        description: `Сохранён «${primary.name}», удалено дублей: ${duplicates.length}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка объединения", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Активный": return "bg-success/20 text-success";
@@ -714,6 +792,15 @@ export default function Suppliers() {
                 {isFormatting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 Формат названий
               </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={duplicateGroups.length === 0}
+                onClick={() => setIsMergeDialogOpen(true)}
+              >
+                <Building2 className="h-4 w-4" />
+                Дубли {duplicateGroups.length > 0 && `(${duplicateGroups.length})`}
+              </Button>
             </div>
           </div>
 
@@ -736,6 +823,25 @@ export default function Suppliers() {
               <ArrowUpDown className="h-4 w-4" />
               {sortDirection === "asc" ? "А → Я" : "Я → А"}
             </Button>
+            <div className="flex items-center border rounded-md overflow-hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-none"
+                onClick={() => setTableZoom((z) => Math.max(0.7, +(z - 0.1).toFixed(1)))}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="px-2 text-xs font-medium min-w-[3ch] text-center">{Math.round(tableZoom * 100)}%</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-none"
+                onClick={() => setTableZoom((z) => Math.min(1.3, +(z + 0.1).toFixed(1)))}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
               Фильтры
@@ -743,22 +849,23 @@ export default function Suppliers() {
           </div>
         </div>
 
-        {/* Таблица поставщиков */}
-        <Card className="bg-card border-border/40">
-          <CardHeader className="border-b border-border/40 overflow-x-auto">
-            <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 text-xs font-medium text-muted-foreground uppercase">
-              <div>Название</div>
-              <div>Город</div>
-              <div>Номенклатура</div>
-              <div>ИНН</div>
-              <div>Телефон / Email</div>
-              <div>Статус</div>
-              <div>Благонадёжность</div>
-              <div className="text-center">Заявки</div>
-              <div className="text-right">Сумма закупок</div>
-              <div className="text-right">Действия</div>
-            </div>
-          </CardHeader>
+          {/* Таблица поставщиков */}
+          <div className="overflow-x-auto">
+            <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
+            <CardHeader className="border-b border-border/40 overflow-x-auto">
+              <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+                <div className="border-r border-border/40 px-3 py-2 text-left">Название</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Город</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Номенклатура</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">ИНН</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Телефон / Email</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Статус</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Благонадёжность</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Заявки</div>
+                <div className="border-r border-border/40 px-3 py-2 text-center">Сумма закупок</div>
+                <div className="px-3 py-2 text-right">Действия</div>
+              </div>
+            </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
@@ -772,11 +879,12 @@ export default function Suppliers() {
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 p-4 hover:bg-muted/30 transition-colors items-center",
-                        index % 2 === 1 && "bg-muted/20"
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
+                        index % 2 === 1 && "bg-muted/20",
+                        duplicateIds.has(supplier.id) && "bg-amber-500/5"
                       )}
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 border-r border-border/40 px-3 py-4 text-left">
                         <button
                           type="button"
                           className="font-medium text-foreground text-left hover:text-primary hover:underline inline-flex items-center gap-1"
@@ -790,18 +898,18 @@ export default function Suppliers() {
                           <div className="text-xs text-muted-foreground mt-0.5 truncate">{supplier.contact_person}</div>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
-                      <div className="text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
                         {supplier.nomenclature || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground font-mono">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground min-w-0">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground min-w-0">
                         <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
-                      <div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         <Select
                           value={supplier.status}
                           onValueChange={(value) => handleInlineField(supplier.id, "status", value)}
@@ -816,7 +924,7 @@ export default function Suppliers() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         <Select
                           value={supplier.reliability || "Не проверен"}
                           onValueChange={(value) => handleInlineField(supplier.id, "reliability", value)}
@@ -831,7 +939,7 @@ export default function Suppliers() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="text-center">
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         {stats?.count ? (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="h-3 w-3" />
@@ -841,7 +949,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="text-right text-sm font-medium">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm font-medium">
                         {stats?.totalAmount ? (
                           <span className="text-foreground">
                             {stats.totalAmount.toLocaleString("ru-RU")} ₽
@@ -850,7 +958,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="text-right">
+                      <div className="px-3 py-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -882,8 +990,9 @@ export default function Suppliers() {
                 {searchQuery ? "Поставщики не найдены" : "Нет поставщиков"}
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          </div>
 
         {/* Диалог создания/редактирования */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -1166,6 +1275,74 @@ export default function Suppliers() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isMergeDialogOpen} onOpenChange={setIsMergeDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Дублирующиеся поставщики</DialogTitle>
+              <DialogDescription>
+                Найдено {duplicateGroups.length} групп дублей. Для каждой группы выберите основную запись — заявки и связи будут перенесены, остальные удалены.
+              </DialogDescription>
+            </DialogHeader>
+
+            {duplicateGroups.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">Дубли не найдены</div>
+            ) : (
+              <div className="space-y-4">
+                {duplicateGroups.map((group, idx) => (
+                  <div key={idx} className="border border-border/40 rounded-lg p-4 space-y-3">
+                    <div className="text-sm font-medium text-foreground">Группа {idx + 1}</div>
+                    <div className="space-y-2">
+                      {group.map((s) => {
+                        const stats = contractorStats.get(s.name.toLowerCase().trim());
+                        return (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between gap-3 text-sm px-3 py-2 rounded-md bg-muted/30"
+                          >
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{s.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {s.inn ? `ИНН ${s.inn}` : "без ИНН"} • {s.city || "—"} • {s.nomenclature || "—"}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              {stats?.count ? (
+                                <Badge variant="secondary" className="gap-1">
+                                  <FileText className="h-3 w-3" />
+                                  {stats.count}
+                                </Badge>
+                              ) : null}
+                              {stats?.totalAmount ? (
+                                <span className="text-xs text-muted-foreground">
+                                  {stats.totalAmount.toLocaleString("ru-RU")} ₽
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMergeGroup(group)}
+                      disabled={isMerging}
+                    >
+                      {isMerging ? "Объединение..." : "Объединить группу"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsMergeDialogOpen(false)}>
+                Закрыть
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
