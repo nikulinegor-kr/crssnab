@@ -828,11 +828,12 @@ export default function Suppliers() {
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 p-4 hover:bg-muted/30 transition-colors items-center",
-                        index % 2 === 1 && "bg-muted/20"
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
+                        index % 2 === 1 && "bg-muted/20",
+                        duplicateIds.has(supplier.id) && "bg-amber-500/5"
                       )}
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 border-r border-border/40 px-3 py-4 text-left">
                         <button
                           type="button"
                           className="font-medium text-foreground text-left hover:text-primary hover:underline inline-flex items-center gap-1"
@@ -846,18 +847,18 @@ export default function Suppliers() {
                           <div className="text-xs text-muted-foreground mt-0.5 truncate">{supplier.contact_person}</div>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
-                      <div className="text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
                         {supplier.nomenclature || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground font-mono">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground min-w-0">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground min-w-0">
                         <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
-                      <div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         <Select
                           value={supplier.status}
                           onValueChange={(value) => handleInlineField(supplier.id, "status", value)}
@@ -872,7 +873,7 @@ export default function Suppliers() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         <Select
                           value={supplier.reliability || "Не проверен"}
                           onValueChange={(value) => handleInlineField(supplier.id, "reliability", value)}
@@ -887,7 +888,7 @@ export default function Suppliers() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="text-center">
+                      <div className="border-r border-border/40 px-3 py-4 text-center">
                         {stats?.count ? (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="h-3 w-3" />
@@ -897,7 +898,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="text-right text-sm font-medium">
+                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm font-medium">
                         {stats?.totalAmount ? (
                           <span className="text-foreground">
                             {stats.totalAmount.toLocaleString("ru-RU")} ₽
@@ -906,7 +907,7 @@ export default function Suppliers() {
                           <span className="text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      <div className="text-right">
+                      <div className="px-3 py-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
