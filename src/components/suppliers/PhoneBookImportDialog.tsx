@@ -146,24 +146,40 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
   const queryClient = useQueryClient();
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [contacts, setContacts] = useState<ContactEntry[]>([]);
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [overwrite, setOverwrite] = useState(false);
-  const [autoApply, setAutoApply] = useState(true);
+  const [onlyMatched, setOnlyMatched] = useState(true);
   const [fileName, setFileName] = useState("");
+  const [result, setResult] = useState<MatchRow[] | null>(null);
+  const [search, setSearch] = useState("");
+
+  const visibleRows = useMemo(() => {
+    const base = onlyMatched ? matches.filter((m) => m.newPhone) : matches;
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+    const terms = q.split(/\s+/);
+    return base.filter((m) => {
+      const hay = `${m.supplierName} ${m.contactName} ${m.newPhone}`.toLowerCase();
+      return terms.every((t) => hay.includes(t));
+    });
+  }, [matches, onlyMatched, search]);
+
+  const selectedCount = useMemo(() => matches.filter((m) => m.selected && m.newPhone).length, [matches]);
 
   const applyRows = async (rows: MatchRow[]) => {
     if (!rows.length) return;
     setIsSaving(true);
-    let updated = 0;
+    const done: MatchRow[] = [];
     try {
       for (const m of rows) {
         const { error } = await supabase.from("suppliers").update({ phone: m.newPhone }).eq("id", m.supplierId);
-        if (!error) updated++;
+        if (!error) done.push(m);
       }
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${updated} из ${rows.length}` });
+      setResult(done);
       setMatches([]);
-      onOpenChange(false);
+      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${done.length} из ${rows.length}` });
     } catch (e: any) {
       toast({ title: "Ошибка сохранения", description: e?.message || String(e), variant: "destructive" });
     } finally {
@@ -171,16 +187,50 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
     }
   };
 
-  const selectedCount = useMemo(() => matches.filter((m) => m.selected).length, [matches]);
+  const buildMatches = (list: ContactEntry[], withOverwrite: boolean) => {
+    const contactIndex = new Map<string, ContactEntry>();
+    for (const c of list) {
+      for (const k of matchKeys(c.name)) {
+        if (!contactIndex.has(k)) contactIndex.set(k, c);
+      }
+    }
+    const rows: MatchRow[] = [];
+    for (const s of suppliers) {
+      if (s.phone && !withOverwrite) continue;
+      const keys = matchKeys(s.name);
+      let hit: ContactEntry | undefined;
+      const fullKey = normalizeKey(s.name);
+      if (fullKey && contactIndex.has(fullKey)) {
+        hit = contactIndex.get(fullKey);
+      } else {
+        for (const k of keys.slice(1)) {
+          if (contactIndex.has(k)) {
+            hit = contactIndex.get(k);
+            break;
+          }
+        }
+      }
+      rows.push({
+        supplierId: s.id,
+        supplierName: s.name,
+        currentPhone: s.phone,
+        contactName: hit?.name ?? "",
+        newPhone: hit?.phone ?? "",
+        selected: !!hit,
+      });
+    }
+    return rows;
+  };
 
   const handleFile = async (file: File) => {
     setIsParsing(true);
     setMatches([]);
+    setResult(null);
     setFileName(file.name);
     try {
       const isVcf = /\.(vcf|vcard)$/i.test(file.name) || file.type === "text/vcard";
-      const contacts = isVcf ? parseVcf(await file.text()) : await parseExcel(file);
-      if (!contacts.length) {
+      const list = isVcf ? parseVcf(await file.text()) : await parseExcel(file);
+      if (!list.length) {
         toast({
           title: "Контакты не найдены",
           description: "Поддерживаются .vcf (экспорт контактов телефона) и Excel/CSV с колонками «Имя» и «Телефон»",
@@ -188,57 +238,17 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
         });
         return;
       }
-
-      // Индекс контактов по ключам
-      const contactIndex = new Map<string, ContactEntry>();
-      for (const c of contacts) {
-        for (const k of matchKeys(c.name)) {
-          if (!contactIndex.has(k)) contactIndex.set(k, c);
-        }
-      }
-
-      const found: MatchRow[] = [];
-      for (const s of suppliers) {
-        if (s.phone && !overwrite) continue;
-        const keys = matchKeys(s.name);
-        let hit: ContactEntry | undefined;
-        // сначала ищем по полному ключу, потом по словам
-        const fullKey = normalizeKey(s.name);
-        if (fullKey && contactIndex.has(fullKey)) {
-          hit = contactIndex.get(fullKey);
-        } else {
-          for (const k of keys.slice(1)) {
-            if (contactIndex.has(k)) {
-              hit = contactIndex.get(k);
-              break;
-            }
-          }
-        }
-        if (hit) {
-          found.push({
-            supplierId: s.id,
-            supplierName: s.name,
-            currentPhone: s.phone,
-            contactName: hit.name,
-            newPhone: hit.phone,
-            selected: true,
-          });
-        }
-      }
-
-      if (!found.length) {
-        toast({
-          title: "Совпадений не найдено",
-          description: `В файле ${contacts.length} контактов, но ни одно название не совпало с поставщиками`,
-        });
-        return;
-      }
-      if (autoApply) {
-        // Режим «для всего списка сразу»: применяем все найденные совпадения без предпросмотра
-        await applyRows(found);
-        return;
-      }
-      setMatches(found);
+      setContacts(list);
+      const rows = buildMatches(list, overwrite);
+      setMatches(rows);
+      const matched = rows.filter((r) => r.newPhone).length;
+      toast({
+        title: `Контактов в файле: ${list.length}`,
+        description: matched
+          ? `Автоматически сопоставлено: ${matched}. Остальным можно выбрать контакт вручную.`
+          : "Автосовпадений нет — выберите контакты вручную в списке.",
+      });
+      if (!matched) setOnlyMatched(false);
     } catch (e: any) {
       toast({ title: "Ошибка чтения файла", description: e?.message || String(e), variant: "destructive" });
     } finally {
@@ -246,106 +256,234 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
     }
   };
 
-  const handleApply = () => applyRows(matches.filter((m) => m.selected));
+  const setRowContact = (supplierId: string, c: ContactEntry | null) =>
+    setMatches((prev) =>
+      prev.map((x) =>
+        x.supplierId === supplierId
+          ? { ...x, contactName: c?.name ?? "", newPhone: c?.phone ?? "", selected: !!c }
+          : x,
+      ),
+    );
+
+  const handleApply = () => applyRows(matches.filter((m) => m.selected && m.newPhone));
+
+  const close = () => {
+    onOpenChange(false);
+    setResult(null);
+    setMatches([]);
+    setContacts([]);
+    setFileName("");
+    setSearch("");
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] flex flex-col">
+    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
+      <DialogContent className="max-w-3xl max-h-[90dvh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookUser className="h-5 w-5" />
             Телефоны из телефонной книги
           </DialogTitle>
           <DialogDescription>
-            Экспортируйте контакты с телефона в файл .vcf (или подготовьте Excel с колонками «Имя» и «Телефон») —
-            система найдёт совпадения по похожим названиям и предложит заполнить номера.
+            Загрузите .vcf (или Excel с колонками «Имя» и «Телефон»). Совпадения подставятся автоматически, а для
+            остальных поставщиков можно выбрать контакт вручную.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <Button variant="outline" className="gap-2 w-full" asChild disabled={isParsing}>
-            <label className="cursor-pointer">
-              {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {isParsing ? "Читаем файл..." : fileName ? `Файл: ${fileName}` : "Выбрать файл (.vcf, .xlsx, .csv)"}
-              <input
-                type="file"
-                accept=".vcf,.vcard,.xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleFile(f);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-          </Button>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="pb-auto-apply"
-              checked={autoApply}
-              onCheckedChange={(v) => setAutoApply(!!v)}
-            />
-            <Label htmlFor="pb-auto-apply" className="text-sm cursor-pointer">
-              Заполнить весь список сразу (без предпросмотра)
-            </Label>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="pb-overwrite"
-              checked={overwrite}
-              onCheckedChange={(v) => {
-                setOverwrite(!!v);
-                setMatches([]);
-              }}
-            />
-            <Label htmlFor="pb-overwrite" className="text-sm cursor-pointer">
-              Подбирать и для поставщиков, у которых телефон уже заполнен (перезапись)
-            </Label>
-          </div>
-        </div>
-
-        {matches.length > 0 && (
+        {result ? (
           <div className="flex-1 min-h-0 overflow-y-auto border rounded-md">
-            <div className="grid grid-cols-[24px_1fr_1fr_130px] gap-x-3 px-3 py-2 text-xs font-medium text-muted-foreground border-b sticky top-0 bg-background z-10">
-              <span />
-              <span className="text-left">Поставщик</span>
-              <span className="text-left">Контакт из файла</span>
-              <span className="text-left">Новый телефон</span>
+            <div className="px-3 py-2 text-sm font-medium border-b sticky top-0 bg-background z-10">
+              Заполнено телефонов: {result.length}
             </div>
-            {matches.map((m) => (
-              <div
-                key={m.supplierId}
-                className="grid grid-cols-[24px_1fr_1fr_130px] gap-x-3 px-3 py-2 text-sm border-b last:border-b-0 items-center"
-              >
-                <Checkbox
-                  checked={m.selected}
-                  onCheckedChange={(v) =>
-                    setMatches((prev) => prev.map((x) => (x.supplierId === m.supplierId ? { ...x, selected: !!v } : x)))
-                  }
-                />
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{m.supplierName}</div>
-                  {m.currentPhone && <div className="text-xs text-muted-foreground">сейчас: {m.currentPhone}</div>}
-                </div>
-                <div className="truncate text-muted-foreground">{m.contactName}</div>
-                <div className="font-numeric">{m.newPhone}</div>
+            {result.map((m) => (
+              <div key={m.supplierId} className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0">
+                <Check className="h-4 w-4 text-primary shrink-0" />
+                <span className="truncate flex-1 font-medium">{m.supplierName}</span>
+                <span className="truncate text-muted-foreground hidden sm:block">{m.contactName || "—"}</span>
+                <span className="font-numeric">{m.newPhone}</span>
               </div>
             ))}
           </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <Button variant="outline" className="gap-2 w-full" asChild disabled={isParsing}>
+                <label className="cursor-pointer">
+                  {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {isParsing ? "Читаем файл..." : fileName ? `Файл: ${fileName}` : "Выбрать файл (.vcf, .xlsx, .csv)"}
+                  <input
+                    type="file"
+                    accept=".vcf,.vcard,.xlsx,.xls,.csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFile(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </Button>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="pb-overwrite"
+                    checked={overwrite}
+                    onCheckedChange={(v) => {
+                      setOverwrite(!!v);
+                      if (contacts.length) setMatches(buildMatches(contacts, !!v));
+                    }}
+                  />
+                  <Label htmlFor="pb-overwrite" className="text-sm cursor-pointer">
+                    Включая поставщиков с заполненным телефоном
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="pb-only-matched" checked={onlyMatched} onCheckedChange={(v) => setOnlyMatched(!!v)} />
+                  <Label htmlFor="pb-only-matched" className="text-sm cursor-pointer">
+                    Только найденные совпадения
+                  </Label>
+                </div>
+              </div>
+
+              {matches.length > 0 && (
+                <Input
+                  placeholder="Поиск по поставщику или контакту..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              )}
+            </div>
+
+            {matches.length > 0 && (
+              <div className="flex-1 min-h-0 overflow-y-auto border rounded-md">
+                <div className="grid grid-cols-[24px_1fr_1fr] gap-x-3 px-3 py-2 text-xs font-medium text-muted-foreground border-b sticky top-0 bg-background z-10">
+                  <span />
+                  <span className="text-left">Поставщик</span>
+                  <span className="text-left">Контакт / телефон</span>
+                </div>
+                {visibleRows.map((m) => (
+                  <div
+                    key={m.supplierId}
+                    className="grid grid-cols-[24px_1fr_1fr] gap-x-3 px-3 py-2 text-sm border-b last:border-b-0 items-center"
+                  >
+                    <Checkbox
+                      checked={m.selected}
+                      disabled={!m.newPhone}
+                      onCheckedChange={(v) =>
+                        setMatches((prev) =>
+                          prev.map((x) => (x.supplierId === m.supplierId ? { ...x, selected: !!v } : x)),
+                        )
+                      }
+                    />
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{m.supplierName}</div>
+                      {m.currentPhone && <div className="text-xs text-muted-foreground">сейчас: {m.currentPhone}</div>}
+                    </div>
+                    <ContactPicker
+                      contacts={contacts}
+                      value={m.newPhone ? { name: m.contactName, phone: m.newPhone } : null}
+                      onChange={(c) => setRowContact(m.supplierId, c)}
+                    />
+                  </div>
+                ))}
+                {!visibleRows.length && (
+                  <div className="px-3 py-6 text-sm text-muted-foreground text-center">Ничего не найдено</div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Отмена
+          <Button variant="outline" onClick={close}>
+            {result ? "Закрыть" : "Отмена"}
           </Button>
-          <Button onClick={handleApply} disabled={!selectedCount || isSaving} className="gap-2">
-            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Заполнить ({selectedCount})
-          </Button>
+          {!result && (
+            <Button onClick={handleApply} disabled={!selectedCount || isSaving} className="gap-2">
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Заполнить ({selectedCount})
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+function ContactPicker({
+  contacts,
+  value,
+  onChange,
+}: {
+  contacts: ContactEntry[];
+  value: ContactEntry | null;
+  onChange: (c: ContactEntry | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const terms = q ? q.split(/\s+/) : [];
+    const list = terms.length
+      ? contacts.filter((c) => terms.every((t) => `${c.name} ${c.phone}`.toLowerCase().includes(t)))
+      : contacts;
+    return list.slice(0, 200);
+  }, [contacts, query]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-between font-normal min-w-0">
+          <span className="truncate text-left">
+            {value ? (
+              <>
+                <span className="font-numeric">{value.phone}</span>
+                <span className="text-muted-foreground"> · {value.name}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">Выбрать контакт</span>
+            )}
+          </span>
+          <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[320px]" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Поиск контакта..." value={query} onValueChange={setQuery} />
+          <CommandList>
+            <CommandEmpty>Контакты не найдены</CommandEmpty>
+            <CommandGroup>
+              {value && (
+                <CommandItem
+                  onSelect={() => {
+                    onChange(null);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" /> Очистить
+                </CommandItem>
+              )}
+              {filtered.map((c, i) => (
+                <CommandItem
+                  key={`${c.phone}-${i}`}
+                  onSelect={() => {
+                    onChange(c);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate">{c.name}</div>
+                    <div className="text-xs text-muted-foreground font-numeric">{c.phone}</div>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
