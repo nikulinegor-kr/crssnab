@@ -148,7 +148,28 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
   const [isSaving, setIsSaving] = useState(false);
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [overwrite, setOverwrite] = useState(false);
+  const [autoApply, setAutoApply] = useState(true);
   const [fileName, setFileName] = useState("");
+
+  const applyRows = async (rows: MatchRow[]) => {
+    if (!rows.length) return;
+    setIsSaving(true);
+    let updated = 0;
+    try {
+      for (const m of rows) {
+        const { error } = await supabase.from("suppliers").update({ phone: m.newPhone }).eq("id", m.supplierId);
+        if (!error) updated++;
+      }
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${updated} из ${rows.length}` });
+      setMatches([]);
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Ошибка сохранения", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const selectedCount = useMemo(() => matches.filter((m) => m.selected).length, [matches]);
 
@@ -212,6 +233,11 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
         });
         return;
       }
+      if (autoApply) {
+        // Режим «для всего списка сразу»: применяем все найденные совпадения без предпросмотра
+        await applyRows(found);
+        return;
+      }
       setMatches(found);
     } catch (e: any) {
       toast({ title: "Ошибка чтения файла", description: e?.message || String(e), variant: "destructive" });
@@ -220,26 +246,7 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
     }
   };
 
-  const handleApply = async () => {
-    const chosen = matches.filter((m) => m.selected);
-    if (!chosen.length) return;
-    setIsSaving(true);
-    let updated = 0;
-    try {
-      for (const m of chosen) {
-        const { error } = await supabase.from("suppliers").update({ phone: m.newPhone }).eq("id", m.supplierId);
-        if (!error) updated++;
-      }
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${updated}` });
-      setMatches([]);
-      onOpenChange(false);
-    } catch (e: any) {
-      toast({ title: "Ошибка сохранения", description: e?.message || String(e), variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleApply = () => applyRows(matches.filter((m) => m.selected));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -272,6 +279,17 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
               />
             </label>
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="pb-auto-apply"
+              checked={autoApply}
+              onCheckedChange={(v) => setAutoApply(!!v)}
+            />
+            <Label htmlFor="pb-auto-apply" className="text-sm cursor-pointer">
+              Заполнить весь список сразу (без предпросмотра)
+            </Label>
+          </div>
 
           <div className="flex items-center gap-2">
             <Checkbox
