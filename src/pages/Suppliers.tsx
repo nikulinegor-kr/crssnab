@@ -407,6 +407,81 @@ export default function Suppliers() {
     }
   };
 
+  // Поиск города и номенклатуры в интернете
+  const [isWebLookup, setIsWebLookup] = useState(false);
+  const [isWebEnriching, setIsWebEnriching] = useState(false);
+  const [webProgress, setWebProgress] = useState({ current: 0, total: 0 });
+
+  const lookupSupplierWeb = async (payload: { name: string; inn?: string | null }) => {
+    const { data, error } = await supabase.functions.invoke("enrich-supplier-web", {
+      body: { name: payload.name, inn: payload.inn || undefined },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data as { city?: string; nomenclature?: string; confidence?: string };
+  };
+
+  const handleWebLookupForm = async () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Укажите название", description: "Название организации обязательно", variant: "destructive" });
+      return;
+    }
+    setIsWebLookup(true);
+    try {
+      const res = await lookupSupplierWeb({ name: formData.name, inn: formData.inn });
+      if (!res?.city && !res?.nomenclature) {
+        toast({ title: "Ничего не найдено", description: "Не удалось определить город и номенклатуру" });
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        city: res.city || prev.city,
+        nomenclature: res.nomenclature || prev.nomenclature,
+      }));
+      toast({
+        title: "Данные найдены",
+        description: `${res.city || "—"} • ${res.nomenclature || "—"}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка поиска", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsWebLookup(false);
+    }
+  };
+
+  const handleBatchWebEnrich = async () => {
+    if (!suppliers?.length) return;
+    const toEnrich = suppliers.filter((s) => !s.city || !s.nomenclature);
+    if (toEnrich.length === 0) {
+      toast({ title: "Всё заполнено", description: "Город и номенклатура указаны у всех поставщиков" });
+      return;
+    }
+    setIsWebEnriching(true);
+    setWebProgress({ current: 0, total: toEnrich.length });
+    let updated = 0;
+    let failed = 0;
+    for (let i = 0; i < toEnrich.length; i++) {
+      const s = toEnrich[i];
+      setWebProgress({ current: i + 1, total: toEnrich.length });
+      try {
+        const res = await lookupSupplierWeb({ name: s.name, inn: s.inn });
+        const patch: Record<string, string> = {};
+        if (!s.city && res?.city) patch.city = res.city;
+        if (!s.nomenclature && res?.nomenclature) patch.nomenclature = res.nomenclature;
+        if (Object.keys(patch).length) {
+          const { error } = await supabase.from("suppliers").update(patch).eq("id", s.id);
+          if (error) failed++; else updated++;
+        }
+      } catch {
+        failed++;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    setIsWebEnriching(false);
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    toast({ title: "Поиск завершён", description: `Обновлено: ${updated}${failed ? `, не найдено: ${failed}` : ""}` });
+  };
+
   const [isBatchEnriching, setIsBatchEnriching] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
 
