@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2, ArrowUpDown, ZoomIn, ZoomOut, BookUser } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2, ArrowUpDown, ZoomIn, ZoomOut, BookUser, Globe } from "lucide-react";
 import { formatCompanyName } from "@/lib/companyFormat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -405,6 +405,81 @@ export default function Suppliers() {
       setIsExtractingSupplier(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  // Поиск города и номенклатуры в интернете
+  const [isWebLookup, setIsWebLookup] = useState(false);
+  const [isWebEnriching, setIsWebEnriching] = useState(false);
+  const [webProgress, setWebProgress] = useState({ current: 0, total: 0 });
+
+  const lookupSupplierWeb = async (payload: { name: string; inn?: string | null }) => {
+    const { data, error } = await supabase.functions.invoke("enrich-supplier-web", {
+      body: { name: payload.name, inn: payload.inn || undefined },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data as { city?: string; nomenclature?: string; confidence?: string };
+  };
+
+  const handleWebLookupForm = async () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Укажите название", description: "Название организации обязательно", variant: "destructive" });
+      return;
+    }
+    setIsWebLookup(true);
+    try {
+      const res = await lookupSupplierWeb({ name: formData.name, inn: formData.inn });
+      if (!res?.city && !res?.nomenclature) {
+        toast({ title: "Ничего не найдено", description: "Не удалось определить город и номенклатуру" });
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        city: res.city || prev.city,
+        nomenclature: res.nomenclature || prev.nomenclature,
+      }));
+      toast({
+        title: "Данные найдены",
+        description: `${res.city || "—"} • ${res.nomenclature || "—"}`,
+      });
+    } catch (e: any) {
+      toast({ title: "Ошибка поиска", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsWebLookup(false);
+    }
+  };
+
+  const handleBatchWebEnrich = async () => {
+    if (!suppliers?.length) return;
+    const toEnrich = suppliers.filter((s) => !s.city || !s.nomenclature);
+    if (toEnrich.length === 0) {
+      toast({ title: "Всё заполнено", description: "Город и номенклатура указаны у всех поставщиков" });
+      return;
+    }
+    setIsWebEnriching(true);
+    setWebProgress({ current: 0, total: toEnrich.length });
+    let updated = 0;
+    let failed = 0;
+    for (let i = 0; i < toEnrich.length; i++) {
+      const s = toEnrich[i];
+      setWebProgress({ current: i + 1, total: toEnrich.length });
+      try {
+        const res = await lookupSupplierWeb({ name: s.name, inn: s.inn });
+        const patch: Record<string, string> = {};
+        if (!s.city && res?.city) patch.city = res.city;
+        if (!s.nomenclature && res?.nomenclature) patch.nomenclature = res.nomenclature;
+        if (Object.keys(patch).length) {
+          const { error } = await supabase.from("suppliers").update(patch).eq("id", s.id);
+          if (error) failed++; else updated++;
+        }
+      } catch {
+        failed++;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    setIsWebEnriching(false);
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    toast({ title: "Поиск завершён", description: `Обновлено: ${updated}${failed ? `, не найдено: ${failed}` : ""}` });
   };
 
   const [isBatchEnriching, setIsBatchEnriching] = useState(false);
@@ -808,6 +883,17 @@ export default function Suppliers() {
                 {isBatchEnriching
                   ? `Обновляем ${batchProgress.current}/${batchProgress.total}...`
                   : "Заполнить реквизиты"}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isWebEnriching}
+                onClick={handleBatchWebEnrich}
+              >
+                {isWebEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                {isWebEnriching
+                  ? `Поиск ${webProgress.current}/${webProgress.total}...`
+                  : "Город и номенклатура"}
               </Button>
               <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
                 <Download className="h-4 w-4" />
@@ -1257,6 +1343,20 @@ export default function Suppliers() {
                     placeholder="Что поставляет: фильтры, метизы, ГСМ…"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isWebLookup || !formData.name.trim()}
+                  onClick={handleWebLookupForm}
+                >
+                  {isWebLookup ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                  {isWebLookup ? "Ищем в интернете..." : "Найти город и номенклатуру в интернете"}
+                </Button>
               </div>
 
               <div className="space-y-2">
