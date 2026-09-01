@@ -420,11 +420,75 @@ export default function Suppliers() {
     });
   };
 
-  const filteredSuppliers = suppliers?.filter((supplier) =>
-    supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    supplier.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSuppliers = suppliers?.filter((supplier) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return q.split(/\s+/).every((term) =>
+      [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
+        .some((v) => v?.toLowerCase().includes(term))
+    );
+  });
+
+  const handleExportExcel = async () => {
+    const rows = filteredSuppliers || [];
+    if (!rows.length) {
+      toast({ title: "Нет данных для экспорта", variant: "destructive" });
+      return;
+    }
+    try {
+      const XLSX = await import("xlsx");
+      const data = rows.map((s) => {
+        const stats = contractorStats.get(s.name.toLowerCase().trim());
+        return {
+          "Название": s.name,
+          "Город": s.city || "",
+          "Номенклатура": s.nomenclature || "",
+          "ИНН": s.inn || "",
+          "КПП": s.kpp || "",
+          "ОГРН": s.ogrn || "",
+          "Контактное лицо": s.contact_person || "",
+          "Телефон": s.phone || "",
+          "Email": s.email || "",
+          "Категория": s.category || "",
+          "Статус": s.status || "",
+          "Благонадёжность": s.reliability || "",
+          "Адрес": s.address || "",
+          "Банк": s.bank_name || "",
+          "Расчётный счёт": s.bank_account || "",
+          "БИК": s.bik || "",
+          "Заявок": stats?.count || 0,
+          "Сумма закупок": stats?.totalAmount || 0,
+          "Примечания": s.notes || "",
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws["!cols"] = [{ wch: 38 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 40 }, { wch: 26 }, { wch: 24 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 30 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Поставщики");
+      XLSX.writeFile(wb, `поставщики_${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast({ title: "Экспорт завершён", description: `Выгружено поставщиков: ${rows.length}` });
+    } catch (e: any) {
+      toast({ title: "Ошибка экспорта", description: e?.message || String(e), variant: "destructive" });
+    }
+  };
+
+  const [isFormatting, setIsFormatting] = useState(false);
+
+  const handleNormalizeNames = async () => {
+    if (!suppliers?.length) return;
+    setIsFormatting(true);
+    let changed = 0;
+    for (const s of suppliers) {
+      const next = formatCompanyName(s.name);
+      if (next && next !== s.name) {
+        const { error } = await supabase.from("suppliers").update({ name: next }).eq("id", s.id);
+        if (!error) changed++;
+      }
+    }
+    setIsFormatting(false);
+    queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    toast({ title: "Формат названий обновлён", description: `Изменено записей: ${changed}` });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
