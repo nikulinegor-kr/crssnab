@@ -728,6 +728,14 @@ export default function Suppliers() {
                 className="pl-9"
               />
             </div>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sortDirection === "asc" ? "А → Я" : "Я → А"}
+            </Button>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
               Фильтры
