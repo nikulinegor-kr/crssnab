@@ -734,6 +734,11 @@ export default function Suppliers() {
 
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const d of duplicates) next.delete(d.id);
+        return next;
+      });
       toast({
         title: "Дубли объединены",
         description: `Сохранён «${primary.name}», удалено дублей: ${duplicates.length}`,
