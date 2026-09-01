@@ -666,16 +666,20 @@ export default function Suppliers() {
 
       for (const dup of duplicates) {
         // Update requests contractor names
-        await supabase
+        const { error: reqErr } = await supabase
           .from("requests")
           .update({ contractor: primary.name })
           .eq("organization_id", currentOrgId)
           .eq("contractor", dup.name);
+        if (reqErr) throw reqErr;
         // Update FK-linked tables
-        await supabase.from("supplier_list_items").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
-        await supabase.from("kp_supplier_prices").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
+        const { error: sliErr } = await supabase.from("supplier_list_items").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
+        if (sliErr) throw sliErr;
+        const { error: kspErr } = await supabase.from("kp_supplier_prices").update({ supplier_id: primary.id }).eq("supplier_id", dup.id);
+        if (kspErr) throw kspErr;
         // Delete duplicate
-        await supabase.from("suppliers").delete().eq("id", dup.id);
+        const { error: delErr } = await supabase.from("suppliers").delete().eq("id", dup.id);
+        if (delErr) throw delErr;
       }
 
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
