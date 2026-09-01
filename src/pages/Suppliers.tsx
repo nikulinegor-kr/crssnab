@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -118,6 +119,21 @@ export default function Suppliers() {
   const [tableZoom, setTableZoom] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleMergeSelected = () => {
+    if (!suppliers || selectedIds.size < 2) return;
+    const group = suppliers.filter((s) => selectedIds.has(s.id));
+    handleMergeGroup(group).then(() => setSelectedIds(new Set()));
+  };
   const [isPhoneBookOpen, setIsPhoneBookOpen] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
