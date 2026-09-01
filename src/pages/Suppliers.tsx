@@ -850,7 +850,7 @@ export default function Suppliers() {
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20",
                         duplicateIds.has(supplier.id) && "bg-amber-500/5"
                       )}
@@ -879,36 +879,6 @@ export default function Suppliers() {
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground min-w-0">
                         <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center">
-                        <Select
-                          value={supplier.status}
-                          onValueChange={(value) => handleInlineField(supplier.id, "status", value)}
-                        >
-                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getStatusColor(supplier.status))}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statuses.map((st) => (
-                              <SelectItem key={st} value={st}>{st}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center">
-                        <Select
-                          value={supplier.reliability || "Не проверен"}
-                          onValueChange={(value) => handleInlineField(supplier.id, "reliability", value)}
-                        >
-                          <SelectTrigger className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs font-medium shadow-none [&>svg]:h-3 [&>svg]:w-3", getReliabilityColor(supplier.reliability))}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {reliabilities.map((r) => (
-                              <SelectItem key={r} value={r}>{r}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center">
                         {stats?.count ? (
