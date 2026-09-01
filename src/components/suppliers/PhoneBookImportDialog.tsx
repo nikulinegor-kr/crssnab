@@ -282,6 +282,17 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
 
           <div className="flex items-center gap-2">
             <Checkbox
+              id="pb-auto-apply"
+              checked={autoApply}
+              onCheckedChange={(v) => setAutoApply(!!v)}
+            />
+            <Label htmlFor="pb-auto-apply" className="text-sm cursor-pointer">
+              Заполнить весь список сразу (без предпросмотра)
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
               id="pb-overwrite"
               checked={overwrite}
               onCheckedChange={(v) => {
