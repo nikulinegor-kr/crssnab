@@ -40,6 +40,46 @@ import { useDadataSearch, DadataSuggestion } from "@/hooks/useDadataSearch";
 import { SupplierListsDialog } from "@/components/materials/SupplierListsDialog";
 import { PhoneBookImportDialog } from "@/components/suppliers/PhoneBookImportDialog";
 
+const InlineNomenclatureCell = ({ supplierId, value }: { supplierId: string; value: string | null }) => {
+  const [text, setText] = useState(value || "");
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  useEffect(() => { setText(value || ""); }, [value]);
+
+  const save = async () => {
+    const next = text.trim();
+    if (next === (value || "")) return;
+    setSaving(true);
+    const { error } = await supabase.from("suppliers").update({ nomenclature: next || null }).eq("id", supplierId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Ошибка", description: "Не удалось сохранить номенклатуру", variant: "destructive" });
+      setText(value || "");
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    }
+  };
+
+  return (
+    <div className="relative px-1">
+      <Input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "Escape") setText(value || "");
+        }}
+        placeholder="—"
+        className="h-7 border-transparent bg-transparent hover:border-input focus:border-input text-center text-sm px-2"
+      />
+      {saving && <Loader2 className="h-3 w-3 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />}
+    </div>
+  );
+};
+
 interface Supplier {
   id: string;
   name: string;
@@ -882,8 +922,8 @@ export default function Suppliers() {
                         )}
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
-                        {supplier.nomenclature || "—"}
+                      <div className="border-r border-border/40 px-1 py-2 min-w-0" title={supplier.nomenclature || ""}>
+                        <InlineNomenclatureCell supplierId={supplier.id} value={supplier.nomenclature} />
                       </div>
                       <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
