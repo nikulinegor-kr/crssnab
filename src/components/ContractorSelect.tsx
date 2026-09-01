@@ -104,9 +104,18 @@ export function ContractorSelect({
 
   const handleAddNew = async () => {
     if (!newName.trim() || !onAddNew) return;
-    
+
+    if (!newPhone.trim() || !newNomenclature.trim()) {
+      toast({
+        title: "Заполните обязательные поля",
+        description: "Укажите телефон и номенклатуру поставщика",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formattedName = formatCompanyName(newName.trim());
-    
+
     // Проверка на дубликат
     if (checkDuplicate(formattedName)) {
       toast({
@@ -116,13 +125,15 @@ export function ContractorSelect({
       });
       return;
     }
-    
+
     setIsAdding(true);
     try {
-      await onAddNew(formattedName);
+      await onAddNew(formattedName, { phone: newPhone.trim(), nomenclature: newNomenclature.trim() });
       onChange(formattedName);
       setIsAddOpen(false);
       setNewName("");
+      setNewPhone("");
+      setNewNomenclature("");
     } finally {
       setIsAdding(false);
     }
