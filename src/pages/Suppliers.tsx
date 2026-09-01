@@ -1345,6 +1345,20 @@ export default function Suppliers() {
                 </div>
               </div>
 
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isWebLookup || !formData.name.trim()}
+                  onClick={handleWebLookupForm}
+                >
+                  {isWebLookup ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                  {isWebLookup ? "Ищем в интернете..." : "Найти город и номенклатуру в интернете"}
+                </Button>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="address">Юридический адрес</Label>
                 <Input
