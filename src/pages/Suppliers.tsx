@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2 } from "lucide-react";
+import { Plus, Search, Filter, FileText, DollarSign, Building2, Loader2, Upload, RefreshCw, Download, ExternalLink, Wand2, ArrowUpDown } from "lucide-react";
 import { formatCompanyName } from "@/lib/companyFormat";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +73,7 @@ export default function Suppliers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
@@ -420,14 +421,20 @@ export default function Suppliers() {
     });
   };
 
-  const filteredSuppliers = suppliers?.filter((supplier) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
-    return q.split(/\s+/).every((term) =>
-      [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
-        .some((v) => v?.toLowerCase().includes(term))
+  const filteredSuppliers = suppliers
+    ?.filter((supplier) => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return q.split(/\s+/).every((term) =>
+        [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
+          .some((v) => v?.toLowerCase().includes(term))
+      );
+    })
+    .sort((a, b) =>
+      sortDirection === "asc"
+        ? a.name.localeCompare(b.name, "ru-RU")
+        : b.name.localeCompare(a.name, "ru-RU")
     );
-  });
 
   const handleExportExcel = async () => {
     const rows = filteredSuppliers || [];
@@ -721,6 +728,14 @@ export default function Suppliers() {
                 className="pl-9"
               />
             </div>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sortDirection === "asc" ? "А → Я" : "Я → А"}
+            </Button>
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
               Фильтры
