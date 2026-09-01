@@ -991,8 +991,9 @@ export default function Suppliers() {
                 {searchQuery ? "Поставщики не найдены" : "Нет поставщиков"}
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          </div>
 
         {/* Диалог создания/редактирования */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
