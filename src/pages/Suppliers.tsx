@@ -826,14 +826,12 @@ export default function Suppliers() {
           <div className="overflow-x-auto">
             <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
             <CardHeader className="border-b border-border/40 overflow-x-auto">
-              <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+              <div className="min-w-[980px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
                 <div className="border-r border-border/40 px-3 py-2 text-left">Название</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Город</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Номенклатура</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">ИНН</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Телефон / Email</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Статус</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Благонадёжность</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Заявки</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Сумма закупок</div>
                 <div className="px-3 py-2 text-right">Действия</div>
