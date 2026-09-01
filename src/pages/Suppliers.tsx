@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -118,6 +119,21 @@ export default function Suppliers() {
   const [tableZoom, setTableZoom] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleMergeSelected = () => {
+    if (!suppliers || selectedIds.size < 2) return;
+    const group = suppliers.filter((s) => selectedIds.has(s.id));
+    handleMergeGroup(group).then(() => setSelectedIds(new Set()));
+  };
   const [isPhoneBookOpen, setIsPhoneBookOpen] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -718,6 +734,11 @@ export default function Suppliers() {
 
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const d of duplicates) next.delete(d.id);
+        return next;
+      });
       toast({
         title: "Дубли объединены",
         description: `Сохранён «${primary.name}», удалено дублей: ${duplicates.length}`,
@@ -826,6 +847,12 @@ export default function Suppliers() {
                 <Upload className="h-4 w-4" />
                 Загрузить контакты
               </Button>
+              {selectedIds.size >= 2 && (
+                <Button variant="default" className="gap-2" onClick={handleMergeSelected} disabled={isMerging}>
+                  {isMerging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building2 className="h-4 w-4" />}
+                  Объединить выбранные ({selectedIds.size})
+                </Button>
+              )}
             </div>
           </div>
 
@@ -878,7 +905,20 @@ export default function Suppliers() {
           <div className="overflow-x-auto">
             <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
             <CardHeader className="border-b border-border/40 overflow-x-auto">
-              <div className="min-w-[980px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+              <div className="min-w-[1020px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+                <div className="border-r border-border/40 px-2 py-2 flex items-center justify-center">
+                  <Checkbox
+                    checked={
+                      !!filteredSuppliers?.length &&
+                      filteredSuppliers.every((s) => selectedIds.has(s.id))
+                    }
+                    onCheckedChange={(v) => {
+                      if (!filteredSuppliers) return;
+                      setSelectedIds(v ? new Set(filteredSuppliers.map((s) => s.id)) : new Set());
+                    }}
+                    aria-label="Выбрать всех"
+                  />
+                </div>
                 <div className="border-r border-border/40 px-3 py-2 text-left">Название</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Город</div>
                 <div className="border-r border-border/40 px-3 py-2 text-center">Номенклатура</div>
@@ -902,11 +942,19 @@ export default function Suppliers() {
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
+                        "grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20",
-                        duplicateIds.has(supplier.id) && "bg-amber-500/5"
+                        duplicateIds.has(supplier.id) && "bg-amber-500/5",
+                        selectedIds.has(supplier.id) && "bg-primary/5"
                       )}
                     >
+                      <div className="border-r border-border/40 px-2 py-4 flex items-center justify-center">
+                        <Checkbox
+                          checked={selectedIds.has(supplier.id)}
+                          onCheckedChange={(v) => toggleSelected(supplier.id, !!v)}
+                          aria-label={`Выбрать ${supplier.name}`}
+                        />
+                      </div>
                       <div className="min-w-0 border-r border-border/40 px-3 py-4 text-left">
                         <button
                           type="button"
