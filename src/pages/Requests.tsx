@@ -67,14 +67,18 @@ const Requests = () => {
         .from("requests")
         .select("id, description, request_number, status, document_url")
         .eq("organization_id", currentOrgId)
-        .in("status", ["Счёт", "Счёт в Бухгалтерии", "Обновить счёт"])
         .eq("archived", false);
       if (error) throw error;
 
+      // Статусы счетов встречаются с разным регистром и лишними пробелами — нормализуем
+      const INVOICE_STATUSES = new Set(["счёт", "счет", "счёт в бухгалтерии", "счет в бухгалтерии", "обновить счёт", "обновить счет"]);
       const rows = (data || []).filter((r: any) => {
+        const status = String(r.status ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (!INVOICE_STATUSES.has(status)) return false;
         const urls = Array.isArray(r.document_url) ? r.document_url : (r.document_url ? [r.document_url] : []);
         return urls.length > 0;
       });
+
       if (rows.length === 0) {
         toast({ title: "Нет счетов", description: "Не найдено заявок со статусом «Счёт» с прикреплёнными файлами" });
         return;
