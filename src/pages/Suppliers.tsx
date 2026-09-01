@@ -38,6 +38,7 @@ import {
 import { MoreVertical } from "lucide-react";
 import { useDadataSearch, DadataSuggestion } from "@/hooks/useDadataSearch";
 import { SupplierListsDialog } from "@/components/materials/SupplierListsDialog";
+import { PhoneBookImportDialog } from "@/components/suppliers/PhoneBookImportDialog";
 
 interface Supplier {
   id: string;
@@ -77,6 +78,7 @@ export default function Suppliers() {
   const [tableZoom, setTableZoom] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [isPhoneBookOpen, setIsPhoneBookOpen] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
@@ -779,6 +781,10 @@ export default function Suppliers() {
               >
                 <Building2 className="h-4 w-4" />
                 Дубли {duplicateGroups.length > 0 && `(${duplicateGroups.length})`}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => setIsPhoneBookOpen(true)}>
+                <BookUser className="h-4 w-4" />
+                Телефоны из контактов
               </Button>
             </div>
           </div>
