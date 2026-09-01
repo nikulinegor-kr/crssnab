@@ -676,6 +676,23 @@ export default function Suppliers() {
                 <Download className="h-4 w-4" />
                 Экспорт Excel
               </Button>
+              <Button variant="outline" className="gap-2" asChild disabled={isImporting}>
+                <label className="cursor-pointer">
+                  {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {isImporting ? "Импорт..." : "Импорт Excel"}
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImportExcel(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </Button>
+
               <Button variant="outline" className="gap-2" disabled={isFormatting} onClick={handleNormalizeNames}>
                 {isFormatting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 Формат названий
