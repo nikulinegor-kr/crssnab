@@ -12,8 +12,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
-import { BookUser, Loader2, Upload } from "lucide-react";
+import { BookUser, Check, ChevronsUpDown, Loader2, Upload, X } from "lucide-react";
 
 interface SupplierLite {
   id: string;
