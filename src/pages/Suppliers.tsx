@@ -598,9 +598,11 @@ export default function Suppliers() {
 
         {/* Таблица поставщиков */}
         <Card className="bg-card border-border/40">
-          <CardHeader className="border-b border-border/40">
-            <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 text-sm font-medium text-muted-foreground uppercase">
+          <CardHeader className="border-b border-border/40 overflow-x-auto">
+            <div className="min-w-[1180px] grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 text-xs font-medium text-muted-foreground uppercase">
               <div>Название</div>
+              <div>Город</div>
+              <div>Номенклатура</div>
               <div>ИНН</div>
               <div>Телефон / Email</div>
               <div>Статус</div>
@@ -610,34 +612,46 @@ export default function Suppliers() {
               <div className="text-right">Действия</div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Загрузка...
               </div>
             ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
-              <div className="divide-y divide-border/40">
+              <div className="divide-y divide-border/40 min-w-[1180px]">
                  {filteredSuppliers.map((supplier, index) => {
                     const stats = contractorStats.get(supplier.name.toLowerCase().trim());
                     return (
                     <div
                       key={supplier.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_2fr_1fr_1fr_1fr_1.5fr_auto] gap-4 p-4 hover:bg-muted/30 transition-colors items-center",
+                        "grid grid-cols-[2fr_1fr_1.4fr_0.9fr_1.6fr_0.9fr_1fr_0.7fr_1.1fr_auto] gap-3 p-4 hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20"
                       )}
                     >
-                      <div>
-                        <div className="font-medium text-foreground">{supplier.name}</div>
+                      <div className="min-w-0">
+                        <button
+                          type="button"
+                          className="font-medium text-foreground text-left hover:text-primary hover:underline inline-flex items-center gap-1"
+                          title="Открыть заявки этого поставщика"
+                          onClick={() => navigate(`/requests?contractor=${encodeURIComponent(supplier.name)}`)}
+                        >
+                          <span className="truncate">{supplier.name}</span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                        </button>
                         {supplier.contact_person && (
-                          <div className="text-xs text-muted-foreground mt-0.5">{supplier.contact_person}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">{supplier.contact_person}</div>
                         )}
+                      </div>
+                      <div className="text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
+                      <div className="text-sm text-muted-foreground truncate" title={supplier.nomenclature || ""}>
+                        {supplier.nomenclature || "—"}
                       </div>
                       <div className="text-sm text-muted-foreground font-mono">
                         {supplier.inn || "—"}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        <div>{supplier.phone || "—"}</div>
+                      <div className="text-sm text-muted-foreground min-w-0">
+                        <div className="truncate">{supplier.phone || "—"}</div>
                         {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
                       </div>
                       <div>
