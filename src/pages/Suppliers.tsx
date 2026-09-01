@@ -422,6 +422,32 @@ export default function Suppliers() {
     });
   };
 
+  const normalizeDuplicateKey = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/['"«»“”]/g, "")
+      .replace(/\b(ооо|ао|пао|зао|ип|общество с ограниченной ответственностью|акционерное общество)\b/g, "")
+      .trim();
+
+  const duplicateGroups = useMemo(() => {
+    if (!suppliers) return [] as Supplier[][];
+    const map = new Map<string, Supplier[]>();
+    for (const s of suppliers) {
+      const key = normalizeDuplicateKey(s.name);
+      if (!key) continue;
+      const arr = map.get(key) || [];
+      arr.push(s);
+      map.set(key, arr);
+    }
+    return Array.from(map.values()).filter((g) => g.length > 1);
+  }, [suppliers]);
+
+  const duplicateIds = useMemo(
+    () => new Set(duplicateGroups.flatMap((g) => g.map((s) => s.id))),
+    [duplicateGroups]
+  );
+
   const filteredSuppliers = suppliers
     ?.filter((supplier) => {
       const q = searchQuery.toLowerCase().trim();
