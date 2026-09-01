@@ -922,6 +922,28 @@ export default function Suppliers() {
               </div>
 
               <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">Город</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="Например: Новосибирск"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nomenclature">Номенклатура</Label>
+                  <Input
+                    id="nomenclature"
+                    value={formData.nomenclature}
+                    onChange={(e) => setFormData({ ...formData, nomenclature: e.target.value })}
+                    placeholder="Что поставляет: фильтры, метизы, ГСМ…"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="address">Юридический адрес</Label>
                 <Input
                   id="address"
