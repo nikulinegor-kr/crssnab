@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Plus, X, Trash2, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ interface ContractorSelectProps {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  onAddNew?: (name: string) => Promise<void>;
+  onAddNew?: (name: string, extra: { phone: string; nomenclature: string }) => Promise<void>;
   onDelete?: (value: string) => Promise<void>;
   onEdit?: (id: string, newName: string) => Promise<void>;
   disabled?: boolean;
@@ -57,6 +58,8 @@ export function ContractorSelect({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newNomenclature, setNewNomenclature] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ value: string; label: string } | null>(null);
@@ -102,9 +105,18 @@ export function ContractorSelect({
 
   const handleAddNew = async () => {
     if (!newName.trim() || !onAddNew) return;
-    
+
+    if (!newPhone.trim() || !newNomenclature.trim()) {
+      toast({
+        title: "Заполните обязательные поля",
+        description: "Укажите телефон и номенклатуру поставщика",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formattedName = formatCompanyName(newName.trim());
-    
+
     // Проверка на дубликат
     if (checkDuplicate(formattedName)) {
       toast({
@@ -114,13 +126,15 @@ export function ContractorSelect({
       });
       return;
     }
-    
+
     setIsAdding(true);
     try {
-      await onAddNew(formattedName);
+      await onAddNew(formattedName, { phone: newPhone.trim(), nomenclature: newNomenclature.trim() });
       onChange(formattedName);
       setIsAddOpen(false);
       setNewName("");
+      setNewPhone("");
+      setNewNomenclature("");
     } finally {
       setIsAdding(false);
     }
@@ -393,10 +407,42 @@ export function ContractorSelect({
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
+                <Label htmlFor="contractor-name">Название *</Label>
                 <Input
+                  id="contractor-name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Название контрагента"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNew();
+                    }
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contractor-phone">Телефон *</Label>
+                <Input
+                  id="contractor-phone"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="+7 (___) ___-__-__"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNew();
+                    }
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contractor-nomenclature">Номенклатура *</Label>
+                <Input
+                  id="contractor-nomenclature"
+                  value={newNomenclature}
+                  onChange={(e) => setNewNomenclature(e.target.value)}
+                  placeholder="Например: металлопрокат, фильтры, ГСМ"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -413,6 +459,8 @@ export function ContractorSelect({
                 onClick={() => {
                   setIsAddOpen(false);
                   setNewName("");
+                  setNewPhone("");
+                  setNewNomenclature("");
                 }}
               >
                 Отмена
@@ -420,7 +468,7 @@ export function ContractorSelect({
               <Button
                 type="button"
                 onClick={handleAddNew}
-                disabled={isAdding || !newName.trim()}
+                disabled={isAdding || !newName.trim() || !newPhone.trim() || !newNomenclature.trim()}
               >
                 {isAdding ? "Добавление..." : "Добавить"}
               </Button>

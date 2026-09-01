@@ -40,7 +40,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
   const [isRecognizing, setIsRecognizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddContractor = async (name: string) => {
+  const handleAddContractor = async (name: string, extra?: { phone: string; nomenclature: string }) => {
     if (!currentOrgId) {
       toast({ title: "Ошибка", description: "Организация не выбрана", variant: "destructive" });
       return;
@@ -51,7 +51,13 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
       return;
     }
     const { error } = await supabase.from("suppliers").insert({
-      name, organization_id: currentOrgId, created_by: user.id, category: "Другое", status: "Активный",
+      name,
+      organization_id: currentOrgId,
+      created_by: user.id,
+      category: "Другое",
+      status: "Активный",
+      phone: extra?.phone || null,
+      nomenclature: extra?.nomenclature || null,
     });
     if (error) {
       toast({ title: "Ошибка", description: error.message || "Не удалось добавить контрагента", variant: "destructive" });
