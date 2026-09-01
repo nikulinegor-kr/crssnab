@@ -822,9 +822,9 @@ export default function Suppliers() {
                 <Building2 className="h-4 w-4" />
                 Дубли {duplicateGroups.length > 0 && `(${duplicateGroups.length})`}
               </Button>
-              <Button variant="outline" className="gap-2" onClick={() => setIsPhoneBookOpen(true)}>
-                <BookUser className="h-4 w-4" />
-                Телефоны из контактов
+              <Button className="gap-2" onClick={() => setIsPhoneBookOpen(true)}>
+                <Upload className="h-4 w-4" />
+                Загрузить контакты
               </Button>
             </div>
           </div>
