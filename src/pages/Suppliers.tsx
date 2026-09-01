@@ -884,6 +884,17 @@ export default function Suppliers() {
                   ? `Обновляем ${batchProgress.current}/${batchProgress.total}...`
                   : "Заполнить реквизиты"}
               </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isWebEnriching}
+                onClick={handleBatchWebEnrich}
+              >
+                {isWebEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                {isWebEnriching
+                  ? `Поиск ${webProgress.current}/${webProgress.total}...`
+                  : "Город и номенклатура"}
+              </Button>
               <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
                 <Download className="h-4 w-4" />
                 Экспорт Excel
