@@ -473,6 +473,111 @@ export default function Suppliers() {
   };
 
   const [isFormatting, setIsFormatting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleImportExcel = async (file: File) => {
+    if (!currentOrgId) {
+      toast({ title: "Организация не выбрана", variant: "destructive" });
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const norm = (v: any) => String(v ?? "").replace(/\s+/g, " ").trim();
+      const lc = (v: any) => norm(v).toLowerCase();
+
+      const existing = new Set((suppliers || []).map((s) => lc(s.name)));
+      const rows: any[] = [];
+      const seen = new Set<string>();
+
+      for (const sheetName of wb.SheetNames) {
+        const raw: any[][] = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: "" });
+        if (!raw.length) continue;
+
+        const KEYS = ["назв", "поставщик", "организац", "компани", "инн", "кпп", "огрн", "телеф", "email", "почт", "город", "адрес", "номенклат", "контакт", "банк", "бик"];
+        let headerIdx = -1;
+        let best = 0;
+        for (let i = 0; i < Math.min(raw.length, 25); i++) {
+          const joined = raw[i].map(lc).join("|");
+          const hits = KEYS.reduce((n, k) => n + (joined.includes(k) ? 1 : 0), 0);
+          if (hits > best) { best = hits; headerIdx = i; }
+        }
+        if (headerIdx < 0 || best < 1) continue;
+
+        const headers = raw[headerIdx].map(lc);
+        const col = (...keys: string[]) => headers.findIndex((h) => keys.some((k) => h.includes(k)));
+        const cName = col("назв", "поставщик", "организац", "компани", "контрагент");
+        const cCity = col("город", "регион");
+        const cNom = col("номенклат", "товар", "продук", "что постав");
+        const cInn = col("инн");
+        const cKpp = col("кпп");
+        const cOgrn = col("огрн");
+        const cContact = col("контакт", "фио", "менеджер", "представит");
+        const cPhone = col("телеф", "тел", "phone", "моб");
+        const cEmail = col("email", "почт", "e-mail", "мейл");
+        const cAddr = col("адрес");
+        const cBank = col("банк");
+        const cAcc = col("счет", "счёт", "р/с");
+        const cBik = col("бик");
+        const cCat = col("категор");
+        const cNote = col("примеч", "коммент");
+        if (cName < 0) continue;
+
+        for (let i = headerIdx + 1; i < raw.length; i++) {
+          const cells = raw[i].map(norm);
+          const rawName = cells[cName];
+          if (!rawName) continue;
+          const name = formatCompanyName(rawName);
+          const key = lc(name);
+          if (!key || existing.has(key) || seen.has(key)) continue;
+          seen.add(key);
+          const pick = (idx: number) => (idx >= 0 && cells[idx] ? cells[idx] : null);
+          rows.push({
+            organization_id: currentOrgId,
+            name,
+            city: pick(cCity),
+            nomenclature: pick(cNom),
+            inn: pick(cInn),
+            kpp: pick(cKpp),
+            ogrn: pick(cOgrn),
+            contact_person: pick(cContact),
+            phone: pick(cPhone),
+            email: pick(cEmail),
+            address: pick(cAddr),
+            bank_name: pick(cBank),
+            bank_account: pick(cAcc),
+            bik: pick(cBik),
+            category: pick(cCat) || "Другое",
+            status: "Активный",
+            reliability: "Не проверен",
+            notes: pick(cNote),
+          });
+        }
+      }
+
+      if (!rows.length) {
+        toast({
+          title: "Не удалось распознать данные",
+          description: "Нужна строка-заголовок со столбцом «Название» (или «Поставщик»)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      for (let i = 0; i < rows.length; i += 200) {
+        const { error } = await supabase.from("suppliers").insert(rows.slice(i, i + 200));
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast({ title: "Импорт завершён", description: `Добавлено поставщиков: ${rows.length}` });
+    } catch (e: any) {
+      toast({ title: "Ошибка импорта", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
 
   const handleNormalizeNames = async () => {
     if (!suppliers?.length) return;
