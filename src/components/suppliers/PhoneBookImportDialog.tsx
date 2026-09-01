@@ -246,26 +246,7 @@ export function PhoneBookImportDialog({ open, onOpenChange, suppliers }: PhoneBo
     }
   };
 
-  const handleApply = async () => {
-    const chosen = matches.filter((m) => m.selected);
-    if (!chosen.length) return;
-    setIsSaving(true);
-    let updated = 0;
-    try {
-      for (const m of chosen) {
-        const { error } = await supabase.from("suppliers").update({ phone: m.newPhone }).eq("id", m.supplierId);
-        if (!error) updated++;
-      }
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
-      toast({ title: "Телефоны обновлены", description: `Заполнено номеров: ${updated}` });
-      setMatches([]);
-      onOpenChange(false);
-    } catch (e: any) {
-      toast({ title: "Ошибка сохранения", description: e?.message || String(e), variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleApply = () => applyRows(matches.filter((m) => m.selected));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
