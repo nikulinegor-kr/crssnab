@@ -406,10 +406,42 @@ export function ContractorSelect({
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
+                <Label htmlFor="contractor-name">Название *</Label>
                 <Input
+                  id="contractor-name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Название контрагента"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNew();
+                    }
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contractor-phone">Телефон *</Label>
+                <Input
+                  id="contractor-phone"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="+7 (___) ___-__-__"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNew();
+                    }
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contractor-nomenclature">Номенклатура *</Label>
+                <Input
+                  id="contractor-nomenclature"
+                  value={newNomenclature}
+                  onChange={(e) => setNewNomenclature(e.target.value)}
+                  placeholder="Например: металлопрокат, фильтры, ГСМ"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -426,6 +458,8 @@ export function ContractorSelect({
                 onClick={() => {
                   setIsAddOpen(false);
                   setNewName("");
+                  setNewPhone("");
+                  setNewNomenclature("");
                 }}
               >
                 Отмена
@@ -433,7 +467,7 @@ export function ContractorSelect({
               <Button
                 type="button"
                 onClick={handleAddNew}
-                disabled={isAdding || !newName.trim()}
+                disabled={isAdding || !newName.trim() || !newPhone.trim() || !newNomenclature.trim()}
               >
                 {isAdding ? "Добавление..." : "Добавить"}
               </Button>
