@@ -560,10 +560,12 @@ export default function Suppliers() {
   const normalizeDuplicateKey = (name: string) =>
     name
       .toLowerCase()
+      .replace(/['"«»“”]/g, " ")
+      .replace(/общество\s+с\s+ограниченн?ой\s+ответственн?остью|индивидуальный\s+предприниматель|акционерное\s+общество/g, " ")
+      .replace(/(^|[^а-яёa-z0-9])(ооо|зао|оао|ао|пао|нао|ип|гк|муп|фгуп)(?![а-яёa-z0-9])/g, "$1 ")
       .replace(/\s+/g, " ")
-      .replace(/['"«»“”]/g, "")
-      .replace(/\b(ооо|ао|пао|зао|ип|общество с ограниченной ответственностью|акционерное общество)\b/g, "")
       .trim();
+
 
   const duplicateGroups = useMemo(() => {
     if (!suppliers) return [] as Supplier[][];
