@@ -1,4 +1,6 @@
 import { Suspense, useState } from "react";
+import NativeShell from "@/components/native/NativeShell";
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -130,6 +132,8 @@ const App = () => {
           <NetworkStatusIndicator />
           <BrowserRouter>
           <QuickRequestProvider>
+          <NativeShell />
+
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />

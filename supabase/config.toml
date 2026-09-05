@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.enrich-supplier-web]
 verify_jwt = true
+
+[functions.send-apns-push]
+verify_jwt = false

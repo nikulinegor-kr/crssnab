@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BiometricLoginButton from "@/components/native/BiometricLoginButton";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -216,6 +217,7 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 animate-fade-in">
+                <BiometricLoginButton />
                 <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-foreground">Email</Label>

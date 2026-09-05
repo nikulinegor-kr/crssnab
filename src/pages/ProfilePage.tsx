@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import BiometricSettingCard from "@/components/native/BiometricSettingCard";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -268,6 +269,9 @@ export default function ProfilePage() {
                       onCheckedChange={setTwoFactorEnabled}
                     />
                   </div>
+
+                  <BiometricSettingCard />
+
 
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline">

@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.app.lovable.p03d26285f32f457cbdfeb9b17be007d2"],
+        "components": [
+          { "/": "/*", "comment": "Все страницы CRSS открываются в приложении" }
+        ]
+      }
+    ]
+  }
+}
