@@ -130,6 +130,8 @@ const App = () => {
           <NetworkStatusIndicator />
           <BrowserRouter>
           <QuickRequestProvider>
+          <NativeShell />
+
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
