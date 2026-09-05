@@ -216,6 +216,7 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 animate-fade-in">
+                <BiometricLoginButton />
                 <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-foreground">Email</Label>
