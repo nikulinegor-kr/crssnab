@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.notify_apns_on_notification() FROM PUBLIC, anon, authenticated;
