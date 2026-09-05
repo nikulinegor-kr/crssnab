@@ -560,10 +560,12 @@ export default function Suppliers() {
   const normalizeDuplicateKey = (name: string) =>
     name
       .toLowerCase()
+      .replace(/['"«»“”]/g, " ")
+      .replace(/общество\s+с\s+ограниченн?ой\s+ответственн?остью|индивидуальный\s+предприниматель|акционерное\s+общество/g, " ")
+      .replace(/(^|[^а-яёa-z0-9])(ооо|зао|оао|ао|пао|нао|ип|гк|муп|фгуп)(?![а-яёa-z0-9])/g, "$1 ")
       .replace(/\s+/g, " ")
-      .replace(/['"«»“”]/g, "")
-      .replace(/\b(ооо|ао|пао|зао|ип|общество с ограниченной ответственностью|акционерное общество)\b/g, "")
       .trim();
+
 
   const duplicateGroups = useMemo(() => {
     if (!suppliers) return [] as Supplier[][];
@@ -794,6 +796,27 @@ export default function Suppliers() {
       });
       const [primary, ...duplicates] = sorted;
 
+      // Перенос заполненных полей из дублей в основную карточку
+      const mergeFields = [
+        "phone", "email", "inn", "kpp", "ogrn", "city", "nomenclature", "address",
+        "contact_person", "bank_name", "bik", "bank_account", "notes",
+      ] as const;
+
+      const patch: Record<string, string> = {};
+      for (const field of mergeFields) {
+        const current = (primary as any)[field];
+        if (current !== null && current !== undefined && String(current).trim() !== "") continue;
+        const donor = duplicates.find((d) => {
+          const v = (d as any)[field];
+          return v !== null && v !== undefined && String(v).trim() !== "";
+        });
+        if (donor) patch[field] = (donor as any)[field];
+      }
+      if (Object.keys(patch).length > 0) {
+        const { error: patchErr } = await supabase.from("suppliers").update(patch).eq("id", primary.id);
+        if (patchErr) throw patchErr;
+      }
+
       for (const dup of duplicates) {
         // Update requests contractor names
         const { error: reqErr } = await supabase
@@ -806,6 +829,7 @@ export default function Suppliers() {
         const { error: delErr } = await supabase.from("suppliers").delete().eq("id", dup.id);
         if (delErr) throw delErr;
       }
+
 
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
@@ -989,9 +1013,9 @@ export default function Suppliers() {
 
           {/* Таблица поставщиков */}
           <div className="overflow-x-auto">
-            <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
-            <CardHeader className="border-b border-border/40 overflow-x-auto">
-              <div className="min-w-[1020px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+            <Card className="bg-card border-border/40 w-max min-w-full" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
+            <CardHeader className="border-b border-border/40 p-0">
+              <div className="min-w-[1180px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
                 <div className="border-r border-border/40 px-2 py-2 flex items-center justify-center">
                   <Checkbox
                     checked={
@@ -1015,7 +1039,7 @@ export default function Suppliers() {
                 <div className="px-3 py-2 text-right">Действия</div>
               </div>
             </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Загрузка...
