@@ -1014,8 +1014,8 @@ export default function Suppliers() {
           {/* Таблица поставщиков */}
           <div className="overflow-x-auto">
             <Card className="bg-card border-border/40" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
-            <CardHeader className="border-b border-border/40 overflow-x-auto">
-              <div className="min-w-[1020px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
+            <CardHeader className="border-b border-border/40">
+              <div className="min-w-[1180px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
                 <div className="border-r border-border/40 px-2 py-2 flex items-center justify-center">
                   <Checkbox
                     checked={
@@ -1039,7 +1039,7 @@ export default function Suppliers() {
                 <div className="px-3 py-2 text-right">Действия</div>
               </div>
             </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Загрузка...
