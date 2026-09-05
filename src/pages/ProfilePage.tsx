@@ -269,6 +269,9 @@ export default function ProfilePage() {
                     />
                   </div>
 
+                  <BiometricSettingCard />
+
+
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline">
                       Отменить
