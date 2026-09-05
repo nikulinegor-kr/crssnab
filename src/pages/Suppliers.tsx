@@ -799,9 +799,9 @@ export default function Suppliers() {
       // Перенос заполненных полей из дублей в основную карточку
       const mergeFields = [
         "phone", "email", "inn", "kpp", "ogrn", "city", "nomenclature", "address",
-        "contact_person", "website", "bank_name", "bank_bik", "bank_account",
-        "correspondent_account", "notes", "delivery_terms", "payment_terms",
+        "contact_person", "bank_name", "bik", "bank_account", "notes",
       ] as const;
+
       const patch: Record<string, string> = {};
       for (const field of mergeFields) {
         const current = (primary as any)[field];
