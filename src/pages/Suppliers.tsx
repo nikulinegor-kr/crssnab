@@ -796,6 +796,27 @@ export default function Suppliers() {
       });
       const [primary, ...duplicates] = sorted;
 
+      // Перенос заполненных полей из дублей в основную карточку
+      const mergeFields = [
+        "phone", "email", "inn", "kpp", "ogrn", "city", "nomenclature", "address",
+        "contact_person", "website", "bank_name", "bank_bik", "bank_account",
+        "correspondent_account", "notes", "delivery_terms", "payment_terms",
+      ] as const;
+      const patch: Record<string, string> = {};
+      for (const field of mergeFields) {
+        const current = (primary as any)[field];
+        if (current !== null && current !== undefined && String(current).trim() !== "") continue;
+        const donor = duplicates.find((d) => {
+          const v = (d as any)[field];
+          return v !== null && v !== undefined && String(v).trim() !== "";
+        });
+        if (donor) patch[field] = (donor as any)[field];
+      }
+      if (Object.keys(patch).length > 0) {
+        const { error: patchErr } = await supabase.from("suppliers").update(patch).eq("id", primary.id);
+        if (patchErr) throw patchErr;
+      }
+
       for (const dup of duplicates) {
         // Update requests contractor names
         const { error: reqErr } = await supabase
@@ -808,6 +829,7 @@ export default function Suppliers() {
         const { error: delErr } = await supabase.from("suppliers").delete().eq("id", dup.id);
         if (delErr) throw delErr;
       }
+
 
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["contractor-stats"] });
