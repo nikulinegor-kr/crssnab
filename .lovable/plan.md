@@ -1,81 +1,59 @@
-# Модуль «Фильтрующие элементы»
+# Мобильное приложение CRSS для iPhone (TestFlight)
 
-Новый раздел ERP, полностью независимый от «Склада запасных частей»: своя таблица в БД, свои страницы, свои фильтры и своя логика списания и неликвида.
+Цель: собрать текущую CRM в настоящее iOS-приложение через Capacitor, не меняя бизнес-логику и существующие данные. Приложение подтягивает интерфейс с вашего сайта (правки видны сразу, без пересборки), работает с тем же бэкендом и аккаунтами.
 
-## Структура сайдбара (ERP)
+## Что получит пользователь
 
-```text
-ERP
-├── Склад запасных частей
-├── Фильтрующие элементы   ← новое
-└── Склад неликвида
-```
+- Приложение на iPhone с иконкой, заставкой и корректными отступами под «чёлку» и нижнюю полосу.
+- Вход по Face ID: пароль вводится один раз, дальше — по лицу. Переключатель в профиле, всегда есть запасной вход по паролю.
+- Настоящие push-уведомления от Apple по тем же событиям, что уже есть в системе (статусы заявок, комментарии, напоминания). Значок с числом непрочитанных, переход по нажатию сразу в нужную заявку.
+- Камера: снимок счёта или фото ТМЦ прямо из карточки заявки, плюс выбор из галереи — там, где сейчас загружаются файлы.
+- Файлы: открытие и сохранение PDF/Excel (счета, ведомости, отчёты) через стандартное меню «Поделиться» iOS.
+- Ссылки вида crssnab.com/requests/... открываются сразу в приложении, а не в браузере.
+- Аккуратное поведение офлайн: понятное сообщение вместо белого экрана.
 
-`src/components/AppSidebar.tsx` — добавить пункт «Фильтрующие элементы» между запчастями и неликвидом, иконка `Filter` из lucide.
+## Что нужно от вас (без этого TestFlight невозможен)
 
-## База данных (миграция)
+1. Платный Apple Developer аккаунт (99 $/год).
+2. Mac с Xcode — сборка и загрузка в TestFlight делается там.
+3. Ключ APNs (.p8) из Apple Developer для отправки пушей — добавим его как секрет в бэкенд.
 
-Новые таблицы в `public` со схемой:
+Приложение нельзя собрать и отправить в TestFlight прямо здесь: после моей работы вы выгружаете проект в GitHub, забираете его на Mac и выполняете несколько команд — точный список будет в инструкции.
 
-1. `filter_elements` — каталог фильтров
-   - `organization_id`, `manufacturer`, `name`, `article`, `cross_numbers text[]`,
-   - `unit` (шт/л/кг…), `storage_location`, `min_stock numeric`,
-   - `photo_url`, `notes`, стандартные timestamps, `created_by`.
-2. `filter_element_equipment` — совместимость N:M с `equipment`
-   - `filter_element_id`, `equipment_id`, unique пара.
-3. `filter_element_movements` — все операции (`IN`, `WRITE_OFF`, `ADJUST`, `RETURN`)
-   - `filter_element_id`, `type`, `quantity`, `equipment_id` (для WRITE_OFF),
-   - `responsible_user_id`, `object_id`, `comment`, `created_by`, `created_at`.
-4. `filter_element_deadstock` — неликвид фильтров
-   - копия ключевых полей + `quantity`, `market_price`, `actual_sale_price`,
-   - `status` (`in_stock`|`for_sale`|`sold`|`written_off`),
-   - `buyer`, `sold_at`, `sale_comment`, `is_archived`.
+## Технический план
 
-Для каждой таблицы: `GRANT SELECT/INSERT/UPDATE/DELETE ... TO authenticated`, `GRANT ALL ... TO service_role`, `ENABLE ROW LEVEL SECURITY`, политики по `user_has_org_access(auth.uid(), organization_id)`.
+**Capacitor**
+- Установить `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`; создать `capacitor.config.ts` с `appId: app.lovable.p03d26285f32f457cbdfeb9b17be007d2`, `appName: crssnab`, `webDir: dist`.
+- Режим «автообновление с сайта»: `server.url = https://crssnab.com`, `cleartext: true`. Это допускает быстрые правки без пересборки; при ревью Apple может потребовать переключиться на локальный бандл — в конфиге оставим комментарий, как это сделать одной строкой.
+- Плагины: `@capacitor/push-notifications`, `@capacitor/camera`, `@capacitor/filesystem`, `@capacitor/share`, `@capacitor/app`, `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/preferences`, `capacitor-native-biometric`.
 
-Функция `public.filter_element_stock(_id uuid)` — сумма движений (`IN`/`RETURN`/`ADJUST` со знаком +, `WRITE_OFF` со знаком −). Триггер `filter_element_deadstock_auto_archive` — при `quantity <= 0` ставит `is_archived = true`, аналогично запчастям.
+**Оболочка UI**
+- `src/lib/native.ts` — единая точка определения нативной среды (`Capacitor.isNativePlatform()`), чтобы веб-версия не менялась.
+- Safe-area: CSS-переменные `env(safe-area-inset-*)` в `index.css`, применение в `AppLayout` и `MobileBottomNav`.
+- Инициализация в `main.tsx`: StatusBar (стиль под тему), SplashScreen.hide() после монтирования, обработчик аппаратной кнопки «назад»/свайпа.
 
-Бакет storage `filter-elements-photos` (public read, insert/update/delete для authenticated своей организации через префикс `{org_id}/...`).
+**Face ID (быстрый вход)**
+- `src/hooks/useBiometricAuth.ts`: после успешного входа по паролю refresh-токен сессии кладётся в Keychain (`capacitor-native-biometric` + `@capacitor/preferences` только для флага включения).
+- На старте: если флаг включён — запрос Face ID, при успехе `supabase.auth.setSession`, при отказе — обычная форма входа.
+- Переключатель «Вход по Face ID» в `ProfilePage` и в настройках уведомлений — только на нативной платформе.
 
-## Хук данных
+**Push через APNs**
+- Новая таблица `device_push_tokens` (user_id, organization_id, token, platform, created_at) — существующие таблицы не трогаем. RLS: пользователь видит и пишет только свои строки; GRANT для `authenticated`, полный доступ `service_role`.
+- Регистрация токена при входе, удаление при выходе; слушатели `pushNotificationReceived` / `pushNotificationActionPerformed` с переходом по `deep link` в заявку.
+- Edge-функция `send-apns-push`: подписывает JWT ключом APNs (.p8, секреты `APNS_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`) и шлёт в `api.push.apple.com`.
+- Подключение к существующей очереди: `notification-worker` дополнительно вызывает `send-apns-push` для получателей с токенами. Текущая логика Telegram/MAX и правила маршрутизации не меняются.
 
-`src/hooks/useFilterElements.ts`:
-- список фильтров текущей организации с совместимой техникой и остатком (через RPC `filter_element_stock`);
-- фильтрация по производителю, поиску (мультислово), выбранной единице техники (`equipment_id` → только фильтры, у которых есть строка в `filter_element_equipment`);
-- индикатор «ниже минимума» (`stock <= min_stock`).
+**Камера и файлы**
+- `src/hooks/useNativeCamera.ts` — обёртка над `Camera.getPhoto`, возвращает `File` для существующих загрузчиков (`FileDropZone`, `MultiFileDropZone`, распознавание счетов). На вебе поведение прежнее.
+- Экспорт PDF/Excel на нативе: запись через `Filesystem` в кэш + `Share.share`, вместо скачивания через ссылку.
 
-## Страницы и компоненты
+**Deep links**
+- `App.addListener('appUrlOpen')` → разбор пути → `navigate()` в React Router.
+- В инструкции: Associated Domains (`applinks:crssnab.com`) и файл `apple-app-site-association` в `public/.well-known/`.
 
-`src/pages/FilterElements.tsx` — две вкладки:
-
-1. **Каталог**
-   - Тулбар: поиск, селектор производителя, селектор совместимой техники, чекбокс «Ниже минимума».
-   - Таблица колонок ровно по ТЗ: Производитель, Наименование, Артикул, Кросс-номер (chips), Совместимость (chips, +N), Остаток, Мин. остаток, Ед. изм., Место хранения, Действия.
-   - Действия: «Пополнить» (IN), «Списать», «Редактировать», «В неликвид», «Удалить».
-2. **Неликвид фильтров** — таблица `filter_element_deadstock` с колонками ТЗ и кнопкой «Продать».
-
-Диалоги (`src/components/filter-elements/`):
-- `FilterElementFormDialog.tsx` — создание/редактирование с мульти-селектом техники из `equipment` (поиск по 2+ словам, как в остальном проекте).
-- `FilterElementMovementDialog.tsx` — «Пополнить» / «Корректировка».
-- `FilterElementWriteOffDialog.tsx` — списание: обязательные поля «Техника» (из совместимости этого фильтра), «Ответственный» (профили организации), «Объект» (`request_objects`), «Количество» (≤ остатка), «Комментарий».
-- `FilterElementDetailDialog.tsx` — история движений с фильтром по типу.
-- `FilterDeadstockSaleDialog.tsx` — продажа: покупатель, дата, количество, фактическая стоимость, комментарий; статус → `sold`, `quantity -= sold`.
-
-## Роутинг
-
-`src/App.tsx` — маршрут `/filter-elements` → `FilterElements.tsx`, обёрнут в существующий `RequireAuth` / layout как соседние ERP-страницы.
+**Документация**
+- `MOBILE_IOS.md`: экспорт в GitHub, `npm install`, `npx cap add ios`, `npx cap sync`, настройка capabilities (Push, Associated Domains, Face ID usage strings), архив в Xcode и загрузка в TestFlight.
 
 ## Что НЕ меняется
 
-- Существующие `spare_parts*` таблицы и страницы остаются нетронутыми — фильтры полностью отдельная сущность.
-- «Склад неликвида» остаётся как есть; неликвид фильтров живёт внутри модуля «Фильтрующие элементы» на второй вкладке.
-
-## Технические детали
-
-- Manrope, tabular-nums для чисел, «—» для пустых значений, drawer 90dvh на мобиле — по правилам проекта.
-- Совместимость и кросс-номера рендерятся как `Badge` с ограничением видимости (`+N` при переполнении).
-- Все запросы к таблицам > 1000 строк — через `.range()` цикл (правило проекта).
-- Пагинация/поиск по технике в селекторе — `Command` popover с дебаунсом 300 мс.
-- Списание проводится атомарно: insert в `filter_element_movements` с типом `WRITE_OFF`; остаток пересчитывается функцией.
-
-После утверждения плана: миграция → регенерация типов → фронтенд-код → добавление пункта в сайдбар.
+Схема существующих таблиц, RLS существующих таблиц, логика заявок, склада, планировщика, Telegram/MAX-интеграции и веб-версия сайта.
