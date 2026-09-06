@@ -37,7 +37,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { usePlannerMembers, useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 import { usePlannerTaskActivity } from "@/hooks/usePlannerTaskComments";
 import { usePlannerStages } from "@/hooks/usePlannerStages";
 import { usePlannerTemplates } from "@/hooks/usePlannerTemplates";
@@ -74,7 +74,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const create = useCreatePlannerTask();
   const update = useUpdatePlannerTask();
   const del = useDeletePlannerTask();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
+  const { data: assignableMembers = [] } = usePlannerMembers();
   const navigate = useNavigate();
   const { data: stages = [] } = usePlannerStages();
   const { data: templates = [] } = usePlannerTemplates();
@@ -433,7 +434,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                       <CommandList>
                         <CommandEmpty>Не найдено</CommandEmpty>
                         <CommandGroup>
-                          {members.map((m) => (
+                          {assignableMembers.map((m) => (
                             <CommandItem
                               key={m.user_id}
                               value={`${m.full_name ?? ""} ${m.email ?? ""}`}

@@ -28,7 +28,7 @@ export function PlannerTaskMeta({
   className,
 }: Props) {
   const { equipmentMap, objectMap } = usePlannerLookups();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
 
   const ids = (equipmentIds?.length ? equipmentIds : (equipmentId ? [equipmentId] : []))
     .map((id) => equipmentMap.get(id))

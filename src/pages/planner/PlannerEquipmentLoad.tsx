@@ -21,7 +21,7 @@ export default function PlannerEquipmentLoad() {
   const filters = usePlannerFilters();
   const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
   const { equipment, equipmentMap, objectMap } = usePlannerLookups();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const [editing, setEditing] = useState<PlannerTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 

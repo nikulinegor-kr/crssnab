@@ -4740,23 +4740,38 @@ export type Database = {
       }
       user_organizations: {
         Row: {
+          can_manage_tasks: boolean
           created_at: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
           id: string
+          is_active: boolean
           organization_id: string
+          planner_access: boolean
           role: Database["public"]["Enums"]["organization_role"]
           user_id: string
         }
         Insert: {
+          can_manage_tasks?: boolean
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           id?: string
+          is_active?: boolean
           organization_id: string
+          planner_access?: boolean
           role?: Database["public"]["Enums"]["organization_role"]
           user_id: string
         }
         Update: {
+          can_manage_tasks?: boolean
           created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           id?: string
+          is_active?: boolean
           organization_id?: string
+          planner_access?: boolean
           role?: Database["public"]["Enums"]["organization_role"]
           user_id?: string
         }
@@ -5100,6 +5115,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_manage_tasks: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_can_view_request: {
         Args: { _applicant_user_id: string; _org_id: string; _user_id: string }
         Returns: boolean
@@ -5118,6 +5137,10 @@ export type Database = {
       }
       user_has_permission: {
         Args: { _org_id: string; _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_planner_access: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
       user_is_org_admin: {

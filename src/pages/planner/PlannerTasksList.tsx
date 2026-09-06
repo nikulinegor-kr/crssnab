@@ -33,7 +33,7 @@ export default function PlannerTasksList() {
   const [me, setMe] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PlannerTask | null>(null);
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));

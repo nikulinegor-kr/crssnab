@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
+import { usePlannerMembers, initialsOf } from "@/hooks/useOrgMembers";
 import { usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
 import { usePlannerScope, plannerBasePath } from "@/contexts/PlannerScopeContext";
 import { Card } from "@/components/ui/card";
@@ -30,7 +30,7 @@ export default function PlannerWorkload() {
   const navigate = useNavigate();
   const scope = usePlannerScope();
   const { currentOrgId } = useCurrentOrganization();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = usePlannerMembers();
   const { setViewedUserId } = usePlannerViewAs();
 
   const { data: tasks = [], isLoading } = useQuery({

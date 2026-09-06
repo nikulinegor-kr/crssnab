@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { X, Layers, MapPin, Truck, User, Flag, Search } from "lucide-react";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
-import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { usePlannerMembers } from "@/hooks/useOrgMembers";
 import { PRIORITY_META, type PlannerTaskPriority } from "@/hooks/usePlannerTasks";
 
 const NONE = "__none__";
@@ -12,7 +12,7 @@ const NONE = "__none__";
 export function PlannerFiltersBar() {
   const f = usePlannerFilters();
   const { equipment, objects } = usePlannerLookups();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = usePlannerMembers();
 
   const visibleEquipment = f.objectId
     ? equipment.filter((e) => e.current_object_id === f.objectId)

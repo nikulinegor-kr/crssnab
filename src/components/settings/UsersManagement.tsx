@@ -27,7 +27,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2, Users, Pencil, Copy, Mail, Check } from "lucide-react";
+import { Plus, Trash2, Loader2, Users, Pencil, Copy, Mail, Check, UserX, UserCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -38,6 +40,9 @@ interface OrgMember {
   id: string;
   user_id: string;
   role: "owner" | "admin" | "editor" | "viewer" | "member";
+  is_active: boolean;
+  planner_access: boolean;
+  can_manage_tasks: boolean;
   profiles: {
     email: string;
     organization_name: string;
@@ -106,7 +111,7 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
       
       const { data: userOrgs, error: orgsError } = await supabase
         .from("user_organizations")
-        .select("id, user_id, role")
+        .select("id, user_id, role, is_active, planner_access, can_manage_tasks")
         .eq("organization_id", organizationId);
 
       if (orgsError) throw orgsError;
@@ -135,6 +140,9 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
             id: uo.id,
             user_id: uo.user_id,
             role: uo.role,
+            is_active: uo.is_active !== false,
+            planner_access: uo.planner_access !== false,
+            can_manage_tasks: uo.can_manage_tasks !== false,
             profiles: {
               email: profile.email,
               organization_name: profile.organization_name,
@@ -279,6 +287,41 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
         title: "Ошибка",
         description: error.message,
       });
+    }
+  };
+
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const applyStatus = async (
+    member: OrgMember,
+    patch: { isActive?: boolean; plannerAccess?: boolean; canManageTasks?: boolean }
+  ) => {
+    setSavingUserId(member.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("set-user-status", {
+        body: {
+          organizationId,
+          userId: member.user_id,
+          ...patch,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Не удалось сохранить");
+      toast({ title: "Сохранено" });
+      fetchMembers();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Ошибка", description: error.message });
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const toggleEmployment = (member: OrgMember) => {
+    if (member.is_active) {
+      if (!confirm(`Перевести ${member.profiles.full_name || member.profiles.email} в статус «Уволен / Неактивен»? Доступ к системе будет закрыт, история сохранится.`)) return;
+      applyStatus(member, { isActive: false });
+    } else {
+      applyStatus(member, { isActive: true });
     }
   };
 
@@ -473,7 +516,7 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
         <CardHeader>
           <CardTitle>Пользователи организации</CardTitle>
           <CardDescription>
-            Управление пользователями и их ролями
+            Сотрудник остаётся в истории заявок и задач даже после увольнения: статус «Уволен / Неактивен» закрывает вход в систему, но ничего не удаляет
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -489,16 +532,38 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                   <TableHead>Email</TableHead>
                   <TableHead>Должность</TableHead>
                   <TableHead>Роль</TableHead>
+                  <TableHead>Статус</TableHead>
+                  <TableHead className="text-center">Планировщик</TableHead>
+                  <TableHead className="text-center">Работа с задачами</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {members.map((member) => (
-                  <TableRow key={member.id}>
+                  <TableRow key={member.id} className={member.is_active ? undefined : "opacity-60"}>
                     <TableCell>{member.profiles.full_name || "—"}</TableCell>
                     <TableCell>{member.profiles.email}</TableCell>
                     <TableCell>{member.profiles.position || "—"}</TableCell>
                     <TableCell>{getRoleName(member.role)}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.is_active ? "secondary" : "destructive"}>
+                        {member.is_active ? "Активен" : "Уволен / Неактивен"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={member.is_active && member.planner_access}
+                        disabled={!member.is_active || savingUserId === member.user_id}
+                        onCheckedChange={(v) => applyStatus(member, { plannerAccess: v })}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={member.is_active && member.planner_access && member.can_manage_tasks}
+                        disabled={!member.is_active || !member.planner_access || savingUserId === member.user_id}
+                        onCheckedChange={(v) => applyStatus(member, { canManageTasks: v })}
+                      />
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -512,6 +577,24 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                           <Button
                             variant="ghost"
                             size="sm"
+                            title={member.is_active ? "Уволить / деактивировать" : "Восстановить доступ"}
+                            disabled={savingUserId === member.user_id}
+                            onClick={() => toggleEmployment(member)}
+                          >
+                            {savingUserId === member.user_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : member.is_active ? (
+                              <UserX className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <UserCheck className="h-4 w-4 text-primary" />
+                            )}
+                          </Button>
+                        )}
+                        {member.role !== "owner" && !member.is_active && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Удалить из организации"
                             onClick={() => removeUser(member.id, member.profiles.email)}
                           >
                             <Trash2 className="h-4 w-4" />

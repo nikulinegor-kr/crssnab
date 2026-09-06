@@ -36,7 +36,7 @@ export function KanbanCard({
   const dueDate = task.due_date ? new Date(task.due_date) : null;
   const overdue = dueDate && isPast(dueDate) && task.status !== "done";
   const dueToday = dueDate && isToday(dueDate);
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const assignee = task.assignee_id ? members.find((m) => m.user_id === task.assignee_id) : null;
 
   return (
