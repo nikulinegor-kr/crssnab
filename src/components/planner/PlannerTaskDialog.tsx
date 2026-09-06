@@ -115,7 +115,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setPriority(task?.priority ?? "medium");
     setObjectId(task?.object_id ?? defaultObjectId ?? null);
     setStageId(task?.stage_id ?? null);
-    setAssigneeId(task?.assignee_id ?? null);
+    setAssigneeId(task?.assignee_id ?? defaultAssigneeId ?? null);
     setStartDate(task?.start_date?.slice(0, 10) ?? "");
     setDueDate(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
     setDueTime((task as any)?.due_time?.slice(0, 5) ?? "");
