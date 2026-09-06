@@ -32,9 +32,8 @@ interface Props {
 
 function buildNav(base: string, isAdmin: boolean, isManual: boolean) {
   const items = [
-    { to: `${base}`, label: "Сегодня", icon: Sun, end: true },
+    { to: `${base}`, label: "Доска задач", icon: KanbanSquare, end: true },
     { to: `${base}/dashboard`, label: "Обзор", icon: LayoutDashboard },
-    { to: `${base}/board`, label: "Доска задач", icon: KanbanSquare },
     { to: `${base}/calendar`, label: "Календарь", icon: CalendarDays },
     { to: `${base}/timeline`, label: "План по времени", icon: GanttChartSquare },
     { to: `${base}/tasks`, label: "Список", icon: ListTodo },
@@ -42,7 +41,7 @@ function buildNav(base: string, isAdmin: boolean, isManual: boolean) {
     { to: `${base}/by-object`, label: "По объектам", icon: MapPin },
     { to: `${base}/templates`, label: "Шаблоны", icon: FileText },
   ];
-  if (isAdmin && isManual) {
+  if (isAdmin) {
     items.splice(2, 0, { to: `${base}/workload`, label: "Загрузка сотрудников", icon: Users });
   }
   return items;
@@ -53,11 +52,9 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
   const isManual = scope === "manual";
   const { isAdmin } = useUserRole();
   const nav = buildNav(base, isAdmin, isManual);
-  const title = isManual ? "Мой планировщик" : "Планировщик CRM";
-  const subtitle = isManual
-    ? "Личные задачи: звонки, встречи, поездки и напоминания"
-    : "Автоматические задачи из заявок, счетов и доставки";
-  const TitleIcon = isManual ? CalendarRange : ClipboardList;
+  const title = "Планировщик";
+  const subtitle = "Единая доска задач: заявки, объекты, техника и сотрудники";
+  const TitleIcon = ClipboardList;
 
   return (
     <PlannerScopeProvider scope={scope}>
@@ -102,7 +99,7 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
             <Outlet />
           </div>
 
-          {isManual && <PlannerQuickFab />}
+          <PlannerQuickFab />
         </div>
       </PlannerFiltersProvider>
       </PlannerViewAsProvider>

@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import {
   PLANNER_COLUMNS,
   PRIORITY_META,
+  PRIORITY_CHOICES,
   type PlannerTask,
   type PlannerTaskPriority,
   type PlannerTaskStatus,
@@ -61,12 +62,13 @@ interface Props {
   defaultDueDate?: string;
   defaultObjectId?: string | null;
   defaultRequestId?: string | null;
+  defaultAssigneeId?: string | null;
 }
 
 const equipmentLabelLocal = (e: any) =>
   [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
 
-export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId }: Props) {
+export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId }: Props) {
   const isEdit = !!task;
   const { currentOrgId } = useCurrentOrganization();
   const create = useCreatePlannerTask();
@@ -113,7 +115,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setPriority(task?.priority ?? "medium");
     setObjectId(task?.object_id ?? defaultObjectId ?? null);
     setStageId(task?.stage_id ?? null);
-    setAssigneeId(task?.assignee_id ?? null);
+    setAssigneeId(task?.assignee_id ?? defaultAssigneeId ?? null);
     setStartDate(task?.start_date?.slice(0, 10) ?? "");
     setDueDate(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
     setDueTime((task as any)?.due_time?.slice(0, 5) ?? "");
@@ -405,7 +407,10 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 <Select value={priority} onValueChange={(v) => setPriority(v as PlannerTaskPriority)}>
                   <SelectTrigger className={errCls("priority")}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(PRIORITY_META) as PlannerTaskPriority[]).map((p) =>
+                    {(task && !PRIORITY_CHOICES.includes(task.priority)
+                      ? [task.priority, ...PRIORITY_CHOICES]
+                      : PRIORITY_CHOICES
+                    ).map((p) =>
                       <SelectItem key={p} value={p}>{PRIORITY_META[p].label}</SelectItem>)}
                   </SelectContent>
                 </Select>

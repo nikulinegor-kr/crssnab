@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { usePlannerScope } from "@/contexts/PlannerScopeContext";
-import { usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
+import { useUserRole } from "./useUserRole";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
@@ -64,61 +64,67 @@ export interface PlannerTask {
 }
 
 export const PLANNER_COLUMNS: { id: PlannerTaskStatus; title: string }[] = [
-  { id: "backlog", title: "Новые задачи" },
-  { id: "todo", title: "К выполнению" },
+  { id: "backlog", title: "Новые" },
   { id: "in_progress", title: "В работе" },
   { id: "review", title: "На проверке" },
   { id: "done", title: "Выполнено" },
 ];
 
+/** Legacy "todo" tasks are shown in the "Новые" column. */
+export const normalizeStatus = (s: PlannerTaskStatus): PlannerTaskStatus =>
+  s === "todo" ? "backlog" : s;
+
 export const PRIORITY_META: Record<
   PlannerTaskPriority,
   { label: string; className: string; dot: string }
 > = {
-  low: { label: "Низкий", className: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
-  medium: { label: "Средний", className: "bg-primary/10 text-primary", dot: "bg-primary" },
-  high: { label: "Высокий", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
-  urgent: { label: "Срочно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
-  critical: { label: "Критический", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
+  low: { label: "Планово", className: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
+  medium: { label: "Планово", className: "bg-primary/10 text-primary", dot: "bg-primary" },
+  high: { label: "Приоритетно", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  urgent: { label: "Аварийно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
+  critical: { label: "Аварийно", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
 };
 
+/** Priorities offered when creating/editing a task (CRM standard). */
+export const PRIORITY_CHOICES: PlannerTaskPriority[] = ["urgent", "high", "medium"];
+
+
+/**
+ * Unified planner task source: ALL tasks of the organization (auto + manual).
+ * Views (today / week / all / mine / employees) only filter this single dataset.
+ * Employees without admin rights only get their own tasks.
+ */
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
   const scope = usePlannerScope();
-  const { viewedUserId: ctxViewedUserId } = usePlannerViewAs();
-  const { data: fallbackUserId } = useQuery({
+  const { isAdmin } = useUserRole();
+  const { data: currentUserId } = useQuery({
     queryKey: ["auth-user-id"],
     queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
     staleTime: 60_000,
   });
-  const viewedUserId = ctxViewedUserId ?? fallbackUserId ?? null;
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["planner-tasks", currentOrgId, scope, viewedUserId],
+    queryKey: ["planner-tasks", currentOrgId, isAdmin, currentUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
       if (!currentOrgId) return [];
-      let q = supabase
+      const { data, error } = await supabase
         .from("planner_tasks")
         .select("*")
-        .eq("organization_id", currentOrgId);
-      if (scope === "auto") {
-        // CRM planner: organization-wide view of auto-generated tasks
-        q = q.eq("source", "auto_rule");
-      } else {
-        // Personal planner: only tasks assigned to or created by the viewed user
-        if (!viewedUserId) return [];
-        q = q
-          .or("source.is.null,source.eq.manual")
-          .or(`assignee_id.eq.${viewedUserId},created_by.eq.${viewedUserId}`);
-      }
-      const { data, error } = await q
+        .eq("organization_id", currentOrgId)
         .order("position", { ascending: true })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(3000);
       if (error) throw error;
-      return (data ?? []) as unknown as PlannerTask[];
+      const all = (data ?? []) as unknown as PlannerTask[];
+      if (isAdmin || !currentUserId) return all;
+      return all.filter(
+        (t) => t.assignee_id === currentUserId || t.created_by === currentUserId
+      );
     },
-    enabled: !!currentOrgId && (scope === "auto" || !!viewedUserId),
+    enabled: !!currentOrgId,
+
   });
 
   // Realtime

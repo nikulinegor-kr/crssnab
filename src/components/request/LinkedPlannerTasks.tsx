@@ -20,7 +20,7 @@ const PRIORITY_DOT: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   backlog: "Новая",
-  todo: "К выполнению",
+  todo: "Новая",
   in_progress: "В работе",
   review: "На проверке",
   done: "Выполнено",
@@ -42,7 +42,6 @@ export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
         .from("planner_tasks")
         .select("*")
         .eq("request_id", requestId)
-        .or("source.is.null,source.eq.manual")
         .order("due_date", { ascending: true, nullsFirst: false });
       return ((data ?? []) as unknown) as PlannerTask[];
     },
@@ -54,7 +53,7 @@ export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-primary" />
-          Личные задачи по заявке
+          Задачи по заявке
           {tasks.length > 0 && (
             <Badge variant="secondary" className="ml-1 text-xs">
               {tasks.length}
@@ -63,20 +62,19 @@ export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
         </CardTitle>
         <Button
           size="sm"
-          variant="outline"
           className="gap-1"
           onClick={() => {
             setEditTask(null);
             setOpen(true);
           }}
         >
-          <Plus className="h-3.5 w-3.5" /> Добавить
+          <Plus className="h-3.5 w-3.5" /> Поставить задачу
         </Button>
       </CardHeader>
       <CardContent className="pt-1 space-y-2">
         {tasks.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Нет связанных личных задач
+            Нет задач по этой заявке
           </p>
         )}
         {tasks.map((t) => (
