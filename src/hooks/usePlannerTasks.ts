@@ -240,6 +240,7 @@ export const useUpdatePlannerTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
   });
@@ -257,6 +258,7 @@ export const useDeletePlannerTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
       toast({ title: "Задача удалена" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
