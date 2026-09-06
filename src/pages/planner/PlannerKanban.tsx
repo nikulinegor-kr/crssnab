@@ -18,6 +18,7 @@ import {
   usePlannerTasks,
   useUpdatePlannerTask,
   PLANNER_COLUMNS,
+  normalizeStatus,
   type PlannerTask,
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
@@ -25,10 +26,21 @@ import { KanbanColumn, KanbanCard } from "@/components/planner/KanbanColumn";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 
-export default function PlannerKanban() {
+interface KanbanProps {
+  /** Optional additional filter applied on top of global planner filters (used by views). */
+  taskFilter?: (t: PlannerTask) => boolean;
+  /** Values pre-filled when creating a task from this board. */
+  defaultAssigneeId?: string | null;
+  hideHeader?: boolean;
+}
+
+export default function PlannerKanban({ taskFilter, defaultAssigneeId, hideHeader }: KanbanProps = {}) {
   const { data: allTasks = [], isLoading } = usePlannerTasks();
   const filters = usePlannerFilters();
-  const tasks = useMemo(() => filters.apply(allTasks), [allTasks, filters]);
+  const tasks = useMemo(() => {
+    const base = filters.apply(allTasks);
+    return taskFilter ? base.filter(taskFilter) : base;
+  }, [allTasks, filters, taskFilter]);
   const update = useUpdatePlannerTask();
   const [activeTask, setActiveTask] = useState<PlannerTask | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -44,7 +56,7 @@ export default function PlannerKanban() {
     const map: Record<PlannerTaskStatus, PlannerTask[]> = {
       backlog: [], todo: [], in_progress: [], review: [], done: [],
     };
-    for (const t of tasks) map[t.status]?.push(t);
+    for (const t of tasks) map[normalizeStatus(t.status)]?.push(t);
     return map;
   }, [tasks]);
 
@@ -95,6 +107,7 @@ export default function PlannerKanban() {
 
   return (
     <>
+      {!hideHeader && (
       <div className="flex items-center justify-between mb-3">
         <div className="text-sm text-muted-foreground">
           Перетаскивайте карточки между колонками
@@ -103,6 +116,7 @@ export default function PlannerKanban() {
           <Plus className="h-4 w-4 mr-1" /> Новая задача
         </Button>
       </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -133,6 +147,7 @@ export default function PlannerKanban() {
         onOpenChange={setDialogOpen}
         task={dialogTask}
         defaultStatus={dialogStatus}
+        defaultAssigneeId={defaultAssigneeId ?? undefined}
       />
     </>
   );
