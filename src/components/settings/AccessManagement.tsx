@@ -27,8 +27,12 @@ interface OrgUser {
   id: string; // user_organizations row id
   user_id: string;
   role: string;
+  is_active: boolean;
+  planner_access: boolean;
+  can_manage_tasks: boolean;
   profile: { full_name: string | null; email: string; position?: string | null } | null;
 }
+
 
 interface AccessManagementProps {
   organizationId: string;
