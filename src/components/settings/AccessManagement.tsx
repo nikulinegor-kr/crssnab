@@ -393,8 +393,60 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
 
 
         {/* Right panel: role + permissions */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {selectedUser && (
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Статус сотрудника</span>
+                  <Badge variant={selectedUser.is_active ? "secondary" : "destructive"}>
+                    {selectedUser.is_active ? "Активен" : "Уволен / Неактивен"}
+                  </Badge>
+                </div>
+                {selectedUser.role !== "owner" && (
+                  <Button
+                    variant={selectedUser.is_active ? "outline" : "default"}
+                    size="sm"
+                    className="gap-2"
+                    disabled={savingUserId === selectedUser.user_id}
+                    onClick={() => toggleEmployment(selectedUser)}
+                  >
+                    {savingUserId === selectedUser.user_id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : selectedUser.is_active ? (
+                      <UserX className="h-4 w-4" />
+                    ) : (
+                      <UserCheck className="h-4 w-4" />
+                    )}
+                    {selectedUser.is_active ? "Уволить / отключить доступ" : "Восстановить доступ"}
+                  </Button>
+                )}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <span className="text-sm">Доступ к планировщику</span>
+                  <Switch
+                    checked={selectedUser.is_active && selectedUser.planner_access}
+                    disabled={!selectedUser.is_active || savingUserId === selectedUser.user_id}
+                    onCheckedChange={(v) => applyStatus(selectedUser, { plannerAccess: v })}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <span className="text-sm">Может работать с задачами</span>
+                  <Switch
+                    checked={selectedUser.is_active && selectedUser.planner_access && selectedUser.can_manage_tasks}
+                    disabled={!selectedUser.is_active || !selectedUser.planner_access || savingUserId === selectedUser.user_id}
+                    onCheckedChange={(v) => applyStatus(selectedUser, { canManageTasks: v })}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                При увольнении вход в систему закрывается, сотрудник исчезает из выбора ответственных, но остаётся в истории заявок и задач.
+              </p>
+            </div>
+          )}
           {!selectedUserId ? (
+
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm py-16 gap-2">
               <Shield className="h-8 w-8 opacity-40" />
               Выберите пользователя для настройки прав
