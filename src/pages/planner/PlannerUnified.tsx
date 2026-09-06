@@ -21,6 +21,7 @@ import { usePlannerTasks, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { useOrgMembers, usePlannerMembers } from "@/hooks/useOrgMembers";
 import { useUserRole } from "@/hooks/useUserRole";
+import { usePlannerAccess } from "@/hooks/usePlannerAccess";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PlannerTaskRow } from "@/components/planner/PlannerTaskRow";
@@ -48,6 +49,7 @@ export default function PlannerUnified() {
   const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const { data: plannerMembers = [] } = usePlannerMembers();
   const { isAdmin } = useUserRole();
+  const { canManageTasks } = usePlannerAccess();
 
   const { data: currentUserId } = useQuery({
     queryKey: ["auth-user-id"],
@@ -175,9 +177,11 @@ export default function PlannerUnified() {
           </Select>
         )}
 
-        <Button size="sm" className="ml-auto h-8" onClick={openNew}>
-          <Plus className="h-4 w-4 mr-1" /> Новая задача
-        </Button>
+        {canManageTasks && (
+          <Button size="sm" className="ml-auto h-8" onClick={openNew}>
+            <Plus className="h-4 w-4 mr-1" /> Новая задача
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
