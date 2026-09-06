@@ -56,8 +56,9 @@ const TeamPage = () => {
       if (!currentOrgId) return [];
       const { data, error } = await supabase
         .from("user_organizations")
-        .select("user_id, role")
-        .eq("organization_id", currentOrgId);
+        .select("user_id, role, is_active")
+        .eq("organization_id", currentOrgId)
+        .eq("is_active", true);
       if (error) throw error;
 
       const userIds = data.map((m) => m.user_id);
