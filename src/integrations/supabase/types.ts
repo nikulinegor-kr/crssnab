@@ -2692,6 +2692,7 @@ export type Database = {
       planner_tasks: {
         Row: {
           actual_hours: number | null
+          archived_at: string | null
           assignee_id: string | null
           assignee_name: string | null
           attachments: Json
@@ -2728,6 +2729,7 @@ export type Database = {
         }
         Insert: {
           actual_hours?: number | null
+          archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           attachments?: Json
@@ -2764,6 +2766,7 @@ export type Database = {
         }
         Update: {
           actual_hours?: number | null
+          archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           attachments?: Json

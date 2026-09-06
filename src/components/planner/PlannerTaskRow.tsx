@@ -4,6 +4,7 @@ import { CalendarClock, ListChecks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
+import { PlannerTaskActions } from "@/components/planner/PlannerTaskActions";
 import { PLANNER_COLUMNS, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { initialsOf, type OrgMember } from "@/hooks/useOrgMembers";
 import { cn } from "@/lib/utils";
@@ -25,10 +26,18 @@ export function PlannerTaskRow({ task, members, onClick, className, hideDate }: 
   const assignee = task.assignee_id ? members.find((m) => m.user_id === task.assignee_id) : null;
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onClick(task)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(task);
+        }
+      }}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent/40 transition",
+        "group w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent/40 transition cursor-pointer",
         className
       )}
     >
@@ -74,6 +83,7 @@ export function PlannerTaskRow({ task, members, onClick, className, hideDate }: 
           {format(due, "d MMM", { locale: ru })}
         </Badge>
       )}
-    </button>
+      <PlannerTaskActions task={task} />
+    </div>
   );
 }

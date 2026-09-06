@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { PRIORITY_META, type PlannerTask, type PlannerTaskStatus } from "@/hooks/usePlannerTasks";
 import { useOrgMembers, initialsOf } from "@/hooks/useOrgMembers";
 import { PlannerTaskMeta } from "./PlannerTaskMeta";
+import { PlannerTaskActions } from "./PlannerTaskActions";
 
 export function KanbanCard({
   task,
@@ -49,6 +50,7 @@ export function KanbanCard({
       <div className="flex items-start gap-2">
         <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", pr.dot)} />
         <div className="flex-1 text-sm font-medium leading-snug line-clamp-3">{task.title}</div>
+        <PlannerTaskActions task={task} />
         <button
           {...attributes}
           {...listeners}

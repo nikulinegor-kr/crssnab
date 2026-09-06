@@ -59,6 +59,7 @@ export interface PlannerTask {
   source?: PlannerTaskSource | null;
   source_rule?: string | null;
   due_time?: string | null;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +114,7 @@ export const usePlannerTasks = () => {
         .select("*")
         .eq("organization_id", currentOrgId)
         .eq("hidden_auto", false)
+        .is("archived_at", null)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(3000);
@@ -146,6 +148,26 @@ export const usePlannerTasks = () => {
   }, [currentOrgId, queryClient, scope]);
 
   return query;
+};
+
+/** Archived tasks (hidden from all regular views, restorable). */
+export const useArchivedPlannerTasks = () => {
+  const { currentOrgId } = useCurrentOrganization();
+  return useQuery({
+    queryKey: ["planner-tasks-archived", currentOrgId],
+    queryFn: async (): Promise<PlannerTask[]> => {
+      if (!currentOrgId) return [];
+      const { data, error } = await (supabase.from("planner_tasks") as any)
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .not("archived_at", "is", null)
+        .order("archived_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return (data ?? []) as unknown as PlannerTask[];
+    },
+    enabled: !!currentOrgId,
+  });
 };
 
 export const useCreatePlannerTask = () => {
@@ -218,6 +240,7 @@ export const useUpdatePlannerTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
   });
@@ -235,6 +258,7 @@ export const useDeletePlannerTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
       toast({ title: "Задача удалена" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),

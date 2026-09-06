@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Plus, X, Trash2, History, Lock, Repeat, Link2, ChevronsUpDown, Check, Truck, AlertTriangle, ExternalLink } from "lucide-react";
+import { Plus, X, Trash2, History, Lock, Repeat, Link2, ChevronsUpDown, Check, Truck, AlertTriangle, ExternalLink, Archive } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
@@ -337,6 +337,15 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     if (!task) return;
     if (!confirm("Удалить задачу?")) return;
     await del.mutateAsync(task.id);
+    onOpenChange(false);
+  };
+
+  const handleArchive = async () => {
+    if (!task) return;
+    await update.mutateAsync({
+      id: task.id,
+      patch: { archived_at: task.archived_at ? null : new Date().toISOString() } as any,
+    });
     onOpenChange(false);
   };
 
@@ -859,9 +868,15 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
         <DialogFooter className="flex sm:justify-between gap-2">
           {isEdit ? (
-            <Button variant="ghost" className="text-destructive" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4 mr-1" /> Удалить
-            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" onClick={handleArchive}>
+                <Archive className="h-4 w-4 mr-1" />
+                {task?.archived_at ? "Из архива" : "В архив"}
+              </Button>
+              <Button variant="ghost" className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-1" /> Удалить
+              </Button>
+            </div>
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>

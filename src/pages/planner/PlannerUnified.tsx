@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { usePlannerTasks, type PlannerTask } from "@/hooks/usePlannerTasks";
+import { usePlannerTasks, useArchivedPlannerTasks, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { useOrgMembers, usePlannerMembers } from "@/hooks/useOrgMembers";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -28,7 +28,7 @@ import { PlannerTaskRow } from "@/components/planner/PlannerTaskRow";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import PlannerKanban from "./PlannerKanban";
 
-type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team";
+type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team" | "archive";
 
 const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "board", label: "Доска" },
@@ -37,6 +37,7 @@ const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "mine", label: "Мои задачи" },
   { key: "team", label: "Задачи сотрудников" },
   { key: "all", label: "Все задачи" },
+  { key: "archive", label: "Архив" },
 ];
 
 export default function PlannerUnified() {
@@ -46,6 +47,7 @@ export default function PlannerUnified() {
   const taskParam = params.get("task");
 
   const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: archivedTasks = [], isLoading: archiveLoading } = useArchivedPlannerTasks();
   const filters = usePlannerFilters();
   const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const { data: plannerMembers = [] } = usePlannerMembers();
@@ -186,7 +188,25 @@ export default function PlannerUnified() {
         )}
       </div>
 
-      {isLoading ? (
+      {view === "archive" ? (
+        archiveLoading ? (
+          <Skeleton className="h-[60dvh] w-full" />
+        ) : archivedTasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-10 text-center">Архив пуст</p>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="px-3 py-2 text-xs font-semibold border-b text-muted-foreground bg-muted/30 flex items-center gap-2">
+              Архивные задачи
+              <Badge variant="secondary" className="text-[10px]">{archivedTasks.length}</Badge>
+            </div>
+            <div className="divide-y divide-border/50">
+              {archivedTasks.map((t) => (
+                <PlannerTaskRow key={t.id} task={t} members={members} onClick={openTask} />
+              ))}
+            </div>
+          </Card>
+        )
+      ) : isLoading ? (
         <Skeleton className="h-[60dvh] w-full" />
       ) : view === "today" ? (
         <div className="space-y-4">
