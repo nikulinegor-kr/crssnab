@@ -33,9 +33,9 @@ export const usePlannerAccess = () => {
   const row = query.data;
   const isAdmin = row?.role === "owner" || row?.role === "admin";
   const active = row?.is_active !== false && !!row;
-  const hasPlannerAccess = active && (isAdmin || row?.planner_access !== false);
+  const hasPlannerAccess = active && (isAdmin || row?.planner_access === true);
   const canManageTasks =
-    active && (isAdmin || (row?.planner_access !== false && row?.can_manage_tasks !== false));
+    active && (isAdmin || (row?.planner_access === true && row?.can_manage_tasks === true));
 
   return { loading: query.isLoading, isAdmin, hasPlannerAccess, canManageTasks };
 };
