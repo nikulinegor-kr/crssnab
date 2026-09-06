@@ -354,7 +354,8 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
                 "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors group",
                 selectedUserId === u.user_id
                   ? "border-primary bg-primary/5"
-                  : "border-transparent hover:bg-accent/50"
+                  : "border-transparent hover:bg-accent/50",
+                !u.is_active && "opacity-60"
               )}
               onClick={() => setSelectedUserId(u.user_id)}
             >
@@ -363,7 +364,15 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{u.profile?.full_name || u.profile?.email || "Без имени"}</p>
-                {u.profile?.position && <p className="text-xs text-muted-foreground truncate">{u.profile.position}</p>}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {u.profile?.position && <span className="text-xs text-muted-foreground truncate">{u.profile.position}</span>}
+                  <Badge
+                    variant={u.is_active ? "secondary" : "destructive"}
+                    className="text-[10px] px-1.5 py-0 shrink-0"
+                  >
+                    {u.is_active ? "Активен" : "Уволен"}
+                  </Badge>
+                </div>
               </div>
               <Badge variant="secondary" className={cn("text-xs shrink-0", roleBadgeColors[u.role])}>
                 {roleLabels[u.role] || u.role}
@@ -381,6 +390,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
             </div>
           ))}
         </div>
+
 
         {/* Right panel: role + permissions */}
         <div className="lg:col-span-2">
