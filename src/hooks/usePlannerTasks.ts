@@ -64,23 +64,30 @@ export interface PlannerTask {
 }
 
 export const PLANNER_COLUMNS: { id: PlannerTaskStatus; title: string }[] = [
-  { id: "backlog", title: "Новые задачи" },
-  { id: "todo", title: "К выполнению" },
+  { id: "backlog", title: "Новые" },
   { id: "in_progress", title: "В работе" },
   { id: "review", title: "На проверке" },
   { id: "done", title: "Выполнено" },
 ];
 
+/** Legacy "todo" tasks are shown in the "Новые" column. */
+export const normalizeStatus = (s: PlannerTaskStatus): PlannerTaskStatus =>
+  s === "todo" ? "backlog" : s;
+
 export const PRIORITY_META: Record<
   PlannerTaskPriority,
   { label: string; className: string; dot: string }
 > = {
-  low: { label: "Низкий", className: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
-  medium: { label: "Средний", className: "bg-primary/10 text-primary", dot: "bg-primary" },
-  high: { label: "Высокий", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
-  urgent: { label: "Срочно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
-  critical: { label: "Критический", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
+  low: { label: "Планово", className: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
+  medium: { label: "Планово", className: "bg-primary/10 text-primary", dot: "bg-primary" },
+  high: { label: "Приоритетно", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  urgent: { label: "Аварийно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
+  critical: { label: "Аварийно", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
 };
+
+/** Priorities offered when creating/editing a task (CRM standard). */
+export const PRIORITY_CHOICES: PlannerTaskPriority[] = ["urgent", "high", "medium"];
+
 
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
