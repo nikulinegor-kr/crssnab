@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { usePlannerTasks, type PlannerTask } from "@/hooks/usePlannerTasks";
+import { usePlannerTasks, useArchivedPlannerTasks, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { useOrgMembers, usePlannerMembers } from "@/hooks/useOrgMembers";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -28,7 +28,7 @@ import { PlannerTaskRow } from "@/components/planner/PlannerTaskRow";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import PlannerKanban from "./PlannerKanban";
 
-type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team";
+type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team" | "archive";
 
 const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "board", label: "Доска" },
@@ -37,6 +37,7 @@ const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "mine", label: "Мои задачи" },
   { key: "team", label: "Задачи сотрудников" },
   { key: "all", label: "Все задачи" },
+  { key: "archive", label: "Архив" },
 ];
 
 export default function PlannerUnified() {
