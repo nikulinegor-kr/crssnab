@@ -53,8 +53,8 @@ export const useOrgMembers = (options: UseOrgMembersOptions = {}) => {
             position: p?.position ?? null,
             role: l.role ?? null,
             is_active: l.is_active !== false,
-            planner_access: isAdmin || l.planner_access !== false,
-            can_manage_tasks: isAdmin || l.can_manage_tasks !== false,
+            planner_access: isAdmin || l.planner_access === true,
+            can_manage_tasks: isAdmin || l.can_manage_tasks === true,
             deactivated_at: l.deactivated_at ?? null,
           };
         })

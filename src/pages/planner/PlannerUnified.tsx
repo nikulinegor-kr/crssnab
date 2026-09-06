@@ -144,12 +144,13 @@ export default function PlannerUnified() {
   };
 
   const teamMembers = plannerMembers.filter((m) => m.user_id !== currentUserId);
+  const visibleViews = canManageTasks ? VIEWS : VIEWS.filter((v) => v.key !== "team");
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex gap-1 overflow-x-auto scrollbar-none">
-          {VIEWS.map((v) => (
+          {visibleViews.map((v) => (
             <Button
               key={v.key}
               size="sm"
@@ -162,7 +163,7 @@ export default function PlannerUnified() {
           ))}
         </div>
 
-        {view === "team" && isAdmin && (
+        {view === "team" && canManageTasks && (
           <Select value={employeeId ?? "__all__"} onValueChange={(v) => setEmployee(v)}>
             <SelectTrigger className="h-8 w-auto min-w-[190px] text-xs">
               <SelectValue placeholder="Сотрудник" />
