@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   Loader2, ChevronRight, ChevronDown, Copy, CheckCheck, Users, Plus, Trash2,
-  Pencil, UserPlus, Shield, Check, Mail,
+  Pencil, UserPlus, Shield, Check, Mail, UserX, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
