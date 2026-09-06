@@ -30,7 +30,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const organizationId: string = body.organizationId;
-    const targetUserId: string = body.userId;
+    const targetUserId: string = body.userId ?? body.targetUserId;
     const isActive: boolean | undefined = body.isActive;
     const plannerAccess: boolean | undefined = body.plannerAccess;
     const canManageTasks: boolean | undefined = body.canManageTasks;
