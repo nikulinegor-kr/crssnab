@@ -59,6 +59,7 @@ export interface PlannerTask {
   source?: PlannerTaskSource | null;
   source_rule?: string | null;
   due_time?: string | null;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +114,7 @@ export const usePlannerTasks = () => {
         .select("*")
         .eq("organization_id", currentOrgId)
         .eq("hidden_auto", false)
+        .is("archived_at", null)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(3000);
