@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { usePlannerScope } from "@/contexts/PlannerScopeContext";
-import { useUserRole } from "./useUserRole";
+import { usePlannerAccess } from "./usePlannerAccess";
 
 export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
@@ -97,7 +97,7 @@ export const PRIORITY_CHOICES: PlannerTaskPriority[] = ["urgent", "high", "mediu
 export const usePlannerTasks = () => {
   const { currentOrgId } = useCurrentOrganization();
   const scope = usePlannerScope();
-  const { isAdmin } = useUserRole();
+  const { canManageTasks } = usePlannerAccess();
   const { data: currentUserId } = useQuery({
     queryKey: ["auth-user-id"],
     queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
@@ -106,7 +106,7 @@ export const usePlannerTasks = () => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["planner-tasks", currentOrgId, isAdmin, currentUserId],
+    queryKey: ["planner-tasks", currentOrgId, canManageTasks, currentUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
       if (!currentOrgId) return [];
       const { data, error } = await (supabase.from("planner_tasks") as any)
@@ -118,7 +118,7 @@ export const usePlannerTasks = () => {
         .limit(3000);
       if (error) throw error;
       const all = (data ?? []) as unknown as PlannerTask[];
-      if (isAdmin || !currentUserId) return all;
+      if (canManageTasks || !currentUserId) return all;
       return all.filter(
         (t) => t.assignee_id === currentUserId || t.created_by === currentUserId
       );
