@@ -5110,6 +5110,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_see_all_tasks: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_can_view_request: {
         Args: { _applicant_user_id: string; _org_id: string; _user_id: string }
         Returns: boolean
