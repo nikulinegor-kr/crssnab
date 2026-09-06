@@ -109,11 +109,10 @@ export const usePlannerTasks = () => {
     queryKey: ["planner-tasks", currentOrgId, isAdmin, currentUserId],
     queryFn: async (): Promise<PlannerTask[]> => {
       if (!currentOrgId) return [];
-      const { data, error } = await supabase
-        .from("planner_tasks")
+      const { data, error } = await (supabase.from("planner_tasks") as any)
         .select("*")
         .eq("organization_id", currentOrgId)
-        .eq("hidden_auto" as any, false)
+        .eq("hidden_auto", false)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(3000);
