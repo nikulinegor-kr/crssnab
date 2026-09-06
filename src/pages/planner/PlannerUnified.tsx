@@ -45,7 +45,7 @@ export default function PlannerUnified() {
 
   const { data: tasks = [], isLoading } = usePlannerTasks();
   const filters = usePlannerFilters();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const { isAdmin } = useUserRole();
 
   const { data: currentUserId } = useQuery({

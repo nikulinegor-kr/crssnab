@@ -467,7 +467,7 @@ export default function PlannerToday() {
 function PlannerTodayCrm() {
   const { rows, loading: loadingTasks, reload } = usePlannerRows();
   const { data: requests, loading: loadingReq } = useAnalyticsRequests();
-  const { data: members } = useOrgMembers();
+  const { data: members } = useOrgMembers({ includeInactive: true });
   const [me, setMe] = useState<string | null>(null);
   const [aiContent, setAiContent] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
