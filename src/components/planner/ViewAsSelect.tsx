@@ -1,9 +1,9 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { usePlannerMembers } from "@/hooks/useOrgMembers";
 import { usePlannerViewAs } from "@/contexts/PlannerViewAsContext";
 
 export function ViewAsSelect() {
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = usePlannerMembers();
   const { viewedUserId, setViewedUserId, currentUserId } = usePlannerViewAs();
   const value = viewedUserId ?? currentUserId ?? "";
 

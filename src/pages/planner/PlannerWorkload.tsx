@@ -30,7 +30,7 @@ export default function PlannerWorkload() {
   const navigate = useNavigate();
   const scope = usePlannerScope();
   const { currentOrgId } = useCurrentOrganization();
-  const { data: members = [] } = useOrgMembers();
+  const { data: members = [] } = usePlannerMembers();
   const { setViewedUserId } = usePlannerViewAs();
 
   const { data: tasks = [], isLoading } = useQuery({
