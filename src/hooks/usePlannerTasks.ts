@@ -113,6 +113,7 @@ export const usePlannerTasks = () => {
         .from("planner_tasks")
         .select("*")
         .eq("organization_id", currentOrgId)
+        .eq("hidden_auto" as any, false)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(3000);
