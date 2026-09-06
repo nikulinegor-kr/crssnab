@@ -340,6 +340,15 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     onOpenChange(false);
   };
 
+  const handleArchive = async () => {
+    if (!task) return;
+    await update.mutateAsync({
+      id: task.id,
+      patch: { archived_at: task.archived_at ? null : new Date().toISOString() } as any,
+    });
+    onOpenChange(false);
+  };
+
   const errCls = (k: string) => errors[k] ? "border-destructive focus-visible:ring-destructive" : "";
 
   return (
@@ -859,9 +868,15 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
         <DialogFooter className="flex sm:justify-between gap-2">
           {isEdit ? (
-            <Button variant="ghost" className="text-destructive" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4 mr-1" /> Удалить
-            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" onClick={handleArchive}>
+                <Archive className="h-4 w-4 mr-1" />
+                {task?.archived_at ? "Из архива" : "В архив"}
+              </Button>
+              <Button variant="ghost" className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-1" /> Удалить
+              </Button>
+            </div>
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
