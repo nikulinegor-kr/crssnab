@@ -72,6 +72,7 @@ const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformanceP
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
 const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.CrmPlannerLayout })));
 const MyPlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.MyPlannerLayout })));
+const PlannerUnified = lazyWithRetry(() => import("./pages/planner/PlannerUnified"));
 const PlannerToday = lazyWithRetry(() => import("./pages/planner/PlannerToday"));
 const PlannerMyPlan = lazyWithRetry(() => import("./pages/planner/PlannerMyPlan"));
 const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
@@ -631,7 +632,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<PlannerToday />} />
+              <Route index element={<PlannerUnified />} />
+              <Route path="today" element={<PlannerToday />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
@@ -642,29 +644,9 @@ const App = () => {
               <Route path="equipment" element={<PlannerEquipmentLoad />} />
               <Route path="by-object" element={<PlannerByObject />} />
             </Route>
-            <Route
-              path="/my-planner"
-              element={
-                <ProtectedRoute>
-                  <AppLayout fullBleed>
-                    <MyPlannerLayout />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<PlannerToday />} />
-              <Route path="dashboard" element={<PlannerDashboard />} />
-              <Route path="tasks" element={<PlannerTasksList />} />
-              <Route path="board" element={<PlannerKanban />} />
-              <Route path="calendar" element={<PlannerCalendar />} />
-              <Route path="timeline" element={<PlannerTimeline />} />
-              <Route path="stages" element={<PlannerStages />} />
-              <Route path="templates" element={<PlannerTemplates />} />
-              <Route path="equipment" element={<PlannerEquipmentLoad />} />
-              <Route path="by-object" element={<PlannerByObject />} />
-              <Route path="workload" element={<PlannerWorkload />} />
-            </Route>
-            <Route path="/planner/my" element={<Navigate to="/my-planner" replace />} />
+            <Route path="/my-planner" element={<Navigate to="/planner?view=mine" replace />} />
+            <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
+            <Route path="/planner/my" element={<Navigate to="/planner?view=mine" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

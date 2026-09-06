@@ -110,8 +110,7 @@ export const menuGroups: MenuGroup[] = [
     label: "Планировщик",
     icon: CalendarRange,
     items: [
-      { id: "planner", title: "Планировщик CRM", url: "/planner", icon: ClipboardList },
-      { id: "my-planner", title: "Мой планировщик", url: "/my-planner", icon: CalendarRange },
+      { id: "planner", title: "Планировщик", url: "/planner", icon: ClipboardList },
     ],
   },
   {

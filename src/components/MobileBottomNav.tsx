@@ -60,7 +60,7 @@ export const MobileBottomNav = () => {
           <span className="text-[10px] font-medium text-muted-foreground mt-0.5">Быстро</span>
         </button>
 
-        <Item to="/my-planner" label="Планировщик" icon={CalendarRange} />
+        <Item to="/planner" label="Планировщик" icon={CalendarRange} />
         <Item to="/organization/settings" label="Настройки" icon={Settings} />
       </div>
     </nav>
