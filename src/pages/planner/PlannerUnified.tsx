@@ -47,6 +47,7 @@ export default function PlannerUnified() {
   const taskParam = params.get("task");
 
   const { data: tasks = [], isLoading } = usePlannerTasks();
+  const { data: archivedTasks = [], isLoading: archiveLoading } = useArchivedPlannerTasks();
   const filters = usePlannerFilters();
   const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const { data: plannerMembers = [] } = usePlannerMembers();
@@ -187,7 +188,25 @@ export default function PlannerUnified() {
         )}
       </div>
 
-      {isLoading ? (
+      {view === "archive" ? (
+        archiveLoading ? (
+          <Skeleton className="h-[60dvh] w-full" />
+        ) : archivedTasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-10 text-center">Архив пуст</p>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="px-3 py-2 text-xs font-semibold border-b text-muted-foreground bg-muted/30 flex items-center gap-2">
+              Архивные задачи
+              <Badge variant="secondary" className="text-[10px]">{archivedTasks.length}</Badge>
+            </div>
+            <div className="divide-y divide-border/50">
+              {archivedTasks.map((t) => (
+                <PlannerTaskRow key={t.id} task={t} members={members} onClick={openTask} />
+              ))}
+            </div>
+          </Card>
+        )
+      ) : isLoading ? (
         <Skeleton className="h-[60dvh] w-full" />
       ) : view === "today" ? (
         <div className="space-y-4">
