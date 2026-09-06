@@ -91,7 +91,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
     setLoading(true);
     const { data, error } = await supabase
       .from("user_organizations")
-      .select("id, user_id, role")
+      .select("id, user_id, role, is_active, planner_access, can_manage_tasks")
       .eq("organization_id", organizationId);
 
     if (error) {
@@ -112,18 +112,60 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
       .select("id, full_name, email, position")
       .in("id", userIds);
 
-    const mapped = (data || []).map((row) => {
+    const mapped = (data || []).map((row: any) => {
       const profile = profiles?.find((p) => p.id === row.user_id);
       return {
         id: row.id,
         user_id: row.user_id,
         role: row.role,
+        is_active: row.is_active !== false,
+        planner_access: row.planner_access !== false,
+        can_manage_tasks: row.can_manage_tasks !== false,
         profile: profile ? { full_name: profile.full_name, email: profile.email, position: profile.position } : null,
       };
     });
     setUsers(mapped);
     setLoading(false);
   };
+
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const applyStatus = async (
+    u: OrgUser,
+    patch: { isActive?: boolean; plannerAccess?: boolean; canManageTasks?: boolean }
+  ) => {
+    setSavingUserId(u.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("set-user-status", {
+        body: {
+          organizationId,
+          targetUserId: u.user_id,
+          isActive: patch.isActive ?? u.is_active,
+          plannerAccess: patch.plannerAccess ?? u.planner_access,
+          canManageTasks: patch.canManageTasks ?? u.can_manage_tasks,
+        },
+      });
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || "Не удалось сохранить");
+      toast({ title: "Сохранено" });
+      await fetchUsers();
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const toggleEmployment = async (u: OrgUser) => {
+    const name = u.profile?.full_name || u.profile?.email || "сотрудника";
+    if (u.is_active && !confirm(`Перевести ${name} в статус «Уволен / Неактивен»? Вход будет закрыт, история сохранится.`)) return;
+    await applyStatus(u, {
+      isActive: !u.is_active,
+      plannerAccess: u.is_active ? false : u.planner_access,
+      canManageTasks: u.is_active ? false : u.can_manage_tasks,
+    });
+  };
+
 
   useEffect(() => { fetchUsers(); }, [organizationId]);
 
