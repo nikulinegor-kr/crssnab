@@ -1,0 +1,2 @@
+ALTER TABLE public.planner_tasks ADD COLUMN IF NOT EXISTS archived_at timestamp with time zone;
+CREATE INDEX IF NOT EXISTS planner_tasks_org_archived_idx ON public.planner_tasks (organization_id) WHERE archived_at IS NULL;
