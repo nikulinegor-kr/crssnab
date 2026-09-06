@@ -150,6 +150,26 @@ export const usePlannerTasks = () => {
   return query;
 };
 
+/** Archived tasks (hidden from all regular views, restorable). */
+export const useArchivedPlannerTasks = () => {
+  const { currentOrgId } = useCurrentOrganization();
+  return useQuery({
+    queryKey: ["planner-tasks-archived", currentOrgId],
+    queryFn: async (): Promise<PlannerTask[]> => {
+      if (!currentOrgId) return [];
+      const { data, error } = await (supabase.from("planner_tasks") as any)
+        .select("*")
+        .eq("organization_id", currentOrgId)
+        .not("archived_at", "is", null)
+        .order("archived_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return (data ?? []) as unknown as PlannerTask[];
+    },
+    enabled: !!currentOrgId,
+  });
+};
+
 export const useCreatePlannerTask = () => {
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
