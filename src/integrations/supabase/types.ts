@@ -5061,6 +5061,19 @@ export type Database = {
         }
         Returns: string
       }
+      planner_check_task_deadlines: { Args: never; Returns: undefined }
+      planner_notify_users: {
+        Args: {
+          _message: string
+          _org: string
+          _targets: string[]
+          _task_id: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      planner_priority_label: { Args: { _p: string }; Returns: string }
+      planner_status_label: { Args: { _s: string }; Returns: string }
       planner_upsert_auto_task: {
         Args: {
           _assignee: string
