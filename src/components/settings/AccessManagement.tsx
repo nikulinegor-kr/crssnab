@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   Loader2, ChevronRight, ChevronDown, Copy, CheckCheck, Users, Plus, Trash2,
-  Pencil, UserPlus, Shield, Check, Mail,
+  Pencil, UserPlus, Shield, Check, Mail, UserX, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
@@ -26,8 +27,12 @@ interface OrgUser {
   id: string; // user_organizations row id
   user_id: string;
   role: string;
+  is_active: boolean;
+  planner_access: boolean;
+  can_manage_tasks: boolean;
   profile: { full_name: string | null; email: string; position?: string | null } | null;
 }
+
 
 interface AccessManagementProps {
   organizationId: string;
@@ -86,7 +91,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
     setLoading(true);
     const { data, error } = await supabase
       .from("user_organizations")
-      .select("id, user_id, role")
+      .select("id, user_id, role, is_active, planner_access, can_manage_tasks")
       .eq("organization_id", organizationId);
 
     if (error) {
@@ -107,18 +112,60 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
       .select("id, full_name, email, position")
       .in("id", userIds);
 
-    const mapped = (data || []).map((row) => {
+    const mapped = (data || []).map((row: any) => {
       const profile = profiles?.find((p) => p.id === row.user_id);
       return {
         id: row.id,
         user_id: row.user_id,
         role: row.role,
+        is_active: row.is_active !== false,
+        planner_access: row.planner_access !== false,
+        can_manage_tasks: row.can_manage_tasks !== false,
         profile: profile ? { full_name: profile.full_name, email: profile.email, position: profile.position } : null,
       };
     });
     setUsers(mapped);
     setLoading(false);
   };
+
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const applyStatus = async (
+    u: OrgUser,
+    patch: { isActive?: boolean; plannerAccess?: boolean; canManageTasks?: boolean }
+  ) => {
+    setSavingUserId(u.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("set-user-status", {
+        body: {
+          organizationId,
+          targetUserId: u.user_id,
+          isActive: patch.isActive ?? u.is_active,
+          plannerAccess: patch.plannerAccess ?? u.planner_access,
+          canManageTasks: patch.canManageTasks ?? u.can_manage_tasks,
+        },
+      });
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || "Не удалось сохранить");
+      toast({ title: "Сохранено" });
+      await fetchUsers();
+    } catch (e: any) {
+      toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const toggleEmployment = async (u: OrgUser) => {
+    const name = u.profile?.full_name || u.profile?.email || "сотрудника";
+    if (u.is_active && !confirm(`Перевести ${name} в статус «Уволен / Неактивен»? Вход будет закрыт, история сохранится.`)) return;
+    await applyStatus(u, {
+      isActive: !u.is_active,
+      plannerAccess: u.is_active ? false : u.planner_access,
+      canManageTasks: u.is_active ? false : u.can_manage_tasks,
+    });
+  };
+
 
   useEffect(() => { fetchUsers(); }, [organizationId]);
 
@@ -307,7 +354,8 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
                 "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors group",
                 selectedUserId === u.user_id
                   ? "border-primary bg-primary/5"
-                  : "border-transparent hover:bg-accent/50"
+                  : "border-transparent hover:bg-accent/50",
+                !u.is_active && "opacity-60"
               )}
               onClick={() => setSelectedUserId(u.user_id)}
             >
@@ -316,7 +364,15 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{u.profile?.full_name || u.profile?.email || "Без имени"}</p>
-                {u.profile?.position && <p className="text-xs text-muted-foreground truncate">{u.profile.position}</p>}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {u.profile?.position && <span className="text-xs text-muted-foreground truncate">{u.profile.position}</span>}
+                  <Badge
+                    variant={u.is_active ? "secondary" : "destructive"}
+                    className="text-[10px] px-1.5 py-0 shrink-0"
+                  >
+                    {u.is_active ? "Активен" : "Уволен"}
+                  </Badge>
+                </div>
               </div>
               <Badge variant="secondary" className={cn("text-xs shrink-0", roleBadgeColors[u.role])}>
                 {roleLabels[u.role] || u.role}
@@ -335,9 +391,62 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
           ))}
         </div>
 
+
         {/* Right panel: role + permissions */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {selectedUser && (
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Статус сотрудника</span>
+                  <Badge variant={selectedUser.is_active ? "secondary" : "destructive"}>
+                    {selectedUser.is_active ? "Активен" : "Уволен / Неактивен"}
+                  </Badge>
+                </div>
+                {selectedUser.role !== "owner" && (
+                  <Button
+                    variant={selectedUser.is_active ? "outline" : "default"}
+                    size="sm"
+                    className="gap-2"
+                    disabled={savingUserId === selectedUser.user_id}
+                    onClick={() => toggleEmployment(selectedUser)}
+                  >
+                    {savingUserId === selectedUser.user_id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : selectedUser.is_active ? (
+                      <UserX className="h-4 w-4" />
+                    ) : (
+                      <UserCheck className="h-4 w-4" />
+                    )}
+                    {selectedUser.is_active ? "Уволить / отключить доступ" : "Восстановить доступ"}
+                  </Button>
+                )}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <span className="text-sm">Доступ к планировщику</span>
+                  <Switch
+                    checked={selectedUser.is_active && selectedUser.planner_access}
+                    disabled={!selectedUser.is_active || savingUserId === selectedUser.user_id}
+                    onCheckedChange={(v) => applyStatus(selectedUser, { plannerAccess: v })}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <span className="text-sm">Может работать с задачами</span>
+                  <Switch
+                    checked={selectedUser.is_active && selectedUser.planner_access && selectedUser.can_manage_tasks}
+                    disabled={!selectedUser.is_active || !selectedUser.planner_access || savingUserId === selectedUser.user_id}
+                    onCheckedChange={(v) => applyStatus(selectedUser, { canManageTasks: v })}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                При увольнении вход в систему закрывается, сотрудник исчезает из выбора ответственных, но остаётся в истории заявок и задач.
+              </p>
+            </div>
+          )}
           {!selectedUserId ? (
+
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm py-16 gap-2">
               <Shield className="h-8 w-8 opacity-40" />
               Выберите пользователя для настройки прав
