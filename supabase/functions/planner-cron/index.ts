@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
     const { data: dueSoon } = await supabase
       .from("planner_tasks")
       .select("id, title, due_date, assignee_id, organization_id")
+      .eq("hidden_auto", false)
       .neq("status", "done")
       .not("due_date", "is", null)
       .gte("due_date", nowIso)
