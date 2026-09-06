@@ -28,19 +28,20 @@ import { PlannerTaskRow } from "@/components/planner/PlannerTaskRow";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import PlannerKanban from "./PlannerKanban";
 
-type ViewKey = "today" | "week" | "all" | "mine" | "team";
+type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team";
 
 const VIEWS: { key: ViewKey; label: string }[] = [
+  { key: "board", label: "Доска" },
   { key: "today", label: "Сегодня" },
   { key: "week", label: "На неделю" },
-  { key: "all", label: "Все задачи" },
   { key: "mine", label: "Мои задачи" },
   { key: "team", label: "Задачи сотрудников" },
+  { key: "all", label: "Все задачи" },
 ];
 
 export default function PlannerUnified() {
   const [params, setParams] = useSearchParams();
-  const view = (params.get("view") as ViewKey) || "today";
+  const view = (params.get("view") as ViewKey) || "board";
   const employeeId = params.get("employee");
   const taskParam = params.get("task");
 
