@@ -2706,6 +2706,7 @@ export type Database = {
           equipment_id: string | null
           equipment_ids: string[]
           estimated_hours: number | null
+          hidden_auto: boolean
           id: string
           is_private: boolean
           last_auto_sync_at: string | null
@@ -2741,6 +2742,7 @@ export type Database = {
           equipment_id?: string | null
           equipment_ids?: string[]
           estimated_hours?: number | null
+          hidden_auto?: boolean
           id?: string
           is_private?: boolean
           last_auto_sync_at?: string | null
@@ -2776,6 +2778,7 @@ export type Database = {
           equipment_id?: string | null
           equipment_ids?: string[]
           estimated_hours?: number | null
+          hidden_auto?: boolean
           id?: string
           is_private?: boolean
           last_auto_sync_at?: string | null
@@ -5089,18 +5092,6 @@ export type Database = {
       }
       planner_priority_label: { Args: { _p: string }; Returns: string }
       planner_status_label: { Args: { _s: string }; Returns: string }
-      planner_upsert_auto_task: {
-        Args: {
-          _assignee: string
-          _due: string
-          _org: string
-          _priority: string
-          _request_id: string
-          _rule: string
-          _title: string
-        }
-        Returns: string
-      }
       seed_notification_routing: {
         Args: { _org_id: string }
         Returns: undefined
