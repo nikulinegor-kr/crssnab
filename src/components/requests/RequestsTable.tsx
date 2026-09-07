@@ -803,7 +803,7 @@ export const RequestsTable = ({
                 />
               </TableHead>
               {visibility.request_date && (
-                <ResizableTableHeader column="request_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
+                <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
                 <ResizableTableHeader column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
