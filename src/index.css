@@ -177,7 +177,14 @@ All colors MUST be HSL.
   }
 }
 
+/* Dark theme: emerald "paid" badges need a lighter green for WCAG AA */
+.dark .text-emerald-600,
+.dark .text-emerald-700 {
+  color: hsl(160 84% 52%);
+}
+
 @layer utilities {
+
   .font-numeric {
     font-variant-numeric: tabular-nums;
   }
