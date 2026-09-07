@@ -162,6 +162,10 @@ All colors MUST be HSL.
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 211 100% 50%;
+    /* WCAG AA on #1F1F1F surfaces */
+    --success: 160 84% 52%;
+    --warning-foreground: 22 78% 26%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
