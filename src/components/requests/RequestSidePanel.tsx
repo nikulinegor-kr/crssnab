@@ -21,11 +21,16 @@ interface RequestSidePanelProps {
   hasNext?: boolean;
   position?: number;
   requestCount?: number;
+  /** Панель как колонка раскладки (широкий экран) вместо оверлея. */
+  inline?: boolean;
+  width?: number;
+  onWidthChange?: (width: number) => void;
 }
 
-const PANEL_WIDTH_KEY = "requests-side-panel-width";
 const DEFAULT_PANEL_WIDTH = 460;
 const MIN_PANEL_WIDTH = 360;
+const MAX_PANEL_WIDTH = 720;
+
 
 const money = (v: number) =>
   new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
