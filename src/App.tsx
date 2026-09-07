@@ -10,6 +10,9 @@ import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
+import { PersistentAppLayout } from "./components/PersistentAppLayout";
+import { PlannerBoardSkeleton } from "./components/planner/PlannerBoardSkeleton";
+
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
 import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
