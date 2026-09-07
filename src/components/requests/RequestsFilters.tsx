@@ -189,7 +189,7 @@ export const RequestsFilters = ({
   ].filter(Boolean).length;
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-3">
+    <div className="flex flex-col gap-1.5 border border-border bg-card p-2">
       {/* === Search + Filter button row === */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
@@ -206,7 +206,7 @@ export const RequestsFilters = ({
                 handleSmartSearch();
               }
             }}
-            className="pl-9 pr-20 h-9 sm:h-10 text-sm"
+            className="pl-9 pr-20 h-8 text-xs rounded-sm bg-background"
           />
           <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
             {searchQuery && (
@@ -245,7 +245,7 @@ export const RequestsFilters = ({
         {/* Combined Filter popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="shrink-0 h-9 sm:h-10 px-3 gap-1.5">
+            <Button variant="outline" size="sm" className="shrink-0 h-8 px-3 gap-1.5 rounded-sm text-xs">
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">
                 Фильтр{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
@@ -413,7 +413,7 @@ export const RequestsFilters = ({
             onClick={() => { resetFilters(); clearSmartSearch(); }}
             aria-label="Сбросить все фильтры"
             title="Сбросить все фильтры"
-            className="shrink-0 h-9 sm:h-10 px-2 sm:px-3 gap-1.5"
+            className="shrink-0 h-8 px-2 sm:px-3 gap-1.5 rounded-sm text-xs"
           >
             <X className="h-4 w-4" />
             <span className="hidden sm:inline">Сбросить всё</span>

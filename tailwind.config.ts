@@ -17,9 +17,9 @@ export default {
         'xs': '480px',
       },
       fontFamily: {
-        sans: ["Manrope", "system-ui", "sans-serif"],
-        heading: ["Manrope", "system-ui", "sans-serif"],
-        mono: ["Manrope", "system-ui", "sans-serif"],
+        sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
+        heading: ["IBM Plex Sans", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

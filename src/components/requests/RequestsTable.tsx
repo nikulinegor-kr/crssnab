@@ -582,7 +582,7 @@ export const RequestsTable = ({
   );
 
   return (
-    <div className="flex gap-4 items-start">
+    <div className="flex gap-2 items-start">
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
@@ -698,7 +698,7 @@ export const RequestsTable = ({
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
-        <div className="flex items-center justify-end gap-2 mb-2">
+        <div className="flex items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
           <Toggle
             pressed={groupByProject}
             onPressedChange={toggleGroupByProject}
@@ -722,10 +722,10 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="rounded-md border border-border bg-background">
-        <Table className="text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
-          <TableHeader className="bg-muted/60 [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted [&_th]:shadow-sm">
-            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '44px' }}>
+        <div className="border-0 bg-card">
+        <Table className="text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
+          <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
+            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '34px' }}>
               <TableHead className="w-[5px] p-0 border-r"></TableHead>
               <TableHead className="w-[28px] min-w-[28px] max-w-[28px] p-0 border-r border-b" aria-label="Раскрыть"></TableHead>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
@@ -859,11 +859,11 @@ export const RequestsTable = ({
                   return (
                     <TableRow
                       key={`grp-${it.key}`}
-                      className="bg-muted/70 hover:bg-muted cursor-pointer border-y-2 border-primary/20"
+                      className="bg-accent/70 hover:bg-accent cursor-pointer border-y border-border"
                       onClick={() => toggleGroup(it.key)}
                     >
-                      <TableCell colSpan={100} className="px-3 py-2">
-                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <TableCell colSpan={100} className="px-2 py-1.5">
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
                           <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <MapPin className="h-4 w-4 text-primary" />
                           <span className="font-semibold text-foreground">{it.name}</span>
@@ -875,7 +875,7 @@ export const RequestsTable = ({
                           {counts.inWork > 0 && <span className="text-muted-foreground">⚙ {counts.inWork} в работе</span>}
                           {counts.delivered > 0 && <span className="text-emerald-600">✓ {counts.delivered} доставлено</span>}
                           {counts.amount > 0 && (
-                            <span className="ml-auto font-semibold text-foreground">
+                            <span className="ml-auto font-numeric font-semibold text-foreground">
                               {new Intl.NumberFormat("ru-RU").format(Math.round(counts.amount))} ₽
                             </span>
                           )}
@@ -932,10 +932,10 @@ export const RequestsTable = ({
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer transition-all duration-150 ease-out relative group hover:bg-muted/40 hover:shadow-sm active:scale-[0.998] active:bg-muted/60 ${isEvenRow ? 'bg-muted/50' : ''} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
+                  className={`cursor-pointer relative group hover:bg-accent/70 ${isEvenRow ? 'bg-muted/40' : ''} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: '40px' }}
+                  style={{ height: '34px' }}
                 >
                   <TableCell 
                     className="w-[5px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[6px]" 
@@ -973,16 +973,16 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="text-center p-1 border-r border-b text-xs text-muted-foreground/60 font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }}>
+                  <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }} data-numeric>
                     {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center p-1 border-r border-b text-[13px] text-muted-foreground" style={{ width: 70, minWidth: 70, maxWidth: 70 }}>
+                    <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 70, minWidth: 70, maxWidth: 70 }} data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.description, minWidth: widths.description, maxWidth: widths.description }}>
+                    <TableCell className="px-2 py-1.5 border-r border-b overflow-hidden" style={{ width: widths.description, minWidth: widths.description, maxWidth: widths.description }}>
                       <div className="flex items-center gap-1.5">
                         {onToggleFavorite && (
                           <button
@@ -1012,7 +1012,7 @@ export const RequestsTable = ({
                                   getPriorityColor={getPriorityColor}
                                   onEdit={onEditClick}
                                 >
-                                  <div className="line-clamp-2 hover:text-primary transition-colors font-medium text-foreground leading-snug" title={request.description}>
+                                  <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-tight" title={request.description}>
                                     <HighlightText text={request.description} searchQuery={searchQuery} />
                                   </div>
                                 </RequestQuickPreview>
@@ -1129,7 +1129,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }} data-numeric>
                       {request.invoice_number ? (
                         <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
@@ -1140,7 +1140,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_prepay && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.payment_prepay, minWidth: widths.payment_prepay, maxWidth: widths.payment_prepay }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" style={{ width: widths.payment_prepay, minWidth: widths.payment_prepay, maxWidth: widths.payment_prepay }} data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -1152,7 +1152,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b font-mono font-semibold overflow-hidden" style={{ width: widths.payment_percentage, minWidth: widths.payment_percentage, maxWidth: widths.payment_percentage }} data-numeric>
                       <InlinePaymentStatusCell
                         requestId={request.id}
                         paymentPercent={(request as any).payment_percent ?? 0}
@@ -1160,7 +1160,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" style={{ width: widths.shipment_date, minWidth: widths.shipment_date, maxWidth: widths.shipment_date }} data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="shipment_date"
@@ -1172,7 +1172,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b text-foreground text-[14px] overflow-hidden" style={{ width: widths.delivery_date, minWidth: widths.delivery_date, maxWidth: widths.delivery_date }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" style={{ width: widths.delivery_date, minWidth: widths.delivery_date, maxWidth: widths.delivery_date }} data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -1202,7 +1202,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.waybill_number && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.waybill_number, minWidth: widths.waybill_number, maxWidth: widths.waybill_number }}>
+                    <TableCell className="text-center px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.waybill_number, minWidth: widths.waybill_number, maxWidth: widths.waybill_number }} data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1220,7 +1220,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }}>
+                    <TableCell className="text-right px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }} data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
