@@ -29,6 +29,7 @@ export const ResizableTableHeader = ({
   onSort,
   className = "",
   align = "center",
+  defaultWidth,
   children,
 }: ResizableTableHeaderProps) => {
   const headerRef = useRef<HTMLTableCellElement>(null);
