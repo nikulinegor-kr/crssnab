@@ -31,9 +31,13 @@ export const InlineEditCell = ({
   value,
   displayValue,
   className,
+  editOnClick = false,
 }: InlineEditCellProps) => {
+  const isDate = field === "delivery_date" || field === "shipment_date";
+  const norm = (v: string | number | null) =>
+    isDate ? String(v ?? "").slice(0, 10) : String(v ?? "");
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(value ?? ""));
+  const [editValue, setEditValue] = useState(norm(value));
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
