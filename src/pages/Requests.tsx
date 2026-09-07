@@ -149,7 +149,6 @@ const Requests = () => {
 
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
