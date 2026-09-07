@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo, useMemo, ReactNode } from "react";
+import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen } from "lucide-react";
