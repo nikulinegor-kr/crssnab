@@ -318,8 +318,8 @@ export const RequestsTable = ({
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
 
-  // Меню статуса/приоритета (клик по ячейке либо клавиши S / P)
-  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" } | null>(null);
+  // Меню статуса / приоритета / исполнителя (клик по ячейке либо клавиши S / P / I)
+  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" | "executor" } | null>(null);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -337,8 +337,12 @@ export const RequestsTable = ({
       } else if (key === "p" || key === "з") {
         event.preventDefault();
         setOpenMenu({ id: activeRequestId, field: "priority" });
+      } else if (key === "i" || key === "ш") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "executor" });
       }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeRequestId]);
