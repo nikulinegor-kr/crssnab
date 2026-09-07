@@ -396,6 +396,186 @@ export const RequestSidePanel = ({
 
   const asOverlay = !inline || isFullscreen;
 
+  const fieldsBlock = (
+    <>
+            <PanelField
+              label="Объект"
+              type="select"
+              options={objectOptions}
+              value={request.object_id}
+              display={(request as any).object_name}
+              readOnly={readOnly}
+              onSave={(v) => saveField("object_id", v)}
+            />
+            <PanelField
+              label="Контрагент"
+              type="select"
+              options={supplierOptions}
+              value={request.contractor}
+              readOnly={readOnly}
+              onSave={(v) => saveField("contractor", v)}
+            />
+            <PanelField
+              label="Заявитель"
+              type="select"
+              options={applicantOptions}
+              value={request.applicant}
+              display={formatPersonName(request.applicant)}
+              readOnly={readOnly}
+              onSave={(v) => saveField("applicant", v)}
+            />
+            <PanelField
+              label="Кто ведёт"
+              type="select"
+              options={executorOptions}
+              value={request.executor}
+              display={formatPersonName(request.executor)}
+              readOnly={readOnly}
+              onSave={(v) => saveField("executor", v)}
+            />
+            <PanelField
+              label="Перевозчик"
+              type="select"
+              options={carrierOptions}
+              value={request.transport_company}
+              readOnly={readOnly}
+              onSave={(v) => saveField("transport_company", v)}
+            />
+            <PanelField
+              label="№ ТТН"
+              type="text"
+              value={request.waybill_number}
+              readOnly={readOnly}
+              onSave={(v) => saveField("waybill_number", v)}
+            />
+            <PanelField
+              label="№ счёта"
+              type="text"
+              value={request.invoice_number}
+              readOnly={readOnly}
+              onSave={(v) => saveField("invoice_number", v)}
+            />
+            <PanelField
+              label="Отгрузка"
+              type="date"
+              value={request.shipment_date}
+              display={dt(request.shipment_date)}
+              readOnly={readOnly}
+              onSave={(v) => saveField("shipment_date", v)}
+            />
+            <PanelField
+              label="Приход"
+              type="date"
+              value={request.delivery_date}
+              display={dt(request.delivery_date)}
+              readOnly={readOnly}
+              onSave={(v) => saveField("delivery_date", v)}
+            />
+    </>
+  );
+  const totalsBlock = (
+    <div className="mx-0 w-full max-w-[480px]">
+            <div className="mt-3 bg-muted/60 px-3 py-2.5">
+              <PanelField
+                label="Товар"
+                type="number"
+                value={goods}
+                display={<span className="font-numeric">{money(goods)} ₽</span>}
+                readOnly={readOnly}
+                onSave={(v) => saveField("amount", Number(v.replace(",", ".")) || 0)}
+              />
+              <PanelField
+                label="Доставка"
+                type="number"
+                value={(request as any).amount_2 || 0}
+                display={<span className="font-numeric">{money(extra)} ₽</span>}
+                readOnly={readOnly}
+                onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
+              />
+              <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
+                <span className="text-[10px] text-muted-foreground">Всего</span>
+                <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
+              </div>
+              <PanelField
+                label="Оплата"
+                type="number"
+                value={paid}
+                display={
+                  <span className={paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-muted-foreground"}>
+                    {paid} % — {paid >= 100 ? "оплачено полностью" : paid > 0 ? "оплачено частично" : "не оплачено"}
+                  </span>
+                }
+                readOnly={readOnly}
+                onSave={(v) => {
+                  const pct = Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
+                  return saveField("payment_percent", pct);
+                }}
+              />
+            </div>
+    </div>
+  );
+  const movementBlock = (
+    <>
+            <div className="mt-4">
+              <div className="mb-2 text-[10px] text-muted-foreground">Движение</div>
+              <div className="space-y-2.5">
+                {movement.map((m, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span
+                      className={cn(
+                        "mt-[3px] h-2 w-2 shrink-0 rounded-full border",
+                        m.done && i === movement.length - 1 ? "border-primary bg-primary" : "border-border bg-card"
+                      )}
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[10.5px] leading-4">{m.title}</div>
+                      <div className="font-numeric text-[9.5px] leading-4 text-muted-foreground">{m.sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+    </>
+  );
+  const itemsBlock = (
+          <PanelItemsTable
+            requestId={request.id}
+            organizationId={currentOrgId}
+            items={(items || []) as any}
+            readOnly={readOnly}
+            onTotalChange={(itemsTotal) => {
+              if (itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
+                void saveField("amount", itemsTotal, { silent: true });
+              }
+            }}
+          />
+  );
+  const docsBlock = (
+          <PanelDocuments
+            requestId={request.id}
+            requestNumber={request.request_number}
+            photoUrls={photoUrls}
+            documentUrls={documentUrls}
+            readOnly={readOnly}
+            uploads={uploads}
+            onUpload={handleUpload}
+          />
+  );
+  const historyBlock = (
+          <div className="space-y-1">
+            {(history || []).length === 0 && <div className="text-[11px] text-muted-foreground">Записей нет</div>}
+            {(history || []).map((h: any) => (
+              <div key={h.id} className="flex items-center justify-between gap-2 border-b border-border/70 py-1.5">
+                <span className="truncate text-[11px]">{h.action}</span>
+                <span className="font-numeric shrink-0 text-[9.5px] text-muted-foreground">
+                  {h.created_at ? format(new Date(h.created_at), "dd.MM.yy HH:mm") : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+  );
+  const wideFullscreen = isFullscreen && viewportWide;
+
   const content = (
     <aside
       className={cn(
@@ -529,201 +709,56 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {/* Tabs */}
-      <div className="mt-2 flex gap-4 border-b border-border px-4">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id as any)}
-            className={cn(
-              "relative pb-1.5 text-[10px] transition-colors",
-              tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t.label}
-            {tab === t.id && <span className="absolute inset-x-0 -bottom-px h-[1.5px] bg-foreground/70" />}
-          </button>
-        ))}
-      </div>
+      {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
+      {!wideFullscreen && (
+        <div className="mt-2 flex gap-4 border-b border-border px-4">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id as any)}
+              className={cn(
+                "relative pb-1.5 text-[10px] transition-colors",
+                tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t.label}
+              {tab === t.id && <span className="absolute inset-x-0 -bottom-px h-[1.5px] bg-foreground/70" />}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-        {tab === "overview" && (
-          <>
-            <PanelField
-              label="Объект"
-              type="select"
-              options={objectOptions}
-              value={request.object_id}
-              display={(request as any).object_name}
-              readOnly={readOnly}
-              onSave={(v) => saveField("object_id", v)}
-            />
-            <PanelField
-              label="Контрагент"
-              type="select"
-              options={supplierOptions}
-              value={request.contractor}
-              readOnly={readOnly}
-              onSave={(v) => saveField("contractor", v)}
-            />
-            <PanelField
-              label="Заявитель"
-              type="select"
-              options={applicantOptions}
-              value={request.applicant}
-              display={formatPersonName(request.applicant)}
-              readOnly={readOnly}
-              onSave={(v) => saveField("applicant", v)}
-            />
-            <PanelField
-              label="Кто ведёт"
-              type="select"
-              options={executorOptions}
-              value={request.executor}
-              display={formatPersonName(request.executor)}
-              readOnly={readOnly}
-              onSave={(v) => saveField("executor", v)}
-            />
-            <PanelField
-              label="Перевозчик"
-              type="select"
-              options={carrierOptions}
-              value={request.transport_company}
-              readOnly={readOnly}
-              onSave={(v) => saveField("transport_company", v)}
-            />
-            <PanelField
-              label="№ ТТН"
-              type="text"
-              value={request.waybill_number}
-              readOnly={readOnly}
-              onSave={(v) => saveField("waybill_number", v)}
-            />
-            <PanelField
-              label="№ счёта"
-              type="text"
-              value={request.invoice_number}
-              readOnly={readOnly}
-              onSave={(v) => saveField("invoice_number", v)}
-            />
-            <PanelField
-              label="Отгрузка"
-              type="date"
-              value={request.shipment_date}
-              display={dt(request.shipment_date)}
-              readOnly={readOnly}
-              onSave={(v) => saveField("shipment_date", v)}
-            />
-            <PanelField
-              label="Приход"
-              type="date"
-              value={request.delivery_date}
-              display={dt(request.delivery_date)}
-              readOnly={readOnly}
-              onSave={(v) => saveField("delivery_date", v)}
-            />
-
-            {/* Totals */}
-            <div className="mt-3 bg-muted/60 px-3 py-2.5">
-              <PanelField
-                label="Товар"
-                type="number"
-                value={goods}
-                display={<span className="font-numeric">{money(goods)} ₽</span>}
-                readOnly={readOnly}
-                onSave={(v) => saveField("amount", Number(v.replace(",", ".")) || 0)}
-              />
-              <PanelField
-                label="Доставка"
-                type="number"
-                value={(request as any).amount_2 || 0}
-                display={<span className="font-numeric">{money(extra)} ₽</span>}
-                readOnly={readOnly}
-                onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
-              />
-              <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
-                <span className="text-[10px] text-muted-foreground">Всего</span>
-                <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
-              </div>
-              <PanelField
-                label="Оплата"
-                type="number"
-                value={paid}
-                display={
-                  <span className={paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-muted-foreground"}>
-                    {paid} % — {paid >= 100 ? "оплачено полностью" : paid > 0 ? "оплачено частично" : "не оплачено"}
-                  </span>
-                }
-                readOnly={readOnly}
-                onSave={(v) => {
-                  const pct = Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
-                  return saveField("payment_percent", pct);
-                }}
-              />
+        {wideFullscreen ? (
+          <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[420px_minmax(0,1fr)_360px] gap-6">
+            <div className="min-w-0">
+              {fieldsBlock}
+              {totalsBlock}
             </div>
-
-            {/* Movement */}
-            <div className="mt-4">
-              <div className="mb-2 text-[10px] text-muted-foreground">Движение</div>
-              <div className="space-y-2.5">
-                {movement.map((m, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span
-                      className={cn(
-                        "mt-[3px] h-2 w-2 shrink-0 rounded-full border",
-                        m.done && i === movement.length - 1 ? "border-primary bg-primary" : "border-border bg-card"
-                      )}
-                    />
-                    <div className="min-w-0">
-                      <div className="text-[10.5px] leading-4">{m.title}</div>
-                      <div className="font-numeric text-[9.5px] leading-4 text-muted-foreground">{m.sub}</div>
-                    </div>
-                  </div>
-                ))}
+            <div className="min-w-0">{itemsBlock}</div>
+            <div className="min-w-0 space-y-5">
+              {docsBlock}
+              <div>{movementBlock}</div>
+              <div>
+                <div className="mb-2 text-[10px] text-muted-foreground">История</div>
+                {historyBlock}
               </div>
             </div>
-          </>
-        )}
-
-        {tab === "items" && (
-          <PanelItemsTable
-            requestId={request.id}
-            organizationId={currentOrgId}
-            items={(items || []) as any}
-            readOnly={readOnly}
-            onTotalChange={(itemsTotal) => {
-              if (itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
-                void saveField("amount", itemsTotal, { silent: true });
-              }
-            }}
-          />
-        )}
-
-        {tab === "docs" && (
-          <PanelDocuments
-            requestId={request.id}
-            requestNumber={request.request_number}
-            photoUrls={photoUrls}
-            documentUrls={documentUrls}
-            readOnly={readOnly}
-            uploads={uploads}
-            onUpload={handleUpload}
-          />
-        )}
-
-        {tab === "history" && (
-          <div className="space-y-1">
-            {(history || []).length === 0 && <div className="text-[11px] text-muted-foreground">Записей нет</div>}
-            {(history || []).map((h: any) => (
-              <div key={h.id} className="flex items-center justify-between gap-2 border-b border-border/70 py-1.5">
-                <span className="truncate text-[11px]">{h.action}</span>
-                <span className="font-numeric shrink-0 text-[9.5px] text-muted-foreground">
-                  {h.created_at ? format(new Date(h.created_at), "dd.MM.yy HH:mm") : ""}
-                </span>
-              </div>
-            ))}
           </div>
+        ) : (
+          <>
+            {tab === "overview" && (
+              <>
+                {fieldsBlock}
+                {totalsBlock}
+                {movementBlock}
+              </>
+            )}
+            {tab === "items" && itemsBlock}
+            {tab === "docs" && docsBlock}
+            {tab === "history" && historyBlock}
+          </>
         )}
       </div>
 
