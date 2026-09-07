@@ -567,9 +567,20 @@ export const RequestsTable = ({
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
+  // Панель листает по всей выборке, а не по текущей странице
   useEffect(() => {
-    onRequestOrderChange?.(paginatedRequests);
-  }, [onRequestOrderChange, paginatedRequests]);
+    onRequestOrderChange?.(sortedRequests || []);
+  }, [onRequestOrderChange, sortedRequests]);
+
+  // Если выбранная в панели заявка ушла за пределы страницы — переходим на её страницу
+  useEffect(() => {
+    if (!activeRequestId || grouped) return;
+    const index = (sortedRequests || []).findIndex((r) => r.id === activeRequestId);
+    if (index < 0) return;
+    const page = Math.floor(index / pageSize) + 1;
+    setCurrentPage((prev) => (prev === page ? prev : page));
+  }, [activeRequestId, grouped, pageSize, sortedRequests]);
+
 
   // Group by object — must stay before early returns to keep hook order stable
   const groupedRequests = useMemo(() => {
