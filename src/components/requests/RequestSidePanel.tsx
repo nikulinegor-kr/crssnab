@@ -38,6 +38,32 @@ const Row = ({ label, value, accent }: { label: string; value: React.ReactNode; 
 
 export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTitleValue(request?.description || "");
+    setEditingTitle(false);
+  }, [request?.id, request?.description]);
+
+  const saveField = async (field: "description" | "status" | "priority", val: string) => {
+    if (!request) return;
+    setSavingField(field);
+    try {
+      const { error } = await supabase.from("requests").update({ [field]: val }).eq("id", request.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      if (field === "description") setEditingTitle(false);
+    } catch (e) {
+      console.error("SidePanel save:", e);
+      toast({ title: "Ошибка", description: "Не удалось сохранить", variant: "destructive" });
+    } finally {
+      setSavingField(null);
+    }
+  };
 
   const { data: items } = useQuery({
     queryKey: ["request-items", request?.id],
