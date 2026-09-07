@@ -52,6 +52,11 @@ import { useProjectOptions } from "@/hooks/useProjects";
 import { useAuthUserId } from "@/hooks/useOrgMembership";
 import { isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+
 
 const moneyShort = (n: number) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
