@@ -139,6 +139,7 @@ interface RequestsTableProps {
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
   headerActions?: ReactNode;
+  activeRequestId?: string | null;
 }
 
 // Memoized mobile card component for better performance
@@ -262,6 +263,7 @@ export const RequestsTable = ({
   favoriteIds,
   onToggleFavorite,
   headerActions,
+  activeRequestId,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { data: userId } = useAuthUserId();
@@ -438,7 +440,7 @@ export const RequestsTable = ({
   }, []);
 
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [data-inline-edit]')) return;
+    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [role="button"]')) return;
     onEditClick?.(request);
   }, [onEditClick]);
 
@@ -949,7 +951,12 @@ export const RequestsTable = ({
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer relative group border-b border-border hover:bg-[hsl(var(--row-hover))] before:absolute before:inset-y-0 before:left-0 before:w-0.5 ${priorityLine} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
+                  className={cn(
+                    "cursor-pointer relative group border-b border-border before:absolute before:inset-y-0 before:left-0 before:w-0.5",
+                    activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
+                    priorityLine,
+                    isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
+                  )}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
