@@ -13,7 +13,7 @@ interface ResizableTableHeaderProps {
   sortDirection?: "asc" | "desc";
   onSort?: () => void;
   className?: string;
-  align?: "left" | "center";
+  align?: "left" | "center" | "right";
   defaultWidth?: number;
   children?: React.ReactNode;
 }
@@ -76,7 +76,7 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-bold border-r border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
+        "relative p-2 font-bold border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
@@ -85,7 +85,7 @@ export const ResizableTableHeader = ({
       {children ? (
         <div className="flex items-center justify-center">{children}</div>
       ) : (
-        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : "justify-center")}>
+        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center")}>
           <span className="truncate text-xs uppercase">{label}</span>
           {sortable && (
             <Icon
