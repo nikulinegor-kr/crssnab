@@ -26,14 +26,28 @@ interface Props {
   field: "applicant" | "executor";
   value: string | null;
   searchQuery?: string;
+  /** Внешнее управление меню (горячая клавиша I). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /** Инлайн-выбор человека из своего справочника прямо в ячейке таблицы. */
-export const InlineParticipantCell = ({ requestId, organizationId, field, value, searchQuery }: Props) => {
-  const [open, setOpen] = useState(false);
+export const InlineParticipantCell = ({
+  requestId,
+  organizationId,
+  field,
+  value,
+  searchQuery,
+  open: controlledOpen,
+  onOpenChange,
+}: Props) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = onOpenChange ?? setUncontrolledOpen;
   const { update, saving } = useRequestQuickUpdate();
   const { data: people = [] } = useRequestParticipants(field, organizationId, open);
   const shown = formatPersonName(value);
+
 
   const select = async (name: string | null) => {
     setOpen(false);
