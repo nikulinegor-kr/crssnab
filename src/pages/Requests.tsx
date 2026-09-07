@@ -698,7 +698,7 @@ const Requests = () => {
         hasPrevious={selectedRequestIndex > 0}
         hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
         position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
-        total={panelRequestOrder.length}
+        requestCount={panelRequestOrder.length}
       />
 
       {selectedRequest && (

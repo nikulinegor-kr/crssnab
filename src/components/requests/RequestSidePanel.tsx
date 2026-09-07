@@ -20,7 +20,7 @@ interface RequestSidePanelProps {
   hasPrevious?: boolean;
   hasNext?: boolean;
   position?: number;
-  total?: number;
+  requestCount?: number;
 }
 
 const PANEL_WIDTH_KEY = "requests-side-panel-width";
@@ -56,7 +56,7 @@ export const RequestSidePanel = ({
   hasPrevious = false,
   hasNext = false,
   position,
-  total,
+  requestCount,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -334,7 +334,7 @@ export const RequestSidePanel = ({
         </select>
         <span className="font-numeric">{request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date)}</span>
-        {position && total ? <span className="ml-auto font-numeric">{position} / {total}</span> : null}
+        {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
