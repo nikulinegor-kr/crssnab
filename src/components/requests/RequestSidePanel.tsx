@@ -498,12 +498,20 @@ export const RequestSidePanel = ({
                 <span className="text-[0.8125rem] text-muted-foreground">Всего</span>
                 <span className="font-numeric text-[1.375rem] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
+            </div>
+            {/* Оплата — отдельной строкой под блоком сумм */}
+            <div className="mt-2 px-3">
               <PanelField
-                label="Оплата"
+                label="Оплата, %"
                 type="number"
                 value={paid}
                 display={
-                  <span className={paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-muted-foreground"}>
+                  <span
+                    className={cn(
+                      "font-numeric text-[0.9375rem] font-semibold",
+                      paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-destructive"
+                    )}
+                  >
                     {paid} % — {paid >= 100 ? "оплачено полностью" : paid > 0 ? "оплачено частично" : "не оплачено"}
                   </span>
                 }
@@ -516,6 +524,7 @@ export const RequestSidePanel = ({
             </div>
     </div>
   );
+
   const movementBlock = (
     <>
             <div className="mt-4">
