@@ -628,7 +628,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Header */}
-      <div className="flex items-start gap-2 px-4 pt-3">
+      <div className={cn("flex items-start gap-2 px-4 pt-3", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
         {editingTitle && !readOnly ? (
           <textarea
             autoFocus
@@ -679,7 +679,7 @@ export const RequestSidePanel = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric">
+      <div className={cn("flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
         <select
           value={request.status}
           disabled={readOnly || savingField === "status"}
@@ -749,7 +749,7 @@ export const RequestSidePanel = ({
           </div>
         ) : (
           <>
-            {tab === "overview" && (
+            {tab !== "docs" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
@@ -772,10 +772,8 @@ export const RequestSidePanel = ({
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 flex items-center gap-2 border-t border-border bg-card px-4 py-2.5">
-        <Button onClick={() => onEdit?.(request)} size="sm" className="h-7 px-3 text-[11px]">
-          Редактировать
-        </Button>
+      <div className="sticky bottom-0 border-t border-border bg-card px-4 py-2.5">
+        <div className={cn("flex items-center gap-2", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
         <Button
           size="sm"
           variant="outline"
@@ -809,6 +807,7 @@ export const RequestSidePanel = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </aside>
   );
