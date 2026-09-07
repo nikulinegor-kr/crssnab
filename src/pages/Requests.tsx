@@ -172,7 +172,7 @@ const Requests = () => {
 
   const handleEditClick = (request: Request) => {
     setSelectedRequest(request);
-    setEditDialogOpen(true);
+    setPanelOpen(true);
   };
 
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
