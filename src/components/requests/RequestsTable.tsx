@@ -1216,7 +1216,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.object && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineObjectCell
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
@@ -1267,7 +1267,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
