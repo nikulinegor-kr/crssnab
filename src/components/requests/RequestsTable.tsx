@@ -39,7 +39,7 @@ import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { HighlightText } from "@/components/HighlightText";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
-import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
+import { useTableColumnWidths, ColumnWidths, DEFAULT_COLUMN_WIDTHS } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
 import { QuickBadgeSelect } from "./QuickBadgeSelect";
@@ -270,7 +270,7 @@ export const RequestsTable = ({
   const navigate = useNavigate();
   const { data: userId } = useAuthUserId();
   const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
-  const { widths, updateWidth } = useTableColumnWidths();
+  const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
     return saved === "normal" || saved === "roomy" ? saved : "compact";
@@ -765,12 +765,15 @@ export const RequestsTable = ({
           </Toggle>
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={resetColumnWidths} title="Сбросить ширину колонок">
+            Ширина по умолчанию
+          </Button>
         </div>
         <div className="border-0 bg-card">
         <Table className="w-max min-w-full text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: 32 }} />
-            {visibility.request_date && <col style={{ width: 70 }} />}
+            {visibility.request_date && <col style={{ width: widths.request_date }} />}
             {visibility.description && <col style={{ width: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
             {visibility.status && <col style={{ width: widths.status }} />}
@@ -800,63 +803,58 @@ export const RequestsTable = ({
                 />
               </TableHead>
               {visibility.request_date && (
-                <TableHead className="w-[70px] min-w-[70px] max-w-[70px] text-center p-1 border-r border-b text-xs font-bold text-foreground/80 cursor-pointer hover:bg-muted/60" onClick={() => handleSort("request_date")}>
-                  <div className="flex items-center justify-center gap-0.5">
-                    <span className="uppercase">Дата</span>
-                    {sortConfig?.field === "request_date" ? (sortConfig.direction === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                  </div>
-                </TableHead>
+                <ResizableTableHeader column="request_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
-                <ResizableTableHeader column="description" label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
+                <ResizableTableHeader column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
               )}
               {visibility.object && (
-                <ResizableTableHeader column="object" label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
+                <ResizableTableHeader column="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
               {visibility.status && (
-                <ResizableTableHeader column="status" label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
+                <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
-                <ResizableTableHeader column="availability" label="Наличие" width={widths.availability} onResize={handleColumnResize} />
+                <ResizableTableHeader column="availability" defaultWidth={DEFAULT_COLUMN_WIDTHS.availability} label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <ResizableTableHeader column="contractor" label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
+                <ResizableTableHeader column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
               )}
               {visibility.amount && (
-                <ResizableTableHeader column="amount" label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
+                <ResizableTableHeader column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
               )}
               {visibility.invoice_number && (
-                <ResizableTableHeader column="invoice_number" label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
+                <ResizableTableHeader column="invoice_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.invoice_number} label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
               )}
               {visibility.payment_prepay && (
-                <ResizableTableHeader column="payment_prepay" label="% предопл." width={widths.payment_prepay} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
+                <ResizableTableHeader column="payment_prepay" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_prepay} label="% предопл." width={widths.payment_prepay} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.payment_percentage && (
-                <ResizableTableHeader column="payment_percentage" label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
+                <ResizableTableHeader column="payment_percentage" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_percentage} label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.shipment_date && (
-                <ResizableTableHeader column="shipment_date" label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
+                <ResizableTableHeader column="shipment_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.shipment_date} label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
               )}
               {visibility.delivery_date && (
-                <ResizableTableHeader column="delivery_date" label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
+                <ResizableTableHeader column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
               )}
               {visibility.transport_company && (
-                <ResizableTableHeader column="transport_company" label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
+                <ResizableTableHeader column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
               )}
               {visibility.waybill_number && (
-                <ResizableTableHeader column="waybill_number" label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
+                <ResizableTableHeader column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
               )}
               {visibility.applicant && (
-                <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
+                <ResizableTableHeader column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader column="executor" label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+                <ResizableTableHeader column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
               )}
               {visibility.equipment && (
-                <ResizableTableHeader column="equipment" label="Техника" width={widths.equipment} onResize={handleColumnResize} />
+                <ResizableTableHeader column="equipment" defaultWidth={DEFAULT_COLUMN_WIDTHS.equipment} label="Техника" width={widths.equipment} onResize={handleColumnResize} />
               )}
               {visibility.comments && (
-                <ResizableTableHeader column="comments" label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
+                <ResizableTableHeader column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
               <TableHead className="w-10 p-1 text-center">
                 <MoreVertical className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
