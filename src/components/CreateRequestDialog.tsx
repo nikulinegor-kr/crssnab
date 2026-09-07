@@ -888,16 +888,19 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       {exitWarningDialog}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-3">
             <DialogTitle>Новая заявка</DialogTitle>
             <DialogDescription>
               Заполните форму для создания заявки
             </DialogDescription>
           </DialogHeader>
-          {formContent}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pb-2">
+            {formContent}
+          </div>
           {desktopActions}
         </DialogContent>
+
       </Dialog>
     </>
   );
