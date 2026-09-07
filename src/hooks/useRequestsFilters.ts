@@ -22,6 +22,7 @@ export interface RequestFilters {
   priorityFilter: string;
   yearFilter: string;
   applicantFilter: string;
+  executorFilter: string;
   hideDelivered: boolean;
   specialDateFilter: SpecialDateFilter;
   objectFilter: string;
@@ -155,6 +156,7 @@ export const useRequestsFilters = (
   const [priorityFilter, setPriorityFilter] = useState(savedFilters?.priorityFilter || "all");
   const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
+  const [executorFilter, setExecutorFilter] = useState(savedFilters?.executorFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
   const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
@@ -169,12 +171,13 @@ export const useRequestsFilters = (
       priorityFilter,
       yearFilter,
       applicantFilter,
+      executorFilter,
       hideDelivered,
       objectFilter,
       transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, hideDelivered, objectFilter, transportCompanyFilter]);
+  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
@@ -192,6 +195,7 @@ export const useRequestsFilters = (
       setPriorityFilter("all");
       setYearFilter("all");
       setApplicantFilter("all");
+      setExecutorFilter("all");
       setObjectFilter("all");
       setHideDelivered(false);
       setSpecialDateFilter(null);
@@ -306,6 +310,8 @@ export const useRequestsFilters = (
         yearFilter === "all" || request.request_date.startsWith(yearFilter);
       const matchesApplicant =
         applicantFilter === "all" || request.applicant === applicantFilter;
+      const matchesExecutor =
+        executorFilter === "all" || request.executor === executorFilter;
       const matchesDelivered =
         activeTab === "archived"
           ? true
@@ -324,6 +330,7 @@ export const useRequestsFilters = (
         matchesPriority &&
         matchesYear &&
         matchesApplicant &&
+        matchesExecutor &&
         matchesDelivered &&
         matchesObject &&
         matchesTransportCompany
@@ -336,6 +343,7 @@ export const useRequestsFilters = (
     priorityFilter,
     yearFilter,
     applicantFilter,
+    executorFilter,
     hideDelivered,
     activeTab,
     specialDateFilter,
@@ -346,6 +354,12 @@ export const useRequestsFilters = (
   const uniqueApplicants = useMemo(() => {
     return Array.from(
       new Set(requests?.map((r) => r.applicant).filter(Boolean))
+    ).sort() as string[];
+  }, [requests]);
+
+  const uniqueExecutors = useMemo(() => {
+    return Array.from(
+      new Set(requests?.map((r) => r.executor).filter(Boolean))
     ).sort() as string[];
   }, [requests]);
 
@@ -395,6 +409,7 @@ export const useRequestsFilters = (
     if (filters.priorityFilter !== undefined) setPriorityFilter(filters.priorityFilter);
     if (filters.yearFilter !== undefined) setYearFilter(filters.yearFilter);
     if (filters.applicantFilter !== undefined) setApplicantFilter(filters.applicantFilter);
+    if (filters.executorFilter !== undefined) setExecutorFilter(filters.executorFilter);
     if (filters.hideDelivered !== undefined) setHideDelivered(filters.hideDelivered);
     if (filters.objectFilter !== undefined) setObjectFilter(filters.objectFilter);
     if (filters.transportCompanyFilter !== undefined) setTransportCompanyFilter(filters.transportCompanyFilter);
@@ -406,6 +421,7 @@ export const useRequestsFilters = (
     setPriorityFilter("all");
     setYearFilter("all");
     setApplicantFilter("all");
+    setExecutorFilter("all");
     setHideDelivered(true);
     setSpecialDateFilter(null);
     setObjectFilter("all");
@@ -418,6 +434,7 @@ export const useRequestsFilters = (
     priorityFilter,
     yearFilter,
     applicantFilter,
+    executorFilter,
     hideDelivered,
     specialDateFilter,
     objectFilter,
@@ -436,6 +453,8 @@ export const useRequestsFilters = (
     setYearFilter,
     applicantFilter,
     setApplicantFilter,
+    executorFilter,
+    setExecutorFilter,
     hideDelivered,
     setHideDelivered,
     specialDateFilter,
@@ -449,6 +468,7 @@ export const useRequestsFilters = (
     // Computed
     filteredRequests,
     uniqueApplicants,
+    uniqueExecutors,
     uniqueTransportCompanies,
     currentFilters,
     
