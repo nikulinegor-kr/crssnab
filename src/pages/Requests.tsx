@@ -352,7 +352,7 @@ const Requests = () => {
   const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
-    <div className="w-full overflow-hidden p-1.5 xs:p-2 sm:p-3 md:p-4 lg:p-6 space-y-3 sm:space-y-4">
+    <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-3 md:p-4 space-y-2.5">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -368,10 +368,10 @@ const Requests = () => {
       )}
 
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-2">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Все заявки</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-lg font-semibold">Реестр заявок</h1>
+          <p className="text-xs text-muted-foreground font-numeric">
             {filters.filteredRequests?.length || 0} найдено
             {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
               <button
@@ -394,19 +394,19 @@ const Requests = () => {
               <Button
                 onClick={downloadAllInvoices}
                 disabled={isDownloadingInvoices}
-                size="lg"
+                size="sm"
                 variant="outline"
                 title="Скачать все счета на оплату (ZIP)"
-                className="gap-2 px-3 text-sm font-semibold"
+                className="h-8 gap-1.5 px-3 text-xs font-medium shadow-none"
               >
                 <Printer className="h-4 w-4" />
                 <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
               </Button>
               <Button
                 onClick={openQuickRequest}
-                size="lg"
+                size="sm"
                 title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-                className="gap-2 px-4 text-sm font-semibold shadow-md hover:shadow-lg transition-all bg-amber-500 hover:bg-amber-600 text-[#78350F] border-0"
+                className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none bg-warning hover:bg-warning/90 text-[hsl(var(--warning-foreground))] border-0"
               >
                 <Zap className="h-4 w-4" />
                 <span className="hidden sm:inline">Быстрая заявка</span>
@@ -414,8 +414,8 @@ const Requests = () => {
               </Button>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
-                size="lg"
-                className="gap-2 px-6 text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all sticky top-16 z-10"
+                size="sm"
+                className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sticky top-16 z-10"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden xs:inline">Новая заявка</span>
@@ -427,13 +427,13 @@ const Requests = () => {
       </div>
 
       {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex gap-1 border-b border-border items-end">
+      <nav className="flex gap-0 border-b border-border bg-card items-end overflow-x-auto">
         {mainTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
             className={cn(
-              "relative px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5",
+              "relative min-h-9 px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
               "hover:text-foreground",
               activeTab === tab.value
                 ? "text-foreground"
@@ -458,7 +458,7 @@ const Requests = () => {
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
             className={cn(
-              "relative px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition-colors flex items-center gap-1.5",
+              "relative min-h-9 px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
               "hover:text-foreground",
               activeTab === tab.value
                 ? "text-foreground"
@@ -476,7 +476,7 @@ const Requests = () => {
 
       {/* === Tab Content === */}
       {activeTab === "active" && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
             requests={requests}
@@ -546,7 +546,7 @@ const Requests = () => {
           />
 
           {/* LEVEL 7: Table */}
-          <Card className="p-2 sm:p-3 md:p-4 overflow-hidden">
+          <div className="overflow-hidden border border-border bg-card">
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -564,7 +564,7 @@ const Requests = () => {
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
             />
-          </Card>
+          </div>
         </div>
       )}
 
@@ -613,7 +613,7 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+          <div className="overflow-hidden border border-border bg-card">
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -629,7 +629,7 @@ const Requests = () => {
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
             />
-          </Card>
+          </div>
         </div>
       )}
 
@@ -644,7 +644,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <Card className="p-2 sm:p-3 md:p-4 lg:p-6 overflow-hidden">
+            <div className="overflow-hidden border border-border bg-card">
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}
@@ -659,7 +659,7 @@ const Requests = () => {
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
             />
-            </Card>
+            </div>
           )}
         </div>
       )}

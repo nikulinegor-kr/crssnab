@@ -272,41 +272,42 @@ export const RequestsMiniDashboard = ({
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="flex gap-2 overflow-x-auto border border-border bg-card px-2 py-2">
       {groups.map((group) => (
-        <div key={group.title} className="space-y-1.5">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-1">
+        <div key={group.title} className="flex min-w-max items-center gap-1 border-r border-border pr-2 last:border-r-0">
+          <h3 className="px-1.5 text-[10px] font-semibold uppercase text-muted-foreground">
             {group.title}
           </h3>
-          <div className="space-y-1">
+          <div className="flex gap-1">
             {group.items.map((item) => {
               const active = isItemActive(item);
               return (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   onClick={() => handleClick(item)}
                   className={cn(
-                    "flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-all cursor-pointer active:scale-[0.97]",
-                    "hover:shadow-sm hover:-translate-y-px",
+                    "flex h-7 items-center gap-1.5 rounded-sm border px-2 text-left transition-colors",
+                    "hover:bg-accent",
                     active
                       ? item.activeBg
-                      : "bg-card border-border/40 hover:border-border",
+                      : "bg-card border-border",
                     item.count > 0 && (item.id === "emergency" || item.id === "overdue" || item.id === "overdueShipment")
                       ? "border-red-200/60 dark:border-red-800/40"
                       : ""
                   )}
                 >
-                  <div className={cn("p-1 rounded-md shrink-0", item.iconBg, item.colorClass)}>
+                  <span className={cn("shrink-0", item.colorClass)}>
                     {item.icon}
-                  </div>
-                  <span className="text-xs text-muted-foreground truncate flex-1">{item.label}</span>
+                  </span>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">{item.label}</span>
                   <span className={cn(
-                    "text-sm font-bold tabular-nums",
+                    "font-numeric text-xs font-semibold tabular-nums",
                     item.count > 0 ? item.colorClass : "text-muted-foreground/40"
                   )}>
                     {item.count}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>
