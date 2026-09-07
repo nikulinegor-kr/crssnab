@@ -297,7 +297,30 @@ All colors MUST be HSL.
     padding-bottom: 0 !important;
     font-size: 14px !important;
     line-height: 20px !important;
+    height: var(--row-h, 32px);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+
+  /* Ячейки не растягивают строку: всё содержимое в одну строку с многоточием */
+  .requests-registry table tbody td > *,
+  .requests-registry table tbody td span,
+  .requests-registry table tbody td a,
+  .requests-registry table tbody td div {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .requests-registry table tbody td .shrink-0,
+  .requests-registry table tbody td [role="checkbox"],
+  .requests-registry table tbody td svg {
+    overflow: visible;
+  }
+
 
   .requests-registry table tbody td [data-numeric],
   .requests-registry table tbody td.font-mono,
