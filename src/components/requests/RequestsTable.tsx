@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
-import { UI_SCALES, useUiScale } from "@/hooks/useUiScale";
+import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
