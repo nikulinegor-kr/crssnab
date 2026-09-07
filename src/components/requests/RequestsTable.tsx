@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
-import { UI_SCALES, useUiScale } from "@/hooks/useUiScale";
+import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -97,7 +97,8 @@ function summarizeGroup(items: any[]) {
   return { total, suppliers: suppliers.size, invoices, amount, paid, unpaid: Math.max(amount - paid, 0), delivered, inTransit, overdue, emergency, progress, computedStatus };
 }
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const PAGE_SIZE_OPTIONS = [0, 25, 50, 100, 250];
+const pageSizeLabel = (size: number) => (size === 0 ? "Все" : String(size));
 const STORAGE_KEY = "requests-page-size";
 const SORT_STORAGE_KEY = "requests-sort";
 const DENSITY_STORAGE_KEY = "requests-table-density";
@@ -460,7 +461,8 @@ export const RequestsTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? parseInt(saved, 10) : 25;
+    const parsed = saved !== null ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(parsed) ? parsed : 0; // 0 — показывать все заявки
   });
 
   // Sort state
@@ -564,9 +566,10 @@ export const RequestsTable = ({
     (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
     0
   ), [sortedRequests]);
-  const effectivePageSize = grouped ? Math.max(totalItems, 1) : pageSize;
-  const totalPages = grouped ? 1 : Math.ceil(totalItems / pageSize);
-  const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
+  const showAll = grouped || pageSize === 0;
+  const effectivePageSize = showAll ? Math.max(totalItems, 1) : pageSize;
+  const totalPages = showAll ? 1 : Math.ceil(totalItems / pageSize);
+  const startIndex = showAll ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
@@ -577,12 +580,12 @@ export const RequestsTable = ({
 
   // Если выбранная в панели заявка ушла за пределы страницы — переходим на её страницу
   useEffect(() => {
-    if (!activeRequestId || grouped) return;
+    if (!activeRequestId || showAll) return;
     const index = (sortedRequests || []).findIndex((r) => r.id === activeRequestId);
     if (index < 0) return;
     const page = Math.floor(index / pageSize) + 1;
     setCurrentPage((prev) => (prev === page ? prev : page));
-  }, [activeRequestId, grouped, pageSize, sortedRequests]);
+  }, [activeRequestId, showAll, pageSize, sortedRequests]);
 
 
   // Group by object — must stay before early returns to keep hook order stable
@@ -647,13 +650,13 @@ export const RequestsTable = ({
     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-          <SelectTrigger className="w-14 h-6 text-xs px-2">
+          <SelectTrigger className="w-16 h-6 text-xs px-2">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PAGE_SIZE_OPTIONS.map((size) => (
               <SelectItem key={size} value={size.toString()} className="text-xs">
-                {size}
+                {pageSizeLabel(size)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -708,12 +711,12 @@ export const RequestsTable = ({
           <ChevronsRight className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <div className="flex items-center gap-1" aria-label="Плотность строк">
+      <div className="flex items-center gap-1" aria-label="Плотность и масштаб">
         {([
-          ["compact", "Плотно"],
-          ["normal", "Обычно"],
-          ["roomy", "Свободно"],
-        ] as const).map(([value, label]) => (
+          ["compact", 100, "Плотно"],
+          ["normal", 110, "Обычно"],
+          ["roomy", 125, "Свободно"],
+        ] as const).map(([value, scale, label]) => (
           <Button
             key={value}
             type="button"
@@ -723,23 +726,10 @@ export const RequestsTable = ({
             onClick={() => {
               setDensity(value);
               localStorage.setItem(DENSITY_STORAGE_KEY, value);
+              setUiScale(scale);
             }}
           >
             {label}
-          </Button>
-        ))}
-      </div>
-      <div className="flex items-center gap-1" aria-label="Масштаб интерфейса">
-        {UI_SCALES.map((value) => (
-          <Button
-            key={value}
-            type="button"
-            size="sm"
-            variant={uiScale === value ? "secondary" : "ghost"}
-            className="h-6 px-2 text-xs font-numeric"
-            onClick={() => setUiScale(value)}
-          >
-            {value}%
           </Button>
         ))}
       </div>
@@ -1053,8 +1043,8 @@ export const RequestsTable = ({
                       className="bg-accent/70 hover:bg-accent cursor-pointer border-y border-border"
                       onClick={() => toggleGroup(it.key)}
                     >
-                      <TableCell colSpan={100} className="px-2 py-1.5">
-                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                      <TableCell colSpan={100} className="px-2 py-1.5 text-left">
+                        <div className="flex items-center justify-start gap-2 flex-wrap text-xs text-left">
                           <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <MapPin className="h-4 w-4 text-primary" />
                           <span className="font-semibold text-foreground">{it.name}</span>
@@ -1084,8 +1074,8 @@ export const RequestsTable = ({
                       className="bg-primary/5 hover:bg-primary/10 cursor-pointer border-y-2 border-primary/30"
                       onClick={() => toggleProject(it.key)}
                     >
-                      <TableCell colSpan={100} className="px-3 py-2">
-                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <TableCell colSpan={100} className="px-3 py-2 text-left">
+                        <div className="flex items-center justify-start gap-2 flex-wrap text-sm text-left">
                           <ChevronDown className={`h-4 w-4 transition-transform ${open ? '' : '-rotate-90'}`} />
                           <FolderOpen className="h-4 w-4 text-primary" />
                           <span className="font-semibold text-foreground">{it.name}</span>
