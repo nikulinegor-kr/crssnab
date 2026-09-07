@@ -45,10 +45,13 @@ interface RequestsFiltersProps {
   setYearFilter: (value: string) => void;
   applicantFilter: string;
   setApplicantFilter: (value: string) => void;
+  executorFilter: string;
+  setExecutorFilter: (value: string) => void;
   hideDelivered: boolean;
   setHideDelivered: (value: boolean) => void;
   years: string[];
   uniqueApplicants: string[];
+  uniqueExecutors: string[];
   currentFilters: RequestFilters;
   selectAllStatuses: () => void;
   addYear: (year: string) => boolean;
@@ -78,10 +81,13 @@ export const RequestsFilters = ({
   setYearFilter,
   applicantFilter,
   setApplicantFilter,
+  executorFilter,
+  setExecutorFilter,
   hideDelivered,
   setHideDelivered,
   years,
   uniqueApplicants,
+  uniqueExecutors,
   currentFilters,
   selectAllStatuses,
   addYear,
@@ -178,6 +184,7 @@ export const RequestsFilters = ({
     priorityFilter !== "all" ||
     yearFilter !== "all" ||
     applicantFilter !== "all" ||
+    executorFilter !== "all" ||
     objectFilter !== "all" ||
     transportCompanyFilter !== "all" ||
     hideDelivered ||
@@ -190,6 +197,7 @@ export const RequestsFilters = ({
     yearFilter !== "all",
     objectFilter !== "all",
     applicantFilter !== "all",
+    executorFilter !== "all",
     transportCompanyFilter !== "all",
     priorityFilter !== "all",
     hideDelivered,
@@ -202,7 +210,8 @@ export const RequestsFilters = ({
     ...statusFilter.map((status) => ({ key: `status-${status}`, label: `Статус: ${status}`, clear: () => setStatusFilter(statusFilter.filter((item) => item !== status)) })),
     ...(priorityFilter !== "all" ? [{ key: "priority", label: `Приоритет: ${priorityFilter}`, clear: () => setPriorityFilter("all") }] : []),
     ...(yearFilter !== "all" ? [{ key: "year", label: `Год: ${yearFilter}`, clear: () => setYearFilter("all") }] : []),
-    ...(applicantFilter !== "all" ? [{ key: "applicant", label: `Контрагент: ${applicantFilter}`, clear: () => setApplicantFilter("all") }] : []),
+    ...(applicantFilter !== "all" ? [{ key: "applicant", label: `Заявитель: ${formatPersonName(applicantFilter)}`, clear: () => setApplicantFilter("all") }] : []),
+    ...(executorFilter !== "all" ? [{ key: "executor", label: `Кто ведёт: ${formatPersonName(executorFilter)}`, clear: () => setExecutorFilter("all") }] : []),
     ...(objectFilter !== "all" ? [{ key: "object", label: `Объект: ${objectLabel || objectFilter}`, clear: () => setObjectFilter("all") }] : []),
     ...(transportCompanyFilter !== "all" ? [{ key: "transport", label: `ТК: ${transportCompanyFilter}`, clear: () => setTransportCompanyFilter("all") }] : []),
     ...(hideDelivered ? [{ key: "delivered", label: "Скрыть доставленные", clear: () => setHideDelivered(false) }] : []),
@@ -374,17 +383,33 @@ export const RequestsFilters = ({
                 </Select>
               </div>
 
-              {/* Applicant */}
+              {/* Заявитель — только справочник заявителей */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Контрагент</Label>
+                <Label className="text-xs font-medium">Заявитель</Label>
                 <Select value={applicantFilter} onValueChange={setApplicantFilter}>
                   <SelectTrigger className="text-xs h-8">
-                    <SelectValue placeholder="Контрагент" />
+                    <SelectValue placeholder="Заявитель" />
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-background max-h-[200px]">
                     <SelectItem value="all" className="text-xs">Все</SelectItem>
                     {uniqueApplicants.map((applicant) => (
-                      <SelectItem key={applicant} value={applicant} className="text-xs">{applicant}</SelectItem>
+                      <SelectItem key={applicant} value={applicant} className="text-xs">{formatPersonName(applicant)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Кто ведёт — только справочник исполнителей */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Кто ведёт</Label>
+                <Select value={executorFilter} onValueChange={setExecutorFilter}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue placeholder="Кто ведёт" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background max-h-[200px]">
+                    <SelectItem value="all" className="text-xs">Все</SelectItem>
+                    {uniqueExecutors.map((executor) => (
+                      <SelectItem key={executor} value={executor} className="text-xs">{formatPersonName(executor)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -422,6 +447,7 @@ export const RequestsFilters = ({
                       priorityFilter: filters.priorityFilter || "all",
                       yearFilter: filters.yearFilter || "all",
                       applicantFilter: filters.applicantFilter || "all",
+                      executorFilter: filters.executorFilter || "all",
                       hideDelivered: filters.hideDelivered ?? true,
                     });
                   }}
