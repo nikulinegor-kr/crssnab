@@ -1953,7 +1953,7 @@ export default function MaterialStatementsPage() {
                                 <Badge variant="outline" className={
                                   st.detected_source_type === "RC" ? "text-info border-info/30" :
                                   st.detected_source_type === "GL" ? "text-success border-success/30" :
-                                  st.detected_source_type === "MR" ? "text-purple-600 border-purple-300" :
+                                  st.detected_source_type === "MR" ? "text-info border-info/30" :
                                   st.detected_source_type === "SPEC" ? "text-warning border-warning/30" :
                                   "text-muted-foreground"
                                 }>
@@ -2233,7 +2233,7 @@ export default function MaterialStatementsPage() {
                                           {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-warning" /></span>}
                                           {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-info" /></span>}
                                           {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
-                                          {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-purple-500" /></span>}
+                                          {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-info" /></span>}
                                           {item.price_source === "exact" && <span title="Точное совпадение"><Check className="h-3 w-3 text-success" /></span>}
                                         </span>
                                       )}

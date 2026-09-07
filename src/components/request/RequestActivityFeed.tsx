@@ -49,7 +49,7 @@ export function RequestActivityFeed({ activities }: RequestActivityFeedProps) {
       case 'updated':
         return <div className="h-2.5 w-2.5 rounded-full bg-info ring-4 ring-info/10" />;
       case 'comment':
-        return <div className="h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-500/10" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-info ring-4 ring-info/10" />;
       default:
         return <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground ring-4 ring-muted/30" />;
     }

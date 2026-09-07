@@ -124,7 +124,7 @@ export const RequestQuickPreview = ({
                 </Badge>
               )}
               {request.delivery_date && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-info/10 text-info border-0 font-numeric">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(request.delivery_date), "d MMM", { locale: ru })}
                 </Badge>
@@ -136,7 +136,7 @@ export const RequestQuickPreview = ({
                 </Badge>
               )}
               {request.waybill_number && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-primary/10 text-primary border-0">
                   <FileText className="h-3 w-3" />
                   ТТН: {request.waybill_number}
                 </Badge>

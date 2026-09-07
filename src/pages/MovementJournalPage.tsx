@@ -30,7 +30,7 @@ const TYPE_COLORS: Record<string, string> = {
   MOVE_IN: "bg-info/10 text-info dark:bg-info dark:text-info",
   MOVE_OUT: "bg-warning/10 text-warning dark:bg-warning dark:text-warning",
   IN_TRANSIT: "bg-info/10 text-info dark:bg-info dark:text-info",
-  INVENTORY: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  INVENTORY: "bg-info/10 text-info",
 };
 
 export default function MovementJournalPage() {

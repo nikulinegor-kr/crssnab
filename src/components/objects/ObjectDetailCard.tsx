@@ -232,10 +232,10 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
 
   const DOC_TYPE_COLORS: Record<string, string> = {
     "Контракт": "bg-info/10 text-info dark:bg-info/30 dark:text-info",
-    "Договор": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    "Договор": "bg-info/10 text-info",
     "Счёт": "bg-success/10 text-success dark:bg-success/30 dark:text-success",
     "КП": "bg-warning/10 text-warning dark:bg-warning/30 dark:text-warning",
-    "Фото": "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
+    "Фото": "bg-primary/10 text-primary",
   };
 
   return (

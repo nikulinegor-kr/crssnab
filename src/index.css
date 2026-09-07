@@ -54,7 +54,7 @@ All colors MUST be HSL.
   td[data-numeric],
   th.font-numeric,
   td.font-numeric {
-    text-align: right;
+    text-align: right !important;
   }
 
   #root {
@@ -144,8 +144,8 @@ All colors MUST be HSL.
     --muted: 210 17% 95%;
     --muted-foreground: 213 11% 40%;
 
-    --accent: 210 17% 95%;
-    --accent-foreground: 219 26% 8%;
+    --accent: 187 87% 32%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 64% 47%;
     --destructive-foreground: 0 0% 100%;
@@ -205,8 +205,8 @@ All colors MUST be HSL.
     --muted: 221 26% 15%;
     --muted-foreground: 216 15% 59%;
 
-    --accent: 221 26% 15%;
-    --accent-foreground: 216 28% 93%;
+    --accent: 185 81% 47%;
+    --accent-foreground: 190 84% 8%;
 
     --destructive: 0 100% 71%;
     --destructive-foreground: 0 0% 10%;

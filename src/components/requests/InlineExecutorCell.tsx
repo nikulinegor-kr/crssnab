@@ -83,7 +83,7 @@ export const InlineExecutorCell = ({ requestId, organizationId, value, searchQue
               <HighlightText text={value} searchQuery={searchQuery || ""} />
             </span>
           ) : (
-            <span className="text-[#9CA3AF] text-[12px] italic">не назначен</span>
+            <span className="text-muted-foreground text-xs italic">не назначен</span>
           )}
           {saving ? (
             <Loader2 className="h-3 w-3 animate-spin shrink-0" />

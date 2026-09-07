@@ -24,9 +24,9 @@ const MOVEMENT_LABELS: Record<string, { label: string; color: string }> = {
   IN: { label: "Приход", color: "bg-success/10 text-success dark:text-success" },
   WRITE_OFF: { label: "Списание", color: "bg-warning/10 text-warning dark:text-warning" },
   SALE: { label: "Продажа", color: "bg-info/10 text-info dark:text-info" },
-  MOVE: { label: "Перемещение", color: "bg-purple-500/10 text-purple-700 dark:text-purple-400" },
-  RETURN: { label: "Возврат", color: "bg-teal-500/10 text-teal-700 dark:text-teal-400" },
-  ADJUST: { label: "Корректировка", color: "bg-slate-500/10 text-slate-700 dark:text-slate-400" },
+  MOVE: { label: "Перемещение", color: "bg-info/10 text-info" },
+  RETURN: { label: "Возврат", color: "bg-success/10 text-success" },
+  ADJUST: { label: "Корректировка", color: "bg-muted text-muted-foreground" },
 };
 
 export function SparePartDetailDialog({ open, onOpenChange, part, orgId }: Props) {
