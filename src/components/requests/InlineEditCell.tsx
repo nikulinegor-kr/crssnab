@@ -21,6 +21,8 @@ interface InlineEditCellProps {
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
+  /** Редактирование по одиночному клику (для колонок дат, заявителя и т.п.). */
+  editOnClick?: boolean;
 }
 
 export const InlineEditCell = ({
