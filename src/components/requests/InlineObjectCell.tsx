@@ -78,7 +78,7 @@ export function InlineObjectCell({
         <button
           type="button"
           className={cn(
-            "w-full text-left rounded px-1 -mx-1 hover:bg-muted/60 transition-colors",
+            "w-full text-left rounded p-0 m-0 hover:bg-muted/60 transition-colors",
             className
           )}
           onClick={(e) => e.stopPropagation()}
