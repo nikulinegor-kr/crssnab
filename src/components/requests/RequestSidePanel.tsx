@@ -501,7 +501,9 @@ export const RequestSidePanel = ({
           Редактировать
         </Button>
       </div>
-    </aside>,
-    document.body
+    </aside>
   );
+
+  return asOverlay ? createPortal(content, document.body) : content;
 };
+
