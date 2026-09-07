@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter, Truck } from "lucide-react";
+import { formatPersonName } from "@/lib/personName";
 import { Input } from "@/components/ui/input";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
