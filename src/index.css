@@ -204,13 +204,24 @@ All colors MUST be HSL.
     font-variant-numeric: tabular-nums;
   }
 
+  .requests-registry table {
+    font-size: 11px;
+  }
+
+  .requests-registry table thead th {
+    font-size: 10px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    text-transform: none;
+  }
+
   .requests-registry table tbody tr {
-    height: 31px;
+    height: 29px;
   }
 
   .requests-registry table tbody td {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
   }
 }
 
