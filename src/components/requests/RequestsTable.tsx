@@ -1285,8 +1285,9 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
+                        editOnClick
                         requestId={request.id}
                         field="shipment_date"
                         value={request.shipment_date || ""}
@@ -1297,8 +1298,9 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
+                        editOnClick
                         requestId={request.id}
                         field="delivery_date"
                         value={request.delivery_date || ""}
@@ -1345,8 +1347,9 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
+                        editOnClick
                         requestId={request.id}
                         field="applicant"
                         value={request.applicant || ""}
@@ -1363,7 +1366,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.executor && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineExecutorCell
                         requestId={request.id}
                         organizationId={request.organization_id}

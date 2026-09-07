@@ -21,6 +21,8 @@ interface InlineEditCellProps {
   value: string | number | null;
   displayValue: React.ReactNode;
   className?: string;
+  /** Редактирование по одиночному клику (для колонок дат, заявителя и т.п.). */
+  editOnClick?: boolean;
 }
 
 export const InlineEditCell = ({
@@ -29,9 +31,13 @@ export const InlineEditCell = ({
   value,
   displayValue,
   className,
+  editOnClick = false,
 }: InlineEditCellProps) => {
+  const isDate = field === "delivery_date" || field === "shipment_date";
+  const norm = (v: string | number | null) =>
+    isDate ? String(v ?? "").slice(0, 10) : String(v ?? "");
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(value ?? ""));
+  const [editValue, setEditValue] = useState(norm(value));
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -45,11 +51,11 @@ export const InlineEditCell = ({
   }, [isEditing]);
 
   useEffect(() => {
-    setEditValue(String(value ?? ""));
+    setEditValue(norm(value));
   }, [value]);
 
   const handleSave = async () => {
-    if (editValue === String(value ?? "")) {
+    if (editValue === norm(value)) {
       setIsEditing(false);
       return;
     }
@@ -92,7 +98,7 @@ export const InlineEditCell = ({
   };
 
   const handleCancel = () => {
-    setEditValue(String(value ?? ""));
+    setEditValue(norm(value));
     setIsEditing(false);
   };
 
@@ -117,11 +123,20 @@ export const InlineEditCell = ({
       <div
         data-inline-edit
         onDoubleClick={handleDoubleClick}
+        onClick={
+          editOnClick
+            ? (e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }
+            : undefined
+        }
         className={cn(
           "group/inline relative flex w-full items-center gap-1 rounded p-0 m-0 transition-colors hover:bg-muted/50",
+          editOnClick && "cursor-text",
           className
         )}
-        title="Двойной клик — редактировать"
+        title={editOnClick ? "Клик — редактировать" : "Двойной клик — редактировать"}
       >
 
         <div className="min-w-0 flex-1">{displayValue}</div>
