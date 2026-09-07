@@ -49,14 +49,14 @@ const Requests = () => {
 
   // Filters
   const filters = useRequestsFilters(requests, activeTab);
+
+  // Semantic search results
+  const [semanticSearchIds, setSemanticSearchIds] = useState<string[] | null>(null);
   const visibleRequests = useMemo(() => (
     semanticSearchIds
       ? filters.filteredRequests?.filter((request) => semanticSearchIds.includes(request.id))
       : filters.filteredRequests
   ) || [], [filters.filteredRequests, semanticSearchIds]);
-
-  // Semantic search results
-  const [semanticSearchIds, setSemanticSearchIds] = useState<string[] | null>(null);
 
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());

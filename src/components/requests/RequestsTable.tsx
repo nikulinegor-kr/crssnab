@@ -444,6 +444,13 @@ export const RequestsTable = ({
     onEditClick?.(request);
   }, [onEditClick]);
 
+  const handleDesktopRowClick = useCallback((request: Request, e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[data-row-action]")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onEditClick?.(request);
+  }, [onEditClick]);
+
   const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
     // Double click inside an inline-editable cell starts editing, not quick view
@@ -957,11 +964,11 @@ export const RequestsTable = ({
                     priorityLine,
                     isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
                   )}
-                  onClick={(e) => handleRowClick(request, e)}
+                  onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -980,6 +987,7 @@ export const RequestsTable = ({
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button
+                            data-row-action
                             type="button"
                             variant="ghost"
                             size="icon"
@@ -992,6 +1000,7 @@ export const RequestsTable = ({
                         )}
                         {onToggleFavorite && (
                           <button
+                            data-row-action
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite(request.id); }}
                             className="shrink-0 hover:scale-110 transition-transform"
                             aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
@@ -1036,6 +1045,7 @@ export const RequestsTable = ({
                           />
                         </div>
                         <button
+                          data-row-action
                           onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
                           className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
                           aria-label="Быстрый просмотр"
@@ -1285,7 +1295,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {/* Row Action Menu */}
-                  <TableCell className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
