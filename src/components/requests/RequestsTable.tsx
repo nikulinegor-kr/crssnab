@@ -768,7 +768,7 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="border-0 bg-card">
-        <Table className="w-max min-w-full text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
+        <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
