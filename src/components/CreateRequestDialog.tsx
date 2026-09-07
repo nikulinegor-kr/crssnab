@@ -790,7 +790,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   );
 
   const desktopActions = (
-    <div className="flex justify-end gap-2 pt-4">
+    <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 flex justify-end gap-2 border-t bg-background px-6 py-3">
       <Button
         type="button"
         variant="outline"
@@ -805,6 +805,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       </Button>
     </div>
   );
+
 
   const mobileActions = (
     <div className="grid grid-cols-2 gap-2">
