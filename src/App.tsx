@@ -623,15 +623,15 @@ const App = () => {
               }
             />
             <Route
-              path="/planner"
               element={
-                <ProtectedRoute>
-                  <AppLayout fullBleed>
-                    <PlannerLayout />
-                  </AppLayout>
-                </ProtectedRoute>
+                <PersistentAppLayout fullBleed fallback={<PlannerBoardSkeleton />} />
               }
             >
+            <Route
+              path="/planner"
+              element={<PlannerLayout />}
+            >
+
               <Route index element={<PlannerUnified />} />
               <Route path="today" element={<PlannerToday />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
