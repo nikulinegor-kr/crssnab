@@ -80,7 +80,6 @@ export const ResizableTableHeader = ({
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
-      style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px`, transition: isResizing ? 'none' : 'width 150ms ease-out, min-width 150ms ease-out, max-width 150ms ease-out' }}
       onClick={sortable ? onSort : undefined}
     >
       {children ? (
