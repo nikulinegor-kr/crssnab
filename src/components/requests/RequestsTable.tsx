@@ -417,30 +417,37 @@ export const RequestsTable = ({
     setCurrentPage(1);
   }, []);
 
-  const clickTimerRef = useCallback(() => {}, []);
-  const [clickTimer, setClickTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelPendingRowClick = useCallback(() => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+  }, []);
 
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
       return;
     }
-    // Delay navigation to distinguish from double-click
-    const timer = setTimeout(() => {
+    // Delay navigation to distinguish from double-click (inline editing)
+    cancelPendingRowClick();
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null;
       navigate(`/requests/${request.id}`);
     }, 250);
-    setClickTimer(timer);
-  }, [navigate]);
+  }, [navigate, cancelPendingRowClick]);
 
   const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
-    e.preventDefault();
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
     // Cancel pending single-click navigation
-    if (clickTimer) {
-      clearTimeout(clickTimer);
-      setClickTimer(null);
-    }
+    cancelPendingRowClick();
+    // Double click inside an inline-editable cell starts editing, not quick view
+    if ((e.target as HTMLElement).closest('[data-inline-edit]')) return;
+    e.preventDefault();
     openQuickView(request);
-  }, [openQuickView, clickTimer]);
+  }, [openQuickView, cancelPendingRowClick]);
+
 
   // Pagination calculations — disabled in grouped mode (show all)
   const grouped = groupByObject || groupByProject;
