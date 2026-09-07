@@ -96,7 +96,7 @@ const TONE_STYLE: Record<string, string> = {
   green: "bg-success/10 hover:bg-success/20",
   yellow: "bg-warning/10 hover:bg-warning/20",
   blue: "bg-info/10 hover:bg-info/20",
-  purple: "bg-violet-500/10 hover:bg-violet-500/20",
+  purple: "bg-info/10 hover:bg-info/20",
   red: "bg-destructive/10 hover:bg-destructive/20",
   none: "hover:bg-muted/40",
 };

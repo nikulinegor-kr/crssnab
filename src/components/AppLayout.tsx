@@ -53,7 +53,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
         <div className="flex-1 flex min-w-0 flex-col">
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="hover:bg-white/10 transition-colors rounded-md" />
+              <SidebarTrigger className="hover:bg-background/10 transition-colors rounded-md" />
               {logoUrl ? (
                 <div className="p-1.5 rounded-md bg-muted/60 shrink-0">
                   <img

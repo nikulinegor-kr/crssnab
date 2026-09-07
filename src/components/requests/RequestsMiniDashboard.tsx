@@ -196,9 +196,9 @@ export const RequestsMiniDashboard = ({
         {
           id: "unpaid", label: "Не оплачено", count: metrics.unpaid,
           icon: <CreditCard className="h-3.5 w-3.5" />,
-          colorClass: "text-slate-600 dark:text-slate-400",
-          iconBg: "bg-slate-100 dark:bg-slate-800/50",
-          activeBg: "bg-slate-50 dark:bg-slate-950/60 border-slate-400 dark:border-slate-600 ring-1 ring-slate-200 dark:ring-slate-800",
+          colorClass: "text-muted-foreground dark:text-muted-foreground",
+          iconBg: "bg-muted/10 dark:bg-muted/50",
+          activeBg: "bg-muted/10 dark:bg-muted/60 border-border dark:border-border ring-1 ring-border dark:ring-border",
           type: "special", specialFilter: "unpaid",
         },
         {
@@ -212,9 +212,9 @@ export const RequestsMiniDashboard = ({
         {
           id: "invoiced", label: "Счета выставлены", count: metrics.invoiced,
           icon: <Receipt className="h-3.5 w-3.5" />,
-          colorClass: "text-violet-600 dark:text-violet-400",
-          iconBg: "bg-violet-100 dark:bg-violet-900/50",
-          activeBg: "bg-violet-50 dark:bg-violet-950/60 border-violet-400 dark:border-violet-600 ring-1 ring-violet-200 dark:ring-violet-800",
+          colorClass: "text-info dark:text-info",
+          iconBg: "bg-info/10 dark:bg-info/50",
+          activeBg: "bg-info/10 dark:bg-info/60 border-info/30 dark:border-info/30 ring-1 ring-info/30 dark:ring-info/30",
           type: "status", value: "Счёт в Бухгалтерии",
         },
       ],
@@ -225,9 +225,9 @@ export const RequestsMiniDashboard = ({
         {
           id: "newRequests", label: "Новые заявки", count: metrics.newRequests,
           icon: <FileText className="h-3.5 w-3.5" />,
-          colorClass: "text-slate-600 dark:text-slate-400",
-          iconBg: "bg-slate-100 dark:bg-slate-800/50",
-          activeBg: "bg-slate-50 dark:bg-slate-950/60 border-slate-400 dark:border-slate-600 ring-1 ring-slate-200 dark:ring-slate-800",
+          colorClass: "text-muted-foreground dark:text-muted-foreground",
+          iconBg: "bg-muted/10 dark:bg-muted/50",
+          activeBg: "bg-muted/10 dark:bg-muted/60 border-border dark:border-border ring-1 ring-border dark:ring-border",
           type: "status", value: "Новая заявка",
         },
         {

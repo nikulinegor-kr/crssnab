@@ -13,12 +13,12 @@ export function ImageViewer({ imageUrl, open, onOpenChange }: ImageViewerProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95">
+      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-overlay/95">
         <div className="relative">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white"
+            className="absolute top-2 right-2 z-10 bg-overlay/50 hover:bg-overlay/70 text-primary-foreground"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-4 w-4" />

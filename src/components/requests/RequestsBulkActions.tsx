@@ -692,7 +692,7 @@ export const RequestsBulkActions = ({
             <Button
               onClick={handleBulkStatusChange}
               disabled={isSending}
-              className="gap-1.5 text-xs h-8 px-3 bg-success hover:bg-success text-white"
+              className="gap-1.5 text-xs h-8 px-3 bg-success hover:bg-success text-primary-foreground"
               size="sm"
             >
               <Truck className="h-3.5 w-3.5" />

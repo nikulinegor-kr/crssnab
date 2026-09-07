@@ -27,7 +27,7 @@ export function QuickAddErpMenu() {
           <Button
             variant="ghost"
             size="icon"
-            className="hover:bg-white/10 relative"
+            className="hover:bg-background/10 relative"
             aria-label="Быстро добавить"
             title="Быстро добавить"
           >

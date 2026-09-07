@@ -55,7 +55,7 @@ export function RequestQuickActionsCard({
     const styles: Record<string, string> = {
       "Аварийно": "bg-destructive/15 text-destructive dark:text-destructive border-destructive/30",
       "Приоритетно": "bg-warning/15 text-warning dark:text-warning border-warning/30",
-      "Плановая": "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30",
+      "Плановая": "bg-muted/15 text-muted-foreground dark:text-muted-foreground border-border/30",
     };
     return styles[priority] || "";
   };
@@ -136,7 +136,7 @@ export function RequestQuickActionsCard({
                         "w-2 h-2 rounded-full",
                         priority.name === "Аварийно" && "bg-destructive",
                         priority.name === "Приоритетно" && "bg-warning",
-                        priority.name === "Плановая" && "bg-gray-400",
+                        priority.name === "Плановая" && "bg-muted",
                       )} />
                       {priority.name}
                     </div>

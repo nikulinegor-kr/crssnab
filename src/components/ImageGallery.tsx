@@ -51,13 +51,13 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-overlay/95 border-none">
         <div className="relative flex items-center justify-center min-h-[60vh]">
           {/* Close button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-20 bg-black/50 hover:bg-black/70 text-white"
+            className="absolute top-2 right-2 z-20 bg-overlay/50 hover:bg-overlay/70 text-primary-foreground"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-5 w-5" />
@@ -69,7 +69,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white h-12 w-12"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-overlay/50 hover:bg-overlay/70 text-primary-foreground h-12 w-12"
                 onClick={goToPrevious}
               >
                 <ChevronLeft className="h-8 w-8" />
@@ -77,7 +77,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white h-12 w-12"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-overlay/50 hover:bg-overlay/70 text-primary-foreground h-12 w-12"
                 onClick={goToNext}
               >
                 <ChevronRight className="h-8 w-8" />
@@ -95,7 +95,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
 
           {/* Counter */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-overlay/60 text-primary-foreground px-3 py-1 rounded-full text-sm">
               {currentIndex + 1} / {images.length}
             </div>
           )}
@@ -108,7 +108,7 @@ export function ImageGallery({ images, initialIndex = 0, open, onOpenChange }: I
                   key={idx}
                   onClick={() => setCurrentIndex(idx)}
                   className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                    idx === currentIndex ? "border-white" : "border-transparent opacity-60 hover:opacity-100"
+                    idx === currentIndex ? "border-primary-foreground" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
                   <SignedImage src={img} alt="" className="w-full h-full object-cover" />

@@ -2203,7 +2203,7 @@ export default function MaterialStatementsPage() {
                                       <div className="flex items-center gap-1.5">
                                         {isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}
                                         {item.item_type === "work" && <Badge variant="outline" className="text-xs shrink-0 border-warning/30 text-warning">Работы</Badge>}
-                                        {item.item_type === "customer_supply" && <Badge variant="outline" className="text-xs shrink-0 border-violet-300 text-violet-600">Пост. зак.</Badge>}
+                                        {item.item_type === "customer_supply" && <Badge variant="outline" className="text-xs shrink-0 border-info/30 text-info">Пост. зак.</Badge>}
                                       </div>
                                     </TableCell>
                                     <TableCell>{isEditing ? <Input value={editingItem.type_mark || ""} onChange={e => setEditingItem({ ...editingItem, type_mark: e.target.value })} className="h-8" /> : (item.type_mark ? <HighlightText text={item.type_mark} searchQuery={materialsSearch} /> : "—")}</TableCell>

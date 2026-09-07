@@ -74,7 +74,7 @@ const TYPE_META: Record<TypeKey, {
   request: {
     label: "Входящие заявки",
     icon: Inbox,
-    color: "text-violet-500",
+    color: "text-info",
     sources: [
       { event: "Новая заявка", trigger: "requests INSERT", template: "🆕 Новая заявка" },
       { event: "Назначен исполнитель", trigger: "executor_id изменён", template: "👤 Назначен ответственный" },
@@ -480,7 +480,7 @@ function summary(p: any) {
 }
 
 const TONE_BG: Record<string, string> = {
-  violet: "bg-violet-500/10 text-violet-600 dark:text-violet-300 border-violet-500/30",
+  violet: "bg-info/10 text-info dark:text-info border-info/30",
   blue: "bg-info/10 text-info dark:text-info border-info/30",
   amber: "bg-warning/10 text-warning dark:text-warning border-warning/30",
   emerald: "bg-success/10 text-success dark:text-success border-success/30",
