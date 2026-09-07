@@ -28,22 +28,10 @@ export const OrganizationSwitcher = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentOrgId, setCurrentOrgId } = useCurrentOrganization();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  useEffect(() => {
-    if (currentOrgId && organizations.length > 0) {
-      const org = organizations.find((o) => o.organization_id === currentOrgId);
-      setCurrentOrg(org || null);
-    }
-  }, [currentOrgId, organizations]);
-
-  const fetchOrganizations = async () => {
-    try {
+  const { data: organizations = [] } = useQuery({
+    queryKey: ["user-organizations-list"],
+    queryFn: async (): Promise<Organization[]> => {
       const { data, error } = await supabase
         .from("user_organizations")
         .select(`
@@ -55,17 +43,16 @@ export const OrganizationSwitcher = () => {
             name
           )
         `);
-
       if (error) throw error;
-      setOrganizations(data || []);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message,
-      });
-    }
-  };
+      return (data ?? []) as unknown as Organization[];
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const currentOrg =
+    organizations.find((o) => o.organization_id === currentOrgId) ?? null;
+
 
   const switchOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
