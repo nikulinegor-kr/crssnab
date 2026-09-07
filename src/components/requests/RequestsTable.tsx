@@ -1501,6 +1501,17 @@ export const RequestsTable = ({
                 ))}
               </SelectContent>
             </Select>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("executor", v)}>
+              <SelectTrigger className="h-7 w-[170px] text-xs">
+                <SelectValue placeholder="Кто ведёт" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {bulkExecutors.map((p) => (
+                  <SelectItem key={p.id} value={p.name} className="text-xs">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSelection}>
               Снять выделение
             </Button>
