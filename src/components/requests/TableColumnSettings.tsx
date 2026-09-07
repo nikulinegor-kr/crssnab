@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 export interface ColumnVisibility {
+  select: boolean;
   request_date: boolean;
   description: boolean;
   object: boolean;
@@ -32,6 +33,7 @@ export interface ColumnVisibility {
 }
 
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
+  select: true,
   request_date: false,
   description: true,
   object: true,
@@ -54,6 +56,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
 };
 
 const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
+  select: "Чекбоксы выбора",
   request_date: "Дата",
   description: "Заявка",
   object: "Объект",
