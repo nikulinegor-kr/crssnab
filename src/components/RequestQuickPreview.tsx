@@ -45,10 +45,10 @@ export const RequestQuickPreview = ({
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-numeric text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                   {request.request_number}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground font-numeric">
                   {format(new Date(request.request_date), "d MMM yyyy", { locale: ru })}
                 </span>
               </div>

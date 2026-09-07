@@ -486,10 +486,10 @@ const Dashboard = () => {
                           <TrendingUp className="h-3.5 w-3.5 text-success" />
                         </div>
                       </div>
-                      <p className={`text-2xl font-bold ${stats.completionRate >= 70 ? "text-success" : stats.completionRate >= 40 ? "text-warning" : "text-destructive"}`}>
+                      <p className={`text-2xl font-bold font-numeric ${stats.completionRate >= 70 ? "text-success" : stats.completionRate >= 40 ? "text-warning" : "text-destructive"}`}>
                         {stats.completionRate}%
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{stats.completed} из {stats.total}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-numeric">{stats.completed} из {stats.total}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -531,7 +531,7 @@ const Dashboard = () => {
                     <CardTitle className="text-base flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-primary" />
                       Расходы по объектам
-                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                      <span className="text-sm font-normal text-muted-foreground ml-1 font-numeric">
                         {totalExpenses.toLocaleString("ru-RU")} ₽
                       </span>
                     </CardTitle>
@@ -560,7 +560,7 @@ const Dashboard = () => {
                               <span className="text-muted-foreground mr-1.5">{idx + 1}.</span>
                               {obj.name}
                             </span>
-                            <span className="font-medium text-foreground whitespace-nowrap">
+                            <span className="font-medium text-foreground whitespace-nowrap font-numeric">
                               {obj.total.toLocaleString("ru-RU")} ₽
                               <span className="text-muted-foreground text-xs ml-1.5">({obj.count} заявок)</span>
                             </span>

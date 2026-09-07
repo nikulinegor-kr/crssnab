@@ -228,8 +228,8 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
             <option key={p} value={p}>{p}</option>
           ))}
         </select>
-        <span>{request.request_number}</span>
-        <span>{dt(request.request_date)}</span>
+        <span className="font-numeric">{request.request_number}</span>
+        <span className="font-numeric">{dt(request.request_date)}</span>
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
@@ -280,7 +280,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
                 <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-[10px]">
-                <span className={paid >= 100 ? "text-success" : "text-[hsl(24_90%_45%)]"}>
+                <span className={paid >= 100 ? "text-success" : "text-warning"}>
                   {paid >= 100 ? "Оплачено полностью" : paid > 0 ? "Оплачено частично" : "Не оплачено"}
                 </span>
                 <span className="font-numeric text-muted-foreground">{paid} %</span>

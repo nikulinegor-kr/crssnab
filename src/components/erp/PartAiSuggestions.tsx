@@ -544,7 +544,7 @@ export function PartAiSuggestions({
             <div className="text-xs text-muted-foreground px-1">
               Последняя закупка: {new Date(data.price.last_at).toLocaleDateString("ru-RU")}
               {" • "}
-              <span className="text-foreground">{data.price.last_price.toLocaleString("ru-RU")} ₽</span>
+              <span className="text-foreground font-numeric">{data.price.last_price.toLocaleString("ru-RU")} ₽</span>
               {data.price.last_supplier ? ` • ${data.price.last_supplier}` : ""}
               {data.price.avg_price ? ` • средняя ${Math.round(data.price.avg_price).toLocaleString("ru-RU")} ₽` : ""}
               {" • закупок: "}{data.price.purchase_count}

@@ -185,12 +185,12 @@ export default function ProcurementPlanPage() {
                       </Badge>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-right font-medium">{item.stock}</TableCell>
-                  <TableCell className="text-right">{item.reserve}</TableCell>
-                  <TableCell className="text-right">{item.inTransit}</TableCell>
-                  <TableCell className="text-right">{item.ordered}</TableCell>
-                  <TableCell className="text-right">{item.min_stock}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-medium font-numeric">{item.stock}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.reserve}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.inTransit}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.ordered}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.min_stock}</TableCell>
+                  <TableCell className="text-right font-numeric">
                     <Badge variant="destructive">{item.deficit}</Badge>
                   </TableCell>
                   <TableCell>

@@ -199,7 +199,7 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
               <span className="opacity-60">— исп.</span>
             )}
             {request.updated_at && (
-              <span className="opacity-70 truncate">
+              <span className="opacity-70 truncate font-numeric">
                 {format(new Date(request.updated_at), "d MMM HH:mm", { locale: ru })}
               </span>
             )}
