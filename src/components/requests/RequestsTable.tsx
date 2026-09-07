@@ -726,6 +726,21 @@ export const RequestsTable = ({
           </Button>
         ))}
       </div>
+      <div className="flex items-center gap-1" aria-label="Масштаб интерфейса">
+        {UI_SCALES.map((value) => (
+          <Button
+            key={value}
+            type="button"
+            size="sm"
+            variant={uiScale === value ? "secondary" : "ghost"}
+            className="h-6 px-2 text-xs font-numeric"
+            onClick={() => setUiScale(value)}
+          >
+            {value}%
+          </Button>
+        ))}
+      </div>
+
     </div>
   );
 
