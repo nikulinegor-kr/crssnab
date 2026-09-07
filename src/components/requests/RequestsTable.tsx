@@ -785,6 +785,9 @@ export const RequestsTable = ({
               {visibility.contractor && (
                 <ResizableTableHeader column="contractor" label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
               )}
+              {visibility.amount && (
+                <ResizableTableHeader column="amount" label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
+              )}
               {visibility.invoice_number && (
                 <ResizableTableHeader column="invoice_number" label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
               )}
@@ -805,9 +808,6 @@ export const RequestsTable = ({
               )}
               {visibility.waybill_number && (
                 <ResizableTableHeader column="waybill_number" label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
-              )}
-              {visibility.amount && (
-                <ResizableTableHeader column="amount" label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
               )}
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
@@ -1104,6 +1104,24 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+                  {visibility.amount && (
+                    <TableCell className="text-right px-2 py-1.5 border-b overflow-hidden text-xs font-mono" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }} data-numeric>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="amount"
+                        value={request.amount ?? ""}
+                        displayValue={
+                          request.amount && request.amount > 0 ? (
+                            <span className="font-medium">
+                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )
+                        }
+                      />
+                    </TableCell>
+                  )}
                   {visibility.invoice_number && (
                     <TableCell className="text-center px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.invoice_number, minWidth: widths.invoice_number, maxWidth: widths.invoice_number }} data-numeric>
                       {request.invoice_number ? (
@@ -1190,24 +1208,6 @@ export const RequestsTable = ({
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-xs italic">—</span>
-                          )
-                        }
-                      />
-                    </TableCell>
-                  )}
-                  {visibility.amount && (
-                    <TableCell className="text-right px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }} data-numeric>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="amount"
-                        value={request.amount ?? ""}
-                        displayValue={
-                          request.amount && request.amount > 0 ? (
-                            <span className="font-medium">
-                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />

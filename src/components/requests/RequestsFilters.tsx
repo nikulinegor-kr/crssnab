@@ -181,6 +181,7 @@ export const RequestsFilters = ({
     objectFilter !== "all" ||
     transportCompanyFilter !== "all" ||
     hideDelivered ||
+    specialDateFilter !== null && specialDateFilter !== undefined ||
     isSmartSearchActive;
 
   const activeFilterCount = [
