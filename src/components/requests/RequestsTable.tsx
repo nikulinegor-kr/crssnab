@@ -891,29 +891,30 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="border-0 bg-card" ref={tableWrapRef}>
-        <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'auto' }}>
+        <Table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
-            {visibility.request_date && <col style={{ width: widths.request_date !== DEFAULT_COLUMN_WIDTHS.request_date ? widths.request_date : '1%' }} />}
-            {visibility.description && <col style={{ width: '100%' }} />}
-            {visibility.object && <col style={{ width: widths.object !== DEFAULT_COLUMN_WIDTHS.object ? widths.object : '1%' }} />}
-            {visibility.status && <col style={{ width: widths.status !== DEFAULT_COLUMN_WIDTHS.status ? widths.status : '1%' }} />}
-            {visibility.availability && <col style={{ width: widths.availability !== DEFAULT_COLUMN_WIDTHS.availability ? widths.availability : '1%' }} />}
-            {visibility.contractor && <col style={{ width: widths.contractor !== DEFAULT_COLUMN_WIDTHS.contractor ? widths.contractor : '1%' }} />}
-            {visibility.amount && <col style={{ width: widths.amount !== DEFAULT_COLUMN_WIDTHS.amount ? widths.amount : '1%' }} />}
-            {visibility.invoice_number && <col style={{ width: widths.invoice_number !== DEFAULT_COLUMN_WIDTHS.invoice_number ? widths.invoice_number : '1%' }} />}
-            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay !== DEFAULT_COLUMN_WIDTHS.payment_prepay ? widths.payment_prepay : '1%' }} />}
-            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage !== DEFAULT_COLUMN_WIDTHS.payment_percentage ? widths.payment_percentage : '1%' }} />}
-            {visibility.shipment_date && <col style={{ width: widths.shipment_date !== DEFAULT_COLUMN_WIDTHS.shipment_date ? widths.shipment_date : '1%' }} />}
-            {visibility.delivery_date && <col style={{ width: widths.delivery_date !== DEFAULT_COLUMN_WIDTHS.delivery_date ? widths.delivery_date : '1%' }} />}
-            {visibility.transport_company && <col style={{ width: widths.transport_company !== DEFAULT_COLUMN_WIDTHS.transport_company ? widths.transport_company : '1%' }} />}
-            {visibility.waybill_number && <col style={{ width: widths.waybill_number !== DEFAULT_COLUMN_WIDTHS.waybill_number ? widths.waybill_number : '1%' }} />}
-            {visibility.applicant && <col style={{ width: widths.applicant !== DEFAULT_COLUMN_WIDTHS.applicant ? widths.applicant : '1%' }} />}
-            {visibility.executor && <col style={{ width: widths.executor !== DEFAULT_COLUMN_WIDTHS.executor ? widths.executor : '1%' }} />}
-            {visibility.equipment && <col style={{ width: widths.equipment !== DEFAULT_COLUMN_WIDTHS.equipment ? widths.equipment : '1%' }} />}
-            {visibility.comments && <col style={{ width: widths.comments !== DEFAULT_COLUMN_WIDTHS.comments ? widths.comments : '1%' }} />}
+            {visibility.request_date && <col style={{ width: widths.request_date }} />}
+            {visibility.description && <col style={{ width: widths.description }} />}
+            {visibility.object && <col style={{ width: widths.object }} />}
+            {visibility.status && <col style={{ width: widths.status }} />}
+            {visibility.availability && <col style={{ width: widths.availability }} />}
+            {visibility.contractor && <col style={{ width: widths.contractor }} />}
+            {visibility.amount && <col style={{ width: widths.amount }} />}
+            {visibility.invoice_number && <col style={{ width: widths.invoice_number }} />}
+            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay }} />}
+            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage }} />}
+            {visibility.shipment_date && <col style={{ width: widths.shipment_date }} />}
+            {visibility.delivery_date && <col style={{ width: widths.delivery_date }} />}
+            {visibility.transport_company && <col style={{ width: widths.transport_company }} />}
+            {visibility.waybill_number && <col style={{ width: widths.waybill_number }} />}
+            {visibility.applicant && <col style={{ width: widths.applicant }} />}
+            {visibility.executor && <col style={{ width: widths.executor }} />}
+            {visibility.equipment && <col style={{ width: widths.equipment }} />}
+            {visibility.comments && <col style={{ width: widths.comments }} />}
             <col style={{ width: 40 }} />
           </colgroup>
+
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
               <TableHead className="text-center p-1 border-b">
