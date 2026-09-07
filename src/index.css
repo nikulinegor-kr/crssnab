@@ -210,23 +210,7 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  .requests-registry {
-    --background: 210 20% 98%;
-    --foreground: 223 60% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 223 60% 15%;
-    --primary: 210 46% 43%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 97%;
-    --secondary-foreground: 223 60% 15%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 216 20% 40%;
-    --accent: 180 35% 94%;
-    --accent-foreground: 223 60% 15%;
-    --border: 214 22% 89%;
-    --input: 214 22% 84%;
-    --ring: 210 46% 43%;
-  }
+  /* Registry follows the global theme tokens (no local overrides) */
 
   .requests-registry .font-numeric,
   .requests-registry time,
@@ -247,7 +231,17 @@ All colors MUST be HSL.
   }
 
   .requests-registry table tbody tr {
-    height: 29px;
+    height: var(--row-h, 32px);
+    transition: background-color var(--dur-fast) var(--ease);
+  }
+
+  .requests-registry table tbody tr:hover {
+    background-color: hsl(var(--row-hover));
+  }
+
+  .requests-registry table tbody tr[data-state="selected"],
+  .requests-registry table tbody tr[aria-selected="true"] {
+    background-color: hsl(var(--row-sel));
   }
 
   .requests-registry table tbody td {
