@@ -17,9 +17,9 @@ export default {
         'xs': '480px',
       },
       fontFamily: {
-        sans: ["Manrope", "system-ui", "sans-serif"],
-        heading: ["Manrope", "system-ui", "sans-serif"],
-        mono: ["Manrope", "system-ui", "sans-serif"],
+        sans: ["var(--sans)"],
+        heading: ["var(--sans)"],
+        mono: ["var(--mono)"],
       },
       colors: {
         border: "hsl(var(--border))",
