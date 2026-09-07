@@ -155,7 +155,41 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
     <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-[-8px_0_24px_-16px_rgba(15,23,42,0.35)] animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
-        <h2 className="min-w-0 flex-1 text-[13px] font-semibold leading-tight">{request.description}</h2>
+        {editingTitle ? (
+          <div className="flex min-w-0 flex-1 items-start gap-1">
+            <textarea
+              autoFocus
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (titleValue.trim()) saveField("description", titleValue.trim());
+                } else if (e.key === "Escape") {
+                  setTitleValue(request.description || "");
+                  setEditingTitle(false);
+                }
+              }}
+              rows={2}
+              className="min-w-0 flex-1 resize-none rounded border border-input bg-background px-1.5 py-1 text-[13px] font-semibold leading-tight focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              onClick={() => titleValue.trim() && saveField("description", titleValue.trim())}
+              className="mt-0.5 text-emerald-600 hover:text-emerald-700"
+              aria-label="Сохранить название"
+            >
+              {savingField === "description" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            </button>
+          </div>
+        ) : (
+          <h2
+            className="min-w-0 flex-1 cursor-text rounded px-1 -mx-1 text-[13px] font-semibold leading-tight hover:bg-muted/50"
+            title="Клик — редактировать название"
+            onClick={() => setEditingTitle(true)}
+          >
+            {request.description}
+          </h2>
+        )}
         <button
           onClick={() => onOpenFull?.(request)}
           className="text-muted-foreground hover:text-foreground"
@@ -168,13 +202,34 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
         </button>
       </div>
 
-      <div className="flex items-center gap-3 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric">
-        <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} />
-          <span className="text-foreground/80">{request.status}</span>
-        </span>
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric">
+        <select
+          value={request.status}
+          disabled={savingField === "status"}
+          onChange={(e) => saveField("status", e.target.value)}
+          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          style={{ borderLeft: `3px solid ${getStatusColor(request.status)}` }}
+          aria-label="Статус"
+        >
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          value={request.priority || "Планово"}
+          disabled={savingField === "priority"}
+          onChange={(e) => saveField("priority", e.target.value)}
+          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          style={{ borderLeft: `3px solid ${getPriorityColor(request.priority || "Планово")}` }}
+          aria-label="Приоритет"
+        >
+          {PRIORITIES.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
         <span>{request.request_number}</span>
         <span>{dt(request.request_date)}</span>
+        {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
       {/* Tabs */}
