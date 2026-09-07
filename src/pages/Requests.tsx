@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { RequestSidePanel } from "@/components/requests/RequestSidePanel";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
@@ -175,6 +176,8 @@ const Requests = () => {
       setSelectedRequestIds(new Set(filters.filteredRequests?.map((r) => r.id) || []));
     }
   };
+
+  const [expandedRequest, setExpandedRequest] = useState<Request | null>(null);
 
   const handleEditClick = (request: Request) => {
     setSelectedRequest(request);
@@ -712,6 +715,7 @@ const Requests = () => {
               hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
               position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
               requestCount={panelRequestOrder.length}
+              onExpand={(r) => setExpandedRequest(r as Request)}
             />
           )}
         </div>
@@ -749,8 +753,15 @@ const Requests = () => {
           hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
           position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
           requestCount={panelRequestOrder.length}
+          onExpand={(r) => setExpandedRequest(r as Request)}
         />
       )}
+
+      <EditRequestDialog
+        request={expandedRequest as any}
+        open={!!expandedRequest}
+        onOpenChange={(open) => { if (!open) setExpandedRequest(null); }}
+      />
 
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

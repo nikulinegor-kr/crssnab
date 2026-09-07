@@ -38,6 +38,8 @@ interface RequestSidePanelProps {
   inline?: boolean;
   width?: number;
   onWidthChange?: (width: number) => void;
+  /** Открыть большую форму заявки вместо внутреннего полноэкранного режима. */
+  onExpand?: (request: any) => void;
 }
 
 const DEFAULT_PANEL_WIDTH = 460;
@@ -64,6 +66,7 @@ export const RequestSidePanel = ({
   inline = false,
   width,
   onWidthChange,
+  onExpand,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -668,7 +671,10 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsFullscreen((value) => !value)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+            if (!isFullscreen && onExpand && request) { onExpand(request); return; }
+            setIsFullscreen((value) => !value);
+          }} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
             {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </Button>
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
@@ -754,7 +760,7 @@ export const RequestSidePanel = ({
                 {/* Позиции живут в полном экране */}
                 <button
                   type="button"
-                  onClick={() => setIsFullscreen(true)}
+                  onClick={() => (onExpand && request ? onExpand(request) : setIsFullscreen(true))}
                   className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
                 >
                   <span>Позиции: {items?.length || 0}</span>
