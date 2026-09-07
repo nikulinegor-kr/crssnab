@@ -127,7 +127,7 @@ export function RequestNotificationsCard({ requestId, organizationId }: Props) {
                   {log ? (
                     <Badge
                       variant="outline"
-                      className="h-5 gap-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px]"
+                      className="h-5 gap-1 border-success/30 bg-success/10 text-success dark:text-success text-[11px]"
                     >
                       <CheckCircle2 className="h-3 w-3" />
                       {format(new Date(log.sent_at), "dd.MM HH:mm", { locale: ru })}

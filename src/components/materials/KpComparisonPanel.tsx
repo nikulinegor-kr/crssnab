@@ -588,7 +588,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                   <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="font-medium">{kp.supplier_name}</span>
                   <span className="text-xs text-muted-foreground">({kp.file_name})</span>
-                  {kp.status === "recognized" && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                  {kp.status === "recognized" && <Check className="h-3.5 w-3.5 text-success" />}
                   {kp.status === "error" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
                   {kp.status === "recognizing" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDeleteSupplier(kp.id)}>
@@ -647,10 +647,10 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                           const isMin = minSupplierId === kp.id && sp?.price != null;
                           return (
                             <>
-                              <TableCell key={`${kp.id}-${item.id}-p`} className={`text-sm text-center ${isMin ? "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20" : ""}`}>
+                              <TableCell key={`${kp.id}-${item.id}-p`} className={`text-sm text-center ${isMin ? "text-success font-semibold bg-success/10 dark:bg-success/20" : ""}`}>
                                 {sp?.price != null ? formatPrice(sp.price) : "—"}
                               </TableCell>
-                              <TableCell key={`${kp.id}-${item.id}-t`} className={`text-sm text-center ${isMin ? "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20" : ""}`}>
+                              <TableCell key={`${kp.id}-${item.id}-t`} className={`text-sm text-center ${isMin ? "text-success font-semibold bg-success/10 dark:bg-success/20" : ""}`}>
                                 {sp?.total_price != null ? formatPrice(sp.total_price) : "—"}
                               </TableCell>
                             </>
@@ -701,7 +701,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
           </DialogHeader>
           <div className="flex items-center gap-4 text-sm">
             <Badge variant="outline" className="gap-1">Всего: <strong>{currentMatches.length}</strong></Badge>
-            <Badge className="gap-1 bg-emerald-600">Найдено: <strong>{currentMatches.filter(m => m.matchedItemId).length}</strong></Badge>
+            <Badge className="gap-1 bg-success">Найдено: <strong>{currentMatches.filter(m => m.matchedItemId).length}</strong></Badge>
             <Badge variant="destructive" className="gap-1">Не найдено: <strong>{currentMatches.filter(m => !m.matchedItemId).length}</strong></Badge>
           </div>
           <div className="relative">
@@ -723,7 +723,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                 {currentMatches
                   .filter(m => !matchSearch.trim() || matchesMaterialSearch(matchSearch, m.kpItemName, null))
                   .map((match, idx) => (
-                    <TableRow key={idx} className={match.matchedItemId ? "bg-emerald-50/50 dark:bg-emerald-950/10" : "bg-destructive/5"}>
+                    <TableRow key={idx} className={match.matchedItemId ? "bg-success/50 dark:bg-success/10" : "bg-destructive/5"}>
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                       <TableCell className="text-sm"><HighlightText text={match.kpItemName} searchQuery={matchSearch} /></TableCell>
                       <TableCell className="text-sm font-medium">{match.kpPrice != null ? formatPrice(match.kpPrice) : "—"}</TableCell>
@@ -740,7 +740,7 @@ export function KpComparisonPanel({ orgId, folderId, allItems }: Props) {
                       </TableCell>
                       <TableCell>
                         {match.matchedItemId ? (
-                          <Badge className="bg-emerald-600 text-xs">
+                          <Badge className="bg-success text-xs">
                             {match.matchType === "exact" ? "точное" : match.matchType === "parametric" ? "парам." : match.matchType === "manual" ? "ручное" : "нечёткое"}
                           </Badge>
                         ) : (

@@ -213,8 +213,8 @@ const MobileRequestCard = memo(({
           {(() => {
             const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
             if (pct === 0) return null;
-            if (pct >= 100) return <span className="font-semibold text-emerald-600">Оплачено</span>;
-            return <span className="font-semibold text-amber-600">{pct}%</span>;
+            if (pct >= 100) return <span className="font-semibold text-success">Оплачено</span>;
+            return <span className="font-semibold text-warning">{pct}%</span>;
           })()}
         </div>
       </div>
@@ -849,11 +849,11 @@ export const RequestsTable = ({
                           <span className="font-semibold text-foreground">{it.name}</span>
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{counts.total} заявок</span>
-                          {counts.emergency > 0 && <span className="text-red-600 font-medium">🔴 {counts.emergency} ав.</span>}
-                          {counts.priority > 0 && <span className="text-orange-600 font-medium">🟠 {counts.priority} приор.</span>}
-                          {counts.planned > 0 && <span className="text-blue-600 font-medium">🔵 {counts.planned} плановых</span>}
+                          {counts.emergency > 0 && <span className="text-destructive font-medium">🔴 {counts.emergency} ав.</span>}
+                          {counts.priority > 0 && <span className="text-warning font-medium">🟠 {counts.priority} приор.</span>}
+                          {counts.planned > 0 && <span className="text-info font-medium">🔵 {counts.planned} плановых</span>}
                           {counts.inWork > 0 && <span className="text-muted-foreground">⚙ {counts.inWork} в работе</span>}
-                          {counts.delivered > 0 && <span className="text-emerald-600">✓ {counts.delivered} доставлено</span>}
+                          {counts.delivered > 0 && <span className="text-success">✓ {counts.delivered} доставлено</span>}
                           {counts.amount > 0 && (
                             <span className="ml-auto font-numeric font-semibold text-foreground">
                               {new Intl.NumberFormat("ru-RU").format(Math.round(counts.amount))} ₽
@@ -882,9 +882,9 @@ export const RequestsTable = ({
                           <span className="text-muted-foreground">📦 {s.total}</span>
                           <span className="text-muted-foreground">🏢 {s.suppliers}</span>
                           <span className="text-muted-foreground">🧾 {s.invoices}</span>
-                          {s.inTransit > 0 && <span className="text-blue-600">🚛 {s.inTransit} в пути</span>}
-                          {s.delivered > 0 && <span className="text-emerald-600">✓ {s.delivered} доставлено</span>}
-                          {s.overdue > 0 && <span className="text-red-600 font-medium">⏰ {s.overdue} просрочено</span>}
+                          {s.inTransit > 0 && <span className="text-info">🚛 {s.inTransit} в пути</span>}
+                          {s.delivered > 0 && <span className="text-success">✓ {s.delivered} доставлено</span>}
+                          {s.overdue > 0 && <span className="text-destructive font-medium">⏰ {s.overdue} просрочено</span>}
                           <span className="text-muted-foreground">📈 {s.progress}%</span>
                           <span className="ml-auto font-semibold text-foreground font-numeric tabular-nums">
                             {moneyShort(s.amount)}
@@ -952,8 +952,8 @@ export const RequestsTable = ({
                             <Star
                               className={`h-3.5 w-3.5 ${
                                 favoriteIds?.has(request.id)
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-muted-foreground/20 hover:text-yellow-400"
+                                  ? "fill-warning text-warning"
+                                  : "text-muted-foreground/20 hover:text-warning"
                               }`}
                             />
                           </button>

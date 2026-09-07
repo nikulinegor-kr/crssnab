@@ -89,7 +89,7 @@ export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
             <CheckCircle2
               className={`h-4 w-4 shrink-0 ${
                 t.status === "done"
-                  ? "text-green-600"
+                  ? "text-success"
                   : "text-muted-foreground"
               }`}
             />

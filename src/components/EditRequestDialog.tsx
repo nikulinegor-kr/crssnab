@@ -916,21 +916,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       switch (serverSaveState) {
         case 'saving':
           return (
-            <Badge variant="outline" className="text-xs gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+            <Badge variant="outline" className="text-xs gap-1 bg-warning/10 text-warning dark:text-warning border-warning/30">
               <Loader2 className="h-3 w-3 animate-spin" />
               Сохраняется...
             </Badge>
           );
         case 'saved':
           return (
-            <Badge variant="outline" className="text-xs gap-1 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+            <Badge variant="outline" className="text-xs gap-1 bg-success/10 text-success dark:text-success border-success/30">
               <Check className="h-3 w-3" />
               Сохранено
             </Badge>
           );
         case 'error':
           return (
-            <Badge variant="outline" className="text-xs gap-1 bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30">
+            <Badge variant="outline" className="text-xs gap-1 bg-destructive/10 text-destructive dark:text-destructive border-destructive/30">
               <AlertTriangle className="h-3 w-3" />
               Ошибка
             </Badge>
@@ -948,10 +948,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     if (!draftInfo.exists || isViewer) return null;
     
     return (
-      <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+      <div className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <span className="text-amber-700 dark:text-amber-300">
+          <Clock className="h-4 w-4 text-warning dark:text-warning" />
+          <span className="text-warning dark:text-warning">
             Найден черновик от {draftInfo.formattedDate}
           </span>
         </div>
@@ -1212,7 +1212,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <RefreshCw className="h-5 w-5 text-amber-500" />
+            <RefreshCw className="h-5 w-5 text-warning" />
             Заявка обновилась
           </AlertDialogTitle>
           <AlertDialogDescription>

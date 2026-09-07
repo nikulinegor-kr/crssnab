@@ -35,13 +35,13 @@ const money = (n: number) =>
 function statusClass(status: string) {
   switch (status) {
     case "Проект завершён":
-      return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
+      return "bg-success/15 text-success border-success/30";
     case "Аварийная ситуация":
-      return "bg-red-500/15 text-red-700 border-red-500/30";
+      return "bg-destructive/15 text-destructive border-destructive/30";
     case "В пути":
-      return "bg-blue-500/15 text-blue-700 border-blue-500/30";
+      return "bg-info/15 text-info border-info/30";
     case "Ожидает оплаты":
-      return "bg-amber-500/15 text-amber-700 border-amber-500/30";
+      return "bg-warning/15 text-warning border-warning/30";
     default:
       return "bg-muted text-muted-foreground border-border";
   }
@@ -79,7 +79,7 @@ function ChildRow({
   return (
     <div
       className={`flex items-start gap-2 border-b border-border/40 px-3 py-2 last:border-b-0 ${
-        highlighted ? "bg-amber-500/10" : "hover:bg-muted/30"
+        highlighted ? "bg-warning/10" : "hover:bg-muted/30"
       }`}
     >
       <span className="mt-1 text-muted-foreground/60 select-none">├─</span>
@@ -158,7 +158,7 @@ function ProjectCard({
               {s.computedStatus}
             </Badge>
             {s.overdue > 0 && (
-              <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-700 border-red-500/30">
+              <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
                 <AlertTriangle className="mr-1 h-3 w-3" /> Просрочено: {s.overdue}
               </Badge>
             )}

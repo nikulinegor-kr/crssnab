@@ -215,7 +215,7 @@ export function AppSidebar() {
         {favoriteItems.length > 0 && (
           <SidebarGroup className="py-0">
             {(!collapsed || isMobile) && (
-              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-[10px] uppercase tracking-wider text-warning dark:text-warning">
                 <Star className="h-3.5 w-3.5 fill-current" />
                 Избранное
               </SidebarGroupLabel>

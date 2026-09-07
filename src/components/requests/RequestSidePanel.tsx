@@ -176,7 +176,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
             />
             <button
               onClick={() => titleValue.trim() && saveField("description", titleValue.trim())}
-              className="mt-0.5 text-emerald-600 hover:text-emerald-700"
+              className="mt-0.5 text-success hover:text-success"
               aria-label="Сохранить название"
             >
               {savingField === "description" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -280,7 +280,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
                 <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-[10px]">
-                <span className={paid >= 100 ? "text-emerald-600" : "text-[hsl(24_90%_45%)]"}>
+                <span className={paid >= 100 ? "text-success" : "text-[hsl(24_90%_45%)]"}>
                   {paid >= 100 ? "Оплачено полностью" : paid > 0 ? "Оплачено частично" : "Не оплачено"}
                 </span>
                 <span className="font-numeric text-muted-foreground">{paid} %</span>

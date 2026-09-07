@@ -319,7 +319,7 @@ export const InlineEditCell = ({
       <Button
         variant="ghost"
         size="icon"
-        className="h-6 w-6 text-green-600 hover:text-green-700"
+        className="h-6 w-6 text-success hover:text-success"
         onClick={handleSave}
         disabled={isSaving}
       >

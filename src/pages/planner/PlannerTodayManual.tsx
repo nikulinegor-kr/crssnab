@@ -25,10 +25,10 @@ import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { Truck, MapPin } from "lucide-react";
 
 const PRIORITY_BAR: Record<PlannerTaskPriority, string> = {
-  critical: "bg-red-500",
-  urgent: "bg-red-500",
-  high: "bg-orange-500",
-  medium: "bg-blue-500",
+  critical: "bg-destructive",
+  urgent: "bg-destructive",
+  high: "bg-warning",
+  medium: "bg-info",
   low: "bg-muted-foreground/40",
 };
 
@@ -54,7 +54,7 @@ function TaskRow({ task, onOpen }: { task: PlannerTask; onOpen: (t: PlannerTask)
           className="shrink-0 rounded-full p-1 hover:bg-muted"
           aria-label="Готово"
         >
-          <CheckCircle2 className={`h-5 w-5 ${done ? "text-green-600" : "text-muted-foreground"}`} />
+          <CheckCircle2 className={`h-5 w-5 ${done ? "text-success" : "text-muted-foreground"}`} />
         </button>
         <button onClick={() => onOpen(task)} className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -206,7 +206,7 @@ export default function PlannerTodayManual() {
         </Card>
         <Card className="p-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Выполнено
+            <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Выполнено
           </div>
           <div className="text-2xl font-semibold mt-1">{done}</div>
         </Card>
@@ -214,7 +214,7 @@ export default function PlannerTodayManual() {
 
       {overdue.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-red-600">Просрочено · {overdue.length}</div>
+          <div className="text-xs font-medium text-destructive">Просрочено · {overdue.length}</div>
           {overdue.map((t) => (
             <TaskRow key={t.id} task={t} onOpen={openEdit} />
           ))}

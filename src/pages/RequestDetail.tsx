@@ -812,7 +812,7 @@ export default function RequestDetail() {
                   onClick={() => setRevisionDialogOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                  className="gap-2 border-warning/30 text-warning hover:bg-warning/10"
                 >
                   <Edit className="h-4 w-4" />
                   На доработку

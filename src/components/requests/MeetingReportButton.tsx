@@ -280,11 +280,11 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={exportExcel} className="gap-2 cursor-pointer">
-          <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+          <FileSpreadsheet className="h-4 w-4 text-success" />
           Excel (.xlsx)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportPdf} className="gap-2 cursor-pointer">
-          <FileText className="h-4 w-4 text-rose-600" />
+          <FileText className="h-4 w-4 text-destructive" />
           PDF
         </DropdownMenuItem>
       </DropdownMenuContent>

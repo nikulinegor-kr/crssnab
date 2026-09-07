@@ -225,16 +225,16 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
   };
 
   const STATUS_COLORS: Record<string, string> = {
-    "Активный": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    "Приостановлен": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    "Активный": "bg-success/10 text-success dark:bg-success/30 dark:text-success",
+    "Приостановлен": "bg-warning/10 text-warning dark:bg-warning/30 dark:text-warning",
     "Завершён": "bg-muted text-muted-foreground",
   };
 
   const DOC_TYPE_COLORS: Record<string, string> = {
-    "Контракт": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "Контракт": "bg-info/10 text-info dark:bg-info/30 dark:text-info",
     "Договор": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-    "Счёт": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    "КП": "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+    "Счёт": "bg-success/10 text-success dark:bg-success/30 dark:text-success",
+    "КП": "bg-warning/10 text-warning dark:bg-warning/30 dark:text-warning",
     "Фото": "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
   };
 

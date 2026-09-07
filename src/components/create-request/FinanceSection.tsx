@@ -344,7 +344,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
             render={({ field }) => {
               const val = field.value ?? 0;
               const statusLabel = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : "Частично оплачено";
-              const statusColor = val === 0 ? "text-destructive" : val >= 100 ? "text-emerald-600" : "text-amber-600";
+              const statusColor = val === 0 ? "text-destructive" : val >= 100 ? "text-success" : "text-warning";
               const prepay = form.watch("payment_percentage") ?? 0;
               const underpaid = prepay > 0 && val < prepay;
               return (
@@ -379,8 +379,8 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
               {(() => {
                 const val = form.watch("payment_percent") ?? 0;
                 if (val === 0) return <span className="text-destructive font-medium">Не оплачено</span>;
-                if (val >= 100) return <span className="text-emerald-600 font-medium">Оплачено</span>;
-                return <span className="text-amber-600 font-medium">Частично ({val}%)</span>;
+                if (val >= 100) return <span className="text-success font-medium">Оплачено</span>;
+                return <span className="text-warning font-medium">Частично ({val}%)</span>;
               })()}
             </div>
           </FormItem>

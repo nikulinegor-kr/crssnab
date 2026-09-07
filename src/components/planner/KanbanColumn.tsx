@@ -92,7 +92,7 @@ export function KanbanCard({
               className={cn(
                 "inline-flex items-center gap-1",
                 overdue && "text-destructive font-medium",
-                dueToday && !overdue && "text-orange-500 font-medium"
+                dueToday && !overdue && "text-warning font-medium"
               )}
             >
               <CalendarClock className="h-3 w-3" />

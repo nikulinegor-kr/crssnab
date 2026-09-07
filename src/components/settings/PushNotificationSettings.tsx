@@ -19,11 +19,11 @@ export const PushNotificationSettings = () => {
   const getStatusIcon = () => {
     switch (permission) {
       case 'granted':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-5 w-5 text-success" />;
       case 'denied':
         return <XCircle className="h-5 w-5 text-destructive" />;
       case 'unsupported':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-warning" />;
       default:
         return <Info className="h-5 w-5 text-muted-foreground" />;
     }

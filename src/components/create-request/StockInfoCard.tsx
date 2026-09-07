@@ -104,9 +104,9 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
 
   const items = [
     { label: "Остаток", value: stockInfo.inStock, icon: Package, color: "text-foreground" },
-    { label: "В пути", value: stockInfo.inTransit, icon: Truck, color: "text-blue-600 dark:text-blue-400" },
-    { label: "Резерв", value: stockInfo.reserved, icon: Lock, color: "text-amber-600 dark:text-amber-400" },
-    { label: "Доступно", value: stockInfo.available, icon: CheckCircle, color: stockInfo.available > 0 ? "text-green-600 dark:text-green-400" : "text-destructive" },
+    { label: "В пути", value: stockInfo.inTransit, icon: Truck, color: "text-info dark:text-info" },
+    { label: "Резерв", value: stockInfo.reserved, icon: Lock, color: "text-warning dark:text-warning" },
+    { label: "Доступно", value: stockInfo.available, icon: CheckCircle, color: stockInfo.available > 0 ? "text-success dark:text-success" : "text-destructive" },
   ];
 
   return (
@@ -138,7 +138,7 @@ export const StockInfoCard = ({ productId, warehouseId, organizationId }: StockI
         </div>
       </div>
       {noStock && (
-        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning dark:text-warning">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>Нет на складе — рекомендуется закупка</span>
         </div>

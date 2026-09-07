@@ -80,17 +80,17 @@ export default function SupplyDashboardPage() {
   const summaryCards = [
     { title: "Всего заявок", value: stats.total, icon: FileText, color: "text-foreground" },
     { title: "Новых", value: stats.newRequests.length, icon: Plus, color: "text-primary" },
-    { title: "Выполняется", value: stats.inProgress.length, icon: Boxes, color: "text-amber-500" },
-    { title: "В пути", value: stats.inTransit.length, icon: Truck, color: "text-blue-500" },
-    { title: "Доставлено в ТК", value: stats.deliveredTk.length, icon: Package, color: "text-indigo-500" },
-    { title: "Доставлено", value: stats.delivered.length, icon: Package, color: "text-green-500" },
+    { title: "Выполняется", value: stats.inProgress.length, icon: Boxes, color: "text-warning" },
+    { title: "В пути", value: stats.inTransit.length, icon: Truck, color: "text-info" },
+    { title: "Доставлено в ТК", value: stats.deliveredTk.length, icon: Package, color: "text-info" },
+    { title: "Доставлено", value: stats.delivered.length, icon: Package, color: "text-success" },
   ];
 
   const cards = [
     { title: "Выполняется", value: stats.inProgress.length, icon: FileText, color: "text-primary", onClick: () => navigate("/requests?status=in_progress") },
-    { title: "Поставки в пути", value: stats.inTransit.length, icon: Truck, color: "text-blue-500", onClick: () => navigate("/shipments") },
-    { title: "Поставки сегодня", value: stats.todayDeliveries.length, icon: CalendarDays, color: "text-green-500", onClick: () => navigate("/shipments") },
-    { title: "Товары заканчиваются", value: lowStockCount, icon: AlertTriangle, color: "text-amber-500", onClick: () => navigate("/procurement-plan") },
+    { title: "Поставки в пути", value: stats.inTransit.length, icon: Truck, color: "text-info", onClick: () => navigate("/shipments") },
+    { title: "Поставки сегодня", value: stats.todayDeliveries.length, icon: CalendarDays, color: "text-success", onClick: () => navigate("/shipments") },
+    { title: "Товары заканчиваются", value: lowStockCount, icon: AlertTriangle, color: "text-warning", onClick: () => navigate("/procurement-plan") },
     { title: "Аварийные заявки", value: stats.emergency.length, icon: AlertCircle, color: "text-destructive", onClick: () => navigate("/requests?priority=Аварийно") },
     { title: "Просроченные", value: stats.overdue.length, icon: Clock, color: "text-destructive", onClick: () => navigate("/requests") },
   ];
@@ -194,12 +194,12 @@ export default function SupplyDashboardPage() {
 
       {/* Today deliveries */}
       {stats.todayDeliveries.length > 0 && (
-        <Card className="border-green-500/30">
+        <Card className="border-success/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-green-500" />
+              <CalendarDays className="h-4 w-4 text-success" />
               Поставки сегодня
-              <Badge className="bg-green-500">{stats.todayDeliveries.length}</Badge>
+              <Badge className="bg-success">{stats.todayDeliveries.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -227,7 +227,7 @@ export default function SupplyDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Truck className="h-4 w-4 text-blue-500" />
+              <Truck className="h-4 w-4 text-info" />
               Поставки в пути
               <Badge variant="secondary">{stats.inTransit.length}</Badge>
             </CardTitle>

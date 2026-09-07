@@ -116,7 +116,7 @@ export default function HomePage() {
                     </div>
                     <div className="h-24 flex-1 bg-card rounded-lg shadow-sm p-3">
                       <div className="h-2 w-12 bg-muted rounded mb-2" />
-                      <div className="h-4 w-20 bg-green-500/20 rounded" />
+                      <div className="h-4 w-20 bg-success/20 rounded" />
                     </div>
                   </div>
                   <div className="flex-1 bg-card rounded-lg shadow-sm p-4">
@@ -187,9 +187,9 @@ export default function HomePage() {
                 <div className="bg-muted rounded-2xl p-4 shadow-inner border border-border">
                   <div className="bg-card rounded-xl shadow-xl overflow-hidden">
                     <div className="h-10 border-b border-border bg-muted flex items-center px-4 gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-400" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                      <div className="w-3 h-3 rounded-full bg-green-400" />
+                      <div className="w-3 h-3 rounded-full bg-destructive" />
+                      <div className="w-3 h-3 rounded-full bg-warning" />
+                      <div className="w-3 h-3 rounded-full bg-success" />
                     </div>
                     <div className="p-6">
                       <div className="flex justify-between items-center mb-6">
@@ -215,12 +215,12 @@ export default function HomePage() {
                   <div className="flex flex-col gap-2">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Остатки на складе</span>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600">
+                      <div className="w-10 h-10 rounded bg-success/10 dark:bg-success/30 flex items-center justify-center text-success">
                         <Package className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="text-lg font-bold text-foreground">1,240 т.</div>
-                        <div className="text-[10px] text-green-500">+12% к прошлому месяцу</div>
+                        <div className="text-[10px] text-success">+12% к прошлому месяцу</div>
                       </div>
                     </div>
                   </div>

@@ -31,13 +31,13 @@ function statusBadgeClass(status: string) {
   switch (status) {
     case "Завершена":
     case "Разгружена":
-      return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
+      return "bg-success/15 text-success border-success/30";
     case "В пути":
-      return "bg-blue-500/15 text-blue-700 border-blue-500/30";
+      return "bg-info/15 text-info border-info/30";
     case "Прибыла":
-      return "bg-amber-500/15 text-amber-700 border-amber-500/30";
+      return "bg-warning/15 text-warning border-warning/30";
     case "Загружена":
-      return "bg-indigo-500/15 text-indigo-700 border-indigo-500/30";
+      return "bg-info/15 text-info border-info/30";
     default:
       return "bg-muted text-muted-foreground border-border";
   }
@@ -259,9 +259,9 @@ export function ShipmentsSummaryChips({
   return (
     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
       <span title="Всего перевозок">🚛 {total}</span>
-      {delivered > 0 && <span className="text-emerald-600" title="Доставлено">🟢 {delivered}</span>}
-      {inTransit > 0 && <span className="text-amber-600" title="В пути">🟡 {inTransit}</span>}
-      {overdue > 0 && <span className="text-red-600 font-medium" title="Просрочено">🔴 {overdue}</span>}
+      {delivered > 0 && <span className="text-success" title="Доставлено">🟢 {delivered}</span>}
+      {inTransit > 0 && <span className="text-warning" title="В пути">🟡 {inTransit}</span>}
+      {overdue > 0 && <span className="text-destructive font-medium" title="Просрочено">🔴 {overdue}</span>}
     </div>
   );
 }

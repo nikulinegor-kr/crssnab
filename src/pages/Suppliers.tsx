@@ -1054,7 +1054,7 @@ export default function Suppliers() {
                       className={cn(
                         "grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
                         index % 2 === 1 && "bg-muted/20",
-                        duplicateIds.has(supplier.id) && "bg-amber-500/5",
+                        duplicateIds.has(supplier.id) && "bg-warning/5",
                         selectedIds.has(supplier.id) && "bg-primary/5"
                       )}
                     >

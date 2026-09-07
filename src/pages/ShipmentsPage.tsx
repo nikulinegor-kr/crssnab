@@ -65,9 +65,9 @@ const ShipmentsPage = () => {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case "В пути": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "Доставлено": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "Доставлено в ТК": return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200";
+      case "В пути": return "bg-info/10 text-info dark:bg-info dark:text-info";
+      case "Доставлено": return "bg-success/10 text-success dark:bg-success dark:text-success";
+      case "Доставлено в ТК": return "bg-success/10 text-success dark:bg-success dark:text-success";
       default: return "bg-muted text-muted-foreground";
     }
   };

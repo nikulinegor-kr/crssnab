@@ -30,7 +30,7 @@ export const HighlightText: React.FC<HighlightTextProps> = ({
       parts.push(text.slice(lastEnd, start));
     }
     parts.push(
-      <mark key={start} className="bg-yellow-300 dark:bg-yellow-600 text-foreground px-0.5 rounded-sm">
+      <mark key={start} className="bg-warning dark:bg-warning text-foreground px-0.5 rounded-sm">
         {text.slice(start, end)}
       </mark>
     );

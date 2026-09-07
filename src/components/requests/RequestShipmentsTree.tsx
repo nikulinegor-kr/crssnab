@@ -26,11 +26,11 @@ function statusBadgeClass(status: string) {
     case "Завершена":
     case "Разгружена":
     case "Прибыла":
-      return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
+      return "bg-success/15 text-success border-success/30";
     case "В пути":
-      return "bg-blue-500/15 text-blue-700 border-blue-500/30";
+      return "bg-info/15 text-info border-info/30";
     case "Загружена":
-      return "bg-indigo-500/15 text-indigo-700 border-indigo-500/30";
+      return "bg-info/15 text-info border-info/30";
     default:
       return "bg-muted text-muted-foreground border-border";
   }
@@ -74,7 +74,7 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
           {(shipment.actual_arrival_date || shipment.planned_arrival_date) && (
             <span>
               Приход:{" "}
-              <span className={shipment.actual_arrival_date ? "text-emerald-700" : "text-foreground"}>
+              <span className={shipment.actual_arrival_date ? "text-success" : "text-foreground"}>
                 {fmt(shipment.actual_arrival_date ?? shipment.planned_arrival_date)}
               </span>
               {!shipment.actual_arrival_date && shipment.planned_arrival_date && (
@@ -153,8 +153,8 @@ export function ShipmentsProgressChip({
     <span
       className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
         done
-          ? "bg-emerald-500/15 text-emerald-700"
-          : "bg-amber-500/15 text-amber-700"
+          ? "bg-success/15 text-success"
+          : "bg-warning/15 text-warning"
       }`}
       title="Прибывшие машины из общего числа"
     >

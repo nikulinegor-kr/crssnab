@@ -81,10 +81,10 @@ const PRIORITY_RANK: Record<string, number> = {
 };
 
 const PRIORITY_STYLE: Record<string, { label: string; bar: string; chip: string }> = {
-  critical: { label: "Критический", bar: "bg-red-500", chip: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
-  urgent: { label: "Критический", bar: "bg-red-500", chip: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
-  high: { label: "Высокий", bar: "bg-orange-500", chip: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
-  medium: { label: "Средний", bar: "bg-blue-500", chip: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+  critical: { label: "Критический", bar: "bg-destructive", chip: "bg-destructive/15 text-destructive dark:text-destructive border-destructive/30" },
+  urgent: { label: "Критический", bar: "bg-destructive", chip: "bg-destructive/15 text-destructive dark:text-destructive border-destructive/30" },
+  high: { label: "Высокий", bar: "bg-warning", chip: "bg-warning/15 text-warning dark:text-warning border-warning/30" },
+  medium: { label: "Средний", bar: "bg-info", chip: "bg-info/15 text-info dark:text-info border-info/30" },
   low: { label: "Низкий", bar: "bg-muted-foreground/40", chip: "bg-muted text-muted-foreground border-border" },
 };
 
@@ -161,14 +161,14 @@ function dueBadge(due: string | null) {
   const overdueDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
   if (overdueDays > 0) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive dark:text-destructive">
         <Timer className="h-3 w-3" /> просрочено на {overdueDays} дн.
       </span>
     );
   }
   if (isToday(d)) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-warning dark:text-warning">
         <Timer className="h-3 w-3" /> сегодня
       </span>
     );
@@ -414,10 +414,10 @@ function BlockCard({
   empty?: string;
 }) {
   const accentMap = {
-    red: { bar: "bg-red-500", icon: "text-red-500" },
-    orange: { bar: "bg-orange-500", icon: "text-orange-500" },
-    green: { bar: "bg-emerald-500", icon: "text-emerald-500" },
-    blue: { bar: "bg-blue-500", icon: "text-blue-500" },
+    red: { bar: "bg-destructive", icon: "text-destructive" },
+    orange: { bar: "bg-warning", icon: "text-warning" },
+    green: { bar: "bg-success", icon: "text-success" },
+    blue: { bar: "bg-info", icon: "text-info" },
   }[accent];
 
   return (
@@ -677,7 +677,7 @@ function PlannerTodayCrm() {
         >
           {overdueTasks.length > 0 && (
             <div>
-              <div className="text-xs font-medium text-red-600 mb-1.5">Просрочено · {overdueTasks.length}</div>
+              <div className="text-xs font-medium text-destructive mb-1.5">Просрочено · {overdueTasks.length}</div>
               <div className="space-y-2">
                 {overdueTasks.map((t) => (
                   <TaskCard key={t.id} task={t} members={memberList} onChanged={reload} />
@@ -722,7 +722,7 @@ function PlannerTodayCrm() {
                 <div className="text-sm font-medium truncate">{a.name}</div>
                 <div className="flex items-center gap-1.5">
                   {a.overdue > 0 && (
-                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-red-500/10 text-red-600 border-red-500/30">
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-destructive/10 text-destructive border-destructive/30">
                       проср. {a.overdue}
                     </Badge>
                   )}

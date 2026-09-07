@@ -161,7 +161,7 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
                   <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell className="text-right font-medium">
-                    <span className={item.total === 0 ? "text-amber-500 flex items-center justify-end gap-1" : ""}>
+                    <span className={item.total === 0 ? "text-warning flex items-center justify-end gap-1" : ""}>
                       {item.total === 0 && <AlertTriangle className="h-3 w-3" />}
                       {item.total.toLocaleString("ru-RU")} ₽
                     </span>

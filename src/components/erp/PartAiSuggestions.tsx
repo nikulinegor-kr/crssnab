@@ -97,10 +97,10 @@ function isMobile() {
 }
 
 const TRUST_META: Record<string, { icon: string; label: string; className: string }> = {
-  green: { icon: "🟢", label: "Проверено по официальному каталогу", className: "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300" },
-  yellow: { icon: "🟡", label: "Проверено по проверенному каталогу", className: "border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300" },
-  orange: { icon: "🟠", label: "Проверено по нескольким сторонним каталогам", className: "border-orange-500/50 bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300" },
-  red: { icon: "🔴", label: "Совместимость не подтверждена", className: "border-red-500/50 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-300" },
+  green: { icon: "🟢", label: "Проверено по официальному каталогу", className: "border-success/50 bg-success/10 dark:bg-success/20 text-success dark:text-success" },
+  yellow: { icon: "🟡", label: "Проверено по проверенному каталогу", className: "border-warning/50 bg-warning/10 dark:bg-warning/20 text-warning dark:text-warning" },
+  orange: { icon: "🟠", label: "Проверено по нескольким сторонним каталогам", className: "border-warning/50 bg-warning/10 dark:bg-warning/20 text-warning dark:text-warning" },
+  red: { icon: "🔴", label: "Совместимость не подтверждена", className: "border-destructive/50 bg-destructive/10 dark:bg-destructive/20 text-destructive dark:text-destructive" },
 };
 
 export function PartAiSuggestions({
@@ -275,9 +275,9 @@ export function PartAiSuggestions({
 
       {/* Duplicate warning */}
       {!dismissed && data?.duplicate && (
-        <div className="rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm">
+        <div className="rounded-md border border-warning/50 bg-warning/10 dark:bg-warning/20 px-3 py-2 text-sm">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="font-medium">Такая позиция уже есть в CRM</div>
               <div className="text-muted-foreground mt-1">
@@ -303,11 +303,11 @@ export function PartAiSuggestions({
 
       {/* Article not found */}
       {!dismissed && ai && notFound && (
-        <div className="rounded-md border border-red-500/50 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-sm">
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 dark:bg-destructive/20 px-3 py-2 text-sm">
           <div className="flex items-start gap-2">
-            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />
             <div className="flex-1">
-              <div className="font-medium text-red-800 dark:text-red-300">Артикул не найден в официальных каталогах</div>
+              <div className="font-medium text-destructive dark:text-destructive">Артикул не найден в официальных каталогах</div>
               <div className="text-xs text-muted-foreground mt-1">
                 Проверьте правильность артикула и производителя. AI не имеет права придумывать совместимость.
               </div>
@@ -514,7 +514,7 @@ export function PartAiSuggestions({
                 </div>
               </>
             ) : (
-              <div className="rounded-md border border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-300 space-y-2">
+              <div className="rounded-md border border-warning/40 bg-warning/10 dark:bg-warning/20 px-2 py-1.5 text-xs text-warning dark:text-warning space-y-2">
                 <div className="flex items-start gap-1">
                   <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <div>Совместимость с техникой компании не найдена.</div>

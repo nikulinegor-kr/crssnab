@@ -171,7 +171,7 @@ export default function ProcurementPlanPage() {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
                       <div>
                         <p className="font-medium text-sm">{item.name}</p>
                         {item.article && <p className="text-xs text-muted-foreground">{item.article}</p>}

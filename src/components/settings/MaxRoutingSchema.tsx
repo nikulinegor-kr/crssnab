@@ -51,7 +51,7 @@ const TYPE_META: Record<TypeKey, {
   supply: {
     label: "Поставка ТМЦ",
     icon: Package,
-    color: "text-blue-500",
+    color: "text-info",
     sources: [
       { event: "Прибытие груза", trigger: "delivery_date достигнут (cron)", template: "🚚 Груз прибыл" },
       { event: "Изменение статуса доставки", trigger: "status → «В пути / Доставлено в ТК»", template: "📦 Изменение статуса" },
@@ -63,7 +63,7 @@ const TYPE_META: Record<TypeKey, {
   invoice: {
     label: "Счета на оплату",
     icon: Receipt,
-    color: "text-emerald-500",
+    color: "text-success",
     sources: [
       { event: "Новый счёт", trigger: "OCR подтверждён", template: "💳 Счёт на оплату" },
       { event: "Согласование счёта", trigger: "payment_status → «На согласовании»", template: "🟡 Требуется согласование" },
@@ -86,7 +86,7 @@ const TYPE_META: Record<TypeKey, {
   alert: {
     label: "CRSS Оповещения",
     icon: AlertTriangle,
-    color: "text-amber-500",
+    color: "text-warning",
     sources: [
       { event: "Системная ошибка", trigger: "client_error_logs.severity=critical", template: "🛑 Системная ошибка" },
       { event: "Ошибка webhook", trigger: "max_webhook_logs.outgoing_error", template: "❌ Webhook error" },
@@ -122,7 +122,7 @@ function statusTone(l: WebhookLog): "ok" | "wait" | "err" {
 }
 
 const toneDot: Record<"ok" | "wait" | "err", string> = {
-  ok: "bg-emerald-500", wait: "bg-amber-500", err: "bg-destructive",
+  ok: "bg-success", wait: "bg-warning", err: "bg-destructive",
 };
 
 export const MaxRoutingSchema = ({ organizationId }: Props) => {
@@ -481,9 +481,9 @@ function summary(p: any) {
 
 const TONE_BG: Record<string, string> = {
   violet: "bg-violet-500/10 text-violet-600 dark:text-violet-300 border-violet-500/30",
-  blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/30",
-  amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/30",
-  emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30",
+  blue: "bg-info/10 text-info dark:text-info border-info/30",
+  amber: "bg-warning/10 text-warning dark:text-warning border-warning/30",
+  emerald: "bg-success/10 text-success dark:text-success border-success/30",
 };
 
 const RouteNode = ({ icon: Icon, label, sub, tone }: {

@@ -275,7 +275,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">С ценами</p>
-              <p className="text-xl font-bold text-emerald-600">{materialItems.filter(i => i.price != null).length}</p>
+              <p className="text-xl font-bold text-success">{materialItems.filter(i => i.price != null).length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Общая стоимость</p>
@@ -304,7 +304,7 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
                       <CardTitle className="text-sm">{sec.name}</CardTitle>
                       <Badge variant="secondary" className="text-xs">{items.length} поз.</Badge>
                       {procuredCount > 0 && (
-                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                        <Badge variant="outline" className="text-xs text-warning border-warning/30">
                           {procuredCount} в закупке
                         </Badge>
                       )}
@@ -348,13 +348,13 @@ export function FinalStatement({ orgId, objectId, objectName, sections, folders 
                             <TableCell className="font-medium">{formatPrice(item.total_price)}</TableCell>
                             <TableCell>
                               {item.procurement_status === "in_procurement" && (
-                                <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">В закупке</Badge>
+                                <Badge variant="outline" className="text-warning border-warning/30 text-xs">В закупке</Badge>
                               )}
                               {item.procurement_status === "ordered" && (
-                                <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">Заказано</Badge>
+                                <Badge variant="outline" className="text-info border-info/30 text-xs">Заказано</Badge>
                               )}
                               {item.procurement_status === "delivered" && (
-                                <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">Доставлено</Badge>
+                                <Badge variant="outline" className="text-success border-success/30 text-xs">Доставлено</Badge>
                               )}
                             </TableCell>
                           </TableRow>

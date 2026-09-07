@@ -418,15 +418,15 @@ export default function MaterialStatementsPage() {
   }, [folders, statements, sectionProgressItems]);
 
   const getProgressColor = (percent: number) => {
-    if (percent >= 70) return "text-green-600";
-    if (percent >= 30) return "text-yellow-600";
-    return "text-red-500";
+    if (percent >= 70) return "text-success";
+    if (percent >= 30) return "text-warning";
+    return "text-destructive";
   };
 
   const getProgressBarClass = (percent: number) => {
-    if (percent >= 70) return "[&>div]:bg-green-500";
-    if (percent >= 30) return "[&>div]:bg-yellow-500";
-    return "[&>div]:bg-red-500";
+    if (percent >= 70) return "[&>div]:bg-success";
+    if (percent >= 30) return "[&>div]:bg-warning";
+    return "[&>div]:bg-destructive";
   };
 
   // Build tree: Year → Objects → Sections → Folders
@@ -1653,7 +1653,7 @@ export default function MaterialStatementsPage() {
                             }`}
                             onClick={() => selectFinal(node.year, entry.object.id)}
                           >
-                            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                            <FileSpreadsheet className="h-3.5 w-3.5 text-success flex-shrink-0" />
                             <span className="truncate flex-1 text-left text-xs font-medium">Финальная ведомость</span>
                           </button>
                           {/* Ведомость поставщиков */}
@@ -1834,7 +1834,7 @@ export default function MaterialStatementsPage() {
                   </Button>
                 )}
                 {mergeSnapshot && mergeSnapshot.folderId === (selectedFolderId || "") && (
-                  <Button variant="outline" size="sm" onClick={handleUndoMerge} disabled={mergeDuplicatesLoading} className="border-orange-300 text-orange-600 hover:bg-orange-50">
+                  <Button variant="outline" size="sm" onClick={handleUndoMerge} disabled={mergeDuplicatesLoading} className="border-warning/30 text-warning hover:bg-warning/10">
                     {mergeDuplicatesLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Undo2 className="h-4 w-4 mr-1" />}
                     Разъединить дубли
                   </Button>
@@ -1947,14 +1947,14 @@ export default function MaterialStatementsPage() {
                           <TableCell>
                             <div className="flex gap-1 flex-wrap">
                               {st.is_recognized
-                                ? <Badge variant="outline" className="text-green-600 border-green-300">Распознано</Badge>
+                                ? <Badge variant="outline" className="text-success border-success/30">Распознано</Badge>
                                 : <Badge variant="secondary">Не распознано</Badge>}
                               {st.detected_source_type && (
                                 <Badge variant="outline" className={
-                                  st.detected_source_type === "RC" ? "text-blue-600 border-blue-300" :
-                                  st.detected_source_type === "GL" ? "text-emerald-600 border-emerald-300" :
+                                  st.detected_source_type === "RC" ? "text-info border-info/30" :
+                                  st.detected_source_type === "GL" ? "text-success border-success/30" :
                                   st.detected_source_type === "MR" ? "text-purple-600 border-purple-300" :
-                                  st.detected_source_type === "SPEC" ? "text-orange-600 border-orange-300" :
+                                  st.detected_source_type === "SPEC" ? "text-warning border-warning/30" :
                                   "text-muted-foreground"
                                 }>
                                   {st.detected_source_type === "RC" ? "Конструкции" :
@@ -2013,11 +2013,11 @@ export default function MaterialStatementsPage() {
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">В закупке</p>
-                    <p className="text-xl font-bold text-amber-600">{procuredCount - deliveredCount}</p>
+                    <p className="text-xl font-bold text-warning">{procuredCount - deliveredCount}</p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Доставлено</p>
-                    <p className="text-xl font-bold text-emerald-600">{deliveredCount}</p>
+                    <p className="text-xl font-bold text-success">{deliveredCount}</p>
                   </Card>
                   <Card className="p-3">
                     <p className="text-xs text-muted-foreground">Осталось купить</p>
@@ -2202,7 +2202,7 @@ export default function MaterialStatementsPage() {
                                     <TableCell>
                                       <div className="flex items-center gap-1.5">
                                         {isEditing ? <Input value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} className="h-8" /> : <HighlightText text={item.name} searchQuery={materialsSearch} />}
-                                        {item.item_type === "work" && <Badge variant="outline" className="text-xs shrink-0 border-orange-300 text-orange-600">Работы</Badge>}
+                                        {item.item_type === "work" && <Badge variant="outline" className="text-xs shrink-0 border-warning/30 text-warning">Работы</Badge>}
                                         {item.item_type === "customer_supply" && <Badge variant="outline" className="text-xs shrink-0 border-violet-300 text-violet-600">Пост. зак.</Badge>}
                                       </div>
                                     </TableCell>
@@ -2230,11 +2230,11 @@ export default function MaterialStatementsPage() {
                                           title="Нажмите для редактирования цены"
                                         >
                                           {formatPrice(item.price)}
-                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-amber-500" /></span>}
-                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-blue-500" /></span>}
+                                          {item.price_source === "manual" && <span title="Ручной ввод"><Hand className="h-3 w-3 text-warning" /></span>}
+                                          {item.price_source === "kp" && <span title="Из КП"><FileCheck className="h-3 w-3 text-info" /></span>}
                                           {item.price_source === "file" && item.price != null && <span title="Из файла"><FileUp className="h-3 w-3 text-muted-foreground" /></span>}
                                           {item.price_source === "similar" && <span title="По аналогу"><Sparkles className="h-3 w-3 text-purple-500" /></span>}
-                                          {item.price_source === "exact" && <span title="Точное совпадение"><Check className="h-3 w-3 text-emerald-500" /></span>}
+                                          {item.price_source === "exact" && <span title="Точное совпадение"><Check className="h-3 w-3 text-success" /></span>}
                                         </span>
                                       )}
                                     </TableCell>
@@ -2244,10 +2244,10 @@ export default function MaterialStatementsPage() {
                                        const isMin = getMinKpSupplier(item.id) === kp.id && sp?.price != null;
                                        return (
                                          <React.Fragment key={kp.id}>
-                                           <TableCell className={cn("text-sm text-center border-l", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                           <TableCell className={cn("text-sm text-center border-l", isMin && "text-success font-semibold bg-success/10 dark:bg-success/20")}>
                                              {sp?.price != null ? formatPrice(sp.price) : "—"}
                                            </TableCell>
-                                           <TableCell className={cn("text-sm text-center", isMin && "text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/20")}>
+                                           <TableCell className={cn("text-sm text-center", isMin && "text-success font-semibold bg-success/10 dark:bg-success/20")}>
                                              {sp?.total_price != null ? formatPrice(sp.total_price) : "—"}
                                            </TableCell>
                                          </React.Fragment>
@@ -2256,9 +2256,9 @@ export default function MaterialStatementsPage() {
                                      <TableCell>
                                       {item.confidence != null ? (
                                         <Badge variant="outline" className={cn("text-xs",
-                                          item.confidence_level === "HIGH" && "border-emerald-300 text-emerald-600",
-                                          item.confidence_level === "MEDIUM" && "border-amber-300 text-amber-600",
-                                          item.confidence_level === "LOW" && "border-red-300 text-red-600",
+                                          item.confidence_level === "HIGH" && "border-success/30 text-success",
+                                          item.confidence_level === "MEDIUM" && "border-warning/30 text-warning",
+                                          item.confidence_level === "LOW" && "border-destructive/30 text-destructive",
                                         )}>
                                           {item.confidence}%
                                         </Badge>
@@ -2266,13 +2266,13 @@ export default function MaterialStatementsPage() {
                                      </TableCell>
                                      <TableCell>
                                       {item.procurement_status === "in_procurement" && (
-                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">🟡 в закупке</Badge>
+                                        <Badge variant="outline" className="text-warning border-warning/30 text-xs">🟡 в закупке</Badge>
                                       )}
                                       {item.procurement_status === "ordered" && (
-                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">🔵 заказано</Badge>
+                                        <Badge variant="outline" className="text-info border-info/30 text-xs">🔵 заказано</Badge>
                                       )}
                                       {item.procurement_status === "delivered" && (
-                                        <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">🟢 доставлено</Badge>
+                                        <Badge variant="outline" className="text-success border-success/30 text-xs">🟢 доставлено</Badge>
                                       )}
                                     </TableCell>
                                     <TableCell>
@@ -2598,7 +2598,7 @@ export default function MaterialStatementsPage() {
                 <Badge variant="outline" className="gap-1">
                   Всего: <strong>{kpMatches.length}</strong>
                 </Badge>
-                <Badge variant="default" className="gap-1 bg-emerald-600">
+                <Badge variant="default" className="gap-1 bg-success">
                   Обновлено: <strong>{kpMatches.filter(m => m.matchedItemId).length}</strong>
                 </Badge>
                 <Badge variant="destructive" className="gap-1">
@@ -2637,7 +2637,7 @@ export default function MaterialStatementsPage() {
                       return (
                         <TableRow key={idx} className={cn(
                           !isMatched && "bg-destructive/5",
-                          isMatched && priceChanged && "bg-emerald-50 dark:bg-emerald-950/20",
+                          isMatched && priceChanged && "bg-success/10 dark:bg-success/20",
                         )}>
                           <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                           <TableCell className="text-sm font-medium">
@@ -2646,7 +2646,7 @@ export default function MaterialStatementsPage() {
                           <TableCell className="text-sm text-muted-foreground">
                             {isMatched && match.oldPrice != null ? formatPrice(match.oldPrice) : "—"}
                           </TableCell>
-                          <TableCell className={cn("text-sm font-medium", priceChanged && "text-emerald-600 dark:text-emerald-400")}>
+                          <TableCell className={cn("text-sm font-medium", priceChanged && "text-success dark:text-success")}>
                             {match.kpItem.price != null ? formatPrice(match.kpItem.price) : "—"}
                           </TableCell>
                           <TableCell>
@@ -2663,7 +2663,7 @@ export default function MaterialStatementsPage() {
                           <TableCell>
                             {isMatched ? (
                               <div className="flex flex-col gap-0.5">
-                                <Badge variant="default" className="bg-emerald-600 text-xs w-fit">
+                                <Badge variant="default" className="bg-success text-xs w-fit">
                                   {match.matchType === "parametric" ? "по параметрам" : match.matchType === "fuzzy" ? "нечёткое" : "точное"}
                                 </Badge>
 {match.matchType === "parametric" ? (
@@ -2750,7 +2750,7 @@ export default function MaterialStatementsPage() {
               В КП найдено {kpManualItems.length} позиций, для которых цена была задана вручную. Перезаписать их ценами из КП?
             </p>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Hand className="h-3 w-3 text-amber-500" /> Ручные цены будут заменены
+              <Hand className="h-3 w-3 text-warning" /> Ручные цены будут заменены
             </div>
           </div>
           <DialogFooter>

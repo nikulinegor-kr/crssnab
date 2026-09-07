@@ -418,11 +418,11 @@ export default function CalendarPage() {
   const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case "Высокий":
-        return "bg-red-500/20 text-red-600 border-red-500";
+        return "bg-destructive/20 text-destructive border-destructive/30";
       case "Средний":
-        return "bg-yellow-500/20 text-yellow-600 border-yellow-500";
+        return "bg-warning/20 text-warning border-warning/30";
       case "Низкий":
-        return "bg-green-500/20 text-green-600 border-green-500";
+        return "bg-success/20 text-success border-success/30";
       default:
         return "bg-primary/20 text-primary border-primary";
     }
@@ -452,11 +452,11 @@ export default function CalendarPage() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div className="text-center">
-              <h2 className={`text-xl font-semibold ${isHoliday || isWeekendDay ? "text-red-500" : ""}`}>
+              <h2 className={`text-xl font-semibold ${isHoliday || isWeekendDay ? "text-destructive" : ""}`}>
                 {format(dayToShow, "d MMMM yyyy, EEEE", { locale: ru })}
               </h2>
               {holidayName && (
-                <div className="text-sm text-red-500">🎉 {holidayName}</div>
+                <div className="text-sm text-destructive">🎉 {holidayName}</div>
               )}
             </div>
             <Button variant="ghost" size="icon" onClick={() => {
@@ -478,18 +478,18 @@ export default function CalendarPage() {
                     key={idx}
                     className={`p-2 rounded-md text-sm ${
                       deadline.type === "tax" 
-                        ? "bg-orange-500/20 border border-orange-500/30" 
+                        ? "bg-warning/20 border border-warning/30" 
                         : deadline.type === "report"
-                        ? "bg-blue-500/20 border border-blue-500/30"
-                        : "bg-green-500/20 border border-green-500/30"
+                        ? "bg-info/20 border border-info/30"
+                        : "bg-success/20 border border-success/30"
                     }`}
                   >
                     <div className={`font-medium ${
                       deadline.type === "tax" 
-                        ? "text-orange-700 dark:text-orange-300" 
+                        ? "text-warning dark:text-warning" 
                         : deadline.type === "report"
-                        ? "text-blue-700 dark:text-blue-300"
-                        : "text-green-700 dark:text-green-300"
+                        ? "text-info dark:text-info"
+                        : "text-success dark:text-success"
                     }`}>
                       {deadline.title}
                     </div>
@@ -613,19 +613,19 @@ export default function CalendarPage() {
               {/* Легенда */}
               <div className="flex flex-wrap gap-4 mb-4 text-xs">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300"></div>
+                  <div className="w-3 h-3 rounded bg-destructive/10 dark:bg-destructive/30 border border-destructive/30"></div>
                   <span>Выходные/праздники</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-orange-500"></div>
+                  <div className="w-3 h-3 rounded bg-warning"></div>
                   <span>Налоги</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-blue-500"></div>
+                  <div className="w-3 h-3 rounded bg-info"></div>
                   <span>Отчётность</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-green-500"></div>
+                  <div className="w-3 h-3 rounded bg-success"></div>
                   <span>Страховые взносы</span>
                 </div>
               </div>
@@ -636,7 +636,7 @@ export default function CalendarPage() {
                   <div
                     key={day}
                     className={`p-2 text-center text-sm font-medium bg-muted/50 ${
-                      index >= 5 ? "text-red-500" : "text-muted-foreground"
+                      index >= 5 ? "text-destructive" : "text-muted-foreground"
                     }`}
                   >
                     {day}
@@ -666,11 +666,11 @@ export default function CalendarPage() {
                               min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 sm:p-2 cursor-pointer hover:bg-accent/50 transition-colors
                               ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
                               ${isToday ? "ring-2 ring-primary ring-inset" : ""}
-                              ${isHoliday || isWeekendDay ? "bg-red-50 dark:bg-red-950/20" : "bg-card"}
+                              ${isHoliday || isWeekendDay ? "bg-destructive/10 dark:bg-destructive/20" : "bg-card"}
                             `}
                           >
                             <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 flex items-center gap-1 ${
-                              isToday ? "text-primary" : isHoliday || isWeekendDay ? "text-red-500" : ""
+                              isToday ? "text-primary" : isHoliday || isWeekendDay ? "text-destructive" : ""
                             }`}>
                               {format(day, "d")}
                               {isHoliday && <span className="text-[8px]">🎉</span>}
@@ -683,10 +683,10 @@ export default function CalendarPage() {
                                   key={idx}
                                   className={`text-[8px] sm:text-[10px] p-0.5 rounded truncate ${
                                     deadline.type === "tax" 
-                                      ? "bg-orange-500/20 text-orange-700 dark:text-orange-300" 
+                                      ? "bg-warning/20 text-warning dark:text-warning" 
                                       : deadline.type === "report"
-                                      ? "bg-blue-500/20 text-blue-700 dark:text-blue-300"
-                                      : "bg-green-500/20 text-green-700 dark:text-green-300"
+                                      ? "bg-info/20 text-info dark:text-info"
+                                      : "bg-success/20 text-success dark:text-success"
                                   }`}
                                 >
                                   {deadline.title}
@@ -725,16 +725,16 @@ export default function CalendarPage() {
                           <TooltipContent side="top" className="max-w-[250px]">
                             <div className="space-y-1">
                               {holidayName && (
-                                <div className="font-medium text-red-500">🎉 {holidayName}</div>
+                                <div className="font-medium text-destructive">🎉 {holidayName}</div>
                               )}
                               {accountantDeadlines.map((deadline, idx) => (
                                 <div key={idx} className="text-xs">
                                   <div className={`font-medium ${
                                     deadline.type === "tax" 
-                                      ? "text-orange-500" 
+                                      ? "text-warning" 
                                       : deadline.type === "report"
-                                      ? "text-blue-500"
-                                      : "text-green-500"
+                                      ? "text-info"
+                                      : "text-success"
                                   }`}>
                                     {deadline.title}
                                   </div>
@@ -876,19 +876,19 @@ export default function CalendarPage() {
                   <SelectContent>
                     <SelectItem value="Высокий">
                       <span className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span className="w-3 h-3 rounded-full bg-destructive"></span>
                         Высокий
                       </span>
                     </SelectItem>
                     <SelectItem value="Средний">
                       <span className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span className="w-3 h-3 rounded-full bg-warning"></span>
                         Средний
                       </span>
                     </SelectItem>
                     <SelectItem value="Низкий">
                       <span className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span className="w-3 h-3 rounded-full bg-success"></span>
                         Низкий
                       </span>
                     </SelectItem>

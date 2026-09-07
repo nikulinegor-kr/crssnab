@@ -142,7 +142,7 @@ export default function ErpAnalyticsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-muted-foreground">Товары заканчиваются</p>
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
             </div>
             <p className="text-2xl font-bold">{lowStockItems.length}</p>
           </CardContent>
@@ -151,7 +151,7 @@ export default function ErpAnalyticsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-muted-foreground">Поставки в пути</p>
-              <Truck className="h-4 w-4 text-blue-500" />
+              <Truck className="h-4 w-4 text-info" />
             </div>
             <p className="text-2xl font-bold">{inTransit.length}</p>
           </CardContent>
@@ -250,10 +250,10 @@ export default function ErpAnalyticsPage() {
 
       {/* Low stock list */}
       {lowStockItems.length > 0 && (
-        <Card className="border-amber-500/30">
+        <Card className="border-warning/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
               Товары заканчиваются
               <Badge variant="destructive">{lowStockItems.length}</Badge>
             </CardTitle>

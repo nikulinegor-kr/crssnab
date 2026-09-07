@@ -49,10 +49,10 @@ import {
 type View = "today" | "tomorrow" | "this-week" | "next-week" | "calendar" | "list";
 
 const PRIORITY_BAR: Record<PlannerTaskPriority, string> = {
-  critical: "bg-red-500",
-  urgent: "bg-red-500",
-  high: "bg-orange-500",
-  medium: "bg-blue-500",
+  critical: "bg-destructive",
+  urgent: "bg-destructive",
+  high: "bg-warning",
+  medium: "bg-info",
   low: "bg-muted-foreground/40",
 };
 
@@ -193,7 +193,7 @@ function TaskCard({
             aria-label="Выполнено"
           >
             <CheckCircle2
-              className={`h-6 w-6 ${done ? "text-green-600" : "text-muted-foreground"}`}
+              className={`h-6 w-6 ${done ? "text-success" : "text-muted-foreground"}`}
             />
           </button>
           <button

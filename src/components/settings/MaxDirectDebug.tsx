@@ -146,7 +146,7 @@ export function MaxDirectDebug({ organizationId }: Props) {
         {result && (
           <div className="rounded-md border p-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 flex-wrap">
-              {result.delivered ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-destructive" />}
+              {result.delivered ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-destructive" />}
               <span className="font-medium">{result.delivered ? "Доставлено" : "Не доставлено"}</span>
               <Badge variant="outline">HTTP {result.status}</Badge>
               <Badge variant="secondary">{result.mode_used}</Badge>
@@ -161,7 +161,7 @@ export function MaxDirectDebug({ organizationId }: Props) {
                 {result.attempts?.map((a: any, i: number) => (
                   <div key={i} className="border rounded p-2 bg-card">
                     <div className="flex items-center gap-2 mb-1">
-                      {a.delivered ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                      {a.delivered ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}
                       <span className="font-medium">{a.mode}</span>
                       <Badge variant="outline" className="text-[10px]">HTTP {a.http_status}</Badge>
                       <span className="text-muted-foreground">{a.duration_ms}ms</span>

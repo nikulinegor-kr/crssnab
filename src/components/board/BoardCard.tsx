@@ -37,11 +37,11 @@ interface Props {
 function priorityColor(p: string | null | undefined) {
   switch (p) {
     case "Аварийно":
-      return "bg-red-500";
+      return "bg-destructive";
     case "Срочно":
-      return "bg-orange-500";
+      return "bg-warning";
     case "Планово":
-      return "bg-blue-500";
+      return "bg-info";
     default:
       return "bg-muted-foreground/40";
   }
@@ -165,7 +165,7 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
           {isOverdue && (
             <Badge
               variant="outline"
-              className="h-5 text-[10px] px-1.5 border-red-500/40 text-red-600"
+              className="h-5 text-[10px] px-1.5 border-destructive/40 text-destructive"
             >
               <AlertTriangle className="h-3 w-3 mr-0.5" /> Просрочено
             </Badge>
@@ -176,7 +176,7 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
             </Badge>
           )}
           {paid && (
-            <Badge className="h-5 text-[10px] px-1.5 bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15">
+            <Badge className="h-5 text-[10px] px-1.5 bg-success/15 text-success hover:bg-success/15">
               Оплачено
             </Badge>
           )}
@@ -208,7 +208,7 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
             <span
               className={cn(
                 "flex items-center gap-0.5 font-numeric",
-                isOverdue && "text-red-600"
+                isOverdue && "text-destructive"
               )}
             >
               <Calendar className="h-3 w-3" />

@@ -190,9 +190,9 @@ const DocumentsPage = () => {
                   <TableRow key={`${doc.requestId}-${i}`} className="hover:bg-accent/40 transition-colors">
                     <TableCell className="text-center">
                       {doc.type === "photo" ? (
-                        <FileImage className="h-4 w-4 text-blue-500 mx-auto" />
+                        <FileImage className="h-4 w-4 text-info mx-auto" />
                       ) : (
-                        <FileText className="h-4 w-4 text-orange-500 mx-auto" />
+                        <FileText className="h-4 w-4 text-warning mx-auto" />
                       )}
                     </TableCell>
                     <TableCell className="text-sm font-medium max-w-[250px] truncate">

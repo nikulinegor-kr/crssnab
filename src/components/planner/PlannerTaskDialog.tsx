@@ -586,7 +586,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                                     <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
                                       <span className={meta.text}>{meta.label}</span>
                                       {busy && busyInfo && (
-                                        <span className="truncate text-amber-600 dark:text-amber-400">
+                                        <span className="truncate text-warning dark:text-warning">
                                           Занята: «{busyInfo.title}»{busyEnd ? ` до ${busyEnd}` : ""}
                                         </span>
                                       )}
@@ -626,12 +626,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                       className={cn(
                         "rounded-md border p-3 text-xs space-y-2",
                         overridden
-                          ? "border-amber-500/30 bg-amber-500/5"
+                          ? "border-warning/30 bg-warning/5"
                           : "border-destructive/40 bg-destructive/5",
                       )}
                     >
                       <div className="flex items-start gap-2">
-                        <AlertTriangle className={cn("h-4 w-4 shrink-0 mt-0.5", overridden ? "text-amber-600" : "text-destructive")} />
+                        <AlertTriangle className={cn("h-4 w-4 shrink-0 mt-0.5", overridden ? "text-warning" : "text-destructive")} />
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="font-medium">
                             ⚠️ Техника уже используется — {equipmentLabelLocal(eq)}
@@ -683,7 +683,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                                 type="button"
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 text-xs text-amber-600"
+                                className="h-7 text-xs text-warning"
                                 onClick={() =>
                                   setOverriddenConflicts((prev) => new Set(prev).add(eid))
                                 }
@@ -692,7 +692,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                               </Button>
                             )}
                             {overridden && (
-                              <span className="text-[11px] text-amber-600 self-center">
+                              <span className="text-[11px] text-warning self-center">
                                 Конфликт подтверждён — сохранение разрешено
                               </span>
                             )}

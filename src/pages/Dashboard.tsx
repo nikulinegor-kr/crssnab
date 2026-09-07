@@ -68,9 +68,9 @@ interface DashboardCardProps {
 
 const variantStyles: Record<string, { icon: string; border: string; bg: string; text: string }> = {
   danger: { icon: "text-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" },
-  warning: { icon: "text-orange-500", border: "border-orange-500/30", bg: "bg-orange-500/10", text: "text-orange-500" },
-  success: { icon: "text-green-500", border: "border-green-500/30", bg: "bg-green-500/10", text: "text-green-500" },
-  info: { icon: "text-blue-500", border: "border-blue-500/30", bg: "bg-blue-500/10", text: "text-blue-500" },
+  warning: { icon: "text-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning" },
+  success: { icon: "text-success", border: "border-success/30", bg: "bg-success/10", text: "text-success" },
+  info: { icon: "text-info", border: "border-info/30", bg: "bg-info/10", text: "text-info" },
   neutral: { icon: "text-muted-foreground", border: "border-border/40", bg: "bg-muted/50", text: "text-foreground" },
 };
 
@@ -324,7 +324,7 @@ const Dashboard = () => {
               onClick={openQuickRequest}
               size="sm"
               title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-[#78350F] border-0"
+              className="gap-1.5 bg-warning hover:bg-warning text-[#78350F] border-0"
             >
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Быстрая заявка</span>
@@ -342,7 +342,7 @@ const Dashboard = () => {
         <button
           type="button"
           onClick={openQuickRequest}
-          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-[#78350F] shadow-md transition-colors"
+          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-warning hover:bg-warning active:bg-warning text-[#78350F] shadow-md transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
@@ -400,10 +400,10 @@ const Dashboard = () => {
                   {[
                     { title: "Всего заявок", value: stats.total, icon: FileText, color: "text-foreground" },
                     { title: "Новых", value: stats.newRequests, icon: Plus, color: "text-primary" },
-                    { title: "Выполняется", value: stats.inProgress, icon: Timer, color: "text-orange-500" },
-                    { title: "В пути", value: stats.inTransit, icon: Truck, color: "text-blue-500" },
-                    { title: "Доставлено в ТК", value: stats.notPickedUp, icon: PackageCheck, color: "text-indigo-500" },
-                    { title: "Доставлено", value: stats.completed, icon: CheckCircle, color: "text-green-500" },
+                    { title: "Выполняется", value: stats.inProgress, icon: Timer, color: "text-warning" },
+                    { title: "В пути", value: stats.inTransit, icon: Truck, color: "text-info" },
+                    { title: "Доставлено в ТК", value: stats.notPickedUp, icon: PackageCheck, color: "text-info" },
+                    { title: "Доставлено", value: stats.completed, icon: CheckCircle, color: "text-success" },
                   ].map((card) => {
                     const Icon = card.icon;
                     return (
@@ -434,7 +434,7 @@ const Dashboard = () => {
 
             {/* ⚙️ РАБОТА */}
             <div className="space-y-2">
-              <SectionHeader icon={FileText} title="Работа" color="text-blue-500" />
+              <SectionHeader icon={FileText} title="Работа" color="text-info" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="Новые заявки" value={stats.newRequests} icon={Plus} variant="info" onClick={() => navigate("/requests?status=Новая заявка")} />
                 <DashboardCard title="Выполняется" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе,КП,На согласовании,Счёт,Счёт в Бухгалтерии,В пути,Доставлено в ТК")} />
@@ -454,7 +454,7 @@ const Dashboard = () => {
 
             {/* 🚚 ЛОГИСТИКА */}
             <div className="space-y-2">
-              <SectionHeader icon={Truck} title="Логистика" color="text-blue-500" />
+              <SectionHeader icon={Truck} title="Логистика" color="text-info" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
                 <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня, статус не «Доставлено»" onClick={() => navigate("/requests?filter=deliveryToday")} />
@@ -464,7 +464,7 @@ const Dashboard = () => {
 
             {/* 💰 ФИНАНСЫ */}
             <div className="space-y-2">
-              <SectionHeader icon={DollarSign} title="Финансы (со счётом)" color="text-green-500" />
+              <SectionHeader icon={DollarSign} title="Финансы (со счётом)" color="text-success" />
               <div className="grid grid-cols-3 gap-3">
                 <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" hint="Есть счёт, но оплата не проведена" onClick={() => navigate("/requests?payment_status=unpaid")} />
                 <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" hint="Есть счёт, оплата частичная" onClick={() => navigate("/requests?payment_status=partial")} />
@@ -475,18 +475,18 @@ const Dashboard = () => {
             {/* 📊 ЭФФЕКТИВНОСТЬ + ⏱ СРЕДНЕЕ ВРЕМЯ */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <SectionHeader icon={TrendingUp} title="Эффективность" color="text-green-500" />
+                <SectionHeader icon={TrendingUp} title="Эффективность" color="text-success" />
                 <div className="grid grid-cols-2 gap-3">
                   <DashboardCard title="Выполнено" value={stats.completed} icon={PackageCheck} variant="success" onClick={() => navigate("/requests?status=Доставлено")} />
                   <Card className="border-border/40 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all" onClick={() => navigate("/requests")}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs text-muted-foreground">% выполнения</p>
-                        <div className="p-1.5 rounded-md bg-green-500/10">
-                          <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+                        <div className="p-1.5 rounded-md bg-success/10">
+                          <TrendingUp className="h-3.5 w-3.5 text-success" />
                         </div>
                       </div>
-                      <p className={`text-2xl font-bold ${stats.completionRate >= 70 ? "text-green-500" : stats.completionRate >= 40 ? "text-orange-500" : "text-destructive"}`}>
+                      <p className={`text-2xl font-bold ${stats.completionRate >= 70 ? "text-success" : stats.completionRate >= 40 ? "text-warning" : "text-destructive"}`}>
                         {stats.completionRate}%
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-1">{stats.completed} из {stats.total}</p>
@@ -496,7 +496,7 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-2">
-                <SectionHeader icon={Timer} title="Среднее время (дней)" color="text-blue-500" />
+                <SectionHeader icon={Timer} title="Среднее время (дней)" color="text-info" />
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { title: "Создание → Заказ", value: stats.avgCreationToOrder, hint: "От создания заявки до отгрузки" },
@@ -509,7 +509,7 @@ const Dashboard = () => {
                           <Card className="border-border/40">
                             <CardContent className="p-4">
                               <p className="text-xs text-muted-foreground mb-2 leading-tight">{item.title}</p>
-                              <p className={`text-2xl font-bold ${item.value > 14 ? "text-destructive" : item.value > 7 ? "text-orange-500" : "text-green-500"}`}>
+                              <p className={`text-2xl font-bold ${item.value > 14 ? "text-destructive" : item.value > 7 ? "text-warning" : "text-success"}`}>
                                 {item.value || "—"}
                               </p>
                             </CardContent>

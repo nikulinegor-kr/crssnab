@@ -135,8 +135,8 @@ function StatCard({
   const toneMap = {
     primary: "bg-primary/10 text-primary",
     destructive: "bg-destructive/10 text-destructive",
-    orange: "bg-orange-500/10 text-orange-500",
-    success: "bg-emerald-500/10 text-emerald-500",
+    orange: "bg-warning/10 text-warning",
+    success: "bg-success/10 text-success",
   } as const;
   return (
     <Card>
