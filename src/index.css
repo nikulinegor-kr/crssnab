@@ -340,13 +340,30 @@ All colors MUST be HSL.
     border-right-width: 0;
   }
 
-  /* Единые отступы и выравнивание: заголовок всегда совпадает со значением */
+  /* Единые отступы и выравнивание: заголовок всегда совпадает со значением.
+     По умолчанию колонки по центру, текстовая «Заявка» — слева, деньги — справа. */
   .requests-registry table th,
   .requests-registry table td {
     padding-left: 12px !important;
     padding-right: 12px !important;
-    text-align: left;
+    text-align: center;
     vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .requests-registry table th:not(:first-child):not(:last-child),
+  .requests-registry table td:not(:first-child):not(:last-child) {
+    min-width: 72px;
+  }
+
+  /* Длинные текстовые значения обрезаются многоточием */
+  .requests-registry table th[data-col="object"],
+  .requests-registry table td[data-col="object"],
+  .requests-registry table th[data-col="contractor"],
+  .requests-registry table td[data-col="contractor"] {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Служебные колонки — чекбокс и меню «⋮» */
@@ -357,6 +374,7 @@ All colors MUST be HSL.
     padding-left: 4px !important;
     padding-right: 4px !important;
     text-align: center;
+    width: 40px;
   }
 
   .requests-registry table th:first-child > div,
@@ -375,6 +393,19 @@ All colors MUST be HSL.
 
   .requests-registry table td:not(:first-child):not(:last-child) > div,
   .requests-registry table td:not(:first-child):not(:last-child) > button {
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Текстовая колонка «Заявка» — влево */
+  .requests-registry table th[data-align="left"],
+  .requests-registry table td[data-align="left"] {
+    text-align: left;
+  }
+
+  .requests-registry table td[data-align="left"] > div,
+  .requests-registry table td[data-align="left"] > button,
+  .requests-registry table td[data-align="left"] > span {
     justify-content: flex-start;
     text-align: left;
   }
@@ -391,6 +422,7 @@ All colors MUST be HSL.
     justify-content: flex-end;
     text-align: right;
   }
+
 
 }
 
