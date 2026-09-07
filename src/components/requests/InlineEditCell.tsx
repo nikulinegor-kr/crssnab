@@ -123,11 +123,20 @@ export const InlineEditCell = ({
       <div
         data-inline-edit
         onDoubleClick={handleDoubleClick}
+        onClick={
+          editOnClick
+            ? (e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }
+            : undefined
+        }
         className={cn(
           "group/inline relative flex w-full items-center gap-1 rounded p-0 m-0 transition-colors hover:bg-muted/50",
+          editOnClick && "cursor-text",
           className
         )}
-        title="Двойной клик — редактировать"
+        title={editOnClick ? "Клик — редактировать" : "Двойной клик — редактировать"}
       >
 
         <div className="min-w-0 flex-1">{displayValue}</div>
