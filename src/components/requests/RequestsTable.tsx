@@ -800,7 +800,19 @@ export const RequestsTable = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden lg:block">
+      <div
+        className="hidden lg:block"
+        onMouseOver={(e) => {
+          // Тултип только когда текст реально не поместился
+          const cell = (e.target as HTMLElement)?.closest?.("td") as HTMLTableCellElement | null;
+          if (!cell) return;
+          const overflowing = cell.scrollWidth > cell.clientWidth + 1;
+          const text = cell.innerText?.trim();
+          if (overflowing && text) cell.title = text;
+          else cell.removeAttribute("title");
+        }}
+      >
+
         <div className="flex items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
           <Toggle
             pressed={groupByProject}
