@@ -85,7 +85,7 @@ export const ResizableTableHeader = ({
       {children ? (
         <div className="flex items-center justify-center">{children}</div>
       ) : (
-        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : "justify-center")}>
+        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center")}>
           <span className="truncate text-xs uppercase">{label}</span>
           {sortable && (
             <Icon
