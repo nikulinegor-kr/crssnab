@@ -28,7 +28,7 @@ export const ResizableTableHeader = ({
   sortDirection,
   onSort,
   className = "",
-  align = "center",
+  align = "left",
   defaultWidth,
   children,
 }: ResizableTableHeaderProps) => {
