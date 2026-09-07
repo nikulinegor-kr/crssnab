@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,7 +11,7 @@ import { useRequestFavorites } from "@/hooks/useRequestFavorites";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
 
-import { AlertCircle, Plus, ShoppingCart, Star, Zap, Printer } from "lucide-react";
+import { Plus, ShoppingCart, Star, Zap, Printer } from "lucide-react";
 import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
 import { cn } from "@/lib/utils";
 
@@ -149,27 +149,6 @@ const Requests = () => {
   const [duplicateInitialData, setDuplicateInitialData] = useState<any>(null);
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  // Telegram config state
-  const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean | null>(null);
-
-  // Check Telegram configuration using secure RPC (no credential exposure)
-  useEffect(() => {
-    const checkTelegramConfig = async () => {
-      if (!currentOrgId) return;
-      try {
-        const { data, error } = await supabase.rpc('is_telegram_configured', { 
-          _org_id: currentOrgId 
-        });
-        if (error) throw error;
-        setIsTelegramConfigured(data === true);
-      } catch (error) {
-        console.error("Error checking Telegram config:", error);
-        setIsTelegramConfigured(false);
-      }
-    };
-    checkTelegramConfig();
-  }, [currentOrgId]);
 
   const toggleRequestSelection = (requestId: string) => {
     setSelectedRequestIds((prev) => {
@@ -353,20 +332,6 @@ const Requests = () => {
 
   return (
     <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 space-y-2">
-      {isTelegramConfigured === false && (
-        <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="flex items-center justify-between">
-            <span className="text-sm text-blue-800 dark:text-blue-200">
-              Telegram не настроен. Настройте его для отправки уведомлений о заявках.
-            </span>
-            <Button variant="outline" size="sm" onClick={() => navigate("/settings")} className="ml-4">
-              Настроить
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* === LEVEL 1: Page Header === */}
       <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
         <div className="min-w-0">
