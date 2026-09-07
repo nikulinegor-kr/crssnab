@@ -293,6 +293,16 @@ All colors MUST be HSL.
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
   }
+
+  .requests-registry [data-density="compact"] { --row-h: 32px; }
+  .requests-registry [data-density="normal"] { --row-h: 40px; }
+  .requests-registry [data-density="roomy"] { --row-h: 52px; }
+
+  .requests-registry table th,
+  .requests-registry table td {
+    border-left-width: 0;
+    border-right-width: 0;
+  }
 }
 
 /* Dark theme: emerald "paid" badges need a lighter green for WCAG AA */

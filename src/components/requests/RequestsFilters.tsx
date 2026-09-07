@@ -184,6 +184,7 @@ export const RequestsFilters = ({
     isSmartSearchActive;
 
   const activeFilterCount = [
+    searchQuery !== "",
     statusFilter.length > 0,
     yearFilter !== "all",
     objectFilter !== "all",
@@ -191,6 +192,7 @@ export const RequestsFilters = ({
     transportCompanyFilter !== "all",
     priorityFilter !== "all",
     hideDelivered,
+    specialDateFilter !== null && specialDateFilter !== undefined,
   ].filter(Boolean).length;
 
   const objectLabel = availableObjects.find((object) => object.id === objectFilter)?.name;
