@@ -350,7 +350,7 @@ const Dashboard = () => {
             </div>
             <div className="text-left">
               <div className="font-semibold leading-tight">Быстрая заявка</div>
-              <div className="text-xs text-white/85">Создать за 2 секунды</div>
+              <div className="text-xs text-[#78350F]/80">Создать за 2 секунды</div>
             </div>
           </div>
           <Plus className="h-5 w-5 opacity-90" />
