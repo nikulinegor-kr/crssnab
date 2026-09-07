@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlannerTaskRow } from "@/components/planner/PlannerTaskRow";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import PlannerKanban from "./PlannerKanban";
+import { PlannerBoardSkeleton } from "@/components/planner/PlannerBoardSkeleton";
 
 type ViewKey = "board" | "today" | "week" | "all" | "mine" | "team" | "archive";
 
@@ -207,7 +208,7 @@ export default function PlannerUnified() {
           </Card>
         )
       ) : isLoading ? (
-        <Skeleton className="h-[60dvh] w-full" />
+        <PlannerBoardSkeleton />
       ) : view === "today" ? (
         <div className="space-y-4">
           <TaskGroup title="Просроченные" tone="danger" tasks={todayGroups.overdue} members={members} onClick={openTask} />

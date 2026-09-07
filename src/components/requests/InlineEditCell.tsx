@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,8 +104,9 @@ export const InlineEditCell = ({
     }
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    // Let it bubble so the row cancels its pending single-click navigation
+    e.preventDefault();
     if (!isEditing) {
       setIsEditing(true);
     }
@@ -114,17 +115,31 @@ export const InlineEditCell = ({
   if (!isEditing) {
     return (
       <div
-        onClick={handleClick}
+        data-inline-edit
+        onDoubleClick={handleDoubleClick}
         className={cn(
-          "cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors -mx-1",
+          "group/inline relative flex items-start gap-1 rounded px-1 py-0.5 transition-colors -mx-1 hover:bg-muted/50",
           className
         )}
-        title="Нажмите для редактирования"
+        title="Двойной клик — редактировать"
       >
-        {displayValue}
+
+        <div className="min-w-0 flex-1">{displayValue}</div>
+        <button
+          type="button"
+          aria-label="Редактировать"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="shrink-0 opacity-0 group-hover/inline:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
       </div>
     );
   }
+
 
   // Status / Priority field uses Select
   if (field === "status" || field === "priority") {

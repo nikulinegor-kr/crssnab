@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+
 import {
   LayoutDashboard,
   ListTodo,
@@ -14,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlannerBoardSkeleton } from "@/components/planner/PlannerBoardSkeleton";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
 import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
@@ -96,8 +99,11 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
           </div>
 
           <div className="flex-1 min-h-0 p-3 sm:p-6">
-            <Outlet />
+            <Suspense fallback={<PlannerBoardSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
+
 
           <PlannerQuickFab />
         </div>

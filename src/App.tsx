@@ -10,6 +10,9 @@ import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
+import { PersistentAppLayout } from "./components/PersistentAppLayout";
+import { PlannerBoardSkeleton } from "./components/planner/PlannerBoardSkeleton";
+
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
 import { NetworkStatusIndicator } from "./components/NetworkStatusIndicator";
@@ -623,15 +626,15 @@ const App = () => {
               }
             />
             <Route
-              path="/planner"
               element={
-                <ProtectedRoute>
-                  <AppLayout fullBleed>
-                    <PlannerLayout />
-                  </AppLayout>
-                </ProtectedRoute>
+                <PersistentAppLayout fullBleed fallback={<PlannerBoardSkeleton />} />
               }
             >
+            <Route
+              path="/planner"
+              element={<PlannerLayout />}
+            >
+
               <Route index element={<PlannerUnified />} />
               <Route path="today" element={<PlannerToday />} />
               <Route path="dashboard" element={<PlannerDashboard />} />
@@ -645,6 +648,8 @@ const App = () => {
               <Route path="by-object" element={<PlannerByObject />} />
               <Route path="workload" element={<PlannerWorkload />} />
             </Route>
+            </Route>
+
             <Route path="/my-planner" element={<Navigate to="/planner?view=mine" replace />} />
             <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
             <Route path="/planner/my" element={<Navigate to="/planner?view=mine" replace />} />

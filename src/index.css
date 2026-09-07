@@ -97,14 +97,14 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 211 100% 50%;
+    --primary: 211 100% 43%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 216 20% 40%;
 
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
@@ -114,11 +114,13 @@ All colors MUST be HSL.
 
     --border: 214 32% 85%;
     --input: 214 32% 85%;
-    --ring: 211 100% 50%;
+    --ring: 211 100% 43%;
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
+    --warning-foreground: 22 78% 26%;
     --info: 199 89% 48%;
+
 
     --radius: 0.5rem;
 
@@ -160,6 +162,10 @@ All colors MUST be HSL.
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 211 100% 50%;
+    /* WCAG AA on #1F1F1F surfaces */
+    --success: 160 84% 52%;
+    --warning-foreground: 22 78% 26%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -171,7 +177,14 @@ All colors MUST be HSL.
   }
 }
 
+/* Dark theme: emerald "paid" badges need a lighter green for WCAG AA */
+.dark .text-emerald-600,
+.dark .text-emerald-700 {
+  color: hsl(160 84% 52%);
+}
+
 @layer utilities {
+
   .font-numeric {
     font-variant-numeric: tabular-nums;
   }
