@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useRequestsFilters } from "@/hooks/useRequestsFilters";
+import { useRequestPanelWidth } from "@/hooks/useRequestPanelWidth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateProcurement } from "@/hooks/useProcurements";
 import { useRequestFavorites } from "@/hooks/useRequestFavorites";
 import { supabase } from "@/integrations/supabase/client";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
