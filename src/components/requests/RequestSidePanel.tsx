@@ -753,14 +753,22 @@ export const RequestSidePanel = ({
               <>
                 {fieldsBlock}
                 {totalsBlock}
+                {/* Позиции живут в полном экране */}
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreen(true)}
+                  className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
+                >
+                  <span>Позиции: {items?.length || 0}</span>
+                  <span className="text-primary">Открыть на полный экран</span>
+                </button>
                 {movementBlock}
               </>
             )}
-            {tab === "items" && itemsBlock}
             {tab === "docs" && docsBlock}
-            {tab === "history" && historyBlock}
           </>
         )}
+
       </div>
 
       {/* Footer */}
