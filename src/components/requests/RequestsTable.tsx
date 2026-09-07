@@ -147,6 +147,8 @@ interface RequestsTableProps {
   headerActions?: ReactNode;
   activeRequestId?: string | null;
   onRequestOrderChange?: (requests: Request[]) => void;
+  onClearSelection?: () => void;
+
 }
 
 // Memoized mobile card component for better performance
