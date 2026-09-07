@@ -231,7 +231,7 @@ All colors MUST be HSL.
   .requests-registry .font-numeric,
   .requests-registry time,
   .requests-registry [data-numeric] {
-    font-family: inherit;
+    font-family: var(--mono);
     font-variant-numeric: tabular-nums;
   }
 
