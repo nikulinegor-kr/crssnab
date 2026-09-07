@@ -32,7 +32,7 @@ const QUICK_FILTERS: QuickFilterButton[] = [
     id: "priority",
     label: "Приоритетные",
     icon: <Flame className="h-3.5 w-3.5" />,
-    activeColor: "bg-orange-500 text-white border-orange-500 hover:bg-orange-600",
+    activeColor: "bg-orange-500 text-[#431407] border-orange-500 hover:bg-orange-600",
     type: "priority",
     value: "Приоритетно",
   },
