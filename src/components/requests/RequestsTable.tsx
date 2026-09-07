@@ -767,7 +767,29 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="border-0 bg-card">
-        <Table className="text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
+        <Table className="w-max min-w-full text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: 32 }} />
+            {visibility.request_date && <col style={{ width: 70 }} />}
+            {visibility.description && <col style={{ width: widths.description }} />}
+            {visibility.object && <col style={{ width: widths.object }} />}
+            {visibility.status && <col style={{ width: widths.status }} />}
+            {visibility.availability && <col style={{ width: widths.availability }} />}
+            {visibility.contractor && <col style={{ width: widths.contractor }} />}
+            {visibility.amount && <col style={{ width: widths.amount }} />}
+            {visibility.invoice_number && <col style={{ width: widths.invoice_number }} />}
+            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay }} />}
+            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage }} />}
+            {visibility.shipment_date && <col style={{ width: widths.shipment_date }} />}
+            {visibility.delivery_date && <col style={{ width: widths.delivery_date }} />}
+            {visibility.transport_company && <col style={{ width: widths.transport_company }} />}
+            {visibility.waybill_number && <col style={{ width: widths.waybill_number }} />}
+            {visibility.applicant && <col style={{ width: widths.applicant }} />}
+            {visibility.executor && <col style={{ width: widths.executor }} />}
+            {visibility.equipment && <col style={{ width: widths.equipment }} />}
+            {visibility.comments && <col style={{ width: widths.comments }} />}
+            <col style={{ width: 40 }} />
+          </colgroup>
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
