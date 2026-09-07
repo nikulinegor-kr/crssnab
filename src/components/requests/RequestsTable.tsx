@@ -42,6 +42,7 @@ import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
 import { useTableColumnWidths, ColumnWidths } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
+import { QuickBadgeSelect } from "./QuickBadgeSelect";
 import { InlineObjectCell } from "./InlineObjectCell";
 import { InlineExecutorCell } from "./InlineExecutorCell";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
@@ -1018,14 +1019,14 @@ export const RequestsTable = ({
                   )}
                   {visibility.priority && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority, minWidth: widths.priority, maxWidth: widths.priority }}>
-                      <InlineEditCell
+                      <QuickBadgeSelect
                         requestId={request.id}
                         field="priority"
                         value={request.priority || "Планово"}
-                        displayValue={
+                        badge={
                           <Badge
                             variant="outline"
-                            className="text-xs px-2 py-0.5 cursor-pointer"
+                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
                             style={{
                               borderColor: getPriorityColor(request.priority || "Планово"),
                               color: getPriorityColor(request.priority || "Планово"),
@@ -1039,13 +1040,13 @@ export const RequestsTable = ({
                   )}
                   {visibility.status && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
-                      <InlineEditCell
+                      <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
                         value={request.status}
-                        displayValue={
+                        badge={
                           <Badge
-                            className="text-xs px-2 py-0.5"
+                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
                             style={{
                               backgroundColor: getStatusColor(request.status),
                               color: "white",
