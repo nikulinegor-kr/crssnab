@@ -21,7 +21,7 @@ All colors MUST be HSL.
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Manrope', system-ui, sans-serif;
+    font-family: var(--sans);
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -29,7 +29,7 @@ All colors MUST be HSL.
   }
 
   h1, h2, .page-title {
-    font-family: 'Manrope', system-ui, sans-serif;
+    font-family: var(--sans);
     font-weight: 600;
     letter-spacing: 0;
   }
