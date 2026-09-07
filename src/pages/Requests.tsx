@@ -352,7 +352,7 @@ const Requests = () => {
   const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
-    <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-3 md:p-4 space-y-2.5">
+    <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 space-y-2">
       {isTelegramConfigured === false && (
         <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -368,9 +368,9 @@ const Requests = () => {
       )}
 
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-2">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold">Реестр заявок</h1>
+          <h1 className="text-base font-semibold">Заявки</h1>
           <p className="text-xs text-muted-foreground font-numeric">
             {filters.filteredRequests?.length || 0} найдено
             {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (

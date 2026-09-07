@@ -1267,14 +1267,22 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+      <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
+        <SheetContent
+          side="right"
+          className="w-[min(720px,48vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
             {headerContent}
-          </DialogHeader>
-          {formContent}
-        </DialogContent>
-      </Dialog>
+          </SheetHeader>
+          <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
+          <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+            {formContent}
+          </div>
+        </SheetContent>
+      </Sheet>
       {deleteDialogContent}
       {closeConfirmDialogContent}
       {conflictDialogContent}

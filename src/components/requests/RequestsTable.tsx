@@ -417,36 +417,17 @@ export const RequestsTable = ({
     setCurrentPage(1);
   }, []);
 
-  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cancelPendingRowClick = useCallback(() => {
-    if (clickTimerRef.current) {
-      clearTimeout(clickTimerRef.current);
-      clickTimerRef.current = null;
-    }
-  }, []);
-
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) {
-      return;
-    }
-    // Delay navigation to distinguish from double-click (inline editing)
-    cancelPendingRowClick();
-    clickTimerRef.current = setTimeout(() => {
-      clickTimerRef.current = null;
-      navigate(`/requests/${request.id}`);
-    }, 250);
-  }, [navigate, cancelPendingRowClick]);
+    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [data-inline-edit]')) return;
+    onEditClick?.(request);
+  }, [onEditClick]);
 
   const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
-    // Cancel pending single-click navigation
-    cancelPendingRowClick();
     // Double click inside an inline-editable cell starts editing, not quick view
     if ((e.target as HTMLElement).closest('[data-inline-edit]')) return;
     e.preventDefault();
-    openQuickView(request);
-  }, [openQuickView, cancelPendingRowClick]);
+  }, []);
 
 
   // Pagination calculations — disabled in grouped mode (show all)
@@ -726,8 +707,6 @@ export const RequestsTable = ({
         <Table className="text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '34px' }}>
-              <TableHead className="w-[5px] p-0 border-r"></TableHead>
-              <TableHead className="w-[28px] min-w-[28px] max-w-[28px] p-0 border-r border-b" aria-label="Раскрыть"></TableHead>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -920,12 +899,6 @@ export const RequestsTable = ({
                 const request = it.request;
                 const index = it.index;
                 const isChildRow = it.child === true;
-                const priorityColor = request.priority === "Аварийно"
-                  ? "#ef4444"
-                  : request.priority === "Приоритетно"
-                    ? "#f97316"
-                    : "#d1d5db";
-
                 const isEvenRow = index % 2 === 1;
                 const rowNumber = startIndex + index + 1;
 
@@ -937,33 +910,6 @@ export const RequestsTable = ({
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: '34px' }}
                 >
-                  <TableCell 
-                    className="w-[5px] p-0 border-r-0 transition-all duration-200 group-hover:brightness-125 group-hover:w-[6px]" 
-                    style={{ 
-                      backgroundColor: priorityColor,
-                      borderRadius: '3px 0 0 3px',
-                    }} 
-                  />
-                  {(() => {
-                    const hasShipments = (shipmentsSummary?.[request.id]?.total ?? 0) >= 1;
-                    return (
-                      <TableCell
-                        className="p-0 border-r border-b text-center align-middle"
-                        style={{ width: 28, minWidth: 28, maxWidth: 28 }}
-                        onClick={(e) => { if (hasShipments) { e.stopPropagation(); toggleExpand(request.id); } }}
-                      >
-                        {hasShipments && (
-                          <button
-                            type="button"
-                            className="h-7 w-7 inline-flex items-center justify-center text-muted-foreground hover:text-primary"
-                            aria-label={expandedRows.has(request.id) ? "Свернуть" : "Раскрыть перевозки"}
-                          >
-                            <ChevronDown className={`h-4 w-4 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
-                          </button>
-                        )}
-                      </TableCell>
-                    );
-                  })()}
                   <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
@@ -984,6 +930,18 @@ export const RequestsTable = ({
                   {visibility.description && (
                     <TableCell className="px-2 py-1.5 border-r border-b overflow-hidden" style={{ width: widths.description, minWidth: widths.description, maxWidth: widths.description }}>
                       <div className="flex items-center gap-1.5">
+                        {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(request.id); }}
+                            aria-label={expandedRows.has(request.id) ? "Свернуть перевозки" : "Раскрыть перевозки"}
+                          >
+                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
+                          </Button>
+                        )}
                         {onToggleFavorite && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite(request.id); }}
