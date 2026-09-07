@@ -51,6 +51,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
 
   const saveField = async (field: "description" | "status" | "priority", val: string) => {
     if (!request) return;
+    if (field === "description" && val) val = val.charAt(0).toUpperCase() + val.slice(1);
     setSavingField(field);
     try {
       const { error } = await supabase.from("requests").update({ [field]: val }).eq("id", request.id);
