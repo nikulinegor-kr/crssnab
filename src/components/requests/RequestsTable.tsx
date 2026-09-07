@@ -235,7 +235,7 @@ const MobileRequestCard = memo(({
           )}
           {request.applicant && (
             <span className="truncate max-w-[80px]">
-              <span className="font-medium">З:</span> <HighlightText text={request.applicant} searchQuery={searchQuery} />
+              <span className="font-medium">З:</span> <HighlightText text={formatPersonName(request.applicant)} searchQuery={searchQuery} />
             </span>
           )}
           {(() => {

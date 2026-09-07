@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPersonName } from "@/lib/personName";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -104,7 +105,7 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
         "Отгрузка": formatDate(r.shipment_date),
         "Приход": formatDate(r.delivery_date),
         "Сумма": Number(r.amount) || 0,
-        "Заявитель": r.applicant || "—",
+        "Заявитель": formatPersonName(r.applicant) || "—",
       }));
 
       const totalSum = data.reduce((s, r) => s + (Number(r.amount) || 0), 0);
@@ -202,7 +203,7 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
         formatDate(r.shipment_date),
         formatDate(r.delivery_date),
         formatAmount(Number(r.amount)),
-        r.applicant || "—",
+        formatPersonName(r.applicant) || "—",
       ]);
 
       autoTable(doc, {
