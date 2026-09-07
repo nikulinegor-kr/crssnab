@@ -660,6 +660,18 @@ const Requests = () => {
       )}
 
 
+      <RequestSidePanel
+        request={selectedRequest as any}
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        onEdit={(r) => {
+          setSelectedRequest(r);
+          setPanelOpen(false);
+          setEditDialogOpen(true);
+        }}
+        onOpenFull={(r) => navigate(`/requests/${r.id}`)}
+      />
+
       {selectedRequest && (
         <EditRequestDialog
           request={selectedRequest}
