@@ -139,6 +139,8 @@ interface RequestsTableProps {
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
   headerActions?: ReactNode;
+  activeRequestId?: string | null;
+  onRequestOrderChange?: (requests: Request[]) => void;
 }
 
 // Memoized mobile card component for better performance
@@ -262,6 +264,8 @@ export const RequestsTable = ({
   favoriteIds,
   onToggleFavorite,
   headerActions,
+  activeRequestId,
+  onRequestOrderChange,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { data: userId } = useAuthUserId();
@@ -438,7 +442,14 @@ export const RequestsTable = ({
   }, []);
 
   const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [data-inline-edit]')) return;
+    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [role="button"]')) return;
+    onEditClick?.(request);
+  }, [onEditClick]);
+
+  const handleDesktopRowClick = useCallback((request: Request, e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[data-row-action]")) return;
+    e.preventDefault();
+    e.stopPropagation();
     onEditClick?.(request);
   }, [onEditClick]);
 
@@ -462,6 +473,10 @@ export const RequestsTable = ({
   const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
+
+  useEffect(() => {
+    onRequestOrderChange?.(paginatedRequests);
+  }, [onRequestOrderChange, paginatedRequests]);
 
   // Group by object — must stay before early returns to keep hook order stable
   const groupedRequests = useMemo(() => {
@@ -949,12 +964,17 @@ export const RequestsTable = ({
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer relative group border-b border-border hover:bg-[hsl(var(--row-hover))] before:absolute before:inset-y-0 before:left-0 before:w-0.5 ${priorityLine} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
-                  onClick={(e) => handleRowClick(request, e)}
+                  className={cn(
+                    "cursor-pointer relative group border-b border-border before:absolute before:inset-y-0 before:left-0 before:w-0.5",
+                    activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
+                    priorityLine,
+                    isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
+                  )}
+                  onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -973,6 +993,7 @@ export const RequestsTable = ({
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button
+                            data-row-action
                             type="button"
                             variant="ghost"
                             size="icon"
@@ -985,6 +1006,7 @@ export const RequestsTable = ({
                         )}
                         {onToggleFavorite && (
                           <button
+                            data-row-action
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite(request.id); }}
                             className="shrink-0 hover:scale-110 transition-transform"
                             aria-label={favoriteIds?.has(request.id) ? "Убрать из избранного" : "В избранное"}
@@ -1029,6 +1051,7 @@ export const RequestsTable = ({
                           />
                         </div>
                         <button
+                          data-row-action
                           onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
                           className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
                           aria-label="Быстрый просмотр"
@@ -1278,7 +1301,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {/* Row Action Menu */}
-                  <TableCell className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">

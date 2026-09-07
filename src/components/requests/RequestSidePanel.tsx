@@ -1,21 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, FileText, Check, Loader2 } from "lucide-react";
+import { X, Maximize2, Minimize2, FileText, Check, Loader2, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
   open: boolean;
   onClose: () => void;
   onEdit?: (request: Request) => void;
-  onOpenFull?: (request: Request) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
+  position?: number;
+  requestCount?: number;
 }
+
+const PANEL_WIDTH_KEY = "requests-side-panel-width";
+const DEFAULT_PANEL_WIDTH = 460;
+const MIN_PANEL_WIDTH = 360;
 
 const money = (v: number) =>
   new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
@@ -36,13 +46,74 @@ const Row = ({ label, value, accent }: { label: string; value: React.ReactNode; 
   </div>
 );
 
-export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }: RequestSidePanelProps) => {
+export const RequestSidePanel = ({
+  request,
+  open,
+  onClose,
+  onEdit,
+  onPrevious,
+  onNext,
+  hasPrevious = false,
+  hasNext = false,
+  position,
+  requestCount,
+}: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [savingField, setSavingField] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(PANEL_WIDTH_KEY));
+    return Number.isFinite(saved) && saved >= MIN_PANEL_WIDTH ? saved : DEFAULT_PANEL_WIDTH;
+  });
+  const resizingRef = useRef(false);
+
+  const stopResize = useCallback(() => {
+    if (!resizingRef.current) return;
+    resizingRef.current = false;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const maxWidth = Math.max(MIN_PANEL_WIDTH, window.innerWidth - 280);
+      const nextWidth = Math.min(maxWidth, Math.max(MIN_PANEL_WIDTH, window.innerWidth - event.clientX));
+      setPanelWidth(nextWidth);
+      localStorage.setItem(PANEL_WIDTH_KEY, String(nextWidth));
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", stopResize);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", stopResize);
+      stopResize();
+    };
+  }, [stopResize]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      } else if (event.key === "ArrowUp" && hasPrevious) {
+        event.preventDefault();
+        onPrevious?.();
+      } else if (event.key === "ArrowDown" && hasNext) {
+        event.preventDefault();
+        onNext?.();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [hasNext, hasPrevious, onClose, onNext, onPrevious, open]);
 
   useEffect(() => {
     setTitleValue(request?.description || "");
@@ -69,10 +140,12 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
   const { data: items } = useQuery({
     queryKey: ["request-items", request?.id],
     queryFn: async () => {
+      const requestId = request?.id;
+      if (!requestId) return [];
       const { data, error } = await supabase
         .from("request_items")
         .select("*")
-        .eq("request_id", request!.id)
+        .eq("request_id", requestId)
         .order("created_at");
       if (error) throw error;
       return data || [];
@@ -83,10 +156,12 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
   const { data: history } = useQuery({
     queryKey: ["request-audit", request?.id],
     queryFn: async () => {
+      const requestId = request?.id;
+      if (!requestId) return [];
       const { data, error } = await supabase
         .from("audit_logs")
         .select("id, action, created_at")
-        .eq("entity_id", request!.id)
+        .eq("entity_id", requestId)
         .order("created_at", { ascending: false })
         .limit(30);
       if (error) throw error;
@@ -153,7 +228,29 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
   ] as const;
 
   return createPortal(
-    <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-panel animate-in slide-in-from-right duration-200">
+    <aside
+      className="requests-registry fixed inset-y-0 right-0 z-50 flex max-w-[100vw] flex-col border-l border-border bg-card shadow-panel motion-reduce:animate-none"
+      style={{
+        width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
+        transition: "width var(--dur) var(--ease)",
+        animation: "slide-in-right var(--dur) var(--ease)",
+      }}
+      aria-label="Карточка заявки"
+    >
+      {!isFullscreen && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Изменить ширину панели"
+          className="absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-primary/20"
+          onMouseDown={(event) => {
+            event.preventDefault();
+            resizingRef.current = true;
+            document.body.style.cursor = "col-resize";
+            document.body.style.userSelect = "none";
+          }}
+        />
+      )}
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
         {editingTitle ? (
@@ -174,13 +271,16 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
               rows={2}
               className="min-w-0 flex-1 resize-none rounded border border-input bg-background px-1.5 py-1 text-[13px] font-semibold leading-tight focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => titleValue.trim() && saveField("description", titleValue.trim())}
-              className="mt-0.5 text-success hover:text-success"
+              className="mt-0.5 h-7 w-7 text-success hover:text-success"
               aria-label="Сохранить название"
             >
               {savingField === "description" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            </button>
+            </Button>
           </div>
         ) : (
           <h2
@@ -191,16 +291,20 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
             {request.description}
           </h2>
         )}
-        <button
-          onClick={() => onOpenFull?.(request)}
-          className="text-muted-foreground hover:text-foreground"
-          aria-label="Открыть полностью"
-        >
-          <Maximize2 className="h-3.5 w-3.5" />
-        </button>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Закрыть">
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
+            <ArrowUp className="h-3.5 w-3.5" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
+            <ArrowDown className="h-3.5 w-3.5" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsFullscreen((value) => !value)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
           <X className="h-4 w-4" />
-        </button>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric">
@@ -230,6 +334,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
         </select>
         <span className="font-numeric">{request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date)}</span>
+        {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
@@ -251,7 +356,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {tab === "overview" && (
           <>
             <Row label="Объект" value={(request as any).object_name} />
@@ -363,21 +468,16 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-2 border-t border-border px-4 py-2.5">
-        <button
+      <div className="sticky bottom-0 flex items-center gap-2 border-t border-border bg-card px-4 py-2.5">
+        <Button
           onClick={() => onEdit?.(request)}
-          className="h-7 bg-primary px-3 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
+          size="sm"
+          className="h-7 px-3 text-[11px]"
         >
           Редактировать
-        </button>
-        <button
-          onClick={() => onOpenFull?.(request)}
-          className="h-7 border border-input bg-card px-3 text-[11px] font-medium hover:bg-muted"
-        >
-          Открыть заявку
-        </button>
+        </Button>
       </div>
-    </div>,
+    </aside>,
     document.body
   );
 };

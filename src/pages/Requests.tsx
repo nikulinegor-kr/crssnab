@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useCallback } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -36,7 +35,6 @@ import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider
 import { cn } from "@/lib/utils";
 
 const Requests = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
@@ -54,9 +52,15 @@ const Requests = () => {
 
   // Semantic search results
   const [semanticSearchIds, setSemanticSearchIds] = useState<string[] | null>(null);
+  const visibleRequests = useMemo(() => (
+    semanticSearchIds
+      ? filters.filteredRequests?.filter((request) => semanticSearchIds.includes(request.id))
+      : filters.filteredRequests
+  ) || [], [filters.filteredRequests, semanticSearchIds]);
 
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
+  const [panelRequestOrder, setPanelRequestOrder] = useState<Request[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isDownloadingInvoices, setIsDownloadingInvoices] = useState(false);
 
@@ -176,6 +180,19 @@ const Requests = () => {
     setSelectedRequest(request);
     setPanelOpen(true);
   };
+
+  const selectedRequestIndex = selectedRequest
+    ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
+    : -1;
+
+  const selectAdjacentRequest = (offset: -1 | 1) => {
+    const next = panelRequestOrder[selectedRequestIndex + offset];
+    if (next) setSelectedRequest(next);
+  };
+
+  const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
+    setPanelRequestOrder(orderedRequests);
+  }, []);
 
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -518,10 +535,7 @@ const Requests = () => {
           {/* LEVEL 7: Table */}
           <div className="overflow-hidden bg-card">
             <RequestsTable
-              requests={semanticSearchIds 
-                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
-                : filters.filteredRequests
-              }
+              requests={visibleRequests}
               isLoading={isLoading}
               selectedRequestIds={selectedRequestIds}
               toggleRequestSelection={toggleRequestSelection}
@@ -533,6 +547,8 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
+              activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
           </div>
         </div>
@@ -587,10 +603,7 @@ const Requests = () => {
 
           <div className="overflow-hidden bg-card">
             <RequestsTable
-              requests={semanticSearchIds 
-                ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
-                : filters.filteredRequests
-              }
+              requests={visibleRequests}
               isLoading={isLoading}
               selectedRequestIds={selectedRequestIds}
               toggleRequestSelection={toggleRequestSelection}
@@ -600,6 +613,8 @@ const Requests = () => {
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
+              activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
           </div>
         </div>
@@ -630,6 +645,8 @@ const Requests = () => {
               searchQuery=""
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
+              activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
             </div>
           )}
@@ -676,7 +693,12 @@ const Requests = () => {
           setPanelOpen(false);
           setEditDialogOpen(true);
         }}
-        onOpenFull={(r) => navigate(`/requests/${r.id}`)}
+        onPrevious={() => selectAdjacentRequest(-1)}
+        onNext={() => selectAdjacentRequest(1)}
+        hasPrevious={selectedRequestIndex > 0}
+        hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
+        position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
+        requestCount={panelRequestOrder.length}
       />
 
       {selectedRequest && (
