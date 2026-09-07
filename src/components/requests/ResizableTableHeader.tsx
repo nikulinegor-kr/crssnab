@@ -75,29 +75,35 @@ export const ResizableTableHeader = ({
   return (
     <TableHead
       ref={headerRef}
+      data-align={align === "right" ? "right" : undefined}
       className={cn(
-        "relative p-2 font-medium border-b text-center select-none text-muted-foreground transition-all duration-150 ease-out",
+        "relative p-2 font-medium border-b select-none text-muted-foreground transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
       onClick={sortable ? onSort : undefined}
     >
       {children ? (
-        <div className="flex items-center justify-center">{children}</div>
+        <div className="flex items-center justify-start">{children}</div>
       ) : (
-        <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center")}>
+        <div
+          className={cn(
+            "flex w-full items-center gap-1 overflow-hidden",
+            align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start"
+          )}
+        >
           <span className="truncate text-xs font-medium normal-case tracking-normal">{label}</span>
 
-          {sortable && (
-            <Icon
-              className={cn(
-                "h-3 w-3 flex-shrink-0",
-                isActive ? "text-primary" : "text-muted-foreground/50"
-              )}
-            />
-          )}
+          {/* Иконка всегда занимает место — заголовок не дёргается при сортировке */}
+          <Icon
+            className={cn(
+              "h-3 w-3 flex-none",
+              !sortable ? "invisible" : isActive ? "text-primary" : "text-muted-foreground/50"
+            )}
+          />
         </div>
       )}
+
       {/* Resize handle */}
       <div
         title="Потяните, чтобы изменить ширину. Двойной клик — сброс"
