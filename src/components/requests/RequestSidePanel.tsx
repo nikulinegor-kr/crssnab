@@ -153,7 +153,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
   ] as const;
 
   return createPortal(
-    <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-[-8px_0_24px_-16px_rgba(15,23,42,0.35)] animate-in slide-in-from-right duration-200">
+    <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-panel animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
         {editingTitle ? (
