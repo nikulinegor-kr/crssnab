@@ -13,7 +13,7 @@ interface ResizableTableHeaderProps {
   sortDirection?: "asc" | "desc";
   onSort?: () => void;
   className?: string;
-  align?: "left" | "center";
+  align?: "left" | "center" | "right";
   defaultWidth?: number;
   children?: React.ReactNode;
 }
