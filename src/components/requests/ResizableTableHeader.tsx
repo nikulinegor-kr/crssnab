@@ -100,13 +100,27 @@ export const ResizableTableHeader = ({
       )}
       {/* Resize handle */}
       <div
+        title="Потяните, чтобы изменить ширину. Двойной клик — сброс"
         className={cn(
-          "absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/50 transition-colors z-20",
-          isResizing && "bg-primary"
+          "absolute top-0 -right-[3px] w-[7px] h-full cursor-col-resize z-20 group/resize flex justify-center",
+          isResizing && "bg-primary/20"
         )}
         onMouseDown={handleMouseDown}
         onClick={(e) => e.stopPropagation()}
-      />
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (defaultWidth) onResize(column, defaultWidth);
+        }}
+      >
+        <span
+          className={cn(
+            "h-full w-[2px] bg-border transition-colors group-hover/resize:bg-primary",
+            isResizing && "bg-primary"
+          )}
+        />
+      </div>
+
     </TableHead>
   );
 };
