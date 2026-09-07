@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
+import { RequestSidePanel } from "@/components/requests/RequestSidePanel";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
@@ -144,6 +145,7 @@ const Requests = () => {
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateInitialData, setDuplicateInitialData] = useState<any>(null);
