@@ -1116,14 +1116,16 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden">
+                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
                         value={request.status}
+                        open={openMenu?.id === request.id && openMenu.field === "status"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "status" } : null)}
                         badge={
                           <span className={cn(
-                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-xs hover:bg-muted",
+                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 hover:bg-muted",
                             overdue && "bg-destructive-soft text-destructive hover:bg-destructive-soft"
                           )}>
                             <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", overdue ? "bg-destructive" : statusDotClass(request.status))} />
@@ -1133,6 +1135,7 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+
                   {visibility.availability && (
                     <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       {request.availability_delivery_time ? (
