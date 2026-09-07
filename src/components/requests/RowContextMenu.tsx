@@ -80,41 +80,20 @@ export const RowContextMenu = ({
           </ContextMenuSubContent>
         </ContextMenuSub>
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>Заявитель</ContextMenuSubTrigger>
-          <ContextMenuSubContent className="max-h-[320px] w-56 overflow-y-auto">
-            <ContextMenuItem onSelect={() => void update(requestId, "applicant", null, applicant)}>
-              <span className="italic text-muted-foreground">Снять назначение</span>
-            </ContextMenuItem>
-            {applicants.map((person) => (
-              <ContextMenuItem
-                key={person.id}
-                className={cn(person.name === applicant && "font-medium")}
-                onSelect={() => void update(requestId, "applicant", person.name, applicant)}
-              >
-                {person.label}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+        <PeopleSubmenu
+          title="Заявитель"
+          people={applicants}
+          current={applicant}
+          onPick={(name) => void update(requestId, "applicant", name, applicant)}
+        />
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>Кто ведёт</ContextMenuSubTrigger>
-          <ContextMenuSubContent className="max-h-[320px] w-56 overflow-y-auto">
-            <ContextMenuItem onSelect={() => void update(requestId, "executor", null, executor)}>
-              <span className="italic text-muted-foreground">Снять назначение</span>
-            </ContextMenuItem>
-            {executors.map((person) => (
-              <ContextMenuItem
-                key={person.id}
-                className={cn(person.name === executor && "font-medium")}
-                onSelect={() => void update(requestId, "executor", person.name, executor)}
-              >
-                {person.label}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+        <PeopleSubmenu
+          title="Кто ведёт"
+          people={executors}
+          current={executor}
+          onPick={(name) => void update(requestId, "executor", name, executor)}
+        />
+
 
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
