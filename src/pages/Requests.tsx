@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -60,6 +60,7 @@ const Requests = () => {
 
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
+  const [panelRequestOrder, setPanelRequestOrder] = useState<Request[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isDownloadingInvoices, setIsDownloadingInvoices] = useState(false);
 
@@ -181,13 +182,17 @@ const Requests = () => {
   };
 
   const selectedRequestIndex = selectedRequest
-    ? visibleRequests.findIndex((request) => request.id === selectedRequest.id)
+    ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
     : -1;
 
   const selectAdjacentRequest = (offset: -1 | 1) => {
-    const next = visibleRequests[selectedRequestIndex + offset];
+    const next = panelRequestOrder[selectedRequestIndex + offset];
     if (next) setSelectedRequest(next);
   };
+
+  const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
+    setPanelRequestOrder(orderedRequests);
+  }, []);
 
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -543,6 +548,7 @@ const Requests = () => {
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
           </div>
         </div>
@@ -608,6 +614,7 @@ const Requests = () => {
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
           </div>
         </div>
@@ -639,6 +646,7 @@ const Requests = () => {
               favoriteIds={favoriteIds}
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
+              onRequestOrderChange={handleRequestOrderChange}
             />
             </div>
           )}
@@ -688,9 +696,9 @@ const Requests = () => {
         onPrevious={() => selectAdjacentRequest(-1)}
         onNext={() => selectAdjacentRequest(1)}
         hasPrevious={selectedRequestIndex > 0}
-        hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < visibleRequests.length - 1}
+        hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
         position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
-        total={visibleRequests.length}
+        total={panelRequestOrder.length}
       />
 
       {selectedRequest && (

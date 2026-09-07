@@ -229,10 +229,11 @@ export const RequestSidePanel = ({
 
   return createPortal(
     <aside
-      className="requests-registry fixed inset-y-0 right-0 z-50 flex max-w-[100vw] flex-col border-l border-border bg-card shadow-panel animate-slide-in-right motion-reduce:animate-none"
+      className="requests-registry fixed inset-y-0 right-0 z-50 flex max-w-[100vw] flex-col border-l border-border bg-card shadow-panel motion-reduce:animate-none"
       style={{
         width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
         transition: "width var(--dur) var(--ease)",
+        animation: "slide-in-right var(--dur) var(--ease)",
       }}
       aria-label="Карточка заявки"
     >

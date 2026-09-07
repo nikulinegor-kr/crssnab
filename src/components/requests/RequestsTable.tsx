@@ -140,6 +140,7 @@ interface RequestsTableProps {
   onToggleFavorite?: (requestId: string) => void;
   headerActions?: ReactNode;
   activeRequestId?: string | null;
+  onRequestOrderChange?: (requests: Request[]) => void;
 }
 
 // Memoized mobile card component for better performance
@@ -264,6 +265,7 @@ export const RequestsTable = ({
   onToggleFavorite,
   headerActions,
   activeRequestId,
+  onRequestOrderChange,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const { data: userId } = useAuthUserId();
@@ -471,6 +473,10 @@ export const RequestsTable = ({
   const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
+
+  useEffect(() => {
+    onRequestOrderChange?.(paginatedRequests);
+  }, [onRequestOrderChange, paginatedRequests]);
 
   // Group by object — must stay before early returns to keep hook order stable
   const groupedRequests = useMemo(() => {
