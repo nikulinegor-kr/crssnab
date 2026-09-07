@@ -40,7 +40,7 @@ export default function AnalyticsRequestsPage() {
     const delivered = rows.filter((r) => StatusGroups.DELIVERED.has(r.status ?? ""));
     return {
       new: count(rows, (r) => (r.status ?? "") === "Новая заявка"),
-      incoming: count(rows, (r) => (r.status ?? "") === "Входящая заявка"),
+      incoming: count(rows, (r) => (r.status ?? "") === "Новая заявка"),
       inWork: count(
         rows,
         (r) =>
@@ -86,7 +86,7 @@ export default function AnalyticsRequestsPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <MetricCard label="Новые" value={metrics.new} to="/requests?status=Новая+заявка" />
-        <MetricCard label="Входящие" value={metrics.incoming} to="/requests?status=Входящая+заявка" />
+        <MetricCard label="Новые" value={metrics.incoming} to="/requests?status=Новая+заявка" />
         <MetricCard label="В работе" value={metrics.inWork} />
         <MetricCard label="В пути" value={metrics.inTransit} to="/requests?status=В+пути" />
         <MetricCard label="Доставлены" value={metrics.delivered} tone="success" to="/requests?status=Доставлено" />

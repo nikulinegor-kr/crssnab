@@ -61,8 +61,8 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
     const rows = titles.map((t) => ({
       request_number: buildRequestNumber(),
       request_date: today,
-      description: t,
-      status: "Входящая заявка",
+      description: t ? t.charAt(0).toUpperCase() + t.slice(1) : t,
+      status: "Новая заявка",
       priority: "Планово",
       applicant: "—",
       created_by: user.id,
@@ -182,7 +182,7 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
               )}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Остальные поля можно заполнить позже. Статус: «Входящая заявка».
+              Остальные поля можно заполнить позже. Статус: «Новая заявка».
             </p>
           </form>
         </TabsContent>
