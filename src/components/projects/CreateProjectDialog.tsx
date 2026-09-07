@@ -66,8 +66,8 @@ export function CreateProjectDialog({ open, onOpenChange, onCreated }: Props) {
           {
             request_number: `PRJ-${new Date().getFullYear()}-${Date.now()}`,
             request_date: new Date().toISOString().split("T")[0],
-            description: name.trim(),
-            status: "Входящая заявка",
+            description: (() => { const n = name.trim(); return n ? n.charAt(0).toUpperCase() + n.slice(1) : n; })(),
+            status: "Новая заявка",
             priority: "Планово",
             applicant: manager.trim() || "—",
             executor: manager.trim() || null,
