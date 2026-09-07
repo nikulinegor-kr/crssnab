@@ -239,14 +239,25 @@ export const RequestSidePanel = ({
     { id: "history", label: "История" },
   ] as const;
 
-  return createPortal(
+  const asOverlay = !inline || isFullscreen;
+
+  const content = (
     <aside
-      className="requests-registry fixed inset-y-0 right-0 z-50 flex max-w-[100vw] flex-col border-l border-border bg-card shadow-panel motion-reduce:animate-none"
-      style={{
-        width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
-        transition: "width var(--dur) var(--ease)",
-        animation: "slide-in-right var(--dur) var(--ease)",
-      }}
+      className={cn(
+        "requests-registry flex flex-col border-l border-border bg-card",
+        asOverlay
+          ? "fixed inset-y-0 right-0 z-50 max-w-[100vw] shadow-panel motion-reduce:animate-none"
+          : "sticky top-2 h-[calc(100dvh-2rem)] w-full overflow-hidden"
+      )}
+      style={
+        asOverlay
+          ? {
+              width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
+              transition: "width var(--dur) var(--ease)",
+              animation: "slide-in-right var(--dur) var(--ease)",
+            }
+          : undefined
+      }
       aria-label="Карточка заявки"
     >
       {!isFullscreen && (
@@ -263,6 +274,7 @@ export const RequestSidePanel = ({
           }}
         />
       )}
+
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
         {editingTitle ? (
