@@ -498,6 +498,8 @@ const Requests = () => {
             setTransportCompanyFilter={filters.setTransportCompanyFilter}
             uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
+            specialDateFilter={filters.specialDateFilter}
+            setSpecialDateFilter={filters.setSpecialDateFilter}
           />
 
           {/* Bulk Actions Toolbar */}
@@ -514,7 +516,7 @@ const Requests = () => {
           />
 
           {/* LEVEL 7: Table */}
-          <div className="overflow-hidden border border-border bg-card">
+          <div className="overflow-hidden bg-card">
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -567,6 +569,8 @@ const Requests = () => {
             setTransportCompanyFilter={filters.setTransportCompanyFilter}
             uniqueTransportCompanies={filters.uniqueTransportCompanies}
             requests={requests}
+            specialDateFilter={filters.specialDateFilter}
+            setSpecialDateFilter={filters.setSpecialDateFilter}
           />
 
           <RequestsBulkActions
@@ -581,7 +585,7 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <div className="overflow-hidden border border-border bg-card">
+          <div className="overflow-hidden bg-card">
             <RequestsTable
               requests={semanticSearchIds 
                 ? filters.filteredRequests?.filter(r => semanticSearchIds.includes(r.id)) 
@@ -612,7 +616,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <div className="overflow-hidden border border-border bg-card">
+            <div className="overflow-hidden bg-card">
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}

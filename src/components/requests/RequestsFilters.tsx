@@ -30,7 +30,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
 import { 
   STATUSES, 
-  RequestFilters 
+  RequestFilters,
+  SpecialDateFilter,
 } from "@/hooks/useRequestsFilters";
 
 interface RequestsFiltersProps {
@@ -62,6 +63,8 @@ interface RequestsFiltersProps {
   setTransportCompanyFilter: (value: string) => void;
   uniqueTransportCompanies: string[];
   requests: Request[] | undefined;
+  specialDateFilter?: SpecialDateFilter;
+  setSpecialDateFilter?: (value: SpecialDateFilter) => void;
 }
 
 export const RequestsFilters = ({
@@ -93,6 +96,8 @@ export const RequestsFilters = ({
   setTransportCompanyFilter,
   uniqueTransportCompanies,
   requests,
+  specialDateFilter,
+  setSpecialDateFilter,
 }: RequestsFiltersProps) => {
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
@@ -190,6 +195,7 @@ export const RequestsFilters = ({
 
   const objectLabel = availableObjects.find((object) => object.id === objectFilter)?.name;
   const chips = [
+    ...(searchQuery ? [{ key: "search", label: `Поиск: ${searchQuery}`, clear: () => setSearchQuery("") }] : []),
     ...statusFilter.map((status) => ({ key: `status-${status}`, label: `Статус: ${status}`, clear: () => setStatusFilter(statusFilter.filter((item) => item !== status)) })),
     ...(priorityFilter !== "all" ? [{ key: "priority", label: `Приоритет: ${priorityFilter}`, clear: () => setPriorityFilter("all") }] : []),
     ...(yearFilter !== "all" ? [{ key: "year", label: `Год: ${yearFilter}`, clear: () => setYearFilter("all") }] : []),
@@ -197,6 +203,11 @@ export const RequestsFilters = ({
     ...(objectFilter !== "all" ? [{ key: "object", label: `Объект: ${objectLabel || objectFilter}`, clear: () => setObjectFilter("all") }] : []),
     ...(transportCompanyFilter !== "all" ? [{ key: "transport", label: `ТК: ${transportCompanyFilter}`, clear: () => setTransportCompanyFilter("all") }] : []),
     ...(hideDelivered ? [{ key: "delivered", label: "Скрыть доставленные", clear: () => setHideDelivered(false) }] : []),
+    ...(specialDateFilter ? [{
+      key: "special",
+      label: ({ overdue: "Просрочено", stale: "Зависло дольше 2 дней", unpaid: "Ждёт оплаты" } as Partial<Record<Exclude<SpecialDateFilter, null>, string>>)[specialDateFilter] || "Специальный фильтр",
+      clear: () => setSpecialDateFilter?.(null),
+    }] : []),
   ];
 
   return (
