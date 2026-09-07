@@ -391,37 +391,46 @@ All colors MUST be HSL.
     align-items: center;
   }
 
+  .requests-registry table th:not(:first-child):not(:last-child) > div,
   .requests-registry table td:not(:first-child):not(:last-child) > div,
+  .requests-registry table th:not(:first-child):not(:last-child) > button,
   .requests-registry table td:not(:first-child):not(:last-child) > button {
     justify-content: center;
     text-align: center;
   }
 
-  /* Текстовая колонка «Заявка» — влево */
-  .requests-registry table th[data-align="left"],
-  .requests-registry table td[data-align="left"] {
+  /* Текстовая колонка «Заявка» — влево.
+     Селекторы с :not повышают специфичность, чтобы переопределить правило по центру. */
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="left"],
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="left"] {
     text-align: left;
   }
 
-  .requests-registry table td[data-align="left"] > div,
-  .requests-registry table td[data-align="left"] > button,
-  .requests-registry table td[data-align="left"] > span {
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="left"] > div,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="left"] > div,
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="left"] > button,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="left"] > button,
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="left"] > span,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="left"] > span {
     justify-content: flex-start;
     text-align: left;
   }
 
   /* Деньги и количества — вправо */
-  .requests-registry table th[data-align="right"],
-  .requests-registry table td[data-align="right"] {
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="right"],
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="right"] {
     text-align: right;
   }
 
-  .requests-registry table td[data-align="right"] > div,
-  .requests-registry table td[data-align="right"] > button,
-  .requests-registry table td[data-align="right"] > div > div {
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="right"] > div,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="right"] > div,
+  .requests-registry table th:not(:first-child):not(:last-child)[data-align="right"] > button,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="right"] > button,
+  .requests-registry table td:not(:first-child):not(:last-child)[data-align="right"] > div > div {
     justify-content: flex-end;
     text-align: right;
   }
+
 
 
 }
