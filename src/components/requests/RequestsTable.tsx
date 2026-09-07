@@ -44,8 +44,12 @@ import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
 import { QuickBadgeSelect } from "./QuickBadgeSelect";
 import { InlineObjectCell } from "./InlineObjectCell";
-import { InlineExecutorCell } from "./InlineExecutorCell";
+import { InlineParticipantCell } from "./InlineParticipantCell";
+import { RowContextMenu } from "./RowContextMenu";
+import { useRequestParticipants } from "@/hooks/useRequestParticipants";
+import { formatPersonName } from "@/lib/personName";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
+
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
