@@ -118,7 +118,7 @@ export const InlineEditCell = ({
         data-inline-edit
         onDoubleClick={handleDoubleClick}
         className={cn(
-          "group/inline relative flex items-start gap-1 rounded px-1 py-0.5 transition-colors -mx-1 hover:bg-muted/50",
+          "group/inline relative flex w-full items-center gap-1 rounded p-0 m-0 transition-colors hover:bg-muted/50",
           className
         )}
         title="Двойной клик — редактировать"

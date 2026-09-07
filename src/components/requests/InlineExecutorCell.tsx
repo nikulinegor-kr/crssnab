@@ -74,7 +74,7 @@ export const InlineExecutorCell = ({ requestId, organizationId, value, searchQue
           type="button"
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "w-full text-center cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors flex items-center justify-center gap-1",
+            "w-full text-left cursor-pointer hover:bg-muted/50 rounded p-0 m-0 transition-colors flex items-center justify-start gap-1",
           )}
           title="Нажмите, чтобы выбрать исполнителя"
         >
