@@ -95,8 +95,6 @@ function summarizeGroup(items: any[]) {
   return { total, suppliers: suppliers.size, invoices, amount, paid, unpaid: Math.max(amount - paid, 0), delivered, inTransit, overdue, emergency, progress, computedStatus };
 }
 
-import { UI_SCALES, useUiScale } from "@/hooks/useUiScale";
-
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
 const SORT_STORAGE_KEY = "requests-sort";
