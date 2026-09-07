@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { createElement } from "react";
 
 export type QuickField = "status" | "priority" | "applicant" | "executor";
 
@@ -45,13 +44,10 @@ export const useRequestQuickUpdate = () => {
             title: FIELD_TITLES[field],
             description: next || "Значение снято",
             duration: 5000,
-            action: createElement(
-              ToastAction,
-              {
-                altText: "Отменить",
-                onClick: () => void update(requestId, field, previous, next, false),
-              },
-              "Отменить"
+            action: (
+              <ToastAction altText="Отменить" onClick={() => void update(requestId, field, previous, next, false)}>
+                Отменить
+              </ToastAction>
             ),
           });
         }
