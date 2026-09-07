@@ -1010,7 +1010,7 @@ export const RequestsTable = ({
                               <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1065,7 +1065,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
+                        <span className="text-muted-foreground text-xs italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
@@ -1081,7 +1081,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1094,7 +1094,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">не выставлен</span>
+                        <span className="text-muted-foreground text-xs italic">не выставлен</span>
                       )}
                     </TableCell>
                   )}
@@ -1125,7 +1125,7 @@ export const RequestsTable = ({
                         field="shipment_date"
                         value={request.shipment_date || ""}
                         displayValue={
-                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}</span>
+                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">ожидается</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1137,7 +1137,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">нет данных</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1154,7 +1154,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
+                            <span className="text-muted-foreground text-xs italic">нет данных</span>
                           )
                         }
                       />
@@ -1172,7 +1172,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">—</span>
+                            <span className="text-muted-foreground text-xs italic">—</span>
                           )
                         }
                       />
@@ -1190,7 +1190,7 @@ export const RequestsTable = ({
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет суммы</span>
+                            <span className="text-muted-foreground text-xs italic">нет суммы</span>
                           )
                         }
                       />
@@ -1208,7 +1208,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1238,7 +1238,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">нет техники</span>
+                        <span className="text-muted-foreground text-xs italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
@@ -1254,7 +1254,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет</span>
+                            <span className="text-muted-foreground text-xs italic">нет</span>
                           )
                         }
                       />
