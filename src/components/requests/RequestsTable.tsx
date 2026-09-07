@@ -1465,6 +1465,8 @@ export const RequestsTable = ({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
+                </RowContextMenu>
+
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={100} className="p-0 border-b">
