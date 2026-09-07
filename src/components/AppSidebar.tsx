@@ -267,7 +267,7 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent ref={contentRef} className="overflow-y-auto overscroll-contain">
         {/* Favorites first */}
         {favoriteItems.length > 0 && (
           <SidebarGroup className="py-0">
