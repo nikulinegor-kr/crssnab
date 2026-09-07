@@ -49,6 +49,9 @@ import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
+import { useAuthUserId } from "@/hooks/useOrgMembership";
+import { isBefore, startOfToday } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const moneyShort = (n: number) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
@@ -86,6 +89,17 @@ function summarizeGroup(items: any[]) {
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
 const SORT_STORAGE_KEY = "requests-sort";
+const DENSITY_STORAGE_KEY = "requests-table-density";
+
+type RowDensity = "compact" | "normal" | "roomy";
+
+const statusDotClass = (status: string) => {
+  if (["Доставлено", "Выполнено", "Доставлено в ТК"].includes(status)) return "bg-success";
+  if (["В пути", "Готов к отгрузке"].includes(status)) return "bg-info";
+  if (["В работе", "КП"].includes(status)) return "bg-warning";
+  if (["Счёт", "Счёт в Бухгалтерии", "Счёт в бухгалтерии", "На согласовании"].includes(status)) return "bg-primary";
+  return "bg-muted-foreground";
+};
 
 type SortField = 
   | "request_date" 
@@ -250,8 +264,13 @@ export const RequestsTable = ({
   headerActions,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
-  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility();
+  const { data: userId } = useAuthUserId();
+  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
   const { widths, updateWidth } = useTableColumnWidths();
+  const [density, setDensity] = useState<RowDensity>(() => {
+    const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
+    return saved === "normal" || saved === "roomy" ? saved : "compact";
+  });
   
   // Quick View state — only store ID to avoid re-renders from table data updates
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
@@ -434,6 +453,10 @@ export const RequestsTable = ({
   // Pagination calculations — disabled in grouped mode (show all)
   const grouped = groupByObject || groupByProject;
   const totalItems = sortedRequests?.length || 0;
+  const filteredTotal = useMemo(() => (sortedRequests || []).reduce(
+    (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
+    0
+  ), [sortedRequests]);
   const effectivePageSize = grouped ? Math.max(totalItems, 1) : pageSize;
   const totalPages = grouped ? 1 : Math.ceil(totalItems / pageSize);
   const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
@@ -499,7 +522,7 @@ export const RequestsTable = ({
 
   // Compact Pagination UI
   const PaginationControls = () => (
-    <div className="flex items-center justify-between gap-2 py-2 border-t mt-2">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
           <SelectTrigger className="w-14 h-6 text-xs px-2">
@@ -514,6 +537,9 @@ export const RequestsTable = ({
           </SelectContent>
         </Select>
         <span className="hidden xs:inline">/ {totalItems}</span>
+        <span className="mx-1 h-4 w-px bg-border" />
+        <span>Сумма:</span>
+        <strong className="font-numeric font-semibold text-foreground">{moneyShort(filteredTotal)}</strong>
       </div>
       
       <div className="flex items-center gap-1">
@@ -560,11 +586,32 @@ export const RequestsTable = ({
           <ChevronsRight className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <div className="flex items-center gap-1" aria-label="Плотность строк">
+        {([
+          ["compact", "Плотно"],
+          ["normal", "Обычно"],
+          ["roomy", "Свободно"],
+        ] as const).map(([value, label]) => (
+          <Button
+            key={value}
+            type="button"
+            size="sm"
+            variant={density === value ? "secondary" : "ghost"}
+            className="h-6 px-2 text-xs"
+            onClick={() => {
+              setDensity(value);
+              localStorage.setItem(DENSITY_STORAGE_KEY, value);
+            }}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 
   return (
-    <div className="flex gap-2 items-start">
+    <div className="flex gap-2 items-start" data-density={density}>
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
@@ -675,7 +722,7 @@ export const RequestsTable = ({
             />
           ))
         )}
-        {!grouped && <PaginationControls />}
+        <PaginationControls />
       </div>
 
       {/* Desktop Table View */}
@@ -707,7 +754,7 @@ export const RequestsTable = ({
         <div className="border-0 bg-card">
         <Table className="text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
-            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: '34px' }}>
+            <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
               <TableHead className="w-[32px] min-w-[32px] max-w-[32px] text-center p-1 border-r border-b">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
@@ -715,7 +762,6 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
-              <TableHead className="w-[28px] min-w-[28px] max-w-[28px] text-center p-1 border-r border-b text-xs text-muted-foreground font-bold">№</TableHead>
               {visibility.request_date && (
                 <TableHead className="w-[70px] min-w-[70px] max-w-[70px] text-center p-1 border-r border-b text-xs font-bold text-foreground/80 cursor-pointer hover:bg-muted/60" onClick={() => handleSort("request_date")}>
                   <div className="flex items-center justify-center gap-0.5">
@@ -730,9 +776,6 @@ export const RequestsTable = ({
               {visibility.object && (
                 <ResizableTableHeader column="object" label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
-              {visibility.priority && (
-                <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
-              )}
               {visibility.status && (
                 <ResizableTableHeader column="status" label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
@@ -741,6 +784,9 @@ export const RequestsTable = ({
               )}
               {visibility.contractor && (
                 <ResizableTableHeader column="contractor" label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
+              )}
+              {visibility.amount && (
+                <ResizableTableHeader column="amount" label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
               )}
               {visibility.invoice_number && (
                 <ResizableTableHeader column="invoice_number" label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
@@ -763,14 +809,11 @@ export const RequestsTable = ({
               {visibility.waybill_number && (
                 <ResizableTableHeader column="waybill_number" label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
               )}
-              {visibility.amount && (
-                <ResizableTableHeader column="amount" label="Стоимость" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
-              )}
               {visibility.applicant && (
                 <ResizableTableHeader column="applicant" label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader column="executor" label="Исполнитель" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+                <ResizableTableHeader column="executor" label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
               )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" label="Техника" width={widths.equipment} onResize={handleColumnResize} />
@@ -900,16 +943,16 @@ export const RequestsTable = ({
                 const request = it.request;
                 const index = it.index;
                 const isChildRow = it.child === true;
-                const isEvenRow = index % 2 === 1;
-                const rowNumber = startIndex + index + 1;
+                const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
+                const priorityLine = request.priority === "Аварийно" ? "before:bg-destructive" : request.priority === "Приоритетно" ? "before:bg-warning" : "before:bg-transparent";
 
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer relative group hover:bg-accent/70 ${isEvenRow ? 'bg-muted/40' : ''} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
+                  className={`cursor-pointer relative group border-b border-border hover:bg-[hsl(var(--row-hover))] before:absolute before:inset-y-0 before:left-0 before:w-0.5 ${priorityLine} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: '34px' }}
+                  style={{ height: 'var(--row-h)' }}
                 >
                   <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
@@ -919,9 +962,6 @@ export const RequestsTable = ({
                         className="h-4 w-4"
                       />
                     </div>
-                  </TableCell>
-                  <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }} data-numeric>
-                    {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 70, minWidth: 70, maxWidth: 70 }} data-numeric>
@@ -1010,50 +1050,27 @@ export const RequestsTable = ({
                               <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs italic">не указан</span>
+                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />
 
                     </TableCell>
                   )}
-                  {visibility.priority && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority, minWidth: widths.priority, maxWidth: widths.priority }}>
-                      <QuickBadgeSelect
-                        requestId={request.id}
-                        field="priority"
-                        value={request.priority || "Планово"}
-                        badge={
-                          <Badge
-                            variant="outline"
-                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
-                            style={{
-                              borderColor: getPriorityColor(request.priority || "Планово"),
-                              color: getPriorityColor(request.priority || "Планово"),
-                            }}
-                          >
-                            {request.priority || "Планово"}
-                          </Badge>
-                        }
-                      />
-                    </TableCell>
-                  )}
                   {visibility.status && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
+                    <TableCell className="px-3 py-2 border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
                         value={request.status}
                         badge={
-                          <Badge
-                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
-                            style={{
-                              backgroundColor: getStatusColor(request.status),
-                              color: "white",
-                            }}
-                          >
-                            {request.status}
-                          </Badge>
+                          <span className={cn(
+                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-xs hover:bg-muted",
+                            overdue && "bg-destructive-soft text-destructive hover:bg-destructive-soft"
+                          )}>
+                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", overdue ? "bg-destructive" : statusDotClass(request.status))} />
+                            {overdue ? "Просрочено" : request.status}
+                          </span>
                         }
                       />
                     </TableCell>
@@ -1065,7 +1082,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-xs italic">нет данных</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   )}
@@ -1081,7 +1098,25 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs italic">не указан</span>
+                            <span className="text-muted-foreground">—</span>
+                          )
+                        }
+                      />
+                    </TableCell>
+                  )}
+                  {visibility.amount && (
+                    <TableCell className="text-right px-2 py-1.5 border-b overflow-hidden text-xs font-mono" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }} data-numeric>
+                      <InlineEditCell
+                        requestId={request.id}
+                        field="amount"
+                        value={request.amount ?? ""}
+                        displayValue={
+                          request.amount && request.amount > 0 ? (
+                            <span className="font-medium">
+                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />
@@ -1094,7 +1129,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-xs italic">не выставлен</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   )}
@@ -1125,7 +1160,7 @@ export const RequestsTable = ({
                         field="shipment_date"
                         value={request.shipment_date || ""}
                         displayValue={
-                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">ожидается</span>}</span>
+                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground">—</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1137,7 +1172,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">нет данных</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground">—</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1154,7 +1189,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs italic">нет данных</span>
+                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />
@@ -1178,24 +1213,6 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
-                  {visibility.amount && (
-                    <TableCell className="text-right px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" style={{ width: widths.amount, minWidth: widths.amount, maxWidth: widths.amount }} data-numeric>
-                      <InlineEditCell
-                        requestId={request.id}
-                        field="amount"
-                        value={request.amount ?? ""}
-                        displayValue={
-                          request.amount && request.amount > 0 ? (
-                            <span className="font-medium">
-                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs italic">нет суммы</span>
-                          )
-                        }
-                      />
-                    </TableCell>
-                  )}
                   {visibility.applicant && (
                     <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]" style={{ width: widths.applicant, minWidth: widths.applicant, maxWidth: widths.applicant }}>
                       <InlineEditCell
@@ -1208,7 +1225,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs italic">не указан</span>
+                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />
@@ -1238,7 +1255,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-xs italic">нет техники</span>
+                            <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   )}
@@ -1254,7 +1271,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs italic">нет</span>
+                            <span className="text-muted-foreground">—</span>
                           )
                         }
                       />
@@ -1314,7 +1331,7 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
-        {!grouped && <PaginationControls />}
+        <PaginationControls />
         </div>
       </div>
       </div>

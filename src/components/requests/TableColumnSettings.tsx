@@ -32,16 +32,16 @@ export interface ColumnVisibility {
 }
 
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
-  request_date: true,
+  request_date: false,
   description: true,
   object: true,
-  priority: true,
+  priority: false,
   status: true,
   availability: false,
   contractor: true,
   invoice_number: false,
-  payment_prepay: true,
-  payment_percentage: true,
+  payment_prepay: false,
+  payment_percentage: false,
   shipment_date: false,
   delivery_date: true,
   transport_company: false,
@@ -57,7 +57,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   request_date: "Дата",
   description: "Заявка",
   object: "Объект",
-  priority: "Приоритет",
+  priority: "Приоритет (устаревшая колонка)",
   status: "Статус",
   availability: "Наличие",
   contractor: "Контрагент",
@@ -68,9 +68,9 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   delivery_date: "Приход",
   transport_company: "ТК",
   waybill_number: "№ТТН",
-  amount: "Стоимость",
+  amount: "Сумма",
   applicant: "Заявитель",
-  executor: "Исполнитель",
+  executor: "Кто ведёт",
   comments: "Комментарий",
   equipment: "Техника",
 };
@@ -108,7 +108,7 @@ export const TableColumnSettings = ({
       <PopoverContent className="w-56 bg-background border shadow-lg z-50" align="end">
         <div className="space-y-1">
           <h4 className="font-medium text-sm mb-3">Отображение колонок</h4>
-          {(Object.keys(COLUMN_LABELS) as Array<keyof ColumnVisibility>).map((column) => (
+          {(Object.keys(COLUMN_LABELS) as Array<keyof ColumnVisibility>).filter((column) => column !== "priority").map((column) => (
             <div key={column} className="flex items-center gap-2 py-1">
               <Checkbox
                 id={`col-${column}`}
