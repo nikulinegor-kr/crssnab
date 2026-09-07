@@ -44,8 +44,12 @@ import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
 import { QuickBadgeSelect } from "./QuickBadgeSelect";
 import { InlineObjectCell } from "./InlineObjectCell";
-import { InlineExecutorCell } from "./InlineExecutorCell";
+import { InlineParticipantCell } from "./InlineParticipantCell";
+import { RowContextMenu } from "./RowContextMenu";
+import { useRequestParticipants } from "@/hooks/useRequestParticipants";
+import { formatPersonName } from "@/lib/personName";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
+
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
@@ -231,7 +235,7 @@ const MobileRequestCard = memo(({
           )}
           {request.applicant && (
             <span className="truncate max-w-[80px]">
-              <span className="font-medium">З:</span> <HighlightText text={request.applicant} searchQuery={searchQuery} />
+              <span className="font-medium">З:</span> <HighlightText text={formatPersonName(request.applicant)} searchQuery={searchQuery} />
             </span>
           )}
           {(() => {
@@ -280,8 +284,11 @@ export const RequestsTable = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [bulkSaving, setBulkSaving] = useState(false);
+  const tableOrgId = (requests?.[0] as any)?.organization_id ?? null;
+  const { data: bulkExecutors = [] } = useRequestParticipants("executor", tableOrgId, selectedRequestIds.size > 0);
 
-  const applyBulk = useCallback(async (field: "status" | "priority", value: string) => {
+
+  const applyBulk = useCallback(async (field: "status" | "priority" | "executor", value: string) => {
     const ids = Array.from(selectedRequestIds);
     if (!ids.length) return;
     setBulkSaving(true);
@@ -290,8 +297,8 @@ export const RequestsTable = ({
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast({
-        title: field === "status" ? "Статус изменён" : "Приоритет изменён",
-        description: `Заявок: ${ids.length} · ${value}`,
+        title: field === "status" ? "Статус изменён" : field === "priority" ? "Приоритет изменён" : "Исполнитель изменён",
+        description: `Заявок: ${ids.length} · ${field === "executor" ? formatPersonName(value) : value}`,
       });
     } catch (e) {
       console.error("Bulk update:", e);
@@ -300,6 +307,7 @@ export const RequestsTable = ({
       setBulkSaving(false);
     }
   }, [queryClient, selectedRequestIds, toast]);
+
 
   const { data: userId } = useAuthUserId();
   const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
@@ -313,8 +321,8 @@ export const RequestsTable = ({
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
 
-  // Меню статуса/приоритета (клик по ячейке либо клавиши S / P)
-  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" } | null>(null);
+  // Меню статуса / приоритета / исполнителя (клик по ячейке либо клавиши S / P / I)
+  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" | "executor" } | null>(null);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -332,8 +340,12 @@ export const RequestsTable = ({
       } else if (key === "p" || key === "з") {
         event.preventDefault();
         setOpenMenu({ id: activeRequestId, field: "priority" });
+      } else if (key === "i" || key === "ш") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "executor" });
       }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeRequestId]);
@@ -1053,7 +1065,18 @@ export const RequestsTable = ({
 
                 return (
                 <React.Fragment key={request.id}>
+                  <RowContextMenu
+                    requestId={request.id}
+                    organizationId={request.organization_id}
+                    requestNumber={(request as any).request_number || request.id}
+                    status={request.status}
+                    priority={request.priority || null}
+                    applicant={request.applicant || null}
+                    executor={request.executor || null}
+                    onOpenCard={() => navigate(`/requests/${request.id}`)}
+                  >
                   <TableRow
+
                   className={cn(
                     "cursor-pointer group border-b border-border",
                     activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
@@ -1352,33 +1375,29 @@ export const RequestsTable = ({
                   )}
                   {visibility.applicant && (
                     <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineEditCell
-                        editOnClick
+                      <InlineParticipantCell
                         requestId={request.id}
+                        organizationId={request.organization_id}
                         field="applicant"
-                        value={request.applicant || ""}
-                        displayValue={
-                          request.applicant ? (
-                            <div className="line-clamp-2 leading-snug text-foreground">
-                              <HighlightText text={request.applicant} searchQuery={searchQuery} />
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )
-                        }
+                        value={request.applicant || null}
+                        searchQuery={searchQuery}
                       />
                     </TableCell>
                   )}
                   {visibility.executor && (
                     <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineExecutorCell
+                      <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
+                        field="executor"
                         value={request.executor}
                         searchQuery={searchQuery}
+                        open={openMenu?.id === request.id && openMenu.field === "executor"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "executor" } : null)}
                       />
                     </TableCell>
                   )}
+
                   {visibility.equipment && (
                     <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
@@ -1456,6 +1475,8 @@ export const RequestsTable = ({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
+                </RowContextMenu>
+
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={100} className="p-0 border-b">
@@ -1492,6 +1513,17 @@ export const RequestsTable = ({
                 ))}
               </SelectContent>
             </Select>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("executor", v)}>
+              <SelectTrigger className="h-7 w-[170px] text-xs">
+                <SelectValue placeholder="Кто ведёт" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {bulkExecutors.map((p) => (
+                  <SelectItem key={p.id} value={p.name} className="text-xs">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSelection}>
               Снять выделение
             </Button>

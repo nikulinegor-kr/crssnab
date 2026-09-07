@@ -28,7 +28,9 @@ interface FilterState {
   priorityFilter: string;
   yearFilter: string;
   applicantFilter: string;
+  executorFilter?: string;
   hideDelivered: boolean;
+
 }
 
 interface SavedFilter {

@@ -521,10 +521,13 @@ const Requests = () => {
             setYearFilter={filters.setYearFilter}
             applicantFilter={filters.applicantFilter}
             setApplicantFilter={filters.setApplicantFilter}
+            executorFilter={filters.executorFilter}
+            setExecutorFilter={filters.setExecutorFilter}
             hideDelivered={filters.hideDelivered}
             setHideDelivered={filters.setHideDelivered}
             years={filters.years}
             uniqueApplicants={filters.uniqueApplicants}
+            uniqueExecutors={filters.uniqueExecutors}
             currentFilters={filters.currentFilters}
             selectAllStatuses={filters.selectAllStatuses}
             addYear={filters.addYear}
@@ -592,10 +595,13 @@ const Requests = () => {
             setYearFilter={filters.setYearFilter}
             applicantFilter={filters.applicantFilter}
             setApplicantFilter={filters.setApplicantFilter}
+            executorFilter={filters.executorFilter}
+            setExecutorFilter={filters.setExecutorFilter}
             hideDelivered={filters.hideDelivered}
             setHideDelivered={filters.setHideDelivered}
             years={filters.years}
             uniqueApplicants={filters.uniqueApplicants}
+            uniqueExecutors={filters.uniqueExecutors}
             currentFilters={filters.currentFilters}
             selectAllStatuses={filters.selectAllStatuses}
             addYear={filters.addYear}
