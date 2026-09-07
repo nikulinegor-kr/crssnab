@@ -281,6 +281,32 @@ export const RequestsTable = ({
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
 
+  // Меню статуса/приоритета (клик по ячейке либо клавиши S / P)
+  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" } | null>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+        return;
+      }
+      if (!activeRequestId || event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "s" || key === "ы") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "status" });
+      } else if (key === "p" || key === "з") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "priority" });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeRequestId]);
+
+
   const openQuickView = useCallback((request: Request) => {
     setQuickViewRequestId(request.id);
     setQuickViewOpen(true);
