@@ -504,7 +504,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     try {
       const requestData = {
         request_date: data.request_date,
-        description: data.description,
+        description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
         status: data.status,
         priority: data.priority,
         applicant: data.applicant,
@@ -634,7 +634,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     if (data) {
       form.reset({
         request_date: data.request_date,
-        description: data.description,
+        description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
         status: data.status,
         priority: data.priority,
         applicant: data.applicant || "",
@@ -723,7 +723,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       const requestData = {
         request_date: data.request_date,
-        description: data.description,
+        description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
         status: data.status,
         priority: data.priority,
         applicant: data.applicant,

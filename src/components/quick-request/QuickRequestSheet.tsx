@@ -182,7 +182,7 @@ export const QuickRequestSheet = ({ open, onOpenChange }: QuickRequestSheetProps
               )}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Остальные поля можно заполнить позже. Статус: «Входящая заявка».
+              Остальные поля можно заполнить позже. Статус: «Новая заявка».
             </p>
           </form>
         </TabsContent>
