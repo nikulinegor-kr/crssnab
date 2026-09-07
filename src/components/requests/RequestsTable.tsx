@@ -49,6 +49,8 @@ import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
+import { useAuthUserId } from "@/hooks/useOrgMembership";
+import { isBefore, startOfToday } from "date-fns";
 
 const moneyShort = (n: number) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
@@ -86,6 +88,17 @@ function summarizeGroup(items: any[]) {
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "requests-page-size";
 const SORT_STORAGE_KEY = "requests-sort";
+const DENSITY_STORAGE_KEY = "requests-table-density";
+
+type RowDensity = "compact" | "normal" | "roomy";
+
+const statusDotClass = (status: string) => {
+  if (["Доставлено", "Выполнено", "Доставлено в ТК"].includes(status)) return "bg-success";
+  if (["В пути", "Готов к отгрузке"].includes(status)) return "bg-info";
+  if (["В работе", "КП"].includes(status)) return "bg-warning";
+  if (["Счёт", "Счёт в Бухгалтерии", "Счёт в бухгалтерии", "На согласовании"].includes(status)) return "bg-primary";
+  return "bg-muted-foreground";
+};
 
 type SortField = 
   | "request_date" 
@@ -250,8 +263,13 @@ export const RequestsTable = ({
   headerActions,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
-  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility();
+  const { data: userId } = useAuthUserId();
+  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
   const { widths, updateWidth } = useTableColumnWidths();
+  const [density, setDensity] = useState<RowDensity>(() => {
+    const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
+    return saved === "normal" || saved === "roomy" ? saved : "compact";
+  });
   
   // Quick View state — only store ID to avoid re-renders from table data updates
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
@@ -434,6 +452,10 @@ export const RequestsTable = ({
   // Pagination calculations — disabled in grouped mode (show all)
   const grouped = groupByObject || groupByProject;
   const totalItems = sortedRequests?.length || 0;
+  const filteredTotal = useMemo(() => (sortedRequests || []).reduce(
+    (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
+    0
+  ), [sortedRequests]);
   const effectivePageSize = grouped ? Math.max(totalItems, 1) : pageSize;
   const totalPages = grouped ? 1 : Math.ceil(totalItems / pageSize);
   const startIndex = grouped ? 0 : (currentPage - 1) * pageSize;
@@ -499,7 +521,7 @@ export const RequestsTable = ({
 
   // Compact Pagination UI
   const PaginationControls = () => (
-    <div className="flex items-center justify-between gap-2 py-2 border-t mt-2">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
           <SelectTrigger className="w-14 h-6 text-xs px-2">
@@ -514,6 +536,9 @@ export const RequestsTable = ({
           </SelectContent>
         </Select>
         <span className="hidden xs:inline">/ {totalItems}</span>
+        <span className="mx-1 h-4 w-px bg-border" />
+        <span>Сумма:</span>
+        <strong className="font-numeric font-semibold text-foreground">{moneyShort(filteredTotal)}</strong>
       </div>
       
       <div className="flex items-center gap-1">
@@ -560,11 +585,32 @@ export const RequestsTable = ({
           <ChevronsRight className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <div className="flex items-center gap-1" aria-label="Плотность строк">
+        {([
+          ["compact", "Плотно"],
+          ["normal", "Обычно"],
+          ["roomy", "Свободно"],
+        ] as const).map(([value, label]) => (
+          <Button
+            key={value}
+            type="button"
+            size="sm"
+            variant={density === value ? "secondary" : "ghost"}
+            className="h-6 px-2 text-xs"
+            onClick={() => {
+              setDensity(value);
+              localStorage.setItem(DENSITY_STORAGE_KEY, value);
+            }}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 
   return (
-    <div className="flex gap-2 items-start">
+    <div className="flex gap-2 items-start" data-density={density}>
       <div className="flex-1 min-w-0">
       {/* Mobile View - Compact Cards */}
       <div className="lg:hidden space-y-1.5">
@@ -715,7 +761,6 @@ export const RequestsTable = ({
                   className="h-4 w-4"
                 />
               </TableHead>
-              <TableHead className="w-[28px] min-w-[28px] max-w-[28px] text-center p-1 border-r border-b text-xs text-muted-foreground font-bold">№</TableHead>
               {visibility.request_date && (
                 <TableHead className="w-[70px] min-w-[70px] max-w-[70px] text-center p-1 border-r border-b text-xs font-bold text-foreground/80 cursor-pointer hover:bg-muted/60" onClick={() => handleSort("request_date")}>
                   <div className="flex items-center justify-center gap-0.5">
@@ -729,9 +774,6 @@ export const RequestsTable = ({
               )}
               {visibility.object && (
                 <ResizableTableHeader column="object" label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
-              )}
-              {visibility.priority && (
-                <ResizableTableHeader column="priority" label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
               )}
               {visibility.status && (
                 <ResizableTableHeader column="status" label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
@@ -900,16 +942,16 @@ export const RequestsTable = ({
                 const request = it.request;
                 const index = it.index;
                 const isChildRow = it.child === true;
-                const isEvenRow = index % 2 === 1;
-                const rowNumber = startIndex + index + 1;
+                const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
+                const priorityLine = request.priority === "Аварийно" ? "before:bg-destructive" : request.priority === "Приоритетно" ? "before:bg-warning" : "before:bg-transparent";
 
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
-                  className={`cursor-pointer relative group hover:bg-accent/70 ${isEvenRow ? 'bg-muted/40' : ''} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
+                  className={`cursor-pointer relative group border-b border-border hover:bg-[hsl(var(--row-hover))] before:absolute before:inset-y-0 before:left-0 before:w-0.5 ${priorityLine} ${isChildRow ? 'bg-primary/[0.03]' : ''}`}
                   onClick={(e) => handleRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: '34px' }}
+                  style={{ height: 'var(--row-h)' }}
                 >
                   <TableCell className="text-center p-1 border-r border-b align-middle" style={{ width: 32, minWidth: 32, maxWidth: 32 }} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
@@ -919,9 +961,6 @@ export const RequestsTable = ({
                         className="h-4 w-4"
                       />
                     </div>
-                  </TableCell>
-                  <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 28, minWidth: 28, maxWidth: 28 }} data-numeric>
-                    {rowNumber}
                   </TableCell>
                   {visibility.request_date && (
                     <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" style={{ width: 70, minWidth: 70, maxWidth: 70 }} data-numeric>
@@ -1017,43 +1056,20 @@ export const RequestsTable = ({
 
                     </TableCell>
                   )}
-                  {visibility.priority && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.priority, minWidth: widths.priority, maxWidth: widths.priority }}>
-                      <QuickBadgeSelect
-                        requestId={request.id}
-                        field="priority"
-                        value={request.priority || "Планово"}
-                        badge={
-                          <Badge
-                            variant="outline"
-                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
-                            style={{
-                              borderColor: getPriorityColor(request.priority || "Планово"),
-                              color: getPriorityColor(request.priority || "Планово"),
-                            }}
-                          >
-                            {request.priority || "Планово"}
-                          </Badge>
-                        }
-                      />
-                    </TableCell>
-                  )}
                   {visibility.status && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
+                    <TableCell className="px-3 py-2 border-b overflow-hidden" style={{ width: widths.status, minWidth: widths.status, maxWidth: widths.status }}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
                         value={request.status}
                         badge={
-                          <Badge
-                            className="text-xs px-2 py-0.5 cursor-pointer hover:opacity-80"
-                            style={{
-                              backgroundColor: getStatusColor(request.status),
-                              color: "white",
-                            }}
-                          >
-                            {request.status}
-                          </Badge>
+                          <span className={cn(
+                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-xs hover:bg-muted",
+                            overdue && "bg-destructive-soft text-destructive hover:bg-destructive-soft"
+                          )}>
+                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", overdue ? "bg-destructive" : statusDotClass(request.status))} />
+                            {overdue ? "Просрочено" : request.status}
+                          </span>
                         }
                       />
                     </TableCell>
