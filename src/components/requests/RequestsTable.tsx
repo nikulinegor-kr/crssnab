@@ -1361,33 +1361,29 @@ export const RequestsTable = ({
                   )}
                   {visibility.applicant && (
                     <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineEditCell
-                        editOnClick
+                      <InlineParticipantCell
                         requestId={request.id}
+                        organizationId={request.organization_id}
                         field="applicant"
-                        value={request.applicant || ""}
-                        displayValue={
-                          request.applicant ? (
-                            <div className="line-clamp-2 leading-snug text-foreground">
-                              <HighlightText text={request.applicant} searchQuery={searchQuery} />
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )
-                        }
+                        value={request.applicant || null}
+                        searchQuery={searchQuery}
                       />
                     </TableCell>
                   )}
                   {visibility.executor && (
                     <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineExecutorCell
+                      <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
+                        field="executor"
                         value={request.executor}
                         searchQuery={searchQuery}
+                        open={openMenu?.id === request.id && openMenu.field === "executor"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "executor" } : null)}
                       />
                     </TableCell>
                   )}
+
                   {visibility.equipment && (
                     <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
