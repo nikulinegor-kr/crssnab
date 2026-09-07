@@ -28,7 +28,6 @@ interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
   open: boolean;
   onClose: () => void;
-  onEdit?: (request: Request) => void;
   onPrevious?: () => void;
   onNext?: () => void;
   hasPrevious?: boolean;
@@ -56,7 +55,6 @@ export const RequestSidePanel = ({
   request,
   open,
   onClose,
-  onEdit,
   onPrevious,
   onNext,
   hasPrevious = false,
