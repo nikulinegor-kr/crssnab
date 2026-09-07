@@ -991,8 +991,24 @@ export const RequestsTable = ({
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell data-row-action className="text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
-
+                  <TableCell data-row-action className="relative text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
+                    <QuickBadgeSelect
+                      requestId={request.id}
+                      field="priority"
+                      value={request.priority || "Планово"}
+                      badge={null}
+                      open={openMenu?.id === request.id && openMenu.field === "priority"}
+                      onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+                      trigger={
+                        <span
+                          role="button"
+                          tabIndex={-1}
+                          aria-label={`Приоритет: ${request.priority || "Планово"}`}
+                          title={`Приоритет: ${request.priority || "Планово"}`}
+                          className="absolute inset-y-0 left-0 w-[6px] cursor-pointer hover:bg-primary/20"
+                        />
+                      }
+                    />
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -1001,6 +1017,7 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
+
                   {visibility.request_date && (
                     <TableCell className="text-center p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
