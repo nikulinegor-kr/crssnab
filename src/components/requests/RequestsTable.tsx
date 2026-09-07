@@ -772,7 +772,7 @@ export const RequestsTable = ({
           <colgroup>
             <col style={{ width: 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
-            {visibility.description && <col style={{ minWidth: widths.description }} />}
+            {visibility.description && <col style={{ width: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
             {visibility.status && <col style={{ width: widths.status }} />}
             {visibility.availability && <col style={{ width: widths.availability }} />}
