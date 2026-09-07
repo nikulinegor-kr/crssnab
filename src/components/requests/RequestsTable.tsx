@@ -95,11 +95,12 @@ type RowDensity = "compact" | "normal" | "roomy";
 
 const statusDotClass = (status: string) => {
   if (["Доставлено", "Выполнено", "Доставлено в ТК"].includes(status)) return "bg-success";
-  if (["В пути", "Готов к отгрузке"].includes(status)) return "bg-info";
-  if (["В работе", "КП"].includes(status)) return "bg-warning";
-  if (["Счёт", "Счёт в Бухгалтерии", "Счёт в бухгалтерии", "На согласовании"].includes(status)) return "bg-primary";
+  if (["В пути"].includes(status)) return "bg-primary";
+  if (["Готов к отгрузке", "На согласовании", "В работе"].includes(status)) return "bg-info";
+  if (["КП", "Запрос КП", "Ожидание КП", "Счёт", "Счёт в Бухгалтерии", "Счёт в бухгалтерии", "Обновить счёт"].includes(status)) return "bg-warning";
   return "bg-muted-foreground";
 };
+
 
 type SortField = 
   | "request_date" 
@@ -765,16 +766,13 @@ export const RequestsTable = ({
           </Toggle>
           {headerActions}
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={resetColumnWidths} title="Сбросить ширину колонок">
-            Ширина по умолчанию
-          </Button>
         </div>
         <div className="border-0 bg-card">
         <Table className="w-max min-w-full text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
-            {visibility.description && <col style={{ width: widths.description }} />}
+            {visibility.description && <col style={{ minWidth: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
             {visibility.status && <col style={{ width: widths.status }} />}
             {visibility.availability && <col style={{ width: widths.availability }} />}
@@ -979,22 +977,22 @@ export const RequestsTable = ({
                 const index = it.index;
                 const isChildRow = it.child === true;
                 const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
-                const priorityLine = request.priority === "Аварийно" ? "before:bg-destructive" : request.priority === "Приоритетно" ? "before:bg-warning" : "before:bg-transparent";
+                const priorityShadow = request.priority === "Аварийно" ? "inset 2px 0 0 hsl(var(--destructive))" : request.priority === "Приоритетно" ? "inset 2px 0 0 hsl(var(--warning))" : undefined;
 
                 return (
                 <React.Fragment key={request.id}>
                   <TableRow
                   className={cn(
-                    "cursor-pointer relative group border-b border-border before:absolute before:inset-y-0 before:left-0 before:w-0.5",
+                    "cursor-pointer group border-b border-border",
                     activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
-                    priorityLine,
                     isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
                   )}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell data-row-action className="text-center p-1 border-b align-middle" onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
+
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
