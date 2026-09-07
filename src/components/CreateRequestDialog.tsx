@@ -790,7 +790,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   );
 
   const desktopActions = (
-    <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 flex justify-end gap-2 border-t bg-background px-6 py-3">
+    <div className="shrink-0 sticky bottom-0 z-10 flex justify-end gap-2 border-t bg-background px-6 py-3">
       <Button
         type="button"
         variant="outline"
@@ -870,8 +870,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             </SheetHeader>
             <SheetDescription className="sr-only">Заполните форму для создания заявки</SheetDescription>
             <div
-              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overscroll-contain overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
             >
+
               {formContent}
             </div>
             <div className="shrink-0 border-t bg-background/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
