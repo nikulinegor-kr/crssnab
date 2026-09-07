@@ -6,7 +6,7 @@ import {
   Star,
   FileText,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Collapsible,
@@ -40,6 +40,7 @@ import { menuGroups, findItemById, type MenuItem, type MenuGroup } from "@/confi
 import { useSidebarPrefs } from "@/hooks/useSidebarPrefs";
 
 const OPEN_KEY = "sidebar:groups-open:v1";
+const SCROLL_KEY = "sidebar:scroll-top:v1";
 
 function ThemeToggle({ showText }: { showText: boolean }) {
   const { theme, setTheme } = useTheme();
