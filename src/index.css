@@ -265,12 +265,14 @@ All colors MUST be HSL.
   }
 
   .requests-registry table {
-    font-size: 12px;
+    font-size: 14px;
+    line-height: 20px;
   }
 
   .requests-registry table thead th {
     font-size: 12px;
     font-weight: 500;
+    letter-spacing: 0;
     color: hsl(var(--muted-foreground));
     text-transform: none;
   }
@@ -289,9 +291,20 @@ All colors MUST be HSL.
     background-color: hsl(var(--row-sel));
   }
 
+  /* One text size for the whole row — secondary columns differ by colour, not size */
   .requests-registry table tbody td {
-    padding-top: 0.2rem;
-    padding-bottom: 0.2rem;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+  }
+
+  .requests-registry table tbody td [data-numeric],
+  .requests-registry table tbody td.font-mono,
+  .requests-registry table tbody td[data-numeric] {
+    font-family: var(--mono);
+    font-size: 13px !important;
+    font-variant-numeric: tabular-nums;
   }
 
   .requests-registry [data-density="compact"] { --row-h: 32px; }
@@ -303,6 +316,7 @@ All colors MUST be HSL.
     border-left-width: 0;
     border-right-width: 0;
   }
+
 }
 
 /* Dark theme: emerald "paid" badges need a lighter green for WCAG AA */
