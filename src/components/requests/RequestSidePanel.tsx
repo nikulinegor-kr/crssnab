@@ -8,7 +8,8 @@ import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { useRequestParticipants } from "@/hooks/useRequestParticipants";
+import { formatPersonName } from "@/lib/personName";
 import { useUserRole } from "@/hooks/useUserRole";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -71,9 +72,11 @@ export const RequestSidePanel = ({
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
   const { canEdit } = useUserRole();
-  const { data: members } = useOrgMembers();
+  const { data: applicantsDir = [] } = useRequestParticipants("applicant", currentOrgId);
+  const { data: executorsDir = [] } = useRequestParticipants("executor", currentOrgId);
   const [savingField, setSavingField] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1100);
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -81,6 +84,12 @@ export const RequestSidePanel = ({
   const [titleValue, setTitleValue] = useState("");
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
+  useEffect(() => {
+    const onResize = () => setViewportWide(window.innerWidth >= 1100);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const applyWidth = useCallback(
     (next: number) => {
@@ -322,12 +331,13 @@ export const RequestSidePanel = ({
   const total = goods + extra;
   const paid = (request as any)?.payment_percent ?? request?.payment_percentage ?? 0;
 
-  const memberOptions: PanelFieldOption[] = useMemo(
-    () =>
-      (members || [])
-        .filter((m) => m.full_name)
-        .map((m) => ({ value: m.full_name as string, label: m.full_name as string })),
-    [members]
+  const applicantOptions: PanelFieldOption[] = useMemo(
+    () => applicantsDir.map((p) => ({ value: p.name, label: p.label })),
+    [applicantsDir]
+  );
+  const executorOptions: PanelFieldOption[] = useMemo(
+    () => executorsDir.map((p) => ({ value: p.name, label: p.label })),
+    [executorsDir]
   );
   const objectOptions: PanelFieldOption[] = useMemo(
     () => (objects || []).map((o: any) => ({ value: o.id, label: o.name })),
@@ -347,14 +357,14 @@ export const RequestSidePanel = ({
     const steps: { title: string; sub: string; done: boolean }[] = [
       {
         title: "Заявка создана",
-        sub: `${dt(request.request_date) ?? "—"}${request.applicant ? ` • ${request.applicant}` : ""}`,
+        sub: `${dt(request.request_date) ?? "—"}${request.applicant ? ` • ${formatPersonName(request.applicant)}` : ""}`,
         done: true,
       },
     ];
     if (request.invoice_number) {
       steps.push({
         title: "Счёт получен и согласован",
-        sub: `${dt((request as any).invoice_date || request.request_date) ?? "—"}${request.executor ? ` • ${request.executor}` : ""}`,
+        sub: `${dt((request as any).invoice_date || request.request_date) ?? "—"}${request.executor ? ` • ${formatPersonName(request.executor)}` : ""}`,
         done: true,
       });
     }
@@ -368,7 +378,7 @@ export const RequestSidePanel = ({
     if ((request as any).actual_arrival_date) {
       steps.push({
         title: "Приход подтверждён",
-        sub: `${dt((request as any).actual_arrival_date) ?? "—"}${request.received_by ? ` • ${request.received_by}` : ""}`,
+        sub: `${dt((request as any).actual_arrival_date) ?? "—"}${request.received_by ? ` • ${formatPersonName(request.received_by)}` : ""}`,
         done: true,
       });
     }
@@ -560,17 +570,18 @@ export const RequestSidePanel = ({
             <PanelField
               label="Заявитель"
               type="select"
-              options={memberOptions}
+              options={applicantOptions}
               value={request.applicant}
-              accent
+              display={formatPersonName(request.applicant)}
               readOnly={readOnly}
               onSave={(v) => saveField("applicant", v)}
             />
             <PanelField
               label="Кто ведёт"
               type="select"
-              options={memberOptions}
+              options={executorOptions}
               value={request.executor}
+              display={formatPersonName(request.executor)}
               readOnly={readOnly}
               onSave={(v) => saveField("executor", v)}
             />
