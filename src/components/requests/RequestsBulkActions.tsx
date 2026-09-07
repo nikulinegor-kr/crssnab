@@ -578,11 +578,11 @@ export const RequestsBulkActions = ({
                   Не оплачено (0%)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(50)}>
-                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-amber-500" />
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-warning" />
                   Частично (50%)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleBulkPaymentUpdate(100)}>
-                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-emerald-500" />
+                  <span className="w-2 h-2 rounded-full mr-2 shrink-0 bg-success" />
                   Оплачено (100%)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -692,7 +692,7 @@ export const RequestsBulkActions = ({
             <Button
               onClick={handleBulkStatusChange}
               disabled={isSending}
-              className="gap-1.5 text-xs h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="gap-1.5 text-xs h-8 px-3 bg-success hover:bg-success text-primary-foreground"
               size="sm"
             >
               <Truck className="h-3.5 w-3.5" />
@@ -735,7 +735,7 @@ export const RequestsBulkActions = ({
             <Button
               onClick={() => setHardDeleteOpen(true)}
               variant="destructive"
-              className="gap-1.5 text-xs h-8 px-3 bg-red-700 hover:bg-red-800"
+              className="gap-1.5 text-xs h-8 px-3 bg-destructive hover:bg-destructive"
               size="sm"
             >
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -777,7 +777,7 @@ export const RequestsBulkActions = ({
             <AlertDialogAction
               onClick={handleHardDelete}
               disabled={isDeleting}
-              className="bg-red-700 hover:bg-red-800"
+              className="bg-destructive hover:bg-destructive"
             >
               {isDeleting ? "Удаление..." : "Удалить навсегда"}
             </AlertDialogAction>

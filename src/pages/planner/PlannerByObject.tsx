@@ -85,7 +85,7 @@ export default function PlannerByObject() {
               <Card key={obj.id} className="overflow-hidden">
                 <Collapsible defaultOpen>
                   <CollapsibleTrigger className="w-full flex items-center gap-2 px-4 py-3 hover:bg-accent/30 transition">
-                    <MapPin className="h-4 w-4 text-emerald-500" />
+                    <MapPin className="h-4 w-4 text-success" />
                     <span className="text-sm font-semibold flex-1 text-left">{obj.name}</span>
                     <Badge variant="secondary" className="font-numeric">{totalTasks}</Badge>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -94,7 +94,7 @@ export default function PlannerByObject() {
                     {obj.equipment.map((eq) => (
                       <div key={eq.id} className="px-4 py-2.5">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <Truck className={cn("h-3.5 w-3.5", eq.id === NO_EQUIP ? "text-muted-foreground" : "text-blue-500")} />
+                          <Truck className={cn("h-3.5 w-3.5", eq.id === NO_EQUIP ? "text-muted-foreground" : "text-info")} />
                           <span className="text-xs font-medium">{eq.label}</span>
                           <Badge variant="outline" className="ml-auto font-numeric text-[10px]">{eq.tasks.length}</Badge>
                         </div>

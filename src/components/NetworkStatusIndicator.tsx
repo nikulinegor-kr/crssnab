@@ -24,7 +24,7 @@ export function NetworkStatusIndicator() {
       className={cn(
         "fixed bottom-4 left-4 z-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 animate-fade-in",
         isOnline
-          ? "bg-green-500/90 text-white"
+          ? "bg-success/90 text-primary-foreground"
           : "bg-destructive/90 text-destructive-foreground"
       )}
     >

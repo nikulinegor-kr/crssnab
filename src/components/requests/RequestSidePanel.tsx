@@ -28,7 +28,7 @@ const Row = ({ label, value, accent }: { label: string; value: React.ReactNode; 
     <div
       className={cn(
         "min-w-0 flex-1 text-[11px] leading-4 break-words",
-        accent ? "text-[hsl(24_90%_48%)]" : "text-foreground"
+        accent ? "text-primary" : "text-foreground"
       )}
     >
       {value || <span className="text-muted-foreground">—</span>}
@@ -153,7 +153,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
   ] as const;
 
   return createPortal(
-    <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-[-8px_0_24px_-16px_rgba(15,23,42,0.35)] animate-in slide-in-from-right duration-200">
+    <div className="requests-registry fixed inset-y-0 right-0 z-50 flex w-[380px] max-w-[92vw] flex-col border-l border-border bg-card shadow-panel animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
         {editingTitle ? (
@@ -176,7 +176,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
             />
             <button
               onClick={() => titleValue.trim() && saveField("description", titleValue.trim())}
-              className="mt-0.5 text-emerald-600 hover:text-emerald-700"
+              className="mt-0.5 text-success hover:text-success"
               aria-label="Сохранить название"
             >
               {savingField === "description" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -228,8 +228,8 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
             <option key={p} value={p}>{p}</option>
           ))}
         </select>
-        <span>{request.request_number}</span>
-        <span>{dt(request.request_date)}</span>
+        <span className="font-numeric">{request.request_number}</span>
+        <span className="font-numeric">{dt(request.request_date)}</span>
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
@@ -280,7 +280,7 @@ export const RequestSidePanel = ({ request, open, onClose, onEdit, onOpenFull }:
                 <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-[10px]">
-                <span className={paid >= 100 ? "text-emerald-600" : "text-[hsl(24_90%_45%)]"}>
+                <span className={paid >= 100 ? "text-success" : "text-warning"}>
                   {paid >= 100 ? "Оплачено полностью" : paid > 0 ? "Оплачено частично" : "Не оплачено"}
                 </span>
                 <span className="font-numeric text-muted-foreground">{paid} %</span>

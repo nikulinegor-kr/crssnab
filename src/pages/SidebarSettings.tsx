@@ -153,7 +153,7 @@ export default function SidebarSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Star className="h-4 w-4 text-amber-500" />
+            <Star className="h-4 w-4 text-warning" />
             Избранное
           </CardTitle>
         </CardHeader>
@@ -179,7 +179,7 @@ export default function SidebarSettings() {
                           onClick={() => toggleFavorite(item.id)}
                           aria-label="Убрать из избранного"
                         >
-                          <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                          <Star className="h-4 w-4 fill-warning text-warning" />
                         </Button>
                       }
                     />
@@ -223,7 +223,7 @@ export default function SidebarSettings() {
                                 onClick={() => toggleFavorite(item.id)}
                                 aria-label={isFav ? "Убрать из избранного" : "В избранное"}
                               >
-                                <Star className={cn("h-4 w-4", isFav ? "fill-amber-500 text-amber-500" : "text-muted-foreground")} />
+                                <Star className={cn("h-4 w-4", isFav ? "fill-warning text-warning" : "text-muted-foreground")} />
                               </Button>
                               <Separator orientation="vertical" className="h-5" />
                               <Switch

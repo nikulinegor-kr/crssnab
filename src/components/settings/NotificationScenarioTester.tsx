@@ -327,11 +327,11 @@ export function NotificationScenarioTester({ organizationId, orgName = "Моя �
                   return (
                     <div key={i} className="p-3 text-sm space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {r.ok ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        {r.ok ? <CheckCircle2 className="h-4 w-4 text-success" />
                           : <XCircle className="h-4 w-4 text-destructive" />}
                         <span className="font-medium">{s.title}</span>
                         <Badge variant="outline" className="text-[10px] uppercase">{r.platform}</Badge>
-                        {r.simulated && <Badge className="text-[10px] bg-amber-500/15 text-amber-700 border-amber-500/30">simulated</Badge>}
+                        {r.simulated && <Badge className="text-[10px] bg-warning/15 text-warning border-warning/30">simulated</Badge>}
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />{new Date(r.at).toLocaleTimeString("ru-RU")}
                         </span>
@@ -349,7 +349,7 @@ export function NotificationScenarioTester({ organizationId, orgName = "Моя �
                       <div className="grid md:grid-cols-2 gap-2">
                         <div className="text-xs bg-muted/40 rounded p-2 whitespace-pre-wrap">{r.text}</div>
                         <div className="text-xs bg-muted/40 rounded p-2 font-mono overflow-x-auto">
-                          <div>status: <span className={cn(r.ok ? "text-green-600" : "text-destructive")}>{r.status ?? "—"}</span></div>
+                          <div>status: <span className={cn(r.ok ? "text-success" : "text-destructive")}>{r.status ?? "—"}</span></div>
                           {r.error && <div className="text-destructive">error: {r.error}</div>}
                           {r.response && (
                             <pre className="mt-1 whitespace-pre-wrap break-all">

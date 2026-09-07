@@ -22,6 +22,8 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: var(--sans);
+    font-size: 13.5px;
+    letter-spacing: 0;
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -31,7 +33,28 @@ All colors MUST be HSL.
   h1, h2, .page-title {
     font-family: var(--sans);
     font-weight: 600;
-    letter-spacing: 0;
+  }
+
+  h1, .page-title { letter-spacing: -0.02em; }
+  h2 { letter-spacing: -0.015em; }
+
+  time,
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="number"],
+  input[type="time"],
+  [data-numeric],
+  .font-numeric {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  th[data-numeric],
+  td[data-numeric],
+  th.font-numeric,
+  td.font-numeric {
+    text-align: right !important;
   }
 
   #root {
@@ -102,42 +125,53 @@ All colors MUST be HSL.
 
     --row-h: 32px;
 
-    /* Light theme (default) — spec palette */
-    --background: 220 14% 97%;          /* #F6F7F9 */
-    --foreground: 219 26% 8%;           /* #0F1319 */
+    /* Light theme — exact application palette */
+    --background: 220 14% 97%;
+    --foreground: 219 26% 8%;
 
-    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card: 0 0% 100%;
     --card-foreground: 219 26% 8%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 219 26% 8%;
 
-    --primary: 187 87% 32%;             /* #0A8A99 */
+    --primary: 187 87% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 17% 95%;           /* #F1F3F6 */
+    --secondary: 210 17% 95%;
     --secondary-foreground: 219 26% 8%;
 
     --muted: 210 17% 95%;
-    --muted-foreground: 213 11% 40%;    /* #5A6572 */
+    --muted-foreground: 213 11% 40%;
 
-    --accent: 210 17% 95%;
-    --accent-foreground: 219 26% 8%;
+    --accent: 187 87% 32%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 64% 47%;           /* #C42B2B */
+    --destructive: 0 64% 47%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 19% 91%;              /* #E3E7EC */
-    --input: 214 14% 84%;               /* #CDD4DD */
+    --border: 214 19% 91%;
+    --input: 214 14% 84%;
     --ring: 187 87% 32%;
 
-    --success: 160 89% 25%;             /* #07785A */
-    --warning: 37 100% 30%;             /* #9A5B00 */
-    --warning-foreground: 37 100% 20%;
-    --info: 219 68% 47%;                /* #2563C9 */
+    --success: 160 89% 25%;
+    --warning: 37 100% 30%;
+    --warning-foreground: 0 0% 100%;
+    --info: 219 68% 47%;
 
-    --row-hover: 210 20% 96%;           /* #F4F6F8 */
-    --row-sel: 186 41% 94%;             /* #E8F5F6 */
+    --surface-2: 210 25% 99%;
+    --surface-3: 210 17% 95%;
+    --text-3: 214 10% 59%;
+    --primary-soft: 186 42% 94%;
+    --destructive-soft: 0 46% 95%;
+    --warning-soft: 37 44% 92%;
+    --success-soft: 160 45% 93%;
+    --info-soft: 219 51% 95%;
+    --overlay: 219 26% 8%;
+    --panel-shadow: 0 16px 40px hsl(216 45% 11% / 0.13);
+
+    --row-hover: 210 20% 96%;
+    --row-sel: 186 41% 94%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 219 26% 8%;
@@ -153,41 +187,52 @@ All colors MUST be HSL.
   html[data-theme="dark"] {
     color-scheme: dark;
 
-    --background: 222 21% 5%;           /* #0B0D11 */
-    --foreground: 216 28% 93%;          /* #E8ECF2 */
+    --background: 222 21% 5%;
+    --foreground: 216 28% 93%;
 
-    --card: 219 28% 10%;                /* #121620 */
+    --card: 219 28% 10%;
     --card-foreground: 216 28% 93%;
 
     --popover: 219 28% 10%;
     --popover-foreground: 216 28% 93%;
 
-    --primary: 185 81% 47%;             /* #16C7D8 */
-    --primary-foreground: 190 84% 8%;   /* #04252A */
+    --primary: 185 81% 47%;
+    --primary-foreground: 190 84% 8%;
 
-    --secondary: 221 26% 15%;           /* #1D2432 */
+    --secondary: 221 26% 15%;
     --secondary-foreground: 216 28% 93%;
 
     --muted: 221 26% 15%;
-    --muted-foreground: 216 15% 59%;    /* #8792A6 */
+    --muted-foreground: 216 15% 59%;
 
-    --accent: 221 26% 15%;
-    --accent-foreground: 216 28% 93%;
+    --accent: 185 81% 47%;
+    --accent-foreground: 190 84% 8%;
 
-    --destructive: 0 100% 71%;          /* #FF6B6B */
+    --destructive: 0 100% 71%;
     --destructive-foreground: 0 0% 10%;
 
-    --border: 222 23% 17%;              /* #222836 */
-    --input: 219 20% 24%;               /* #303949 */
+    --border: 222 23% 17%;
+    --input: 219 20% 24%;
     --ring: 185 81% 47%;
 
-    --success: 162 62% 51%;             /* #35D0A5 */
-    --warning: 36 91% 55%;              /* #F5A524 */
+    --success: 162 62% 51%;
+    --warning: 36 91% 55%;
     --warning-foreground: 36 91% 55%;
-    --info: 219 100% 72%;               /* #6EA8FF */
+    --info: 219 100% 72%;
 
-    --row-hover: 220 24% 12%;           /* #161B25 */
-    --row-sel: 189 52% 12%;             /* #0F2A30 */
+    --surface-2: 219 26% 12%;
+    --surface-3: 221 26% 15%;
+    --text-3: 219 15% 41%;
+    --primary-soft: 185 42% 14%;
+    --destructive-soft: 0 34% 16%;
+    --warning-soft: 36 32% 16%;
+    --success-soft: 162 28% 15%;
+    --info-soft: 219 30% 17%;
+    --overlay: 0 0% 0%;
+    --panel-shadow: 0 16px 48px hsl(0 0% 0% / 0.55);
+
+    --row-hover: 220 24% 12%;
+    --row-sel: 189 52% 12%;
 
     --sidebar-background: 219 28% 10%;
     --sidebar-foreground: 216 28% 93%;
@@ -259,8 +304,15 @@ All colors MUST be HSL.
 @layer utilities {
 
   .font-numeric {
+    font-family: var(--mono);
     font-variant-numeric: tabular-nums;
   }
+
+  .text-display { font-size: 28px; letter-spacing: -0.02em; }
+  .text-title { font-size: 20px; letter-spacing: -0.015em; }
+  .text-body-lg { font-size: 15px; letter-spacing: -0.012em; }
+  .text-body { font-size: 13.5px; letter-spacing: 0; }
+  .text-caption { font-size: 12px; letter-spacing: 0.005em; }
 
   .glassmorphism {
     background: hsl(var(--card));
@@ -290,23 +342,9 @@ All colors MUST be HSL.
     @apply transition-transform duration-200 hover:scale-105;
   }
 
-  .light-card-shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-  }
-  
+  .light-card-shadow,
   .light-card-shadow:hover {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-  
-  .dark .light-card-shadow {
     box-shadow: none;
-  }
-  
-  .dark .light-card-shadow:hover {
-    box-shadow: 0 0 20px rgba(0, 128, 255, 0.1);
-    transform: translateY(-2px);
   }
 
   /* Smooth table cell transitions */

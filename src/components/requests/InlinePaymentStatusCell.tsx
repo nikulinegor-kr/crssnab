@@ -20,22 +20,22 @@ const STATUS_OPTIONS = [
     label: "Не оплачено",
     value: "not_paid" as const,
     targetPercent: 1,
-    className: "text-red-600 bg-red-50 border-red-200",
-    dotClass: "bg-red-500",
+    className: "text-destructive bg-destructive/10 border-destructive/30",
+    dotClass: "bg-destructive",
   },
   {
     label: "Частично оплачено",
     value: "partial" as const,
     targetPercent: 50,
-    className: "text-blue-600 bg-blue-50 border-blue-200",
-    dotClass: "bg-blue-500",
+    className: "text-info bg-info/10 border-info/30",
+    dotClass: "bg-info",
   },
   {
     label: "Оплачено",
     value: "paid" as const,
     targetPercent: 100,
-    className: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    dotClass: "bg-emerald-500",
+    className: "text-success bg-success/10 border-success/30",
+    dotClass: "bg-success",
   },
 ];
 

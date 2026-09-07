@@ -81,9 +81,9 @@ export const PRIORITY_META: Record<
 > = {
   low: { label: "Планово", className: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
   medium: { label: "Планово", className: "bg-primary/10 text-primary", dot: "bg-primary" },
-  high: { label: "Приоритетно", className: "bg-orange-500/15 text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  high: { label: "Приоритетно", className: "bg-warning/15 text-warning", dot: "bg-warning" },
   urgent: { label: "Аварийно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
-  critical: { label: "Аварийно", className: "bg-red-500/15 text-red-600 dark:text-red-400", dot: "bg-red-500" },
+  critical: { label: "Аварийно", className: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
 };
 
 /** Priorities offered when creating/editing a task (CRM standard). */

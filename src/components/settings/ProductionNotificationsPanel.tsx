@@ -211,10 +211,10 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
 
   const statusBadge = (s: string) => {
     const map: Record<string, { label: string; cls: string }> = {
-      queued: { label: "В очереди", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-300" },
-      sending: { label: "Отправка", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
-      delivered: { label: "Доставлено", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
-      failed: { label: "Ошибка", cls: "bg-red-500/15 text-red-700 dark:text-red-300" },
+      queued: { label: "В очереди", cls: "bg-info/15 text-info dark:text-info" },
+      sending: { label: "Отправка", cls: "bg-warning/15 text-warning dark:text-warning" },
+      delivered: { label: "Доставлено", cls: "bg-success/15 text-success dark:text-success" },
+      failed: { label: "Ошибка", cls: "bg-destructive/15 text-destructive dark:text-destructive" },
       skipped: { label: "Тест", cls: "bg-muted text-muted-foreground" },
     };
     const m = map[s] ?? { label: s, cls: "bg-muted text-muted-foreground" };
@@ -223,9 +223,9 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
 
   const healthDot = (status: string) => {
     const colors: Record<string, string> = {
-      ok: "bg-emerald-500",
-      degraded: "bg-amber-500",
-      down: "bg-red-500",
+      ok: "bg-success",
+      degraded: "bg-warning",
+      down: "bg-destructive",
       unknown: "bg-muted",
     };
     return <span className={`inline-block h-2.5 w-2.5 rounded-full ${colors[status] ?? "bg-muted"}`} />;
@@ -242,7 +242,7 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
   return (
     <div className="space-y-6">
       {/* MODE SWITCH */}
-      <Card className={settings?.mode === "production" ? "border-emerald-500/50" : "border-amber-500/50"}>
+      <Card className={settings?.mode === "production" ? "border-success/50" : "border-warning/50"}>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -311,9 +311,9 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { label: "Всего", value: stats.total, cls: "" },
-              { label: "Доставлено", value: stats.delivered, cls: "text-emerald-600 dark:text-emerald-400" },
-              { label: "В очереди", value: stats.queued, cls: "text-blue-600 dark:text-blue-400" },
-              { label: "Ошибок", value: stats.failed, cls: "text-red-600 dark:text-red-400" },
+              { label: "Доставлено", value: stats.delivered, cls: "text-success dark:text-success" },
+              { label: "В очереди", value: stats.queued, cls: "text-info dark:text-info" },
+              { label: "Ошибок", value: stats.failed, cls: "text-destructive dark:text-destructive" },
               { label: "Тест (skip)", value: stats.skipped, cls: "text-muted-foreground" },
             ].map((s) => (
               <div key={s.label} className="rounded-md border p-3">
@@ -457,7 +457,7 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
                     <TableCell className="font-numeric text-xs">
                       {q.last_http_code ?? "—"}
                       {q.last_error && (
-                        <div className="text-red-600 dark:text-red-400 truncate max-w-[160px]" title={q.last_error}>
+                        <div className="text-destructive dark:text-destructive truncate max-w-[160px]" title={q.last_error}>
                           {q.last_error}
                         </div>
                       )}
@@ -495,11 +495,11 @@ export const ProductionNotificationsPanel = ({ organizationId }: Props) => {
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   {h.last_error && (
-                    <span className="flex items-center gap-1 text-red-600 dark:text-red-400" title={h.last_error}>
+                    <span className="flex items-center gap-1 text-destructive dark:text-destructive" title={h.last_error}>
                       <AlertTriangle className="h-3 w-3" /> {h.last_error.slice(0, 60)}
                     </span>
                   )}
-                  {h.status === "ok" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+                  {h.status === "ok" && <CheckCircle2 className="h-3.5 w-3.5 text-success" />}
                   {h.latency_ms ? <span className="font-numeric">{h.latency_ms}ms</span> : null}
                   <span className="font-numeric">
                     {formatDistanceToNow(new Date(h.last_check_at), { locale: ru, addSuffix: true })}

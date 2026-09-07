@@ -93,10 +93,10 @@ type Enriched = Row & {
 };
 
 const TONE_STYLE: Record<string, string> = {
-  green: "bg-emerald-500/10 hover:bg-emerald-500/20",
-  yellow: "bg-amber-500/10 hover:bg-amber-500/20",
-  blue: "bg-sky-500/10 hover:bg-sky-500/20",
-  purple: "bg-violet-500/10 hover:bg-violet-500/20",
+  green: "bg-success/10 hover:bg-success/20",
+  yellow: "bg-warning/10 hover:bg-warning/20",
+  blue: "bg-info/10 hover:bg-info/20",
+  purple: "bg-info/10 hover:bg-info/20",
   red: "bg-destructive/10 hover:bg-destructive/20",
   none: "hover:bg-muted/40",
 };
@@ -609,9 +609,9 @@ export default function RequestsRegistryPage() {
       <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
         <Stat label="Всего заявок" value={stats.count} />
         <Stat label="Сумма закупок" value={money(stats.total)} />
-        <Stat label="Оплачено" value={money(stats.paidSum)} tone="text-emerald-600" />
-        <Stat label="Не оплачено" value={money(stats.unpaidSum)} tone="text-amber-600" />
-        <Stat label="Сумма переходящих" value={money(stats.carrySum)} tone="text-sky-600" />
+        <Stat label="Оплачено" value={money(stats.paidSum)} tone="text-success" />
+        <Stat label="Не оплачено" value={money(stats.unpaidSum)} tone="text-warning" />
+        <Stat label="Сумма переходящих" value={money(stats.carrySum)} tone="text-info" />
       </div>
 
       {/* Аналитика по месяцам */}

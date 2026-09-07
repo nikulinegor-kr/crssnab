@@ -49,16 +49,16 @@ function getDeliveryDateTone(dateStr?: string | null, status?: string | null) {
   if (!dateStr) return null;
   const finalStatuses = ["Доставлено", "Прибыло", "Закрыто", "Отменено", "Выполнено"];
   if (status && finalStatuses.includes(status)) {
-    return { label: "Прибыло", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" };
+    return { label: "Прибыло", className: "bg-success/10 text-success border-success/30" };
   }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
   const days = Math.round((target.getTime() - today.getTime()) / 86400000);
-  if (days < 0) return { label: `Просрочка ${Math.abs(days)} дн.`, className: "bg-red-500/10 text-red-600 border-red-500/30" };
-  if (days === 0) return { label: "Сегодня", className: "bg-red-500/10 text-red-600 border-red-500/30" };
-  if (days === 1) return { label: "Завтра", className: "bg-orange-500/10 text-orange-600 border-orange-500/30" };
-  if (days <= 3) return { label: `Через ${days} дн.`, className: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
-  return { label: `Через ${days} дн.`, className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" };
+  if (days < 0) return { label: `Просрочка ${Math.abs(days)} дн.`, className: "bg-destructive/10 text-destructive border-destructive/30" };
+  if (days === 0) return { label: "Сегодня", className: "bg-destructive/10 text-destructive border-destructive/30" };
+  if (days === 1) return { label: "Завтра", className: "bg-warning/10 text-warning border-warning/30" };
+  if (days <= 3) return { label: `Через ${days} дн.`, className: "bg-warning/10 text-warning border-warning/30" };
+  return { label: `Через ${days} дн.`, className: "bg-success/10 text-success border-success/30" };
 }
 
 interface RequestLogisticsCardProps {
@@ -137,8 +137,8 @@ export function RequestLogisticsCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-border/40">
           {/* Shipment date */}
           <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-            <div className="p-2 rounded-md bg-amber-500/10 shrink-0">
-              <Truck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <div className="p-2 rounded-md bg-warning/10 shrink-0">
+              <Truck className="h-4 w-4 text-warning dark:text-warning" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground mb-1">Дата отправки</p>
@@ -185,8 +185,8 @@ export function RequestLogisticsCard({
 
           {/* Delivery date */}
           <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-            <div className="p-2 rounded-md bg-green-500/10 shrink-0">
-              <CalendarDays className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="p-2 rounded-md bg-success/10 shrink-0">
+              <CalendarDays className="h-4 w-4 text-success dark:text-success" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">

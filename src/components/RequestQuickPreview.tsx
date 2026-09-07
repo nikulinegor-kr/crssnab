@@ -45,10 +45,10 @@ export const RequestQuickPreview = ({
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-numeric text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                   {request.request_number}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground font-numeric">
                   {format(new Date(request.request_date), "d MMM yyyy", { locale: ru })}
                 </span>
               </div>
@@ -112,31 +112,31 @@ export const RequestQuickPreview = ({
           <>
             <div className="p-3 py-2 flex flex-wrap gap-1.5">
               {request.availability_delivery_time && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-success/10 text-success dark:text-success border-0">
                   <Package className="h-3 w-3" />
                   {request.availability_delivery_time}
                 </Badge>
               )}
               {request.shipment_date && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-info/10 text-info dark:text-info border-0">
                   <Send className="h-3 w-3" />
                   {format(new Date(request.shipment_date), "d MMM", { locale: ru })}
                 </Badge>
               )}
               {request.delivery_date && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-info/10 text-info border-0 font-numeric">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(request.delivery_date), "d MMM", { locale: ru })}
                 </Badge>
               )}
               {request.transport_company && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-warning/10 text-warning dark:text-warning border-0">
                   <Truck className="h-3 w-3" />
                   {request.transport_company}
                 </Badge>
               )}
               {request.waybill_number && (
-                <Badge variant="secondary" className="text-[10px] gap-1 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-0">
+                <Badge variant="secondary" className="text-[10px] gap-1 bg-primary/10 text-primary border-0">
                   <FileText className="h-3 w-3" />
                   ТТН: {request.waybill_number}
                 </Badge>
@@ -159,13 +159,13 @@ export const RequestQuickPreview = ({
               )}
               {request.executor && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <User className="h-3 w-3 shrink-0 text-green-500/60" />
+                  <User className="h-3 w-3 shrink-0 text-success/60" />
                   <span className="truncate max-w-[100px]">{request.executor}</span>
                 </div>
               )}
               {request.contractor && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Truck className="h-3 w-3 shrink-0 text-orange-500/60" />
+                  <Truck className="h-3 w-3 shrink-0 text-warning/60" />
                   <span className="truncate max-w-[120px]">{request.contractor}</span>
                 </div>
               )}
@@ -195,8 +195,8 @@ export const RequestQuickPreview = ({
               )}
               {request.payment_percentage !== null && request.payment_percentage !== undefined && (
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3 w-3 shrink-0 text-green-500" />
-                  <span className="font-semibold text-green-600 dark:text-green-400">
+                  <Clock className="h-3 w-3 shrink-0 text-success" />
+                  <span className="font-semibold text-success dark:text-success">
                     {request.payment_percentage}%
                   </span>
                 </div>

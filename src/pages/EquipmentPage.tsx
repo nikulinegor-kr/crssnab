@@ -34,7 +34,7 @@ function CopyString({ equipment }: { equipment: any }) {
     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
       <span className="truncate">{text}</span>
       <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={handleCopy}>
-        {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+        {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
       </Button>
     </div>
   );

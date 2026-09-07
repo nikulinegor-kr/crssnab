@@ -49,13 +49,13 @@ export function PlannerTaskMeta({
     <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-0.5", text, className)}>
       {obj && (
         <span className="inline-flex items-center gap-1 text-muted-foreground">
-          <MapPin className={cn(iconCls, "text-emerald-500")} />
+          <MapPin className={cn(iconCls, "text-success")} />
           <span className="truncate max-w-[160px]">{obj.name}</span>
         </span>
       )}
       {eqList.length > 0 && (
         <span className="inline-flex items-center gap-1 text-muted-foreground">
-          <Truck className={cn(iconCls, "text-blue-500")} />
+          <Truck className={cn(iconCls, "text-info")} />
           <span className="truncate max-w-[220px]">
             {equipmentLabel(eqList[0])}
             {eqList.length > 1 && ` +${eqList.length - 1}`}

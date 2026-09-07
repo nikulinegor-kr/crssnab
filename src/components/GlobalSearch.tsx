@@ -21,13 +21,13 @@ interface SearchResult {
 
 const ICONS: Record<SearchResult["type"], { icon: typeof FileText; color: string }> = {
   request: { icon: FileText, color: "text-primary" },
-  contractor: { icon: Users, color: "text-orange-500" },
-  object: { icon: Building2, color: "text-emerald-500" },
-  invoice: { icon: Hash, color: "text-purple-500" },
-  supplier: { icon: Package, color: "text-blue-500" },
-  shipment: { icon: Truck, color: "text-amber-500" },
-  product: { icon: Box, color: "text-cyan-500" },
-  warehouse: { icon: Warehouse, color: "text-teal-500" },
+  contractor: { icon: Users, color: "text-warning" },
+  object: { icon: Building2, color: "text-success" },
+  invoice: { icon: Hash, color: "text-info" },
+  supplier: { icon: Package, color: "text-info" },
+  shipment: { icon: Truck, color: "text-warning" },
+  product: { icon: Box, color: "text-primary" },
+  warehouse: { icon: Warehouse, color: "text-success" },
 };
 
 const TYPE_LABELS: Record<SearchResult["type"], string> = {

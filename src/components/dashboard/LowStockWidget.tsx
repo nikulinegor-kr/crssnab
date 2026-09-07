@@ -61,10 +61,10 @@ export const LowStockWidget = () => {
   if (isLoading || lowStockItems.length === 0) return null;
 
   return (
-    <Card className="bg-card border-amber-500/30 shadow-sm">
+    <Card className="bg-card border-warning/30 shadow-sm">
       <CardHeader className="pb-3 p-4">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertTriangle className="h-4 w-4 text-warning" />
           Товары заканчиваются
           <Badge variant="destructive" className="ml-auto">{lowStockItems.length}</Badge>
         </CardTitle>

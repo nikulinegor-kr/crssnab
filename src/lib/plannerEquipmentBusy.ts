@@ -6,10 +6,10 @@ export const ACTIVE_STATUSES: PlannerTaskStatus[] = ["backlog", "todo", "in_prog
 export type EquipmentBusyStatus = "free" | "planned" | "working" | "overloaded";
 
 export const BUSY_STATUS_META: Record<EquipmentBusyStatus, { label: string; dot: string; text: string; bg: string }> = {
-  free:       { label: "Свободна",     dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-  planned:    { label: "Запланирована", dot: "bg-amber-500",   text: "text-amber-600 dark:text-amber-400",     bg: "bg-amber-500/10" },
-  working:    { label: "В работе",      dot: "bg-blue-500",    text: "text-blue-600 dark:text-blue-400",       bg: "bg-blue-500/10" },
-  overloaded: { label: "Перегружена",   dot: "bg-red-500",     text: "text-red-600 dark:text-red-400",         bg: "bg-red-500/10" },
+  free:       { label: "Свободна",     dot: "bg-success",     text: "text-success",     bg: "bg-success/10" },
+  planned:    { label: "Запланирована", dot: "bg-warning",     text: "text-warning",     bg: "bg-warning/10" },
+  working:    { label: "В работе",      dot: "bg-info",        text: "text-info",        bg: "bg-info/10" },
+  overloaded: { label: "Перегружена",   dot: "bg-destructive", text: "text-destructive", bg: "bg-destructive/10" },
 };
 
 const taskEquipmentIds = (t: PlannerTask): string[] =>

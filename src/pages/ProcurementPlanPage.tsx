@@ -171,7 +171,7 @@ export default function ProcurementPlanPage() {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
                       <div>
                         <p className="font-medium text-sm">{item.name}</p>
                         {item.article && <p className="text-xs text-muted-foreground">{item.article}</p>}
@@ -185,12 +185,12 @@ export default function ProcurementPlanPage() {
                       </Badge>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-right font-medium">{item.stock}</TableCell>
-                  <TableCell className="text-right">{item.reserve}</TableCell>
-                  <TableCell className="text-right">{item.inTransit}</TableCell>
-                  <TableCell className="text-right">{item.ordered}</TableCell>
-                  <TableCell className="text-right">{item.min_stock}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-medium font-numeric">{item.stock}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.reserve}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.inTransit}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.ordered}</TableCell>
+                  <TableCell className="text-right font-numeric">{item.min_stock}</TableCell>
+                  <TableCell className="text-right font-numeric">
                     <Badge variant="destructive">{item.deficit}</Badge>
                   </TableCell>
                   <TableCell>

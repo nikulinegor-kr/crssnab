@@ -71,7 +71,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
             <TableHead className="text-center">Перечислено на р/счет, касса в том числе вознаграждение</TableHead>
             <TableHead className="text-center">Налог 7%</TableHead>
             <TableHead className="text-center">Остаток после удержания налога 7%</TableHead>
-            <TableHead className="text-center bg-green-100 dark:bg-green-900/30">Заработная плата 30 000 +% вознаграждение агента</TableHead>
+            <TableHead className="text-center bg-success/10 dark:bg-success/30">Заработная плата 30 000 +% вознаграждение агента</TableHead>
             <TableHead className="text-center">Сумма по чекам</TableHead>
             <TableHead className="text-center">Сумма Акта</TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -109,7 +109,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
                   <TableCell className="text-right bg-muted/30 font-semibold">
                     {row.remainder_after_tax !== null ? row.remainder_after_tax.toFixed(2) : ""}
                   </TableCell>
-                  <TableCell className="text-right bg-green-50 dark:bg-green-900/20 font-semibold">
+                  <TableCell className="text-right bg-success/10 dark:bg-success/20 font-semibold">
                     {(30000).toLocaleString("ru-RU", { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-right">
@@ -164,7 +164,7 @@ export const ActCalculationTable = ({ rows, onUpdate, onDelete, agentCommission 
             <TableCell></TableCell>
             <TableCell className="text-right">{totals.tax_7_percent.toFixed(2)}</TableCell>
             <TableCell className="text-right">{totals.remainder_after_tax.toFixed(2)}</TableCell>
-            <TableCell className="text-right bg-green-50 dark:bg-green-900/20">{totals.salary_with_commission.toFixed(2)}</TableCell>
+            <TableCell className="text-right bg-success/10 dark:bg-success/20">{totals.salary_with_commission.toFixed(2)}</TableCell>
             <TableCell className="text-right">{totals.check_amount.toFixed(2)}</TableCell>
             <TableCell className="text-right">{totals.act_amount.toFixed(2)}</TableCell>
             <TableCell></TableCell>

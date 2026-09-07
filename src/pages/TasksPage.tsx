@@ -456,7 +456,7 @@ export default function TasksPage() {
                             onClick={() => handleOpenCompletionDialog(task)}
                           >
                             {task.completion_status === "completed" ? (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <CheckCircle className="h-4 w-4 text-success" />
                             ) : (
                               <Clock className="h-4 w-4" />
                             )}

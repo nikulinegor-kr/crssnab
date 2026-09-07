@@ -48,7 +48,7 @@ export function ReceivedByDialog({ open, organizationId, defaultValue, onCancel,
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PackageCheck className="h-5 w-5 text-emerald-600" />
+            <PackageCheck className="h-5 w-5 text-success" />
             Приёмку ТМЦ осуществил
           </DialogTitle>
           <DialogDescription>

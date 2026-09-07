@@ -321,15 +321,15 @@ export default function EquipmentDetailPage() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => navigate(`/requests/${row.requestId}`)}
                         >
-                          <TableCell className="text-sm">
+                          <TableCell className="text-sm font-numeric">
                             {row.date ? format(new Date(row.date), "dd.MM.yyyy") : "—"}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-mono text-xs">{row.requestNumber}</Badge>
                           </TableCell>
                           <TableCell className="max-w-[250px] truncate">{row.itemName}</TableCell>
-                          <TableCell className="text-right">{row.quantity}</TableCell>
-                          <TableCell className="text-right font-medium">
+                          <TableCell className="text-right font-numeric">{row.quantity}</TableCell>
+                          <TableCell className="text-right font-medium font-numeric">
                             {row.cost > 0 ? `${row.cost.toLocaleString("ru-RU")} ₽` : "—"}
                           </TableCell>
                         </TableRow>
@@ -385,11 +385,11 @@ export default function EquipmentDetailPage() {
                         <TableRow key={i}>
                           <TableCell className="font-mono text-xs">{part.article}</TableCell>
                           <TableCell className="font-medium max-w-[300px] truncate">{part.name}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right font-numeric">
                             <Badge variant="secondary">{part.usageCount}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">{part.totalQuantity}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-right font-numeric">{part.totalQuantity}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground font-numeric">
                             {part.lastUsedAt ? format(new Date(part.lastUsedAt), "dd.MM.yyyy") : "—"}
                           </TableCell>
                         </TableRow>

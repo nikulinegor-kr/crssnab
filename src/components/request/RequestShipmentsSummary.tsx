@@ -22,11 +22,11 @@ function statusTone(status: string) {
   switch (status) {
     case "Завершена":
     case "Разгружена":
-      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/30";
+      return "bg-success/10 text-success border-success/30";
     case "В пути":
-      return "bg-blue-500/10 text-blue-600 border-blue-500/30";
+      return "bg-info/10 text-info border-info/30";
     case "Прибыла":
-      return "bg-amber-500/10 text-amber-600 border-amber-500/30";
+      return "bg-warning/10 text-warning border-warning/30";
     default:
       return "bg-muted text-muted-foreground border-border";
   }
@@ -105,11 +105,11 @@ export function RequestShipmentsSummary({ requestId }: Props) {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <Truck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <Truck className="h-3.5 w-3.5 text-warning shrink-0" />
                   <span className="truncate">Выход: {fmt(s.load_date)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <CalendarDays className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                  <CalendarDays className="h-3.5 w-3.5 text-success shrink-0" />
                   <span className="truncate">
                     Приход: {fmt(s.actual_arrival_date || s.planned_arrival_date)}
                   </span>

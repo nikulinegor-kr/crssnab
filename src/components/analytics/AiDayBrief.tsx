@@ -146,9 +146,9 @@ const BUCKET_META: BucketMeta[] = [
 const toneClass = (t: BucketMeta["tone"]) =>
   ({
     default: "text-primary",
-    warning: "text-amber-500",
-    danger: "text-red-500",
-    success: "text-emerald-500",
+    warning: "text-warning",
+    danger: "text-destructive",
+    success: "text-success",
   })[t];
 
 // ---------- Snapshot builder ----------

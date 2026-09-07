@@ -158,7 +158,7 @@ export const SupplierListsTreeMenu = ({ objectId, objectName, organizationId }: 
         onClick={() => setExpanded(v => !v)}
       >
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        <FileSpreadsheet className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+        <FileSpreadsheet className="h-3.5 w-3.5 text-info flex-shrink-0" />
         <span className="truncate flex-1 text-left text-xs font-medium">Ведомость поставщиков</span>
         {expanded && lists.length > 0 && (
           <span className="text-[10px] text-muted-foreground font-normal flex-shrink-0">{lists.length}</span>
@@ -173,7 +173,7 @@ export const SupplierListsTreeMenu = ({ objectId, objectName, organizationId }: 
               className="group/list w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md hover:bg-accent/50 cursor-pointer"
               onClick={() => { setOpenListId(l.id); setCreateBlank(false); }}
             >
-              <FileSpreadsheet className="h-3 w-3 text-blue-500/70 flex-shrink-0" />
+              <FileSpreadsheet className="h-3 w-3 text-info/70 flex-shrink-0" />
               <span className="truncate flex-1 text-left text-xs">{l.name}</span>
               <Trash2
                 className="h-3 w-3 text-destructive cursor-pointer opacity-0 group-hover/list:opacity-100 flex-shrink-0"

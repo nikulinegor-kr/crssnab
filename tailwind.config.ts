@@ -21,6 +21,15 @@ export default {
         heading: ["var(--sans)"],
         mono: ["var(--mono)"],
       },
+      fontSize: {
+        xs: ["12px", { lineHeight: "16px", letterSpacing: "0.005em" }],
+        sm: ["13.5px", { lineHeight: "20px", letterSpacing: "0" }],
+        base: ["15px", { lineHeight: "22px", letterSpacing: "-0.012em" }],
+        lg: ["20px", { lineHeight: "26px", letterSpacing: "-0.015em" }],
+        xl: ["20px", { lineHeight: "26px", letterSpacing: "-0.015em" }],
+        "2xl": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em" }],
+        "3xl": ["28px", { lineHeight: "34px", letterSpacing: "-0.02em" }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -58,6 +67,7 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        overlay: "hsl(var(--overlay))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -70,9 +80,24 @@ export default {
         },
       },
       borderRadius: {
+        DEFAULT: "var(--radius)",
+        sm: "var(--radius-sm)",
+        md: "var(--radius)",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        xl: "var(--radius-lg)",
+        "2xl": "var(--radius-lg)",
+        "3xl": "var(--radius-lg)",
+      },
+      boxShadow: {
+        DEFAULT: "none",
+        sm: "none",
+        md: "none",
+        lg: "none",
+        xl: "none",
+        "2xl": "none",
+        inner: "none",
+        popup: "var(--panel-shadow)",
+        panel: "var(--panel-shadow)",
       },
       keyframes: {
         "accordion-down": {

@@ -45,11 +45,11 @@ export function RequestActivityFeed({ activities }: RequestActivityFeedProps) {
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'created':
-        return <div className="h-2.5 w-2.5 rounded-full bg-green-500 ring-4 ring-green-500/10" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-success ring-4 ring-success/10" />;
       case 'updated':
-        return <div className="h-2.5 w-2.5 rounded-full bg-blue-500 ring-4 ring-blue-500/10" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-info ring-4 ring-info/10" />;
       case 'comment':
-        return <div className="h-2.5 w-2.5 rounded-full bg-purple-500 ring-4 ring-purple-500/10" />;
+        return <div className="h-2.5 w-2.5 rounded-full bg-info ring-4 ring-info/10" />;
       default:
         return <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground ring-4 ring-muted/30" />;
     }

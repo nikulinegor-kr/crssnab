@@ -201,15 +201,15 @@ const TeamPerformancePage = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Выполнено</p>
-                      <p className="font-semibold text-lg text-green-600">{stat.completed}</p>
+                      <p className="font-semibold text-lg text-success">{stat.completed}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">В работе</p>
-                      <p className="font-semibold text-lg text-blue-600">{stat.inProgress}</p>
+                      <p className="font-semibold text-lg text-info">{stat.inProgress}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Просрочено</p>
-                      <p className={`font-semibold text-lg ${stat.overdue > 0 ? "text-red-600" : ""}`}>{stat.overdue}</p>
+                      <p className={`font-semibold text-lg ${stat.overdue > 0 ? "text-destructive" : ""}`}>{stat.overdue}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">% выполн.</p>
@@ -237,9 +237,9 @@ const TeamPerformancePage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
               {[
                 { title: "Всего", value: selectedStats.total, icon: FileText, color: "text-foreground", filter: "all" },
-                { title: "Выполнено", value: selectedStats.completed, icon: CheckCircle, color: "text-green-600", filter: "completed" },
-                { title: "В работе", value: selectedStats.inProgress, icon: Clock, color: "text-blue-600", filter: "inProgress" },
-                { title: "Просрочено", value: selectedStats.overdue, icon: AlertTriangle, color: selectedStats.overdue > 0 ? "text-red-600" : "text-foreground", filter: "overdue" },
+                { title: "Выполнено", value: selectedStats.completed, icon: CheckCircle, color: "text-success", filter: "completed" },
+                { title: "В работе", value: selectedStats.inProgress, icon: Clock, color: "text-info", filter: "inProgress" },
+                { title: "Просрочено", value: selectedStats.overdue, icon: AlertTriangle, color: selectedStats.overdue > 0 ? "text-destructive" : "text-foreground", filter: "overdue" },
                 { title: "% выполн.", value: `${selectedStats.completionRate}%`, icon: TrendingUp, color: "text-foreground" },
                 { title: "Ср. время", value: `${selectedStats.avgDays} дн.`, icon: Timer, color: "text-foreground" },
                 { title: "Сумма", value: `${selectedStats.totalAmount.toLocaleString("ru-RU")} ₽`, icon: DollarSign, color: "text-foreground" },

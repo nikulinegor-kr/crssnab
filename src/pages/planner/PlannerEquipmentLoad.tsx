@@ -99,7 +99,7 @@ export default function PlannerEquipmentLoad() {
               >
                 <div className="space-y-1">
                   <div className="flex items-start gap-2">
-                    <Truck className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                    <Truck className="h-4 w-4 text-info mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold truncate">{equipmentLabel(eq)}</div>
                       {eq.plate_number && (
@@ -119,7 +119,7 @@ export default function PlannerEquipmentLoad() {
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                     {obj && (
                       <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-emerald-500" /> {obj.name}
+                        <MapPin className="h-3 w-3 text-success" /> {obj.name}
                       </span>
                     )}
                     {eq.responsible_name && (

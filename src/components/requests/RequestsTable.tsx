@@ -213,8 +213,8 @@ const MobileRequestCard = memo(({
           {(() => {
             const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
             if (pct === 0) return null;
-            if (pct >= 100) return <span className="font-semibold text-emerald-600">Оплачено</span>;
-            return <span className="font-semibold text-amber-600">{pct}%</span>;
+            if (pct >= 100) return <span className="font-semibold text-success">Оплачено</span>;
+            return <span className="font-semibold text-warning">{pct}%</span>;
           })()}
         </div>
       </div>
@@ -849,11 +849,11 @@ export const RequestsTable = ({
                           <span className="font-semibold text-foreground">{it.name}</span>
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{counts.total} заявок</span>
-                          {counts.emergency > 0 && <span className="text-red-600 font-medium">🔴 {counts.emergency} ав.</span>}
-                          {counts.priority > 0 && <span className="text-orange-600 font-medium">🟠 {counts.priority} приор.</span>}
-                          {counts.planned > 0 && <span className="text-blue-600 font-medium">🔵 {counts.planned} плановых</span>}
+                          {counts.emergency > 0 && <span className="text-destructive font-medium">🔴 {counts.emergency} ав.</span>}
+                          {counts.priority > 0 && <span className="text-warning font-medium">🟠 {counts.priority} приор.</span>}
+                          {counts.planned > 0 && <span className="text-info font-medium">🔵 {counts.planned} плановых</span>}
                           {counts.inWork > 0 && <span className="text-muted-foreground">⚙ {counts.inWork} в работе</span>}
-                          {counts.delivered > 0 && <span className="text-emerald-600">✓ {counts.delivered} доставлено</span>}
+                          {counts.delivered > 0 && <span className="text-success">✓ {counts.delivered} доставлено</span>}
                           {counts.amount > 0 && (
                             <span className="ml-auto font-numeric font-semibold text-foreground">
                               {new Intl.NumberFormat("ru-RU").format(Math.round(counts.amount))} ₽
@@ -882,9 +882,9 @@ export const RequestsTable = ({
                           <span className="text-muted-foreground">📦 {s.total}</span>
                           <span className="text-muted-foreground">🏢 {s.suppliers}</span>
                           <span className="text-muted-foreground">🧾 {s.invoices}</span>
-                          {s.inTransit > 0 && <span className="text-blue-600">🚛 {s.inTransit} в пути</span>}
-                          {s.delivered > 0 && <span className="text-emerald-600">✓ {s.delivered} доставлено</span>}
-                          {s.overdue > 0 && <span className="text-red-600 font-medium">⏰ {s.overdue} просрочено</span>}
+                          {s.inTransit > 0 && <span className="text-info">🚛 {s.inTransit} в пути</span>}
+                          {s.delivered > 0 && <span className="text-success">✓ {s.delivered} доставлено</span>}
+                          {s.overdue > 0 && <span className="text-destructive font-medium">⏰ {s.overdue} просрочено</span>}
                           <span className="text-muted-foreground">📈 {s.progress}%</span>
                           <span className="ml-auto font-semibold text-foreground font-numeric tabular-nums">
                             {moneyShort(s.amount)}
@@ -952,8 +952,8 @@ export const RequestsTable = ({
                             <Star
                               className={`h-3.5 w-3.5 ${
                                 favoriteIds?.has(request.id)
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-muted-foreground/20 hover:text-yellow-400"
+                                  ? "fill-warning text-warning"
+                                  : "text-muted-foreground/20 hover:text-warning"
                               }`}
                             />
                           </button>
@@ -1010,7 +1010,7 @@ export const RequestsTable = ({
                               <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1065,7 +1065,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
+                        <span className="text-muted-foreground text-xs italic">нет данных</span>
                       )}
                     </TableCell>
                   )}
@@ -1081,7 +1081,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1094,7 +1094,7 @@ export const RequestsTable = ({
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">не выставлен</span>
+                        <span className="text-muted-foreground text-xs italic">не выставлен</span>
                       )}
                     </TableCell>
                   )}
@@ -1125,7 +1125,7 @@ export const RequestsTable = ({
                         field="shipment_date"
                         value={request.shipment_date || ""}
                         displayValue={
-                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">ожидается</span>}</span>
+                          <span>{request.shipment_date ? format(new Date(request.shipment_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">ожидается</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1137,7 +1137,7 @@ export const RequestsTable = ({
                         field="delivery_date"
                         value={request.delivery_date || ""}
                         displayValue={
-                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>}</span>
+                          <span>{request.delivery_date ? format(new Date(request.delivery_date), "dd.MM.yy") : <span className="text-muted-foreground text-xs italic">нет данных</span>}</span>
                         }
                       />
                     </TableCell>
@@ -1154,7 +1154,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет данных</span>
+                            <span className="text-muted-foreground text-xs italic">нет данных</span>
                           )
                         }
                       />
@@ -1172,7 +1172,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">—</span>
+                            <span className="text-muted-foreground text-xs italic">—</span>
                           )
                         }
                       />
@@ -1190,7 +1190,7 @@ export const RequestsTable = ({
                               {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
                             </span>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет суммы</span>
+                            <span className="text-muted-foreground text-xs italic">нет суммы</span>
                           )
                         }
                       />
@@ -1208,7 +1208,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">не указан</span>
+                            <span className="text-muted-foreground text-xs italic">не указан</span>
                           )
                         }
                       />
@@ -1238,7 +1238,7 @@ export const RequestsTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-[#9CA3AF] text-[12px] italic">нет техники</span>
+                        <span className="text-muted-foreground text-xs italic">нет техники</span>
                       )}
                     </TableCell>
                   )}
@@ -1254,7 +1254,7 @@ export const RequestsTable = ({
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
-                            <span className="text-[#9CA3AF] text-[12px] italic">нет</span>
+                            <span className="text-muted-foreground text-xs italic">нет</span>
                           )
                         }
                       />

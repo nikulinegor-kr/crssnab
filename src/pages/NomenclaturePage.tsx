@@ -327,7 +327,7 @@ export default function NomenclaturePage() {
                       <div className="flex items-center gap-2">
                         {p.name}
                         {isLow && (
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                          <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
                         )}
                       </div>
                     </TableCell>
@@ -515,7 +515,7 @@ function ProductDetailDialog({
         </div>
 
         {isLow && (
-          <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning dark:text-warning">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>Нужно заказать — остаток ниже минимального ({currentStock} из {product.min_stock})</span>
           </div>

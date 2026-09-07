@@ -34,14 +34,14 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  IN: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  OUT: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  RESERVE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  UNRESERVE: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  MOVE_IN: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-  MOVE_OUT: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  IN_TRANSIT: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
-  INVENTORY: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  IN: "bg-success/10 text-success dark:bg-success dark:text-success",
+  OUT: "bg-destructive/10 text-destructive dark:bg-destructive dark:text-destructive",
+  RESERVE: "bg-warning/10 text-warning dark:bg-warning dark:text-warning",
+  UNRESERVE: "bg-info/10 text-info dark:bg-info dark:text-info",
+  MOVE_IN: "bg-info/10 text-info dark:bg-info dark:text-info",
+  MOVE_OUT: "bg-warning/10 text-warning dark:bg-warning dark:text-warning",
+  IN_TRANSIT: "bg-info/10 text-info dark:bg-info dark:text-info",
+  INVENTORY: "bg-info/10 text-info",
 };
 
 export default function WarehousePage() {
@@ -441,7 +441,7 @@ export default function WarehousePage() {
                         <TableCell className="text-right">{s.stock}</TableCell>
                         <TableCell className="text-right">
                           {s.inTransit > 0 ? (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            <Badge variant="secondary" className="bg-info/10 text-info dark:bg-info dark:text-info">
                               {s.inTransit}
                             </Badge>
                           ) : "—"}

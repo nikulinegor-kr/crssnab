@@ -111,9 +111,9 @@ function RequestListCard({
 }) {
   const toneClasses = {
     default: "text-primary",
-    warning: "text-amber-500",
-    danger: "text-red-500",
-    success: "text-emerald-500",
+    warning: "text-warning",
+    danger: "text-destructive",
+    success: "text-success",
   }[tone];
 
   return (
@@ -213,9 +213,9 @@ function TodayActionsBlock({ groups }: { groups: TodayGroup[] }) {
   const toneClass = (t: TodayGroup["tone"]) =>
     ({
       default: "text-primary",
-      warning: "text-amber-500",
-      danger: "text-red-500",
-      success: "text-emerald-500",
+      warning: "text-warning",
+      danger: "text-destructive",
+      success: "text-success",
     })[t];
 
   return (

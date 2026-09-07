@@ -13,8 +13,8 @@ type Props = {
 const toneMap: Record<NonNullable<Props["tone"]>, string> = {
   default: "",
   danger: "text-destructive",
-  warning: "text-amber-600 dark:text-amber-400",
-  success: "text-emerald-600 dark:text-emerald-400",
+  warning: "text-warning dark:text-warning",
+  success: "text-success dark:text-success",
 };
 
 export function MetricCard({ label, value, hint, to, tone = "default" }: Props) {

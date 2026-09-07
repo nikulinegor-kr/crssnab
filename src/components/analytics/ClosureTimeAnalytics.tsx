@@ -373,9 +373,9 @@ export function ClosureTimeAnalytics({ requests }: ClosureTimeAnalyticsProps) {
                 >
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${
-                      index === 0 ? "bg-yellow-500/20 text-yellow-500" :
-                      index === 1 ? "bg-slate-400/20 text-slate-400" :
-                      index === 2 ? "bg-amber-700/20 text-amber-700" :
+                      index === 0 ? "bg-warning/20 text-warning" :
+                      index === 1 ? "bg-muted/20 text-muted-foreground" :
+                      index === 2 ? "bg-warning/20 text-warning" :
                       "bg-muted text-muted-foreground"
                     }`}>
                       {index + 1}

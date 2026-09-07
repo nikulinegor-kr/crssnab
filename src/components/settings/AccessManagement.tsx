@@ -47,9 +47,9 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleBadgeColors: Record<string, string> = {
-  owner: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  owner: "bg-warning/15 text-warning dark:text-warning",
   admin: "bg-primary/15 text-primary",
-  editor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  editor: "bg-success/15 text-success dark:text-success",
   viewer: "bg-muted text-muted-foreground",
   member: "bg-muted text-muted-foreground",
 };

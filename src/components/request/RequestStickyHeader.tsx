@@ -24,19 +24,19 @@ export function RequestStickyHeader({
 }: RequestStickyHeaderProps) {
   const getStatusStyle = (status: string) => {
     const styles: Record<string, string> = {
-      "Новая заявка": "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30",
-      "В работе": "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
-      "На согласовании": "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30",
-      "КП": "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
-      "Счёт": "bg-violet-400/15 text-violet-500 dark:text-violet-400 border-violet-400/30",
-      "Счёт в бухгалтерии": "bg-violet-400/15 text-violet-500 dark:text-violet-400 border-violet-400/30",
-      "Счёт в Бухгалтерии": "bg-violet-400/15 text-violet-500 dark:text-violet-400 border-violet-400/30",
-      "Оплачено": "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-      "Готов к отгрузке": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
-      "В пути": "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30",
-      "Доставлено в ТК": "bg-green-600/15 text-green-700 dark:text-green-400 border-green-600/30",
-      "Доставлено": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-      "Выполнено": "bg-green-700/15 text-green-800 dark:text-green-300 border-green-700/30",
+      "Новая заявка": "bg-muted text-muted-foreground border-border",
+      "В работе": "bg-warning/15 text-warning dark:text-warning border-warning/30",
+      "На согласовании": "bg-info/15 text-info border-info/30",
+      "КП": "bg-info/15 text-info border-info/30",
+      "Счёт": "bg-info/15 text-info border-info/30",
+      "Счёт в бухгалтерии": "bg-info/15 text-info border-info/30",
+      "Счёт в Бухгалтерии": "bg-info/15 text-info border-info/30",
+      "Оплачено": "bg-info/15 text-info dark:text-info border-info/30",
+      "Готов к отгрузке": "bg-warning/15 text-warning dark:text-warning border-warning/30",
+      "В пути": "bg-success/15 text-success dark:text-success border-success/30",
+      "Доставлено в ТК": "bg-success/15 text-success dark:text-success border-success/30",
+      "Доставлено": "bg-success/15 text-success dark:text-success border-success/30",
+      "Выполнено": "bg-success/15 text-success dark:text-success border-success/30",
     };
     return styles[status] || "bg-muted text-muted-foreground border-border";
   };
@@ -45,15 +45,15 @@ export function RequestStickyHeader({
     if (!priority) return null;
     const styles: Record<string, { className: string; label: string }> = {
       "Аварийно": { 
-        className: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30", 
+        className: "bg-destructive/15 text-destructive dark:text-destructive border-destructive/30", 
         label: "Аварийная" 
       },
       "Приоритетно": { 
-        className: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30", 
+        className: "bg-warning/15 text-warning dark:text-warning border-warning/30", 
         label: "Приоритет" 
       },
       "Плановая": { 
-        className: "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/30", 
+        className: "bg-muted text-muted-foreground border-border", 
         label: "Плановая" 
       },
     };
@@ -124,8 +124,8 @@ export function RequestStickyHeader({
             </>
           ) : (
             <>
-              <Check className="h-3 w-3 text-green-500" />
-              <span className="text-green-600 dark:text-green-400">Сохранено</span>
+              <Check className="h-3 w-3 text-success" />
+              <span className="text-success dark:text-success">Сохранено</span>
             </>
           )}
         </div>

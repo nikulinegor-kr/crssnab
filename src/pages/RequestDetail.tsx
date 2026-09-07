@@ -812,7 +812,7 @@ export default function RequestDetail() {
                   onClick={() => setRevisionDialogOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                  className="gap-2 border-warning/30 text-warning hover:bg-warning/10"
                 >
                   <Edit className="h-4 w-4" />
                   На доработку
@@ -964,8 +964,8 @@ export default function RequestDetail() {
                                 alt={`Фото ${index + 1}`}
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 bg-overlay/0 group-hover:bg-overlay/20 transition-colors flex items-center justify-center">
+                                <Eye className="h-5 w-5 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </button>
                             {canEdit && (
@@ -974,7 +974,7 @@ export default function RequestDetail() {
                                   e.stopPropagation();
                                   handleDeletePhoto(url);
                                 }}
-                                className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                className="absolute top-1 right-1 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity z-10"
                               >
                                 <X className="h-3 w-3" />
                               </button>

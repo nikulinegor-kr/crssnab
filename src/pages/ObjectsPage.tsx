@@ -15,8 +15,8 @@ import { ObjectDetailCard } from "@/components/objects/ObjectDetailCard";
 import { DeleteObjectDialog } from "@/components/objects/DeleteObjectDialog";
 
 const STATUS_COLORS: Record<string, string> = {
-  "Активный": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  "Приостановлен": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  "Активный": "bg-success/10 text-success dark:bg-success/30 dark:text-success",
+  "Приостановлен": "bg-warning/10 text-warning dark:bg-warning/30 dark:text-warning",
   "Завершён": "bg-muted text-muted-foreground",
 };
 
