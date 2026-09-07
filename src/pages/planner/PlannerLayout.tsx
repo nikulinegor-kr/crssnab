@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlannerBoardSkeleton } from "@/components/planner/PlannerBoardSkeleton";
 import { PlannerQuickFab } from "@/components/planner/PlannerQuickFab";
 import { PlannerFiltersBar } from "@/components/planner/PlannerFiltersBar";
 import { PlannerFiltersProvider } from "@/contexts/PlannerFiltersContext";
