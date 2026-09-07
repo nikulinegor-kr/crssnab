@@ -1,6 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
+import { useOrgMembership } from "./useOrgMembership";
 
 /**
  * Planner rights of the current user, independent from having a CRM account:
@@ -8,34 +6,13 @@ import { useCurrentOrganization } from "./useCurrentOrganization";
  * - canManageTasks: can create tasks, change status and see other people's tasks
  */
 export const usePlannerAccess = () => {
-  const { currentOrgId } = useCurrentOrganization();
+  const { data: row, loading } = useOrgMembership();
 
-  const query = useQuery({
-    queryKey: ["planner-access", currentOrgId],
-    queryFn: async () => {
-      if (!currentOrgId) return null;
-      const { data: auth } = await supabase.auth.getUser();
-      const uid = auth.user?.id;
-      if (!uid) return null;
-      const { data, error } = await supabase
-        .from("user_organizations")
-        .select("role, is_active, planner_access, can_manage_tasks")
-        .eq("organization_id", currentOrgId)
-        .eq("user_id", uid)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!currentOrgId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const row = query.data;
   const isAdmin = row?.role === "owner" || row?.role === "admin";
-  const active = row?.is_active !== false && !!row;
+  const active = !!row && row.is_active !== false;
   const hasPlannerAccess = active && (isAdmin || row?.planner_access === true);
   const canManageTasks =
     active && (isAdmin || (row?.planner_access === true && row?.can_manage_tasks === true));
 
-  return { loading: query.isLoading, isAdmin, hasPlannerAccess, canManageTasks };
+  return { loading, isAdmin, hasPlannerAccess, canManageTasks };
 };
