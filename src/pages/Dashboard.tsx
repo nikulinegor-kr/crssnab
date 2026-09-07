@@ -324,7 +324,7 @@ const Dashboard = () => {
               onClick={openQuickRequest}
               size="sm"
               title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white border-0"
+              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-[#78350F] border-0"
             >
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Быстрая заявка</span>
@@ -342,7 +342,7 @@ const Dashboard = () => {
         <button
           type="button"
           onClick={openQuickRequest}
-          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white shadow-md transition-colors"
+          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-[#78350F] shadow-md transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
