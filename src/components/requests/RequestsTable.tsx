@@ -1130,14 +1130,14 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
                         value={request.contractor || ""}
                         displayValue={
                           request.contractor ? (
-                            <div className="line-clamp-2 leading-snug text-center text-foreground">
+                            <div className="line-clamp-2 leading-snug text-foreground">
                               <HighlightText text={request.contractor} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -1197,7 +1197,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="text-right px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="shipment_date"
@@ -1209,7 +1209,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="text-right px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -1257,14 +1257,14 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
                         value={request.applicant || ""}
                         displayValue={
                           request.applicant ? (
-                            <div className="line-clamp-2 leading-snug text-center text-foreground">
+                            <div className="line-clamp-2 leading-snug text-foreground">
                               <HighlightText text={request.applicant} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -1275,7 +1275,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.executor && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineExecutorCell
                         requestId={request.id}
                         organizationId={request.organization_id}
