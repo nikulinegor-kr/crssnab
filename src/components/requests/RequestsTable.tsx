@@ -910,19 +910,19 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
-                <ResizableTableHeader column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
+                <ResizableTableHeader align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
               )}
               {visibility.object && (
-                <ResizableTableHeader align="left" column="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
+                <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
               {visibility.status && (
-                <ResizableTableHeader align="left" column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
+                <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
                 <ResizableTableHeader column="availability" defaultWidth={DEFAULT_COLUMN_WIDTHS.availability} label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <ResizableTableHeader align="left" column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
+                <ResizableTableHeader column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
               )}
               {visibility.amount && (
                 <ResizableTableHeader align="right" column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
@@ -949,10 +949,10 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
               )}
               {visibility.applicant && (
-                <ResizableTableHeader align="left" column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
+                <ResizableTableHeader column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader align="left" column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+                <ResizableTableHeader column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
               )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" defaultWidth={DEFAULT_COLUMN_WIDTHS.equipment} label="Техника" width={widths.equipment} onResize={handleColumnResize} />
@@ -1143,7 +1143,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-2 py-1.5 border-b overflow-hidden">
+                    <TableCell data-align="left" className="px-2 py-1.5 border-b overflow-hidden">
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button

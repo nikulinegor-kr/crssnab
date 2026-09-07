@@ -28,7 +28,7 @@ export const ResizableTableHeader = ({
   sortDirection,
   onSort,
   className = "",
-  align = "left",
+  align = "center",
   defaultWidth,
   children,
 }: ResizableTableHeaderProps) => {
@@ -75,7 +75,8 @@ export const ResizableTableHeader = ({
   return (
     <TableHead
       ref={headerRef}
-      data-align={align === "right" ? "right" : undefined}
+      data-align={align}
+      data-col={column}
       className={cn(
         "relative p-2 font-medium border-b select-none text-muted-foreground transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
