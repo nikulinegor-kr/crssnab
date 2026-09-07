@@ -196,6 +196,19 @@ const Requests = () => {
     setPanelRequestOrder(orderedRequests);
   }, []);
 
+  // Панель как колонка раскладки при широком окне, оверлей — при узком
+  const { width: panelWidth, setWidth: setPanelWidth } = useRequestPanelWidth();
+  const [panelInline, setPanelInline] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1400
+  );
+  useEffect(() => {
+    const onResize = () => setPanelInline(window.innerWidth >= 1400);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+
+
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
     e.stopPropagation();
     setRequestToDelete(request);
