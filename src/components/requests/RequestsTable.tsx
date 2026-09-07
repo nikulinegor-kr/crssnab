@@ -1450,7 +1450,37 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
+        {selectedRequestIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
+            <span className="font-medium">Выбрано {selectedRequestIds.size}</span>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("status", v)}>
+              <SelectTrigger className="h-7 w-[190px] text-xs">
+                <SelectValue placeholder="Статус" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("priority", v)}>
+              <SelectTrigger className="h-7 w-[150px] text-xs">
+                <SelectValue placeholder="Приоритет" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSelection}>
+              Снять выделение
+            </Button>
+            {bulkSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          </div>
+        )}
         <PaginationControls />
+
         </div>
       </div>
       </div>
