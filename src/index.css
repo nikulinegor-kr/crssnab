@@ -357,20 +357,15 @@ All colors MUST be HSL.
     white-space: nowrap;
   }
 
-  .requests-registry table th:not(:first-child):not(:last-child),
-  .requests-registry table td:not(:first-child):not(:last-child) {
-    min-width: 72px;
-  }
-
-  /* Длинные текстовые значения обрезаются многоточием */
-  .requests-registry table th[data-col="object"],
-  .requests-registry table td[data-col="object"],
-  .requests-registry table th[data-col="contractor"],
-  .requests-registry table td[data-col="contractor"] {
-    max-width: 260px;
+  /* Ширины колонок задаются перетаскиванием (colgroup), поэтому без ограничений */
+  .requests-registry table th,
+  .requests-registry table td {
+    min-width: 0;
+    max-width: none;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
 
   /* Служебные колонки — чекбокс и меню «⋮» */
   .requests-registry table th:first-child,
