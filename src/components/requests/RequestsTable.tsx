@@ -285,7 +285,7 @@ export const RequestsTable = ({
   const { toast } = useToast();
   const [bulkSaving, setBulkSaving] = useState(false);
 
-  const applyBulk = useCallback(async (field: "status" | "priority", value: string) => {
+  const applyBulk = useCallback(async (field: "status" | "priority" | "executor", value: string) => {
     const ids = Array.from(selectedRequestIds);
     if (!ids.length) return;
     setBulkSaving(true);
@@ -294,8 +294,8 @@ export const RequestsTable = ({
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast({
-        title: field === "status" ? "Статус изменён" : "Приоритет изменён",
-        description: `Заявок: ${ids.length} · ${value}`,
+        title: field === "status" ? "Статус изменён" : field === "priority" ? "Приоритет изменён" : "Исполнитель изменён",
+        description: `Заявок: ${ids.length} · ${field === "executor" ? formatPersonName(value) : value}`,
       });
     } catch (e) {
       console.error("Bulk update:", e);
@@ -304,6 +304,7 @@ export const RequestsTable = ({
       setBulkSaving(false);
     }
   }, [queryClient, selectedRequestIds, toast]);
+
 
   const { data: userId } = useAuthUserId();
   const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
