@@ -76,7 +76,7 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-bold border-r border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
+        "relative p-2 font-bold border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}

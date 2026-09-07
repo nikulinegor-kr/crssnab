@@ -795,7 +795,7 @@ export const RequestsTable = ({
           </colgroup>
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
-              <TableHead className="text-center p-1 border-r border-b">
+              <TableHead className="text-center p-1 border-b">
                 <Checkbox
                   checked={selectedRequestIds.size === requests.length && requests.length > 0}
                   onCheckedChange={toggleAllRequests}
@@ -994,7 +994,7 @@ export const RequestsTable = ({
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell data-row-action className="text-center p-1 border-r border-b align-middle" onClick={(e) => e.stopPropagation()}>
+                  <TableCell data-row-action className="text-center p-1 border-b align-middle" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -1004,12 +1004,12 @@ export const RequestsTable = ({
                     </div>
                   </TableCell>
                   {visibility.request_date && (
-                    <TableCell className="text-center p-1 border-r border-b text-[11px] text-muted-foreground font-mono" data-numeric>
+                    <TableCell className="text-center p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-2 py-1.5 border-r border-b overflow-hidden">
+                    <TableCell className="px-2 py-1.5 border-b overflow-hidden">
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button
@@ -1082,7 +1082,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.object && (
-                    <TableCell className="px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineObjectCell
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
@@ -1119,7 +1119,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       {request.availability_delivery_time ? (
                         <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
@@ -1130,7 +1130,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
@@ -1166,7 +1166,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       {request.invoice_number ? (
                         <div className="line-clamp-2 text-foreground leading-snug text-center">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
@@ -1177,7 +1177,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_prepay && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -1189,7 +1189,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b font-mono font-semibold overflow-hidden" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b font-mono font-semibold overflow-hidden" data-numeric>
                       <InlinePaymentStatusCell
                         requestId={request.id}
                         paymentPercent={(request as any).payment_percent ?? 0}
@@ -1197,7 +1197,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="shipment_date"
@@ -1209,7 +1209,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -1221,7 +1221,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
@@ -1239,7 +1239,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.waybill_number && (
-                    <TableCell className="text-center px-2 py-1.5 border-r border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell className="text-center px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1257,7 +1257,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="applicant"
@@ -1275,7 +1275,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.executor && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineExecutorCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1285,7 +1285,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.equipment && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden text-[14px]">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
                         <div className="leading-snug truncate">
                           <div className="font-medium text-foreground">
@@ -1303,7 +1303,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center px-3 py-2 border-r border-b overflow-hidden">
+                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden">
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
