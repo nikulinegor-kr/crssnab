@@ -840,7 +840,7 @@ export const RequestsTable = ({
         <div className="border-0 bg-card">
         <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: 32 }} />
+            <col style={{ width: visibility.select === false ? 8 : 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
             {visibility.description && <col style={{ width: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
@@ -864,11 +864,13 @@ export const RequestsTable = ({
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
               <TableHead className="text-center p-1 border-b">
-                <Checkbox
-                  checked={selectedRequestIds.size === requests.length && requests.length > 0}
-                  onCheckedChange={toggleAllRequests}
-                  className="h-4 w-4"
-                />
+                {visibility.select !== false && (
+                  <Checkbox
+                    checked={selectedRequestIds.size === requests.length && requests.length > 0}
+                    onCheckedChange={toggleAllRequests}
+                    className="h-4 w-4"
+                  />
+                )}
               </TableHead>
               {visibility.request_date && (
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
@@ -1079,13 +1081,15 @@ export const RequestsTable = ({
                         />
                       }
                     />
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={selectedRequestIds.has(request.id)}
-                        onCheckedChange={() => toggleRequestSelection(request.id)}
-                        className="h-4 w-4"
-                      />
-                    </div>
+                    {visibility.select !== false && (
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={selectedRequestIds.has(request.id)}
+                          onCheckedChange={() => toggleRequestSelection(request.id)}
+                          className="h-4 w-4"
+                        />
+                      </div>
+                    )}
                   </TableCell>
 
                   {visibility.request_date && (
