@@ -40,7 +40,7 @@ export default function AnalyticsRequestsPage() {
     const delivered = rows.filter((r) => StatusGroups.DELIVERED.has(r.status ?? ""));
     return {
       new: count(rows, (r) => (r.status ?? "") === "Новая заявка"),
-      incoming: count(rows, (r) => (r.status ?? "") === "Входящая заявка"),
+      incoming: count(rows, (r) => (r.status ?? "") === "Новая заявка"),
       inWork: count(
         rows,
         (r) =>
