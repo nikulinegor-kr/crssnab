@@ -24,14 +24,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SavedFiltersDropdown } from "@/components/SavedFiltersDropdown";
-import { QuickFilters } from "./QuickFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
 import { 
   STATUSES, 
-  PRIORITIES, 
   RequestFilters 
 } from "@/hooks/useRequestsFilters";
 
@@ -177,7 +175,7 @@ export const RequestsFilters = ({
     applicantFilter !== "all" ||
     objectFilter !== "all" ||
     transportCompanyFilter !== "all" ||
-    !hideDelivered ||
+    hideDelivered ||
     isSmartSearchActive;
 
   const activeFilterCount = [
@@ -186,7 +184,20 @@ export const RequestsFilters = ({
     objectFilter !== "all",
     applicantFilter !== "all",
     transportCompanyFilter !== "all",
+    priorityFilter !== "all",
+    hideDelivered,
   ].filter(Boolean).length;
+
+  const objectLabel = availableObjects.find((object) => object.id === objectFilter)?.name;
+  const chips = [
+    ...statusFilter.map((status) => ({ key: `status-${status}`, label: `Статус: ${status}`, clear: () => setStatusFilter(statusFilter.filter((item) => item !== status)) })),
+    ...(priorityFilter !== "all" ? [{ key: "priority", label: `Приоритет: ${priorityFilter}`, clear: () => setPriorityFilter("all") }] : []),
+    ...(yearFilter !== "all" ? [{ key: "year", label: `Год: ${yearFilter}`, clear: () => setYearFilter("all") }] : []),
+    ...(applicantFilter !== "all" ? [{ key: "applicant", label: `Контрагент: ${applicantFilter}`, clear: () => setApplicantFilter("all") }] : []),
+    ...(objectFilter !== "all" ? [{ key: "object", label: `Объект: ${objectLabel || objectFilter}`, clear: () => setObjectFilter("all") }] : []),
+    ...(transportCompanyFilter !== "all" ? [{ key: "transport", label: `ТК: ${transportCompanyFilter}`, clear: () => setTransportCompanyFilter("all") }] : []),
+    ...(hideDelivered ? [{ key: "delivered", label: "Скрыть доставленные", clear: () => setHideDelivered(false) }] : []),
+  ];
 
   return (
     <div className="flex flex-col gap-1.5 border border-border bg-card p-2">
@@ -420,6 +431,26 @@ export const RequestsFilters = ({
           </Button>
         )}
       </div>
+
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-1.5" aria-label="Активные фильтры">
+          {chips.map((chip) => (
+            <span key={chip.key} className="inline-flex h-6 items-center gap-1 rounded-md border border-border bg-muted px-2 text-xs text-foreground">
+              {chip.label}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={chip.clear}
+                className="no-min-tap -mr-1 h-4 min-h-0 w-4 rounded-sm p-0 text-muted-foreground hover:text-foreground"
+                aria-label={`Снять фильтр «${chip.label}»`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Smart search indicator */}
       {isSmartSearchActive && (
