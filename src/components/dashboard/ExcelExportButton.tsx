@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { useToast } from "@/hooks/use-toast";
+import { formatPersonName } from "@/lib/personName";
 
 interface ExcelExportButtonProps {
   requests: Request[];
@@ -42,8 +43,8 @@ export function ExcelExportButton({ requests, filteredRequests }: ExcelExportBut
         "Описание": request.description,
         "Статус": request.status,
         "Приоритет": request.priority,
-        "Заявитель": request.applicant || "",
-        "Исполнитель": request.executor || "",
+        "Заявитель": formatPersonName(request.applicant) || "",
+        "Исполнитель": formatPersonName(request.executor) || "",
         "Срок поставки": request.availability_delivery_time || "",
         "Контрагент": request.contractor || "",
         "Номер счета": request.invoice_number || "",

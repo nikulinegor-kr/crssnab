@@ -11,6 +11,7 @@ import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import { Request } from "@/hooks/useRequests";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { formatPersonName } from "@/lib/personName";
 
 interface ExportButtonProps {
   requests: Request[];
@@ -50,8 +51,8 @@ export function ExportButton({ requests }: ExportButtonProps) {
         `"${r.description.replace(/"/g, '""')}"`,
         `"${r.status}"`,
         `"${r.priority || ''}"`,
-        `"${r.applicant || ''}"`,
-        `"${r.executor || ''}"`,
+        `"${formatPersonName(r.applicant)}"`,
+        `"${formatPersonName(r.executor)}"`,
         `"${r.contractor || ''}"`,
         r.shipment_date ? format(new Date(r.shipment_date), "dd.MM.yyyy") : "",
         r.delivery_date ? format(new Date(r.delivery_date), "dd.MM.yyyy") : "",

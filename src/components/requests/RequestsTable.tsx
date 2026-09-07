@@ -310,7 +310,29 @@ export const RequestsTable = ({
 
 
   const { data: userId } = useAuthUserId();
-  const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
+  const { visibility: storedVisibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
+  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(2000);
+
+  useEffect(() => {
+    const el = tableWrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 2000;
+      setAvailableWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /** Мало места (открыта панель) — прячем колонки справа налево. */
+  const visibility = useMemo(() => {
+    const v = { ...storedVisibility };
+    if (availableWidth < 1000) v.executor = false;
+    if (availableWidth < 880) v.delivery_date = false;
+    if (availableWidth < 760) v.contractor = false;
+    return v;
+  }, [storedVisibility, availableWidth]);
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
@@ -847,30 +869,30 @@ export const RequestsTable = ({
             Группировать по объектам
           </Toggle>
           {headerActions}
-          <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
+          <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="border-0 bg-card">
-        <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+        <div className="border-0 bg-card" ref={tableWrapRef}>
+        <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'auto' }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
-            {visibility.request_date && <col style={{ width: widths.request_date }} />}
-            {visibility.description && <col style={{ width: widths.description }} />}
-            {visibility.object && <col style={{ width: widths.object }} />}
-            {visibility.status && <col style={{ width: widths.status }} />}
-            {visibility.availability && <col style={{ width: widths.availability }} />}
-            {visibility.contractor && <col style={{ width: widths.contractor }} />}
-            {visibility.amount && <col style={{ width: widths.amount }} />}
-            {visibility.invoice_number && <col style={{ width: widths.invoice_number }} />}
-            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay }} />}
-            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage }} />}
-            {visibility.shipment_date && <col style={{ width: widths.shipment_date }} />}
-            {visibility.delivery_date && <col style={{ width: widths.delivery_date }} />}
-            {visibility.transport_company && <col style={{ width: widths.transport_company }} />}
-            {visibility.waybill_number && <col style={{ width: widths.waybill_number }} />}
-            {visibility.applicant && <col style={{ width: widths.applicant }} />}
-            {visibility.executor && <col style={{ width: widths.executor }} />}
-            {visibility.equipment && <col style={{ width: widths.equipment }} />}
-            {visibility.comments && <col style={{ width: widths.comments }} />}
+            {visibility.request_date && <col style={{ width: widths.request_date !== DEFAULT_COLUMN_WIDTHS.request_date ? widths.request_date : '1%' }} />}
+            {visibility.description && <col style={{ width: '100%' }} />}
+            {visibility.object && <col style={{ width: widths.object !== DEFAULT_COLUMN_WIDTHS.object ? widths.object : '1%' }} />}
+            {visibility.status && <col style={{ width: widths.status !== DEFAULT_COLUMN_WIDTHS.status ? widths.status : '1%' }} />}
+            {visibility.availability && <col style={{ width: widths.availability !== DEFAULT_COLUMN_WIDTHS.availability ? widths.availability : '1%' }} />}
+            {visibility.contractor && <col style={{ width: widths.contractor !== DEFAULT_COLUMN_WIDTHS.contractor ? widths.contractor : '1%' }} />}
+            {visibility.amount && <col style={{ width: widths.amount !== DEFAULT_COLUMN_WIDTHS.amount ? widths.amount : '1%' }} />}
+            {visibility.invoice_number && <col style={{ width: widths.invoice_number !== DEFAULT_COLUMN_WIDTHS.invoice_number ? widths.invoice_number : '1%' }} />}
+            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay !== DEFAULT_COLUMN_WIDTHS.payment_prepay ? widths.payment_prepay : '1%' }} />}
+            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage !== DEFAULT_COLUMN_WIDTHS.payment_percentage ? widths.payment_percentage : '1%' }} />}
+            {visibility.shipment_date && <col style={{ width: widths.shipment_date !== DEFAULT_COLUMN_WIDTHS.shipment_date ? widths.shipment_date : '1%' }} />}
+            {visibility.delivery_date && <col style={{ width: widths.delivery_date !== DEFAULT_COLUMN_WIDTHS.delivery_date ? widths.delivery_date : '1%' }} />}
+            {visibility.transport_company && <col style={{ width: widths.transport_company !== DEFAULT_COLUMN_WIDTHS.transport_company ? widths.transport_company : '1%' }} />}
+            {visibility.waybill_number && <col style={{ width: widths.waybill_number !== DEFAULT_COLUMN_WIDTHS.waybill_number ? widths.waybill_number : '1%' }} />}
+            {visibility.applicant && <col style={{ width: widths.applicant !== DEFAULT_COLUMN_WIDTHS.applicant ? widths.applicant : '1%' }} />}
+            {visibility.executor && <col style={{ width: widths.executor !== DEFAULT_COLUMN_WIDTHS.executor ? widths.executor : '1%' }} />}
+            {visibility.equipment && <col style={{ width: widths.equipment !== DEFAULT_COLUMN_WIDTHS.equipment ? widths.equipment : '1%' }} />}
+            {visibility.comments && <col style={{ width: widths.comments !== DEFAULT_COLUMN_WIDTHS.comments ? widths.comments : '1%' }} />}
             <col style={{ width: 40 }} />
           </colgroup>
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
@@ -888,19 +910,19 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
               )}
               {visibility.description && (
-                <ResizableTableHeader column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
+                <ResizableTableHeader align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
               )}
               {visibility.object && (
-                <ResizableTableHeader align="left" column="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
+                <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
               {visibility.status && (
-                <ResizableTableHeader align="left" column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
+                <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
                 <ResizableTableHeader column="availability" defaultWidth={DEFAULT_COLUMN_WIDTHS.availability} label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <ResizableTableHeader align="left" column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
+                <ResizableTableHeader column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
               )}
               {visibility.amount && (
                 <ResizableTableHeader align="right" column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
@@ -927,10 +949,10 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
               )}
               {visibility.applicant && (
-                <ResizableTableHeader align="left" column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
+                <ResizableTableHeader column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader align="left" column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+                <ResizableTableHeader column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
               )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" defaultWidth={DEFAULT_COLUMN_WIDTHS.equipment} label="Техника" width={widths.equipment} onResize={handleColumnResize} />
@@ -1121,7 +1143,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell className="px-2 py-1.5 border-b overflow-hidden">
+                    <TableCell data-align="left" className="px-2 py-1.5 border-b overflow-hidden">
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button
@@ -1194,7 +1216,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.object && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineObjectCell
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
@@ -1245,7 +1267,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"

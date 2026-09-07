@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -80,41 +80,20 @@ export const RowContextMenu = ({
           </ContextMenuSubContent>
         </ContextMenuSub>
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>Заявитель</ContextMenuSubTrigger>
-          <ContextMenuSubContent className="max-h-[320px] w-56 overflow-y-auto">
-            <ContextMenuItem onSelect={() => void update(requestId, "applicant", null, applicant)}>
-              <span className="italic text-muted-foreground">Снять назначение</span>
-            </ContextMenuItem>
-            {applicants.map((person) => (
-              <ContextMenuItem
-                key={person.id}
-                className={cn(person.name === applicant && "font-medium")}
-                onSelect={() => void update(requestId, "applicant", person.name, applicant)}
-              >
-                {person.label}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+        <PeopleSubmenu
+          title="Заявитель"
+          people={applicants}
+          current={applicant}
+          onPick={(name) => void update(requestId, "applicant", name, applicant)}
+        />
 
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>Кто ведёт</ContextMenuSubTrigger>
-          <ContextMenuSubContent className="max-h-[320px] w-56 overflow-y-auto">
-            <ContextMenuItem onSelect={() => void update(requestId, "executor", null, executor)}>
-              <span className="italic text-muted-foreground">Снять назначение</span>
-            </ContextMenuItem>
-            {executors.map((person) => (
-              <ContextMenuItem
-                key={person.id}
-                className={cn(person.name === executor && "font-medium")}
-                onSelect={() => void update(requestId, "executor", person.name, executor)}
-              >
-                {person.label}
-              </ContextMenuItem>
-            ))}
-          </ContextMenuSubContent>
-        </ContextMenuSub>
+        <PeopleSubmenu
+          title="Кто ведёт"
+          people={executors}
+          current={executor}
+          onPick={(name) => void update(requestId, "executor", name, executor)}
+        />
+
 
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
@@ -128,5 +107,57 @@ export const RowContextMenu = ({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+};
+
+interface PeopleSubmenuProps {
+  title: string;
+  people: Array<{ id: string; name: string; label: string }>;
+  current: string | null;
+  onPick: (name: string | null) => void;
+}
+
+/** Подменю выбора человека с поиском по подстроке — списки бывают длинными. */
+const PeopleSubmenu = ({ title, people, current, onPick }: PeopleSubmenuProps) => {
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return people;
+    return people.filter((p) =>
+      words.every((w) => `${p.label} ${p.name}`.toLowerCase().includes(w))
+    );
+  }, [people, search]);
+
+  return (
+    <ContextMenuSub>
+      <ContextMenuSubTrigger>{title}</ContextMenuSubTrigger>
+      <ContextMenuSubContent className="w-60 p-1">
+        <input
+          value={search}
+          autoFocus
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          placeholder="Поиск"
+          className="mb-1 h-7 w-full rounded border border-border bg-background px-2 text-xs focus:outline-none"
+        />
+        <div className="max-h-[280px] overflow-y-auto">
+          <ContextMenuItem onSelect={() => onPick(null)}>
+            <span className="italic text-muted-foreground">Снять назначение</span>
+          </ContextMenuItem>
+          {filtered.map((person) => (
+            <ContextMenuItem
+              key={person.id}
+              className={cn(person.name === current && "font-medium")}
+              onSelect={() => onPick(person.name)}
+            >
+              {person.label}
+            </ContextMenuItem>
+          ))}
+          {filtered.length === 0 && (
+            <div className="px-2 py-1 text-xs text-muted-foreground">Ничего не найдено</div>
+          )}
+        </div>
+      </ContextMenuSubContent>
+    </ContextMenuSub>
   );
 };

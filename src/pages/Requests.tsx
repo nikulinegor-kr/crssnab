@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
-import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { RequestSidePanel } from "@/components/requests/RequestSidePanel";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
@@ -150,7 +149,6 @@ const Requests = () => {
 
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
@@ -708,11 +706,6 @@ const Requests = () => {
               request={selectedRequest as any}
               open={panelOpen}
               onClose={() => setPanelOpen(false)}
-              onEdit={(r) => {
-                setSelectedRequest(r);
-                setPanelOpen(false);
-                setEditDialogOpen(true);
-              }}
               onPrevious={() => selectAdjacentRequest(-1)}
               onNext={() => selectAdjacentRequest(1)}
               hasPrevious={selectedRequestIndex > 0}
@@ -750,11 +743,6 @@ const Requests = () => {
           request={selectedRequest as any}
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
-          onEdit={(r) => {
-            setSelectedRequest(r);
-            setPanelOpen(false);
-            setEditDialogOpen(true);
-          }}
           onPrevious={() => selectAdjacentRequest(-1)}
           onNext={() => selectAdjacentRequest(1)}
           hasPrevious={selectedRequestIndex > 0}
@@ -764,14 +752,6 @@ const Requests = () => {
         />
       )}
 
-
-      {selectedRequest && (
-        <EditRequestDialog
-          request={selectedRequest}
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-        />
-      )}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

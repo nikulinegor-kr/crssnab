@@ -182,15 +182,25 @@ export const PanelItemsTable = ({
         </div>
       ))}
 
-      <div className="flex items-center justify-between pt-1">
-        {!readOnly && (
+      {/* Подвал таблицы: «Итого» слева, сумма — в колонке «Сумма» */}
+      <div className="grid grid-cols-[1fr_70px_52px_64px_72px_20px] items-center gap-1 border-t border-border pt-1.5">
+        <span className="text-[11px] font-medium">Итого</span>
+        <span />
+        <span />
+        <span />
+        <span className="font-numeric px-1 text-right text-[12px] font-semibold">{money(total)}</span>
+        <span />
+      </div>
+
+      {!readOnly && (
+        <div className="pt-1">
           <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={addRow} disabled={adding}>
             {adding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
             Добавить позицию
           </Button>
-        )}
-        <span className="font-numeric ml-auto text-[12px] font-semibold">{money(total)} ₽</span>
-      </div>
+        </div>
+      )}
+
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
