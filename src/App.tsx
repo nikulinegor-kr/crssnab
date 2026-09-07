@@ -1,5 +1,6 @@
 import { Suspense, useState } from "react";
 import NativeShell from "@/components/native/NativeShell";
+import "@/hooks/useUiScale";
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";

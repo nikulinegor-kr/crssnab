@@ -265,12 +265,12 @@ All colors MUST be HSL.
   }
 
   .requests-registry table {
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .requests-registry table thead th {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0;
     color: hsl(var(--muted-foreground));
@@ -295,8 +295,8 @@ All colors MUST be HSL.
   .requests-registry table tbody td {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
-    font-size: 14px !important;
-    line-height: 20px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
     height: var(--row-h, 32px);
     vertical-align: middle;
     white-space: nowrap;
@@ -326,7 +326,7 @@ All colors MUST be HSL.
   .requests-registry table tbody td.font-mono,
   .requests-registry table tbody td[data-numeric] {
     font-family: var(--mono);
-    font-size: 13px !important;
+    font-size: 0.8125rem !important;
     font-variant-numeric: tabular-nums;
   }
 

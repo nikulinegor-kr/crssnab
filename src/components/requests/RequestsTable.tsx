@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
+import { UI_SCALES, useUiScale } from "@/hooks/useUiScale";
+
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2 } from "lucide-react";
@@ -334,6 +336,7 @@ export const RequestsTable = ({
     return v;
   }, [storedVisibility, availableWidth]);
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
+  const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
     return saved === "normal" || saved === "roomy" ? saved : "compact";
@@ -567,9 +570,20 @@ export const RequestsTable = ({
   const endIndex = startIndex + effectivePageSize;
   const paginatedRequests = sortedRequests?.slice(startIndex, endIndex) || [];
 
+  // Панель листает по всей выборке, а не по текущей странице
   useEffect(() => {
-    onRequestOrderChange?.(paginatedRequests);
-  }, [onRequestOrderChange, paginatedRequests]);
+    onRequestOrderChange?.(sortedRequests || []);
+  }, [onRequestOrderChange, sortedRequests]);
+
+  // Если выбранная в панели заявка ушла за пределы страницы — переходим на её страницу
+  useEffect(() => {
+    if (!activeRequestId || grouped) return;
+    const index = (sortedRequests || []).findIndex((r) => r.id === activeRequestId);
+    if (index < 0) return;
+    const page = Math.floor(index / pageSize) + 1;
+    setCurrentPage((prev) => (prev === page ? prev : page));
+  }, [activeRequestId, grouped, pageSize, sortedRequests]);
+
 
   // Group by object — must stay before early returns to keep hook order stable
   const groupedRequests = useMemo(() => {
@@ -715,6 +729,21 @@ export const RequestsTable = ({
           </Button>
         ))}
       </div>
+      <div className="flex items-center gap-1" aria-label="Масштаб интерфейса">
+        {UI_SCALES.map((value) => (
+          <Button
+            key={value}
+            type="button"
+            size="sm"
+            variant={uiScale === value ? "secondary" : "ghost"}
+            className="h-6 px-2 text-xs font-numeric"
+            onClick={() => setUiScale(value)}
+          >
+            {value}%
+          </Button>
+        ))}
+      </div>
+
     </div>
   );
 
