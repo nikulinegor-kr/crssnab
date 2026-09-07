@@ -901,10 +901,10 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="payment_percentage" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_percentage} label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
               )}
               {visibility.shipment_date && (
-                <ResizableTableHeader align="right" column="shipment_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.shipment_date} label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
+                <ResizableTableHeader column="shipment_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.shipment_date} label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
               )}
               {visibility.delivery_date && (
-                <ResizableTableHeader align="right" column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
+                <ResizableTableHeader column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
               )}
               {visibility.transport_company && (
                 <ResizableTableHeader column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
@@ -1089,7 +1089,7 @@ export const RequestsTable = ({
                   </TableCell>
 
                   {visibility.request_date && (
-                    <TableCell className="text-center p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
+                    <TableCell className="p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
@@ -1207,9 +1207,9 @@ export const RequestsTable = ({
                   )}
 
                   {visibility.availability && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       {request.availability_delivery_time ? (
-                        <div className="line-clamp-2 text-foreground leading-snug text-center">
+                        <div className="line-clamp-2 text-foreground leading-snug">
                           <HighlightText text={request.availability_delivery_time} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -1236,7 +1236,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell className="text-right px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-align="right" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
@@ -1254,9 +1254,9 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="text-center px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       {request.invoice_number ? (
-                        <div className="line-clamp-2 text-foreground leading-snug text-center">
+                        <div className="line-clamp-2 text-foreground leading-snug">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
                         </div>
                       ) : (
@@ -1265,7 +1265,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_prepay && (
-                    <TableCell className="text-center px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="payment_percentage"
@@ -1277,7 +1277,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="text-center px-2 py-1.5 border-b font-mono font-semibold overflow-hidden" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b font-mono font-semibold overflow-hidden" data-numeric>
                       <InlinePaymentStatusCell
                         requestId={request.id}
                         paymentPercent={(request as any).payment_percent ?? 0}
@@ -1285,7 +1285,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell className="text-right px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="shipment_date"
@@ -1297,7 +1297,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell className="text-right px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="delivery_date"
@@ -1309,14 +1309,14 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="transport_company"
                         value={request.transport_company || ""}
                         displayValue={
                           request.transport_company ? (
-                            <div className="line-clamp-2 text-foreground leading-snug text-center">
+                            <div className="line-clamp-2 text-foreground leading-snug">
                               <HighlightText text={request.transport_company} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -1327,14 +1327,14 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.waybill_number && (
-                    <TableCell className="text-center px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
                         value={request.waybill_number || ""}
                         displayValue={
                           request.waybill_number ? (
-                            <div className="line-clamp-2 text-foreground leading-snug text-center">
+                            <div className="line-clamp-2 text-foreground leading-snug">
                               <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
                             </div>
                           ) : (
@@ -1373,7 +1373,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.equipment && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       {(request as any).equipment_plate || (request as any).equipment_display ? (
                         <div className="leading-snug truncate">
                           <div className="font-medium text-foreground">
@@ -1391,14 +1391,14 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="text-center px-3 py-2 border-b overflow-hidden">
+                    <TableCell className="px-3 py-2 border-b overflow-hidden">
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
                         value={request.comments || ""}
                         displayValue={
                           request.comments ? (
-                            <div className="line-clamp-3 text-muted-foreground text-[13px] leading-snug text-center">
+                            <div className="line-clamp-3 text-muted-foreground text-[13px] leading-snug">
                               <HighlightText text={request.comments} searchQuery={searchQuery} />
                             </div>
                           ) : (
