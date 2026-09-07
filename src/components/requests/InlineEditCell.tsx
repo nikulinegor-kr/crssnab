@@ -51,11 +51,11 @@ export const InlineEditCell = ({
   }, [isEditing]);
 
   useEffect(() => {
-    setEditValue(String(value ?? ""));
+    setEditValue(norm(value));
   }, [value]);
 
   const handleSave = async () => {
-    if (editValue === String(value ?? "")) {
+    if (editValue === norm(value)) {
       setIsEditing(false);
       return;
     }
@@ -98,7 +98,7 @@ export const InlineEditCell = ({
   };
 
   const handleCancel = () => {
-    setEditValue(String(value ?? ""));
+    setEditValue(norm(value));
     setIsEditing(false);
   };
 
