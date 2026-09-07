@@ -62,6 +62,9 @@ export const RequestSidePanel = ({
   hasNext = false,
   position,
   requestCount,
+  inline = false,
+  width,
+  onWidthChange,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -70,10 +73,16 @@ export const RequestSidePanel = ({
   const [titleValue, setTitleValue] = useState("");
   const [savingField, setSavingField] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(PANEL_WIDTH_KEY));
-    return Number.isFinite(saved) && saved >= MIN_PANEL_WIDTH ? saved : DEFAULT_PANEL_WIDTH;
-  });
+  const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
+  const panelWidth = width ?? localWidth;
+  const applyWidth = useCallback(
+    (next: number) => {
+      const value = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, next));
+      if (onWidthChange) onWidthChange(value);
+      else setLocalWidth(value);
+    },
+    [onWidthChange]
+  );
   const resizingRef = useRef(false);
 
   const stopResize = useCallback(() => {
@@ -86,10 +95,7 @@ export const RequestSidePanel = ({
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (!resizingRef.current) return;
-      const maxWidth = Math.max(MIN_PANEL_WIDTH, window.innerWidth - 280);
-      const nextWidth = Math.min(maxWidth, Math.max(MIN_PANEL_WIDTH, window.innerWidth - event.clientX));
-      setPanelWidth(nextWidth);
-      localStorage.setItem(PANEL_WIDTH_KEY, String(nextWidth));
+      applyWidth(window.innerWidth - event.clientX);
     };
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", stopResize);
@@ -98,7 +104,8 @@ export const RequestSidePanel = ({
       window.removeEventListener("mouseup", stopResize);
       stopResize();
     };
-  }, [stopResize]);
+  }, [applyWidth, stopResize]);
+
 
   useEffect(() => {
     if (!open) return;
