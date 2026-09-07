@@ -1062,7 +1062,18 @@ export const RequestsTable = ({
 
                 return (
                 <React.Fragment key={request.id}>
+                  <RowContextMenu
+                    requestId={request.id}
+                    organizationId={request.organization_id}
+                    requestNumber={(request as any).request_number || request.id}
+                    status={request.status}
+                    priority={request.priority || null}
+                    applicant={request.applicant || null}
+                    executor={request.executor || null}
+                    onOpenCard={() => navigate(`/requests/${request.id}`)}
+                  >
                   <TableRow
+
                   className={cn(
                     "cursor-pointer group border-b border-border",
                     activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
