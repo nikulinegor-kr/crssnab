@@ -687,6 +687,33 @@ const Requests = () => {
           <ProcurementList />
         </div>
       )}
+        </div>
+
+        {/* Колонка панели — таблица сжимается, а не перекрывается */}
+        <div className="min-w-0 overflow-hidden">
+          {panelInline && (
+            <RequestSidePanel
+              inline
+              width={panelWidth}
+              onWidthChange={setPanelWidth}
+              request={selectedRequest as any}
+              open={panelOpen}
+              onClose={() => setPanelOpen(false)}
+              onEdit={(r) => {
+                setSelectedRequest(r);
+                setPanelOpen(false);
+                setEditDialogOpen(true);
+              }}
+              onPrevious={() => selectAdjacentRequest(-1)}
+              onNext={() => selectAdjacentRequest(1)}
+              hasPrevious={selectedRequestIndex > 0}
+              hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
+              position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
+              requestCount={panelRequestOrder.length}
+            />
+          )}
+        </div>
+      </div>
 
       {canCreate && (
         <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -707,23 +734,27 @@ const Requests = () => {
         </CreateRequestDialog>
       )}
 
+      {!panelInline && (
+        <RequestSidePanel
+          width={panelWidth}
+          onWidthChange={setPanelWidth}
+          request={selectedRequest as any}
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          onEdit={(r) => {
+            setSelectedRequest(r);
+            setPanelOpen(false);
+            setEditDialogOpen(true);
+          }}
+          onPrevious={() => selectAdjacentRequest(-1)}
+          onNext={() => selectAdjacentRequest(1)}
+          hasPrevious={selectedRequestIndex > 0}
+          hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
+          position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
+          requestCount={panelRequestOrder.length}
+        />
+      )}
 
-      <RequestSidePanel
-        request={selectedRequest as any}
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        onEdit={(r) => {
-          setSelectedRequest(r);
-          setPanelOpen(false);
-          setEditDialogOpen(true);
-        }}
-        onPrevious={() => selectAdjacentRequest(-1)}
-        onNext={() => selectAdjacentRequest(1)}
-        hasPrevious={selectedRequestIndex > 0}
-        hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
-        position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
-        requestCount={panelRequestOrder.length}
-      />
 
       {selectedRequest && (
         <EditRequestDialog
