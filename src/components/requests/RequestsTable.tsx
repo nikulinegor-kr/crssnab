@@ -284,6 +284,9 @@ export const RequestsTable = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [bulkSaving, setBulkSaving] = useState(false);
+  const tableOrgId = (requests?.[0] as any)?.organization_id ?? null;
+  const { data: bulkExecutors = [] } = useRequestParticipants("executor", tableOrgId, selectedRequestIds.size > 0);
+
 
   const applyBulk = useCallback(async (field: "status" | "priority" | "executor", value: string) => {
     const ids = Array.from(selectedRequestIds);
