@@ -3122,6 +3122,7 @@ export type Database = {
           id: string
           name: string
           organization_id: string
+          price: number
           quantity: number
           request_id: string
         }
@@ -3131,6 +3132,7 @@ export type Database = {
           id?: string
           name: string
           organization_id: string
+          price?: number
           quantity?: number
           request_id: string
         }
@@ -3140,6 +3142,7 @@ export type Database = {
           id?: string
           name?: string
           organization_id?: string
+          price?: number
           quantity?: number
           request_id?: string
         }
