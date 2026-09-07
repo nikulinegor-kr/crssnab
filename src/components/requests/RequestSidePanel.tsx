@@ -387,12 +387,13 @@ export const RequestSidePanel = ({
 
   if (!open || !request) return null;
 
+  // Боковая панель — только быстрая правка: поля и файлы.
+  // Позиции, история и прочее тяжёлое живут в полном экране.
   const tabs = [
     { id: "overview", label: "Обзор" },
-    { id: "items", label: `Позиции ${items?.length || ""}`.trim() },
     { id: "docs", label: `Документы ${docsCount || ""}`.trim() },
-    { id: "history", label: "История" },
   ] as const;
+
 
   const asOverlay = !inline || isFullscreen;
 
