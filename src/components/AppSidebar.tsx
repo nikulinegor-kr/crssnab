@@ -133,6 +133,61 @@ export function AppSidebar() {
     setOpenGroups((prev) => (prev[activeGroupKey] ? prev : { ...prev, [activeGroupKey]: true }));
   }, [activeGroupKey]);
 
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Восстанавливаем позицию прокрутки меню и держим её при переходах
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    try {
+      const saved = sessionStorage.getItem(SCROLL_KEY);
+      if (saved) {
+        const top = Number(saved);
+        if (!Number.isNaN(top)) {
+          requestAnimationFrame(() => {
+            if (contentRef.current) contentRef.current.scrollTop = top;
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        try {
+          sessionStorage.setItem(SCROLL_KEY, String(el.scrollTop));
+        } catch {
+          // ignore
+        }
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  // Активный пункт всегда виден
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const id = window.setTimeout(() => {
+      const active = el.querySelector<HTMLElement>('[data-active="true"], a[aria-current="page"]');
+      if (!active) return;
+      const box = active.getBoundingClientRect();
+      const parent = el.getBoundingClientRect();
+      if (box.top < parent.top || box.bottom > parent.bottom) {
+        active.scrollIntoView({ block: "nearest" });
+      }
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [currentPath]);
+
   useEffect(() => {
     try {
       localStorage.setItem(OPEN_KEY, JSON.stringify(openGroups));
@@ -140,6 +195,7 @@ export function AppSidebar() {
       // ignore
     }
   }, [openGroups]);
+
 
   const handleLogout = async () => {
     if (isDemoMode) { navigate("/"); return; }
