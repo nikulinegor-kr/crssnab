@@ -645,6 +645,8 @@ const App = () => {
               <Route path="by-object" element={<PlannerByObject />} />
               <Route path="workload" element={<PlannerWorkload />} />
             </Route>
+            </Route>
+
             <Route path="/my-planner" element={<Navigate to="/planner?view=mine" replace />} />
             <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
             <Route path="/planner/my" element={<Navigate to="/planner?view=mine" replace />} />
