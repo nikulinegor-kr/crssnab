@@ -274,8 +274,33 @@ export const RequestsTable = ({
   headerActions,
   activeRequestId,
   onRequestOrderChange,
+  onClearSelection,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  const applyBulk = useCallback(async (field: "status" | "priority", value: string) => {
+    const ids = Array.from(selectedRequestIds);
+    if (!ids.length) return;
+    setBulkSaving(true);
+    try {
+      const { error } = await supabase.from("requests").update({ [field]: value }).in("id", ids);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      toast({
+        title: field === "status" ? "Статус изменён" : "Приоритет изменён",
+        description: `Заявок: ${ids.length} · ${value}`,
+      });
+    } catch (e) {
+      console.error("Bulk update:", e);
+      toast({ title: "Не удалось сохранить", description: "Изменения не применены", variant: "destructive" });
+    } finally {
+      setBulkSaving(false);
+    }
+  }, [queryClient, selectedRequestIds, toast]);
+
   const { data: userId } = useAuthUserId();
   const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
