@@ -21,11 +21,16 @@ interface RequestSidePanelProps {
   hasNext?: boolean;
   position?: number;
   requestCount?: number;
+  /** Панель как колонка раскладки (широкий экран) вместо оверлея. */
+  inline?: boolean;
+  width?: number;
+  onWidthChange?: (width: number) => void;
 }
 
-const PANEL_WIDTH_KEY = "requests-side-panel-width";
 const DEFAULT_PANEL_WIDTH = 460;
 const MIN_PANEL_WIDTH = 360;
+const MAX_PANEL_WIDTH = 720;
+
 
 const money = (v: number) =>
   new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
@@ -57,6 +62,9 @@ export const RequestSidePanel = ({
   hasNext = false,
   position,
   requestCount,
+  inline = false,
+  width,
+  onWidthChange,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -65,10 +73,16 @@ export const RequestSidePanel = ({
   const [titleValue, setTitleValue] = useState("");
   const [savingField, setSavingField] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(PANEL_WIDTH_KEY));
-    return Number.isFinite(saved) && saved >= MIN_PANEL_WIDTH ? saved : DEFAULT_PANEL_WIDTH;
-  });
+  const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
+  const panelWidth = width ?? localWidth;
+  const applyWidth = useCallback(
+    (next: number) => {
+      const value = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, next));
+      if (onWidthChange) onWidthChange(value);
+      else setLocalWidth(value);
+    },
+    [onWidthChange]
+  );
   const resizingRef = useRef(false);
 
   const stopResize = useCallback(() => {
@@ -81,10 +95,7 @@ export const RequestSidePanel = ({
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (!resizingRef.current) return;
-      const maxWidth = Math.max(MIN_PANEL_WIDTH, window.innerWidth - 280);
-      const nextWidth = Math.min(maxWidth, Math.max(MIN_PANEL_WIDTH, window.innerWidth - event.clientX));
-      setPanelWidth(nextWidth);
-      localStorage.setItem(PANEL_WIDTH_KEY, String(nextWidth));
+      applyWidth(window.innerWidth - event.clientX);
     };
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", stopResize);
@@ -93,7 +104,8 @@ export const RequestSidePanel = ({
       window.removeEventListener("mouseup", stopResize);
       stopResize();
     };
-  }, [stopResize]);
+  }, [applyWidth, stopResize]);
+
 
   useEffect(() => {
     if (!open) return;
@@ -227,14 +239,25 @@ export const RequestSidePanel = ({
     { id: "history", label: "История" },
   ] as const;
 
-  return createPortal(
+  const asOverlay = !inline || isFullscreen;
+
+  const content = (
     <aside
-      className="requests-registry fixed inset-y-0 right-0 z-50 flex max-w-[100vw] flex-col border-l border-border bg-card shadow-panel motion-reduce:animate-none"
-      style={{
-        width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
-        transition: "width var(--dur) var(--ease)",
-        animation: "slide-in-right var(--dur) var(--ease)",
-      }}
+      className={cn(
+        "requests-registry flex flex-col border-l border-border bg-card",
+        asOverlay
+          ? "fixed inset-y-0 right-0 z-50 max-w-[100vw] shadow-panel motion-reduce:animate-none"
+          : "sticky top-2 h-[calc(100dvh-2rem)] w-full overflow-hidden"
+      )}
+      style={
+        asOverlay
+          ? {
+              width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
+              transition: "width var(--dur) var(--ease)",
+              animation: "slide-in-right var(--dur) var(--ease)",
+            }
+          : undefined
+      }
       aria-label="Карточка заявки"
     >
       {!isFullscreen && (
@@ -251,6 +274,7 @@ export const RequestSidePanel = ({
           }}
         />
       )}
+
       {/* Header */}
       <div className="flex items-start gap-2 px-4 pt-3">
         {editingTitle ? (
@@ -477,7 +501,9 @@ export const RequestSidePanel = ({
           Редактировать
         </Button>
       </div>
-    </aside>,
-    document.body
+    </aside>
   );
+
+  return asOverlay ? createPortal(content, document.body) : content;
 };
+

@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useRequestsFilters } from "@/hooks/useRequestsFilters";
+import { useRequestPanelWidth } from "@/hooks/useRequestPanelWidth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateProcurement } from "@/hooks/useProcurements";
 import { useRequestFavorites } from "@/hooks/useRequestFavorites";
 import { supabase } from "@/integrations/supabase/client";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -193,6 +195,19 @@ const Requests = () => {
   const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
     setPanelRequestOrder(orderedRequests);
   }, []);
+
+  // Панель как колонка раскладки при широком окне, оверлей — при узком
+  const { width: panelWidth, setWidth: setPanelWidth } = useRequestPanelWidth();
+  const [panelInline, setPanelInline] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1400
+  );
+  useEffect(() => {
+    const onResize = () => setPanelInline(window.innerWidth >= 1400);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+
 
   const handleDeleteClick = (request: Request, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -459,8 +474,17 @@ const Requests = () => {
         ))}
       </nav>
 
-      {/* === Tab Content === */}
+      {/* === Tab Content + боковая панель как колонка раскладки === */}
+      <div
+        className="grid items-start gap-2"
+        style={{
+          gridTemplateColumns: `minmax(0,1fr) ${panelInline && panelOpen ? panelWidth : 0}px`,
+          transition: "grid-template-columns var(--dur) var(--ease)",
+        }}
+      >
+        <div className="min-w-0 space-y-2">
       {activeTab === "active" && (
+
         <div className="space-y-2">
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
@@ -549,6 +573,7 @@ const Requests = () => {
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
           </div>
         </div>
@@ -615,6 +640,7 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
           </div>
         </div>
@@ -647,6 +673,7 @@ const Requests = () => {
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
             </div>
           )}
@@ -663,6 +690,33 @@ const Requests = () => {
           <ProcurementList />
         </div>
       )}
+        </div>
+
+        {/* Колонка панели — таблица сжимается, а не перекрывается */}
+        <div className="min-w-0 overflow-hidden">
+          {panelInline && (
+            <RequestSidePanel
+              inline
+              width={panelWidth}
+              onWidthChange={setPanelWidth}
+              request={selectedRequest as any}
+              open={panelOpen}
+              onClose={() => setPanelOpen(false)}
+              onEdit={(r) => {
+                setSelectedRequest(r);
+                setPanelOpen(false);
+                setEditDialogOpen(true);
+              }}
+              onPrevious={() => selectAdjacentRequest(-1)}
+              onNext={() => selectAdjacentRequest(1)}
+              hasPrevious={selectedRequestIndex > 0}
+              hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
+              position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
+              requestCount={panelRequestOrder.length}
+            />
+          )}
+        </div>
+      </div>
 
       {canCreate && (
         <CreateRequestDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -683,23 +737,27 @@ const Requests = () => {
         </CreateRequestDialog>
       )}
 
+      {!panelInline && (
+        <RequestSidePanel
+          width={panelWidth}
+          onWidthChange={setPanelWidth}
+          request={selectedRequest as any}
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          onEdit={(r) => {
+            setSelectedRequest(r);
+            setPanelOpen(false);
+            setEditDialogOpen(true);
+          }}
+          onPrevious={() => selectAdjacentRequest(-1)}
+          onNext={() => selectAdjacentRequest(1)}
+          hasPrevious={selectedRequestIndex > 0}
+          hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
+          position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
+          requestCount={panelRequestOrder.length}
+        />
+      )}
 
-      <RequestSidePanel
-        request={selectedRequest as any}
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        onEdit={(r) => {
-          setSelectedRequest(r);
-          setPanelOpen(false);
-          setEditDialogOpen(true);
-        }}
-        onPrevious={() => selectAdjacentRequest(-1)}
-        onNext={() => selectAdjacentRequest(1)}
-        hasPrevious={selectedRequestIndex > 0}
-        hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
-        position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
-        requestCount={panelRequestOrder.length}
-      />
 
       {selectedRequest && (
         <EditRequestDialog

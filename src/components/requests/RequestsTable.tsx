@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -52,6 +52,11 @@ import { useProjectOptions } from "@/hooks/useProjects";
 import { useAuthUserId } from "@/hooks/useOrgMembership";
 import { isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+
 
 const moneyShort = (n: number) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(n)) + " \u20BD";
@@ -142,6 +147,8 @@ interface RequestsTableProps {
   headerActions?: ReactNode;
   activeRequestId?: string | null;
   onRequestOrderChange?: (requests: Request[]) => void;
+  onClearSelection?: () => void;
+
 }
 
 // Memoized mobile card component for better performance
@@ -267,8 +274,33 @@ export const RequestsTable = ({
   headerActions,
   activeRequestId,
   onRequestOrderChange,
+  onClearSelection,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  const applyBulk = useCallback(async (field: "status" | "priority", value: string) => {
+    const ids = Array.from(selectedRequestIds);
+    if (!ids.length) return;
+    setBulkSaving(true);
+    try {
+      const { error } = await supabase.from("requests").update({ [field]: value }).in("id", ids);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      toast({
+        title: field === "status" ? "Статус изменён" : "Приоритет изменён",
+        description: `Заявок: ${ids.length} · ${value}`,
+      });
+    } catch (e) {
+      console.error("Bulk update:", e);
+      toast({ title: "Не удалось сохранить", description: "Изменения не применены", variant: "destructive" });
+    } finally {
+      setBulkSaving(false);
+    }
+  }, [queryClient, selectedRequestIds, toast]);
+
   const { data: userId } = useAuthUserId();
   const { visibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
@@ -280,6 +312,32 @@ export const RequestsTable = ({
   // Quick View state — only store ID to avoid re-renders from table data updates
   const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  // Меню статуса/приоритета (клик по ячейке либо клавиши S / P)
+  const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" } | null>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+        return;
+      }
+      if (!activeRequestId || event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "s" || key === "ы") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "status" });
+      } else if (key === "p" || key === "з") {
+        event.preventDefault();
+        setOpenMenu({ id: activeRequestId, field: "priority" });
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeRequestId]);
+
 
   const openQuickView = useCallback((request: Request) => {
     setQuickViewRequestId(request.id);
@@ -768,7 +826,7 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={visibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="border-0 bg-card">
-        <Table className="w-max min-w-full text-xs border-collapse" style={{ tableLayout: 'fixed' }}>
+        <Table className="w-full min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
@@ -991,8 +1049,24 @@ export const RequestsTable = ({
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
                 >
-                  <TableCell data-row-action className="text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
-
+                  <TableCell data-row-action className="relative text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
+                    <QuickBadgeSelect
+                      requestId={request.id}
+                      field="priority"
+                      value={request.priority || "Планово"}
+                      badge={null}
+                      open={openMenu?.id === request.id && openMenu.field === "priority"}
+                      onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+                      trigger={
+                        <span
+                          role="button"
+                          tabIndex={-1}
+                          aria-label={`Приоритет: ${request.priority || "Планово"}`}
+                          title={`Приоритет: ${request.priority || "Планово"}`}
+                          className="absolute inset-y-0 left-0 w-[6px] cursor-pointer hover:bg-primary/20"
+                        />
+                      }
+                    />
                     <div className="flex items-center justify-center">
                       <Checkbox
                         checked={selectedRequestIds.has(request.id)}
@@ -1001,6 +1075,7 @@ export const RequestsTable = ({
                       />
                     </div>
                   </TableCell>
+
                   {visibility.request_date && (
                     <TableCell className="text-center p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
@@ -1099,14 +1174,16 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.status && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden">
+                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
                         value={request.status}
+                        open={openMenu?.id === request.id && openMenu.field === "status"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "status" } : null)}
                         badge={
                           <span className={cn(
-                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-xs hover:bg-muted",
+                            "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 hover:bg-muted",
                             overdue && "bg-destructive-soft text-destructive hover:bg-destructive-soft"
                           )}>
                             <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", overdue ? "bg-destructive" : statusDotClass(request.status))} />
@@ -1116,6 +1193,7 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+
                   {visibility.availability && (
                     <TableCell className="text-center px-3 py-2 border-b overflow-hidden text-[14px]">
                       {request.availability_delivery_time ? (
@@ -1372,7 +1450,37 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
+        {selectedRequestIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
+            <span className="font-medium">Выбрано {selectedRequestIds.size}</span>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("status", v)}>
+              <SelectTrigger className="h-7 w-[190px] text-xs">
+                <SelectValue placeholder="Статус" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("priority", v)}>
+              <SelectTrigger className="h-7 w-[150px] text-xs">
+                <SelectValue placeholder="Приоритет" />
+              </SelectTrigger>
+              <SelectContent className="z-[120]">
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearSelection}>
+              Снять выделение
+            </Button>
+            {bulkSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          </div>
+        )}
         <PaginationControls />
+
         </div>
       </div>
       </div>

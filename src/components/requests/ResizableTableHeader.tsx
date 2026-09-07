@@ -76,7 +76,7 @@ export const ResizableTableHeader = ({
     <TableHead
       ref={headerRef}
       className={cn(
-        "relative p-2 font-bold border-b text-center select-none text-foreground/80 tracking-wide transition-all duration-150 ease-out",
+        "relative p-2 font-medium border-b text-center select-none text-muted-foreground transition-all duration-150 ease-out",
         sortable && "cursor-pointer hover:bg-muted/60",
         className
       )}
@@ -86,7 +86,8 @@ export const ResizableTableHeader = ({
         <div className="flex items-center justify-center">{children}</div>
       ) : (
         <div className={cn("flex items-center gap-0.5 overflow-hidden", align === "left" ? "justify-start" : align === "right" ? "justify-end" : "justify-center")}>
-          <span className="truncate text-xs uppercase">{label}</span>
+          <span className="truncate text-xs font-medium normal-case tracking-normal">{label}</span>
+
           {sortable && (
             <Icon
               className={cn(
