@@ -406,7 +406,7 @@ const Requests = () => {
                 onClick={openQuickRequest}
                 size="lg"
                 title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-                className="gap-2 px-4 text-sm font-semibold shadow-md hover:shadow-lg transition-all bg-amber-500 hover:bg-amber-600 text-white border-0"
+                className="gap-2 px-4 text-sm font-semibold shadow-md hover:shadow-lg transition-all bg-amber-500 hover:bg-amber-600 text-[#78350F] border-0"
               >
                 <Zap className="h-4 w-4" />
                 <span className="hidden sm:inline">Быстрая заявка</span>
