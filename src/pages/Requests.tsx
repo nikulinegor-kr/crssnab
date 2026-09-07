@@ -474,8 +474,17 @@ const Requests = () => {
         ))}
       </nav>
 
-      {/* === Tab Content === */}
+      {/* === Tab Content + боковая панель как колонка раскладки === */}
+      <div
+        className="grid items-start gap-2"
+        style={{
+          gridTemplateColumns: `minmax(0,1fr) ${panelInline && panelOpen ? panelWidth : 0}px`,
+          transition: "grid-template-columns var(--dur) var(--ease)",
+        }}
+      >
+        <div className="min-w-0 space-y-2">
       {activeTab === "active" && (
+
         <div className="space-y-2">
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
