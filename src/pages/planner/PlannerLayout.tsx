@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+
 import {
   LayoutDashboard,
   ListTodo,
@@ -96,8 +98,11 @@ export default function PlannerLayout({ scope = "auto" }: Props) {
           </div>
 
           <div className="flex-1 min-h-0 p-3 sm:p-6">
-            <Outlet />
+            <Suspense fallback={<PlannerBoardSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
+
 
           <PlannerQuickFab />
         </div>
