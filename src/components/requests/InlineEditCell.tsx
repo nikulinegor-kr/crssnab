@@ -105,7 +105,7 @@ export const InlineEditCell = ({
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    // Let it bubble so the row cancels its pending single-click navigation
     e.preventDefault();
     if (!isEditing) {
       setIsEditing(true);
@@ -115,6 +115,7 @@ export const InlineEditCell = ({
   if (!isEditing) {
     return (
       <div
+        data-inline-edit
         onDoubleClick={handleDoubleClick}
         className={cn(
           "group/inline relative flex items-start gap-1 rounded px-1 py-0.5 transition-colors -mx-1 hover:bg-muted/50",
@@ -122,6 +123,7 @@ export const InlineEditCell = ({
         )}
         title="Двойной клик — редактировать"
       >
+
         <div className="min-w-0 flex-1">{displayValue}</div>
         <button
           type="button"
