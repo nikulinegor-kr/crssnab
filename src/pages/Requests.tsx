@@ -573,6 +573,7 @@ const Requests = () => {
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
           </div>
         </div>
@@ -639,6 +640,7 @@ const Requests = () => {
               searchQuery={filters.searchQuery}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
           </div>
         </div>
@@ -671,6 +673,7 @@ const Requests = () => {
               onToggleFavorite={toggleFavorite}
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
+              onClearSelection={() => setSelectedRequestIds(new Set())}
             />
             </div>
           )}
