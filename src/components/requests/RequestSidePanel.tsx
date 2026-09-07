@@ -28,7 +28,7 @@ const Row = ({ label, value, accent }: { label: string; value: React.ReactNode; 
     <div
       className={cn(
         "min-w-0 flex-1 text-[11px] leading-4 break-words",
-        accent ? "text-[hsl(24_90%_48%)]" : "text-foreground"
+        accent ? "text-primary" : "text-foreground"
       )}
     >
       {value || <span className="text-muted-foreground">—</span>}

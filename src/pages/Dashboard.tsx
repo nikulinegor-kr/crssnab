@@ -323,8 +323,9 @@ const Dashboard = () => {
             <Button
               onClick={openQuickRequest}
               size="sm"
+              variant="secondary"
               title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-              className="gap-1.5 bg-warning hover:bg-warning text-[#78350F] border-0"
+              className="gap-1.5"
             >
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Быстрая заявка</span>
@@ -339,22 +340,23 @@ const Dashboard = () => {
         </div>
 
         {/* Mobile-only prominent Quick Request action */}
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={openQuickRequest}
-          className="sm:hidden w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-warning hover:bg-warning active:bg-warning text-[#78350F] shadow-md transition-colors"
+          className="sm:hidden h-auto w-full justify-between gap-3 rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-md border border-input bg-background flex items-center justify-center">
               <Zap className="h-5 w-5" />
             </div>
             <div className="text-left">
               <div className="font-semibold leading-tight">Быстрая заявка</div>
-              <div className="text-xs text-[#78350F]/80">Создать за 2 секунды</div>
+              <div className="text-xs text-muted-foreground">Создать за 2 секунды</div>
             </div>
           </div>
           <Plus className="h-5 w-5 opacity-90" />
-        </button>
+        </Button>
 
 
         {/* Period filter + Year */}
