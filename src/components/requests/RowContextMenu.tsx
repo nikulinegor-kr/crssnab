@@ -109,3 +109,55 @@ export const RowContextMenu = ({
     </ContextMenu>
   );
 };
+
+interface PeopleSubmenuProps {
+  title: string;
+  people: Array<{ id: string; name: string; label: string }>;
+  current: string | null;
+  onPick: (name: string | null) => void;
+}
+
+/** Подменю выбора человека с поиском по подстроке — списки бывают длинными. */
+const PeopleSubmenu = ({ title, people, current, onPick }: PeopleSubmenuProps) => {
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return people;
+    return people.filter((p) =>
+      words.every((w) => `${p.label} ${p.name}`.toLowerCase().includes(w))
+    );
+  }, [people, search]);
+
+  return (
+    <ContextMenuSub>
+      <ContextMenuSubTrigger>{title}</ContextMenuSubTrigger>
+      <ContextMenuSubContent className="w-60 p-1">
+        <input
+          value={search}
+          autoFocus
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          placeholder="Поиск"
+          className="mb-1 h-7 w-full rounded border border-border bg-background px-2 text-xs focus:outline-none"
+        />
+        <div className="max-h-[280px] overflow-y-auto">
+          <ContextMenuItem onSelect={() => onPick(null)}>
+            <span className="italic text-muted-foreground">Снять назначение</span>
+          </ContextMenuItem>
+          {filtered.map((person) => (
+            <ContextMenuItem
+              key={person.id}
+              className={cn(person.name === current && "font-medium")}
+              onSelect={() => onPick(person.name)}
+            >
+              {person.label}
+            </ContextMenuItem>
+          ))}
+          {filtered.length === 0 && (
+            <div className="px-2 py-1 text-xs text-muted-foreground">Ничего не найдено</div>
+          )}
+        </div>
+      </ContextMenuSubContent>
+    </ContextMenuSub>
+  );
+};
