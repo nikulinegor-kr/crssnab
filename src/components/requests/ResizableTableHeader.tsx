@@ -14,6 +14,7 @@ interface ResizableTableHeaderProps {
   onSort?: () => void;
   className?: string;
   align?: "left" | "center";
+  defaultWidth?: number;
   children?: React.ReactNode;
 }
 
