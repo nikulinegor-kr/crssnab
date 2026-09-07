@@ -42,7 +42,7 @@ interface RequestSidePanelProps {
   onExpand?: (request: any) => void;
 }
 
-const DEFAULT_PANEL_WIDTH = 460;
+const DEFAULT_PANEL_WIDTH = 520;
 const MIN_PANEL_WIDTH = 360;
 const MAX_PANEL_WIDTH = 720;
 
@@ -495,8 +495,8 @@ export const RequestSidePanel = ({
                 onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
               />
               <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
-                <span className="text-[10px] text-muted-foreground">Всего</span>
-                <span className="font-numeric text-[15px] font-semibold tracking-tight">{money(total)} ₽</span>
+                <span className="text-[0.8125rem] text-muted-foreground">Всего</span>
+                <span className="font-numeric text-[1.375rem] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
               <PanelField
                 label="Оплата"
@@ -649,12 +649,12 @@ export const RequestSidePanel = ({
               }
             }}
             rows={2}
-            className="min-w-0 flex-1 resize-none rounded border border-input bg-background px-1.5 py-1 text-[13px] font-semibold leading-tight focus:outline-none focus:ring-1 focus:ring-ring"
+            className="min-w-0 flex-1 resize-none rounded border border-input bg-background px-1.5 py-1 text-[1.125rem] font-semibold leading-tight focus:outline-none focus:ring-1 focus:ring-ring"
           />
         ) : (
           <h2
             className={cn(
-              "min-w-0 flex-1 rounded px-1 -mx-1 text-[13px] font-semibold leading-tight",
+              "min-w-0 flex-1 rounded px-1 -mx-1 text-[1.125rem] font-semibold leading-tight",
               !readOnly && "cursor-text hover:bg-muted/50"
             )}
             title={readOnly ? undefined : "Клик — изменить название"}
@@ -683,12 +683,12 @@ export const RequestSidePanel = ({
         </div>
       </div>
 
-      <div className={cn("flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[10px] text-muted-foreground font-numeric", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className={cn("flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
         <select
           value={request.status}
           disabled={readOnly || savingField === "status"}
           onChange={(e) => saveField("status", e.target.value)}
-          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[0.8125rem] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           style={{ borderLeft: `3px solid ${getStatusColor(request.status)}` }}
           aria-label="Статус"
         >
@@ -700,7 +700,7 @@ export const RequestSidePanel = ({
           value={request.priority || "Планово"}
           disabled={readOnly || savingField === "priority"}
           onChange={(e) => saveField("priority", e.target.value)}
-          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[0.8125rem] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           style={{ borderLeft: `3px solid ${getPriorityColor(request.priority || "Планово")}` }}
           aria-label="Приоритет"
         >

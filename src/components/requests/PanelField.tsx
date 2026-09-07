@@ -77,7 +77,7 @@ export const PanelField = ({
       onClick={() => !readOnly && setEditing(true)}
       title={readOnly ? "Нет прав на изменение" : shown ? "Клик — изменить" : "Добавить"}
       className={cn(
-        "flex min-h-5 w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[11px] leading-4",
+        "flex min-h-[2rem] w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[0.9375rem] leading-5",
         readOnly ? "cursor-default" : "cursor-text hover:bg-muted/60",
         accent ? "text-primary" : "text-foreground"
       )}
@@ -95,7 +95,7 @@ export const PanelField = ({
     editor = (
       <Popover open onOpenChange={(o) => !o && setEditing(false)}>
         <PopoverTrigger asChild>
-          <span className="block w-full text-[11px]">{shown ?? "—"}</span>
+          <span className="block w-full text-[0.9375rem]">{shown ?? "—"}</span>
         </PopoverTrigger>
         <PopoverContent className="w-[260px] p-1 z-[130]" align="start">
           <div className="flex items-center gap-1.5 border-b border-border px-1.5 pb-1.5">
@@ -154,18 +154,18 @@ export const PanelField = ({
             setEditing(false);
           }
         }}
-        className="h-6 px-1.5 text-[11px]"
+        className="h-8 px-1.5 text-[0.9375rem]"
       />
     );
   }
 
   return (
-    <div className="flex items-start gap-3 py-[3px]">
-      <div className="w-[86px] shrink-0 text-[10px] leading-4 text-muted-foreground">{label}</div>
+    <div className="flex min-h-[2rem] items-center gap-3 py-[2px]">
+      <div className="w-[8.125rem] shrink-0 text-[0.8125rem] leading-5 text-muted-foreground">{label}</div>
       <div className="min-w-0 flex-1">
         {editing ? editor : staticView}
       </div>
-      {suffix && <span className="shrink-0 text-[10px] text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="shrink-0 text-[0.8125rem] text-muted-foreground">{suffix}</span>}
     </div>
   );
 };

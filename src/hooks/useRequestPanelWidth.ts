@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 
 export const PANEL_MIN_WIDTH = 360;
 export const PANEL_MAX_WIDTH = 720;
-export const PANEL_DEFAULT_WIDTH = 460;
+export const PANEL_DEFAULT_WIDTH = 520;
 const PANEL_WIDTH_KEY = "requests-side-panel-width";
 
 const clamp = (value: number) => Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, value));
