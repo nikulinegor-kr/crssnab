@@ -562,7 +562,8 @@ const Requests = () => {
           />
 
           {/* LEVEL 7: Table */}
-          <div className="overflow-hidden bg-card">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+
             <RequestsTable
               requests={visibleRequests}
               isLoading={isLoading}
@@ -585,7 +586,8 @@ const Requests = () => {
       )}
 
       {activeTab === "archived" && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+
           <RequestsFilters
             searchQuery={filters.searchQuery}
             setSearchQuery={filters.setSearchQuery}
@@ -634,7 +636,8 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <div className="overflow-hidden bg-card">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+
             <RequestsTable
               requests={visibleRequests}
               isLoading={isLoading}
@@ -655,7 +658,7 @@ const Requests = () => {
       )}
 
       {activeTab === "favorites" && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
           {favoriteRequests.length === 0 ? (
             <Card className="p-8 text-center">
               <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
@@ -665,7 +668,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <div className="overflow-hidden bg-card">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}
@@ -689,7 +692,7 @@ const Requests = () => {
       )}
 
       {activeTab === "procurement" && (
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
           <div className="flex items-center gap-2 mb-2">
             <Button variant="outline" size="sm" onClick={() => setActiveTab("active")} className="gap-1.5">
               ← Назад к заявкам
