@@ -366,7 +366,7 @@ const Requests = () => {
   const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
-    <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 space-y-2">
+    <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
       <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
         <div className="min-w-0">
