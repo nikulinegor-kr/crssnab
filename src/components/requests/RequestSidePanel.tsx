@@ -580,6 +580,34 @@ export const RequestSidePanel = ({
                   return saveField("payment_percent", pct);
                 }}
               />
+              {!readOnly && (
+                <div className="mt-1.5 flex gap-1.5 pl-[130px]">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={paid === 50 ? "default" : "outline"}
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => {
+                      void saveField("payment_percent", 50);
+                      void saveField("payment_status", "partial");
+                    }}
+                  >
+                    Оплачено 50%
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={paid >= 100 ? "default" : "outline"}
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => {
+                      void saveField("payment_percent", 100);
+                      void saveField("payment_status", "paid");
+                    }}
+                  >
+                    Оплачено 100%
+                  </Button>
+                </div>
+              )}
             </div>
     </div>
   );
