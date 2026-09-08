@@ -647,7 +647,7 @@ export const RequestsTable = ({
 
   // Compact Pagination UI
   const PaginationControls = () => (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2 py-2">
+    <div className="flex flex-none flex-wrap items-center justify-between gap-2 border-t border-border bg-card px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
           <SelectTrigger className="w-16 h-6 text-xs px-2">
@@ -867,7 +867,7 @@ export const RequestsTable = ({
         }}
       >
 
-        <div className="flex items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
+        <div className="flex flex-none items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
           <Toggle
             pressed={groupByProject}
             onPressedChange={toggleGroupByProject}
@@ -1538,7 +1538,7 @@ export const RequestsTable = ({
         </div>
 
         {selectedRequestIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
+          <div className="flex flex-none flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
             <span className="font-medium">Выбрано {selectedRequestIds.size}</span>
             <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("status", v)}>
               <SelectTrigger className="h-7 w-[190px] text-xs">
