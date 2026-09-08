@@ -113,6 +113,8 @@ export const RequestSidePanel = ({
     [onWidthChange]
   );
   const resizingRef = useRef(false);
+  const invoiceInputRef = useRef<HTMLInputElement>(null);
+
 
   const stopResize = useCallback(() => {
     if (!resizingRef.current) return;
