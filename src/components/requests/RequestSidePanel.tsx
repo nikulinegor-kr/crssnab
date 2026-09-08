@@ -23,6 +23,7 @@ import {
 import { PanelField, PanelFieldOption } from "./PanelField";
 import { PanelItemsTable } from "./PanelItemsTable";
 import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDocuments";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
