@@ -368,7 +368,7 @@ const Requests = () => {
   return (
     <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
         <div className="min-w-0">
           <h1 className="text-base font-semibold">Заявки</h1>
           <p className="text-xs text-muted-foreground font-numeric">
@@ -428,7 +428,7 @@ const Requests = () => {
       </div>
 
       {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex gap-0 border-b border-border bg-card items-end overflow-x-auto">
+      <nav className="flex shrink-0 gap-0 border-b border-border bg-card items-end overflow-x-auto">
         {mainTabs.map((tab) => (
           <button
             key={tab.value}
@@ -477,16 +477,17 @@ const Requests = () => {
 
       {/* === Tab Content + боковая панель как колонка раскладки === */}
       <div
-        className="grid items-start gap-2"
+        className="grid min-h-0 flex-1 items-stretch gap-2"
         style={{
           gridTemplateColumns: `minmax(0,1fr) ${panelInline && panelOpen ? panelWidth : 0}px`,
           transition: "grid-template-columns var(--dur) var(--ease)",
         }}
       >
-        <div className="min-w-0 space-y-2">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2">
       {activeTab === "active" && (
 
-        <div className="space-y-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
             requests={requests}
