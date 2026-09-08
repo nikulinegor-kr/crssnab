@@ -84,27 +84,29 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
 
           <main id="main-content" className={cn(
-            "flex-1 min-w-0 overflow-x-hidden",
-            fullBleed ? "overflow-y-hidden" : "overflow-y-auto"
+            "min-w-0 min-h-0 h-full overflow-x-hidden",
+            fullBleed ? "overflow-y-hidden" : "overflow-y-auto overscroll-contain"
           )}>
             {fullBleed ? (
-              <div className="flex flex-col h-full w-full min-w-0">
+              <div className="flex flex-col h-full min-h-0 w-full min-w-0">
                 {!hideSubscriptionBanner && (
-                  <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
+                  <div className="w-full shrink-0 p-2 sm:p-3 md:p-6 min-w-0">
                     <SubscriptionBanner />
                   </div>
                 )}
                 <PermissionRoute>{children}</PermissionRoute>
+                {/* Отступ под нижним меню на телефоне */}
+                <div className="h-16 shrink-0 md:hidden" aria-hidden />
               </div>
             ) : (
               <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
                 <SubscriptionBanner />
                 <PermissionRoute>{children}</PermissionRoute>
+                <div className="h-16 md:hidden" aria-hidden />
               </div>
             )}
           </main>
-          {/* Bottom spacer so content isn't hidden behind mobile nav */}
-          <div className="h-16 md:hidden" aria-hidden />
+
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
         <QuickRequestFab />
