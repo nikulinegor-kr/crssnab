@@ -700,10 +700,8 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-            if (!isFullscreen && onExpand && request) { onExpand(request); return; }
-            setIsFullscreen((value) => !value);
-          }} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+
             {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </Button>
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
@@ -745,7 +743,7 @@ export const RequestSidePanel = ({
 
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
-        <div className="mt-2 flex gap-4 border-b border-border px-4">
+        <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -763,7 +761,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {wideFullscreen ? (
           <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[420px_minmax(0,1fr)_360px] gap-6">
             <div className="min-w-0">
@@ -781,28 +779,32 @@ export const RequestSidePanel = ({
             </div>
           </div>
         ) : (
-          <>
+          <div className={cn(containerClass)}>
             {tab !== "docs" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
-                {/* Позиции живут в полном экране */}
-                <button
-                  type="button"
-                  onClick={() => (onExpand && request ? onExpand(request) : setIsFullscreen(true))}
-                  className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
-                >
-                  <span>Позиции: {items?.length || 0}</span>
-                  <span className="text-primary">Открыть на полный экран</span>
-                </button>
+                {isFullscreen ? (
+                  <div className="mt-4">{itemsBlock}</div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreen(true)}
+                    className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
+                  >
+                    <span>Позиции: {items?.length || 0}</span>
+                    <span className="text-primary">Открыть на полный экран</span>
+                  </button>
+                )}
                 {movementBlock}
               </>
             )}
             {tab === "docs" && docsBlock}
-          </>
+          </div>
         )}
 
       </div>
+
 
       {/* Footer */}
       <div className="sticky bottom-0 border-t border-border bg-card px-4 py-2.5">
