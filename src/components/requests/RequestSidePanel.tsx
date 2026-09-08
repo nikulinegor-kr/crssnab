@@ -182,6 +182,11 @@ export const RequestSidePanel = ({
 
 
   useEffect(() => {
+    setEditMode(false);
+    setEditDirty(false);
+  }, [request?.id, open]);
+
+  useEffect(() => {
     setTitleValue(request?.description || "");
     setEditingTitle(false);
     setUploads([]);
