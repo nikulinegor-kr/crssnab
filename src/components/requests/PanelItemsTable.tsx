@@ -45,7 +45,9 @@ export const PanelItemsTable = ({
   items,
   readOnly,
   onTotalChange,
+  onRecognizeInvoice,
 }: PanelItemsTableProps) => {
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [busyId, setBusyId] = useState<string | null>(null);
