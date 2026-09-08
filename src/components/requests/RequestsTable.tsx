@@ -1161,7 +1161,7 @@ export const RequestsTable = ({
                       }
                     />
                     {visibility.select !== false && (
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center h-full w-full">
                         <Checkbox
                           checked={selectedRequestIds.has(request.id)}
                           onCheckedChange={() => toggleRequestSelection(request.id)}
