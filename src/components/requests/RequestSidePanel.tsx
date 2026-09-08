@@ -650,7 +650,19 @@ export const RequestSidePanel = ({
         handleUpload(Array.from(e.dataTransfer.files));
       }}
     >
+      <input
+        ref={invoiceInputRef}
+        type="file"
+        hidden
+        accept="application/pdf,image/*"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = "";
+          if (files.length) handleUpload(files);
+        }}
+      />
       {!isFullscreen && (
+
         <div
           role="separator"
           aria-orientation="vertical"
