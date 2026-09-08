@@ -105,12 +105,22 @@ export const PanelField = ({
 
   let editor: React.ReactNode = null;
 
-  if (editing && type === "select") {
+  if ((editing || forced) && type === "select") {
     editor = (
-      <Popover open onOpenChange={(o) => !o && setEditing(false)}>
+      <Popover open={editing} onOpenChange={(o) => setEditing(o)}>
         <PopoverTrigger asChild>
-          <span className="block w-full text-[0.9375rem]">{shown ?? "—"}</span>
+          <button
+            type="button"
+            className={cn(
+              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-left text-[0.9375rem]",
+              !shown && "text-muted-foreground"
+            )}
+          >
+            <span className="min-w-0 truncate">{shown ?? "—"}</span>
+            <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" />
+          </button>
         </PopoverTrigger>
+
         <PopoverContent className="w-[260px] p-1 z-[130]" align="start">
           <div className="flex items-center gap-1.5 border-b border-border px-1.5 pb-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
