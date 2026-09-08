@@ -15,6 +15,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -98,6 +105,8 @@ export const RequestSidePanel = ({
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
+  const [statusPromptOpen, setStatusPromptOpen] = useState(false);
+  const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
 
@@ -587,9 +596,11 @@ export const RequestSidePanel = ({
                     size="sm"
                     variant={paid === 50 ? "default" : "outline"}
                     className="h-6 px-2 text-[11px]"
-                    onClick={() => {
-                      void saveField("payment_percent", 50);
-                      void saveField("payment_status", "partial");
+                    onClick={async () => {
+                      await saveField("payment_percent", 50);
+                      await saveField("payment_status", "partial");
+                      setPendingPaymentPercent(50);
+                      setStatusPromptOpen(true);
                     }}
                   >
                     Оплачено 50%
@@ -599,9 +610,11 @@ export const RequestSidePanel = ({
                     size="sm"
                     variant={paid >= 100 ? "default" : "outline"}
                     className="h-6 px-2 text-[11px]"
-                    onClick={() => {
-                      void saveField("payment_percent", 100);
-                      void saveField("payment_status", "paid");
+                    onClick={async () => {
+                      await saveField("payment_percent", 100);
+                      await saveField("payment_status", "paid");
+                      setPendingPaymentPercent(100);
+                      setStatusPromptOpen(true);
                     }}
                   >
                     Оплачено 100%
@@ -984,6 +997,14 @@ export const RequestSidePanel = ({
     </aside>
   );
 
+  const handleStatusFromPrompt = async (status: string) => {
+    setStatusPromptOpen(false);
+    if (status && status !== request?.status) {
+      await saveField("status", status);
+    }
+    setPendingPaymentPercent(null);
+  };
+
   return (
     <>
       {asOverlay ? createPortal(content, document.body) : content}
@@ -998,6 +1019,46 @@ export const RequestSidePanel = ({
           }
         }}
       />
+      <Dialog open={statusPromptOpen} onOpenChange={setStatusPromptOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Оплата обновлена</DialogTitle>
+            <DialogDescription>
+              {pendingPaymentPercent === 100
+                ? "Заявка оплачена полностью. Сменить статус?"
+                : "Заявка оплачена частично. Сменить статус?"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Button
+              variant="outline"
+              className="justify-start px-3 text-left"
+              onClick={() => handleStatusFromPrompt("В работе")}
+            >
+              <span className="mr-2 h-2 w-2 rounded-full" style={{ backgroundColor: getStatusColor("В работе") }} />
+              В работе
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start px-3 text-left"
+              onClick={() => handleStatusFromPrompt("Готов к отгрузке")}
+            >
+              <span
+                className="mr-2 h-2 w-2 rounded-full"
+                style={{ backgroundColor: getStatusColor("Готов к отгрузке") }}
+              />
+              Готов к отгрузке
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start px-3 text-left text-muted-foreground"
+              onClick={() => handleStatusFromPrompt(request?.status || "")}
+            >
+              Не менять статус
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
