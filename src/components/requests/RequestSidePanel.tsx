@@ -423,6 +423,7 @@ export const RequestSidePanel = ({
               value={request.object_id}
               display={(request as any).object_name}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("object_id", v)}
             />
             <PanelField
@@ -431,6 +432,7 @@ export const RequestSidePanel = ({
               options={supplierOptions}
               value={request.contractor}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("contractor", v)}
             />
             <PanelField
@@ -440,6 +442,7 @@ export const RequestSidePanel = ({
               value={request.applicant}
               display={formatPersonName(request.applicant)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("applicant", v)}
             />
             <PanelField
@@ -449,6 +452,7 @@ export const RequestSidePanel = ({
               value={request.executor}
               display={formatPersonName(request.executor)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("executor", v)}
             />
             <PanelField
@@ -457,6 +461,7 @@ export const RequestSidePanel = ({
               options={carrierOptions}
               value={request.transport_company}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("transport_company", v)}
             />
             <PanelField
@@ -464,6 +469,7 @@ export const RequestSidePanel = ({
               type="text"
               value={request.waybill_number}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("waybill_number", v)}
             />
             <PanelField
@@ -471,6 +477,7 @@ export const RequestSidePanel = ({
               type="text"
               value={request.invoice_number}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("invoice_number", v)}
             />
             <PanelField
@@ -479,6 +486,7 @@ export const RequestSidePanel = ({
               value={request.shipment_date}
               display={dt(request.shipment_date)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("shipment_date", v)}
             />
             <PanelField
@@ -487,6 +495,7 @@ export const RequestSidePanel = ({
               value={request.delivery_date}
               display={dt(request.delivery_date)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("delivery_date", v)}
             />
     </>
@@ -500,6 +509,7 @@ export const RequestSidePanel = ({
                 value={goods}
                 display={<span className="font-numeric">{money(goods)} ₽</span>}
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => saveField("amount", Number(v.replace(",", ".")) || 0)}
               />
               <PanelField
@@ -508,6 +518,7 @@ export const RequestSidePanel = ({
                 value={(request as any).amount_2 || 0}
                 display={<span className="font-numeric">{money(extra)} ₽</span>}
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
               />
               <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
@@ -532,6 +543,7 @@ export const RequestSidePanel = ({
                   </span>
                 }
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => {
                   const pct = Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
                   return saveField("payment_percent", pct);
