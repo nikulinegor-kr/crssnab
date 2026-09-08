@@ -114,6 +114,27 @@ export const PanelItemsTable = ({
   const cellClass =
     "w-full bg-transparent px-1 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-ring rounded";
 
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+        <div className="text-[13px] text-muted-foreground">Позиций пока нет</div>
+        {!readOnly && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={addRow} disabled={adding}>
+              {adding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+              Добавить позицию
+            </Button>
+            {onRecognizeInvoice && (
+              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={onRecognizeInvoice}>
+                Распознать счёт
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-[1fr_70px_52px_64px_72px_20px] gap-1 text-[9.5px] text-muted-foreground">
@@ -125,7 +146,7 @@ export const PanelItemsTable = ({
         <span />
       </div>
 
-      {items.length === 0 && <div className="text-[11px] text-muted-foreground">Позиций нет</div>}
+
 
       {items.map((it) => (
         <div
