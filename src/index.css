@@ -396,7 +396,9 @@ All colors MUST be HSL.
   .requests-registry table td > div,
   .requests-registry table td > button,
   .requests-registry table td > span {
+    display: flex;
     align-items: center;
+    min-height: 100%;
   }
 
   .requests-registry table th:not(:first-child):not(:last-child) > div,
