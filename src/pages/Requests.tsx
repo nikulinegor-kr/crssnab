@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -25,7 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { RequestSidePanel } from "@/components/requests/RequestSidePanel";
-import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
@@ -749,7 +749,7 @@ const Requests = () => {
         </div>
 
         {/* Колонка панели — таблица сжимается, а не перекрывается */}
-        <div className="min-w-0 overflow-hidden">
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
           {panelInline && (
             <RequestSidePanel
               inline
@@ -757,14 +757,15 @@ const Requests = () => {
               onWidthChange={setPanelWidth}
               request={selectedRequest as any}
               open={panelOpen}
-              onClose={() => setPanelOpen(false)}
+              onClose={closePanel}
               onPrevious={() => selectAdjacentRequest(-1)}
               onNext={() => selectAdjacentRequest(1)}
               hasPrevious={selectedRequestIndex > 0}
               hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
               position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
               requestCount={panelRequestOrder.length}
-              onExpand={(r) => setExpandedRequest(r as Request)}
+              fullscreen={isFullView}
+              onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
             />
           )}
         </div>
@@ -795,22 +796,18 @@ const Requests = () => {
           onWidthChange={setPanelWidth}
           request={selectedRequest as any}
           open={panelOpen}
-          onClose={() => setPanelOpen(false)}
+          onClose={closePanel}
           onPrevious={() => selectAdjacentRequest(-1)}
           onNext={() => selectAdjacentRequest(1)}
           hasPrevious={selectedRequestIndex > 0}
           hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
           position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
           requestCount={panelRequestOrder.length}
-          onExpand={(r) => setExpandedRequest(r as Request)}
+          fullscreen={isFullView}
+          onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
         />
       )}
 
-      <EditRequestDialog
-        request={expandedRequest as any}
-        open={!!expandedRequest}
-        onOpenChange={(open) => { if (!open) setExpandedRequest(null); }}
-      />
 
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
