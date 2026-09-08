@@ -113,6 +113,8 @@ export const RequestSidePanel = ({
     [onWidthChange]
   );
   const resizingRef = useRef(false);
+  const invoiceInputRef = useRef<HTMLInputElement>(null);
+
 
   const stopResize = useCallback(() => {
     if (!resizingRef.current) return;
@@ -542,7 +544,8 @@ export const RequestSidePanel = ({
   const movementBlock = (
     <>
             <div className="mt-4">
-              <div className="mb-2 text-[10px] text-muted-foreground">Движение</div>
+              <div className="mb-3 text-[15px] font-semibold text-foreground">Движение</div>
+
               <div className="space-y-2.5">
                 {movement.map((m, i) => (
                   <div key={i} className="flex gap-2">
@@ -568,6 +571,7 @@ export const RequestSidePanel = ({
             organizationId={currentOrgId}
             items={(items || []) as any}
             readOnly={readOnly}
+            onRecognizeInvoice={readOnly ? undefined : () => invoiceInputRef.current?.click()}
             onTotalChange={(itemsTotal) => {
               if (itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
                 void saveField("amount", itemsTotal, { silent: true });
@@ -600,7 +604,10 @@ export const RequestSidePanel = ({
           </div>
   );
   const wideFullscreen = isFullscreen && viewportWide;
-  const containerClass = isFullscreen ? "mx-auto w-full max-w-[1440px]" : undefined;
+  const containerClass = isFullscreen ? "mx-auto w-[min(1440px,100%-96px)]" : undefined;
+  const columnClass = "flex h-full min-w-0 flex-col rounded-[10px] border border-border bg-card p-5";
+  const sectionTitleClass = "mb-3 text-[15px] font-semibold text-foreground";
+
 
   const content = (
     <aside
@@ -608,7 +615,8 @@ export const RequestSidePanel = ({
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
-          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden"
+          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden bg-muted/40"
+
           : asOverlay
             ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
             : "h-full w-full overflow-hidden"
@@ -642,7 +650,19 @@ export const RequestSidePanel = ({
         handleUpload(Array.from(e.dataTransfer.files));
       }}
     >
+      <input
+        ref={invoiceInputRef}
+        type="file"
+        hidden
+        accept="application/pdf,image/*"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = "";
+          if (files.length) handleUpload(files);
+        }}
+      />
       {!isFullscreen && (
+
         <div
           role="separator"
           aria-orientation="vertical"
@@ -761,31 +781,40 @@ export const RequestSidePanel = ({
       )}
 
       {/* Body */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain py-3", isFullscreen ? "px-0" : "px-4")}>
         {wideFullscreen ? (
-          <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[420px_minmax(0,1fr)_360px] gap-6">
-            <div className="min-w-0">
+          <div
+            className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
+            style={{ gridTemplateColumns: "380px minmax(0, 1fr) 340px" }}
+          >
+            <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
               {totalsBlock}
             </div>
-            <div className="min-w-0">{itemsBlock}</div>
-            <div className="min-w-0 space-y-5">
+            <div className={cn(columnClass, "overflow-y-auto")}>
+              <div className={sectionTitleClass}>Позиции</div>
+              {itemsBlock}
+            </div>
+            <div className={cn(columnClass, "gap-5 overflow-y-auto")}>
               {docsBlock}
               <div>{movementBlock}</div>
               <div>
-                <div className="mb-2 text-[10px] text-muted-foreground">История</div>
+                <div className={sectionTitleClass}>История</div>
                 {historyBlock}
               </div>
             </div>
           </div>
         ) : (
-          <div className={cn(containerClass)}>
+          <div className={cn(containerClass, isFullscreen && "px-0")}>
             {tab !== "docs" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
                 {isFullscreen ? (
-                  <div className="mt-4">{itemsBlock}</div>
+                  <div className="mt-4">
+                    <div className={sectionTitleClass}>Позиции</div>
+                    {itemsBlock}
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -808,7 +837,7 @@ export const RequestSidePanel = ({
 
       {/* Footer */}
       <div className="flex-none border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex items-center gap-2", containerClass)}>
+        <div className={cn("flex items-center gap-3", containerClass)}>
         <Button
           size="sm"
           variant="outline"
@@ -819,6 +848,8 @@ export const RequestSidePanel = ({
           <PackageCheck className="h-3.5 w-3.5" />
           Отметить приход
         </Button>
+        <span className="text-[11px] text-[hsl(var(--text-3))]">Изменения сохраняются автоматически</span>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost" className="ml-auto h-7 w-7" aria-label="Ещё">

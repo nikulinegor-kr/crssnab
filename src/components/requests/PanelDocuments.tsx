@@ -138,7 +138,7 @@ export const PanelDocuments = ({
   const Section = ({ title, kind, urls }: { title: string; kind: DocKind; urls: string[] }) => (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-[15px] font-semibold text-foreground">
           {title} {urls.length ? urls.length : ""}
         </span>
         {!readOnly && (
@@ -161,13 +161,16 @@ export const PanelDocuments = ({
             e.preventDefault();
             pick(e.dataTransfer.files);
           }}
-          className="rounded border border-dashed border-border px-2 py-2 text-center text-[10px] text-muted-foreground"
+          onClick={() => (kind === "photo" ? photoInput : docInput).current?.click()}
+          className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded border border-dashed border-border px-2 py-4 text-center text-[11px] text-muted-foreground hover:bg-muted/40"
         >
-          Перетащите файлы сюда
+          <Upload className="h-5 w-5 text-muted-foreground" />
+          Перетащите файлы сюда или нажмите, чтобы выбрать
         </div>
       )}
 
-      {urls.length === 0 && <div className="text-[11px] text-muted-foreground">—</div>}
+      {urls.length === 0 && <div className="text-[11px] text-muted-foreground">Файлов пока нет</div>}
+
 
       {urls.map((url) => {
         const name = fileNameFromUrl(url);

@@ -900,7 +900,9 @@ export const RequestsTable = ({
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
             {visibility.description && <col style={{ width: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
+            {visibility.priority && <col style={{ width: widths.priority }} />}
             {visibility.status && <col style={{ width: widths.status }} />}
+
             {visibility.availability && <col style={{ width: widths.availability }} />}
             {visibility.contractor && <col style={{ width: widths.contractor }} />}
             {visibility.amount && <col style={{ width: widths.amount }} />}
@@ -938,7 +940,11 @@ export const RequestsTable = ({
               {visibility.object && (
                 <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
+              {visibility.priority && (
+                <ResizableTableHeader column="priority" defaultWidth={DEFAULT_COLUMN_WIDTHS.priority} label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
+              )}
               {visibility.status && (
+
                 <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
@@ -1137,8 +1143,9 @@ export const RequestsTable = ({
                       field="priority"
                       value={request.priority || "Планово"}
                       badge={null}
-                      open={openMenu?.id === request.id && openMenu.field === "priority"}
+                      open={!visibility.priority && openMenu?.id === request.id && openMenu.field === "priority"}
                       onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+
                       trigger={
                         <span
                           role="button"
@@ -1257,7 +1264,28 @@ export const RequestsTable = ({
 
                     </TableCell>
                   )}
+                  {visibility.priority && (
+                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                      <QuickBadgeSelect
+                        requestId={request.id}
+                        field="priority"
+                        value={request.priority || "Планово"}
+                        open={openMenu?.id === request.id && openMenu.field === "priority"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+                        badge={
+                          <span className="inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-[14px] hover:bg-muted">
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: getPriorityColor(request.priority || "Планово") }}
+                            />
+                            {request.priority || "Планово"}
+                          </span>
+                        }
+                      />
+                    </TableCell>
+                  )}
                   {visibility.status && (
+
                     <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}

@@ -60,7 +60,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   request_date: "Дата",
   description: "Заявка",
   object: "Объект",
-  priority: "Приоритет (устаревшая колонка)",
+  priority: "Приоритет",
   status: "Статус",
   availability: "Наличие",
   contractor: "Контрагент",
@@ -111,7 +111,7 @@ export const TableColumnSettings = ({
       <PopoverContent className="w-56 bg-background border shadow-lg z-50" align="end">
         <div className="space-y-1">
           <h4 className="font-medium text-sm mb-3">Отображение колонок</h4>
-          {(Object.keys(COLUMN_LABELS) as Array<keyof ColumnVisibility>).filter((column) => column !== "priority").map((column) => (
+          {(Object.keys(COLUMN_LABELS) as Array<keyof ColumnVisibility>).map((column) => (
             <div key={column} className="flex items-center gap-2 py-1">
               <Checkbox
                 id={`col-${column}`}

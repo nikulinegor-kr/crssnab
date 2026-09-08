@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Pencil, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -77,17 +77,26 @@ export const PanelField = ({
       onClick={() => !readOnly && setEditing(true)}
       title={readOnly ? "Нет прав на изменение" : shown ? "Клик — изменить" : "Добавить"}
       className={cn(
-        "flex min-h-[2rem] w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[0.9375rem] leading-5",
-        readOnly ? "cursor-default" : "cursor-text hover:bg-muted/60",
+        "group/pf flex min-h-[2rem] w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[0.9375rem] leading-5",
+        readOnly ? "cursor-default" : "cursor-text hover:bg-[hsl(var(--surface-3))]",
         accent ? "text-primary" : "text-foreground"
       )}
     >
       <span className="min-w-0 flex-1 truncate">
-        {shown ?? <span className="text-muted-foreground">—</span>}
+        {shown ?? (
+          <span className="text-muted-foreground">
+            <span className={cn(!readOnly && "group-hover/pf:hidden")}>—</span>
+            {!readOnly && <span className="hidden group-hover/pf:inline">Добавить</span>}
+          </span>
+        )}
       </span>
       {saving && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />}
+      {!readOnly && !saving && (
+        <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/pf:opacity-100" />
+      )}
     </button>
   );
+
 
   let editor: React.ReactNode = null;
 
@@ -150,10 +159,12 @@ export const PanelField = ({
             commit(draft);
           } else if (e.key === "Escape") {
             e.preventDefault();
+            e.stopPropagation();
             setDraft(String(value ?? ""));
             setEditing(false);
           }
         }}
+
         className="h-8 px-1.5 text-[0.9375rem]"
       />
     );
