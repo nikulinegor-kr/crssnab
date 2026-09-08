@@ -22,6 +22,8 @@ interface PanelFieldProps {
   readOnly?: boolean;
   accent?: boolean;
   suffix?: string;
+  /** Режим правки: поле всегда показано как редактор. */
+  alwaysEdit?: boolean;
 }
 
 /** Поле карточки заявки: клик по значению превращает его в редактор нужного типа. */
@@ -35,12 +37,14 @@ export const PanelField = ({
   readOnly = false,
   accent,
   suffix,
+  alwaysEdit = false,
 }: PanelFieldProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const forced = alwaysEdit && !readOnly;
 
   useEffect(() => {
     setDraft(String(value ?? ""));
@@ -49,6 +53,7 @@ export const PanelField = ({
   useEffect(() => {
     if (editing && type !== "select") inputRef.current?.focus();
   }, [editing, type]);
+
 
   const filtered = useMemo(() => {
     const list = options ?? [];
