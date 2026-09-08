@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
@@ -94,8 +94,20 @@ export const RequestSidePanel = ({
   const [dragActive, setDragActive] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
+  const exitEditMode = useCallback(
+    (confirmIfDirty: boolean) => {
+      if (confirmIfDirty && editDirty && !window.confirm("Отменить правку? Часть изменений уже сохранена.")) return;
+      setEditMode(false);
+      setEditDirty(false);
+    },
+    [editDirty]
+  );
+
 
 
   useEffect(() => {
@@ -141,10 +153,19 @@ export const RequestSidePanel = ({
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+      const inField = !!target?.matches("input, textarea, select, [contenteditable='true']");
+      if (editMode && (event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        (document.activeElement as HTMLElement | null)?.blur();
+        setEditMode(false);
+        setEditDirty(false);
+        return;
+      }
+      if (inField) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        if (isFullscreen) setIsFullscreen(false);
+        if (editMode) exitEditMode(true);
+        else if (isFullscreen) setIsFullscreen(false);
         else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
         event.preventDefault();
@@ -156,8 +177,14 @@ export const RequestSidePanel = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+  }, [editMode, exitEditMode, hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
 
+
+
+  useEffect(() => {
+    setEditMode(false);
+    setEditDirty(false);
+  }, [request?.id, open]);
 
   useEffect(() => {
     setTitleValue(request?.description || "");
@@ -176,7 +203,9 @@ export const RequestSidePanel = ({
       }
       if (next === "") next = null;
 
+      if (next !== previous) setEditDirty(true);
       setSavingField(field);
+
       queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
         Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, [field]: next } : r)) : old
       );
@@ -423,6 +452,7 @@ export const RequestSidePanel = ({
               value={request.object_id}
               display={(request as any).object_name}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("object_id", v)}
             />
             <PanelField
@@ -431,6 +461,7 @@ export const RequestSidePanel = ({
               options={supplierOptions}
               value={request.contractor}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("contractor", v)}
             />
             <PanelField
@@ -440,6 +471,7 @@ export const RequestSidePanel = ({
               value={request.applicant}
               display={formatPersonName(request.applicant)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("applicant", v)}
             />
             <PanelField
@@ -449,6 +481,7 @@ export const RequestSidePanel = ({
               value={request.executor}
               display={formatPersonName(request.executor)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("executor", v)}
             />
             <PanelField
@@ -457,6 +490,7 @@ export const RequestSidePanel = ({
               options={carrierOptions}
               value={request.transport_company}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("transport_company", v)}
             />
             <PanelField
@@ -464,6 +498,7 @@ export const RequestSidePanel = ({
               type="text"
               value={request.waybill_number}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("waybill_number", v)}
             />
             <PanelField
@@ -471,6 +506,7 @@ export const RequestSidePanel = ({
               type="text"
               value={request.invoice_number}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("invoice_number", v)}
             />
             <PanelField
@@ -479,6 +515,7 @@ export const RequestSidePanel = ({
               value={request.shipment_date}
               display={dt(request.shipment_date)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("shipment_date", v)}
             />
             <PanelField
@@ -487,6 +524,7 @@ export const RequestSidePanel = ({
               value={request.delivery_date}
               display={dt(request.delivery_date)}
               readOnly={readOnly}
+              alwaysEdit={editMode}
               onSave={(v) => saveField("delivery_date", v)}
             />
     </>
@@ -500,6 +538,7 @@ export const RequestSidePanel = ({
                 value={goods}
                 display={<span className="font-numeric">{money(goods)} ₽</span>}
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => saveField("amount", Number(v.replace(",", ".")) || 0)}
               />
               <PanelField
@@ -508,6 +547,7 @@ export const RequestSidePanel = ({
                 value={(request as any).amount_2 || 0}
                 display={<span className="font-numeric">{money(extra)} ₽</span>}
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
               />
               <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
@@ -532,6 +572,7 @@ export const RequestSidePanel = ({
                   </span>
                 }
                 readOnly={readOnly}
+                alwaysEdit={editMode}
                 onSave={(v) => {
                   const pct = Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
                   return saveField("payment_percent", pct);
@@ -615,7 +656,7 @@ export const RequestSidePanel = ({
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
-          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden bg-muted/40"
+          ? "request-fullscreen fixed inset-0 z-[200] h-[100vh] w-[100vw] border-0 overflow-hidden bg-background"
 
           : asOverlay
             ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
@@ -679,7 +720,7 @@ export const RequestSidePanel = ({
 
       {/* Header */}
       <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
-        {editingTitle && !readOnly ? (
+        {(editingTitle || editMode) && !readOnly ? (
           <textarea
             autoFocus
             value={titleValue}
@@ -838,6 +879,38 @@ export const RequestSidePanel = ({
       {/* Footer */}
       <div className="flex-none border-t border-border bg-card px-4 py-2.5">
         <div className={cn("flex items-center gap-3", containerClass)}>
+        {editMode ? (
+          <>
+            <Button
+              size="sm"
+              className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
+              onClick={() => {
+                (document.activeElement as HTMLElement | null)?.blur();
+                setEditMode(false);
+                setEditDirty(false);
+              }}
+            >
+              Сохранить
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 px-3 text-[11px]" onClick={() => exitEditMode(true)}>
+              Отмена
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
+            disabled={readOnly}
+            onClick={() => {
+              if (!isFullscreen) setIsFullscreen(true);
+              setEditMode(true);
+              setEditDirty(false);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Редактировать
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -848,7 +921,7 @@ export const RequestSidePanel = ({
           <PackageCheck className="h-3.5 w-3.5" />
           Отметить приход
         </Button>
-        <span className="text-[11px] text-[hsl(var(--text-3))]">Изменения сохраняются автоматически</span>
+
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

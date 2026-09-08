@@ -22,6 +22,8 @@ interface PanelFieldProps {
   readOnly?: boolean;
   accent?: boolean;
   suffix?: string;
+  /** Режим правки: поле всегда показано как редактор. */
+  alwaysEdit?: boolean;
 }
 
 /** Поле карточки заявки: клик по значению превращает его в редактор нужного типа. */
@@ -35,12 +37,14 @@ export const PanelField = ({
   readOnly = false,
   accent,
   suffix,
+  alwaysEdit = false,
 }: PanelFieldProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const forced = alwaysEdit && !readOnly;
 
   useEffect(() => {
     setDraft(String(value ?? ""));
@@ -49,6 +53,7 @@ export const PanelField = ({
   useEffect(() => {
     if (editing && type !== "select") inputRef.current?.focus();
   }, [editing, type]);
+
 
   const filtered = useMemo(() => {
     const list = options ?? [];
@@ -100,12 +105,22 @@ export const PanelField = ({
 
   let editor: React.ReactNode = null;
 
-  if (editing && type === "select") {
+  if ((editing || forced) && type === "select") {
     editor = (
-      <Popover open onOpenChange={(o) => !o && setEditing(false)}>
+      <Popover open={editing} onOpenChange={(o) => setEditing(o)}>
         <PopoverTrigger asChild>
-          <span className="block w-full text-[0.9375rem]">{shown ?? "—"}</span>
+          <button
+            type="button"
+            className={cn(
+              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-left text-[0.9375rem]",
+              !shown && "text-muted-foreground"
+            )}
+          >
+            <span className="min-w-0 truncate">{shown ?? "—"}</span>
+            <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" />
+          </button>
         </PopoverTrigger>
+
         <PopoverContent className="w-[260px] p-1 z-[130]" align="start">
           <div className="flex items-center gap-1.5 border-b border-border px-1.5 pb-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
@@ -145,7 +160,7 @@ export const PanelField = ({
         </PopoverContent>
       </Popover>
     );
-  } else if (editing) {
+  } else if (editing || forced) {
     editor = (
       <Input
         ref={inputRef}
@@ -154,7 +169,7 @@ export const PanelField = ({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             commit(draft);
           } else if (e.key === "Escape") {
@@ -174,9 +189,10 @@ export const PanelField = ({
     <div className="flex min-h-[2rem] items-center gap-3 py-[2px]">
       <div className="w-[8.125rem] shrink-0 text-[0.8125rem] leading-5 text-muted-foreground">{label}</div>
       <div className="min-w-0 flex-1">
-        {editing ? editor : staticView}
+        {editing || forced ? editor : staticView}
       </div>
       {suffix && <span className="shrink-0 text-[0.8125rem] text-muted-foreground">{suffix}</span>}
     </div>
+
   );
 };
