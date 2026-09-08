@@ -658,7 +658,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Header */}
-      <div className={cn("flex items-start gap-2 px-4 pt-3", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
         {editingTitle && !readOnly ? (
           <textarea
             autoFocus
@@ -710,7 +710,7 @@ export const RequestSidePanel = ({
         </div>
       </div>
 
-      <div className={cn("flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className={cn("flex flex-none flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <select
           value={request.status}
           disabled={readOnly || savingField === "status"}
@@ -807,8 +807,8 @@ export const RequestSidePanel = ({
 
 
       {/* Footer */}
-      <div className="sticky bottom-0 border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex items-center gap-2", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className="flex-none border-t border-border bg-card px-4 py-2.5">
+        <div className={cn("flex items-center gap-2", containerClass)}>
         <Button
           size="sm"
           variant="outline"
