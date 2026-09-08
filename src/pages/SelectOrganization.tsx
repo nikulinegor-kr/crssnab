@@ -28,7 +28,7 @@ const SelectOrganization = () => {
     // Если уже выбранная организация сохранена — сразу в дашборд
     const saved = localStorage.getItem("currentOrganizationId");
     if (saved) {
-      navigate("/dashboard");
+      navigate("/requests");
       return;
     }
     fetchOrganizations();
@@ -86,7 +86,7 @@ const SelectOrganization = () => {
 
   const selectOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
-    navigate("/dashboard");
+    navigate("/requests");
   };
 
   const getRoleBadge = (role: string) => {

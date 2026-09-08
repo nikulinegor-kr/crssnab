@@ -962,7 +962,11 @@ export const RequestSidePanel = ({
           variant="outline"
           className="h-7 gap-1 px-3 text-[11px]"
           disabled={readOnly || request.status === "Доставлено"}
-          onClick={() => saveField("status", "Доставлено")}
+          onClick={() => {
+            const today = new Date().toISOString().slice(0, 10);
+            void saveField("actual_arrival_date" as any, today);
+            void saveField("status", "Доставлено");
+          }}
         >
           <PackageCheck className="h-3.5 w-3.5" />
           Отметить приход
