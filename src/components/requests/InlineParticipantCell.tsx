@@ -82,6 +82,7 @@ export const InlineParticipantCell = ({
       <PopoverContent
         className="w-[240px] p-0 z-[120]"
         align="start"
+        data-row-action
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.stopPropagation()}
       >
@@ -91,17 +92,33 @@ export const InlineParticipantCell = ({
             <CommandEmpty>Ничего не найдено</CommandEmpty>
             <CommandGroup>
               {value && (
-                <CommandItem value="__clear__" onSelect={() => select(null)}>
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => select(null)}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    void select(null);
+                  }}
+                >
                   <span className="text-muted-foreground italic">Снять назначение</span>
                 </CommandItem>
               )}
               {people.map((person) => (
-                <CommandItem key={person.id} value={person.name} onSelect={() => select(person.name)}>
+                <CommandItem
+                  key={person.id}
+                  value={person.name}
+                  onSelect={() => select(person.name)}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    void select(person.name);
+                  }}
+                >
                   <Check className={cn("mr-2 h-4 w-4", value === person.name ? "opacity-100" : "opacity-0")} />
                   {person.label}
                 </CommandItem>
               ))}
             </CommandGroup>
+
           </CommandList>
         </Command>
       </PopoverContent>

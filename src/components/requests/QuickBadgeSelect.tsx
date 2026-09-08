@@ -113,6 +113,7 @@ export const QuickBadgeSelect = ({
       <PopoverContent
         className="w-[200px] p-1 z-[120]"
         align="start"
+        data-row-action
         onClick={(e) => e.stopPropagation()}
       >
         {options.map((opt) => {
@@ -121,7 +122,12 @@ export const QuickBadgeSelect = ({
             <button
               key={opt}
               type="button"
-              onClick={() => handleSelect(opt)}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSelect(opt);
+              }}
+              onClick={(e) => e.stopPropagation()}
               className={cn(
                 "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted",
                 opt === value && "bg-muted/70 font-medium"
@@ -133,6 +139,7 @@ export const QuickBadgeSelect = ({
             </button>
           );
         })}
+
       </PopoverContent>
     </Popover>
   );

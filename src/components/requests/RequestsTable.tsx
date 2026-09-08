@@ -47,6 +47,8 @@ import { InlineEditCell } from "./InlineEditCell";
 import { QuickBadgeSelect } from "./QuickBadgeSelect";
 import { InlineObjectCell } from "./InlineObjectCell";
 import { InlineParticipantCell } from "./InlineParticipantCell";
+import { InlineCarrierCell } from "./InlineCarrierCell";
+
 import { RowContextMenu } from "./RowContextMenu";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { formatPersonName } from "@/lib/personName";
