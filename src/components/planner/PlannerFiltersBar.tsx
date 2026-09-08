@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Layers, MapPin, Truck, User, Flag, Search } from "lucide-react";
+import { X, Layers, MapPin, Truck, User, Flag, Search, CalendarRange } from "lucide-react";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
 import { usePlannerMembers } from "@/hooks/useOrgMembers";
@@ -32,6 +32,21 @@ export function PlannerFiltersBar() {
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Layers className="h-3 w-3" /> Фильтры:
       </div>
+
+      <Select value={f.period} onValueChange={(v) => f.setPeriod(v as any)}>
+        <SelectTrigger className="h-7 text-xs w-auto min-w-[120px] px-2 gap-1.5">
+          <CalendarRange className="h-3 w-3" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Все сроки</SelectItem>
+          <SelectItem value="today">Сегодня</SelectItem>
+          <SelectItem value="week">Неделя</SelectItem>
+          <SelectItem value="overdue">Просрочено</SelectItem>
+        </SelectContent>
+      </Select>
+
+
 
 
       <FilterSelect
