@@ -60,7 +60,7 @@ const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   request_date: "Дата",
   description: "Заявка",
   object: "Объект",
-  priority: "Приоритет (устаревшая колонка)",
+  priority: "Приоритет",
   status: "Статус",
   availability: "Наличие",
   contractor: "Контрагент",
