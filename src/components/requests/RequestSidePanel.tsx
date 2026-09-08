@@ -94,8 +94,20 @@ export const RequestSidePanel = ({
   const [dragActive, setDragActive] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
+  const exitEditMode = useCallback(
+    (confirmIfDirty: boolean) => {
+      if (confirmIfDirty && editDirty && !window.confirm("Отменить правку? Часть изменений уже сохранена.")) return;
+      setEditMode(false);
+      setEditDirty(false);
+    },
+    [editDirty]
+  );
+
 
 
   useEffect(() => {
