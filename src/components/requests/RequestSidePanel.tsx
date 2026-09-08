@@ -542,7 +542,8 @@ export const RequestSidePanel = ({
   const movementBlock = (
     <>
             <div className="mt-4">
-              <div className="mb-2 text-[10px] text-muted-foreground">Движение</div>
+              <div className="mb-3 text-[15px] font-semibold text-foreground">Движение</div>
+
               <div className="space-y-2.5">
                 {movement.map((m, i) => (
                   <div key={i} className="flex gap-2">
