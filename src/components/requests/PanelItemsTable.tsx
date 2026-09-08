@@ -30,7 +30,10 @@ interface PanelItemsTableProps {
   readOnly?: boolean;
   /** Итог по позициям подставляется в сумму заявки. */
   onTotalChange?: (total: number) => void;
+  /** Кнопка «Распознать счёт» в пустом состоянии. */
+  onRecognizeInvoice?: () => void;
 }
+
 
 const money = (v: number) =>
   new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
