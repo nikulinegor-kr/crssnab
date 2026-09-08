@@ -1143,8 +1143,9 @@ export const RequestsTable = ({
                       field="priority"
                       value={request.priority || "Планово"}
                       badge={null}
-                      open={openMenu?.id === request.id && openMenu.field === "priority"}
+                      open={!visibility.priority && openMenu?.id === request.id && openMenu.field === "priority"}
                       onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+
                       trigger={
                         <span
                           role="button"
