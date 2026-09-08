@@ -568,6 +568,7 @@ export const RequestSidePanel = ({
             organizationId={currentOrgId}
             items={(items || []) as any}
             readOnly={readOnly}
+            onRecognizeInvoice={readOnly ? undefined : () => invoiceInputRef.current?.click()}
             onTotalChange={(itemsTotal) => {
               if (itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
                 void saveField("amount", itemsTotal, { silent: true });
@@ -600,7 +601,10 @@ export const RequestSidePanel = ({
           </div>
   );
   const wideFullscreen = isFullscreen && viewportWide;
-  const containerClass = isFullscreen ? "mx-auto w-full max-w-[1440px]" : undefined;
+  const containerClass = isFullscreen ? "mx-auto w-[min(1440px,100%-96px)]" : undefined;
+  const columnClass = "flex h-full min-w-0 flex-col rounded-[10px] border border-border bg-card p-5";
+  const sectionTitleClass = "mb-3 text-[15px] font-semibold text-foreground";
+
 
   const content = (
     <aside
