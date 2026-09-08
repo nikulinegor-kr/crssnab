@@ -900,7 +900,9 @@ export const RequestsTable = ({
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
             {visibility.description && <col style={{ width: widths.description }} />}
             {visibility.object && <col style={{ width: widths.object }} />}
+            {visibility.priority && <col style={{ width: widths.priority }} />}
             {visibility.status && <col style={{ width: widths.status }} />}
+
             {visibility.availability && <col style={{ width: widths.availability }} />}
             {visibility.contractor && <col style={{ width: widths.contractor }} />}
             {visibility.amount && <col style={{ width: widths.amount }} />}
