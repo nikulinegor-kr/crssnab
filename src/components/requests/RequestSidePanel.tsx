@@ -613,7 +613,8 @@ export const RequestSidePanel = ({
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
-          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden"
+          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden bg-muted/40"
+
           : asOverlay
             ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
             : "h-full w-full overflow-hidden"
