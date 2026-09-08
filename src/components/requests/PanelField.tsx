@@ -160,7 +160,7 @@ export const PanelField = ({
         </PopoverContent>
       </Popover>
     );
-  } else if (editing) {
+  } else if (editing || forced) {
     editor = (
       <Input
         ref={inputRef}
@@ -169,7 +169,7 @@ export const PanelField = ({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             commit(draft);
           } else if (e.key === "Escape") {
@@ -189,9 +189,10 @@ export const PanelField = ({
     <div className="flex min-h-[2rem] items-center gap-3 py-[2px]">
       <div className="w-[8.125rem] shrink-0 text-[0.8125rem] leading-5 text-muted-foreground">{label}</div>
       <div className="min-w-0 flex-1">
-        {editing ? editor : staticView}
+        {editing || forced ? editor : staticView}
       </div>
       {suffix && <span className="shrink-0 text-[0.8125rem] text-muted-foreground">{suffix}</span>}
     </div>
+
   );
 };
