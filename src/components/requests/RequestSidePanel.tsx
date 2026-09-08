@@ -96,6 +96,7 @@ export const RequestSidePanel = ({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
