@@ -177,12 +177,38 @@ const Requests = () => {
     }
   };
 
-  const [expandedRequest, setExpandedRequest] = useState<Request | null>(null);
+  // Состояние карточки в адресной строке: ?request=<id>&view=full
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlRequestId = searchParams.get("request");
+  const isFullView = searchParams.get("view") === "full";
+
+  const setRequestParams = useCallback(
+    (requestId: string | null, full: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (requestId) next.set("request", requestId);
+          else next.delete("request");
+          if (requestId && full) next.set("view", "full");
+          else next.delete("view");
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const handleEditClick = (request: Request) => {
     setSelectedRequest(request);
     setPanelOpen(true);
+    setRequestParams(request.id, isFullView);
   };
+
+  const closePanel = useCallback(() => {
+    setPanelOpen(false);
+    setRequestParams(null, false);
+  }, [setRequestParams]);
 
   const selectedRequestIndex = selectedRequest
     ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
@@ -190,8 +216,27 @@ const Requests = () => {
 
   const selectAdjacentRequest = (offset: -1 | 1) => {
     const next = panelRequestOrder[selectedRequestIndex + offset];
-    if (next) setSelectedRequest(next);
+    if (next) {
+      setSelectedRequest(next);
+      setRequestParams(next.id, isFullView);
+    }
   };
+
+  // Восстановление заявки из адресной строки (перезагрузка, ссылка)
+  useEffect(() => {
+    if (!urlRequestId) return;
+    if (selectedRequest?.id === urlRequestId) {
+      if (!panelOpen) setPanelOpen(true);
+      return;
+    }
+    const found = (filters.filteredRequests as Request[] | undefined)?.find((r) => r.id === urlRequestId)
+      ?? (panelRequestOrder as Request[]).find((r) => r.id === urlRequestId);
+    if (found) {
+      setSelectedRequest(found);
+      setPanelOpen(true);
+    }
+  }, [urlRequestId, selectedRequest?.id, panelOpen, filters.filteredRequests, panelRequestOrder]);
+
 
   const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
     setPanelRequestOrder(orderedRequests);
