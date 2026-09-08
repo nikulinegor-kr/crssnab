@@ -904,9 +904,9 @@ export const RequestSidePanel = ({
             className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
             disabled={readOnly}
             onClick={() => {
-              if (!isFullscreen) setIsFullscreen(true);
-              setEditMode(true);
+              setEditMode(false);
               setEditDirty(false);
+              setEditorOpen(true);
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
