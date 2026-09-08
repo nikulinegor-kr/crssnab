@@ -159,10 +159,12 @@ export const PanelField = ({
             commit(draft);
           } else if (e.key === "Escape") {
             e.preventDefault();
+            e.stopPropagation();
             setDraft(String(value ?? ""));
             setEditing(false);
           }
         }}
+
         className="h-8 px-1.5 text-[0.9375rem]"
       />
     );
