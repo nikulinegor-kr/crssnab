@@ -198,7 +198,9 @@ export const RequestSidePanel = ({
       }
       if (next === "") next = null;
 
+      if (next !== previous) setEditDirty(true);
       setSavingField(field);
+
       queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
         Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, [field]: next } : r)) : old
       );
