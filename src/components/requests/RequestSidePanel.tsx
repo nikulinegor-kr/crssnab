@@ -596,9 +596,11 @@ export const RequestSidePanel = ({
                     size="sm"
                     variant={paid === 50 ? "default" : "outline"}
                     className="h-6 px-2 text-[11px]"
-                    onClick={() => {
-                      void saveField("payment_percent", 50);
-                      void saveField("payment_status", "partial");
+                    onClick={async () => {
+                      await saveField("payment_percent", 50);
+                      await saveField("payment_status", "partial");
+                      setPendingPaymentPercent(50);
+                      setStatusPromptOpen(true);
                     }}
                   >
                     Оплачено 50%
@@ -608,9 +610,11 @@ export const RequestSidePanel = ({
                     size="sm"
                     variant={paid >= 100 ? "default" : "outline"}
                     className="h-6 px-2 text-[11px]"
-                    onClick={() => {
-                      void saveField("payment_percent", 100);
-                      void saveField("payment_status", "paid");
+                    onClick={async () => {
+                      await saveField("payment_percent", 100);
+                      await saveField("payment_status", "paid");
+                      setPendingPaymentPercent(100);
+                      setStatusPromptOpen(true);
                     }}
                   >
                     Оплачено 100%
