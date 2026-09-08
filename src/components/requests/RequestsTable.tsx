@@ -924,13 +924,15 @@ export const RequestsTable = ({
 
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
-              <TableHead className="text-center p-1 border-b">
+              <TableHead className="text-center p-1 border-b align-middle">
                 {visibility.select !== false && (
-                  <Checkbox
-                    checked={selectedRequestIds.size === requests.length && requests.length > 0}
-                    onCheckedChange={toggleAllRequests}
-                    className="h-4 w-4"
-                  />
+                  <div className="flex items-center justify-center h-full w-full">
+                    <Checkbox
+                      checked={selectedRequestIds.size === requests.length && requests.length > 0}
+                      onCheckedChange={toggleAllRequests}
+                      className="h-4 w-4"
+                    />
+                  </div>
                 )}
               </TableHead>
               {visibility.request_date && (
@@ -1159,7 +1161,7 @@ export const RequestsTable = ({
                       }
                     />
                     {visibility.select !== false && (
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center h-full w-full">
                         <Checkbox
                           checked={selectedRequestIds.has(request.id)}
                           onCheckedChange={() => toggleRequestSelection(request.id)}
