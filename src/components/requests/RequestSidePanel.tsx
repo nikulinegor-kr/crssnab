@@ -766,31 +766,40 @@ export const RequestSidePanel = ({
       )}
 
       {/* Body */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain py-3", isFullscreen ? "px-0" : "px-4")}>
         {wideFullscreen ? (
-          <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[420px_minmax(0,1fr)_360px] gap-6">
-            <div className="min-w-0">
+          <div
+            className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
+            style={{ gridTemplateColumns: "380px minmax(0, 1fr) 340px" }}
+          >
+            <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
               {totalsBlock}
             </div>
-            <div className="min-w-0">{itemsBlock}</div>
-            <div className="min-w-0 space-y-5">
+            <div className={cn(columnClass, "overflow-y-auto")}>
+              <div className={sectionTitleClass}>Позиции</div>
+              {itemsBlock}
+            </div>
+            <div className={cn(columnClass, "gap-5 overflow-y-auto")}>
               {docsBlock}
               <div>{movementBlock}</div>
               <div>
-                <div className="mb-2 text-[10px] text-muted-foreground">История</div>
+                <div className={sectionTitleClass}>История</div>
                 {historyBlock}
               </div>
             </div>
           </div>
         ) : (
-          <div className={cn(containerClass)}>
+          <div className={cn(containerClass, isFullscreen && "px-0")}>
             {tab !== "docs" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
                 {isFullscreen ? (
-                  <div className="mt-4">{itemsBlock}</div>
+                  <div className="mt-4">
+                    <div className={sectionTitleClass}>Позиции</div>
+                    {itemsBlock}
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -813,7 +822,7 @@ export const RequestSidePanel = ({
 
       {/* Footer */}
       <div className="flex-none border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex items-center gap-2", containerClass)}>
+        <div className={cn("flex items-center gap-3", containerClass)}>
         <Button
           size="sm"
           variant="outline"
@@ -824,6 +833,8 @@ export const RequestSidePanel = ({
           <PackageCheck className="h-3.5 w-3.5" />
           Отметить приход
         </Button>
+        <span className="text-[11px] text-[hsl(var(--text-3))]">Изменения сохраняются автоматически</span>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost" className="ml-auto h-7 w-7" aria-label="Ещё">
