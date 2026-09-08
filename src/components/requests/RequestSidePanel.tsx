@@ -997,6 +997,14 @@ export const RequestSidePanel = ({
     </aside>
   );
 
+  const handleStatusFromPrompt = async (status: string) => {
+    setStatusPromptOpen(false);
+    if (status && status !== request?.status) {
+      await saveField("status", status);
+    }
+    setPendingPaymentPercent(null);
+  };
+
   return (
     <>
       {asOverlay ? createPortal(content, document.body) : content}
@@ -1011,6 +1019,46 @@ export const RequestSidePanel = ({
           }
         }}
       />
+      <Dialog open={statusPromptOpen} onOpenChange={setStatusPromptOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Оплата обновлена</DialogTitle>
+            <DialogDescription>
+              {pendingPaymentPercent === 100
+                ? "Заявка оплачена полностью. Сменить статус?"
+                : "Заявка оплачена частично. Сменить статус?"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Button
+              variant="outline"
+              className="justify-start px-3 text-left"
+              onClick={() => handleStatusFromPrompt("В работе")}
+            >
+              <span className="mr-2 h-2 w-2 rounded-full" style={{ backgroundColor: getStatusColor("В работе") }} />
+              В работе
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start px-3 text-left"
+              onClick={() => handleStatusFromPrompt("Готов к отгрузке")}
+            >
+              <span
+                className="mr-2 h-2 w-2 rounded-full"
+                style={{ backgroundColor: getStatusColor("Готов к отгрузке") }}
+              />
+              Готов к отгрузке
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start px-3 text-left text-muted-foreground"
+              onClick={() => handleStatusFromPrompt(request?.status || "")}
+            >
+              Не менять статус
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
