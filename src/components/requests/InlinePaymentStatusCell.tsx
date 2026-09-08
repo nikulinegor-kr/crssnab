@@ -105,6 +105,7 @@ export const InlinePaymentStatusCell = ({ requestId, paymentPercent }: Props) =>
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-row-action
           onClick={(e) => e.stopPropagation()}
           className={cn(
             "w-full text-left cursor-pointer hover:bg-muted/50 rounded p-0 m-0 transition-colors flex items-center justify-start gap-1",

@@ -122,6 +122,7 @@ export const InlineEditCell = ({
     return (
       <div
         data-inline-edit
+        {...(editOnClick ? { "data-row-action": "" } : {})}
         onDoubleClick={handleDoubleClick}
         onClick={
           editOnClick
@@ -142,6 +143,7 @@ export const InlineEditCell = ({
         <div className="min-w-0 flex-1">{displayValue}</div>
         <button
           type="button"
+          data-row-action
           aria-label="Редактировать"
           onClick={(e) => {
             e.stopPropagation();

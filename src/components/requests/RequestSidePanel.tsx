@@ -228,7 +228,7 @@ export const RequestSidePanel = ({
     queryFn: async () => {
       if (!currentOrgId) return [];
       const { data, error } = await supabase
-        .from("material_objects")
+        .from("request_objects")
         .select("id, name")
         .eq("organization_id", currentOrgId)
         .order("name");
