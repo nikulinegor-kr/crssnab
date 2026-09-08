@@ -23,6 +23,7 @@ import {
 import { PanelField, PanelFieldOption } from "./PanelField";
 import { PanelItemsTable } from "./PanelItemsTable";
 import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDocuments";
+import { EditRequestDialog } from "@/components/EditRequestDialog";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -95,6 +96,7 @@ export const RequestSidePanel = ({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
@@ -656,7 +658,10 @@ export const RequestSidePanel = ({
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
-          ? "request-fullscreen fixed inset-0 z-[200] h-[100vh] w-[100vw] border-0 overflow-hidden bg-background"
+          ? cn(
+              "request-fullscreen fixed inset-0 h-[100vh] w-[100vw] border-0 overflow-hidden bg-background",
+              editorOpen ? "z-[40]" : "z-[200]"
+            )
 
           : asOverlay
             ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
@@ -902,9 +907,9 @@ export const RequestSidePanel = ({
             className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
             disabled={readOnly}
             onClick={() => {
-              if (!isFullscreen) setIsFullscreen(true);
-              setEditMode(true);
+              setEditMode(false);
               setEditDirty(false);
+              setEditorOpen(true);
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -951,5 +956,20 @@ export const RequestSidePanel = ({
     </aside>
   );
 
-  return asOverlay ? createPortal(content, document.body) : content;
+  return (
+    <>
+      {asOverlay ? createPortal(content, document.body) : content}
+      <EditRequestDialog
+        request={request as any}
+        open={editorOpen}
+        onOpenChange={(o) => {
+          setEditorOpen(o);
+          if (!o) {
+            queryClient.invalidateQueries({ queryKey: ["requests"] });
+            queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+          }
+        }}
+      />
+    </>
+  );
 };
