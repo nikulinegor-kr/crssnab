@@ -386,7 +386,10 @@ All colors MUST be HSL.
   .requests-registry table td:first-child > div,
   .requests-registry table th:last-child > div,
   .requests-registry table td:last-child > div {
+    display: flex;
+    align-items: center;
     justify-content: center;
+    height: 100%;
   }
 
   /* Содержимое по вертикали — по центру строки */
