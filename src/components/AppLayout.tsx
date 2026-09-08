@@ -47,10 +47,11 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md">
         Перейти к основному содержимому
       </a>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-background/95">
+      <div className="h-screen min-h-0 flex w-full overflow-hidden bg-gradient-to-br from-background via-background to-background/95">
         <AppSidebar />
         
-        <div className="flex-1 flex min-w-0 flex-col">
+        <div className="flex-1 grid min-w-0 min-h-0 h-full grid-rows-[auto_minmax(0,1fr)]">
+
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover:bg-background/10 transition-colors rounded-md" />
@@ -83,27 +84,29 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
 
           <main id="main-content" className={cn(
-            "flex-1 min-w-0 overflow-x-hidden",
-            fullBleed ? "overflow-y-hidden" : "overflow-y-auto"
+            "min-w-0 min-h-0 h-full overflow-x-hidden",
+            fullBleed ? "overflow-y-hidden" : "overflow-y-auto overscroll-contain"
           )}>
             {fullBleed ? (
-              <div className="flex flex-col h-full w-full min-w-0">
+              <div className="flex flex-col h-full min-h-0 w-full min-w-0">
                 {!hideSubscriptionBanner && (
-                  <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
+                  <div className="w-full shrink-0 p-2 sm:p-3 md:p-6 min-w-0">
                     <SubscriptionBanner />
                   </div>
                 )}
                 <PermissionRoute>{children}</PermissionRoute>
+                {/* Отступ под нижним меню на телефоне */}
+                <div className="h-16 shrink-0 md:hidden" aria-hidden />
               </div>
             ) : (
               <div className="w-full p-2 sm:p-3 md:p-6 min-w-0">
                 <SubscriptionBanner />
                 <PermissionRoute>{children}</PermissionRoute>
+                <div className="h-16 md:hidden" aria-hidden />
               </div>
             )}
           </main>
-          {/* Bottom spacer so content isn't hidden behind mobile nav */}
-          <div className="h-16 md:hidden" aria-hidden />
+
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
         <QuickRequestFab />

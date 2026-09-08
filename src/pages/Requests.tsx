@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -25,7 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { RequestSidePanel } from "@/components/requests/RequestSidePanel";
-import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { RequestsFilters } from "@/components/requests/RequestsFilters";
 import { RequestsBulkActions } from "@/components/requests/RequestsBulkActions";
 import { RequestsTable } from "@/components/requests/RequestsTable";
@@ -177,12 +177,38 @@ const Requests = () => {
     }
   };
 
-  const [expandedRequest, setExpandedRequest] = useState<Request | null>(null);
+  // Состояние карточки в адресной строке: ?request=<id>&view=full
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlRequestId = searchParams.get("request");
+  const isFullView = searchParams.get("view") === "full";
+
+  const setRequestParams = useCallback(
+    (requestId: string | null, full: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (requestId) next.set("request", requestId);
+          else next.delete("request");
+          if (requestId && full) next.set("view", "full");
+          else next.delete("view");
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const handleEditClick = (request: Request) => {
     setSelectedRequest(request);
     setPanelOpen(true);
+    setRequestParams(request.id, isFullView);
   };
+
+  const closePanel = useCallback(() => {
+    setPanelOpen(false);
+    setRequestParams(null, false);
+  }, [setRequestParams]);
 
   const selectedRequestIndex = selectedRequest
     ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
@@ -190,8 +216,27 @@ const Requests = () => {
 
   const selectAdjacentRequest = (offset: -1 | 1) => {
     const next = panelRequestOrder[selectedRequestIndex + offset];
-    if (next) setSelectedRequest(next);
+    if (next) {
+      setSelectedRequest(next);
+      setRequestParams(next.id, isFullView);
+    }
   };
+
+  // Восстановление заявки из адресной строки (перезагрузка, ссылка)
+  useEffect(() => {
+    if (!urlRequestId) return;
+    if (selectedRequest?.id === urlRequestId) {
+      if (!panelOpen) setPanelOpen(true);
+      return;
+    }
+    const found = (filters.filteredRequests as Request[] | undefined)?.find((r) => r.id === urlRequestId)
+      ?? (panelRequestOrder as Request[]).find((r) => r.id === urlRequestId);
+    if (found) {
+      setSelectedRequest(found);
+      setPanelOpen(true);
+    }
+  }, [urlRequestId, selectedRequest?.id, panelOpen, filters.filteredRequests, panelRequestOrder]);
+
 
   const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
     setPanelRequestOrder(orderedRequests);
@@ -366,9 +411,9 @@ const Requests = () => {
   const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
-    <div className="requests-registry w-full min-h-full overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 space-y-2">
+    <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
         <div className="min-w-0">
           <h1 className="text-base font-semibold">Заявки</h1>
           <p className="text-xs text-muted-foreground font-numeric">
@@ -428,7 +473,7 @@ const Requests = () => {
       </div>
 
       {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex gap-0 border-b border-border bg-card items-end overflow-x-auto">
+      <nav className="flex shrink-0 gap-0 border-b border-border bg-card items-end overflow-x-auto">
         {mainTabs.map((tab) => (
           <button
             key={tab.value}
@@ -477,16 +522,17 @@ const Requests = () => {
 
       {/* === Tab Content + боковая панель как колонка раскладки === */}
       <div
-        className="grid items-start gap-2"
+        className="grid min-h-0 flex-1 items-stretch gap-2"
         style={{
           gridTemplateColumns: `minmax(0,1fr) ${panelInline && panelOpen ? panelWidth : 0}px`,
           transition: "grid-template-columns var(--dur) var(--ease)",
         }}
       >
-        <div className="min-w-0 space-y-2">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2">
       {activeTab === "active" && (
 
-        <div className="space-y-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 [&>*:not(:last-child)]:flex-none">
+
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
             requests={requests}
@@ -561,7 +607,8 @@ const Requests = () => {
           />
 
           {/* LEVEL 7: Table */}
-          <div className="overflow-hidden bg-card">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+
             <RequestsTable
               requests={visibleRequests}
               isLoading={isLoading}
@@ -584,7 +631,8 @@ const Requests = () => {
       )}
 
       {activeTab === "archived" && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 [&>*:not(:last-child)]:flex-none">
+
           <RequestsFilters
             searchQuery={filters.searchQuery}
             setSearchQuery={filters.setSearchQuery}
@@ -633,7 +681,8 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <div className="overflow-hidden bg-card">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+
             <RequestsTable
               requests={visibleRequests}
               isLoading={isLoading}
@@ -654,7 +703,7 @@ const Requests = () => {
       )}
 
       {activeTab === "favorites" && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 [&>*:not(:last-child)]:flex-none">
           {favoriteRequests.length === 0 ? (
             <Card className="p-8 text-center">
               <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
@@ -664,7 +713,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <div className="overflow-hidden bg-card">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}
@@ -688,7 +737,7 @@ const Requests = () => {
       )}
 
       {activeTab === "procurement" && (
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
           <div className="flex items-center gap-2 mb-2">
             <Button variant="outline" size="sm" onClick={() => setActiveTab("active")} className="gap-1.5">
               ← Назад к заявкам
@@ -700,7 +749,7 @@ const Requests = () => {
         </div>
 
         {/* Колонка панели — таблица сжимается, а не перекрывается */}
-        <div className="min-w-0 overflow-hidden">
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
           {panelInline && (
             <RequestSidePanel
               inline
@@ -708,14 +757,15 @@ const Requests = () => {
               onWidthChange={setPanelWidth}
               request={selectedRequest as any}
               open={panelOpen}
-              onClose={() => setPanelOpen(false)}
+              onClose={closePanel}
               onPrevious={() => selectAdjacentRequest(-1)}
               onNext={() => selectAdjacentRequest(1)}
               hasPrevious={selectedRequestIndex > 0}
               hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
               position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
               requestCount={panelRequestOrder.length}
-              onExpand={(r) => setExpandedRequest(r as Request)}
+              fullscreen={isFullView}
+              onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
             />
           )}
         </div>
@@ -746,22 +796,18 @@ const Requests = () => {
           onWidthChange={setPanelWidth}
           request={selectedRequest as any}
           open={panelOpen}
-          onClose={() => setPanelOpen(false)}
+          onClose={closePanel}
           onPrevious={() => selectAdjacentRequest(-1)}
           onNext={() => selectAdjacentRequest(1)}
           hasPrevious={selectedRequestIndex > 0}
           hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
           position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
           requestCount={panelRequestOrder.length}
-          onExpand={(r) => setExpandedRequest(r as Request)}
+          fullscreen={isFullView}
+          onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
         />
       )}
 
-      <EditRequestDialog
-        request={expandedRequest as any}
-        open={!!expandedRequest}
-        onOpenChange={(open) => { if (!open) setExpandedRequest(null); }}
-      />
 
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

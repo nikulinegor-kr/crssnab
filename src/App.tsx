@@ -183,12 +183,13 @@ const App = () => {
               path="/requests"
               element={
                 <ProtectedRoute>
-                  <AppLayout>
+                  <AppLayout fullBleed>
                     <Requests />
                   </AppLayout>
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/projects"
               element={

@@ -647,7 +647,7 @@ export const RequestsTable = ({
 
   // Compact Pagination UI
   const PaginationControls = () => (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2 py-2">
+    <div className="flex flex-none flex-wrap items-center justify-between gap-2 border-t border-border bg-card px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
           <SelectTrigger className="w-16 h-6 text-xs px-2">
@@ -738,10 +738,11 @@ export const RequestsTable = ({
   );
 
   return (
-    <div className="flex gap-2 items-start" data-density={density}>
-      <div className="flex-1 min-w-0">
+    <div className="flex h-full min-h-0 gap-2 items-stretch" data-density={density}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/* Mobile View - Compact Cards */}
-      <div className="lg:hidden space-y-1.5">
+      <div className="lg:hidden min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain">
+
         <div className="flex justify-end gap-1 pb-1">
           <Toggle
             pressed={groupByProject}
@@ -854,7 +855,7 @@ export const RequestsTable = ({
 
       {/* Desktop Table View */}
       <div
-        className="hidden lg:block"
+        className="hidden min-h-0 lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
         onMouseOver={(e) => {
           // Тултип только когда текст реально не поместился
           const cell = (e.target as HTMLElement)?.closest?.("td") as HTMLTableCellElement | null;
@@ -866,7 +867,7 @@ export const RequestsTable = ({
         }}
       >
 
-        <div className="flex items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
+        <div className="flex flex-none items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
           <Toggle
             pressed={groupByProject}
             onPressedChange={toggleGroupByProject}
@@ -890,7 +891,9 @@ export const RequestsTable = ({
           {headerActions}
           <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
-        <div className="border-0 bg-card" ref={tableWrapRef}>
+        <div className="flex min-h-0 flex-1 flex-col border-0 bg-card" ref={tableWrapRef}>
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
+
         <Table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
@@ -1532,8 +1535,10 @@ export const RequestsTable = ({
             })()}
           </TableBody>
         </Table>
+        </div>
+
         {selectedRequestIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
+          <div className="flex flex-none flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
             <span className="font-medium">Выбрано {selectedRequestIds.size}</span>
             <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("status", v)}>
               <SelectTrigger className="h-7 w-[190px] text-xs">

@@ -38,9 +38,11 @@ interface RequestSidePanelProps {
   inline?: boolean;
   width?: number;
   onWidthChange?: (width: number) => void;
-  /** Открыть большую форму заявки вместо внутреннего полноэкранного режима. */
-  onExpand?: (request: any) => void;
+  /** Полноэкранный режим — состояние хранится снаружи (в адресной строке). */
+  fullscreen?: boolean;
+  onFullscreenChange?: (value: boolean) => void;
 }
+
 
 const DEFAULT_PANEL_WIDTH = 520;
 const MIN_PANEL_WIDTH = 360;
@@ -66,7 +68,8 @@ export const RequestSidePanel = ({
   inline = false,
   width,
   onWidthChange,
-  onExpand,
+  fullscreen,
+  onFullscreenChange,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -76,7 +79,15 @@ export const RequestSidePanel = ({
   const { data: applicantsDir = [] } = useRequestParticipants("applicant", currentOrgId);
   const { data: executorsDir = [] } = useRequestParticipants("executor", currentOrgId);
   const [savingField, setSavingField] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [localFullscreen, setLocalFullscreen] = useState(false);
+  const isFullscreen = fullscreen ?? localFullscreen;
+  const setIsFullscreen = useCallback(
+    (value: boolean) => {
+      if (onFullscreenChange) onFullscreenChange(value);
+      else setLocalFullscreen(value);
+    },
+    [onFullscreenChange]
+  );
   const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1100);
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
@@ -85,6 +96,7 @@ export const RequestSidePanel = ({
   const [titleValue, setTitleValue] = useState("");
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
 
   useEffect(() => {
     const onResize = () => setViewportWide(window.innerWidth >= 1100);
@@ -130,7 +142,8 @@ export const RequestSidePanel = ({
       if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        if (isFullscreen) setIsFullscreen(false);
+        else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
         event.preventDefault();
         onPrevious?.();
@@ -141,7 +154,8 @@ export const RequestSidePanel = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrevious, onClose, onNext, onPrevious, open]);
+  }, [hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+
 
   useEffect(() => {
     setTitleValue(request?.description || "");
@@ -586,25 +600,31 @@ export const RequestSidePanel = ({
           </div>
   );
   const wideFullscreen = isFullscreen && viewportWide;
+  const containerClass = isFullscreen ? "mx-auto w-full max-w-[1440px]" : undefined;
 
   const content = (
     <aside
       className={cn(
-        "requests-registry flex flex-col border-l border-border bg-card",
+        "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
-        asOverlay
-          ? "fixed inset-y-0 right-0 z-50 max-w-[100vw] shadow-panel motion-reduce:animate-none"
-          : "sticky top-2 h-[calc(100dvh-2rem)] w-full overflow-hidden"
+        isFullscreen
+          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden"
+          : asOverlay
+            ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
+            : "h-full w-full overflow-hidden"
       )}
       style={
-        asOverlay
-          ? {
-              width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
-              transition: "width var(--dur) var(--ease)",
-              animation: "slide-in-right var(--dur) var(--ease)",
-            }
-          : undefined
+        isFullscreen
+          ? undefined
+          : asOverlay
+            ? {
+                width: `min(${panelWidth}px, 92vw)`,
+                transition: "width var(--dur) var(--ease)",
+                animation: "slide-in-right var(--dur) var(--ease)",
+              }
+            : undefined
       }
+
       aria-label="Карточка заявки"
       onDragOver={(e) => {
         if (readOnly) return;
@@ -638,7 +658,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Header */}
-      <div className={cn("flex items-start gap-2 px-4 pt-3", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
         {editingTitle && !readOnly ? (
           <textarea
             autoFocus
@@ -680,10 +700,8 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-            if (!isFullscreen && onExpand && request) { onExpand(request); return; }
-            setIsFullscreen((value) => !value);
-          }} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+
             {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </Button>
           <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
@@ -692,7 +710,7 @@ export const RequestSidePanel = ({
         </div>
       </div>
 
-      <div className={cn("flex flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className={cn("flex flex-none flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <select
           value={request.status}
           disabled={readOnly || savingField === "status"}
@@ -725,7 +743,7 @@ export const RequestSidePanel = ({
 
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
-        <div className="mt-2 flex gap-4 border-b border-border px-4">
+        <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -743,7 +761,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {wideFullscreen ? (
           <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[420px_minmax(0,1fr)_360px] gap-6">
             <div className="min-w-0">
@@ -761,32 +779,36 @@ export const RequestSidePanel = ({
             </div>
           </div>
         ) : (
-          <>
+          <div className={cn(containerClass)}>
             {tab !== "docs" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
-                {/* Позиции живут в полном экране */}
-                <button
-                  type="button"
-                  onClick={() => (onExpand && request ? onExpand(request) : setIsFullscreen(true))}
-                  className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
-                >
-                  <span>Позиции: {items?.length || 0}</span>
-                  <span className="text-primary">Открыть на полный экран</span>
-                </button>
+                {isFullscreen ? (
+                  <div className="mt-4">{itemsBlock}</div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreen(true)}
+                    className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
+                  >
+                    <span>Позиции: {items?.length || 0}</span>
+                    <span className="text-primary">Открыть на полный экран</span>
+                  </button>
+                )}
                 {movementBlock}
               </>
             )}
             {tab === "docs" && docsBlock}
-          </>
+          </div>
         )}
 
       </div>
 
+
       {/* Footer */}
-      <div className="sticky bottom-0 border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex items-center gap-2", wideFullscreen && "mx-auto w-full max-w-[1440px]")}>
+      <div className="flex-none border-t border-border bg-card px-4 py-2.5">
+        <div className={cn("flex items-center gap-2", containerClass)}>
         <Button
           size="sm"
           variant="outline"
