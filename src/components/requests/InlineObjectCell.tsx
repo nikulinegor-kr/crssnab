@@ -77,6 +77,7 @@ export function InlineObjectCell({
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-row-action
           className={cn(
             "w-full text-left rounded p-0 m-0 hover:bg-muted/60 transition-colors",
             className
