@@ -38,9 +38,11 @@ interface RequestSidePanelProps {
   inline?: boolean;
   width?: number;
   onWidthChange?: (width: number) => void;
-  /** Открыть большую форму заявки вместо внутреннего полноэкранного режима. */
-  onExpand?: (request: any) => void;
+  /** Полноэкранный режим — состояние хранится снаружи (в адресной строке). */
+  fullscreen?: boolean;
+  onFullscreenChange?: (value: boolean) => void;
 }
+
 
 const DEFAULT_PANEL_WIDTH = 520;
 const MIN_PANEL_WIDTH = 360;
