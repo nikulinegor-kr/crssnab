@@ -600,25 +600,31 @@ export const RequestSidePanel = ({
           </div>
   );
   const wideFullscreen = isFullscreen && viewportWide;
+  const containerClass = isFullscreen ? "mx-auto w-full max-w-[1440px]" : undefined;
 
   const content = (
     <aside
       className={cn(
-        "requests-registry flex flex-col border-l border-border bg-card",
+        "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
-        asOverlay
-          ? "fixed inset-y-0 right-0 z-50 max-w-[100vw] shadow-panel motion-reduce:animate-none"
-          : "sticky top-2 h-[calc(100dvh-2rem)] w-full overflow-hidden"
+        isFullscreen
+          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden"
+          : asOverlay
+            ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
+            : "h-full w-full overflow-hidden"
       )}
       style={
-        asOverlay
-          ? {
-              width: isFullscreen ? "100vw" : `min(${panelWidth}px, 92vw)`,
-              transition: "width var(--dur) var(--ease)",
-              animation: "slide-in-right var(--dur) var(--ease)",
-            }
-          : undefined
+        isFullscreen
+          ? undefined
+          : asOverlay
+            ? {
+                width: `min(${panelWidth}px, 92vw)`,
+                transition: "width var(--dur) var(--ease)",
+                animation: "slide-in-right var(--dur) var(--ease)",
+              }
+            : undefined
       }
+
       aria-label="Карточка заявки"
       onDragOver={(e) => {
         if (readOnly) return;
