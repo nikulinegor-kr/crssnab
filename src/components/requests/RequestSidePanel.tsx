@@ -145,7 +145,6 @@ export const RequestSidePanel = ({
         if (isFullscreen) setIsFullscreen(false);
         else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
-
         event.preventDefault();
         onPrevious?.();
       } else if (event.key === "ArrowDown" && hasNext) {
@@ -155,7 +154,8 @@ export const RequestSidePanel = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrevious, onClose, onNext, onPrevious, open]);
+  }, [hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+
 
   useEffect(() => {
     setTitleValue(request?.description || "");
