@@ -142,8 +142,10 @@ export const RequestSidePanel = ({
       if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        if (isFullscreen) setIsFullscreen(false);
+        else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
+
         event.preventDefault();
         onPrevious?.();
       } else if (event.key === "ArrowDown" && hasNext) {
