@@ -637,24 +637,27 @@ const App = () => {
               element={<PlannerLayout />}
             >
 
-              <Route index element={<PlannerUnified />} />
-              <Route path="today" element={<PlannerToday />} />
-              <Route path="dashboard" element={<PlannerDashboard />} />
+              <Route index element={<PlannerPeople />} />
+              <Route path="people" element={<Navigate to="/planner" replace />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
               <Route path="calendar" element={<PlannerCalendar />} />
-              <Route path="timeline" element={<PlannerTimeline />} />
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
-              <Route path="equipment" element={<PlannerEquipmentLoad />} />
-              <Route path="by-object" element={<PlannerByObject />} />
-              <Route path="workload" element={<PlannerWorkload />} />
+              {/* Legacy planner views — folded into the four main ones */}
+              <Route path="today" element={<Navigate to="/planner" replace />} />
+              <Route path="dashboard" element={<Navigate to="/planner" replace />} />
+              <Route path="timeline" element={<Navigate to="/planner/calendar" replace />} />
+              <Route path="workload" element={<Navigate to="/planner" replace />} />
+              <Route path="by-object" element={<Navigate to="/planner" replace />} />
+              <Route path="equipment" element={<Navigate to="/equipment" replace />} />
             </Route>
             </Route>
 
-            <Route path="/my-planner" element={<Navigate to="/planner?view=mine" replace />} />
+            <Route path="/my-planner" element={<Navigate to="/planner" replace />} />
             <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
-            <Route path="/planner/my" element={<Navigate to="/planner?view=mine" replace />} />
+            <Route path="/planner/my" element={<Navigate to="/planner" replace />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
