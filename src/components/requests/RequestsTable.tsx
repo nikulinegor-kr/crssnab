@@ -1263,7 +1263,28 @@ export const RequestsTable = ({
 
                     </TableCell>
                   )}
+                  {visibility.priority && (
+                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                      <QuickBadgeSelect
+                        requestId={request.id}
+                        field="priority"
+                        value={request.priority || "Планово"}
+                        open={openMenu?.id === request.id && openMenu.field === "priority"}
+                        onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "priority" } : null)}
+                        badge={
+                          <span className="inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 text-[14px] hover:bg-muted">
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: getPriorityColor(request.priority || "Планово") }}
+                            />
+                            {request.priority || "Планово"}
+                          </span>
+                        }
+                      />
+                    </TableCell>
+                  )}
                   {visibility.status && (
+
                     <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}
