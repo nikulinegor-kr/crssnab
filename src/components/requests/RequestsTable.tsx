@@ -47,6 +47,8 @@ import { InlineEditCell } from "./InlineEditCell";
 import { QuickBadgeSelect } from "./QuickBadgeSelect";
 import { InlineObjectCell } from "./InlineObjectCell";
 import { InlineParticipantCell } from "./InlineParticipantCell";
+import { InlineCarrierCell } from "./InlineCarrierCell";
+
 import { RowContextMenu } from "./RowContextMenu";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { formatPersonName } from "@/lib/personName";
@@ -1411,23 +1413,16 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineEditCell
+                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                      <InlineCarrierCell
                         requestId={request.id}
-                        field="transport_company"
-                        value={request.transport_company || ""}
-                        displayValue={
-                          request.transport_company ? (
-                            <div className="line-clamp-2 text-foreground leading-snug">
-                              <HighlightText text={request.transport_company} searchQuery={searchQuery} />
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )
-                        }
+                        organizationId={request.organization_id}
+                        value={request.transport_company || null}
+                        searchQuery={searchQuery}
                       />
                     </TableCell>
                   )}
+
                   {visibility.waybill_number && (
                     <TableCell className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
