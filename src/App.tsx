@@ -76,19 +76,12 @@ const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformanceP
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
 const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.CrmPlannerLayout })));
 const MyPlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.MyPlannerLayout })));
-const PlannerUnified = lazyWithRetry(() => import("./pages/planner/PlannerUnified"));
-const PlannerToday = lazyWithRetry(() => import("./pages/planner/PlannerToday"));
-const PlannerMyPlan = lazyWithRetry(() => import("./pages/planner/PlannerMyPlan"));
-const PlannerDashboard = lazyWithRetry(() => import("./pages/planner/PlannerDashboard"));
+const PlannerPeople = lazyWithRetry(() => import("./pages/planner/PlannerPeople"));
 const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
 const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
 const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalendar"));
-const PlannerTimeline = lazyWithRetry(() => import("./pages/planner/PlannerTimeline"));
 const PlannerStages = lazyWithRetry(() => import("./pages/planner/PlannerStages"));
 const PlannerTemplates = lazyWithRetry(() => import("./pages/planner/PlannerTemplates"));
-const PlannerEquipmentLoad = lazyWithRetry(() => import("./pages/planner/PlannerEquipmentLoad"));
-const PlannerByObject = lazyWithRetry(() => import("./pages/planner/PlannerByObject"));
-const PlannerWorkload = lazyWithRetry(() => import("./pages/planner/PlannerWorkload"));
 const AnalyticsExecutorsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorsPage"));
 const AnalyticsExecutorDetailPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorDetailPage"));
 const AnalyticsRequestsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsRequestsPage"));
@@ -637,24 +630,27 @@ const App = () => {
               element={<PlannerLayout />}
             >
 
-              <Route index element={<PlannerUnified />} />
-              <Route path="today" element={<PlannerToday />} />
-              <Route path="dashboard" element={<PlannerDashboard />} />
+              <Route index element={<PlannerPeople />} />
+              <Route path="people" element={<Navigate to="/planner" replace />} />
               <Route path="tasks" element={<PlannerTasksList />} />
               <Route path="board" element={<PlannerKanban />} />
               <Route path="calendar" element={<PlannerCalendar />} />
-              <Route path="timeline" element={<PlannerTimeline />} />
               <Route path="stages" element={<PlannerStages />} />
               <Route path="templates" element={<PlannerTemplates />} />
-              <Route path="equipment" element={<PlannerEquipmentLoad />} />
-              <Route path="by-object" element={<PlannerByObject />} />
-              <Route path="workload" element={<PlannerWorkload />} />
+              {/* Legacy planner views — folded into the four main ones */}
+              <Route path="today" element={<Navigate to="/planner" replace />} />
+              <Route path="dashboard" element={<Navigate to="/planner" replace />} />
+              <Route path="timeline" element={<Navigate to="/planner/calendar" replace />} />
+              <Route path="workload" element={<Navigate to="/planner" replace />} />
+              <Route path="by-object" element={<Navigate to="/planner" replace />} />
+              <Route path="equipment" element={<Navigate to="/equipment" replace />} />
             </Route>
             </Route>
 
-            <Route path="/my-planner" element={<Navigate to="/planner?view=mine" replace />} />
+            <Route path="/my-planner" element={<Navigate to="/planner" replace />} />
             <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
-            <Route path="/planner/my" element={<Navigate to="/planner?view=mine" replace />} />
+            <Route path="/planner/my" element={<Navigate to="/planner" replace />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

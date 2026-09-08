@@ -7,8 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 export type PlannerGroupBy = "none" | "object" | "equipment";
+export type PlannerPeriod = "all" | "today" | "week" | "overdue";
 
 interface PlannerFiltersState {
+  period: PlannerPeriod;
+  setPeriod: (v: PlannerPeriod) => void;
   objectId: string | null;
   equipmentId: string | null;
   assigneeId: string | null;
@@ -29,6 +32,7 @@ interface PlannerFiltersState {
 const Ctx = createContext<PlannerFiltersState | null>(null);
 
 export function PlannerFiltersProvider({ children }: { children: ReactNode }) {
+  const [period, setPeriod] = useState<PlannerPeriod>("all");
   const [objectId, setObjectId] = useState<string | null>(null);
   const [equipmentId, setEquipmentId] = useState<string | null>(null);
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
@@ -58,7 +62,7 @@ export function PlannerFiltersProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PlannerFiltersState>(() => {
     const hasActive =
-      !!objectId || !!equipmentId || !!assigneeId || !!priority || !!searchQuery.trim();
+      period !== "all" || !!objectId || !!equipmentId || !!assigneeId || !!priority || !!searchQuery.trim();
 
     const requestById = new Map<string, any>();
     for (const r of requestsIndex) requestById.set((r as any).id, r);
@@ -67,15 +71,33 @@ export function PlannerFiltersProvider({ children }: { children: ReactNode }) {
     const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
     return {
+      period, setPeriod,
       objectId, equipmentId, assigneeId, priority, groupBy, searchQuery,
       setObjectId, setEquipmentId, setAssigneeId, setPriority, setGroupBy, setSearchQuery,
       hasActive,
       reset: () => {
+        setPeriod("all");
         setObjectId(null); setEquipmentId(null);
         setAssigneeId(null); setPriority(null);
         setSearchQuery("");
       },
       apply: (tasks) => tasks.filter((t) => {
+        if (period !== "all") {
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          const endOfToday = startOfToday + 24 * 60 * 60 * 1000 - 1;
+          const due = t.due_date ? new Date(t.due_date).getTime() : null;
+          if (period === "overdue") {
+            if (t.status === "done" || due === null || due >= startOfToday) return false;
+          } else if (period === "today") {
+            if (due === null || due > endOfToday) return false;
+            if (due < startOfToday && t.status === "done") return false;
+          } else if (period === "week") {
+            const endOfWeek = endOfToday + 6 * 24 * 60 * 60 * 1000;
+            if (due === null || due > endOfWeek) return false;
+            if (due < startOfToday && t.status === "done") return false;
+          }
+        }
         if (objectId) {
           const tObj = t.object_id
             || (t.equipment_id ? equipmentMap.get(t.equipment_id)?.current_object_id : null)
@@ -113,7 +135,7 @@ export function PlannerFiltersProvider({ children }: { children: ReactNode }) {
         return true;
       }),
     };
-  }, [objectId, equipmentId, assigneeId, priority, groupBy, searchQuery, equipmentMap, objectMap, members, requestsIndex]);
+  }, [period, objectId, equipmentId, assigneeId, priority, groupBy, searchQuery, equipmentMap, objectMap, members, requestsIndex]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -122,6 +144,7 @@ export function usePlannerFilters(): PlannerFiltersState {
   const v = useContext(Ctx);
   if (!v) {
     return {
+      period: "all", setPeriod: () => {},
       objectId: null, equipmentId: null, assigneeId: null, priority: null,
       groupBy: "none", searchQuery: "",
       setObjectId: () => {}, setEquipmentId: () => {},
