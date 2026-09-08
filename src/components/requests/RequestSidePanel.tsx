@@ -105,6 +105,8 @@ export const RequestSidePanel = ({
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
+  const [statusPromptOpen, setStatusPromptOpen] = useState(false);
+  const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
 
