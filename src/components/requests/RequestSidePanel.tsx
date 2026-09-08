@@ -956,5 +956,20 @@ export const RequestSidePanel = ({
     </aside>
   );
 
-  return asOverlay ? createPortal(content, document.body) : content;
+  return (
+    <>
+      {asOverlay ? createPortal(content, document.body) : content}
+      <EditRequestDialog
+        request={request as any}
+        open={editorOpen}
+        onOpenChange={(o) => {
+          setEditorOpen(o);
+          if (!o) {
+            queryClient.invalidateQueries({ queryKey: ["requests"] });
+            queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+          }
+        }}
+      />
+    </>
+  );
 };
