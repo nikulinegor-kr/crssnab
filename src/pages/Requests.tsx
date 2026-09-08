@@ -486,7 +486,7 @@ const Requests = () => {
         <div className="flex min-h-0 min-w-0 flex-col gap-2">
       {activeTab === "active" && (
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 [&>*:not(:last-child)]:flex-none">
 
           {/* LEVEL 3: KPI Dashboard */}
           <RequestsMiniDashboard
@@ -586,7 +586,7 @@ const Requests = () => {
       )}
 
       {activeTab === "archived" && (
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 [&>*:not(:last-child)]:flex-none">
 
           <RequestsFilters
             searchQuery={filters.searchQuery}
@@ -658,7 +658,7 @@ const Requests = () => {
       )}
 
       {activeTab === "favorites" && (
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 [&>*:not(:last-child)]:flex-none">
           {favoriteRequests.length === 0 ? (
             <Card className="p-8 text-center">
               <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
