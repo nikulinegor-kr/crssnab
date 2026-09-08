@@ -153,10 +153,19 @@ export const RequestSidePanel = ({
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+      const inField = !!target?.matches("input, textarea, select, [contenteditable='true']");
+      if (editMode && (event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        (document.activeElement as HTMLElement | null)?.blur();
+        setEditMode(false);
+        setEditDirty(false);
+        return;
+      }
+      if (inField) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        if (isFullscreen) setIsFullscreen(false);
+        if (editMode) exitEditMode(true);
+        else if (isFullscreen) setIsFullscreen(false);
         else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
         event.preventDefault();
@@ -168,7 +177,8 @@ export const RequestSidePanel = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+  }, [editMode, exitEditMode, hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+
 
 
   useEffect(() => {
