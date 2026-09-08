@@ -940,7 +940,11 @@ export const RequestsTable = ({
               {visibility.object && (
                 <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
               )}
+              {visibility.priority && (
+                <ResizableTableHeader column="priority" defaultWidth={DEFAULT_COLUMN_WIDTHS.priority} label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
+              )}
               {visibility.status && (
+
                 <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
               )}
               {visibility.availability && (
