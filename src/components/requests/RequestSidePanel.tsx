@@ -651,7 +651,7 @@ export const RequestSidePanel = ({
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
-          ? "request-fullscreen fixed inset-0 z-[120] h-[100dvh] w-screen border-0 overflow-hidden bg-muted/40"
+          ? "request-fullscreen fixed inset-0 z-[200] h-[100vh] w-[100vw] border-0 overflow-hidden bg-background"
 
           : asOverlay
             ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
@@ -715,7 +715,7 @@ export const RequestSidePanel = ({
 
       {/* Header */}
       <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
-        {editingTitle && !readOnly ? (
+        {(editingTitle || editMode) && !readOnly ? (
           <textarea
             autoFocus
             value={titleValue}
