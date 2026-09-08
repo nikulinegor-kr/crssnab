@@ -68,7 +68,8 @@ export const RequestSidePanel = ({
   inline = false,
   width,
   onWidthChange,
-  onExpand,
+  fullscreen,
+  onFullscreenChange,
 }: RequestSidePanelProps) => {
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
   const queryClient = useQueryClient();
@@ -78,7 +79,15 @@ export const RequestSidePanel = ({
   const { data: applicantsDir = [] } = useRequestParticipants("applicant", currentOrgId);
   const { data: executorsDir = [] } = useRequestParticipants("executor", currentOrgId);
   const [savingField, setSavingField] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [localFullscreen, setLocalFullscreen] = useState(false);
+  const isFullscreen = fullscreen ?? localFullscreen;
+  const setIsFullscreen = useCallback(
+    (value: boolean) => {
+      if (onFullscreenChange) onFullscreenChange(value);
+      else setLocalFullscreen(value);
+    },
+    [onFullscreenChange]
+  );
   const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1100);
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
@@ -87,6 +96,7 @@ export const RequestSidePanel = ({
   const [titleValue, setTitleValue] = useState("");
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
 
   useEffect(() => {
     const onResize = () => setViewportWide(window.innerWidth >= 1100);
