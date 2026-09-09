@@ -9,6 +9,12 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -76,8 +82,8 @@ export function AppSidebar() {
     if (isViewer) {
       return [
         {
-          key: "crm",
-          label: "CRM",
+          key: "work",
+          label: "Работа",
           icon: FileText,
           items: [{ id: "requests", title: "Заявки", url: "/requests", icon: FileText }],
         },
@@ -125,8 +131,11 @@ export function AppSidebar() {
     } catch {
       // ignore
     }
-    return {};
+    return activeGroupKey && activeGroupKey !== "work"
+      ? { work: true, [activeGroupKey]: true }
+      : { work: true };
   });
+  const [flyoutGroup, setFlyoutGroup] = useState<string | null>(null);
 
   useEffect(() => {
     if (!activeGroupKey) return;
@@ -213,7 +222,7 @@ export function AppSidebar() {
     const showUnread = item.url === "/chat" && totalUnread > 0;
 
     const button = (
-      <SidebarMenuButton asChild isActive={isActive}>
+      <SidebarMenuButton asChild isActive={isActive} className="min-h-9">
         <NavLink
           to={url}
           end
@@ -257,6 +266,29 @@ export function AppSidebar() {
     );
   };
 
+  const renderFlyoutItem = (item: MenuItem) => {
+    const isActive = currentPath === item.url || currentPath.startsWith(item.url + "/");
+    const url = isDemoMode ? `${item.url}?demo=true` : item.url;
+    return (
+      <DropdownMenuItem key={`${item.id}-${item.url}`} asChild className="min-h-9 cursor-pointer">
+        <NavLink
+          to={url}
+          end
+          className="flex w-full items-center gap-2"
+          activeClassName="bg-primary/20 text-primary font-medium"
+          onClick={() => setFlyoutGroup(null)}
+        >
+          <item.icon className="h-4 w-4 shrink-0" />
+          <span>{item.title}</span>
+          {item.url === "/chat" && totalUnread > 0 && (
+            <span className="ml-auto text-xs font-semibold text-destructive">{totalUnread > 9 ? "9+" : totalUnread}</span>
+          )}
+          {isActive && <span className="sr-only">Текущий раздел</span>}
+        </NavLink>
+      </DropdownMenuItem>
+    );
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border/40 p-4">
@@ -272,12 +304,12 @@ export function AppSidebar() {
         {favoriteItems.length > 0 && (
           <SidebarGroup className="py-0">
             {(!collapsed || isMobile) && (
-              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-[10px] uppercase tracking-wider text-warning dark:text-warning">
+              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-xs text-warning dark:text-warning">
                 <Star className="h-3.5 w-3.5 fill-current" />
                 Избранное
               </SidebarGroupLabel>
             )}
-            <SidebarGroupContent>
+            <SidebarGroupContent className={collapsed && !isMobile ? "hidden" : undefined}>
               <SidebarMenu>{favoriteItems.map(renderItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -285,13 +317,44 @@ export function AppSidebar() {
 
         {visibleGroups.map((group) => {
           const isGroupActive = group.key === activeGroupKey;
-          const isOpen = collapsed && !isMobile ? true : !!openGroups[group.key];
+          const isOpen = !!openGroups[group.key];
 
           if (collapsed && !isMobile) {
             return (
-              <SidebarGroup key={group.key}>
+              <SidebarGroup key={group.key} className="py-0">
                 <SidebarGroupContent>
-                  <SidebarMenu>{group.items.map(renderItem)}</SidebarMenu>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <DropdownMenu
+                        modal={false}
+                        open={flyoutGroup === group.key}
+                        onOpenChange={(next) => setFlyoutGroup(next ? group.key : null)}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuButton
+                            className="min-h-9 justify-center"
+                            isActive={isGroupActive}
+                            title={group.label}
+                            aria-label={group.label}
+                            onMouseEnter={() => setFlyoutGroup(group.key)}
+                            onFocus={() => setFlyoutGroup(group.key)}
+                          >
+                            <group.icon className="h-4 w-4" />
+                          </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="right"
+                          align="start"
+                          sideOffset={8}
+                          className="min-w-56"
+                          onMouseLeave={() => setFlyoutGroup(null)}
+                        >
+                          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{group.label}</div>
+                          {group.items.map(renderFlyoutItem)}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             );
@@ -306,7 +369,7 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel
                     className={
-                      "group/label flex h-8 cursor-pointer items-center justify-between px-3 text-[10px] uppercase tracking-wider text-muted-foreground/70 hover:text-foreground transition-colors " +
+                      "group/label flex h-8 cursor-pointer items-center justify-between px-3 text-xs text-muted-foreground/70 hover:text-foreground transition-colors " +
                       (isGroupActive ? "text-foreground" : "")
                     }
                   >
