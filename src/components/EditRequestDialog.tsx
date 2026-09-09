@@ -1270,7 +1270,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
           side="right"
-          className="w-[min(960px,64vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
+          className="w-[min(720px,48vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
