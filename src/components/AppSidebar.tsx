@@ -53,7 +53,7 @@ function ThemeToggle({ showText }: { showText: boolean }) {
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={toggleTheme} className="hover:bg-accent/50">
+      <SidebarMenuButton onClick={toggleTheme} className="min-h-9 hover:bg-accent/50">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         {showText && <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>}
       </SidebarMenuButton>
@@ -400,7 +400,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <ThemeToggle showText={showText} />
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">
+            <SidebarMenuButton onClick={handleLogout} className="min-h-9 hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="h-4 w-4" />
               {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
             </SidebarMenuButton>
