@@ -40,27 +40,20 @@ export type MenuGroup = {
 
 export const menuGroups: MenuGroup[] = [
   {
-    key: "crm",
-    label: "CRM",
+    key: "work",
+    label: "Работа",
     icon: FileText,
     items: [
       { id: "dashboard", title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { id: "requests", title: "Заявки", url: "/requests", icon: FileText },
       { id: "board", title: "Доска", url: "/board", icon: KanbanSquare },
+      { id: "planner", title: "Планировщик", url: "/planner", icon: ClipboardList },
+      { id: "shipments", title: "Поставки", url: "/shipments", icon: Truck },
     ],
   },
   {
-    key: "project",
-    label: "Проект",
-    icon: FolderOpen,
-    items: [
-      { id: "material-statements", title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
-      { id: "documents", title: "Документы", url: "/documents", icon: Files },
-    ],
-  },
-  {
-    key: "erp",
-    label: "ERP",
+    key: "catalogs",
+    label: "Справочники",
     icon: Layers,
     items: [
       { id: "objects", title: "Объекты", url: "/objects", icon: Building2 },
@@ -69,55 +62,34 @@ export const menuGroups: MenuGroup[] = [
       { id: "equipment", title: "Техника", url: "/equipment", icon: Truck },
       { id: "spare-parts", title: "Запчасти", url: "/spare-parts", icon: Wrench },
       { id: "filter-elements", title: "Фильтрующие элементы", url: "/filter-elements", icon: Filter },
-    ],
-  },
-  {
-    key: "logistics",
-    label: "Логистика",
-    icon: Truck,
-    items: [
-      { id: "shipments", title: "Поставки", url: "/shipments", icon: Truck },
       { id: "suppliers", title: "Поставщики", url: "/suppliers", icon: Users },
     ],
   },
   {
-    key: "finance",
-    label: "Финансы",
+    key: "docs",
+    label: "Документы",
+    icon: FolderOpen,
+    items: [
+      { id: "material-statements", title: "Ведомости материалов", url: "/material-statements", icon: FileSpreadsheet },
+      { id: "documents", title: "Документы", url: "/documents", icon: Files },
+    ],
+  },
+  {
+    key: "reports",
+    label: "Отчёты",
     icon: Wallet,
     items: [
       { id: "finance-registry", title: "Реестр по периодам", url: "/finance/registry", icon: FileBarChart },
       { id: "agent-report", title: "Отчет агента", url: "/agent-report", icon: FileBarChart },
       { id: "agent-act-report", title: "Акт агента", url: "/agent-act-report", icon: FileBarChart },
       { id: "percent-calculator", title: "Калькулятор %", url: "/percent-calculator", icon: Percent },
-    ],
-  },
-  {
-    key: "analytics",
-    label: "Аналитика",
-    icon: BarChart3,
-    items: [
       { id: "analytics-day-prep", title: "Подготовка к дню", url: "/analytics/day-prep", icon: ClipboardList },
       { id: "analytics-executors", title: "Исполнители", url: "/analytics/executors", icon: Users },
-      { id: "analytics-requests", title: "Заявки", url: "/analytics/requests", icon: FileText },
+      { id: "analytics-requests", title: "Заявки — аналитика", url: "/analytics/requests", icon: FileText },
       { id: "analytics-finance", title: "Финансы", url: "/analytics/finance", icon: Wallet },
       { id: "analytics-objects", title: "Объекты", url: "/analytics/objects", icon: Building2 },
       { id: "analytics-logistics", title: "Логистика", url: "/analytics/logistics", icon: Truck },
       { id: "analytics-ai", title: "AI Аналитик", url: "/analytics/ai", icon: Sparkles },
-    ],
-  },
-  {
-    key: "planner",
-    label: "Планировщик",
-    icon: CalendarRange,
-    items: [
-      { id: "planner", title: "Планировщик", url: "/planner", icon: ClipboardList },
-    ],
-  },
-  {
-    key: "journals",
-    label: "Журналы",
-    icon: FileBarChart,
-    items: [
       { id: "team-performance", title: "Производительность", url: "/team-performance", icon: Users },
       { id: "action-log", title: "Журнал действий", url: "/action-log", icon: FileBarChart },
     ],
