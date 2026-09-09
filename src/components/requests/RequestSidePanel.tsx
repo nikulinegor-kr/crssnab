@@ -52,7 +52,7 @@ interface RequestSidePanelProps {
 }
 
 
-const DEFAULT_PANEL_WIDTH = 520;
+const DEFAULT_PANEL_WIDTH = 560;
 const MIN_PANEL_WIDTH = 360;
 const MAX_PANEL_WIDTH = 720;
 
@@ -595,7 +595,7 @@ export const RequestSidePanel = ({
                     type="button"
                     size="sm"
                     variant={paid === 50 ? "default" : "outline"}
-                    className="h-6 px-2 text-[11px]"
+                    className="h-8 px-2 text-sm"
                     onClick={async () => {
                       await saveField("payment_percent", 50);
                       await saveField("payment_status", "partial");
@@ -609,7 +609,7 @@ export const RequestSidePanel = ({
                     type="button"
                     size="sm"
                     variant={paid >= 100 ? "default" : "outline"}
-                    className="h-6 px-2 text-[11px]"
+                    className="h-8 px-2 text-sm"
                     onClick={async () => {
                       await saveField("payment_percent", 100);
                       await saveField("payment_status", "paid");
@@ -640,8 +640,8 @@ export const RequestSidePanel = ({
                       )}
                     />
                     <div className="min-w-0">
-                      <div className="text-[10.5px] leading-4">{m.title}</div>
-                      <div className="font-numeric text-[9.5px] leading-4 text-muted-foreground">{m.sub}</div>
+                      <div className="text-sm leading-5">{m.title}</div>
+                      <div className="font-numeric text-xs leading-4 text-muted-foreground">{m.sub}</div>
                     </div>
                   </div>
                 ))}
@@ -676,11 +676,11 @@ export const RequestSidePanel = ({
   );
   const historyBlock = (
           <div className="space-y-1">
-            {(history || []).length === 0 && <div className="text-[11px] text-muted-foreground">Записей нет</div>}
+            {(history || []).length === 0 && <div className="text-sm text-muted-foreground">Записей нет</div>}
             {(history || []).map((h: any) => (
               <div key={h.id} className="flex items-center justify-between gap-2 border-b border-border/70 py-1.5">
-                <span className="truncate text-[11px]">{h.action}</span>
-                <span className="font-numeric shrink-0 text-[9.5px] text-muted-foreground">
+                <span className="truncate text-sm leading-5">{h.action}</span>
+                <span className="font-numeric shrink-0 text-xs leading-4 text-muted-foreground">
                   {h.created_at ? format(new Date(h.created_at), "dd.MM.yy HH:mm") : ""}
                 </span>
               </div>
@@ -801,17 +801,17 @@ export const RequestSidePanel = ({
           </h2>
         )}
         <div className="flex shrink-0 items-center gap-0.5">
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
 
             {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Закрыть">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Закрыть">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -822,7 +822,7 @@ export const RequestSidePanel = ({
           value={request.status}
           disabled={readOnly || savingField === "status"}
           onChange={(e) => saveField("status", e.target.value)}
-          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[0.8125rem] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           style={{ borderLeft: `3px solid ${getStatusColor(request.status)}` }}
           aria-label="Статус"
         >
@@ -834,7 +834,7 @@ export const RequestSidePanel = ({
           value={request.priority || "Планово"}
           disabled={readOnly || savingField === "priority"}
           onChange={(e) => saveField("priority", e.target.value)}
-          className="h-6 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-[0.8125rem] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           style={{ borderLeft: `3px solid ${getPriorityColor(request.priority || "Планово")}` }}
           aria-label="Приоритет"
         >
@@ -856,7 +856,7 @@ export const RequestSidePanel = ({
               key={t.id}
               onClick={() => setTab(t.id as any)}
               className={cn(
-                "relative pb-1.5 text-[10px] transition-colors",
+                "relative flex min-h-8 items-center pb-1.5 text-sm transition-colors",
                 tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -906,7 +906,7 @@ export const RequestSidePanel = ({
                   <button
                     type="button"
                     onClick={() => setIsFullscreen(true)}
-                    className="mt-3 flex w-full items-center justify-between rounded border border-border px-2 py-1.5 text-[11px] hover:bg-muted/60"
+                    className="mt-3 flex min-h-9 w-full items-center justify-between rounded border border-border px-2 py-1.5 text-sm hover:bg-muted/60"
                   >
                     <span>Позиции: {items?.length || 0}</span>
                     <span className="text-primary">Открыть на полный экран</span>
@@ -929,7 +929,7 @@ export const RequestSidePanel = ({
           <>
             <Button
               size="sm"
-              className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
+              className="h-9 gap-1 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90"
               onClick={() => {
                 (document.activeElement as HTMLElement | null)?.blur();
                 setEditMode(false);
@@ -938,14 +938,14 @@ export const RequestSidePanel = ({
             >
               Сохранить
             </Button>
-            <Button size="sm" variant="outline" className="h-7 px-3 text-[11px]" onClick={() => exitEditMode(true)}>
+            <Button size="sm" variant="outline" className="h-9 px-3 text-sm" onClick={() => exitEditMode(true)}>
               Отмена
             </Button>
           </>
         ) : (
           <Button
             size="sm"
-            className="h-7 gap-1 bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/90"
+            className="h-9 gap-1 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90"
             disabled={readOnly}
             onClick={() => {
               setEditMode(false);
@@ -960,7 +960,7 @@ export const RequestSidePanel = ({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 gap-1 px-3 text-[11px]"
+          className="h-9 gap-1 px-3 text-sm"
           disabled={readOnly || request.status === "Доставлено"}
           onClick={() => {
             const today = new Date().toISOString().slice(0, 10);
@@ -975,7 +975,7 @@ export const RequestSidePanel = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" className="ml-auto h-7 w-7" aria-label="Ещё">
+            <Button size="icon" variant="ghost" className="ml-auto h-8 w-8" aria-label="Ещё">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -82,7 +82,7 @@ export const PanelField = ({
       onClick={() => !readOnly && setEditing(true)}
       title={readOnly ? "Нет прав на изменение" : shown ? "Клик — изменить" : "Добавить"}
       className={cn(
-        "group/pf flex min-h-[2rem] w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[0.9375rem] leading-5",
+        "group/pf flex min-h-8 w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[15px] leading-5 text-foreground",
         readOnly ? "cursor-default" : "cursor-text hover:bg-[hsl(var(--surface-3))]",
         accent ? "text-primary" : "text-foreground"
       )}
@@ -112,7 +112,7 @@ export const PanelField = ({
           <button
             type="button"
             className={cn(
-              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-left text-[0.9375rem]",
+              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-left text-[15px] text-foreground",
               !shown && "text-muted-foreground"
             )}
           >
@@ -129,7 +129,7 @@ export const PanelField = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Поиск"
-              className="h-6 w-full bg-transparent text-xs focus:outline-none"
+              className="h-8 w-full bg-transparent text-xs focus:outline-none"
             />
           </div>
           <div className="max-h-[240px] overflow-y-auto pt-1">
@@ -180,18 +180,18 @@ export const PanelField = ({
           }
         }}
 
-        className="h-8 px-1.5 text-[0.9375rem]"
+        className="h-8 px-1.5 text-[15px] text-foreground"
       />
     );
   }
 
   return (
-    <div className="flex min-h-[2rem] items-center gap-3 py-[2px]">
-      <div className="w-[8.125rem] shrink-0 text-[0.8125rem] leading-5 text-muted-foreground">{label}</div>
+    <div className="flex min-h-8 items-center gap-3 py-[2px]">
+      <div className="w-[8.125rem] shrink-0 text-[13px] leading-5 text-muted-foreground">{label}</div>
       <div className="min-w-0 flex-1">
         {editing || forced ? editor : staticView}
       </div>
-      {suffix && <span className="shrink-0 text-[0.8125rem] text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="shrink-0 text-[13px] text-muted-foreground">{suffix}</span>}
     </div>
 
   );
