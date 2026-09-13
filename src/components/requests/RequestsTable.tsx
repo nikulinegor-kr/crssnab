@@ -61,7 +61,7 @@ import { useAuthUserId } from "@/hooks/useOrgMembership";
 import { isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
 
@@ -290,6 +290,29 @@ export const RequestsTable = ({
   const { toast } = useToast();
   const [bulkSaving, setBulkSaving] = useState(false);
   const tableOrgId = (requests?.[0] as any)?.organization_id ?? null;
+
+  // Счётчик задач планировщика по каждой заявке (иконка у названия).
+  const { data: taskCounts } = useQuery({
+    queryKey: ["request-task-counts", tableOrgId],
+    queryFn: async () => {
+      const counts = new Map<string, number>();
+      if (!tableOrgId) return counts;
+      const { data } = await supabase
+        .from("planner_tasks")
+        .select("request_id")
+        .eq("organization_id", tableOrgId)
+        .not("request_id", "is", null)
+        .is("archived_at", null)
+        .limit(5000);
+      for (const row of data ?? []) {
+        const rid = (row as any).request_id as string;
+        counts.set(rid, (counts.get(rid) ?? 0) + 1);
+      }
+      return counts;
+    },
+    enabled: !!tableOrgId,
+    staleTime: 30_000,
+  });
   const { data: bulkExecutors = [] } = useRequestParticipants("executor", tableOrgId, selectedRequestIds.size > 0);
 
 
