@@ -29,9 +29,12 @@ const STATUS_LABEL: Record<string, string> = {
 interface Props {
   requestId: string;
   organizationId: string;
+  requestTitle?: string;
+  objectId?: string | null;
+  expectedDate?: string | null;
 }
 
-export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
+export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, objectId, expectedDate }: Props) {
   const [open, setOpen] = useState(false);
   const [editTask, setEditTask] = useState<PlannerTask | null>(null);
 
@@ -120,6 +123,9 @@ export function LinkedPlannerTasks({ requestId, organizationId }: Props) {
         onOpenChange={setOpen}
         task={editTask}
         defaultRequestId={requestId}
+        defaultTitle={editTask ? undefined : requestTitle}
+        defaultObjectId={editTask ? undefined : objectId}
+        defaultDueDate={editTask ? undefined : (expectedDate ?? undefined)}
       />
     </Card>
   );
