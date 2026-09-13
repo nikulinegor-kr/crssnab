@@ -389,7 +389,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
             </div>
 
             <div className="space-y-1.5">
-              <Label>Описание <span className="text-destructive">*</span></Label>
+              <Label>Описание</Label>
               <div className="flex gap-2">
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Детали…" className={errCls("description")} />
                 <AiImproveButton value={description} onResult={setDescription} title="Улучшить описание через AI" />
@@ -398,7 +398,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Статус <span className="text-destructive">*</span></Label>
+                <Label>Статус</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as PlannerTaskStatus)}>
                   <SelectTrigger className={errCls("status")}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -408,7 +408,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Приоритет <span className="text-destructive">*</span></Label>
+                <Label>Приоритет</Label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as PlannerTaskPriority)}>
                   <SelectTrigger className={errCls("priority")}><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -422,7 +422,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Ответственный <span className="text-destructive">*</span></Label>
+                <Label>Ответственный</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className={cn("w-full justify-between font-normal", errCls("assigneeId"))}>
@@ -484,12 +484,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
 
               <div className="space-y-1.5">
-                <Label>Дата начала <span className="text-destructive">*</span></Label>
+                <Label>Дата начала</Label>
                 <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={errCls("startDate")} />
               </div>
 
               <div className="space-y-1.5">
-                <Label>Дата окончания <span className="text-destructive">*</span></Label>
+                <Label>Дата окончания</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={errCls("dueDate")} />
               </div>
 
