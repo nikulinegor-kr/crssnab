@@ -241,14 +241,37 @@ export default function PlannerTasksList() {
                     const checklistDone = t.checklist.filter((i) => i.done).length;
                     const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
                     return (
-                      <button
+                      <div
                         key={t.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openEdit(t)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openEdit(t);
+                          }
+                        }}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
-                          idx !== group.items.length - 1 && "border-b border-border/40"
+                          "group w-full cursor-pointer flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
+                          idx !== group.items.length - 1 && "border-b border-border/40",
+                          selected.has(t.id) && "bg-accent/30"
                         )}
                       >
+                        <span
+                          className="shrink-0 inline-flex items-center justify-center h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelected(t.id);
+                          }}
+                        >
+                          <Checkbox
+                            checked={selected.has(t.id)}
+                            aria-label="Выбрать задачу"
+                            onCheckedChange={() => toggleSelected(t.id)}
+                          />
+                        </span>
+                        <TaskDoneToggle taskId={t.id} status={t.status} />
                         <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
                         <div className="flex-1 min-w-0">
                           <div className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>
@@ -285,7 +308,7 @@ export default function PlannerTasksList() {
                             {format(due, "d MMM", { locale: ru })}
                           </Badge>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
