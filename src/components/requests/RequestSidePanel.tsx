@@ -894,6 +894,7 @@ export const RequestSidePanel = ({
             </div>
             <div className={cn(columnClass, "gap-5 overflow-y-auto")}>
               {docsBlock}
+              <div>{linkedTasksBlock}</div>
               <div>{movementBlock}</div>
               <div>
                 <div className={sectionTitleClass}>История</div>
@@ -923,6 +924,7 @@ export const RequestSidePanel = ({
                   </button>
                 )}
                 {movementBlock}
+                {linkedTasksBlock}
               </>
             )}
             {tab === "docs" && docsBlock}
