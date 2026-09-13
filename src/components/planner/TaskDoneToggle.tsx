@@ -88,7 +88,7 @@ export function TaskDoneToggle({ taskId, status, className }: Props) {
         className={cn(
           "inline-flex items-center justify-center h-5 w-5 rounded-full border-2 transition-colors",
           done
-            ? "bg-success border-success text-success-foreground"
+            ? "bg-success border-success text-background"
             : "border-muted-foreground/50 text-transparent group-hover:border-success group-hover:text-success hover:border-success hover:text-success"
         )}
       >
