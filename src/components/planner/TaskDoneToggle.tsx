@@ -51,7 +51,13 @@ export function TaskDoneToggle({ taskId, status, className }: Props) {
     e.stopPropagation();
     e.preventDefault();
     const prev = current;
-    const next = done ? (prev === "done" ? "todo" : prev) : "done";
+    let next: string;
+    if (done) {
+      next = prevStatusRef.current || "todo";
+    } else {
+      prevStatusRef.current = prev;
+      next = "done";
+    }
     await setStatus(next);
     toast(next === "done" ? "Задача выполнена" : "Задача возвращена в работу", {
       duration: 5000,
