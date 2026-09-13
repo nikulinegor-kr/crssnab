@@ -303,6 +303,7 @@ export const RequestsTable = ({
         .eq("organization_id", tableOrgId)
         .not("request_id", "is", null)
         .eq("hidden_auto", false)
+        .neq("status", "done")
         .is("archived_at", null)
         .limit(5000);
       for (const row of data ?? []) {

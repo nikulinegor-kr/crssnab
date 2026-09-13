@@ -21,6 +21,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PlannerTasksList() {
   const { data: rawTasks = [], isLoading } = usePlannerTasks();
@@ -49,6 +69,86 @@ export default function PlannerTasksList() {
       return terms.every((term) => hay.includes(term));
     });
   }, [tasks, search, statusFilter, onlyMine, me]);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const queryClient = useQueryClient();
+
+  const toggleSelected = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const invalidateTasks = () => {
+    queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
+    queryClient.invalidateQueries({ queryKey: ["request-linked-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["request-task-counts"] });
+  };
+
+  const bulkComplete = async () => {
+    const ids = [...selected];
+    const before = tasks
+      .filter((t) => selected.has(t.id))
+      .map((t) => ({ id: t.id, status: t.status }));
+    setSelected(new Set());
+    const { error } = await supabase
+      .from("planner_tasks")
+      .update({ status: "done", completed_at: new Date().toISOString() })
+      .in("id", ids);
+    if (error) {
+      toast.error("Не удалось отметить задачи", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Отмечено выполненными: ${ids.length}`, {
+      duration: 5000,
+      action: {
+        label: "Отменить",
+        onClick: async () => {
+          for (const t of before) {
+            await supabase
+              .from("planner_tasks")
+              .update({ status: t.status, completed_at: null })
+              .eq("id", t.id);
+          }
+          invalidateTasks();
+        },
+      },
+    });
+  };
+
+  const bulkAssign = async (userId: string | null) => {
+    const ids = [...selected];
+    setSelected(new Set());
+    const { error } = await supabase
+      .from("planner_tasks")
+      .update({ assignee_id: userId })
+      .in("id", ids);
+    if (error) {
+      toast.error("Не удалось сменить исполнителя", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Исполнитель изменён у задач: ${ids.length}`);
+  };
+
+  const bulkDelete = async () => {
+    const ids = [...selected];
+    setConfirmDelete(false);
+    setSelected(new Set());
+    const { error } = await supabase.from("planner_tasks").delete().in("id", ids);
+    if (error) {
+      toast.error("Не удалось удалить задачи", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Удалено задач: ${ids.length}`);
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -141,14 +241,37 @@ export default function PlannerTasksList() {
                     const checklistDone = t.checklist.filter((i) => i.done).length;
                     const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
                     return (
-                      <button
+                      <div
                         key={t.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openEdit(t)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openEdit(t);
+                          }
+                        }}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
-                          idx !== group.items.length - 1 && "border-b border-border/40"
+                          "group w-full cursor-pointer flex items-center gap-3 px-3 py-3 text-left hover:bg-accent/40 transition",
+                          idx !== group.items.length - 1 && "border-b border-border/40",
+                          selected.has(t.id) && "bg-accent/30"
                         )}
                       >
+                        <span
+                          className="shrink-0 inline-flex items-center justify-center h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelected(t.id);
+                          }}
+                        >
+                          <Checkbox
+                            checked={selected.has(t.id)}
+                            aria-label="Выбрать задачу"
+                            onCheckedChange={() => toggleSelected(t.id)}
+                          />
+                        </span>
+                        <TaskDoneToggle taskId={t.id} status={t.status} />
                         <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
                         <div className="flex-1 min-w-0">
                           <div className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>
@@ -185,7 +308,7 @@ export default function PlannerTasksList() {
                             {format(due, "d MMM", { locale: ru })}
                           </Badge>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -194,6 +317,50 @@ export default function PlannerTasksList() {
           );
         })()
       )}
+
+      {selected.size > 0 && (
+        <div className="sticky bottom-2 z-20 flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-card/95 backdrop-blur px-3 py-2 shadow-lg">
+          <span className="text-sm font-medium">Выбрано {selected.size}</span>
+          <span className="text-muted-foreground">·</span>
+          <Button size="sm" variant="secondary" onClick={bulkComplete}>
+            Отметить выполненными
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="secondary">Сменить исполнителя</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+              <DropdownMenuItem onClick={() => bulkAssign(null)}>Снять исполнителя</DropdownMenuItem>
+              {members.map((m) => (
+                <DropdownMenuItem key={m.user_id} onClick={() => bulkAssign(m.user_id)}>
+                  {m.full_name || m.email}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+            Удалить
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Снять выделение
+          </Button>
+        </div>
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить задачи?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Будет удалено задач: {selected.size}. Действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={bulkDelete}>Удалить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <PlannerTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} task={editing} />
     </div>
