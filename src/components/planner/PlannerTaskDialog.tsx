@@ -69,7 +69,7 @@ interface Props {
 const equipmentLabelLocal = (e: any) =>
   [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
 
-export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId }: Props) {
+export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId, defaultTitle }: Props) {
   const isEdit = !!task;
   const { currentOrgId } = useCurrentOrganization();
   const create = useCreatePlannerTask();
@@ -111,7 +111,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   // Fixes "fields cleared/reset when editing" bug caused by useState initializers only running once.
   useEffect(() => {
     if (!open) return;
-    setTitle(task?.title ?? "");
+    setTitle(task?.title ?? defaultTitle ?? "");
     setDescription(task?.description ?? "");
     setStatus(task?.status ?? defaultStatus ?? "backlog");
     setPriority(task?.priority ?? "medium");
@@ -136,7 +136,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setTemplateId("");
     setOverriddenConflicts(new Set());
     setOnlyFreeEquipment(true);
-  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId]);
+  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultTitle]);
 
   const filteredStages = stages.filter((s) => !objectId || s.object_id === objectId || !s.object_id);
 
