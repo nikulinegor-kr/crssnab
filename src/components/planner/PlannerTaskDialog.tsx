@@ -63,6 +63,7 @@ interface Props {
   defaultObjectId?: string | null;
   defaultRequestId?: string | null;
   defaultAssigneeId?: string | null;
+  defaultTitle?: string;
 }
 
 const equipmentLabelLocal = (e: any) =>
@@ -273,12 +274,6 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     const miss: string[] = [];
     const errs: Record<string, boolean> = {};
     if (!title.trim()) { miss.push("Название"); errs.title = true; }
-    if (!description.trim()) { miss.push("Описание"); errs.description = true; }
-    if (!status) { miss.push("Статус"); errs.status = true; }
-    if (!priority) { miss.push("Приоритет"); errs.priority = true; }
-    if (!assigneeId) { miss.push("Ответственный"); errs.assigneeId = true; }
-    if (!startDate) { miss.push("Дата начала"); errs.startDate = true; }
-    if (!dueDate) { miss.push("Дата окончания"); errs.dueDate = true; }
     setErrors(errs);
     return { ok: miss.length === 0, missing: miss };
   };
