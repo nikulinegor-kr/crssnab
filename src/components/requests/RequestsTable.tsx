@@ -3,7 +3,7 @@ import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -61,7 +61,7 @@ import { useAuthUserId } from "@/hooks/useOrgMembership";
 import { isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
 
@@ -290,6 +290,29 @@ export const RequestsTable = ({
   const { toast } = useToast();
   const [bulkSaving, setBulkSaving] = useState(false);
   const tableOrgId = (requests?.[0] as any)?.organization_id ?? null;
+
+  // Счётчик задач планировщика по каждой заявке (иконка у названия).
+  const { data: taskCounts } = useQuery({
+    queryKey: ["request-task-counts", tableOrgId],
+    queryFn: async () => {
+      const counts = new Map<string, number>();
+      if (!tableOrgId) return counts;
+      const { data } = await supabase
+        .from("planner_tasks")
+        .select("request_id")
+        .eq("organization_id", tableOrgId)
+        .not("request_id", "is", null)
+        .is("archived_at", null)
+        .limit(5000);
+      for (const row of data ?? []) {
+        const rid = (row as any).request_id as string;
+        counts.set(rid, (counts.get(rid) ?? 0) + 1);
+      }
+      return counts;
+    },
+    enabled: !!tableOrgId,
+    staleTime: 30_000,
+  });
   const { data: bulkExecutors = [] } = useRequestParticipants("executor", tableOrgId, selectedRequestIds.size > 0);
 
 
@@ -1128,6 +1151,9 @@ export const RequestsTable = ({
                     priority={request.priority || null}
                     applicant={request.applicant || null}
                     executor={request.executor || null}
+                    requestTitle={request.description || null}
+                    objectId={request.object_id || null}
+                    expectedDate={request.delivery_date || null}
                     onOpenCard={() => navigate(`/requests/${request.id}`)}
                   >
                   <TableRow
@@ -1207,6 +1233,15 @@ export const RequestsTable = ({
                               }`}
                             />
                           </button>
+                        )}
+                        {(taskCounts?.get(request.id) ?? 0) > 0 && (
+                          <span
+                            className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary"
+                            title={`Задач в планировщике: ${taskCounts?.get(request.id)}`}
+                          >
+                            <ClipboardList className="h-3 w-3" />
+                            {taskCounts?.get(request.id)}
+                          </span>
                         )}
                         <div className="flex-1 min-w-0">
                           <InlineEditCell

@@ -74,7 +74,9 @@ export function KanbanCard({
           {" — "}
           {task.due_date ? format(new Date(task.due_date), "d MMM", { locale: ru }) : "—"}
         </div>
-      ) : null}
+      ) : (
+        <div className="text-[10px] text-muted-foreground/60">без срока</div>
+      )}
 
       {(checklistTotal > 0 || dueDate || task.priority !== "medium" || assignee) && (
         <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
