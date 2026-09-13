@@ -58,9 +58,9 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-primary" />
           Задачи по заявке
-          {tasks.length > 0 && (
+          {openCount > 0 && (
             <Badge variant="secondary" className="ml-1 text-xs">
-              {tasks.length}
+              {openCount}
             </Badge>
           )}
         </CardTitle>
@@ -82,21 +82,24 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
           </p>
         )}
         {tasks.map((t) => (
-          <button
+          <div
             key={t.id}
+            role="button"
+            tabIndex={0}
             onClick={() => {
               setEditTask(t);
               setOpen(true);
             }}
-            className="w-full text-left flex items-center gap-3 rounded-md border border-border/40 px-3 py-2 hover:bg-muted/40 transition-colors"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setEditTask(t);
+                setOpen(true);
+              }
+            }}
+            className="group w-full cursor-pointer text-left flex items-center gap-3 rounded-md border border-border/40 px-3 py-2 hover:bg-muted/40 transition-colors"
           >
-            <CheckCircle2
-              className={`h-4 w-4 shrink-0 ${
-                t.status === "done"
-                  ? "text-success"
-                  : "text-muted-foreground"
-              }`}
-            />
+            <TaskDoneToggle taskId={t.id} status={t.status} />
             <span className="text-base shrink-0">
               {PRIORITY_DOT[t.priority] ?? "🟡"}
             </span>
