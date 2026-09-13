@@ -1128,6 +1128,9 @@ export const RequestsTable = ({
                     priority={request.priority || null}
                     applicant={request.applicant || null}
                     executor={request.executor || null}
+                    requestTitle={request.description || null}
+                    objectId={request.object_id || null}
+                    expectedDate={request.delivery_date || null}
                     onOpenCard={() => navigate(`/requests/${request.id}`)}
                   >
                   <TableRow
