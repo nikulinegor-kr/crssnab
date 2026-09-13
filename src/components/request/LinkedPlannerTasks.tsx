@@ -53,6 +53,8 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
     enabled: !!requestId,
   });
 
+  const openCount = tasks.filter((t) => t.status !== "done").length;
+
   return (
     <Card className="glassmorphism border-border/40">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
