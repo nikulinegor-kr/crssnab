@@ -45,6 +45,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
         .from("planner_tasks")
         .select("*")
         .eq("request_id", requestId)
+        .eq("hidden_auto", false)
         .order("due_date", { ascending: true, nullsFirst: false });
       return ((data ?? []) as unknown) as PlannerTask[];
     },

@@ -32,6 +32,7 @@ export const useRequestsWithoutTasks = (limit = 60) => {
         .select("request_id")
         .eq("organization_id", currentOrgId)
         .not("request_id", "is", null)
+        .eq("hidden_auto", false)
         .limit(5000);
       if (linkErr) throw linkErr;
       const linkedIds = new Set((linked ?? []).map((r: any) => r.request_id as string));
