@@ -3,7 +3,7 @@ import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -1233,6 +1233,15 @@ export const RequestsTable = ({
                               }`}
                             />
                           </button>
+                        )}
+                        {(taskCounts?.get(request.id) ?? 0) > 0 && (
+                          <span
+                            className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary"
+                            title={`Задач в планировщике: ${taskCounts?.get(request.id)}`}
+                          >
+                            <ClipboardList className="h-3 w-3" />
+                            {taskCounts?.get(request.id)}
+                          </span>
                         )}
                         <div className="flex-1 min-w-0">
                           <InlineEditCell
