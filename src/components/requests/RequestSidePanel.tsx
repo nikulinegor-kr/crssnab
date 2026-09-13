@@ -31,6 +31,7 @@ import { PanelField, PanelFieldOption } from "./PanelField";
 import { PanelItemsTable } from "./PanelItemsTable";
 import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDocuments";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
+import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -649,6 +650,15 @@ export const RequestSidePanel = ({
             </div>
     </>
   );
+  const linkedTasksBlock = currentOrgId ? (
+    <LinkedPlannerTasks
+      requestId={request.id}
+      organizationId={currentOrgId}
+      requestTitle={request.description ?? undefined}
+      objectId={request.object_id ?? null}
+      expectedDate={request.delivery_date ?? null}
+    />
+  ) : null;
   const itemsBlock = (
           <PanelItemsTable
             requestId={request.id}
