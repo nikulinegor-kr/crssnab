@@ -21,6 +21,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
 import { usePlannerLookups } from "@/hooks/usePlannerEquipment";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PlannerTasksList() {
   const { data: rawTasks = [], isLoading } = usePlannerTasks();
@@ -49,6 +69,86 @@ export default function PlannerTasksList() {
       return terms.every((term) => hay.includes(term));
     });
   }, [tasks, search, statusFilter, onlyMine, me]);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const queryClient = useQueryClient();
+
+  const toggleSelected = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const invalidateTasks = () => {
+    queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
+    queryClient.invalidateQueries({ queryKey: ["request-linked-tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["request-task-counts"] });
+  };
+
+  const bulkComplete = async () => {
+    const ids = [...selected];
+    const before = tasks
+      .filter((t) => selected.has(t.id))
+      .map((t) => ({ id: t.id, status: t.status }));
+    setSelected(new Set());
+    const { error } = await supabase
+      .from("planner_tasks")
+      .update({ status: "done", completed_at: new Date().toISOString() })
+      .in("id", ids);
+    if (error) {
+      toast.error("Не удалось отметить задачи", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Отмечено выполненными: ${ids.length}`, {
+      duration: 5000,
+      action: {
+        label: "Отменить",
+        onClick: async () => {
+          for (const t of before) {
+            await supabase
+              .from("planner_tasks")
+              .update({ status: t.status, completed_at: null })
+              .eq("id", t.id);
+          }
+          invalidateTasks();
+        },
+      },
+    });
+  };
+
+  const bulkAssign = async (userId: string | null) => {
+    const ids = [...selected];
+    setSelected(new Set());
+    const { error } = await supabase
+      .from("planner_tasks")
+      .update({ assignee_id: userId })
+      .in("id", ids);
+    if (error) {
+      toast.error("Не удалось сменить исполнителя", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Исполнитель изменён у задач: ${ids.length}`);
+  };
+
+  const bulkDelete = async () => {
+    const ids = [...selected];
+    setConfirmDelete(false);
+    setSelected(new Set());
+    const { error } = await supabase.from("planner_tasks").delete().in("id", ids);
+    if (error) {
+      toast.error("Не удалось удалить задачи", { description: error.message });
+      return;
+    }
+    invalidateTasks();
+    toast(`Удалено задач: ${ids.length}`);
+  };
 
   const openNew = () => {
     setEditing(null);
