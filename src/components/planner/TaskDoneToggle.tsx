@@ -18,6 +18,7 @@ interface Props {
 export function TaskDoneToggle({ taskId, status, className }: Props) {
   const queryClient = useQueryClient();
   const [localStatus, setLocalStatus] = useState<string | null>(null);
+  const prevStatusRef = useRef<string>(status !== "done" ? status : "todo");
   const current = localStatus ?? status;
   const done = current === "done";
 
