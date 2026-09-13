@@ -115,6 +115,15 @@ export const RowContextMenu = ({
           Копировать номер
         </ContextMenuItem>
       </ContextMenuContent>
+      <PlannerTaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        task={null}
+        defaultRequestId={requestId}
+        defaultTitle={requestTitle ?? undefined}
+        defaultObjectId={objectId ?? null}
+        defaultDueDate={expectedDate ?? undefined}
+      />
     </ContextMenu>
   );
 };
