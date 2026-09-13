@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ClipboardList, Plus, User } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
+import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
@@ -118,7 +119,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
             <Badge variant="outline" className="text-[10px] shrink-0">
               {STATUS_LABEL[t.status] ?? t.status}
             </Badge>
-          </button>
+          </div>
         ))}
       </CardContent>
 

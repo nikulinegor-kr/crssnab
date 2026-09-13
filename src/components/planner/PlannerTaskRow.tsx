@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
 import { PlannerTaskActions } from "@/components/planner/PlannerTaskActions";
+import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
 import { PLANNER_COLUMNS, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { initialsOf, type OrgMember } from "@/hooks/useOrgMembers";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ export function PlannerTaskRow({ task, members, onClick, className, hideDate }: 
         className
       )}
     >
+      <TaskDoneToggle taskId={task.id} status={task.status} />
       <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
       <div className="flex-1 min-w-0">
         <div
