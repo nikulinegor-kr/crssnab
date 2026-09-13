@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, ArchiveRestore, MoreHorizontal, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ import {
   type PlannerTask,
 } from "@/hooks/usePlannerTasks";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -37,6 +38,27 @@ export function PlannerTaskActions({ task, className }: Props) {
   const { toast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const archived = !!task.archived_at;
+
+  const markDone = async () => {
+    const previousStatus = task.status;
+    try {
+      await update.mutateAsync({ id: task.id, patch: { status: "done" } });
+      toast({
+        title: "Задача выполнена",
+        duration: 5000,
+        action: (
+          <ToastAction
+            altText="Отменить"
+            onClick={() => update.mutate({ id: task.id, patch: { status: previousStatus } })}
+          >
+            Отменить
+          </ToastAction>
+        ),
+      });
+    } catch {
+      /* handled by mutation onError */
+    }
+  };
 
   const toggleArchive = async () => {
     try {
@@ -68,6 +90,11 @@ export function PlannerTaskActions({ task, className }: Props) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          {task.status !== "done" && (
+            <DropdownMenuItem onClick={markDone}>
+              <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Выполнено
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={toggleArchive}>
             {archived ? (
               <>
