@@ -318,6 +318,50 @@ export default function PlannerTasksList() {
         })()
       )}
 
+      {selected.size > 0 && (
+        <div className="sticky bottom-2 z-20 flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-card/95 backdrop-blur px-3 py-2 shadow-lg">
+          <span className="text-sm font-medium">Выбрано {selected.size}</span>
+          <span className="text-muted-foreground">·</span>
+          <Button size="sm" variant="secondary" onClick={bulkComplete}>
+            Отметить выполненными
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="secondary">Сменить исполнителя</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+              <DropdownMenuItem onClick={() => bulkAssign(null)}>Снять исполнителя</DropdownMenuItem>
+              {members.map((m) => (
+                <DropdownMenuItem key={m.user_id} onClick={() => bulkAssign(m.user_id)}>
+                  {m.full_name || m.email}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+            Удалить
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Снять выделение
+          </Button>
+        </div>
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить задачи?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Будет удалено задач: {selected.size}. Действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={bulkDelete}>Удалить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PlannerTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} task={editing} />
     </div>
   );
