@@ -12,6 +12,7 @@ import {
 import { STATUSES, PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { useRequestQuickUpdate } from "./useRequestQuickUpdate";
+import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,9 @@ interface RowContextMenuProps {
   applicant: string | null;
   executor: string | null;
   onOpenCard: () => void;
+  requestTitle?: string | null;
+  objectId?: string | null;
+  expectedDate?: string | null;
   children: ReactNode;
 }
 
@@ -37,8 +41,12 @@ export const RowContextMenu = ({
   applicant,
   executor,
   onOpenCard,
+  requestTitle,
+  objectId,
+  expectedDate,
   children,
 }: RowContextMenuProps) => {
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const { update } = useRequestQuickUpdate();
   const { toast } = useToast();
   const { data: applicants = [] } = useRequestParticipants("applicant", organizationId);
@@ -96,6 +104,7 @@ export const RowContextMenu = ({
 
 
         <ContextMenuSeparator />
+        <ContextMenuItem onSelect={() => setTaskDialogOpen(true)}>Поставить задачу</ContextMenuItem>
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
         <ContextMenuItem
           onSelect={() => {
