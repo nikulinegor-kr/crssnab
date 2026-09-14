@@ -293,7 +293,7 @@ Deno.serve(async (req) => {
     let result: SendResult;
     try {
       if (row.platform === "max") {
-        const attachments = buttons.length > 0 && requestId
+        const attachments = buttons.length > 0 && (requestId || buttons.every((b) => b.data))
           ? buildMaxAttachments(requestId, buttons)
           : undefined;
         result = await sendMax(row.group_id, text, attachments);
@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
         if (!tok) {
           result = { ok: false, status: 0, body: "telegram bot_token not configured for org" };
         } else {
-          const markup = buttons.length > 0 && requestId
+          const markup = buttons.length > 0 && (requestId || buttons.every((b) => b.data))
             ? buildTgKeyboard(requestId, buttons)
             : undefined;
           result = await sendTelegram(tok, row.group_id, text, markup);

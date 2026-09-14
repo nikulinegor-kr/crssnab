@@ -441,7 +441,8 @@ Deno.serve(async (req) => {
         callbackPayload.startsWith("discrtype:") ||
         callbackPayload.startsWith("chgstatus:") ||
         callbackPayload.startsWith("statussel:") ||
-        callbackPayload.startsWith("chgback:")
+        callbackPayload.startsWith("chgback:") ||
+        callbackPayload.startsWith("taskdone:")
       )) {
         const callbackId: string | undefined = u?.callback?.callback_id ?? u?.callback_id;
         const messageId: string | number | undefined =
@@ -467,6 +468,42 @@ Deno.serve(async (req) => {
                 user: cbUser,
               }),
             }).catch((e) => console.error("assign-executor (max) failed:", e));
+          }
+        } else if (callbackPayload.startsWith("taskdone:")) {
+          const taskId = callbackPayload.split(":")[1];
+          let note = "Не удалось отметить задачу";
+          if (taskId) {
+            const { data: task } = await supabase
+              .from("planner_tasks")
+              .select("id, title, status")
+              .eq("id", taskId)
+              .maybeSingle();
+            if (!task) {
+              note = "Задача не найдена";
+            } else if (task.status === "done") {
+              note = `Уже выполнено: ${task.title}`;
+            } else {
+              const { error: updErr } = await supabase
+                .from("planner_tasks")
+                .update({ status: "done", completed_at: new Date().toISOString() })
+                .eq("id", taskId);
+              note = updErr ? `Ошибка: ${updErr.message}` : `✅ Выполнено: ${task.title}`;
+              if (!updErr && messageId) {
+                await maxFetch(`/messages?message_id=${encodeURIComponent(String(messageId))}`, {
+                  method: "PUT",
+                  body: JSON.stringify({
+                    text: `✅ Выполнено — ${task.title}`,
+                    attachments: [],
+                  }),
+                }, supabase, { chatId: chatIdStr }).catch(() => {});
+              }
+            }
+          }
+          if (callbackId) {
+            await maxFetch(`/answers/${encodeURIComponent(callbackId)}`, {
+              method: "POST",
+              body: JSON.stringify({ notification: note }),
+            }, supabase, { chatId: chatIdStr }).catch(() => {});
           }
         } else if (
           callbackPayload.startsWith("invroute:") ||
