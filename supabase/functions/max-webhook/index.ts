@@ -441,7 +441,8 @@ Deno.serve(async (req) => {
         callbackPayload.startsWith("discrtype:") ||
         callbackPayload.startsWith("chgstatus:") ||
         callbackPayload.startsWith("statussel:") ||
-        callbackPayload.startsWith("chgback:")
+        callbackPayload.startsWith("chgback:") ||
+        callbackPayload.startsWith("taskdone:")
       )) {
         const callbackId: string | undefined = u?.callback?.callback_id ?? u?.callback_id;
         const messageId: string | number | undefined =
