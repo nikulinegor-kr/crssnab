@@ -449,6 +449,12 @@ const Requests = () => {
                 <Printer className="h-4 w-4" />
                 <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
               </Button>
+              {requests && requests.length > 0 && (
+                <>
+                  <ExcelExportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                  <MeetingReportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                </>
+              )}
               <Button
                 onClick={openQuickRequest}
                 size="sm"
