@@ -8,6 +8,13 @@
       "when": 1789280741394,
       "tag": "0000_auto_planner_tasks_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789374989362,
+      "tag": "0001_planner_task_created_max_notification",
+      "breakpoints": true
     }
   ]
 }
