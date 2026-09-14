@@ -442,17 +442,10 @@ export const RequestsBulkActions = ({
     .map((id) => requests?.find((r) => r.id === id)!)
     .filter(Boolean);
 
-  // Export button always visible
-  const exportButton = requests && requests.length > 0 && (
-    <>
-      <ExcelExportButton requests={requests} filteredRequests={filteredRequests} />
-      <MeetingReportButton requests={requests} filteredRequests={filteredRequests} />
-    </>
-  );
-
-  // If no selection, just show export
+  // Кнопки экспорта перенесены в шапку страницы (рядом с «Счета на оплату»).
+  // Без выбранных заявок панель массовых действий не показываем — убираем пустую полосу.
   if (selectedRequestIds.size < 1) {
-    return <div className="flex flex-wrap gap-1.5 sm:gap-2">{exportButton}</div>;
+    return null;
   }
 
   // Toolbar for 2+ selected
