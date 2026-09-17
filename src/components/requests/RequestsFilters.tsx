@@ -475,24 +475,31 @@ export const RequestsFilters = ({
       </div>
 
       {chips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-1.5" aria-label="Активные фильтры">
+        <div
+          className="flex h-8 min-w-0 max-w-[55%] shrink-0 items-center gap-1 overflow-x-auto"
+          aria-label="Активные фильтры"
+        >
           {chips.map((chip) => (
-            <span key={chip.key} className="inline-flex h-6 items-center gap-1 rounded-md border border-border bg-muted px-2 text-xs text-foreground">
+            <span
+              key={chip.key}
+              className="inline-flex h-5 shrink-0 items-center gap-0.5 rounded-full border border-border bg-muted px-1.5 text-[11px] leading-none text-muted-foreground whitespace-nowrap"
+            >
               {chip.label}
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={chip.clear}
-                className="no-min-tap -mr-1 h-4 min-h-0 w-4 rounded-sm p-0 text-muted-foreground hover:text-foreground"
+                className="no-min-tap -mr-0.5 h-3.5 min-h-0 w-3.5 rounded-full p-0 text-muted-foreground hover:text-foreground"
                 aria-label={`Снять фильтр «${chip.label}»`}
               >
-                <X className="h-3 w-3" />
+                <X className="h-2.5 w-2.5" />
               </Button>
             </span>
           ))}
         </div>
       )}
+
 
       {/* Smart search indicator */}
       {isSmartSearchActive && (
