@@ -36,14 +36,16 @@ export const SubscriptionBanner = () => {
   }
 
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex items-center justify-between">
-        <span>Подписка истекла. Пожалуйста, выберите тариф для продолжения работы.</span>
-        <Button size="sm" variant="outline" onClick={() => navigate("/pricing")}>
-          Выбрать тариф
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <div className="w-full shrink-0 min-w-0 px-2 pt-2 sm:px-3 sm:pt-3 md:px-6 md:pt-6">
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription className="flex items-center justify-between">
+          <span>Подписка истекла. Пожалуйста, выберите тариф для продолжения работы.</span>
+          <Button size="sm" variant="outline" onClick={() => navigate("/pricing")}>
+            Выбрать тариф
+          </Button>
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 };
