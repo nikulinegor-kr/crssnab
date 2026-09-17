@@ -416,24 +416,64 @@ const Requests = () => {
     <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
-        <div className="min-w-0">
-          <h1 className="text-base font-semibold">Заявки</h1>
-          <p className="text-xs text-muted-foreground font-numeric">
-            {filters.filteredRequests?.length || 0} найдено
-            {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold">Заявки</h1>
+            <p className="text-xs text-muted-foreground font-numeric">
+              {filters.filteredRequests?.length || 0} найдено
+              {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
+                <button
+                  onClick={filters.clearFilters}
+                  className="ml-2 text-primary underline hover:no-underline"
+                >
+                  Сбросить фильтры ({requests?.length} всего)
+                </button>
+              )}
+              {selectedRequestIds.size > 0 && (
+                <span className="ml-2 text-primary font-medium">
+                  • {selectedRequestIds.size} выбр.
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-0.5" role="tablist" aria-label="Разделы заявок">
+            {mainTabs.map((tab) => (
               <button
-                onClick={filters.clearFilters}
-                className="ml-2 text-primary underline hover:no-underline"
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={cn(
+                  "min-h-7 rounded-md px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
+                  activeTab === tab.value
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
               >
-                Сбросить фильтры ({requests?.length} всего)
+                {"icon" in tab && tab.icon}
+                {tab.label}
+                {"count" in tab && (tab as any).count > 0 && (
+                  <span className="bg-primary/10 text-primary text-xs rounded-full px-1.5 py-0.5 font-semibold">
+                    {(tab as any).count}
+                  </span>
+                )}
               </button>
-            )}
-            {selectedRequestIds.size > 0 && (
-              <span className="ml-2 text-primary font-medium">
-                • {selectedRequestIds.size} выбр.
-              </span>
-            )}
-          </p>
+            ))}
+            <div className="mx-1 h-4 w-px bg-border" />
+            {analyticsTabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={cn(
+                  "min-h-7 rounded-md px-2.5 py-1 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
+                  activeTab === tab.value
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {canCreate && activeTab === "active" && (
@@ -479,54 +519,6 @@ const Requests = () => {
           )}
         </div>
       </div>
-
-      {/* === LEVEL 2: Tab Navigation === */}
-      <nav className="flex shrink-0 gap-0 border-b border-border bg-card items-end overflow-x-auto">
-        {mainTabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={cn(
-              "relative min-h-9 px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
-              "hover:text-foreground",
-              activeTab === tab.value
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {"icon" in tab && tab.icon}
-            {tab.label}
-            {"count" in tab && (tab as any).count > 0 && (
-              <span className="ml-1 bg-primary/10 text-primary text-xs rounded-full px-1.5 py-0.5 font-semibold">
-                {(tab as any).count}
-              </span>
-            )}
-            {activeTab === tab.value && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-            )}
-          </button>
-        ))}
-        <div className="mx-2 h-5 w-px bg-border self-center" />
-        {analyticsTabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={cn(
-              "relative min-h-9 px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap",
-              "hover:text-foreground",
-              activeTab === tab.value
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {tab.icon}
-            {tab.label}
-            {activeTab === tab.value && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-            )}
-          </button>
-        ))}
-      </nav>
 
       {/* === Tab Content + боковая панель как колонка раскладки === */}
       <div
