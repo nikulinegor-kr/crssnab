@@ -89,11 +89,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
           )}>
             {fullBleed ? (
               <div className="flex flex-col h-full min-h-0 w-full min-w-0">
-                {!hideSubscriptionBanner && (
-                  <div className="w-full shrink-0 p-2 sm:p-3 md:p-6 min-w-0">
-                    <SubscriptionBanner />
-                  </div>
-                )}
+                {!hideSubscriptionBanner && <SubscriptionBanner />}
                 <PermissionRoute>{children}</PermissionRoute>
                 {/* Отступ под нижним меню на телефоне */}
                 <div className="h-16 shrink-0 md:hidden" aria-hidden />
