@@ -905,7 +905,7 @@ export const RequestSidePanel = ({
           </div>
         ) : (
           <div className={cn(containerClass, isFullscreen && "px-0")}>
-            {tab !== "docs" && (
+            {tab !== "docs" && tab !== "tasks" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
@@ -925,9 +925,9 @@ export const RequestSidePanel = ({
                   </button>
                 )}
                 {movementBlock}
-                {linkedTasksBlock}
               </>
             )}
+            {tab === "tasks" && linkedTasksBlock}
             {tab === "docs" && docsBlock}
           </div>
         )}
