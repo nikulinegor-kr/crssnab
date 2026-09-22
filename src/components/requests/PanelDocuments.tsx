@@ -176,36 +176,16 @@ export const PanelDocuments = ({
         const name = fileNameFromUrl(url);
         const info = meta[name];
         return (
-          <div key={url} className="flex items-center gap-2 border-b border-border/70 py-1.5">
-            {kind === "photo" ? (
-              <img src={url} alt={name} loading="lazy" className="h-8 w-8 shrink-0 rounded object-cover" />
-            ) : (
-              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[11px]">{name}</div>
-              <div className="font-numeric text-[9.5px] text-muted-foreground">
-                {humanSize(info?.size)}
-                {info?.created_at ? ` • ${new Date(info.created_at).toLocaleDateString("ru-RU")}` : ""}
-              </div>
-            </div>
-            <a href={url} target="_blank" rel="noreferrer" aria-label="Открыть" className="text-muted-foreground hover:text-primary">
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-            <a href={url} download aria-label="Скачать" className="text-muted-foreground hover:text-primary">
-              <Download className="h-3.5 w-3.5" />
-            </a>
-            {!readOnly && (
-              <button
-                type="button"
-                aria-label="Удалить"
-                onClick={() => setPendingDelete({ url, kind })}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <DocFileRow
+            key={url}
+            url={url}
+            name={name}
+            kind={kind}
+            sizeLabel={humanSize(info?.size)}
+            dateLabel={info?.created_at ? ` • ${new Date(info.created_at).toLocaleDateString("ru-RU")}` : ""}
+            readOnly={readOnly}
+            onDelete={() => setPendingDelete({ url, kind })}
+          />
         );
       })}
     </div>
