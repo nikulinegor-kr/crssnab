@@ -436,7 +436,7 @@ const Requests = () => {
               )}
             </p>
           </div>
-          <div className="flex items-center gap-0.5" role="tablist" aria-label="Разделы заявок">
+          <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto" role="tablist" aria-label="Разделы заявок">
             {mainTabs.map((tab) => (
               <button
                 key={tab.value}
