@@ -151,7 +151,8 @@ export const useRequestsFilters = (
   // Load saved filters from localStorage on init
   const savedFilters = useMemo(() => loadFiltersFromStorage(), []);
   
-  const [searchQuery, setSearchQuery] = useState(savedFilters?.searchQuery || "");
+  // Search text is intentionally NOT restored between sessions
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>(savedFilters?.statusFilter || []);
   const [priorityFilter, setPriorityFilter] = useState(savedFilters?.priorityFilter || "all");
   const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
