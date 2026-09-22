@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 
 import { Upload, X, Image, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { openStoredFile } from "@/lib/storageUrl";
 
 interface MultiFileDropZoneProps {
   accept: string;
