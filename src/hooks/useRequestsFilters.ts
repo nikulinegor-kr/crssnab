@@ -151,7 +151,8 @@ export const useRequestsFilters = (
   // Load saved filters from localStorage on init
   const savedFilters = useMemo(() => loadFiltersFromStorage(), []);
   
-  const [searchQuery, setSearchQuery] = useState(savedFilters?.searchQuery || "");
+  // Search text is intentionally NOT restored between sessions
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>(savedFilters?.statusFilter || []);
   const [priorityFilter, setPriorityFilter] = useState(savedFilters?.priorityFilter || "all");
   const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
@@ -166,7 +167,7 @@ export const useRequestsFilters = (
   // Save filters to localStorage whenever they change (exclude specialDateFilter as it's temporary)
   useEffect(() => {
     const currentFilters = {
-      searchQuery,
+      searchQuery: "",
       statusFilter,
       priorityFilter,
       yearFilter,
@@ -177,7 +178,7 @@ export const useRequestsFilters = (
       transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
+  }, [statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
