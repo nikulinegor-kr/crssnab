@@ -80,7 +80,7 @@ export const RequestSidePanel = ({
   fullscreen,
   onFullscreenChange,
 }: RequestSidePanelProps) => {
-  const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
+  const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
@@ -449,6 +449,7 @@ export const RequestSidePanel = ({
   // Позиции, история и прочее тяжёлое живут в полном экране.
   const tabs = [
     { id: "overview", label: "Обзор" },
+    { id: "tasks", label: "Задачи" },
     { id: "docs", label: `Документы ${docsCount || ""}`.trim() },
   ] as const;
 
@@ -904,7 +905,7 @@ export const RequestSidePanel = ({
           </div>
         ) : (
           <div className={cn(containerClass, isFullscreen && "px-0")}>
-            {tab !== "docs" && (
+            {tab !== "docs" && tab !== "tasks" && (
               <>
                 {fieldsBlock}
                 {totalsBlock}
@@ -924,9 +925,9 @@ export const RequestSidePanel = ({
                   </button>
                 )}
                 {movementBlock}
-                {linkedTasksBlock}
               </>
             )}
+            {tab === "tasks" && linkedTasksBlock}
             {tab === "docs" && docsBlock}
           </div>
         )}

@@ -121,6 +121,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
             <Badge variant="outline" className="text-[10px] shrink-0">
               {STATUS_LABEL[t.status] ?? t.status}
             </Badge>
+            <TaskDoneToggle taskId={t.id} status={t.status} variant="button" />
           </div>
         ))}
       </CardContent>

@@ -9,13 +9,16 @@ interface Props {
   taskId: string;
   status: string;
   className?: string;
+  /** "circle" — компактный кружок, "button" — кнопка с подписью «Выполнить» */
+  variant?: "circle" | "button";
 }
+
 
 /**
  * Shared "mark as done" toggle used by planner rows and the request task list.
  * Optimistic, no confirmation, toast with a 5s undo.
  */
-export function TaskDoneToggle({ taskId, status, className }: Props) {
+export function TaskDoneToggle({ taskId, status, className, variant = "circle" }: Props) {
   const queryClient = useQueryClient();
   const [localStatus, setLocalStatus] = useState<string | null>(null);
   const prevStatusRef = useRef<string>(status !== "done" ? status : "todo");
@@ -69,6 +72,28 @@ export function TaskDoneToggle({ taskId, status, className }: Props) {
       },
     });
   };
+
+  if (variant === "button") {
+    return (
+      <button
+        type="button"
+        title={done ? "Вернуть в работу" : "Отметить выполненной"}
+        aria-pressed={done}
+        onClick={handleClick}
+        onPointerDown={(e) => e.stopPropagation()}
+        className={cn(
+          "shrink-0 inline-flex min-h-8 items-center gap-1.5 rounded-md border px-2 text-xs transition-colors",
+          done
+            ? "border-success/40 bg-success/10 text-success"
+            : "border-border hover:border-success hover:bg-success/10 hover:text-success",
+          className
+        )}
+      >
+        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        {done ? "Выполнено" : "Выполнить"}
+      </button>
+    );
+  }
 
   return (
     <button
