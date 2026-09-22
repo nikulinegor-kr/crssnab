@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { downloadStoredFile, openStoredFile, useSignedUrl } from "@/lib/storageUrl";
 
 export type DocKind = "photo" | "document";
 
@@ -51,6 +52,68 @@ const sanitize = (name: string) => {
 
 const humanSize = (bytes?: number | null) =>
   bytes ? `${(bytes / 1024 / 1024).toFixed(bytes > 1024 * 1024 ? 1 : 2)} МБ` : "—";
+
+function DocFileRow({
+  url,
+  name,
+  kind,
+  sizeLabel,
+  dateLabel,
+  readOnly,
+  onDelete,
+}: {
+  url: string;
+  name: string;
+  kind: DocKind;
+  sizeLabel: string;
+  dateLabel: string;
+  readOnly?: boolean;
+  onDelete: () => void;
+}) {
+  const signed = useSignedUrl(url);
+  return (
+    <div className="flex items-center gap-2 border-b border-border/70 py-1.5">
+      {kind === "photo" ? (
+        <img src={signed} alt={name} loading="lazy" className="h-8 w-8 shrink-0 rounded object-cover" />
+      ) : (
+        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[11px]">{name}</div>
+        <div className="font-numeric text-[9.5px] text-muted-foreground">
+          {sizeLabel}
+          {dateLabel}
+        </div>
+      </div>
+      <button
+        type="button"
+        aria-label="Открыть"
+        onClick={() => openStoredFile(url)}
+        className="text-muted-foreground hover:text-primary"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Скачать"
+        onClick={() => downloadStoredFile(url, name)}
+        className="text-muted-foreground hover:text-primary"
+      >
+        <Download className="h-3.5 w-3.5" />
+      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          aria-label="Удалить"
+          onClick={onDelete}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export interface UploadTask {
   id: string;
@@ -176,36 +239,16 @@ export const PanelDocuments = ({
         const name = fileNameFromUrl(url);
         const info = meta[name];
         return (
-          <div key={url} className="flex items-center gap-2 border-b border-border/70 py-1.5">
-            {kind === "photo" ? (
-              <img src={url} alt={name} loading="lazy" className="h-8 w-8 shrink-0 rounded object-cover" />
-            ) : (
-              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[11px]">{name}</div>
-              <div className="font-numeric text-[9.5px] text-muted-foreground">
-                {humanSize(info?.size)}
-                {info?.created_at ? ` • ${new Date(info.created_at).toLocaleDateString("ru-RU")}` : ""}
-              </div>
-            </div>
-            <a href={url} target="_blank" rel="noreferrer" aria-label="Открыть" className="text-muted-foreground hover:text-primary">
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-            <a href={url} download aria-label="Скачать" className="text-muted-foreground hover:text-primary">
-              <Download className="h-3.5 w-3.5" />
-            </a>
-            {!readOnly && (
-              <button
-                type="button"
-                aria-label="Удалить"
-                onClick={() => setPendingDelete({ url, kind })}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <DocFileRow
+            key={url}
+            url={url}
+            name={name}
+            kind={kind}
+            sizeLabel={humanSize(info?.size)}
+            dateLabel={info?.created_at ? ` • ${new Date(info.created_at).toLocaleDateString("ru-RU")}` : ""}
+            readOnly={readOnly}
+            onDelete={() => setPendingDelete({ url, kind })}
+          />
         );
       })}
     </div>

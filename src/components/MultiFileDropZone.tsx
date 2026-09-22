@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 
 import { Upload, X, Image, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { openStoredFile } from "@/lib/storageUrl";
 
 interface MultiFileDropZoneProps {
   accept: string;
@@ -127,14 +128,13 @@ export const MultiFileDropZone = ({
           {existingUrls.map((url, index) => (
             <div key={`existing-${index}`} className="flex min-w-0 items-center gap-2 p-3 border rounded-lg bg-muted/30">
               <Icon className="h-5 w-5 text-primary shrink-0" />
-              <a 
-                href={url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm truncate flex-1 min-w-0 text-primary hover:underline"
+              <button
+                type="button"
+                onClick={() => openStoredFile(url)}
+                className="text-sm truncate flex-1 min-w-0 text-left text-primary hover:underline"
               >
                 {getFileName(url)}
-              </a>
+              </button>
               {onRemoveExisting && (
                 <Button
                   type="button"
