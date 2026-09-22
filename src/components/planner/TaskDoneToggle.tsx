@@ -9,7 +9,10 @@ interface Props {
   taskId: string;
   status: string;
   className?: string;
+  /** "circle" — компактный кружок, "button" — кнопка с подписью «Выполнить» */
+  variant?: "circle" | "button";
 }
+
 
 /**
  * Shared "mark as done" toggle used by planner rows and the request task list.
