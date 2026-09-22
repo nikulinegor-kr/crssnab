@@ -18,7 +18,7 @@ interface Props {
  * Shared "mark as done" toggle used by planner rows and the request task list.
  * Optimistic, no confirmation, toast with a 5s undo.
  */
-export function TaskDoneToggle({ taskId, status, className }: Props) {
+export function TaskDoneToggle({ taskId, status, className, variant = "circle" }: Props) {
   const queryClient = useQueryClient();
   const [localStatus, setLocalStatus] = useState<string | null>(null);
   const prevStatusRef = useRef<string>(status !== "done" ? status : "todo");
