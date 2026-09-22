@@ -1013,28 +1013,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           type="button"
           variant="outline"
           size="sm"
-          onClick={async () => {
-            try {
-              const url = new URL(request.document_url!);
-              const pathParts = url.pathname.split('/');
-              const bucketIndex = pathParts.findIndex(p => p === 'request-documents');
-              if (bucketIndex === -1) {
-                window.open(request.document_url!, '_blank');
-                return;
-              }
-              const filePath = pathParts.slice(bucketIndex + 1).join('/');
-              const { data, error } = await supabase.storage
-                .from('request-documents')
-                .createSignedUrl(filePath, 3600);
-              if (error || !data) {
-                window.open(request.document_url!, '_blank');
-                return;
-              }
-              window.open(data.signedUrl, '_blank');
-            } catch {
-              window.open(request.document_url!, '_blank');
-            }
-          }}
+          onClick={() => openStoredFile(request.document_url!)}
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
