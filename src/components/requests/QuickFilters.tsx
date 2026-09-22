@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { AlertTriangle, Flame, Receipt, Truck, Package } from "lucide-react";
+import { AlertTriangle, Flame, Receipt, Truck, Package, ClipboardList } from "lucide-react";
 
 interface QuickFiltersProps {
   statusFilter: string[];
@@ -20,6 +20,14 @@ interface QuickFilterButton {
 }
 
 const QUICK_FILTERS: QuickFilterButton[] = [
+  {
+    id: "new",
+    label: "Новая заявка",
+    icon: <ClipboardList className="h-3.5 w-3.5" />,
+    activeColor: "bg-primary text-primary-foreground border-primary/30 hover:bg-primary/90",
+    type: "status",
+    value: "Новая заявка",
+  },
   {
     id: "emergency",
     label: "Аварийные",
