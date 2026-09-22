@@ -262,7 +262,6 @@ export default function PlannerTasksList() {
                           className="shrink-0 inline-flex items-center justify-center h-8 w-8"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleSelected(t.id);
                           }}
                         >
                           <Checkbox
