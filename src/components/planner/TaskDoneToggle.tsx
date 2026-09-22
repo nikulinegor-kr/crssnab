@@ -73,6 +73,28 @@ export function TaskDoneToggle({ taskId, status, className, variant = "circle" }
     });
   };
 
+  if (variant === "button") {
+    return (
+      <button
+        type="button"
+        title={done ? "Вернуть в работу" : "Отметить выполненной"}
+        aria-pressed={done}
+        onClick={handleClick}
+        onPointerDown={(e) => e.stopPropagation()}
+        className={cn(
+          "shrink-0 inline-flex min-h-8 items-center gap-1.5 rounded-md border px-2 text-xs transition-colors",
+          done
+            ? "border-success/40 bg-success/10 text-success"
+            : "border-border hover:border-success hover:bg-success/10 hover:text-success",
+          className
+        )}
+      >
+        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        {done ? "Выполнено" : "Выполнить"}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
