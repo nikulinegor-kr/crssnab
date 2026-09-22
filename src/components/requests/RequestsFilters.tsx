@@ -208,7 +208,6 @@ export const RequestsFilters = ({
 
   const objectLabel = availableObjects.find((object) => object.id === objectFilter)?.name;
   const chips = [
-    ...(searchQuery ? [{ key: "search", label: `Поиск: ${searchQuery}`, clear: () => setSearchQuery("") }] : []),
     ...statusFilter.map((status) => ({ key: `status-${status}`, label: `Статус: ${status}`, clear: () => setStatusFilter(statusFilter.filter((item) => item !== status)) })),
     ...(priorityFilter !== "all" ? [{ key: "priority", label: `Приоритет: ${priorityFilter}`, clear: () => setPriorityFilter("all") }] : []),
     ...(yearFilter !== "all" ? [{ key: "year", label: `Год: ${yearFilter}`, clear: () => setYearFilter("all") }] : []),
