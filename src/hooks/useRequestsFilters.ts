@@ -167,7 +167,7 @@ export const useRequestsFilters = (
   // Save filters to localStorage whenever they change (exclude specialDateFilter as it's temporary)
   useEffect(() => {
     const currentFilters = {
-      searchQuery,
+      searchQuery: "",
       statusFilter,
       priorityFilter,
       yearFilter,
@@ -178,7 +178,7 @@ export const useRequestsFilters = (
       transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [searchQuery, statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
+  }, [statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
