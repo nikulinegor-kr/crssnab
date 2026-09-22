@@ -80,7 +80,7 @@ export const RequestSidePanel = ({
   fullscreen,
   onFullscreenChange,
 }: RequestSidePanelProps) => {
-  const [tab, setTab] = useState<"overview" | "items" | "docs" | "history">("overview");
+  const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
