@@ -449,6 +449,7 @@ export const RequestSidePanel = ({
   // Позиции, история и прочее тяжёлое живут в полном экране.
   const tabs = [
     { id: "overview", label: "Обзор" },
+    { id: "tasks", label: "Задачи" },
     { id: "docs", label: `Документы ${docsCount || ""}`.trim() },
   ] as const;
 
