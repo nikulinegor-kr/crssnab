@@ -27,22 +27,47 @@ export async function resolveSignedUrl(url: string, expiresIn = 60 * 60): Promis
   return data?.signedUrl ?? url;
 }
 
-/** Open a stored file in a new tab, resigning if needed. */
+/**
+ * Open a stored file in a new tab, resigning if needed.
+ * The tab is opened synchronously (inside the click gesture) so pop-up
+ * blockers allow it, then navigated once the signed URL is ready.
+ */
 export async function openStoredFile(url: string) {
-  const signed = await resolveSignedUrl(url);
-  window.open(signed, "_blank", "noopener,noreferrer");
+  const win = window.open("about:blank", "_blank");
+  try {
+    const signed = await resolveSignedUrl(url);
+    if (win) {
+      win.opener = null;
+      win.location.href = signed;
+    } else {
+      window.location.assign(signed);
+    }
+  } catch (e) {
+    win?.close();
+    throw e;
+  }
 }
 
-/** Trigger a browser download for a stored file, resigning if needed. */
+/** Trigger a real browser download for a stored file (via blob, works cross-origin). */
 export async function downloadStoredFile(url: string, suggestedName?: string) {
   const signed = await resolveSignedUrl(url);
-  const a = document.createElement("a");
-  a.href = signed;
-  if (suggestedName) a.download = suggestedName;
-  a.rel = "noopener noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const name =
+    suggestedName ||
+    decodeURIComponent((extractStoragePath(url)?.path ?? signed.split("?")[0]).split("/").pop() || "file");
+  try {
+    const res = await fetch(signed);
+    if (!res.ok) throw new Error(String(res.status));
+    const blobUrl = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+  } catch {
+    window.location.assign(signed);
+  }
 }
 
 /**

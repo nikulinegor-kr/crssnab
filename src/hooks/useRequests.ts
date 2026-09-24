@@ -77,42 +77,23 @@ export const useRequestStats = () => {
   return useQuery({
     queryKey: ["request-stats"],
     queryFn: async () => {
-      const PAGE_SIZE = 1000;
-      let allData: any[] = [];
-      let from = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("requests")
-          .select("status, priority, payment_percentage, delivery_date, created_at")
-          .range(from, from + PAGE_SIZE - 1);
-
-        if (error) throw error;
-        allData = allData.concat(data || []);
-        hasMore = (data?.length || 0) === PAGE_SIZE;
-        from += PAGE_SIZE;
-      }
-
-      const total = allData.length;
+      // Server-side counts only — no full-table download.
       const today = new Date().toISOString().split("T")[0];
-      const newToday = allData.filter(
-        (r: any) => r.created_at?.split("T")[0] === today
-      ).length;
-      
-      const emergency = allData.filter(
-        (r: any) => r.priority === "Аварийно"
-      ).length;
-      
-      const completed = allData.filter(
-        (r: any) => r.status === "Доставлено"
-      ).length;
-
+      const base = () =>
+        supabase.from("requests").select("id", { count: "exact", head: true });
+      const [t, n, e, c] = await Promise.all([
+        base(),
+        base().gte("created_at", `${today}T00:00:00Z`),
+        base().eq("priority", "Аварийно"),
+        base().eq("status", "Доставлено"),
+      ]);
+      const err = t.error || n.error || e.error || c.error;
+      if (err) throw err;
       return {
-        total,
-        newToday,
-        emergency,
-        completed,
+        total: t.count ?? 0,
+        newToday: n.count ?? 0,
+        emergency: e.count ?? 0,
+        completed: c.count ?? 0,
       };
     },
   });
