@@ -172,7 +172,18 @@ export const AdditionalSection = ({
       setDocumentFiles([...documentFiles, modifiedFile]);
       setLastZrsFile(modifiedFile);
 
-      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт и добавлена в документы" });
+      // Automatically download the generated file
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = newFileName;
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт, файл скачан" });
     } catch (err) {
       console.error("PDF insert error:", err);
       toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
