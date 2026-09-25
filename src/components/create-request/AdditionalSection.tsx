@@ -181,7 +181,9 @@ export const AdditionalSection = ({
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      // Revoke later — revoking synchronously can abort the download in
+      // browsers that process the anchor navigation asynchronously.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
 
       toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт, файл скачан" });
     } catch (err) {
@@ -279,7 +281,8 @@ export const AdditionalSection = ({
                       a.href = url;
                       a.download = lastZrsFile.name;
                       a.click();
-                      URL.revokeObjectURL(url);
+                      // Defer revocation so the download is not aborted.
+                      setTimeout(() => URL.revokeObjectURL(url), 10_000);
                     }}
                     className="h-7"
                   >
