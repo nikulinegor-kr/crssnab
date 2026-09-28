@@ -518,50 +518,6 @@ const Requests = () => {
               </button>
             ))}
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {canCreate && activeTab === "active" && (
-            <>
-              <Button
-                onClick={downloadAllInvoices}
-                disabled={isDownloadingInvoices}
-                size="sm"
-                variant="outline"
-                title="Скачать все счета на оплату (ZIP)"
-                className="h-8 gap-1.5 px-3 text-xs font-medium shadow-none"
-              >
-                <Printer className="h-4 w-4" />
-                <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
-              </Button>
-              {requests && requests.length > 0 && (
-                <>
-                  <ExcelExportButton requests={requests} filteredRequests={filters.filteredRequests} />
-                  <MeetingReportButton requests={requests} filteredRequests={filters.filteredRequests} />
-                </>
-              )}
-              <Button
-                onClick={openQuickRequest}
-                size="sm"
-                variant="secondary"
-                title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-                className="h-8 gap-1.5 px-3 text-xs font-semibold"
-              >
-                <Zap className="h-4 w-4" />
-                <span className="hidden sm:inline">Быстрая заявка</span>
-                <span className="sm:hidden">Быстро</span>
-              </Button>
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                size="sm"
-                className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sticky top-16 z-10"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden xs:inline">Новая заявка</span>
-                <span className="xs:hidden" aria-hidden="true">Новая</span>
-              </Button>
-            </>
-          )}
-        </div>
       </div>
 
       {/* === Tab Content + боковая панель как колонка раскладки === */}
