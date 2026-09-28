@@ -1,3 +1,4 @@
+import { printHtml } from "@/lib/printHtml";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -30,10 +31,8 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
+    
+    printHtml(`
       <html>
         <head>
           <title>Этикетка</title>
@@ -49,11 +48,9 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
             <div class="desc">${escapeHtml(description || "")}</div>
             <div class="applicant">${escapeHtml(applicant || "")}</div>
           </div>
-          <script>window.onload = () => { setTimeout(() => window.print(), 200); };</script>
         </body>
       </html>
     `);
-    printWindow.document.close();
   };
 
   return (

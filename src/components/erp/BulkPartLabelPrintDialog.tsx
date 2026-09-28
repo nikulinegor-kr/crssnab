@@ -1,3 +1,4 @@
+import { printHtml } from "@/lib/printHtml";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -41,9 +42,7 @@ export function BulkPartLabelPrintDialog({ open, onOpenChange, items }: Props) {
 
   const handlePrint = () => {
     if (!items.length) return;
-    const w = window.open("", "_blank");
-    if (!w) return;
-
+    
     const labelHtml = items
       .flatMap((it) => Array.from({ length: copies }, () => it))
       .map((it) => {
@@ -55,7 +54,7 @@ export function BulkPartLabelPrintDialog({ open, onOpenChange, items }: Props) {
       })
       .join("");
 
-    w.document.write(`
+    printHtml(`
       <html>
         <head>
           <title>Этикетки (${items.length * copies})</title>
@@ -118,13 +117,9 @@ export function BulkPartLabelPrintDialog({ open, onOpenChange, items }: Props) {
         </head>
         <body>
           ${labelHtml}
-          <script>
-            window.onload = () => { setTimeout(() => window.print(), 250); };
-          </script>
         </body>
       </html>
     `);
-    w.document.close();
   };
 
   return (

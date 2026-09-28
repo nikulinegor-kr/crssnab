@@ -1,3 +1,4 @@
+import { printHtml } from "@/lib/printHtml";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -45,9 +46,7 @@ export function PartLabelPrintDialog({
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
   const handlePrint = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(`
+        printHtml(`
       <html>
         <head>
           <title>Этикетка</title>
@@ -65,11 +64,9 @@ export function PartLabelPrintDialog({
             ${manufacturer ? `<div class="row">${escapeHtml(manufacturer)}</div>` : ""}
             ${storageLocation ? `<div class="row">Место: ${escapeHtml(storageLocation)}</div>` : ""}
           </div>
-          <script>window.onload = () => { setTimeout(() => window.print(), 200); };</script>
         </body>
       </html>
     `);
-    w.document.close();
   };
 
   return (
