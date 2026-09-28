@@ -1054,6 +1054,29 @@ export const RequestSidePanel = ({
     </aside>
   );
 
+  const idleHandle =
+    open && idleHidden && !isFullscreen ? (
+      <button
+        type="button"
+        aria-label="Показать панель заявки"
+        onClick={(e) => {
+          e.stopPropagation();
+          lastActivityRef.current = Date.now();
+          setIdleHidden(false);
+        }}
+        className="fixed right-0 top-1/2 z-[60] -translate-y-1/2 rounded-l-lg border border-r-0 border-border bg-card px-1 py-4 text-muted-foreground shadow-panel hover:bg-accent hover:text-foreground"
+      >
+        <PanelRightOpen className="h-4 w-4" />
+      </button>
+    ) : null;
+
+  const panelBody = (
+    <>
+      {content}
+      {idleHandle}
+    </>
+  );
+
   const handleStatusFromPrompt = async (status: string) => {
     setStatusPromptOpen(false);
     if (status && status !== request?.status) {
