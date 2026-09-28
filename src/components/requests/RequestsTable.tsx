@@ -180,12 +180,12 @@ const MobileRequestCard = memo(({
     className="p-2 cursor-pointer hover:bg-muted/30 transition-colors active:bg-muted/50"
     onClick={onRowClick}
   >
-    <div className="flex items-start gap-2">
+    <div className="flex items-center gap-2">
       <Checkbox
         checked={isSelected}
         onCheckedChange={onToggleSelection}
         onClick={(e) => e.stopPropagation()}
-        className="mt-1 h-4 w-4 flex-shrink-0"
+        className="h-4 w-4 flex-shrink-0"
       />
       <div className="flex-1 min-w-0 space-y-1">
         {/* Header row with date, priority, status */}
@@ -952,13 +952,13 @@ export const RequestsTable = ({
 
           <TableHeader className="bg-muted [&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-muted">
             <TableRow className="border-b border-border hover:bg-transparent" style={{ height: 'var(--row-h)' }}>
-              <TableHead className="text-center p-1 border-b align-middle">
+              <TableHead className="relative text-center p-1 border-b align-middle">
                 {visibility.select !== false && (
-                  <div className="flex items-center justify-center h-full w-full">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <Checkbox
                       checked={selectedRequestIds.size === requests.length && requests.length > 0}
                       onCheckedChange={toggleAllRequests}
-                      className="h-4 w-4"
+                      className="h-4 w-4 pointer-events-auto"
                     />
                   </div>
                 )}
@@ -1192,11 +1192,12 @@ export const RequestsTable = ({
                       }
                     />
                     {visibility.select !== false && (
-                      <div className="flex items-center justify-center h-full w-full">
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <Checkbox
                           checked={selectedRequestIds.has(request.id)}
                           onCheckedChange={() => toggleRequestSelection(request.id)}
-                          className="h-4 w-4"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 pointer-events-auto"
                         />
                       </div>
                     )}
