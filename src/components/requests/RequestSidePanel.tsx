@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
@@ -110,6 +110,43 @@ export const RequestSidePanel = ({
   const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
+  // Автоскрытие панели после 10 секунд бездействия: прячется, возвращается при активности.
+  const IDLE_HIDE_MS = 10_000;
+  const [idleHidden, setIdleHidden] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+  const keepPanelVisible = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    setIdleHidden((prev) => (prev ? false : prev));
+  }, []);
+
+  useEffect(() => {
+    const blocked =
+      !open ||
+      isFullscreen ||
+      editMode ||
+      editorOpen ||
+      statusPromptOpen ||
+      editingTitle ||
+      uploads.length > 0 ||
+      resizingRef.current;
+    if (blocked) {
+      setIdleHidden(false);
+      return;
+    }
+    lastActivityRef.current = Date.now();
+    const events = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "scroll"] as const;
+    events.forEach((evt) => window.addEventListener(evt, keepPanelVisible, { passive: true }));
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      if (Date.now() - lastActivityRef.current >= IDLE_HIDE_MS) setIdleHidden(true);
+    }, 1000);
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, keepPanelVisible));
+      window.clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isFullscreen, editMode, editorOpen, statusPromptOpen, editingTitle, uploads.length, keepPanelVisible]);
 
   const exitEditMode = useCallback(
     (confirmIfDirty: boolean) => {
