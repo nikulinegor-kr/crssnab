@@ -572,7 +572,10 @@ export const RequestsTable = ({
   }, [onEditClick]);
 
   const handleDesktopRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("[data-row-action]")) return;
+    const target = e.target as HTMLElement;
+    // Clicks from portaled menus/dialogs bubble through React tree — ignore them
+    if (!(e.currentTarget as HTMLElement).contains(target)) return;
+    if (target.closest("[data-row-action]")) return;
     e.preventDefault();
     e.stopPropagation();
     onEditClick?.(request);
