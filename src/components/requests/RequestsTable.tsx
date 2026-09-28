@@ -416,7 +416,7 @@ export const RequestsTable = ({
   // Label print dialog state
   const [labelRequest, setLabelRequest] = useState<Request | null>(null);
   const openLabelPrint = useCallback((request: Request) => {
-    setLabelRequest(request);
+    setTimeout(() => setLabelRequest(request), 0);
   }, []);
   const closeLabelPrint = useCallback(() => {
     setLabelRequest(null);
