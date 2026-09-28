@@ -436,7 +436,51 @@ const Requests = () => {
               )}
             </p>
           </div>
-          <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto" role="tablist" aria-label="Разделы заявок">
+          <div className="flex items-center gap-2 shrink-0 sm:order-3">
+            {canCreate && activeTab === "active" && (
+              <>
+                <Button
+                  onClick={downloadAllInvoices}
+                  disabled={isDownloadingInvoices}
+                  size="sm"
+                  variant="outline"
+                  title="Скачать все счета на оплату (ZIP)"
+                  className="hidden h-8 gap-1.5 px-3 text-xs font-medium shadow-none sm:inline-flex"
+                >
+                  <Printer className="h-4 w-4" />
+                  <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
+                </Button>
+                {requests && requests.length > 0 && (
+                  <div className="hidden sm:contents">
+                    <ExcelExportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                    <MeetingReportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                  </div>
+                )}
+                <Button
+                  onClick={openQuickRequest}
+                  size="sm"
+                  variant="secondary"
+                  title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
+                  className="h-8 gap-1.5 px-3 text-xs font-semibold"
+                >
+                  <Zap className="h-4 w-4" />
+                  <span className="hidden sm:inline">Быстрая заявка</span>
+                  <span className="sm:hidden">Быстро</span>
+                </Button>
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  size="sm"
+                  className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sm:sticky sm:top-16 sm:z-10"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden xs:inline">Новая заявка</span>
+                  <span className="xs:hidden" aria-hidden="true">Новая</span>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto sm:order-2 sm:flex-1" role="tablist" aria-label="Разделы заявок">
             {mainTabs.map((tab) => (
               <button
                 key={tab.value}
