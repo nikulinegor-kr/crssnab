@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
@@ -110,6 +110,43 @@ export const RequestSidePanel = ({
   const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
+
+  // Автоскрытие панели после 10 секунд бездействия: прячется, возвращается при активности.
+  const IDLE_HIDE_MS = 10_000;
+  const [idleHidden, setIdleHidden] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+  const keepPanelVisible = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    setIdleHidden((prev) => (prev ? false : prev));
+  }, []);
+
+  useEffect(() => {
+    const blocked =
+      !open ||
+      isFullscreen ||
+      editMode ||
+      editorOpen ||
+      statusPromptOpen ||
+      editingTitle ||
+      uploads.length > 0 ||
+      resizingRef.current;
+    if (blocked) {
+      setIdleHidden(false);
+      return;
+    }
+    lastActivityRef.current = Date.now();
+    const events = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "scroll"] as const;
+    events.forEach((evt) => window.addEventListener(evt, keepPanelVisible, { passive: true }));
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      if (Date.now() - lastActivityRef.current >= IDLE_HIDE_MS) setIdleHidden(true);
+    }, 1000);
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, keepPanelVisible));
+      window.clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isFullscreen, editMode, editorOpen, statusPromptOpen, editingTitle, uploads.length, keepPanelVisible]);
 
   const exitEditMode = useCallback(
     (confirmIfDirty: boolean) => {
@@ -708,6 +745,7 @@ export const RequestSidePanel = ({
     <aside
       className={cn(
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
+        idleHidden && !isFullscreen && "translate-x-full pointer-events-none",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
           ? cn(
@@ -725,13 +763,14 @@ export const RequestSidePanel = ({
           : asOverlay
             ? {
                 width: `min(${panelWidth}px, 92vw)`,
-                transition: "width var(--dur) var(--ease)",
+                transition: "width var(--dur) var(--ease), transform 300ms var(--ease)",
                 animation: "slide-in-right var(--dur) var(--ease)",
               }
-            : undefined
+            : { transition: "transform 300ms var(--ease)" }
       }
 
       aria-label="Карточка заявки"
+      aria-hidden={idleHidden && !isFullscreen ? true : undefined}
       onDragOver={(e) => {
         if (readOnly) return;
         e.preventDefault();
@@ -1015,6 +1054,29 @@ export const RequestSidePanel = ({
     </aside>
   );
 
+  const idleHandle =
+    open && idleHidden && !isFullscreen ? (
+      <button
+        type="button"
+        aria-label="Показать панель заявки"
+        onClick={(e) => {
+          e.stopPropagation();
+          lastActivityRef.current = Date.now();
+          setIdleHidden(false);
+        }}
+        className="fixed right-0 top-1/2 z-[60] -translate-y-1/2 rounded-l-lg border border-r-0 border-border bg-card px-1 py-4 text-muted-foreground shadow-panel hover:bg-accent hover:text-foreground"
+      >
+        <PanelRightOpen className="h-4 w-4" />
+      </button>
+    ) : null;
+
+  const panelBody = (
+    <>
+      {content}
+      {idleHandle}
+    </>
+  );
+
   const handleStatusFromPrompt = async (status: string) => {
     setStatusPromptOpen(false);
     if (status && status !== request?.status) {
@@ -1025,7 +1087,7 @@ export const RequestSidePanel = ({
 
   return (
     <>
-      {asOverlay ? createPortal(content, document.body) : content}
+      {asOverlay ? createPortal(panelBody, document.body) : panelBody}
       <EditRequestDialog
         request={request as any}
         open={editorOpen}
