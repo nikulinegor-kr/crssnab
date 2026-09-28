@@ -924,6 +924,7 @@ export const RequestSidePanel = ({
                     <span className="text-primary">Открыть на полный экран</span>
                   </button>
                 )}
+                <div className="mt-4">{linkedTasksBlock}</div>
                 {movementBlock}
               </>
             )}
