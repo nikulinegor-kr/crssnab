@@ -415,8 +415,8 @@ const Requests = () => {
   return (
     <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-2 py-1.5">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+      <div className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-card px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
           <div className="min-w-0">
             <h1 className="text-base font-semibold">Заявки</h1>
             <p className="text-xs text-muted-foreground font-numeric">
@@ -436,7 +436,51 @@ const Requests = () => {
               )}
             </p>
           </div>
-          <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto" role="tablist" aria-label="Разделы заявок">
+          <div className="flex items-center gap-2 shrink-0 sm:order-3">
+            {canCreate && activeTab === "active" && (
+              <>
+                <Button
+                  onClick={downloadAllInvoices}
+                  disabled={isDownloadingInvoices}
+                  size="sm"
+                  variant="outline"
+                  title="Скачать все счета на оплату (ZIP)"
+                  className="hidden h-8 gap-1.5 px-3 text-xs font-medium shadow-none sm:inline-flex"
+                >
+                  <Printer className="h-4 w-4" />
+                  <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
+                </Button>
+                {requests && requests.length > 0 && (
+                  <div className="hidden sm:contents">
+                    <ExcelExportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                    <MeetingReportButton requests={requests} filteredRequests={filters.filteredRequests} />
+                  </div>
+                )}
+                <Button
+                  onClick={openQuickRequest}
+                  size="sm"
+                  variant="secondary"
+                  title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
+                  className="h-8 gap-1.5 px-3 text-xs font-semibold"
+                >
+                  <Zap className="h-4 w-4" />
+                  <span className="hidden sm:inline">Быстрая заявка</span>
+                  <span className="sm:hidden">Быстро</span>
+                </Button>
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  size="sm"
+                  className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sm:sticky sm:top-16 sm:z-10"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden xs:inline">Новая заявка</span>
+                  <span className="xs:hidden" aria-hidden="true">Новая</span>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto sm:order-2 sm:flex-1" role="tablist" aria-label="Разделы заявок">
             {mainTabs.map((tab) => (
               <button
                 key={tab.value}
@@ -474,50 +518,6 @@ const Requests = () => {
               </button>
             ))}
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {canCreate && activeTab === "active" && (
-            <>
-              <Button
-                onClick={downloadAllInvoices}
-                disabled={isDownloadingInvoices}
-                size="sm"
-                variant="outline"
-                title="Скачать все счета на оплату (ZIP)"
-                className="h-8 gap-1.5 px-3 text-xs font-medium shadow-none"
-              >
-                <Printer className="h-4 w-4" />
-                <span className="hidden sm:inline">{isDownloadingInvoices ? "Собираем..." : "Счета на оплату"}</span>
-              </Button>
-              {requests && requests.length > 0 && (
-                <>
-                  <ExcelExportButton requests={requests} filteredRequests={filters.filteredRequests} />
-                  <MeetingReportButton requests={requests} filteredRequests={filters.filteredRequests} />
-                </>
-              )}
-              <Button
-                onClick={openQuickRequest}
-                size="sm"
-                variant="secondary"
-                title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-                className="h-8 gap-1.5 px-3 text-xs font-semibold"
-              >
-                <Zap className="h-4 w-4" />
-                <span className="hidden sm:inline">Быстрая заявка</span>
-                <span className="sm:hidden">Быстро</span>
-              </Button>
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                size="sm"
-                className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sticky top-16 z-10"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden xs:inline">Новая заявка</span>
-                <span className="xs:hidden" aria-hidden="true">Новая</span>
-              </Button>
-            </>
-          )}
-        </div>
       </div>
 
       {/* === Tab Content + боковая панель как колонка раскладки === */}
