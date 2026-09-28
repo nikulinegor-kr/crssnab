@@ -651,15 +651,15 @@ export const RequestSidePanel = ({
             </div>
     </>
   );
-  const linkedTasksBlock = currentOrgId ? (
+  const linkedTasksBlock = (
     <LinkedPlannerTasks
       requestId={request.id}
-      organizationId={currentOrgId}
+      organizationId={currentOrgId || request.organization_id}
       requestTitle={request.description ?? undefined}
       objectId={request.object_id ?? null}
       expectedDate={request.delivery_date ?? null}
     />
-  ) : null;
+  );
   const itemsBlock = (
           <PanelItemsTable
             requestId={request.id}
