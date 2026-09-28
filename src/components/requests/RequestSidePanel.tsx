@@ -1087,7 +1087,7 @@ export const RequestSidePanel = ({
 
   return (
     <>
-      {asOverlay ? createPortal(content, document.body) : content}
+      {asOverlay ? createPortal(panelBody, document.body) : panelBody}
       <EditRequestDialog
         request={request as any}
         open={editorOpen}
