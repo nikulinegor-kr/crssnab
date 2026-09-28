@@ -745,6 +745,7 @@ export const RequestSidePanel = ({
     <aside
       className={cn(
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
+        idleHidden && !isFullscreen && "translate-x-full pointer-events-none",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
           ? cn(
@@ -762,13 +763,14 @@ export const RequestSidePanel = ({
           : asOverlay
             ? {
                 width: `min(${panelWidth}px, 92vw)`,
-                transition: "width var(--dur) var(--ease)",
+                transition: "width var(--dur) var(--ease), transform 300ms var(--ease)",
                 animation: "slide-in-right var(--dur) var(--ease)",
               }
-            : undefined
+            : { transition: "transform 300ms var(--ease)" }
       }
 
       aria-label="Карточка заявки"
+      aria-hidden={idleHidden && !isFullscreen ? true : undefined}
       onDragOver={(e) => {
         if (readOnly) return;
         e.preventDefault();
