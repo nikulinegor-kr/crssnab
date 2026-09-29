@@ -3,7 +3,7 @@ import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList, ListTree } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -64,6 +64,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+import { getStaleDays, isStale } from "@/lib/requestStaleness";
 
 
 const moneyShort = (n: number) =>
@@ -104,6 +105,14 @@ const pageSizeLabel = (size: number) => (size === 0 ? "Все" : String(size));
 const STORAGE_KEY = "requests-page-size";
 const SORT_STORAGE_KEY = "requests-sort";
 const DENSITY_STORAGE_KEY = "requests-table-density";
+const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
+
+const REQUEST_PHASES = [
+  { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
+  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "Счёт в Бухгалтерии", "В работе"], accent: "bg-info" },
+  { key: "transit", name: "В пути", statuses: ["Готов к отгрузке", "В пути", "Доставлено в ТК"], accent: "bg-primary" },
+  { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
+] as const;
 
 type RowDensity = "compact" | "normal" | "roomy";
 
@@ -436,7 +445,9 @@ export const RequestsTable = ({
     localStorage.setItem("requests-group-by-object", v ? "1" : "0");
     if (v) {
       setGroupByProject(false);
+      setGroupByPhase(false);
       localStorage.setItem("requests-group-by-project", "0");
+      localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "0");
     }
   }, []);
   const toggleGroup = useCallback((key: string) => {
@@ -457,7 +468,22 @@ export const RequestsTable = ({
     localStorage.setItem("requests-group-by-project", v ? "1" : "0");
     if (v) {
       setGroupByObject(false);
+      setGroupByPhase(false);
       localStorage.setItem("requests-group-by-object", "0");
+      localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "0");
+    }
+  }, []);
+  const [groupByPhase, setGroupByPhase] = useState<boolean>(() => {
+    return localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) === "1";
+  });
+  const toggleGroupByPhase = useCallback((v: boolean) => {
+    setGroupByPhase(v);
+    localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, v ? "1" : "0");
+    if (v) {
+      setGroupByObject(false);
+      setGroupByProject(false);
+      localStorage.setItem("requests-group-by-object", "0");
+      localStorage.setItem("requests-group-by-project", "0");
     }
   }, []);
   const toggleProject = useCallback((key: string) => {
@@ -590,7 +616,7 @@ export const RequestsTable = ({
 
 
   // Pagination calculations — disabled in grouped mode (show all)
-  const grouped = groupByObject || groupByProject;
+  const grouped = groupByObject || groupByProject || groupByPhase;
   const totalItems = sortedRequests?.length || 0;
   const filteredTotal = useMemo(() => (sortedRequests || []).reduce(
     (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
@@ -646,6 +672,14 @@ export const RequestsTable = ({
     const list = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "ru"));
     return { list, loose };
   }, [groupByProject, paginatedRequests, projectNames]);
+
+  const phaseGroups = useMemo(() => {
+    if (!groupByPhase) return null;
+    return REQUEST_PHASES.map((phase) => ({
+      ...phase,
+      items: paginatedRequests.filter((request) => phase.statuses.includes(request.status as never)),
+    })).filter((phase) => phase.items.length > 0);
+  }, [groupByPhase, paginatedRequests]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
@@ -792,8 +826,47 @@ export const RequestsTable = ({
             <Layers className="h-3.5 w-3.5" />
             По объектам
           </Toggle>
+          <Toggle
+            pressed={groupByPhase}
+            onPressedChange={toggleGroupByPhase}
+            size="sm"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <ListTree className="h-3.5 w-3.5" />
+            По фазам
+          </Toggle>
         </div>
-        {groupByProject && projectGroups ? (
+        {groupByPhase && phaseGroups ? (
+          phaseGroups.map((g) => {
+            const collapsed = collapsedGroups.has(`phase-${g.key}`);
+            const amount = g.items.reduce((sum, request) => sum + Number(request.amount || 0), 0);
+            return (
+              <div key={g.key} className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(`phase-${g.key}`)}
+                  className="sticky top-0 z-10 flex w-full items-center gap-2 rounded bg-muted/95 px-2 py-1.5 text-xs font-semibold"
+                >
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                  <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", g.accent)} />
+                  <span className="truncate">{g.name}</span>
+                  <span className="ml-auto font-mono font-normal text-muted-foreground">{g.items.length} · {moneyShort(amount)}</span>
+                </button>
+                {!collapsed && g.items.map((request) => (
+                  <MobileRequestCard
+                    key={request.id}
+                    request={request}
+                    isSelected={selectedRequestIds.has(request.id)}
+                    onToggleSelection={() => toggleRequestSelection(request.id)}
+                    onRowClick={(e) => handleRowClick(request, e)}
+                    onDelete={(e) => onDeleteClick(request, e)}
+                    searchQuery={searchQuery}
+                  />
+                ))}
+              </div>
+            );
+          })
+        ) : groupByProject && projectGroups ? (
           <>
             {projectGroups.list.map((g) => {
               const open = expandedProjects.has(g.key);
@@ -918,6 +991,16 @@ export const RequestsTable = ({
             <Layers className="h-3.5 w-3.5" />
             Группировать по объектам
           </Toggle>
+          <Toggle
+            pressed={groupByPhase}
+            onPressedChange={toggleGroupByPhase}
+            size="sm"
+            aria-label="Группировать по фазам"
+            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+          >
+            <ListTree className="h-3.5 w-3.5" />
+            По фазам
+          </Toggle>
           {headerActions}
           <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
@@ -1031,9 +1114,20 @@ export const RequestsTable = ({
               type Item =
                 | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
                 | { kind: "project"; key: string; name: string; items: typeof paginatedRequests }
+                | { kind: "phase"; key: string; name: string; accent: string; items: typeof paginatedRequests }
                 | { kind: "row"; request: typeof paginatedRequests[number]; index: number; child?: boolean };
               const items: Item[] = [];
-              if (groupByProject && projectGroups) {
+              if (groupByPhase && phaseGroups) {
+                let idx = 0;
+                for (const phase of phaseGroups) {
+                  items.push({ kind: "phase", key: phase.key, name: phase.name, accent: phase.accent, items: phase.items });
+                  if (!collapsedGroups.has(`phase-${phase.key}`)) {
+                    for (const request of phase.items) items.push({ kind: "row", request, index: idx++ });
+                  } else {
+                    idx += phase.items.length;
+                  }
+                }
+              } else if (groupByProject && projectGroups) {
                 let idx = 0;
                 for (const g of projectGroups.list) {
                   items.push({ kind: "project", key: g.key, name: g.name, items: g.items });
@@ -1064,6 +1158,26 @@ export const RequestsTable = ({
                 paginatedRequests.forEach((r, i) => items.push({ kind: "row", request: r, index: i }));
               }
               return items.map((it) => {
+                if (it.kind === "phase") {
+                  const collapsed = collapsedGroups.has(`phase-${it.key}`);
+                  const amount = it.items.reduce((sum, request) => sum + Number(request.amount || 0), 0);
+                  return (
+                    <TableRow
+                      key={`phase-${it.key}`}
+                      className="sticky top-[var(--row-h)] z-10 cursor-pointer border-y border-border bg-muted hover:bg-muted"
+                      onClick={() => toggleGroup(`phase-${it.key}`)}
+                    >
+                      <TableCell colSpan={100} className="px-2 py-1.5 text-left">
+                        <div className="flex items-center gap-2 text-xs">
+                          <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+                          <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", it.accent)} />
+                          <span className="font-semibold text-foreground">{it.name}</span>
+                          <span className="ml-auto font-mono text-muted-foreground">{it.items.length} заявок · {moneyShort(amount)}</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
                 if (it.kind === "group") {
                   const counts = it.items.reduce(
                     (acc, r) => {
@@ -1144,7 +1258,15 @@ export const RequestsTable = ({
                 const index = it.index;
                 const isChildRow = it.child === true;
                 const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
-                const priorityShadow = request.priority === "Аварийно" ? "inset 2px 0 0 hsl(var(--destructive))" : request.priority === "Приоритетно" ? "inset 2px 0 0 hsl(var(--warning))" : undefined;
+                const stale = isStale(request);
+                const staleDays = stale ? getStaleDays(request) : 0;
+                const priorityShadow = stale
+                  ? "inset 3px 0 0 hsl(var(--destructive))"
+                  : request.priority === "Аварийно"
+                    ? "inset 2px 0 0 hsl(var(--destructive))"
+                    : request.priority === "Приоритетно"
+                      ? "inset 2px 0 0 hsl(var(--warning))"
+                      : undefined;
 
                 return (
                 <React.Fragment key={request.id}>
@@ -1166,6 +1288,7 @@ export const RequestsTable = ({
                   className={cn(
                     "cursor-pointer group border-b border-border",
                     activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
+                    stale && activeRequestId !== request.id && "bg-destructive/[0.07]",
                     isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
                   )}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
@@ -1279,6 +1402,11 @@ export const RequestsTable = ({
                             }
                           />
                         </div>
+                        {stale && (
+                          <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-destructive px-1.5 font-mono text-[11px] font-medium text-destructive-foreground">
+                            стоит {staleDays} дн.
+                          </span>
+                        )}
                         <button
                           data-row-action
                           onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
