@@ -1412,11 +1412,6 @@ export const RequestsTable = ({
                             }
                           />
                         </div>
-                        {stale && (
-                          <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-destructive px-1.5 font-mono text-[11px] font-medium text-destructive-foreground">
-                            стоит {staleDays} дн.
-                          </span>
-                        )}
                         <button
                           data-row-action
                           onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
