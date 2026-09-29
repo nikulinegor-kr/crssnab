@@ -64,7 +64,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
-import { getStaleDays, isStale } from "@/lib/requestStaleness";
 
 
 const moneyShort = (n: number) =>
@@ -1267,19 +1266,12 @@ export const RequestsTable = ({
                 const index = it.index;
                 const isChildRow = it.child === true;
                 const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
-                const stale = isStale(request);
-                const staleDays = stale ? getStaleDays(request) : 0;
-                const priorityShadow = stale
-                  ? request.priority === "Аварийно"
-                    ? "inset 3px 0 0 hsl(var(--destructive))"
-                    : request.priority === "Приоритетно"
-                      ? "inset 3px 0 0 hsl(var(--destructive)), inset 5px 0 0 hsl(var(--warning))"
-                      : "inset 3px 0 0 hsl(var(--destructive))"
-                  : request.priority === "Аварийно"
-                    ? "inset 2px 0 0 hsl(var(--destructive))"
-                    : request.priority === "Приоритетно"
-                      ? "inset 2px 0 0 hsl(var(--warning))"
-                      : undefined;
+                const isNewRequest = request.status === "Новая заявка";
+                const priorityShadow = request.priority === "Аварийно"
+                  ? "inset 2px 0 0 hsl(var(--destructive))"
+                  : request.priority === "Приоритетно"
+                    ? "inset 2px 0 0 hsl(var(--warning))"
+                    : undefined;
 
                 return (
                 <React.Fragment key={request.id}>
@@ -1302,7 +1294,7 @@ export const RequestsTable = ({
                     "cursor-pointer group border-b border-border",
                     selectedRequestIds.has(request.id) || activeRequestId === request.id
                       ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]"
-                      : stale
+                      : isNewRequest
                         ? "bg-destructive/[0.07] hover:bg-[hsl(var(--row-hover))]"
                         : isChildRow
                           ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
