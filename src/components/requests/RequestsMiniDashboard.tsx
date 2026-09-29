@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { differenceInDays, isBefore, startOfToday } from "date-fns";
+import { isBefore, startOfToday } from "date-fns";
 import { Request } from "@/hooks/useRequests";
 import { SpecialDateFilter } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
+import { isStale } from "@/lib/requestStaleness";
 
 interface RequestsMiniDashboardProps {
   requests: Request[] | undefined;
@@ -28,9 +29,7 @@ export const RequestsMiniDashboard = ({
       overdue: active.filter((request) =>
         Boolean(request.delivery_date && isBefore(new Date(request.delivery_date), today))
       ).length,
-      stale: active.filter((request) =>
-        differenceInDays(today, new Date(request.updated_at || request.created_at)) > 2
-      ).length,
+      stale: active.filter((request) => isStale(request, today)).length,
       unpaid: active.filter((request) => {
         const percent = (request as any).payment_percent ?? request.payment_percentage ?? 0;
         return percent === 0 && request.amount > 0;
