@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
-import { addDays, startOfToday, isBefore, isAfter, differenceInDays } from "date-fns";
+import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
+import { isStale } from "@/lib/requestStaleness";
 
 export type SpecialDateFilter = 
   | "deliveredLast7Days" 
@@ -260,9 +261,7 @@ export const useRequestsFilters = (
       }
 
       if (specialDateFilter === "stale") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        const lastUpdate = new Date(request.updated_at || request.created_at);
-        if (differenceInDays(today, lastUpdate) <= 2) return false;
+        if (!isStale(request, today)) return false;
       }
 
       if (specialDateFilter === "deliveryToday") {

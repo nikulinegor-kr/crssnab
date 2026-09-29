@@ -437,7 +437,9 @@ export const RequestsTable = ({
 
   // Group by object
   const [groupByObject, setGroupByObject] = useState<boolean>(() => {
-    return localStorage.getItem("requests-group-by-object") === "1";
+    return localStorage.getItem("requests-group-by-object") === "1"
+      && localStorage.getItem("requests-group-by-project") !== "1"
+      && localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) !== "1";
   });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const toggleGroupByObject = useCallback((v: boolean) => {
@@ -460,7 +462,8 @@ export const RequestsTable = ({
 
   // Group by project (родительская заявка → дочерние)
   const [groupByProject, setGroupByProject] = useState<boolean>(() => {
-    return localStorage.getItem("requests-group-by-project") === "1";
+    return localStorage.getItem("requests-group-by-project") === "1"
+      && localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) !== "1";
   });
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const toggleGroupByProject = useCallback((v: boolean) => {
@@ -677,7 +680,7 @@ export const RequestsTable = ({
     if (!groupByPhase) return null;
     return REQUEST_PHASES.map((phase) => ({
       ...phase,
-      items: paginatedRequests.filter((request) => phase.statuses.includes(request.status as never)),
+      items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status)),
     })).filter((phase) => phase.items.length > 0);
   }, [groupByPhase, paginatedRequests]);
 
@@ -839,7 +842,10 @@ export const RequestsTable = ({
         {groupByPhase && phaseGroups ? (
           phaseGroups.map((g) => {
             const collapsed = collapsedGroups.has(`phase-${g.key}`);
-            const amount = g.items.reduce((sum, request) => sum + Number(request.amount || 0), 0);
+            const amount = g.items.reduce(
+              (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
+              0
+            );
             return (
               <div key={g.key} className="space-y-1.5">
                 <button
@@ -1160,14 +1166,17 @@ export const RequestsTable = ({
               return items.map((it) => {
                 if (it.kind === "phase") {
                   const collapsed = collapsedGroups.has(`phase-${it.key}`);
-                  const amount = it.items.reduce((sum, request) => sum + Number(request.amount || 0), 0);
+                  const amount = it.items.reduce(
+                    (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
+                    0
+                  );
                   return (
                     <TableRow
                       key={`phase-${it.key}`}
-                      className="sticky top-[var(--row-h)] z-10 cursor-pointer border-y border-border bg-muted hover:bg-muted"
+                      className="cursor-pointer border-y border-border bg-muted hover:bg-muted"
                       onClick={() => toggleGroup(`phase-${it.key}`)}
                     >
-                      <TableCell colSpan={100} className="px-2 py-1.5 text-left">
+                      <TableCell colSpan={100} className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
                         <div className="flex items-center gap-2 text-xs">
                           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", it.accent)} />
@@ -1261,7 +1270,11 @@ export const RequestsTable = ({
                 const stale = isStale(request);
                 const staleDays = stale ? getStaleDays(request) : 0;
                 const priorityShadow = stale
-                  ? "inset 3px 0 0 hsl(var(--destructive))"
+                  ? request.priority === "Аварийно"
+                    ? "inset 3px 0 0 hsl(var(--destructive))"
+                    : request.priority === "Приоритетно"
+                      ? "inset 3px 0 0 hsl(var(--destructive)), inset 5px 0 0 hsl(var(--warning))"
+                      : "inset 3px 0 0 hsl(var(--destructive))"
                   : request.priority === "Аварийно"
                     ? "inset 2px 0 0 hsl(var(--destructive))"
                     : request.priority === "Приоритетно"
@@ -1287,10 +1300,15 @@ export const RequestsTable = ({
 
                   className={cn(
                     "cursor-pointer group border-b border-border",
-                    activeRequestId === request.id ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]" : "hover:bg-[hsl(var(--row-hover))]",
-                    stale && activeRequestId !== request.id && "bg-destructive/[0.07]",
-                    isChildRow && activeRequestId !== request.id && "bg-primary/[0.03]"
+                    selectedRequestIds.has(request.id) || activeRequestId === request.id
+                      ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]"
+                      : stale
+                        ? "bg-destructive/[0.07] hover:bg-[hsl(var(--row-hover))]"
+                        : isChildRow
+                          ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
+                          : "hover:bg-[hsl(var(--row-hover))]"
                   )}
+                  data-state={selectedRequestIds.has(request.id) ? "selected" : undefined}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ height: 'var(--row-h)' }}
