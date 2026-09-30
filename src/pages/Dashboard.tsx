@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
 import { useUserRole } from "@/hooks/useUserRole";
+import { isNewRequest, isOverdue, isStale, isUnpaid } from "@/lib/requestAttention";
 
 type PeriodKey = "today" | "7d" | "30d" | "month" | "all";
 
@@ -94,6 +95,16 @@ const Dashboard = () => {
   }, [requests, periodStart, selectedYear]);
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const attention = useMemo(() => {
+    const all = requests ?? [];
+    return {
+      newRequests: all.filter(isNewRequest).length,
+      overdue: all.filter((r) => isOverdue(r)).length,
+      stale: all.filter((r) => isStale(r)).length,
+      unpaid: all.filter(isUnpaid).length,
+    };
+  }, [requests]);
 
   const stats = useMemo(() => {
     const all = filteredRequests;
@@ -285,28 +296,28 @@ const Dashboard = () => {
               <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?status=Новая заявка")}>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Новые, не отработаны</p>
-                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{stats.newRequests}</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{attention.newRequests}</p>
                   <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
                 </CardContent>
               </Card>
               <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?filter=overdue")}>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Просрочено</p>
-                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-destructive">{stats.overdue}</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-destructive">{attention.overdue}</p>
                   <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
                 </CardContent>
               </Card>
               <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?filter=stale")}>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Зависло дольше 2 дней</p>
-                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-warning">{stats.stale}</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-warning">{attention.stale}</p>
                   <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
                 </CardContent>
               </Card>
               <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?payment_status=unpaid")}>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Ждёт оплаты</p>
-                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{stats.unpaid}</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{attention.unpaid}</p>
                   <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
                 </CardContent>
               </Card>
