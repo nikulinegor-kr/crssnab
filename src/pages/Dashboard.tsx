@@ -1,12 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  FileText, Clock, AlertCircle, Plus, MessageCircle, Building2, Truck, 
-  AlertTriangle, DollarSign, CheckCircle, Timer, Pause, PackageCheck,
-  TrendingUp, Zap, Star, CalendarDays, PackageX, Ban, BarChart3
-} from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, MessageCircle, BarChart3 } from "lucide-react";
 import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
 import { MyPlannerTasksWidget } from "@/components/dashboard/MyPlannerTasksWidget";
 import { useRequests } from "@/hooks/useRequests";
@@ -15,14 +10,12 @@ import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
 import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { DashboardWidgetSettings } from "@/components/dashboard/DashboardWidgetSettings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
@@ -57,67 +50,6 @@ function getPeriodStart(key: PeriodKey): Date | null {
   }
 }
 
-interface DashboardCardProps {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  variant?: "danger" | "warning" | "success" | "info" | "neutral";
-  hint?: string;
-  onClick?: () => void;
-}
-
-const variantStyles: Record<string, { icon: string; border: string; bg: string; text: string }> = {
-  danger: { icon: "text-destructive", border: "border-destructive/30", bg: "bg-destructive/10", text: "text-destructive" },
-  warning: { icon: "text-warning", border: "border-warning/30", bg: "bg-warning/10", text: "text-warning" },
-  success: { icon: "text-success", border: "border-success/30", bg: "bg-success/10", text: "text-success" },
-  info: { icon: "text-info", border: "border-info/30", bg: "bg-info/10", text: "text-info" },
-  neutral: { icon: "text-muted-foreground", border: "border-border/40", bg: "bg-muted/50", text: "text-foreground" },
-};
-
-function DashboardCard({ title, value, icon: Icon, variant = "neutral", hint, onClick }: DashboardCardProps) {
-  const s = variantStyles[variant];
-  const card = (
-    <Card
-      className={`${s.border} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}
-      onClick={onClick}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-muted-foreground leading-tight">{title}</p>
-          <div className={`p-1.5 rounded-md ${s.bg}`}>
-            <Icon className={`h-3.5 w-3.5 ${s.icon}`} />
-          </div>
-        </div>
-        <p className={`text-2xl font-bold ${value > 0 ? s.text : "text-muted-foreground"}`}>{value}</p>
-        {hint && <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
-
-  if (hint) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{card}</TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[220px] text-xs">
-            {hint}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return card;
-}
-
-function SectionHeader({ icon: Icon, title, color }: { icon: React.ElementType; title: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Icon className={`h-4 w-4 ${color}`} />
-      <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h2>
-    </div>
-  );
-}
 
 const Dashboard = () => {
   const rawNavigate = useNavigate();
