@@ -53,7 +53,7 @@ export function NeedsActionWidget({ requests, onRequestClick }: NeedsActionWidge
             {visibleRequests.map((request) => {
               const idleDays = Math.max(
                 0,
-                differenceInDays(startOfToday(), new Date(request.updated_at || request.created_at)),
+                differenceInDays(startOfToday(), new Date(request.updated_at || request.created_at || 0)),
               );
               const stateLabel = request.status === "Новая заявка" ? "новая" : request.status.toLocaleLowerCase("ru-RU");
 
