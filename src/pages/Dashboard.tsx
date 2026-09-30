@@ -63,7 +63,6 @@ const Dashboard = () => {
   }, [rawNavigate]);
   const { data: requests, isLoading: requestsLoading, refetch } = useRequests();
   const { currentOrgId } = useCurrentOrganization();
-  const { logoUrl, orgName } = useOrgBranding();
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
@@ -234,61 +233,15 @@ const Dashboard = () => {
     <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 space-y-5 overflow-hidden min-w-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {logoUrl ? (
-              <div className="p-2 rounded-lg bg-muted/60 shrink-0">
-                <img src={logoUrl} alt={orgName} className="h-16 w-16 object-contain rounded-lg" />
-              </div>
-            ) : (
-              <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Building2 className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-            <div>
-              {orgName && <p className="text-lg font-semibold text-foreground">{orgName}</p>}
-              <h1 className="text-lg text-muted-foreground font-medium">Панель управления</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <DashboardWidgetSettings />
-            <Button
-              onClick={openQuickRequest}
-              size="sm"
-              variant="secondary"
-              title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-              className="gap-1.5"
-            >
-              <Zap className="h-4 w-4" />
-              <span className="hidden sm:inline">Быстрая заявка</span>
-              <span className="sm:hidden">Быстро</span>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-lg text-muted-foreground font-medium">Панель управления</h1>
+          <CreateRequestDialog>
+            <Button size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" /> Новая заявка
             </Button>
-            <CreateRequestDialog>
-              <Button size="sm" className="gap-1.5">
-                <Plus className="h-4 w-4" /> Новая заявка
-              </Button>
-            </CreateRequestDialog>
-          </div>
+          </CreateRequestDialog>
         </div>
 
-        {/* Mobile-only prominent Quick Request action */}
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={openQuickRequest}
-          className="sm:hidden h-auto w-full justify-between gap-3 rounded-xl p-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-md border border-input bg-background flex items-center justify-center">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold leading-tight">Быстрая заявка</div>
-              <div className="text-xs text-muted-foreground">Создать за 2 секунды</div>
-            </div>
-          </div>
-          <Plus className="h-5 w-5 opacity-90" />
-        </Button>
 
 
         {/* Period filter + Year */}
@@ -327,135 +280,38 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* Summary Block */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {[
-                    { title: "Всего заявок", value: stats.total, icon: FileText, color: "text-foreground" },
-                    { title: "Новых", value: stats.newRequests, icon: Plus, color: "text-primary" },
-                    { title: "Выполняется", value: stats.inProgress, icon: Timer, color: "text-warning" },
-                    { title: "В пути", value: stats.inTransit, icon: Truck, color: "text-info" },
-                    { title: "Доставлено в ТК", value: stats.notPickedUp, icon: PackageCheck, color: "text-info" },
-                    { title: "Доставлено", value: stats.completed, icon: CheckCircle, color: "text-success" },
-                  ].map((card) => {
-                    const Icon = card.icon;
-                    return (
-                      <div key={card.title} className="flex items-center gap-3">
-                        <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-muted">
-                          <Icon className={`h-4 w-4 ${card.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold leading-tight">{card.value}</p>
-                          <p className="text-xs text-muted-foreground">{card.title}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 🔴 СРОЧНОСТЬ */}
-            <div className="space-y-2">
-              <SectionHeader icon={Zap} title="Срочность" color="text-destructive" />
-              <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Аварийные" value={stats.emergency} icon={AlertCircle} variant="danger" onClick={() => navigate("/requests?priority=Аварийно")} />
-                <DashboardCard title="Приоритетные" value={stats.priority} icon={Star} variant="warning" onClick={() => navigate("/requests?priority=Приоритетно")} />
-                <DashboardCard title="Плановые" value={stats.planned} icon={CalendarDays} variant="info" onClick={() => navigate("/requests?priority=Планово")} />
-              </div>
+            {/* Требует внимания */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?status=Новая заявка")}>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Новые, не отработаны</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{stats.newRequests}</p>
+                  <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
+                </CardContent>
+              </Card>
+              <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?filter=overdue")}>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Просрочено</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-destructive">{stats.overdue}</p>
+                  <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
+                </CardContent>
+              </Card>
+              <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?filter=stale")}>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Зависло дольше 2 дней</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-warning">{stats.stale}</p>
+                  <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
+                </CardContent>
+              </Card>
+              <Card className="transition-colors cursor-pointer hover:border-primary/40" onClick={() => navigate("/requests?payment_status=unpaid")}>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Ждёт оплаты</p>
+                  <p className="mt-1 font-numeric text-[34px] font-semibold leading-none text-foreground">{stats.unpaid}</p>
+                  <p className="mt-2 text-sm text-primary">Открыть в реестре →</p>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* ⚙️ РАБОТА */}
-            <div className="space-y-2">
-              <SectionHeader icon={FileText} title="Работа" color="text-info" />
-              <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Новые заявки" value={stats.newRequests} icon={Plus} variant="info" onClick={() => navigate("/requests?status=Новая заявка")} />
-                <DashboardCard title="Выполняется" value={stats.inProgress} icon={Timer} variant="neutral" onClick={() => navigate("/requests?status=В работе,КП,На согласовании,Счёт,Счёт в Бухгалтерии,В пути,Доставлено в ТК")} />
-                <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-              </div>
-            </div>
-
-            {/* 🚨 ПРОБЛЕМЫ */}
-            <div className="space-y-2">
-              <SectionHeader icon={AlertTriangle} title="Проблемы" color="text-destructive" />
-              <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Просроченные" value={stats.overdue} icon={Clock} variant="danger" hint="Дата прихода прошла, но заявка не доставлена" onClick={() => navigate("/requests?filter=overdue")} />
-                <DashboardCard title="Зависшие (>2 дн.)" value={stats.stale} icon={Pause} variant="danger" hint="Нет изменений более 2 дней" onClick={() => navigate("/requests?filter=stale")} />
-                <DashboardCard title="Не забраны из ТК" value={stats.notPickedUp} icon={PackageX} variant="danger" hint="Статус «Доставлено в ТК», но не забраны" onClick={() => navigate("/requests?status=Доставлено в ТК")} />
-              </div>
-            </div>
-
-            {/* 🚚 ЛОГИСТИКА */}
-            <div className="space-y-2">
-              <SectionHeader icon={Truck} title="Логистика" color="text-info" />
-              <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="В пути" value={stats.inTransit} icon={Truck} variant="info" onClick={() => navigate("/requests?status=В пути")} />
-                <DashboardCard title="Доставка сегодня" value={stats.deliveryToday} icon={CalendarDays} variant="success" hint="Дата прихода = сегодня, статус не «Доставлено»" onClick={() => navigate("/requests?filter=deliveryToday")} />
-                <DashboardCard title="Просрочка отгрузки" value={stats.overdueShipment} icon={AlertTriangle} variant="danger" hint="Просрочка отгрузки — дата отгрузки прошла, но товар не отправлен" onClick={() => navigate("/requests?filter=overdueShipment")} />
-              </div>
-            </div>
-
-            {/* 💰 ФИНАНСЫ */}
-            <div className="space-y-2">
-              <SectionHeader icon={DollarSign} title="Финансы (со счётом)" color="text-success" />
-              <div className="grid grid-cols-3 gap-3">
-                <DashboardCard title="Не оплачено" value={stats.unpaid} icon={Ban} variant="danger" hint="Есть счёт, но оплата не проведена" onClick={() => navigate("/requests?payment_status=unpaid")} />
-                <DashboardCard title="Частично оплачено" value={stats.partiallyPaid} icon={DollarSign} variant="warning" hint="Есть счёт, оплата частичная" onClick={() => navigate("/requests?payment_status=partial")} />
-                <DashboardCard title="Оплачено" value={stats.paid} icon={CheckCircle} variant="success" hint="Есть счёт, оплата 100%" onClick={() => navigate("/requests?payment_status=paid")} />
-              </div>
-            </div>
-
-            {/* 📊 ЭФФЕКТИВНОСТЬ + ⏱ СРЕДНЕЕ ВРЕМЯ */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <SectionHeader icon={TrendingUp} title="Эффективность" color="text-success" />
-                <div className="grid grid-cols-2 gap-3">
-                  <DashboardCard title="Выполнено" value={stats.completed} icon={PackageCheck} variant="success" onClick={() => navigate("/requests?status=Доставлено")} />
-                  <Card className="border-border/40 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all" onClick={() => navigate("/requests")}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-muted-foreground">% выполнения</p>
-                        <div className="p-1.5 rounded-md bg-success/10">
-                          <TrendingUp className="h-3.5 w-3.5 text-success" />
-                        </div>
-                      </div>
-                      <p className={`text-2xl font-bold font-numeric ${stats.completionRate >= 70 ? "text-success" : stats.completionRate >= 40 ? "text-warning" : "text-destructive"}`}>
-                        {stats.completionRate}%
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1 font-numeric">{stats.completed} из {stats.total}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <SectionHeader icon={Timer} title="Среднее время (дней)" color="text-info" />
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { title: "Создание → Заказ", value: stats.avgCreationToOrder, hint: "От создания заявки до отгрузки" },
-                    { title: "Заказ → Доставка", value: stats.avgOrderToDelivery, hint: "От отгрузки до прихода" },
-                    { title: "Полный цикл", value: stats.avgFullCycle, hint: "От создания до доставки" },
-                  ].map(item => (
-                    <TooltipProvider key={item.title}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Card className="border-border/40">
-                            <CardContent className="p-4">
-                              <p className="text-xs text-muted-foreground mb-2 leading-tight">{item.title}</p>
-                              <p className={`text-2xl font-bold ${item.value > 14 ? "text-destructive" : item.value > 7 ? "text-warning" : "text-success"}`}>
-                                {item.value || "—"}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">{item.hint}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                </div>
-              </div>
-            </div>
 
             {/* 📦 ТОП ОБЪЕКТОВ ПО РАСХОДАМ */}
             {objectExpenses.length > 0 && (
