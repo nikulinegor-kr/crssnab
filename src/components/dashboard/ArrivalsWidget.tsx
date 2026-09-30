@@ -104,7 +104,7 @@ export function ArrivalsWidget({ requests, onRequestClick }: ArrivalsWidgetProps
             <span className="truncate text-sm">{request.description}</span>
             <span className="hidden truncate text-[13px] text-muted-foreground md:block">{request.object_name || "—"}</span>
             <span className="whitespace-nowrap text-right font-numeric text-[13px]">
-              {request.amount.toLocaleString("ru-RU")} ₽
+              {request.amount ? `${request.amount.toLocaleString("ru-RU")} ₽` : "—"}
             </span>
           </div>
         ))}
