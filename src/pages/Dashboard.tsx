@@ -14,8 +14,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
-import { EmergencyRequestsWidget } from "@/components/dashboard/EmergencyRequestsWidget";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
+import { ArrivalsWidget } from "@/components/dashboard/ArrivalsWidget";
+import { NeedsActionWidget } from "@/components/dashboard/NeedsActionWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewSettings } from "@/hooks/useViewSettings";
@@ -323,6 +324,10 @@ const Dashboard = () => {
               </Card>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-stretch">
+              <ArrivalsWidget requests={requests ?? []} onRequestClick={handleRequestClick} />
+              <NeedsActionWidget requests={requests ?? []} onRequestClick={handleRequestClick} />
+            </div>
 
             {/* 📦 ТОП ОБЪЕКТОВ ПО РАСХОДАМ */}
             {objectExpenses.length > 0 && (
@@ -401,10 +406,9 @@ const Dashboard = () => {
             <MyPlannerTasksWidget />
 
             {/* Widgets */}
-            {filteredRequests.length > 0 && (settings.dashboard.showCalendarWidget || settings.dashboard.showEmergencyWidget) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredRequests.length > 0 && settings.dashboard.showCalendarWidget && (
+              <div className="grid grid-cols-1 gap-4">
                 {settings.dashboard.showCalendarWidget && <CalendarWidget requests={calendarRequests} />}
-                {settings.dashboard.showEmergencyWidget && <EmergencyRequestsWidget requests={filteredRequests} onRequestClick={handleRequestClick} />}
               </div>
             )}
           </>
