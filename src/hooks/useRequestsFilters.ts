@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
 import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
 import { isStale } from "@/lib/requestStaleness";
+import { isOverdue, isUnpaid } from "@/lib/requestAttention";
 
 export type SpecialDateFilter = 
   | "deliveredLast7Days" 
@@ -255,9 +256,7 @@ export const useRequestsFilters = (
       }
 
       if (specialDateFilter === "overdue") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!request.delivery_date) return false;
-        if (!isBefore(new Date(request.delivery_date), today)) return false;
+        if (!isOverdue(request, today)) return false;
       }
 
       if (specialDateFilter === "stale") {
@@ -285,9 +284,7 @@ export const useRequestsFilters = (
       }
 
       if (specialDateFilter === "unpaid") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
-        if (!(pct === 0 && request.amount > 0)) return false;
+        if (!isUnpaid(request)) return false;
       }
 
       if (specialDateFilter === "paid") {
