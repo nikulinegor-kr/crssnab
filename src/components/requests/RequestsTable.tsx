@@ -108,10 +108,13 @@ const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
 
 const REQUEST_PHASES = [
   { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
-  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "Счёт в Бухгалтерии", "В работе"], accent: "bg-info" },
-  { key: "transit", name: "В пути", statuses: ["Готов к отгрузке", "В пути", "Доставлено в ТК"], accent: "bg-primary" },
+  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "В работе"], accent: "bg-info" },
+  { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в Бухгалтерии", "Счёт в бухгалтерии"], accent: "bg-warning" },
+  { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
+  { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
   { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
 ] as const;
+
 
 type RowDensity = "compact" | "normal" | "roomy";
 
