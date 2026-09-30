@@ -27,7 +27,7 @@ export function NeedsActionWidget({ requests, onRequestClick }: NeedsActionWidge
       .sort((a, b) => {
         const priorityDifference = Number(b.priority === "Аварийно") - Number(a.priority === "Аварийно");
         if (priorityDifference !== 0) return priorityDifference;
-        return new Date(a.updated_at || a.created_at).getTime() - new Date(b.updated_at || b.created_at).getTime();
+        return new Date(a.updated_at || a.created_at || 0).getTime() - new Date(b.updated_at || b.created_at || 0).getTime();
       }),
     [requests],
   );
