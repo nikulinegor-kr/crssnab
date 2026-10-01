@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip } from "lucide-react";
