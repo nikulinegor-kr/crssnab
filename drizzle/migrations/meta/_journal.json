@@ -36,6 +36,13 @@
       "when": 1790851366562,
       "tag": "0004_requests_perf_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790851735213,
+      "tag": "0005_optimize_requests_triggers",
+      "breakpoints": true
     }
   ]
 }
