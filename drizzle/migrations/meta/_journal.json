@@ -43,6 +43,13 @@
       "when": 1790851735213,
       "tag": "0005_optimize_requests_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790851828704,
+      "tag": "0006_archive_auto_tasks_and_queue_cleanup",
+      "breakpoints": true
     }
   ]
 }
