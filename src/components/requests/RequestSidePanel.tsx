@@ -495,7 +495,7 @@ export const RequestSidePanel = ({
 
   const asOverlay = !inline || isFullscreen;
 
-  const cardClass = cn("mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", " border border-border bg-card px-3 py-2.5";
+  const cardClass = cn("mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", "border border-border bg-card px-3 py-2.5");
   const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
     <div className={cardClass}>
@@ -691,7 +691,7 @@ export const RequestSidePanel = ({
     </div>
   );
   const totalsBlock = (
-    <div className="mx-0 w-full max-w-[480px]">
+    <div className={cn("mx-0 w-full", !isFullscreen && "max-w-[480px]")}>
             <div className="mt-2 rounded bg-muted/60 px-3 py-2.5">
               <PanelField
                 label="Товар"
