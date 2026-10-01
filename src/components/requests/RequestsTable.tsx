@@ -58,7 +58,7 @@ import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
 import { useAuthUserId } from "@/hooks/useOrgMembership";
-import { isBefore, startOfToday } from "date-fns";
+import { endOfToday, isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1293,7 +1293,7 @@ export const RequestsTable = ({
                 const isShippingToday = Boolean(
                   request.shipment_date &&
                   request.status !== "В пути" &&
-                  format(new Date(request.shipment_date), "yyyy-MM-dd") === format(startOfToday(), "yyyy-MM-dd")
+                  isBefore(new Date(request.shipment_date), endOfToday())
                 );
                 const priorityShadow = request.priority === "Аварийно"
                   ? "inset 2px 0 0 hsl(var(--destructive))"
