@@ -1016,6 +1016,7 @@ export const RequestSidePanel = ({
           >
             <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
+              {invoiceBlock}
               {totalsBlock}
             </div>
             <div className={cn(columnClass, "overflow-y-auto")}>
