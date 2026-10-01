@@ -625,6 +625,7 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
+              onMaximize={() => setPanelOpen(false)}
             />
           </div>
         </div>
@@ -697,6 +698,7 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
+              onMaximize={() => setPanelOpen(false)}
             />
           </div>
         </div>
@@ -730,6 +732,7 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
+              onMaximize={() => setPanelOpen(false)}
             />
             </div>
           )}

@@ -168,6 +168,7 @@ interface RequestsTableProps {
   activeRequestId?: string | null;
   onRequestOrderChange?: (requests: Request[]) => void;
   onClearSelection?: () => void;
+  onMaximize?: () => void;
 
 }
 
@@ -295,6 +296,7 @@ export const RequestsTable = ({
   activeRequestId,
   onRequestOrderChange,
   onClearSelection,
+  onMaximize,
 }: RequestsTableProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -489,8 +491,9 @@ export const RequestsTable = ({
       setGroupByProject(false);
       localStorage.setItem("requests-group-by-object", "0");
       localStorage.setItem("requests-group-by-project", "0");
+      onMaximize?.();
     }
-  }, []);
+  }, [onMaximize]);
   const toggleProject = useCallback((key: string) => {
     setExpandedProjects((prev) => {
       const next = new Set(prev);
