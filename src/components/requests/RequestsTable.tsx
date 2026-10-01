@@ -379,7 +379,7 @@ export const RequestsTable = ({
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
   const totalColCount = useMemo(() => {
     const keys = ["request_date","description","object","priority","status","availability","contractor","amount","invoice_number","payment_prepay","payment_percentage","shipment_date","delivery_date","transport_company","waybill_number","applicant","executor","equipment","comments"] as const;
-    return 2 + keys.filter((k) => (visibility as Record<string, boolean | undefined>)[k]).length + 1;
+    return 1 + keys.filter((k) => (visibility as Record<string, boolean | undefined>)[k]).length + 1;
   }, [visibility]);
   const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
