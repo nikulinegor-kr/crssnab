@@ -87,13 +87,23 @@ export const useRequests = (showArchived: boolean = false) => {
 
 
 export const useRequestStats = () => {
+  const orgId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("currentOrganizationId")
+      : null;
+
   return useQuery({
-    queryKey: ["request-stats"],
+    queryKey: ["request-stats", orgId],
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       // Server-side counts only — no full-table download.
       const today = new Date().toISOString().split("T")[0];
-      const base = () =>
-        supabase.from("requests").select("id", { count: "exact", head: true });
+      const base = () => {
+        const q = supabase.from("requests").select("id", { count: "exact", head: true });
+        return orgId ? q.eq("organization_id", orgId) : q;
+      };
+
       const [t, n, e, c] = await Promise.all([
         base(),
         base().gte("created_at", `${today}T00:00:00Z`),
