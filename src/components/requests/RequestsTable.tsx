@@ -1290,18 +1290,16 @@ export const RequestsTable = ({
                 const isChildRow = it.child === true;
                 const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
                 const isNewRequest = request.status === "Новая заявка";
-                const isArrivingToday = Boolean(
-                  request.delivery_date &&
+                const isShippingToday = Boolean(
+                  request.shipment_date &&
                   request.status !== "В пути" &&
-                  format(new Date(request.delivery_date), "yyyy-MM-dd") === format(startOfToday(), "yyyy-MM-dd")
+                  format(new Date(request.shipment_date), "yyyy-MM-dd") === format(startOfToday(), "yyyy-MM-dd")
                 );
                 const priorityShadow = request.priority === "Аварийно"
                   ? "inset 2px 0 0 hsl(var(--destructive))"
                   : request.priority === "Приоритетно"
                     ? "inset 2px 0 0 hsl(var(--warning))"
-                    : isArrivingToday
-                      ? "inset 3px 0 0 hsl(var(--warning) / 0.35)"
-                      : undefined;
+                    : undefined;
 
                 return (
                 <React.Fragment key={request.id}>
@@ -1326,9 +1324,11 @@ export const RequestsTable = ({
                       ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]"
                       : isNewRequest
                         ? "bg-destructive/[0.07] hover:bg-[hsl(var(--row-hover))]"
-                        : isChildRow
-                          ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
-                          : "hover:bg-[hsl(var(--row-hover))]"
+                        : isShippingToday
+                          ? "bg-warning/[0.09] hover:bg-[hsl(var(--row-hover))]"
+                          : isChildRow
+                            ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
+                            : "hover:bg-[hsl(var(--row-hover))]"
                   )}
                   data-state={selectedRequestIds.has(request.id) ? "selected" : undefined}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
