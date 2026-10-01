@@ -51,6 +51,14 @@ export function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Reference lists are only needed once the user actually opens the search,
+  // and they change rarely — cache them for 15 minutes.
+  const dictionaryOptions = {
+    enabled: isOpen,
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 60,
+  } as const;
+
   const { data: objects } = useQuery({
     queryKey: ["search-objects", currentOrgId],
     queryFn: async () => {
@@ -60,6 +68,7 @@ export function GlobalSearch() {
         .eq("is_active", true);
       return data || [];
     },
+    ...dictionaryOptions,
   });
 
   const { data: suppliers } = useQuery({
@@ -70,6 +79,7 @@ export function GlobalSearch() {
         .select("id, name, category, contact_person, inn, phone");
       return data || [];
     },
+    ...dictionaryOptions,
   });
 
   const { data: products } = useQuery({
@@ -80,6 +90,7 @@ export function GlobalSearch() {
         .select("id, name, article, unit");
       return data || [];
     },
+    ...dictionaryOptions,
   });
 
   const { data: warehouses } = useQuery({
@@ -90,7 +101,9 @@ export function GlobalSearch() {
         .select("id, name, description, request_objects(name)");
       return data || [];
     },
+    ...dictionaryOptions,
   });
+
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {

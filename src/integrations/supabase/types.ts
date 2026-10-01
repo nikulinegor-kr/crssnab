@@ -2692,6 +2692,7 @@ export type Database = {
       planner_tasks: {
         Row: {
           actual_hours: number | null
+          archived: boolean
           archived_at: string | null
           assignee_id: string | null
           assignee_name: string | null
@@ -2729,6 +2730,7 @@ export type Database = {
         }
         Insert: {
           actual_hours?: number | null
+          archived?: boolean
           archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
@@ -2766,6 +2768,7 @@ export type Database = {
         }
         Update: {
           actual_hours?: number | null
+          archived?: boolean
           archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
@@ -4970,6 +4973,7 @@ export type Database = {
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
       cleanup_notification_dedup: { Args: never; Returns: undefined }
+      cleanup_notification_queue: { Args: never; Returns: undefined }
       create_arrival_check_tasks: { Args: never; Returns: number }
       enqueue_notification: {
         Args: {
