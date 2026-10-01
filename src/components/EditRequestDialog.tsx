@@ -1035,32 +1035,17 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         {/* Draft Recovery Banner */}
         <DraftRecoveryBanner />
 
-        {/* 1. Context Block: Description + Comment */}
-        <ContextSection 
-          form={form} 
-          draftSaveState={draftSaveState}
-          autoFocus={!isViewer}
-          disabled={isViewer}
-        />
-
-        {/* 2. Request Items */}
-        <RequestItemsSection
-          items={requestItems}
-          onItemsChange={setRequestItems}
-          disabled={isViewer}
-        />
-
-        {/* 3. Core Params: Date, Object */}
-        <CoreParamsSection
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:items-start">
+          {/* Левая колонка — паспорт заявки */}
+          <div className="min-w-0 space-y-5">
+            <CoreParamsSection
           showProjectField
           form={form}
           objectsData={objectsData}
           currentOrgId={request?.organization_id || null}
           disabled={isViewer}
         />
-
-        {/* 3. Status & Responsibles */}
-        <StatusResponsiblesSection
+            <StatusResponsiblesSection
           form={form}
           statuses={statuses}
           priorities={priorities}
@@ -1069,27 +1054,34 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           currentOrgId={request?.organization_id || null}
           disabled={isViewer}
         />
-
-        {/* 4. Finance */}
-        <FinanceSection 
+            <FinanceSection 
           form={form} 
           suppliers={suppliers}
           recentContractors={recentContractors}
           disabled={isViewer}
         />
-
-
-        {/* 6. Logistics: TK, TTN, Dates */}
-        <LogisticsSection
+            <LogisticsSection
           form={form}
           recentTransportCompanies={recentTransportCompanies}
           disabled={isViewer}
           requestId={request?.id}
           organizationId={request?.organization_id}
         />
-
-        {/* 7. Additional: ZRS, Files */}
-        <AdditionalSection
+          </div>
+          {/* Правая колонка — рабочая область */}
+          <div className="min-w-0 space-y-5">
+            <ContextSection 
+          form={form} 
+          draftSaveState={draftSaveState}
+          autoFocus={!isViewer}
+          disabled={isViewer}
+        />
+            <RequestItemsSection
+          items={requestItems}
+          onItemsChange={setRequestItems}
+          disabled={isViewer}
+        />
+            <AdditionalSection
           form={form}
           formValues={formValues}
           objectsData={objectsData}
@@ -1104,9 +1096,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           onRemoveExistingDocument={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
           organizationId={request?.organization_id || null}
         />
+          </div>
+        </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t">
+        <div className="sticky bottom-0 z-10 -mx-5 flex flex-col-reverse justify-between gap-3 border-t bg-card px-5 py-3 sm:flex-row">
           {canEdit && (
             <Button
               type="button"
@@ -1250,7 +1244,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
           side="right"
-          className="w-[min(720px,48vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
+          className="w-[min(1280px,94vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
@@ -1258,7 +1252,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           </SheetHeader>
           <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
           <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-4">
             {formContent}
           </div>
         </SheetContent>
