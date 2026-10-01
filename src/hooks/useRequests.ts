@@ -38,8 +38,16 @@ export interface Request {
 }
 
 export const useRequests = (showArchived: boolean = false) => {
+  const orgId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("currentOrganizationId")
+      : null;
+
   return useQuery({
-    queryKey: ["requests", showArchived],
+    queryKey: ["requests", showArchived, orgId],
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const PAGE_SIZE = 1000;
       let allData: any[] = [];
@@ -47,11 +55,15 @@ export const useRequests = (showArchived: boolean = false) => {
       let hasMore = true;
 
       while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
           .from("requests")
           .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)")
           .eq("archived", showArchived)
-          .eq("is_project", false)
+          .eq("is_project", false);
+
+        if (orgId) query = query.eq("organization_id", orgId);
+
+        const { data, error } = await query
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
 
@@ -72,6 +84,7 @@ export const useRequests = (showArchived: boolean = false) => {
     },
   });
 };
+
 
 export const useRequestStats = () => {
   return useQuery({
