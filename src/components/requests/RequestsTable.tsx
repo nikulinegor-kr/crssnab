@@ -694,7 +694,7 @@ export const RequestsTable = ({
         statuses: [] as unknown as (typeof grouped)[number]["statuses"],
         accent: "bg-border",
         items: other,
-      } as (typeof grouped)[number]);
+      } as unknown as (typeof grouped)[number]);
     }
     return grouped;
   }, [groupByPhase, paginatedRequests]);
