@@ -377,6 +377,10 @@ export const RequestsTable = ({
     return v;
   }, [storedVisibility, availableWidth]);
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
+  const totalColCount = useMemo(() => {
+    const keys = ["request_date","description","object","priority","status","availability","contractor","amount","invoice_number","payment_prepay","payment_percentage","shipment_date","delivery_date","transport_company","waybill_number","applicant","executor","equipment","comments"] as const;
+    return 1 + keys.filter((k) => (visibility as Record<string, boolean | undefined>)[k]).length + 1;
+  }, [visibility]);
   const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
@@ -1194,7 +1198,7 @@ export const RequestsTable = ({
                       className="cursor-pointer border-y border-border bg-muted hover:bg-muted"
                       onClick={() => toggleGroup(`phase-${it.key}`)}
                     >
-                      <TableCell colSpan={100} className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
+                      <TableCell colSpan={totalColCount} className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
                         <div className="flex items-center gap-2 text-xs">
                           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", it.accent)} />
@@ -1226,7 +1230,7 @@ export const RequestsTable = ({
                       className="bg-accent/70 hover:bg-accent cursor-pointer border-y border-border"
                       onClick={() => toggleGroup(it.key)}
                     >
-                      <TableCell colSpan={100} className="px-2 py-1.5 text-left">
+                      <TableCell colSpan={totalColCount} className="px-2 py-1.5 text-left">
                         <div className="flex items-center justify-start gap-2 flex-wrap text-xs text-left">
                           <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <MapPin className="h-4 w-4 text-primary" />
@@ -1257,7 +1261,7 @@ export const RequestsTable = ({
                       className="bg-primary/5 hover:bg-primary/10 cursor-pointer border-y-2 border-primary/30"
                       onClick={() => toggleProject(it.key)}
                     >
-                      <TableCell colSpan={100} className="px-3 py-2 text-left">
+                      <TableCell colSpan={totalColCount} className="px-3 py-2 text-left">
                         <div className="flex items-center justify-start gap-2 flex-wrap text-sm text-left">
                           <ChevronDown className={`h-4 w-4 transition-transform ${open ? '' : '-rotate-90'}`} />
                           <FolderOpen className="h-4 w-4 text-primary" />
@@ -1742,7 +1746,7 @@ export const RequestsTable = ({
 
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={100} className="p-0 border-b">
+                    <TableCell colSpan={totalColCount} className="p-0 border-b">
                       <RequestShipmentsTree requestId={request.id} />
                     </TableCell>
                   </TableRow>
