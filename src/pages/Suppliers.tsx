@@ -209,7 +209,11 @@ export default function Suppliers() {
       return data as Supplier[];
     },
     enabled: !!currentOrgId,
+    // Directory data — changes only when a contractor is added/edited (invalidated on mutation).
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 60,
   });
+
 
   // Создание/обновление поставщика
   const mutation = useMutation({
