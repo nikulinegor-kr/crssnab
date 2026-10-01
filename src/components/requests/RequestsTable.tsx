@@ -1290,11 +1290,18 @@ export const RequestsTable = ({
                 const isChildRow = it.child === true;
                 const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
                 const isNewRequest = request.status === "Новая заявка";
+                const isArrivingToday = Boolean(
+                  request.delivery_date &&
+                  request.status !== "В пути" &&
+                  format(new Date(request.delivery_date), "yyyy-MM-dd") === format(startOfToday(), "yyyy-MM-dd")
+                );
                 const priorityShadow = request.priority === "Аварийно"
                   ? "inset 2px 0 0 hsl(var(--destructive))"
                   : request.priority === "Приоритетно"
                     ? "inset 2px 0 0 hsl(var(--warning))"
-                    : undefined;
+                    : isArrivingToday
+                      ? "inset 3px 0 0 hsl(var(--warning) / 0.35)"
+                      : undefined;
 
                 return (
                 <React.Fragment key={request.id}>
