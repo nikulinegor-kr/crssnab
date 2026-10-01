@@ -197,7 +197,11 @@ export const useProjectOptions = () => {
       if (error) throw error;
       return (data ?? []) as { id: string; description: string | null; request_number: string }[];
     },
+    // Reference list for selects — refetch rarely.
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 60,
   });
+
 };
 
 export const useAttachRequestsToProject = () => {
