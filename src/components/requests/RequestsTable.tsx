@@ -1324,9 +1324,11 @@ export const RequestsTable = ({
                       ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]"
                       : isNewRequest
                         ? "bg-destructive/[0.07] hover:bg-[hsl(var(--row-hover))]"
-                        : isChildRow
-                          ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
-                          : "hover:bg-[hsl(var(--row-hover))]"
+                        : isShippingToday
+                          ? "bg-warning/[0.09] hover:bg-[hsl(var(--row-hover))]"
+                          : isChildRow
+                            ? "bg-primary/[0.03] hover:bg-[hsl(var(--row-hover))]"
+                            : "hover:bg-[hsl(var(--row-hover))]"
                   )}
                   data-state={selectedRequestIds.has(request.id) ? "selected" : undefined}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
