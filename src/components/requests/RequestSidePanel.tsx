@@ -495,9 +495,12 @@ export const RequestSidePanel = ({
 
   const asOverlay = !inline || isFullscreen;
 
-  const fieldsBlock = (
-    <>
-            <PanelField
+  const cardClass = "mt-3 w-full max-w-[480px] rounded-md border border-border bg-card px-3 py-2.5";
+  const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
+  const peopleBlock = (
+    <div className={cardClass}>
+      <div className={cardTitleClass}>Объект и ответственные</div>
+              <PanelField
               label="Объект"
               type="select"
               options={objectOptions}
@@ -507,7 +510,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("object_id", v)}
             />
-            <PanelField
+              <PanelField
               label="Контрагент"
               type="select"
               options={supplierOptions}
@@ -516,7 +519,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("contractor", v)}
             />
-            <PanelField
+              <PanelField
               label="Заявитель"
               type="select"
               options={applicantOptions}
@@ -526,7 +529,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("applicant", v)}
             />
-            <PanelField
+              <PanelField
               label="Кто ведёт"
               type="select"
               options={executorOptions}
@@ -536,7 +539,21 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("executor", v)}
             />
-            <PanelField
+    </div>
+  );
+  const logisticsBlock = (
+    <div className={cardClass}>
+      <div className={cardTitleClass}>Логистика</div>
+      {(request.shipment_date || request.delivery_date) && (
+        <div className="mb-2 flex items-center gap-2 rounded bg-muted/60 px-2 py-1.5 font-numeric text-[13px]">
+          <span className={request.shipment_date ? "text-foreground" : "text-muted-foreground"}>{dt(request.shipment_date) ?? "—"}</span>
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-muted-foreground">→</span>
+          <span className="h-px flex-1 bg-border" />
+          <span className={request.delivery_date ? "font-semibold text-foreground" : "text-muted-foreground"}>{dt(request.delivery_date) ?? "—"}</span>
+        </div>
+      )}
+              <PanelField
               label="Перевозчик"
               type="select"
               options={carrierOptions}
@@ -545,7 +562,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("transport_company", v)}
             />
-            <PanelField
+              <PanelField
               label="№ ТТН"
               type="text"
               value={request.waybill_number}
@@ -553,15 +570,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("waybill_number", v)}
             />
-            <PanelField
-              label="№ счёта"
-              type="text"
-              value={request.invoice_number}
-              readOnly={readOnly}
-              alwaysEdit={editMode}
-              onSave={(v) => saveField("invoice_number", v)}
-            />
-            <PanelField
+              <PanelField
               label="Отгрузка"
               type="date"
               value={request.shipment_date}
@@ -570,7 +579,7 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("shipment_date", v)}
             />
-            <PanelField
+              <PanelField
               label="Приход"
               type="date"
               value={request.delivery_date}
@@ -578,6 +587,18 @@ export const RequestSidePanel = ({
               readOnly={readOnly}
               alwaysEdit={editMode}
               onSave={(v) => saveField("delivery_date", v)}
+            />
+    </div>
+  );
+  const invoiceNumberField = (
+    <>
+              <PanelField
+              label="№ счёта"
+              type="text"
+              value={request.invoice_number}
+              readOnly={readOnly}
+              alwaysEdit={editMode}
+              onSave={(v) => saveField("invoice_number", v)}
             />
     </>
   );
@@ -591,8 +612,8 @@ export const RequestSidePanel = ({
     }
   };
   const invoiceBlock = (
-    <div className="mt-3 w-full max-w-[480px] rounded border border-border px-3 py-2.5">
-      <div className="text-[13px] font-semibold text-muted-foreground">Счёт</div>
+    <div className="mt-2 border-t border-border pt-2">
+      <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
       {mainInvoiceDoc ? (
         <>
           <div className="mt-2 flex items-center gap-2">
@@ -752,6 +773,19 @@ export const RequestSidePanel = ({
               )}
             </div>
     </div>
+  );
+
+  const fieldsBlock = (
+    <>
+      <div className={cardClass}>
+        <div className={cardTitleClass}>Финансы и счёт</div>
+        {invoiceNumberField}
+        {totalsBlock}
+        {invoiceBlock}
+      </div>
+      {logisticsBlock}
+      {peopleBlock}
+    </>
   );
 
   const movementBlock = (
@@ -1016,8 +1050,6 @@ export const RequestSidePanel = ({
           >
             <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
-              {invoiceBlock}
-              {totalsBlock}
             </div>
             <div className={cn(columnClass, "overflow-y-auto")}>
               <div className={sectionTitleClass}>Позиции</div>
@@ -1038,8 +1070,6 @@ export const RequestSidePanel = ({
             {tab !== "docs" && tab !== "tasks" && (
               <>
                 {fieldsBlock}
-                {invoiceBlock}
-                {totalsBlock}
                 {isFullscreen ? (
                   <div className="mt-4">
                     <div className={sectionTitleClass}>Позиции</div>
