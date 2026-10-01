@@ -1038,6 +1038,7 @@ export const RequestSidePanel = ({
             {tab !== "docs" && tab !== "tasks" && (
               <>
                 {fieldsBlock}
+                {invoiceBlock}
                 {totalsBlock}
                 {isFullscreen ? (
                   <div className="mt-4">
