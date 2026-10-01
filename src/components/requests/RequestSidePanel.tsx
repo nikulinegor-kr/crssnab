@@ -495,7 +495,7 @@ export const RequestSidePanel = ({
 
   const asOverlay = !inline || isFullscreen;
 
-  const cardClass = "mt-3 w-full max-w-[480px] rounded-md border border-border bg-card px-3 py-2.5";
+  const cardClass = cn("mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", "border border-border bg-card px-3 py-2.5");
   const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
     <div className={cardClass}>
@@ -691,7 +691,7 @@ export const RequestSidePanel = ({
     </div>
   );
   const totalsBlock = (
-    <div className="mx-0 w-full max-w-[480px]">
+    <div className={cn("mx-0 w-full", !isFullscreen && "max-w-[480px]")}>
             <div className="mt-2 rounded bg-muted/60 px-3 py-2.5">
               <PanelField
                 label="Товар"
@@ -740,7 +740,7 @@ export const RequestSidePanel = ({
                 }}
               />
               {!readOnly && (
-                <div className="mt-1.5 flex gap-1.5 pl-[130px]">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <Button
                     type="button"
                     size="sm"
@@ -981,10 +981,16 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Свернуть панель" : "Развернуть на весь экран"}>
-
-            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-          </Button>
+          {isFullscreen ? (
+            <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-sm" onClick={() => setIsFullscreen(false)} title="Вернуться к реестру">
+              <Minimize2 className="h-3.5 w-3.5" />
+              Свернуть к реестру
+            </Button>
+          ) : (
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => setIsFullscreen(true)} aria-label="Развернуть на весь экран" title="Развернуть на весь экран">
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Закрыть">
             <X className="h-4 w-4" />
           </Button>
@@ -1046,7 +1052,7 @@ export const RequestSidePanel = ({
         {wideFullscreen ? (
           <div
             className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
-            style={{ gridTemplateColumns: "380px minmax(0, 1fr) 340px" }}
+            style={{ gridTemplateColumns: "440px minmax(0, 1fr) 400px" }}
           >
             <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
