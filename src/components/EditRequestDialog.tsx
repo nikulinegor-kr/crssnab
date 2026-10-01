@@ -1037,7 +1037,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:items-start">
           {/* Левая колонка — паспорт заявки */}
-          <div className="min-w-0 space-y-5">
+          <div className="min-w-0 space-y-5 lg:sticky lg:top-0 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pr-1">
             <CoreParamsSection
           showProjectField
           form={form}
@@ -1244,7 +1244,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
           side="right"
-          className="w-[min(1280px,94vw)] max-w-none p-0 gap-0 flex flex-col bg-card"
+          className="w-[min(1280px,94vw)] max-w-none sm:max-w-none p-0 gap-0 flex flex-col bg-card"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
