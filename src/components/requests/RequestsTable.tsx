@@ -1293,7 +1293,7 @@ export const RequestsTable = ({
                 const isShippingToday = Boolean(
                   request.shipment_date &&
                   request.status !== "В пути" &&
-                  format(new Date(request.shipment_date), "yyyy-MM-dd") === format(startOfToday(), "yyyy-MM-dd")
+                  isBefore(new Date(request.shipment_date), endOfToday())
                 );
                 const priorityShadow = request.priority === "Аварийно"
                   ? "inset 2px 0 0 hsl(var(--destructive))"
