@@ -1100,7 +1100,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 z-10 -mx-5 flex flex-col-reverse justify-between gap-3 border-t bg-card px-5 py-3 sm:flex-row">
+        <div className="sticky bottom-0 z-10 -mx-3 flex flex-col-reverse justify-between gap-3 border-t bg-card px-3 py-3 md:-mx-5 md:px-5 sm:flex-row">
           {canEdit && (
             <Button
               type="button"
