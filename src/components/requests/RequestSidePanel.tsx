@@ -510,15 +510,19 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("object_id", v)}
             />
-              <PanelField
-              label="Контрагент"
-              type="select"
-              options={supplierOptions}
-              value={request.contractor}
-              readOnly={readOnly}
-              alwaysEdit={editMode}
-              onSave={(v) => saveField("contractor", v)}
+      {(/ремонт|восстановлен/i.test((request as any).object_name || "") || (request as any).equipment_id) && (
+        <div className="flex min-h-9 items-center gap-2 py-1">
+          <span className="w-[120px] shrink-0 text-[13px] text-muted-foreground">Техника</span>
+          <div className="min-w-0 flex-1">
+            <EquipmentSelectWithAdd
+              value={(request as any).equipment_id || ""}
+              onChange={(v) => void saveField("equipment_id", v || null)}
+              organizationId={currentOrgId ?? null}
+              disabled={readOnly}
             />
+          </div>
+        </div>
+      )}
               <PanelField
               label="Заявитель"
               type="select"
@@ -599,6 +603,15 @@ export const RequestSidePanel = ({
               readOnly={readOnly}
               alwaysEdit={editMode}
               onSave={(v) => saveField("invoice_number", v)}
+            />
+              <PanelField
+              label="Контрагент"
+              type="select"
+              options={supplierOptions}
+              value={request.contractor}
+              readOnly={readOnly}
+              alwaysEdit={editMode}
+              onSave={(v) => saveField("contractor", v)}
             />
     </>
   );
