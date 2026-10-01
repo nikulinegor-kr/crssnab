@@ -692,7 +692,7 @@ export const RequestSidePanel = ({
   );
   const totalsBlock = (
     <div className="mx-0 w-full max-w-[480px]">
-            <div className="mt-3 bg-muted/60 px-3 py-2.5">
+            <div className="mt-2 rounded bg-muted/60 px-3 py-2.5">
               <PanelField
                 label="Товар"
                 type="number"
