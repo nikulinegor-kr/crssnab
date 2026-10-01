@@ -581,6 +581,94 @@ export const RequestSidePanel = ({
             />
     </>
   );
+  const invoiceDocs = documentUrls;
+  const mainInvoiceDoc = invoiceDocs[0];
+  const docFileName = (url: string) => {
+    try {
+      return decodeURIComponent(url.split("/").pop() || "Документ").replace(/^\d+-/, "");
+    } catch {
+      return "Документ";
+    }
+  };
+  const invoiceBlock = (
+    <div className="mt-3 w-full max-w-[480px] rounded border border-border px-3 py-2.5">
+      <div className="text-[13px] font-semibold text-muted-foreground">Счёт</div>
+      {mainInvoiceDoc ? (
+        <>
+          <div className="mt-2 flex items-center gap-2">
+            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate text-sm" title={docFileName(mainInvoiceDoc)}>
+              {docFileName(mainInvoiceDoc)}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 text-[13px]"
+              onClick={() => void openStoredFile(mainInvoiceDoc)}
+            >
+              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+              Открыть
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-2 text-[13px]"
+              onClick={() => void downloadStoredFile(mainInvoiceDoc, docFileName(mainInvoiceDoc))}
+            >
+              <Download className="mr-1 h-3.5 w-3.5" />
+              Скачать
+            </Button>
+          </div>
+          {invoiceDocs.length > 1 && (
+            <div className="mt-1.5 space-y-1">
+              {invoiceDocs.slice(1).map((url) => (
+                <div key={url} className="flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground" title={docFileName(url)}>
+                    {docFileName(url)}
+                  </span>
+                  <button
+                    type="button"
+                    className="min-h-9 shrink-0 px-1 text-[13px] text-primary"
+                    onClick={() => void downloadStoredFile(url, docFileName(url))}
+                  >
+                    Скачать
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="min-w-0 flex-1 text-sm text-muted-foreground">Файл счёта не прикреплён</span>
+          {!readOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-2 text-[13px]"
+              onClick={() => invoiceAttachRef.current?.click()}
+            >
+              <Paperclip className="mr-1 h-3.5 w-3.5" />
+              Прикрепить
+            </Button>
+          )}
+        </div>
+      )}
+      <input
+        ref={invoiceAttachRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = "";
+          if (files.length) void handleUpload(files);
+        }}
+      />
+    </div>
+  );
   const totalsBlock = (
     <div className="mx-0 w-full max-w-[480px]">
             <div className="mt-3 bg-muted/60 px-3 py-2.5">
