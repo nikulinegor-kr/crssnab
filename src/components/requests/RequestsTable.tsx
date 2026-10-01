@@ -680,10 +680,23 @@ export const RequestsTable = ({
 
   const phaseGroups = useMemo(() => {
     if (!groupByPhase) return null;
-    return REQUEST_PHASES.map((phase) => ({
+    const grouped = REQUEST_PHASES.map((phase) => ({
       ...phase,
       items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status)),
     })).filter((phase) => phase.items.length > 0);
+    // Заявки с нестандартным статусом (например «Заказано») не должны пропадать из списка.
+    const known = new Set<string>(REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]));
+    const other = paginatedRequests.filter((request) => !known.has(request.status));
+    if (other.length > 0) {
+      grouped.push({
+        key: "other",
+        name: "Другие статусы",
+        statuses: [] as unknown as (typeof grouped)[number]["statuses"],
+        accent: "bg-border",
+        items: other,
+      } as unknown as (typeof grouped)[number]);
+    }
+    return grouped;
   }, [groupByPhase, paginatedRequests]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);

@@ -115,8 +115,6 @@ export const RequestSidePanel = ({
   const IDLE_HIDE_MS = 10_000;
   const [idleHidden, setIdleHidden] = useState(false);
   const lastActivityRef = useRef(Date.now());
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
   const keepPanelVisible = useCallback(() => {
     lastActivityRef.current = Date.now();
     setIdleHidden((prev) => (prev ? false : prev));
@@ -141,7 +139,7 @@ export const RequestSidePanel = ({
     events.forEach((evt) => window.addEventListener(evt, keepPanelVisible, { passive: true }));
     const timer = window.setInterval(() => {
       if (document.hidden) return;
-      if (Date.now() - lastActivityRef.current >= IDLE_HIDE_MS) onCloseRef.current();
+      if (Date.now() - lastActivityRef.current >= IDLE_HIDE_MS) setIdleHidden(true);
     }, 1000);
     return () => {
       events.forEach((evt) => window.removeEventListener(evt, keepPanelVisible));
