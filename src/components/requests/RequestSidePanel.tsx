@@ -176,6 +176,7 @@ export const RequestSidePanel = ({
   );
   const resizingRef = useRef(false);
   const invoiceInputRef = useRef<HTMLInputElement>(null);
+  const invoiceAttachRef = useRef<HTMLInputElement>(null);
 
 
   const stopResize = useCallback(() => {
