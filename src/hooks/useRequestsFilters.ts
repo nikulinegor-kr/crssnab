@@ -78,8 +78,13 @@ export const getStatusColor = (status: string) => {
     case "Выполнено":
       return "#15803d"; // Очень тёмно-зелёный
     default:
-      return "#6b7280";
+      return customStatusColors.get(status?.trim()) || "#6b7280";
   }
+};
+
+const customStatusColors = new Map<string, string>();
+export const registerCustomStatusColors = (list: { name: string; color: string | null }[]) => {
+  list.forEach((s) => s.color && customStatusColors.set(s.name, s.color));
 };
 
 export const getPriorityColor = (priority: string) => {
