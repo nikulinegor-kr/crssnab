@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { ReactNode, useMemo, useState } from "react";
 import {
   ContextMenu,
@@ -9,7 +10,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { STATUSES, PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
+import { PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { useRequestQuickUpdate } from "./useRequestQuickUpdate";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
@@ -46,6 +47,7 @@ export const RowContextMenu = ({
   expectedDate,
   children,
 }: RowContextMenuProps) => {
+  const STATUSES = useOrgStatuses();
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const { update } = useRequestQuickUpdate();
   const { toast } = useToast();

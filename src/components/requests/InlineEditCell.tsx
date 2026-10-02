@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useState, useEffect, useRef } from "react";
 import { Check, X, Loader2, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+import { PRIORITIES } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 
 interface InlineEditCellProps {
@@ -33,6 +34,7 @@ export const InlineEditCell = ({
   className,
   editOnClick = false,
 }: InlineEditCellProps) => {
+  const STATUSES = useOrgStatuses();
   const isDate = field === "delivery_date" || field === "shipment_date";
   const norm = (v: string | number | null) =>
     isDate ? String(v ?? "").slice(0, 10) : String(v ?? "");

@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import {
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { STATUSES, PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
+import { PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { cn } from "@/lib/utils";
 
 interface QuickBadgeSelectProps {
@@ -34,6 +35,7 @@ export const QuickBadgeSelect = ({
   onOpenChange,
   trigger,
 }: QuickBadgeSelectProps) => {
+  const STATUSES = useOrgStatuses();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
