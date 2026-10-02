@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
 import { useUiScale } from "@/hooks/useUiScale";
 
@@ -63,7 +64,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+import { PRIORITIES } from "@/hooks/useRequestsFilters";
 
 
 const moneyShort = (n: number) =>
@@ -298,6 +299,7 @@ export const RequestsTable = ({
   onClearSelection,
   onMaximize,
 }: RequestsTableProps) => {
+  const STATUSES = useOrgStatuses();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();

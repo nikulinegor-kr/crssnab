@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useState, useMemo } from "react";
 import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter, Truck } from "lucide-react";
 import { formatPersonName } from "@/lib/personName";
@@ -31,7 +32,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
 import { 
-  STATUSES, 
   RequestFilters,
   SpecialDateFilter,
 } from "@/hooks/useRequestsFilters";
@@ -107,6 +107,7 @@ export const RequestsFilters = ({
   specialDateFilter,
   setSpecialDateFilter,
 }: RequestsFiltersProps) => {
+  const STATUSES = useOrgStatuses();
   const { toast } = useToast();
   const [newYear, setNewYear] = useState("");
   const [isSmartSearching, setIsSmartSearching] = useState(false);

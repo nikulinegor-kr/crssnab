@@ -1,3 +1,4 @@
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
@@ -7,7 +8,7 @@ import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, Pac
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
-import { getStatusColor, getPriorityColor, STATUSES, PRIORITIES } from "@/hooks/useRequestsFilters";
+import { getStatusColor, getPriorityColor, PRIORITIES } from "@/hooks/useRequestsFilters";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
@@ -82,6 +83,7 @@ export const RequestSidePanel = ({
   fullscreen,
   onFullscreenChange,
 }: RequestSidePanelProps) => {
+  const STATUSES = useOrgStatuses();
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
   const queryClient = useQueryClient();
   const { toast } = useToast();
