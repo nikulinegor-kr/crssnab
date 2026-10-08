@@ -3,6 +3,7 @@ import { Loader2, Pencil, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { CopyValueButton } from "./CopyValueButton";
 
 export interface PanelFieldOption {
   value: string;
@@ -24,6 +25,9 @@ interface PanelFieldProps {
   suffix?: string;
   /** Режим правки: поле всегда показано как редактор. */
   alwaysEdit?: boolean;
+  /** Показать кнопку копирования значения. */
+  copyable?: boolean;
+  copyLabel?: string;
 }
 
 /** Поле карточки заявки: клик по значению превращает его в редактор нужного типа. */
@@ -38,6 +42,8 @@ export const PanelField = ({
   accent,
   suffix,
   alwaysEdit = false,
+  copyable = false,
+  copyLabel,
 }: PanelFieldProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
@@ -192,6 +198,9 @@ export const PanelField = ({
         {editing || forced ? editor : staticView}
       </div>
       {suffix && <span className="shrink-0 text-[13px] text-muted-foreground">{suffix}</span>}
+      {copyable && value != null && String(value).trim() !== "" && (
+        <CopyValueButton value={String(value)} label={copyLabel} />
+      )}
     </div>
 
   );

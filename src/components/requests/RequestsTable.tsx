@@ -1639,8 +1639,15 @@ export const RequestsTable = ({
                         value={request.waybill_number || ""}
                         displayValue={
                           request.waybill_number ? (
-                            <div className="line-clamp-2 text-foreground leading-snug">
-                              <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
+                            <div className="group/ttn flex items-center gap-1">
+                              <div className="line-clamp-2 min-w-0 flex-1 text-foreground leading-snug">
+                                <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
+                              </div>
+                              <CopyValueButton
+                                value={request.waybill_number}
+                                label="Номер ТТН скопирован"
+                                className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
+                              />
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-xs italic">—</span>
