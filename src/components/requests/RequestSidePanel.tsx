@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
+import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
@@ -94,6 +95,7 @@ export const RequestSidePanel = ({
   const { data: executorsDir = [] } = useRequestParticipants("executor", currentOrgId);
   const [savingField, setSavingField] = useState<string | null>(null);
   const [localFullscreen, setLocalFullscreen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const isFullscreen = fullscreen ?? localFullscreen;
   const setIsFullscreen = useCallback(
     (value: boolean) => {
@@ -1001,6 +1003,15 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setLabelOpen(true)} aria-label="Этикетка" title="Этикетка">
+            <Tag className="h-3.5 w-3.5" />
+          </Button>
+          <LabelPrintDialog
+            open={labelOpen}
+            onOpenChange={setLabelOpen}
+            description={request.description || null}
+            applicant={request.applicant || null}
+          />
           {isFullscreen ? (
             <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-sm" onClick={() => setIsFullscreen(false)} title="Вернуться к реестру">
               <Minimize2 className="h-3.5 w-3.5" />

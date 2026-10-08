@@ -14,6 +14,7 @@ import { PRIORITIES, getStatusColor, getPriorityColor } from "@/hooks/useRequest
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { useRequestQuickUpdate } from "./useRequestQuickUpdate";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
+import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export const RowContextMenu = ({
 }: RowContextMenuProps) => {
   const STATUSES = useOrgStatuses();
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const { update } = useRequestQuickUpdate();
   const { toast } = useToast();
   const { data: applicants = [] } = useRequestParticipants("applicant", organizationId);
@@ -107,6 +109,7 @@ export const RowContextMenu = ({
 
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={() => setTaskDialogOpen(true)}>Поставить задачу</ContextMenuItem>
+        <ContextMenuItem onSelect={() => setLabelOpen(true)}>Этикетка</ContextMenuItem>
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
         <ContextMenuItem
           onSelect={() => {
@@ -125,6 +128,12 @@ export const RowContextMenu = ({
         defaultTitle={requestTitle ?? undefined}
         defaultObjectId={objectId ?? null}
         defaultDueDate={expectedDate ?? undefined}
+      />
+      <LabelPrintDialog
+        open={labelOpen}
+        onOpenChange={setLabelOpen}
+        description={requestTitle ?? null}
+        applicant={applicant}
       />
     </ContextMenu>
   );
