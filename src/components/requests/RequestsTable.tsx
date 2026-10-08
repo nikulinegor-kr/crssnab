@@ -1649,6 +1649,12 @@ export const RequestsTable = ({
                                 label="Номер ТТН скопирован"
                                 className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
                               />
+                              <TrackCargoButton
+                                carrier={request.transport_company}
+                                ttn={request.waybill_number}
+                                className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
+                              />
+
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-xs italic">—</span>

@@ -578,6 +578,7 @@ export const RequestSidePanel = ({
               onSave={(v) => saveField("waybill_number", v)}
               copyable
               copyLabel="Номер ТТН скопирован"
+              extraAction={<TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} />}
             />
               <PanelField
               label="Отгрузка"
