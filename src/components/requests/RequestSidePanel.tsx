@@ -1001,6 +1001,15 @@ export const RequestSidePanel = ({
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setLabelOpen(true)} aria-label="Этикетка" title="Этикетка">
+            <Tag className="h-3.5 w-3.5" />
+          </Button>
+          <LabelPrintDialog
+            open={labelOpen}
+            onOpenChange={setLabelOpen}
+            description={request.description || null}
+            applicant={request.applicant || null}
+          />
           {isFullscreen ? (
             <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-sm" onClick={() => setIsFullscreen(false)} title="Вернуться к реестру">
               <Minimize2 className="h-3.5 w-3.5" />
