@@ -576,6 +576,8 @@ export const RequestSidePanel = ({
               readOnly={readOnly}
               alwaysEdit={editMode}
               onSave={(v) => saveField("waybill_number", v)}
+              copyable
+              copyLabel="Номер ТТН скопирован"
             />
               <PanelField
               label="Отгрузка"
