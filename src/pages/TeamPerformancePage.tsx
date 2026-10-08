@@ -72,6 +72,9 @@ const TeamPerformancePage = () => {
       return allData;
     },
     enabled: !!currentOrgId,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   // Get unique executors

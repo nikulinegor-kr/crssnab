@@ -16,7 +16,14 @@ interface LabelPrintDialogProps {
 export function LabelPrintDialog({ open, onOpenChange, description, applicant }: LabelPrintDialogProps) {
   const { toast } = useToast();
 
-  const labelText = [description || "", applicant || ""].join("\n");
+  const labelLines = [
+    "ООО САХАРЕСУРС",
+    "г. Нерюнгри",
+    "Тел. +79231019944",
+    applicant || "",
+    description || "",
+  ].filter(Boolean);
+  const labelText = labelLines.join("\n");
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -31,22 +38,20 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
   const handlePrint = () => {
-    
     printHtml(`
       <html>
         <head>
           <title>Этикетка</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
-            .label { border: 1px solid #ccc; padding: 16px; max-width: 300px; }
-            .desc { font-size: 13px; margin-bottom: 8px; word-break: break-word; }
-            .applicant { font-size: 12px; color: #333; }
+            .label { border: 1px solid #ccc; padding: 16px; max-width: 300px; margin: 0 auto; text-align: center; }
+            .line { font-size: 13px; margin-bottom: 4px; word-break: break-word; }
+            .line:first-child { font-weight: bold; }
           </style>
         </head>
         <body>
           <div class="label">
-            <div class="desc">${escapeHtml(description || "")}</div>
-            <div class="applicant">${escapeHtml(applicant || "")}</div>
+            ${labelLines.map((l) => `<div class="line">${escapeHtml(l)}</div>`).join("")}
           </div>
         </body>
       </html>
@@ -98,17 +103,10 @@ export function LabelPrintDialog({ open, onOpenChange, description, applicant }:
 
           <div className="space-y-1.5">
             <Label className="text-xs">Формат для этикетки</Label>
-            <div className="flex gap-2">
-              <Input readOnly value={labelText} className="bg-muted/50 text-xs" />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard(labelText, "Формат этикетки скопирован")}
-                disabled={!description}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+            <div className="rounded-md border bg-muted/50 p-3 text-center text-sm leading-relaxed">
+              {labelLines.map((l, i) => (
+                <div key={i} className={i === 0 ? "font-semibold" : undefined}>{l}</div>
+              ))}
             </div>
           </div>
         </div>
