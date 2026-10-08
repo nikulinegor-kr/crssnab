@@ -192,23 +192,23 @@ All colors MUST be HSL.
   html[data-theme="dark"] {
     color-scheme: dark;
 
-    --background: 222 21% 5%;
-    --foreground: 216 28% 93%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 93%;
 
-    --card: 219 28% 10%;
-    --card-foreground: 216 28% 93%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 219 28% 10%;
-    --popover-foreground: 216 28% 93%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 93%;
 
     --primary: 185 81% 47%;
     --primary-foreground: 190 84% 8%;
 
-    --secondary: 221 26% 15%;
-    --secondary-foreground: 216 28% 93%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 93%;
 
-    --muted: 221 26% 15%;
-    --muted-foreground: 216 15% 59%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 185 81% 47%;
     --accent-foreground: 190 84% 8%;
@@ -216,8 +216,8 @@ All colors MUST be HSL.
     --destructive: 0 100% 71%;
     --destructive-foreground: 0 0% 10%;
 
-    --border: 222 23% 17%;
-    --input: 219 20% 24%;
+    --border: 0 0% 18%;
+    --input: 0 0% 23%;
     --ring: 185 81% 47%;
 
     --success: 162 62% 51%;
@@ -225,27 +225,27 @@ All colors MUST be HSL.
     --warning-foreground: 36 91% 55%;
     --info: 219 100% 72%;
 
-    --surface-2: 219 26% 12%;
-    --surface-3: 221 26% 15%;
-    --text-3: 219 15% 41%;
-    --primary-soft: 185 42% 14%;
-    --destructive-soft: 0 34% 16%;
-    --warning-soft: 36 32% 16%;
-    --success-soft: 162 28% 15%;
-    --info-soft: 219 30% 17%;
+    --surface-2: 0 0% 13%;
+    --surface-3: 0 0% 15%;
+    --text-3: 0 0% 44%;
+    --primary-soft: 185 30% 14%;
+    --destructive-soft: 0 30% 16%;
+    --warning-soft: 36 28% 15%;
+    --success-soft: 162 24% 14%;
+    --info-soft: 219 20% 17%;
     --overlay: 0 0% 0%;
-    --panel-shadow: 0 16px 48px hsl(0 0% 0% / 0.55);
+    --panel-shadow: 0 16px 48px hsl(0 0% 0% / 0.6);
 
-    --row-hover: 220 24% 12%;
-    --row-sel: 189 52% 12%;
+    --row-hover: 0 0% 13%;
+    --row-sel: 0 0% 17%;
 
-    --sidebar-background: 219 28% 10%;
-    --sidebar-foreground: 216 28% 93%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 93%;
     --sidebar-primary: 185 81% 47%;
     --sidebar-primary-foreground: 190 84% 8%;
-    --sidebar-accent: 221 26% 15%;
-    --sidebar-accent-foreground: 216 28% 93%;
-    --sidebar-border: 222 23% 17%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-ring: 185 81% 47%;
   }
 
