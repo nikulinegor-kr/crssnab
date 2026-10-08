@@ -69,7 +69,7 @@ export const useRequests = (showArchived: boolean = false) => {
       if (total > PAGE_SIZE) {
         const pages: Promise<any>[] = [];
         for (let from = PAGE_SIZE; from < total; from += PAGE_SIZE) {
-          pages.push(buildQuery().range(from, from + PAGE_SIZE - 1));
+          pages.push(Promise.resolve(buildQuery().range(from, from + PAGE_SIZE - 1)));
         }
         const results = await Promise.all(pages);
         for (const r of results) {
