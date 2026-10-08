@@ -129,6 +129,12 @@ export const RowContextMenu = ({
         defaultObjectId={objectId ?? null}
         defaultDueDate={expectedDate ?? undefined}
       />
+      <LabelPrintDialog
+        open={labelOpen}
+        onOpenChange={setLabelOpen}
+        description={requestTitle ?? null}
+        applicant={applicant}
+      />
     </ContextMenu>
   );
 };
