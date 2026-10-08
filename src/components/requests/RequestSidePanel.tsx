@@ -1,3 +1,4 @@
+import { TrackCargoButton } from "./TrackCargoButton";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -578,6 +579,7 @@ export const RequestSidePanel = ({
               onSave={(v) => saveField("waybill_number", v)}
               copyable
               copyLabel="Номер ТТН скопирован"
+              extraAction={<TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} />}
             />
               <PanelField
               label="Отгрузка"

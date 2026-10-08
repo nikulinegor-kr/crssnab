@@ -28,6 +28,8 @@ interface PanelFieldProps {
   /** Показать кнопку копирования значения. */
   copyable?: boolean;
   copyLabel?: string;
+  /** Дополнительная кнопка справа от значения. */
+  extraAction?: React.ReactNode;
 }
 
 /** Поле карточки заявки: клик по значению превращает его в редактор нужного типа. */
@@ -44,6 +46,7 @@ export const PanelField = ({
   alwaysEdit = false,
   copyable = false,
   copyLabel,
+  extraAction,
 }: PanelFieldProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
@@ -201,6 +204,7 @@ export const PanelField = ({
       {copyable && value != null && String(value).trim() !== "" && (
         <CopyValueButton value={String(value)} label={copyLabel} />
       )}
+      {extraAction}
     </div>
 
   );

@@ -1,5 +1,6 @@
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
+import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
 import { useUiScale } from "@/hooks/useUiScale";
 
@@ -1649,6 +1650,12 @@ export const RequestsTable = ({
                                 label="Номер ТТН скопирован"
                                 className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
                               />
+                              <TrackCargoButton
+                                carrier={request.transport_company}
+                                ttn={request.waybill_number}
+                                className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
+                              />
+
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-xs italic">—</span>
