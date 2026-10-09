@@ -61,7 +61,7 @@ export const useRequests = (showArchived: boolean = false, enabled: boolean = tr
         return query.order("created_at", { ascending: false });
       };
 
-      // First page       let allData: any[] = [];
+      let allData: any[] = [];
       for (let from = 0; ; from += PAGE_SIZE) {
         const r = await buildQuery().range(from, from + PAGE_SIZE - 1);
         if (r.error) throw r.error;
@@ -69,7 +69,7 @@ export const useRequests = (showArchived: boolean = false, enabled: boolean = tr
         if (!r.data || r.data.length < PAGE_SIZE) break;
       }
 
-.map((r: any) => ({
+      return allData.map((r: any) => ({
         ...r,
         object_name: r.request_objects?.name || null,
         equipment_display: r.equipment
