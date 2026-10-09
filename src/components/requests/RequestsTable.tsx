@@ -454,6 +454,11 @@ export const RequestsTable = ({
       && localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) !== "1";
   });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const PHASE_STEP = 30;
+  const [phaseLimits, setPhaseLimits] = useState<Record<string, number>>({});
+  const showMorePhase = useCallback((key: string) => {
+    setPhaseLimits((prev) => ({ ...prev, [key]: (prev[key] ?? PHASE_STEP) + PHASE_STEP * 3 }));
+  }, []);
   const toggleGroupByObject = useCallback((v: boolean) => {
     setGroupByObject(v);
     localStorage.setItem("requests-group-by-object", v ? "1" : "0");
@@ -894,7 +899,7 @@ export const RequestsTable = ({
                   <span className="truncate">{g.name}</span>
                   <span className="ml-auto font-mono font-normal text-muted-foreground">{g.items.length} · {moneyShort(amount)}</span>
                 </button>
-                {!collapsed && g.items.map((request) => (
+                {!collapsed && g.items.slice(0, phaseLimits[g.key] ?? PHASE_STEP).map((request) => (
                   <MobileRequestCard
                     key={request.id}
                     request={request}
@@ -905,6 +910,11 @@ export const RequestsTable = ({
                     searchQuery={searchQuery}
                   />
                 ))}
+                {!collapsed && g.items.length > (phaseLimits[g.key] ?? PHASE_STEP) && (
+                  <button type="button" onClick={() => showMorePhase(g.key)} className="min-h-11 w-full rounded border border-border text-[13px] font-medium text-primary">
+                    Показать ещё ({g.items.length - (phaseLimits[g.key] ?? PHASE_STEP)})
+                  </button>
+                )}
               </div>
             );
           })
@@ -1159,6 +1169,7 @@ export const RequestsTable = ({
                 | { kind: "group"; key: string; name: string; items: typeof paginatedRequests }
                 | { kind: "project"; key: string; name: string; items: typeof paginatedRequests }
                 | { kind: "phase"; key: string; name: string; accent: string; items: typeof paginatedRequests }
+                | { kind: "more"; key: string; rest: number }
                 | { kind: "row"; request: typeof paginatedRequests[number]; index: number; child?: boolean };
               const items: Item[] = [];
               if (groupByPhase && phaseGroups) {
@@ -1166,7 +1177,10 @@ export const RequestsTable = ({
                 for (const phase of phaseGroups) {
                   items.push({ kind: "phase", key: phase.key, name: phase.name, accent: phase.accent, items: phase.items });
                   if (!collapsedGroups.has(`phase-${phase.key}`)) {
-                    for (const request of phase.items) items.push({ kind: "row", request, index: idx++ });
+                    const limit = phaseLimits[phase.key] ?? PHASE_STEP;
+                    phase.items.slice(0, limit).forEach((request) => items.push({ kind: "row", request, index: idx++ }));
+                    idx += Math.max(0, phase.items.length - limit);
+                    if (phase.items.length > limit) items.push({ kind: "more", key: phase.key, rest: phase.items.length - limit });
                   } else {
                     idx += phase.items.length;
                   }
@@ -1202,6 +1216,17 @@ export const RequestsTable = ({
                 paginatedRequests.forEach((r, i) => items.push({ kind: "row", request: r, index: i }));
               }
               return items.map((it) => {
+                if (it.kind === "more") {
+                  return (
+                    <TableRow key={`more-${it.key}`} className="hover:bg-transparent">
+                      <TableCell colSpan={totalColCount} className="py-1 text-center">
+                        <button type="button" onClick={() => showMorePhase(it.key)} className="min-h-11 px-4 text-[13px] font-medium text-primary">
+                          Показать ещё ({it.rest})
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
                 if (it.kind === "phase") {
                   const collapsed = collapsedGroups.has(`phase-${it.key}`);
                   const amount = it.items.reduce(
