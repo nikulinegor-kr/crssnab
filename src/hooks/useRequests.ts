@@ -54,32 +54,22 @@ export const useRequests = (showArchived: boolean = false, enabled: boolean = tr
       const buildQuery = () => {
         let query = supabase
           .from("requests")
-          .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)", { count: "exact" })
+          .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)")
           .eq("archived", showArchived)
           .eq("is_project", false);
         if (orgId) query = query.eq("organization_id", orgId);
         return query.order("created_at", { ascending: false });
       };
 
-      // First page also returns total count; remaining pages load in parallel.
-      const first = await buildQuery().range(0, PAGE_SIZE - 1);
-      if (first.error) throw first.error;
-      let allData: any[] = first.data || [];
-      const total = first.count ?? allData.length;
-
-      if (total > PAGE_SIZE) {
-        const pages: Promise<any>[] = [];
-        for (let from = PAGE_SIZE; from < total; from += PAGE_SIZE) {
-          pages.push(Promise.resolve(buildQuery().range(from, from + PAGE_SIZE - 1)));
-        }
-        const results = await Promise.all(pages);
-        for (const r of results) {
-          if (r.error) throw r.error;
-          allData = allData.concat(r.data || []);
-        }
+      // First page       let allData: any[] = [];
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const r = await buildQuery().range(from, from + PAGE_SIZE - 1);
+        if (r.error) throw r.error;
+        allData = allData.concat(r.data || []);
+        if (!r.data || r.data.length < PAGE_SIZE) break;
       }
 
-      return allData.map((r: any) => ({
+.map((r: any) => ({
         ...r,
         object_name: r.request_objects?.name || null,
         equipment_display: r.equipment

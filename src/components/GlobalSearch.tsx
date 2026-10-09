@@ -47,7 +47,7 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   // Полный список заявок грузим только когда поиск открыт
-  const { data: requests } = useRequests(false, isOpen);
+  const { data: requests } = useRequests(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
