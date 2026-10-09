@@ -43,10 +43,11 @@ const TYPE_LABELS: Record<SearchResult["type"], string> = {
 
 export function GlobalSearch() {
   const navigate = useNavigate();
-  const { data: requests } = useRequests();
   const { currentOrgId } = useCurrentOrganization();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  // Полный список заявок грузим только когда поиск открыт
+  const { data: requests } = useRequests(false, isOpen);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

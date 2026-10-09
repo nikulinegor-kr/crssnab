@@ -37,7 +37,7 @@ export interface Request {
   received_by?: string | null;
 }
 
-export const useRequests = (showArchived: boolean = false) => {
+export const useRequests = (showArchived: boolean = false, enabled: boolean = true) => {
   const orgId =
     typeof window !== "undefined"
       ? localStorage.getItem("currentOrganizationId")
@@ -45,6 +45,7 @@ export const useRequests = (showArchived: boolean = false) => {
 
   return useQuery({
     queryKey: ["requests", showArchived, orgId],
+    enabled,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
     refetchOnWindowFocus: false,

@@ -120,21 +120,25 @@ export const RowContextMenu = ({
           Копировать номер
         </ContextMenuItem>
       </ContextMenuContent>
-      <PlannerTaskDialog
-        open={taskDialogOpen}
-        onOpenChange={setTaskDialogOpen}
-        task={null}
-        defaultRequestId={requestId}
-        defaultTitle={requestTitle ?? undefined}
-        defaultObjectId={objectId ?? null}
-        defaultDueDate={expectedDate ?? undefined}
-      />
-      <LabelPrintDialog
-        open={labelOpen}
-        onOpenChange={setLabelOpen}
-        description={requestTitle ?? null}
-        applicant={applicant}
-      />
+      {taskDialogOpen && (
+        <PlannerTaskDialog
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          task={null}
+          defaultRequestId={requestId}
+          defaultTitle={requestTitle ?? undefined}
+          defaultObjectId={objectId ?? null}
+          defaultDueDate={expectedDate ?? undefined}
+        />
+      )}
+      {labelOpen && (
+        <LabelPrintDialog
+          open={labelOpen}
+          onOpenChange={setLabelOpen}
+          description={requestTitle ?? null}
+          applicant={applicant}
+        />
+      )}
     </ContextMenu>
   );
 };
