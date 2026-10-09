@@ -104,7 +104,7 @@ function summarizeGroup(items: any[]) {
 
 const PAGE_SIZE_OPTIONS = [0, 25, 50, 100, 250];
 const pageSizeLabel = (size: number) => (size === 0 ? "Все" : String(size));
-const STORAGE_KEY = "requests-page-size";
+const STORAGE_KEY = "requests-page-size-v2";
 const SORT_STORAGE_KEY = "requests-sort";
 const DENSITY_STORAGE_KEY = "requests-table-density";
 const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
@@ -531,8 +531,17 @@ export const RequestsTable = ({
   const [pageSize, setPageSize] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     const parsed = saved !== null ? parseInt(saved, 10) : NaN;
-    return Number.isFinite(parsed) ? parsed : 0; // 0 — показывать все заявки
+    return Number.isFinite(parsed) ? parsed : 50; // по умолчанию 50 — быстрее рендер
   });
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : true
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsDesktop(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
@@ -833,7 +842,8 @@ export const RequestsTable = ({
   return (
     <div className="flex h-full min-h-0 gap-2 items-stretch" data-density={density}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* Mobile View - Compact Cards */}
+      {/* Mobile View - Compact Cards (не строим на ПК) */}
+      {!isDesktop && (
       <div className="lg:hidden min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain">
 
         <div className="flex justify-end gap-1 pb-1">
@@ -987,6 +997,8 @@ export const RequestsTable = ({
         )}
         <PaginationControls />
       </div>
+      )}
+
 
       {/* Desktop Table View */}
       <div

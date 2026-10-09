@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useRequests } from "@/hooks/useRequests";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,34 +47,14 @@ const TeamPerformancePage = () => {
   const [period, setPeriod] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Fetch all requests for the org
-  const { data: requests, isLoading } = useQuery({
-    queryKey: ["team-performance-requests", currentOrgId],
-    queryFn: async () => {
-      if (!currentOrgId) return [];
-      const PAGE_SIZE = 1000;
-      let allData: any[] = [];
-      let from = 0;
-      let hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("requests")
-          .select("id, request_number, description, status, priority, executor, applicant, amount, created_at, updated_at, delivery_date, object_id, archived, request_objects(name)")
-          .eq("organization_id", currentOrgId)
-          .order("created_at", { ascending: false })
-          .range(from, from + PAGE_SIZE - 1);
-        if (error) throw error;
-        allData = allData.concat(data || []);
-        hasMore = (data?.length || 0) === PAGE_SIZE;
-        from += PAGE_SIZE;
-      }
-      return allData;
-    },
-    enabled: !!currentOrgId,
-    staleTime: 60_000,
-    gcTime: 10 * 60_000,
-    refetchOnWindowFocus: false,
-  });
+  // Общий кэш заявок (активные + архив) — без повторного скачивания
+  const { data: activeReqs, isLoading: l1 } = useRequests(false);
+  const { data: archivedReqs, isLoading: l2 } = useRequests(true);
+  const isLoading = l1 || l2;
+  const requests = useMemo<any[]>(
+    () => (currentOrgId ? [...(activeReqs || []), ...(archivedReqs || [])] : []),
+    [activeReqs, archivedReqs, currentOrgId]
+  );
 
   // Get unique executors
   const executors = useMemo(() => {
