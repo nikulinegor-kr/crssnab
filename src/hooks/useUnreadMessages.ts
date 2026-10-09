@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useEffect, useState } from "react";
 
 export const useUnreadMessages = () => {
   const { currentOrgId } = useCurrentOrganization();
+  const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,10 +40,12 @@ export const useUnreadMessages = () => {
       return count || 0;
     },
     enabled: !!currentOrgId && !!currentUserId,
-    refetchInterval: 5000, // Обновляем каждые 5 секунд
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    staleTime: 30_000,
   });
 
-  // Подписываемся на изменения сообщений
+  // Realtime: при новых/прочитанных сообщениях обновляем счётчик
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -56,8 +59,7 @@ export const useUnreadMessages = () => {
           table: 'messages',
         },
         () => {
-          // Invalidate query on any message change
-          // This will be handled by React Query's refetch
+          queryClient.invalidateQueries({ queryKey: ["total-unread-messages"] });
         }
       )
       .subscribe();
@@ -65,7 +67,7 @@ export const useUnreadMessages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentOrgId]);
+  }, [currentOrgId, queryClient]);
 
   return totalUnread;
 };

@@ -8,9 +8,11 @@ import { useRequests } from "@/hooks/useRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateRequestDialog } from "@/components/CreateRequestDialog";
 import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
-import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from "react";
+const EditRequestDialog = lazy(() =>
+  import("@/components/EditRequestDialog").then((m) => ({ default: m.EditRequestDialog }))
+);
 import type { Request } from "@/hooks/useRequests";
 import { RequestsAnalytics } from "@/components/RequestsAnalytics";
 import { ClosureTimeAnalytics } from "@/components/analytics/ClosureTimeAnalytics";
@@ -429,7 +431,9 @@ const Dashboard = () => {
         <MessageCircle className="h-5 w-5" />
       </Button>
       {selectedRequest && (
-        <EditRequestDialog request={selectedRequest} open={editDialogOpen} onOpenChange={handleEditDialogClose} />
+        <Suspense fallback={null}>
+          <EditRequestDialog request={selectedRequest} open={editDialogOpen} onOpenChange={handleEditDialogClose} />
+        </Suspense>
       )}
     </div>
   );
