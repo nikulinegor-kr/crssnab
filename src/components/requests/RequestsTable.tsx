@@ -1791,6 +1791,10 @@ export const RequestsTable = ({
                           <Tag className="h-4 w-4 mr-2" />
                           Печать этикетки
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => sendRequestToAppleReminders(request)}>
+                          <Bell className="h-4 w-4 mr-2" />
+                          В Напоминания Apple
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"

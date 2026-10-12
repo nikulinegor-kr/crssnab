@@ -16,8 +16,32 @@ export function buildReminderText(task: PlannerTask): string {
   return [task.title, due, notes].join("\n");
 }
 
+function runShortcut(text: string) {
+  window.location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(APPLE_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(text)}`;
+}
+
 export function sendToAppleReminders(task: PlannerTask) {
-  const text = buildReminderText(task);
-  const url = `shortcuts://run-shortcut?name=${encodeURIComponent(APPLE_SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(text)}`;
-  window.location.href = url;
+  runShortcut(buildReminderText(task));
+}
+
+interface ReminderRequest {
+  id: string;
+  request_number?: string | null;
+  description?: string | null;
+  delivery_date?: string | null;
+  status?: string | null;
+  contractor?: string | null;
+}
+
+/** Same Shortcut format for a request: title, due (delivery date), notes with status and link. */
+export function sendRequestToAppleReminders(r: ReminderRequest) {
+  const title = r.description?.trim() || r.request_number || "Заявка";
+  const due = r.delivery_date ? `${r.delivery_date.slice(0, 10)} 09:00` : "";
+  const notes = [
+    r.request_number && `№ ${r.request_number}`,
+    r.status && `Статус: ${r.status}`,
+    r.contractor && `Поставщик: ${r.contractor}`,
+    `${window.location.origin}/requests/${r.id}`,
+  ].filter(Boolean).join("\n");
+  runShortcut([title, due, notes].join("\n"));
 }

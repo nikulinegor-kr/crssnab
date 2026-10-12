@@ -1206,6 +1206,9 @@ export const RequestSidePanel = ({
             <DropdownMenuItem disabled={readOnly} onClick={() => setTab("docs")}>
               Добавить файлы
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => sendRequestToAppleReminders(request as any)}>
+              В Напоминания Apple
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         </div>
