@@ -48,6 +48,8 @@ export const STATUSES = [
 export const PRIORITIES = ["Аварийно", "Планово", "Приоритетно"];
 
 export const DEFAULT_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"];
+const CURRENT_YEAR = new Date().getFullYear().toString();
+const FINAL_STATUSES = ["Доставлено", "Выполнено", "Отменено", "Закрыто"];
 
 const FILTERS_STORAGE_KEY = "requests_filters";
 
@@ -162,14 +164,22 @@ export const useRequestsFilters = (
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>(savedFilters?.statusFilter || []);
   const [priorityFilter, setPriorityFilter] = useState(savedFilters?.priorityFilter || "all");
-  const [yearFilter, setYearFilter] = useState(savedFilters?.yearFilter || "all");
+  const [yearFilter, setYearFilter] = useState(CURRENT_YEAR);
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [executorFilter, setExecutorFilter] = useState(savedFilters?.executorFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
   const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
-  const [years, setYears] = useState<string[]>(DEFAULT_YEARS);
+  const [extraYears, setYears] = useState<string[]>([]);
+  const years = useMemo(() => {
+    const set = new Set<string>([...extraYears, CURRENT_YEAR, String(Number(CURRENT_YEAR) + 1)]);
+    requests?.forEach((r) => {
+      const y = (r.request_date || "").slice(0, 4);
+      if (/^\d{4}$/.test(y)) set.add(y);
+    });
+    return Array.from(set).sort((a, b) => Number(b) - Number(a));
+  }, [requests, extraYears]);
 
   // Save filters to localStorage whenever they change (exclude specialDateFilter as it's temporary)
   useEffect(() => {
@@ -308,8 +318,15 @@ export const useRequestsFilters = (
         statusFilter.length === 0 || statusFilter.includes(request.status);
       const matchesPriority =
         priorityFilter === "all" || request.priority === priorityFilter;
-      const matchesYear =
-        yearFilter === "all" || request.request_date.startsWith(yearFilter);
+      const matchesYear = (() => {
+        if (yearFilter === "all") return true;
+        const y = parseInt((request.request_date || request.created_at || "").slice(0, 4), 10);
+        const sel = parseInt(yearFilter, 10);
+        if (!y || !sel) return true;
+        if (y === sel) return true;
+        // Неотработанные заявки прошлых лет переходят в следующие годы
+        return y < sel && !FINAL_STATUSES.includes(request.status);
+      })();
       const matchesApplicant =
         applicantFilter === "all" || request.applicant === applicantFilter;
       const matchesExecutor =
