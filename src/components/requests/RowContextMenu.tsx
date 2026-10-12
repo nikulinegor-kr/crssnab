@@ -1,3 +1,4 @@
+import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { ReactNode, useMemo, useState } from "react";
 import {
@@ -110,6 +111,13 @@ export const RowContextMenu = ({
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={() => setTaskDialogOpen(true)}>Поставить задачу</ContextMenuItem>
         <ContextMenuItem onSelect={() => setLabelOpen(true)}>Этикетка</ContextMenuItem>
+        <ContextMenuItem
+          onSelect={() =>
+            sendRequestToAppleReminders({ id: requestId, request_number: requestNumber, description: requestTitle, delivery_date: expectedDate, status })
+          }
+        >
+          В Напоминания Apple
+        </ContextMenuItem>
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
         <ContextMenuItem
           onSelect={() => {

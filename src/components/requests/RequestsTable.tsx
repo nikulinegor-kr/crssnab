@@ -1,3 +1,5 @@
+import { sendRequestToAppleReminders } from "@/lib/appleReminders";
+import { Bell } from "lucide-react";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
 import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
@@ -1790,6 +1792,10 @@ export const RequestsTable = ({
                         <DropdownMenuItem onClick={() => openLabelPrint(request)}>
                           <Tag className="h-4 w-4 mr-2" />
                           Печать этикетки
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => sendRequestToAppleReminders(request)}>
+                          <Bell className="h-4 w-4 mr-2" />
+                          В Напоминания Apple
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
