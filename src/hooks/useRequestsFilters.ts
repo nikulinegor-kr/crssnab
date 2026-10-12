@@ -438,7 +438,7 @@ export const useRequestsFilters = (
     setSearchQuery("");
     setStatusFilter([]);
     setPriorityFilter("all");
-    setYearFilter("all");
+    setYearFilter(CURRENT_YEAR);
     setApplicantFilter("all");
     setExecutorFilter("all");
     setHideDelivered(true);
