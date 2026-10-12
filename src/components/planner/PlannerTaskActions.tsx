@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Archive, ArchiveRestore, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Bell, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react";
+import { APPLE_SHORTCUT_NAME, sendToAppleReminders } from "@/lib/appleReminders";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -95,6 +96,17 @@ export function PlannerTaskActions({ task, className }: Props) {
               <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Выполнено
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onClick={() => {
+              sendToAppleReminders(task);
+              toast({
+                title: "Отправлено в Напоминания Apple",
+                description: `Если ничего не открылось — установите на iPhone/Mac быструю команду «${APPLE_SHORTCUT_NAME}».`,
+              });
+            }}
+          >
+            <Bell className="h-4 w-4 mr-2" /> В Напоминания Apple
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={toggleArchive}>
             {archived ? (
               <>
