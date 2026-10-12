@@ -8,12 +8,7 @@ export const APPLE_SHORTCUT_NAME = "CRM Напоминание";
  * remaining lines — notes with a link back to the CRM.
  */
 export function buildReminderText(task: PlannerTask): string {
-  const due = task.due_date ? `${task.due_date.slice(0, 10)}${task.due_time ? " " + task.due_time.slice(0, 5) : " 09:00"}` : "";
-  const link = task.request_id
-    ? `${window.location.origin}/requests/${task.request_id}`
-    : `${window.location.origin}/planner`;
-  const notes = [task.description?.trim(), link].filter(Boolean).join("\n");
-  return [task.title, due, notes].join("\n");
+  return [task.title, task.description?.trim()].filter(Boolean).join("\n");
 }
 
 function runShortcut(text: string) {
@@ -33,15 +28,13 @@ interface ReminderRequest {
   contractor?: string | null;
 }
 
-/** Same Shortcut format for a request: title, due (delivery date), notes with status and link. */
+/** Request reminder: title plus status/supplier, no date and no link. */
 export function sendRequestToAppleReminders(r: ReminderRequest) {
   const title = r.description?.trim() || r.request_number || "Заявка";
-  const due = r.delivery_date ? `${r.delivery_date.slice(0, 10)} 09:00` : "";
   const notes = [
     r.request_number && `№ ${r.request_number}`,
     r.status && `Статус: ${r.status}`,
     r.contractor && `Поставщик: ${r.contractor}`,
-    `${window.location.origin}/requests/${r.id}`,
   ].filter(Boolean).join("\n");
-  runShortcut([title, due, notes].join("\n"));
+  runShortcut([title, notes].filter(Boolean).join("\n"));
 }
