@@ -1,3 +1,4 @@
+import { isRecentArrival } from "@/components/requests/RequestsTable";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
@@ -168,6 +169,12 @@ export const useRequestsFilters = (
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [executorFilter, setExecutorFilter] = useState(savedFilters?.executorFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
+  const [phaseMode, setPhaseMode] = useState<boolean>(() => typeof localStorage !== "undefined" && localStorage.getItem("requests-group-by-phase") === "1");
+  useEffect(() => {
+    const h = (e: Event) => setPhaseMode(Boolean((e as CustomEvent).detail));
+    window.addEventListener("requests-group-by-phase-change", h);
+    return () => window.removeEventListener("requests-group-by-phase-change", h);
+  }, []);
   const [objectFilter, setObjectFilter] = useState(savedFilters?.objectFilter || "all");
   const [transportCompanyFilter, setTransportCompanyFilter] = useState(savedFilters?.transportCompanyFilter || "all");
   const [specialDateFilter, setSpecialDateFilter] = useState<SpecialDateFilter>(null);
@@ -338,7 +345,7 @@ export const useRequestsFilters = (
             ? true
             : specialDateFilter === "deliveredLast7Days"
               ? true
-              : !hideDelivered || request.status !== "Доставлено";
+              : !hideDelivered || request.status !== "Доставлено" || (phaseMode && isRecentArrival(request));
       const matchesObject =
         objectFilter === "all" || request.object_id === objectFilter;
       const matchesTransportCompany =

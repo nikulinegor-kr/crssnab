@@ -120,6 +120,18 @@ const REQUEST_PHASES = [
   { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
 ] as const;
 
+export const RECENT_ARRIVAL_DAYS = 14;
+const arrivalTime = (r: any): number => {
+  const v = r?.actual_arrival_date || r?.delivery_date || r?.updated_at;
+  const t = v ? new Date(v).getTime() : NaN;
+  return Number.isFinite(t) ? t : 0;
+};
+export const isRecentArrival = (r: any): boolean => {
+  if (r?.status !== "Доставлено") return false;
+  const t = arrivalTime(r);
+  return t > 0 && t >= Date.now() - RECENT_ARRIVAL_DAYS * 86400000 && t <= Date.now() + 86400000;
+};
+
 
 type RowDensity = "compact" | "normal" | "roomy";
 
@@ -709,7 +721,7 @@ export const RequestsTable = ({
     if (!groupByPhase) return null;
     const grouped = REQUEST_PHASES.map((phase) => ({
       ...phase,
-      items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status)),
+      items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status) && !isRecentArrival(request)),
     })).filter((phase) => phase.items.length > 0);
     // Заявки с нестандартным статусом (например «Заказано») не должны пропадать из списка.
     const known = new Set<string>(REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]));
@@ -723,8 +735,22 @@ export const RequestsTable = ({
         items: other,
       } as unknown as (typeof grouped)[number]);
     }
+    const recent = paginatedRequests.filter(isRecentArrival).sort((a, b) => arrivalTime(b) - arrivalTime(a));
+    if (recent.length > 0) {
+      grouped.push({
+        key: "recent-arrivals",
+        name: `Приходы за ${RECENT_ARRIVAL_DAYS} дней`,
+        statuses: [] as unknown as (typeof grouped)[number]["statuses"],
+        accent: "bg-success",
+        items: recent,
+      } as unknown as (typeof grouped)[number]);
+    }
     return grouped;
   }, [groupByPhase, paginatedRequests]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("requests-group-by-phase-change", { detail: groupByPhase }));
+  }, [groupByPhase]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
