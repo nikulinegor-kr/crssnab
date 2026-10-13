@@ -714,7 +714,7 @@ export const RequestsTable = ({
       items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status) && !isRecentArrival(request)),
     })).filter((phase) => phase.items.length > 0);
     // Заявки с нестандартным статусом (например «Заказано») не должны пропадать из списка.
-    const known = new Set<string>(REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]));
+    const known = new Set<string>([...REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]), "Доставлено", "Выполнено"]);
     const other = paginatedRequests.filter((request) => !known.has(request.status));
     if (other.length > 0) {
       grouped.push({
