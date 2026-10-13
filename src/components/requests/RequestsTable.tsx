@@ -1,3 +1,4 @@
+import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
 import { RECENT_ARRIVAL_DAYS, arrivalTime, isRecentArrival } from "@/lib/requestArrivals";
@@ -340,10 +341,18 @@ export const RequestsTable = ({
 
 
   const applyBulk = useCallback(async (field: "status" | "priority" | "executor", value: string) => {
-    const ids = Array.from(selectedRequestIds);
+    let ids = Array.from(selectedRequestIds);
     if (!ids.length) return;
     setBulkSaving(true);
     try {
+      if (field === "status" && value === DELIVERED_STATUS) {
+        const missing = new Set(await findRequestsMissingDeliveryDates(ids));
+        if (missing.size) {
+          toast({ title: "Часть заявок пропущена", description: `Без даты выхода/прихода: ${missing.size}`, variant: "destructive" });
+        }
+        ids = ids.filter((id) => !missing.has(id));
+        if (!ids.length) return;
+      }
       const { error } = await supabase.from("requests").update({ [field]: value }).in("id", ids);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["requests"] });
