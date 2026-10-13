@@ -118,7 +118,6 @@ const REQUEST_PHASES = [
   { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в Бухгалтерии", "Счёт в бухгалтерии"], accent: "bg-warning" },
   { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
-  { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
 ] as const;
 
 
@@ -715,7 +714,7 @@ export const RequestsTable = ({
       items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status) && !isRecentArrival(request)),
     })).filter((phase) => phase.items.length > 0);
     // Заявки с нестандартным статусом (например «Заказано») не должны пропадать из списка.
-    const known = new Set<string>(REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]));
+    const known = new Set<string>([...REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]), "Доставлено", "Выполнено"]);
     const other = paginatedRequests.filter((request) => !known.has(request.status));
     if (other.length > 0) {
       grouped.push({
