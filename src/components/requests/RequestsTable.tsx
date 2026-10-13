@@ -115,8 +115,8 @@ const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
 
 const REQUEST_PHASES = [
   { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
-  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "В работе"], accent: "bg-info" },
   { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в Бухгалтерии", "Счёт в бухгалтерии"], accent: "bg-warning" },
+  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "В работе"], accent: "bg-info" },
   { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
 ] as const;
@@ -726,7 +726,9 @@ export const RequestsTable = ({
     const known = new Set<string>([...REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]), "Доставлено", "Выполнено"]);
     const other = paginatedRequests.filter((request) => !known.has(request.status));
     if (other.length > 0) {
-      grouped.push({
+      const afterIdx = grouped.findIndex((g) => g.key === "accounting" || g.key === "unworked");
+      const lastEarly = grouped.reduce((acc, g, i) => (g.key === "unworked" || g.key === "accounting" ? i : acc), afterIdx === -1 ? -1 : afterIdx);
+      grouped.splice(lastEarly + 1, 0, {
         key: "other",
         name: "Другие статусы",
         statuses: [] as unknown as (typeof grouped)[number]["statuses"],
