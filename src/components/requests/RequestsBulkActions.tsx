@@ -22,6 +22,7 @@ import {
 
 import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
+import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -183,12 +184,26 @@ export const RequestsBulkActions = ({
     if (selectedRequestIds.size === 0) return;
     setIsSending(true);
     try {
+      let ids = Array.from(selectedRequestIds);
+      let skipped = 0;
+      if (newStatus === DELIVERED_STATUS) {
+        const missing = new Set(await findRequestsMissingDeliveryDates(ids));
+        skipped = missing.size;
+        ids = ids.filter((id) => !missing.has(id));
+        if (!ids.length) {
+          toast({ title: "Нельзя поставить «Доставлено»", description: "У выбранных заявок не указаны дата выхода и/или дата прихода", variant: "destructive" });
+          return;
+        }
+      }
       const { error } = await supabase
         .from("requests")
         .update({ status: newStatus })
-        .in("id", Array.from(selectedRequestIds));
+        .in("id", ids);
       if (error) throw error;
-      toast({ title: "Статус обновлён", description: `Обновлено заявок: ${selectedRequestIds.size}` });
+      toast({
+        title: "Статус обновлён",
+        description: `Обновлено заявок: ${ids.length}${skipped ? ` · пропущено без дат выхода/прихода: ${skipped}` : ""}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       setSelectedRequestIds(new Set());
     } catch (err: any) {

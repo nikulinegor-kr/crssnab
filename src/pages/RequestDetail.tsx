@@ -247,6 +247,13 @@ export default function RequestDetail() {
   });
 
   const handleUpdate = (updates: Partial<Request>) => {
+    if (updates.status === "Доставлено" && request?.status !== "Доставлено") {
+      const err = deliveryDatesError({ ...(request as any), ...(updates as any) });
+      if (err) {
+        toast({ title: "Нельзя поставить «Доставлено»", description: err, variant: "destructive" });
+        return;
+      }
+    }
     // Intercept transition to "Доставлено" — require receiver name
     if (
       updates.status === "Доставлено" &&
