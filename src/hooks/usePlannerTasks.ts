@@ -138,7 +138,7 @@ export const usePlannerTasks = () => {
         "postgres_changes",
         { event: "*", schema: "public", table: "planner_tasks", filter: `organization_id=eq.${currentOrgId}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+          invalidatePlannerTaskQueries(queryClient);
         }
       )
       .subscribe();
@@ -168,6 +168,14 @@ export const useArchivedPlannerTasks = () => {
     },
     enabled: !!currentOrgId,
   });
+};
+
+const TASK_QUERY_KEYS = [
+  "planner-tasks","planner-tasks-archived","request-linked-tasks","request-task-counts",
+  "planner-my-tasks","planner-workload-tasks","planner-requests-without-tasks",
+];
+export const invalidatePlannerTaskQueries = (qc: { invalidateQueries: (f: { queryKey: string[] }) => unknown }) => {
+  TASK_QUERY_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 };
 
 export const useCreatePlannerTask = () => {
@@ -214,7 +222,7 @@ export const useCreatePlannerTask = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
+      invalidatePlannerTaskQueries(queryClient);
       toast({ title: "Задача создана" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
@@ -239,8 +247,7 @@ export const useUpdatePlannerTask = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
+      invalidatePlannerTaskQueries(queryClient);
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
   });
@@ -257,8 +264,7 @@ export const useDeletePlannerTask = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
+      invalidatePlannerTaskQueries(queryClient);
       toast({ title: "Задача удалена" });
     },
     onError: (e: any) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }),
