@@ -1,5 +1,6 @@
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
+import { RECENT_ARRIVAL_DAYS, arrivalTime, isRecentArrival } from "@/lib/requestArrivals";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
 import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
@@ -119,6 +120,8 @@ const REQUEST_PHASES = [
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
   { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
 ] as const;
+
+
 
 
 type RowDensity = "compact" | "normal" | "roomy";
@@ -709,7 +712,7 @@ export const RequestsTable = ({
     if (!groupByPhase) return null;
     const grouped = REQUEST_PHASES.map((phase) => ({
       ...phase,
-      items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status)),
+      items: paginatedRequests.filter((request) => (phase.statuses as readonly string[]).includes(request.status) && !isRecentArrival(request)),
     })).filter((phase) => phase.items.length > 0);
     // Заявки с нестандартным статусом (например «Заказано») не должны пропадать из списка.
     const known = new Set<string>(REQUEST_PHASES.flatMap((phase) => phase.statuses as readonly string[]));
@@ -723,8 +726,22 @@ export const RequestsTable = ({
         items: other,
       } as unknown as (typeof grouped)[number]);
     }
+    const recent = paginatedRequests.filter(isRecentArrival).sort((a, b) => arrivalTime(b) - arrivalTime(a));
+    if (recent.length > 0) {
+      grouped.push({
+        key: "recent-arrivals",
+        name: `Приходы за ${RECENT_ARRIVAL_DAYS} дней`,
+        statuses: [] as unknown as (typeof grouped)[number]["statuses"],
+        accent: "bg-success",
+        items: recent,
+      } as unknown as (typeof grouped)[number]);
+    }
     return grouped;
   }, [groupByPhase, paginatedRequests]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("requests-group-by-phase-change", { detail: groupByPhase }));
+  }, [groupByPhase]);
 
   const visibleIds = useMemo(() => paginatedRequests.map((r) => r.id), [paginatedRequests]);
   const { data: shipmentsSummary } = useShipmentsSummary(visibleIds);
