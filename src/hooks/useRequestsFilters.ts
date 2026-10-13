@@ -1,4 +1,4 @@
-import { isRecentArrival } from "@/components/requests/RequestsTable";
+import { isRecentArrival } from "@/lib/requestArrivals";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
@@ -375,7 +375,7 @@ export const useRequestsFilters = (
     specialDateFilter,
     objectFilter,
     transportCompanyFilter,
-  ]);
+  , phaseMode]);
 
   const uniqueApplicants = useMemo(() => {
     return Array.from(
