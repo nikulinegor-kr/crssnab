@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { ClipboardList, Plus, CalendarRange, Settings, LayoutDashboard } from "lucide-react";
+import { ClipboardList, Plus, CalendarRange, Menu, Truck } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const Item = ({
 export const MobileBottomNav = () => {
   const { open } = useQuickRequest();
   const location = useLocation();
+  const { toggleSidebar } = useSidebar();
   // Hide on auth/landing pages
   const hidden = ["/auth", "/employee-login", "/landing", "/"].includes(location.pathname);
   if (hidden) return null;
@@ -45,8 +47,8 @@ export const MobileBottomNav = () => {
       aria-label="Основная навигация"
     >
       <div className="flex items-stretch h-16">
-        <Item to="/dashboard" label="Главная" icon={LayoutDashboard} />
         <Item to="/requests" label="Заявки" icon={ClipboardList} />
+        <Item to="/planner" label="Задачи" icon={CalendarRange} />
 
         <button
           type="button"
@@ -60,8 +62,15 @@ export const MobileBottomNav = () => {
           <span className="text-[10px] font-medium text-muted-foreground mt-0.5">Быстро</span>
         </button>
 
-        <Item to="/planner" label="Планировщик" icon={CalendarRange} />
-        <Item to="/organization/settings" label="Настройки" icon={Settings} />
+        <Item to="/shipments" label="Поставки" icon={Truck} />
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] font-medium text-muted-foreground"
+        >
+          <Menu className="h-5 w-5" />
+          <span>Меню</span>
+        </button>
       </div>
     </nav>
   );

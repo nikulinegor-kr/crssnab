@@ -836,7 +836,7 @@ export const RequestsTable = ({
           <ChevronsRight className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <div className="flex items-center gap-1" aria-label="Плотность и масштаб">
+      <div className="hidden lg:flex items-center gap-1" aria-label="Плотность и масштаб">
         {([
           ["compact", 100, "Плотно"],
           ["normal", 110, "Обычно"],
@@ -869,7 +869,7 @@ export const RequestsTable = ({
       {!isDesktop && (
       <div className="lg:hidden min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain">
 
-        <div className="flex justify-end gap-1 pb-1">
+        <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
           <Toggle
             pressed={groupByProject}
             onPressedChange={toggleGroupByProject}
