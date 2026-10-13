@@ -118,7 +118,6 @@ const REQUEST_PHASES = [
   { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в Бухгалтерии", "Счёт в бухгалтерии"], accent: "bg-warning" },
   { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
-  { key: "closed", name: "Закрыто", statuses: ["Доставлено", "Выполнено"], accent: "bg-success" },
 ] as const;
 
 
