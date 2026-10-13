@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus } from "lucide-react";
+import { Bell, ClipboardList, Plus } from "lucide-react";
+import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -67,16 +68,28 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
             </Badge>
           )}
         </CardTitle>
-        <Button
-          size="sm"
-          className="gap-1 shrink-0"
-          onClick={() => {
-            setEditTask(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="h-3.5 w-3.5" /> Поставить задачу
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1 shrink-0"
+            onClick={() =>
+              sendRequestToAppleReminders({ id: requestId, description: requestTitle ?? null })
+            }
+          >
+            <Bell className="h-3.5 w-3.5" /> В Напоминания Apple
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1 shrink-0"
+            onClick={() => {
+              setEditTask(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Поставить задачу
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-1 space-y-2">
         {tasks.length === 0 && (
