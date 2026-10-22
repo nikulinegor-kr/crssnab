@@ -746,6 +746,19 @@ export const RequestsTable = ({
         items: recent,
       } as unknown as (typeof grouped)[number]);
     }
+    // Остальные доставленные/выполненные — видны, когда «Скрыть доставленные» выключен
+    const closed = paginatedRequests
+      .filter((r) => (r.status === "Доставлено" || r.status === "Выполнено") && !isRecentArrival(r))
+      .sort((a, b) => arrivalTime(b) - arrivalTime(a));
+    if (closed.length > 0) {
+      grouped.push({
+        key: "delivered",
+        name: "Доставлено",
+        statuses: [] as unknown as (typeof grouped)[number]["statuses"],
+        accent: "bg-success",
+        items: closed,
+      } as unknown as (typeof grouped)[number]);
+    }
     return grouped;
   }, [groupByPhase, paginatedRequests]);
 
