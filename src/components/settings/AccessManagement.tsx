@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getFunctionErrorMessage } from "@/lib/functionError";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PERMISSION_TREE, ALL_PERMISSION_KEYS, PermissionKey } from "@/hooks/useUserPermissions";
@@ -209,7 +210,7 @@ export const AccessManagement = ({ organizationId }: AccessManagementProps) => {
           organizationId, organizationName: orgData.name, role: newRole,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error, "Не удалось создать пользователя"));
       if (!data.success) throw new Error(data.error || "Не удалось создать пользователя");
 
       setCreatedCredentials({ email: emailVal.data, password: newPassword, fullName: newFullName.trim() });

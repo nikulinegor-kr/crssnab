@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getFunctionErrorMessage } from "@/lib/functionError";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,7 +107,7 @@ const TeamPage = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error, "Не удалось создать пользователя"));
       if (!data.success) throw new Error(data.error || "Не удалось создать пользователя");
 
       toast({ title: "Успешно", description: "Пользователь добавлен в команду" });
