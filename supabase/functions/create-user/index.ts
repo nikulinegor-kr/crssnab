@@ -55,7 +55,7 @@ serve(async (req) => {
       organizationId: z.string().uuid(),
       role: z.enum(['owner', 'admin', 'editor', 'viewer']),
       fullName: z.string().trim().min(1).max(100).optional(),
-      position: z.string().trim().max(100).optional()
+      position: z.string().trim().max(100).nullish()
     });
 
     const validated = schema.parse(requestBody);
@@ -153,8 +153,18 @@ serve(async (req) => {
         );
       }
       
+      if (userError.code === "weak_password") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Пароль слишком простой или встречался в утечках данных. Придумайте другой пароль."
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
           error: "Не удалось создать пользователя"
         }),
