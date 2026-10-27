@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getFunctionErrorMessage } from "@/lib/functionError";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,7 +220,7 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error, "Не удалось создать пользователя"));
 
       if (!data.success) {
         throw new Error(data.error || "Не удалось создать пользователя");
