@@ -20,6 +20,7 @@ export const ALL_PERMISSION_KEYS = [
   "erp.shipments",
   "analytics",
   "analytics.dashboard",
+  "analytics.executive",
   "analytics.reports",
   "planner",
   "planner.access",
@@ -62,6 +63,7 @@ export const PERMISSION_TREE = [
     label: "Аналитика",
     children: [
       { key: "analytics.dashboard" as PermissionKey, label: "Дашборд" },
+      { key: "analytics.executive" as PermissionKey, label: "Панель руководителя" },
       { key: "analytics.reports" as PermissionKey, label: "Отчёты" },
     ],
   },
@@ -87,7 +89,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/shipments": "erp.shipments",
   
   "/dashboard": "analytics.dashboard",
-  "/executive": "analytics.dashboard",
+  "/executive": "analytics.executive",
   "/agent-report": "analytics.reports",
   "/agent-act-report": "analytics.reports",
   "/percent-calculator": "analytics.reports",
