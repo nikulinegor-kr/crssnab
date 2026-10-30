@@ -22,7 +22,7 @@ const Item = ({
     className={({ isActive }) =>
       cn(
         "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors",
-        (isActive || active) ? "text-primary" : "text-muted-foreground",
+        (active ?? isActive) ? "text-primary" : "text-muted-foreground",
       )
     }
   >
@@ -50,7 +50,7 @@ export const MobileBottomNav = () => {
       aria-label="Основная навигация"
     >
       <div className="flex items-stretch h-16">
-        <Item to={isAdmin ? "/executive" : "/tasks?tab=mine"} label="Главная" icon={House} active={!isAdmin && location.pathname === "/tasks" && location.search.includes("tab=mine")} />
+        <Item to={isAdmin ? "/executive" : "/tasks?tab=mine"} label="Главная" icon={House} active={isAdmin ? location.pathname === "/executive" : location.pathname === "/tasks" && location.search.includes("tab=mine")} />
         <Item to="/requests" label="Заявки" icon={ClipboardList} />
 
         <Button variant="ghost"
@@ -65,7 +65,7 @@ export const MobileBottomNav = () => {
           <span className="text-xs font-medium text-muted-foreground mt-0.5">Быстро</span>
         </Button>
 
-        <Item to="/tasks" label="Задачи" icon={ListChecks} />
+        <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks" && (isAdmin || !location.search.includes("tab=mine"))} />
         <Button variant="ghost"
           type="button"
           onClick={toggleSidebar}

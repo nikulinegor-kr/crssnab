@@ -36,8 +36,8 @@ export default function ExecutivePanelPage() {
   return <div className="mx-auto max-w-7xl min-w-0 space-y-3 pb-[env(safe-area-inset-bottom)] text-foreground" aria-busy={openingTask}>
     <header><h1 className="text-xl font-semibold sm:text-2xl">Панель руководителя</h1><p className="mt-1 text-xs text-muted-foreground">{format(new Date(), "d MMMM yyyy, EEEE", { locale: ru })}</p>
       {panel.orgId && <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
-        <Button variant="link" asChild className="min-h-11 px-0 text-xs font-normal text-muted-foreground"><Link to={EXEC_LINKS.openRequests}>{panel.openRequests.isLoading ? <Skeleton className="h-4 w-8" /> : panel.openRequests.isError ? "—" : panel.openRequests.data} заявок в работе</Link></Button><span>·</span>
-        <Button variant="link" asChild className="min-h-11 px-0 text-xs font-normal text-muted-foreground"><Link to={EXEC_LINKS.activeTasks}>{panel.activeTasks.isLoading ? <Skeleton className="h-4 w-8" /> : panel.activeTasks.isError ? "—" : panel.activeTasks.data} активных задач</Link></Button>
+        <Button variant="link" asChild className="min-h-11 sm:min-h-7 px-0 text-xs font-normal text-muted-foreground"><Link to={EXEC_LINKS.openRequests}>{panel.openRequests.isLoading ? <Skeleton className="h-4 w-8" /> : panel.openRequests.isError ? "—" : panel.openRequests.data} заявок в работе</Link></Button><span>·</span>
+        <Button variant="link" asChild className="min-h-11 sm:min-h-7 px-0 text-xs font-normal text-muted-foreground"><Link to={EXEC_LINKS.activeTasks}>{panel.activeTasks.isLoading ? <Skeleton className="h-4 w-8" /> : panel.activeTasks.isError ? "—" : panel.activeTasks.data} активных задач</Link></Button>
       </div>}
     </header>
     {!panel.orgId ? <p className="text-sm text-muted-foreground">Выберите организацию</p> : <>
