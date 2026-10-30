@@ -11,7 +11,7 @@ import BiometricSettingCard from "@/components/native/BiometricSettingCard";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function ProfilePage() {
+export default function ProfilePage({ embedded = false }: { embedded?: boolean } = {}) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -125,21 +125,21 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="w-full max-w-5xl mx-auto p-3 sm:p-4 md:p-6 space-y-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+    <div className={embedded ? "min-w-0" : "min-h-screen bg-muted/30"}>
+      <div className={embedded ? "mx-auto w-full min-w-0 max-w-5xl space-y-4" : "w-full max-w-5xl mx-auto p-3 sm:p-4 md:p-6 space-y-6"}>
+        {!embedded && <><h1 className="text-2xl md:text-3xl font-bold text-foreground">
           Профиль пользователя
         </h1>
         <p className="text-sm text-muted-foreground">
           Просмотр и редактирование личной информации и настроек
-        </p>
+        </p></>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Левая колонка - аватар и основная информация */}
           <div className="space-y-6">
             <Card className="bg-card border-border/40">
-              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                <Avatar className="h-32 w-32">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center space-y-4">
+                <Avatar className="h-20 w-20 sm:h-32 sm:w-32">
                   <AvatarFallback className="text-3xl bg-primary/20 text-primary">
                     {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
                   </AvatarFallback>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
               <CardHeader className="border-b border-border/40">
                 <CardTitle className="text-lg">Личные данные</CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -232,7 +232,7 @@ export default function ProfilePage() {
               <CardHeader className="border-b border-border/40">
                 <CardTitle className="text-lg">Безопасность</CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Текущий пароль</Label>

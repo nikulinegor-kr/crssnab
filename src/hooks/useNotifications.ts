@@ -67,7 +67,7 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
           title,
           body,
           url,
-          tag: link || undefined,
+          tag: url || undefined,
           icon: "/favicon.png",
           badge: "/favicon.png",
         });
@@ -75,7 +75,7 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
       }
     }
     // Fallback: прямой Notification API (откроется/сфокусируется текущая вкладка)
-    const n = new Notification(title, { body, icon: "/favicon.png", tag: link || undefined });
+    const n = new Notification(title, { body, icon: "/favicon.png", tag: url || undefined });
     n.onclick = () => { window.focus(); window.location.href = url; n.close(); };
   } catch (error) {
     console.error("Error showing browser notification:", error);
@@ -128,7 +128,8 @@ export const useNotifications = () => {
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .eq("user_id", userId ?? "");
 
       if (error) throw error;
     },
