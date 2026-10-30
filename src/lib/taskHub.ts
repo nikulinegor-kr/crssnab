@@ -18,10 +18,11 @@ interface FilterQuery {
   or(filter: string): FilterQuery;
   lt(column: string, value: string): FilterQuery;
   not(column: string, operator: string, value: null): FilterQuery;
+  gte(column: string, value: string): FilterQuery;
   order(column: string, options: { ascending: boolean; nullsFirst?: boolean }): FilterQuery;
 }
 
-export function applyTabFilter<Q>(query: Q, tab: TaskTab, userId: string, todayISO: string): Q {
+export function applyTabFilter<Q>(query: Q, tab: TaskTab, userId: string, todayISO: string, extra: { overdue?: boolean; today?: boolean } = {}): Q {
   let filtered = (query as unknown as FilterQuery).is("archived_at", null).eq("hidden_auto", false);
   if (tab === "done") return filtered.eq("status", "done").order("completed_at", { ascending: false, nullsFirst: false }) as unknown as Q;
   filtered = filtered.neq("status", "done");
@@ -31,6 +32,11 @@ export function applyTabFilter<Q>(query: Q, tab: TaskTab, userId: string, todayI
     case "control": filtered = filtered.eq("reviewer_id", userId).eq("status", "review"); break;
     case "overdue": filtered = filtered.lt("due_date", todayISO); break;
     case "recurring": filtered = filtered.not("recurrence", "is", null); break;
+  }
+  if (tab === "mine" && extra.overdue) filtered = filtered.lt("due_date", todayISO);
+  if (tab === "mine" && extra.today) {
+    const next = new Date(todayISO); next.setDate(next.getDate() + 1);
+    filtered = filtered.gte("due_date", todayISO).lt("due_date", next.toISOString());
   }
   return filtered as unknown as Q;
 }

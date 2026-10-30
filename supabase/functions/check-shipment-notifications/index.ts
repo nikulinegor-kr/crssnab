@@ -212,7 +212,7 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
             overdue: "❌ Просрочка доставки",
           };
           const shortBody = `Заявка #${r.request_number}${r.description ? " — " + r.description : ""}`;
-          const link = `/requests/${r.id}`;
+          const link = `/requests?request=${r.id}`;
 
           const { data: members } = await supabase
             .from("user_organizations")

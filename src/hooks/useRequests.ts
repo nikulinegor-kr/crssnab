@@ -10,6 +10,7 @@ export interface Request {
   priority: string;
   applicant: string | null;
   applicant_user_id: string | null;
+  created_by?: string | null;
   executor: string | null;
   object_id: string | null;
   estimated_delivery_days: number | null;

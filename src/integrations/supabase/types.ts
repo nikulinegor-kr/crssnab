@@ -5201,6 +5201,7 @@ export type Database = {
         }
         Returns: string
       }
+      normalize_notification_link: { Args: { link: string }; Returns: string }
       planner_check_task_deadlines: { Args: never; Returns: undefined }
       planner_notify_users: {
         Args: {
@@ -5264,6 +5265,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      verify_push_hook_secret: { Args: { candidate: string }; Returns: boolean }
     }
     Enums: {
       organization_role: "owner" | "admin" | "member" | "editor" | "viewer"

@@ -33,7 +33,9 @@ const Suppliers = lazyWithRetry(() => import("./pages/Suppliers"));
 const CalendarPage = lazyWithRetry(() => import("./pages/CalendarPage"));
 const TasksHubPage = lazyWithRetry(() => import("./pages/TasksHubPage"));
 const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
-const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
+const MePage = lazyWithRetry(() => import("./pages/MePage"));
+const MeNotificationsPage = lazyWithRetry(() => import("./pages/MeNotificationsPage"));
+const MeProfilePage = lazyWithRetry(() => import("./pages/MeProfilePage"));
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
 const SelectOrganization = lazyWithRetry(() => import("./pages/SelectOrganization"));
 const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSettings"));
@@ -264,16 +266,10 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ProfilePage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/me" element={<ProtectedRoute><AppLayout><MePage /></AppLayout></ProtectedRoute>} />
+            <Route path="/me/notifications" element={<ProtectedRoute><AppLayout><MeNotificationsPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/me/profile" element={<ProtectedRoute><AppLayout><MeProfilePage /></AppLayout></ProtectedRoute>} />
+            <Route path="/profile" element={<Navigate to="/me/profile" replace />} />
             <Route
               path="/organization/settings"
               element={

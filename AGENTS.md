@@ -10,3 +10,7 @@
 - Keep executive drill-down links in executivePanel.ts and delivery/open predicates in requestStaleness.ts; URL drill-down filters are temporary and restore saved user filters to keep counts and lists identical.
 
 - Keep home-screen installability manifest-only; the existing notification worker remains messaging-only without app-shell caching so previews and fresh releases are not trapped in offline caches.
+
+- Scope personal-cabinet queries explicitly to auth user and reuse PlannerTaskDialog, TaskStatusActions and ProfilePage so personal views never fork task or profile editing.
+- Verify push-hook headers through a service-role-only boolean RPC against private DB config; rotate the DB value without returning it, avoiding shared secret literals and environment synchronization.
+- Keep notification links normalized in a pure client helper and the messaging worker, and suppress local browser notifications when a real Web Push subscription exists to avoid duplicate delivery.

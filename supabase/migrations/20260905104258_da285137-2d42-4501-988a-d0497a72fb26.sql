@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS app_private.config (
 REVOKE ALL ON app_private.config FROM PUBLIC, anon, authenticated;
 
 INSERT INTO app_private.config(key, value)
-VALUES ('apns_hook_secret', '61e44c2c7b3ce0bead8566901c8a4966e0adf849cd3313f3')
+VALUES ('apns_hook_secret', encode(extensions.gen_random_bytes(24), 'hex'))
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO app_private.config(key, value)

@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
+import { normalizeNotificationLink } from "@/lib/notificationLinks";
+import { useAuthUserId } from "./useOrgMembership";
 import { useEffect, useCallback } from "react";
 
 interface Notification {
@@ -47,24 +49,25 @@ const playNotificationSound = () => {
   } catch (_) { /* noop */ }
 };
 
-const showBrowserNotification = async (title: string, body: string, link?: string | null) => {
+const showBrowserNotification = async (title: string, body: string, link?: string | null, notificationId?: string) => {
   if (localStorage.getItem(PUSH_BROWSER_ENABLED_KEY) === "off") return;
   if (!("Notification" in window) || Notification.permission !== "granted") return;
 
   appendPushLog({ title, body, link });
   playNotificationSound();
 
-  const url = link || "/dashboard";
+  const url = normalizeNotificationLink(link);
   try {
     if ("serviceWorker" in navigator) {
       const registration = await navigator.serviceWorker.getRegistration();
+      if (registration && await registration.pushManager?.getSubscription()) return;
       if (registration) {
         registration.active?.postMessage({
           type: "show-notification",
           title,
           body,
           url,
-          tag: link || undefined,
+          tag: notificationId || undefined,
           icon: "/favicon.png",
           badge: "/favicon.png",
         });
@@ -72,7 +75,7 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
       }
     }
     // Fallback: прямой Notification API (откроется/сфокусируется текущая вкладка)
-    const n = new Notification(title, { body, icon: "/favicon.png", tag: link || undefined });
+    const n = new Notification(title, { body, icon: "/favicon.png", tag: notificationId || undefined });
     n.onclick = () => { window.focus(); window.location.href = url; n.close(); };
   } catch (error) {
     console.error("Error showing browser notification:", error);
@@ -81,12 +84,13 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
 
 export const useNotifications = () => {
   const { currentOrgId } = useCurrentOrganization();
+  const { data: userId } = useAuthUserId();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Получаем уведомления пользователя
   const { data: notifications, isLoading } = useQuery({
-    queryKey: ["notifications", currentOrgId],
+    queryKey: ["notifications", userId, currentOrgId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -107,43 +111,16 @@ export const useNotifications = () => {
 
   // Подписываемся на новые уведомления
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const channel = supabase
-        .channel(`notifications:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            queryClient.invalidateQueries({ queryKey: ["notifications"] });
-            
-            // Показываем toast уведомление
-            const notification = payload.new as Notification;
-            toast({
-              title: notification.title,
-              description: notification.message,
-            });
-
-            // Показываем браузерное push-уведомление
-            showBrowserNotification(notification.title, notification.message, notification.link);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    getCurrentUser();
-  }, [currentOrgId, queryClient, toast]);
+    if (!userId) return;
+    const channel = supabase.channel(`notifications:${userId}`).on('postgres_changes', {event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${userId}`}, payload => {
+      void queryClient.invalidateQueries({queryKey:["notifications"]});
+      void queryClient.invalidateQueries({queryKey:["my-notifications"]});
+      const notification = payload.new as Notification;
+      toast({title:notification.title,description:notification.message});
+      void showBrowserNotification(notification.title,notification.message,notification.link,notification.id);
+    }).subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [userId, queryClient, toast]);
 
   // Отметить уведомление как прочитанное
   const markAsReadMutation = useMutation({
@@ -151,7 +128,8 @@ export const useNotifications = () => {
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .eq("user_id", userId ?? "");
 
       if (error) throw error;
     },

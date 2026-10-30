@@ -7,7 +7,7 @@ import { useTaskHubIdentity } from "./useTaskHubIdentity";
 import { applyTabFilter, type TaskTab } from "@/lib/taskHub";
 import { invalidatePlannerTaskQueries, type PlannerTask } from "./usePlannerTasks";
 
-export interface HubFilters { search: string; object: string; assignee: string; priority: string; department: string }
+export interface HubFilters { search: string; object: string; assignee: string; priority: string; department: string; overdue?: boolean; today?: boolean }
 export function useTasksHub(tab: TaskTab, filters: HubFilters, page: number) {
   const { currentOrgId } = useCurrentOrganization();
   const { userId } = useTaskHubIdentity();
@@ -20,7 +20,7 @@ export function useTasksHub(tab: TaskTab, filters: HubFilters, page: number) {
     placeholderData: (previous, previousQuery) => previousQuery?.queryKey[1] === currentOrgId && previousQuery?.queryKey[2] === userId ? keepPreviousData(previous) : undefined,
     queryFn: async () => {
       if (!currentOrgId || !userId) return { rows: [] as PlannerTask[], count: 0 };
-      let query = applyTabFilter(supabase.from("planner_tasks").select("*", { count: "exact" }).eq("organization_id", currentOrgId), tab, userId, today);
+      let query = applyTabFilter(supabase.from("planner_tasks").select("*", { count: "exact" }).eq("organization_id", currentOrgId), tab, userId, today, filters);
       for (const term of filters.search.trim().split(/\s+/).filter(Boolean)) query = query.ilike("title", `%${term.replace(/[%_\\]/g, "\\$&")}%`);
       if (filters.object) query = query.eq("object_id", filters.object);
       if (filters.assignee) query = query.eq("assignee_id", filters.assignee);
