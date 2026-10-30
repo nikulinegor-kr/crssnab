@@ -69,12 +69,14 @@ interface Props {
   defaultRequestId?: string | null;
   defaultAssigneeId?: string | null;
   defaultTitle?: string;
+  defaultDescription?: string;
+  defaultPriority?: PlannerTaskPriority;
 }
 
 const equipmentLabelLocal = (e: any) =>
   [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
 
-export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId, defaultTitle }: Props) {
+export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId, defaultTitle, defaultDescription, defaultPriority }: Props) {
   const isEdit = !!task;
   const { currentOrgId } = useCurrentOrganization();
   const create = useCreatePlannerTask();
@@ -127,9 +129,9 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   useEffect(() => {
     if (!open) return;
     setTitle(task?.title ?? defaultTitle ?? "");
-    setDescription(task?.description ?? "");
+    setDescription(task?.description ?? defaultDescription ?? "");
     setStatus(task?.status ?? defaultStatus ?? "backlog");
-    setPriority(task?.priority ?? "medium");
+    setPriority(task?.priority ?? defaultPriority ?? "medium");
     setObjectId(task?.object_id ?? defaultObjectId ?? null);
     setStageId(task?.stage_id ?? null);
     setAssigneeId(task?.assignee_id ?? defaultAssigneeId ?? null);
@@ -157,7 +159,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setTemplateId("");
     setOverriddenConflicts(new Set());
     setOnlyFreeEquipment(true);
-  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultTitle]);
+  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultTitle, defaultDescription, defaultPriority, defaultAssigneeId]);
 
   const filteredStages = stages.filter((s) => !objectId || s.object_id === objectId || !s.object_id);
 
