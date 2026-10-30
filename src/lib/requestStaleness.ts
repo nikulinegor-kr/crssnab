@@ -1,5 +1,7 @@
 import { differenceInDays, startOfToday } from "date-fns";
 
+export const CLOSED_REQUEST_STATUSES = ["Выполнено", "Доставлено", "Закрыто", "Отменено", "Отмена"];
+
 type StaleRequest = {
   status: string;
   updated_at?: string | null;
