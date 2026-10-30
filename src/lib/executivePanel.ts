@@ -1,5 +1,16 @@
 import { differenceInCalendarDays, differenceInDays, startOfDay } from "date-fns";
 import { PLANNER_STATUS_LABELS, type PlannerTaskStatus } from "./plannerStatuses";
+import { pluralRu } from "./pluralRu";
+
+export function formatExecEventTime(createdAt: string, now = new Date()): string {
+  const seconds = Math.max(0, Math.round((now.getTime() - Date.parse(createdAt)) / 1000));
+  const [n, forms]: [number, readonly [string, string, string]] = seconds < 60
+    ? [seconds, ["секунда", "секунды", "секунд"]]
+    : seconds < 3600 ? [Math.round(seconds / 60), ["минута", "минуты", "минут"]]
+    : seconds < 86400 ? [Math.round(seconds / 3600), ["час", "часа", "часов"]]
+    : [Math.round(seconds / 86400), ["день", "дня", "дней"]];
+  return `${n} ${pluralRu(n, forms)} назад`;
+}
 
 export type ExecAttentionItem = {
   id: string;
