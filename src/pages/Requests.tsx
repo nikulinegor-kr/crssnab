@@ -57,10 +57,10 @@ const Requests = () => {
   // Semantic search results
   const [semanticSearchIds, setSemanticSearchIds] = useState<string[] | null>(null);
   const visibleRequests = useMemo(() => (
-    semanticSearchIds
+    semanticSearchIds && !filters.hasUrlFilters
       ? filters.filteredRequests?.filter((request) => semanticSearchIds.includes(request.id))
       : filters.filteredRequests
-  ) || [], [filters.filteredRequests, semanticSearchIds]);
+  ) || [], [filters.filteredRequests, semanticSearchIds, filters.hasUrlFilters]);
 
   // Selection state
   const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(new Set());
@@ -231,13 +231,23 @@ const Requests = () => {
       if (!panelOpen) setPanelOpen(true);
       return;
     }
-    const found = (filters.filteredRequests as Request[] | undefined)?.find((r) => r.id === urlRequestId)
+    const found = requests?.find((r) => r.id === urlRequestId)
       ?? (panelRequestOrder as Request[]).find((r) => r.id === urlRequestId);
     if (found) {
       setSelectedRequest(found);
       setPanelOpen(true);
+      return;
     }
-  }, [urlRequestId, selectedRequest?.id, panelOpen, filters.filteredRequests, panelRequestOrder]);
+    if (!currentOrgId) return;
+    let cancelled = false;
+    void supabase.from("requests").select("*").eq("organization_id", currentOrgId).eq("id", urlRequestId).maybeSingle().then(({ data, error }) => {
+      if (cancelled) return;
+      if (error || !data) { toast({ title: "Не удалось открыть заявку", variant: "destructive" }); return; }
+      setSelectedRequest(data as unknown as Request);
+      setPanelOpen(true);
+    });
+    return () => { cancelled = true; };
+  }, [urlRequestId, selectedRequest?.id, panelOpen, requests, panelRequestOrder, currentOrgId]);
 
 
   const handleRequestOrderChange = useCallback((orderedRequests: Request[]) => {
@@ -606,6 +616,10 @@ const Requests = () => {
             isArchiveTab={false}
           />
 
+          {filters.hasUrlFilters && <div role="status" className="flex flex-wrap items-center gap-x-1 rounded-md border border-border bg-muted px-3 text-xs text-muted-foreground">
+            <span>Отфильтровано с панели руководителя: {filters.urlFilterDescription}</span><span>·</span>
+            <Button variant="link" className="min-h-11 px-1 text-xs" onClick={() => { filters.clearUrlFilters(); setSemanticSearchIds(null); }}>Сбросить</Button>
+          </div>}
           {/* LEVEL 7: Table */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
 

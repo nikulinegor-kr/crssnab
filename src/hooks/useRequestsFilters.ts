@@ -1,10 +1,11 @@
 import { isRecentArrival } from "@/lib/requestArrivals";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Request } from "@/hooks/useRequests";
 import { addDays, startOfToday, isBefore, isAfter } from "date-fns";
-import { isStale } from "@/lib/requestStaleness";
+import { isStale, isOpenRequest, isOverdueDelivery } from "@/lib/requestStaleness";
 import { isOverdue, isUnpaid } from "@/lib/requestAttention";
+import { REQUEST_URL_FILTER_KEYS, requestUrlFilterKey, requestUrlFilterDescription } from "@/lib/executivePanel";
 
 export type SpecialDateFilter = 
   | "deliveredLast7Days" 
@@ -156,7 +157,11 @@ export const useRequestsFilters = (
   requests: Request[] | undefined,
   activeTab: string
 ) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlFilterKey = requestUrlFilterKey(searchParams);
+  const hasUrlFilters = Boolean(urlFilterKey);
+  const appliedUrlKey = useRef<string | null>(null);
+  const [openOnly, setOpenOnly] = useState(false);
   
   // Load saved filters from localStorage on init
   const savedFilters = useMemo(() => loadFiltersFromStorage(), []);
@@ -190,6 +195,7 @@ export const useRequestsFilters = (
 
   // Save filters to localStorage whenever they change (exclude specialDateFilter as it's temporary)
   useEffect(() => {
+    if (hasUrlFilters || appliedUrlKey.current !== urlFilterKey) return;
     const currentFilters = {
       searchQuery: "",
       statusFilter,
@@ -202,10 +208,30 @@ export const useRequestsFilters = (
       transportCompanyFilter,
     };
     saveFiltersToStorage(currentFilters as RequestFilters);
-  }, [statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter]);
+  }, [statusFilter, priorityFilter, yearFilter, applicantFilter, executorFilter, hideDelivered, objectFilter, transportCompanyFilter, hasUrlFilters, urlFilterKey]);
 
   // Apply filters from URL params on mount — reset ALL filters first so dashboard links work cleanly
   useEffect(() => {
+    if (appliedUrlKey.current === urlFilterKey) return;
+    const previousKey = appliedUrlKey.current;
+    appliedUrlKey.current = urlFilterKey;
+    if (!hasUrlFilters) {
+      if (previousKey) {
+        const saved = loadFiltersFromStorage();
+        setSearchQuery(saved?.searchQuery || "");
+        setStatusFilter(saved?.statusFilter || []);
+        setPriorityFilter(saved?.priorityFilter || "all");
+        setYearFilter(saved?.yearFilter || CURRENT_YEAR);
+        setApplicantFilter(saved?.applicantFilter || "all");
+        setExecutorFilter(saved?.executorFilter || "all");
+        setObjectFilter(saved?.objectFilter || "all");
+        setTransportCompanyFilter(saved?.transportCompanyFilter || "all");
+        setHideDelivered(saved?.hideDelivered ?? true);
+        setSpecialDateFilter(null);
+        setOpenOnly(false);
+      }
+      return;
+    }
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
     const isNew = searchParams.get("new");
@@ -214,14 +240,16 @@ export const useRequestsFilters = (
     const contractor = searchParams.get("contractor");
 
     // If any URL param is present, reset everything to defaults first
-    if (status || priority || isNew || filter || paymentStatus || contractor) {
+    if (hasUrlFilters) {
       setSearchQuery("");
       setStatusFilter([]);
       setPriorityFilter("all");
       setYearFilter("all");
       setApplicantFilter("all");
       setExecutorFilter("all");
-      setObjectFilter("all");
+      setObjectFilter(searchParams.get("object") || "all");
+      setOpenOnly(searchParams.get("open") === "1");
+      setTransportCompanyFilter("all");
       setHideDelivered(false);
       setSpecialDateFilter(null);
     }
@@ -256,7 +284,7 @@ export const useRequestsFilters = (
       else if (paymentStatus === "paid") setSpecialDateFilter("paid");
       else if (paymentStatus === "partial") setSpecialDateFilter("invoiced");
     }
-  }, [searchParams]);
+  }, [urlFilterKey, hasUrlFilters, searchParams]);
 
   const filteredRequests = useMemo(() => {
     const today = startOfToday();
@@ -264,6 +292,7 @@ export const useRequestsFilters = (
     const sevenDaysFromNow = addDays(today, 7);
     
     return requests?.filter((request) => {
+      if (openOnly && !isOpenRequest(request)) return false;
       // Special date filter
       if (specialDateFilter === "deliveredLast7Days") {
         if (request.status !== "Доставлено" || !request.delivery_date) return false;
@@ -293,9 +322,7 @@ export const useRequestsFilters = (
       }
 
       if (specialDateFilter === "overdueDelivery") {
-        if (request.status === "Доставлено" || request.status === "Выполнено") return false;
-        if (!request.delivery_date || request.status === "В пути") return false;
-        if (!isBefore(new Date(request.delivery_date), today)) return false;
+        if (!isOverdueDelivery(request, today)) return false;
       }
 
       if (specialDateFilter === "overdueShipment") {
@@ -364,6 +391,7 @@ export const useRequestsFilters = (
     });
   }, [
     requests,
+    openOnly,
     searchQuery,
     statusFilter,
     priorityFilter,
@@ -441,7 +469,16 @@ export const useRequestsFilters = (
     if (filters.transportCompanyFilter !== undefined) setTransportCompanyFilter(filters.transportCompanyFilter);
   }, []);
 
+  const clearUrlFilters = useCallback(() => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous);
+      for (const key of REQUEST_URL_FILTER_KEYS) next.delete(key);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   const clearFilters = useCallback(() => {
+    if (hasUrlFilters) { clearUrlFilters(); return; }
+    setOpenOnly(false);
     setSearchQuery("");
     setStatusFilter([]);
     setPriorityFilter("all");
@@ -452,7 +489,7 @@ export const useRequestsFilters = (
     setSpecialDateFilter(null);
     setObjectFilter("all");
     setTransportCompanyFilter("all");
-  }, []);
+  }, [hasUrlFilters, clearUrlFilters]);
 
   const currentFilters: RequestFilters = {
     searchQuery,
@@ -468,6 +505,9 @@ export const useRequestsFilters = (
   };
 
   return {
+    hasUrlFilters,
+    urlFilterDescription: requestUrlFilterDescription(searchParams, (requests?.find(r => r.object_id === searchParams.get("object")) as (Request & { object_name?: string | null }) | undefined)?.object_name || undefined),
+    clearUrlFilters,
     // State
     searchQuery,
     setSearchQuery,
