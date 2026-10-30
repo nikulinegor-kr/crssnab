@@ -1,0 +1,2 @@
+// Public application-server key; private signing credentials stay in the secret store.
+export const VAPID_PUBLIC_KEY = "BLpJu1c1z7bi8zCG3AqKqpELx4uqEJ3xV_96-pZE7YoE5_WpmIf-0dSMgquUliY0Meis818P-RTUyWFg_E3rINU";

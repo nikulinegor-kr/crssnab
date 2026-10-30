@@ -1,10 +1,12 @@
 import {test,expect} from "bun:test";
 import {normalizeNotificationLink} from "../src/lib/notificationLinks";
-import {getWebPushState} from "../src/lib/webPush";
+import {getWebPushState,vapidKeyBytes} from "../src/lib/webPush";
+import {VAPID_PUBLIC_KEY} from "../supabase/functions/_shared/webPushConfig";
 import {isMyOpenRequest,taskStatistics} from "../src/lib/personalCabinet";
 import {applyTabFilter} from "../src/lib/taskHub";
 import {deliverWebPush,isAllowedPushEndpoint} from "../supabase/functions/_shared/webPushDelivery";
 const id="00000000-0000-0000-0000-000000000001";
+test("provided public VAPID key decodes to an uncompressed P-256 public key",()=>{expect(VAPID_PUBLIC_KEY).toBe("BLpJu1c1z7bi8zCG3AqKqpELx4uqEJ3xV_96-pZE7YoE5_WpmIf-0dSMgquUliY0Meis818P-RTUyWFg_E3rINU");const bytes=vapidKeyBytes(VAPID_PUBLIC_KEY);expect(bytes.byteLength).toBe(65);expect(bytes[0]).toBe(4);});
 test("old request links open side panel",()=>expect(normalizeNotificationLink(`/requests/${id}`)).toBe(`/requests?request=${id}`));
 test("new request links remain unchanged",()=>expect(normalizeNotificationLink(`/requests?request=${id}`)).toBe(`/requests?request=${id}`));
 test("old planner task links open task hub dialog",()=>expect(normalizeNotificationLink(`/planner?task=${id}`)).toBe(`/tasks?task=${id}`));
