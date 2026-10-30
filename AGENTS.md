@@ -2,3 +2,5 @@
 
 - Keep request staleness logic in `src/lib/requestStaleness.ts` so counters, filters, and row indicators cannot diverge.
 - Keep dashboard operational queues in dedicated widgets fed by the unfiltered request list so period controls do not alter actionable totals.
+- Keep executive-panel queries organization-scoped and independent in `useExecutivePanel`, with exact head-only counts and paginated aggregate rows; reuse the planner task dialog for drill-down to avoid inconsistent editing behavior.
+- Keep the shared closed-request status list in `requestStaleness.ts`; executive aggregates use it without changing existing staleness predicates.

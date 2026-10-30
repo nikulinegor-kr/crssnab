@@ -12,6 +12,7 @@ import { QuickAddErpMenu } from "./erp/QuickAddErpMenu";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLayoutProps) {
   const { logoUrl, orgName } = useOrgBranding();
+  const { pathname } = useLocation();
 
   const SIDEBAR_STATE_KEY = "sidebar:open:v1";
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
@@ -105,7 +107,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
-        <QuickRequestFab />
+        {pathname !== "/executive" && <QuickRequestFab />}
         <MobileBottomNav />
       </div>
     </SidebarProvider>
