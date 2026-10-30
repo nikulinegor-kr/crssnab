@@ -18,11 +18,11 @@ describe("executive panel rules", () => {
     expect(isStale({ status: "В работе", created_at: new Date(2026, 9, 27).toISOString() }, today)).toBe(true);
     expect(isStale({ status: "В работе", created_at: new Date(2026, 9, 28).toISOString() }, today)).toBe(false);
   });
-  test("critical and urgent precede other attention rows and the list is limited to ten", () => {
+  test("critical and urgent precede other attention rows and the list is limited to three", () => {
     const row = (id: string, priority: string, days: number): ExecAttentionItem => ({ id, priority, days, kind: "task", title: id, objectName: null });
     const items = [row("urgent", "urgent", 2), row("critical", "critical", 4), ...Array.from({ length: 12 }, (_, i) => row(`normal-${i}`, "medium", i + 10))];
     const result = sortAttention(items);
-    expect(result).toHaveLength(10);
+    expect(result).toHaveLength(3);
     expect(result.slice(0, 3).map(i => i.id)).toEqual(["critical", "urgent", "normal-11"]);
   });
   test("object ranking excludes empty objects and uses overdue count then amount with top six", () => {
@@ -30,11 +30,13 @@ describe("executive panel rules", () => {
     expect(result).toHaveLength(6);
     expect(result.map(i => i.id)).toEqual(["0", "7", "6", "5", "4", "3"]);
   });
-  test("merged events retain the ten newest from both sources", () => {
+  test("merged events retain the six newest from both sources", () => {
     const result = sortEvents(Array.from({ length: 20 }, (_, i) => ({ id: String(i), entityId: String(i), kind: i % 2 ? "task" as const : "request" as const, description: "", reference: "", actor: "", createdAt: new Date(2026, 9, 30, i).toISOString() })));
-    expect(result.map(i => i.id)).toEqual(["19", "18", "17", "16", "15", "14", "13", "12", "11", "10"]);
+    expect(result.map(i => i.id)).toEqual(["19", "18", "17", "16", "15", "14"]);
   });
-  test("amount is grouped with spaces and ruble suffix", () => {
-    expect(formatExecAmount(1234567)).toBe("1 234 567 ₽");
+  test("amount uses compact ruble notation", () => {
+    expect(formatExecAmount(2365399)).toBe("2,37 млн ₽");
+    expect(formatExecAmount(471000)).toBe("471 тыс. ₽");
+    expect(formatExecAmount(999)).toBe("999 ₽");
   });
 });

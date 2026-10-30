@@ -19,3 +19,13 @@ export function getStaleDays(request: StaleRequest, today = startOfToday()): num
 export function isStale(request: StaleRequest, today = startOfToday()): boolean {
   return !COMPLETED_STATUSES.has(request.status) && getStaleDays(request, today) > 2;
 }
+
+export function isOpenRequest(request: { status: string }): boolean {
+  return !CLOSED_REQUEST_STATUSES.includes(request.status);
+}
+
+export function isOverdueDelivery(request: { status: string; planned_delivery_date?: string | null; actual_arrival_date?: string | null }, today = startOfToday()): boolean {
+  if (!isOpenRequest(request) || request.actual_arrival_date || !request.planned_delivery_date) return false;
+  const planned = new Date(request.planned_delivery_date);
+  return !Number.isNaN(planned.getTime()) && planned < today;
+}
