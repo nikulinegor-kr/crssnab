@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { ClipboardList, Plus, ListChecks, Menu, House } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,8 @@ const Item = ({
 );
 
 export const MobileBottomNav = () => {
-  const { isAdmin } = useUserRole();
+  const { hasRouteAccess } = useUserPermissions();
+  const isAdmin = hasRouteAccess("/executive");
   const { open } = useQuickRequest();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
