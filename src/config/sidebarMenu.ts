@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Gauge,
   ListChecks,
+  UserRound,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -44,6 +45,7 @@ export const menuGroups: MenuGroup[] = [
     label: "Работа",
     icon: FileText,
     items: [
+      { id: "me", title: "Личный кабинет", url: "/me", icon: UserRound },
       { id: "executive", title: "Панель руководителя", url: "/executive", icon: Gauge },
       { id: "tasks", title: "Задачи", url: "/tasks", icon: ListChecks },
       { id: "dashboard", title: "Дашборд", url: "/dashboard", icon: LayoutGrid },

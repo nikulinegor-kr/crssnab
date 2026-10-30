@@ -13,7 +13,7 @@ import { invalidatePlannerTaskQueries, type PlannerTask } from "@/hooks/usePlann
 import { useTaskHubIdentity } from "@/hooks/useTaskHubIdentity";
 import { getAvailableTransitions, type TaskTransition } from "@/lib/taskHub";
 
-export function TaskStatusActions({ task, menu = false, onUpdated }: { task: PlannerTask; menu?: boolean; onUpdated?: (task: PlannerTask) => void }) {
+export function TaskStatusActions({ task, menu = false, primary = false, onUpdated }: { task: PlannerTask; menu?: boolean; primary?: boolean; onUpdated?: (task: PlannerTask) => void }) {
   const { userId, isAdmin } = useTaskHubIdentity();
   const qc = useQueryClient();
   const [action, setAction] = useState<TaskTransition | null>(null);
@@ -47,7 +47,7 @@ export function TaskStatusActions({ task, menu = false, onUpdated }: { task: Pla
   };
   if (!actions.length) return null;
   return <div onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
-    {menu ? <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" disabled={pending} aria-label={`Действия: ${task.title}`} title="Действия задачи"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{actions.map(a => <DropdownMenuItem key={a.status} onSelect={() => choose(a)}>{a.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
+    {primary ? <div className="flex items-center gap-2"><Button size="sm" variant="outline" className="min-h-10" disabled={pending} onClick={()=>choose(actions[0])}>{actions[0].label}</Button>{actions.length>1&&<DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10" disabled={pending} aria-label={`Другие действия: ${task.title}`}><MoreHorizontal/></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{actions.slice(1).map(a=><DropdownMenuItem key={a.status} onSelect={()=>choose(a)}>{a.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}</div> : menu ? <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" disabled={pending} aria-label={`Действия: ${task.title}`} title="Действия задачи"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{actions.map(a => <DropdownMenuItem key={a.status} onSelect={() => choose(a)}>{a.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
       : <div className="flex flex-wrap gap-2">{actions.map(a => <Button key={a.status} size="sm" variant="outline" disabled={pending} onClick={() => choose(a)}>{a.label}</Button>)}</div>}
     <Dialog open={!!action} onOpenChange={open => { if (!open && !pending) setAction(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{action?.label}</DialogTitle><DialogDescription>{task.title}</DialogDescription></DialogHeader>
       <div className="space-y-2"><Label htmlFor={`reason-${task.id}`}>{action?.dialog === "waiting" ? "Причина ожидания" : "Что доработать"}</Label><Textarea id={`reason-${task.id}`} value={reason} onChange={e => setReason(e.target.value)} required autoFocus /></div>
