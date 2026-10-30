@@ -18,7 +18,8 @@ const TaskDialog = lazy(() => import("@/components/planner/PlannerTaskDialog").t
 export default function TasksHubPage() {
   const [params, setParams] = useSearchParams();
   const tab = TASK_TABS.find(t => t.id === params.get("tab"))?.id ?? "all";
-  const page = Math.max(0, Number(params.get("page")) || 0);
+  const requestedPage = Number(params.get("page"));
+  const page = Number.isFinite(requestedPage) ? Math.max(0, Math.floor(requestedPage)) : 0;
   const filters = { search: params.get("search") ?? "", object: params.get("object") ?? "", assignee: params.get("assignee") ?? "", priority: params.get("priority") ?? "", department: params.get("department") ?? "" };
   const panel = useTasksHub(tab, filters, page);
   const { data: members = [] } = useOrgMembers({ includeInactive: true });
@@ -61,10 +62,10 @@ export default function TasksHubPage() {
     </Button>)}</div>
     {panel.kpi.isError && <p role="alert" className="text-sm text-muted-foreground">Не удалось загрузить счётчики</p>}
     <Tabs value={tab} onValueChange={value => updateParam("tab", value)}><div className="overflow-x-auto"><TabsList className="h-10 w-max">{TASK_TABS.map(item => <TabsTrigger key={item.id} value={item.id}>{item.label}</TabsTrigger>)}</TabsList></div></Tabs>
-    <div className="flex flex-wrap gap-2 lg:flex-nowrap"><div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по названию" aria-label="Поиск по названию" className="pl-9" /></div>
+    <div className="flex flex-wrap gap-2"><div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по названию" aria-label="Поиск по названию" className="pl-9" /></div>
       <div className="min-w-36 flex-1"><TaskLookupSelect label="Объект" value={filters.object || null} options={panel.objects.data ?? []} onChange={value => updateParam("object", value)} /></div>
       <div className="min-w-36 flex-1"><TaskLookupSelect label="Исполнитель" value={filters.assignee || null} options={members.map(m => ({ id: m.user_id, name: m.full_name || m.email || "—" }))} onChange={value => updateParam("assignee", value)} /></div>
-      <div className="min-w-32 flex-1"><TaskLookupSelect label="Приоритет" value={filters.priority || null} options={Object.entries(PRIORITY_META).map(([id, meta]) => ({ id, name: `${meta.label} (${id})` }))} onChange={value => updateParam("priority", value)} /></div>
+      <div className="min-w-32 flex-1"><TaskLookupSelect label="Приоритет" value={filters.priority || null} options={Object.entries(PRIORITY_META).map(([id, meta]) => ({ id, name: `${meta.label} · ${{ low: "низкий", medium: "средний", high: "высокий", urgent: "срочный", critical: "критический" }[id]}` }))} onChange={value => updateParam("priority", value)} /></div>
       {departments.length > 0 && <div className="min-w-36 flex-1"><TaskLookupSelect label="Подразделение" value={filters.department || null} options={departments} onChange={value => updateParam("department", value)} /></div>}
     </div>
     <section aria-busy={panel.list.isFetching} className="min-h-96">

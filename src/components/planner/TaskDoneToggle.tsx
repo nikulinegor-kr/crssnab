@@ -87,7 +87,7 @@ export function TaskDoneToggle({ task, className, variant = "circle" }: Props) {
       <Button variant="outline"
         type="button"
         disabled={pending || !userId}
-        title={done ? "Вернуть в работу" : "Отметить выполненной"}
+        title={done ? "Вернуть в работу" : sendToReview ? "Передать на проверку" : "Отметить выполненной"}
         aria-pressed={done}
         onClick={handleClick}
         onPointerDown={(e) => e.stopPropagation()}
@@ -109,8 +109,8 @@ export function TaskDoneToggle({ task, className, variant = "circle" }: Props) {
     <Button variant="ghost" size="icon"
       type="button"
       disabled={pending || !userId}
-      title="Отметить выполненной"
-      aria-label="Отметить выполненной"
+      title={done ? "Вернуть в работу" : sendToReview ? "Передать на проверку" : "Отметить выполненной"}
+      aria-label={done ? "Вернуть в работу" : sendToReview ? "Передать на проверку" : "Отметить выполненной"}
       aria-pressed={done}
       onClick={handleClick}
       onPointerDown={(e) => e.stopPropagation()}
