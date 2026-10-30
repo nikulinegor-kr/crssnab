@@ -18,3 +18,5 @@
 - Use the pure pluralRu helper for Russian count labels so executive summaries and object rows share the same declension rules.
 - Keep direct Anthropic calls and model selection in functions/_shared/claude.ts; request-assistant tools use only the authenticated user's RLS client and return proposals without business-data writes.
 - Store request-assistant history in existing AI conversations titled by request number; task proposals use the existing planner mutation only after user confirmation and the shared dialog for edits.
+- Keep trust-letter templates and completed files in separate private buckets; browser rendering uses shared pure grouping/validation, and a permission-checked transactional RPC alone finalizes numbers, attachments and activities to prevent partial journals.
+- Parse attached invoices through the authenticated Claude assistant and its user-token storage client; persist extraction caches and verified supplier directors separately from read-only chat tools.

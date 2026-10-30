@@ -40,6 +40,7 @@ import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDoc
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
+import { TrustLetterButton } from "./TrustLetterDialog";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -1013,6 +1014,7 @@ export const RequestSidePanel = ({
         )}
         <div className="flex shrink-0 items-center gap-0.5">
           <Button type="button" variant="ghost" className="min-h-11 gap-1 px-2" onClick={() => setAssistantOpen(true)} aria-label="Claude"><Sparkles className="h-4 w-4"/><span>Claude</span></Button>
+          <TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
