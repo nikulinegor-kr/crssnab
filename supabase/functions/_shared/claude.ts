@@ -5,7 +5,7 @@ export async function callClaude(apiKey: string, body: Record<string, unknown>, 
     const response = await fetcher("https://api.anthropic.com/v1/messages", {
       method: "POST", signal,
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, model: CLAUDE_MODEL, max_tokens: 2048 }),
+      body: JSON.stringify({ max_tokens: 2048, ...body, model: CLAUDE_MODEL }),
     });
     if ([429, 529].includes(response.status) && attempt < 2) {
       await response.body?.cancel();
