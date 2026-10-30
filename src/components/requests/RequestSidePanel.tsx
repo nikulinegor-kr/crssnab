@@ -1014,7 +1014,6 @@ export const RequestSidePanel = ({
         )}
         <div className="flex shrink-0 items-center gap-0.5">
           <Button type="button" variant="ghost" className="min-h-11 gap-1 px-2" onClick={() => setAssistantOpen(true)} aria-label="Claude"><Sparkles className="h-4 w-4"/><span>Claude</span></Button>
-          <TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
@@ -1096,6 +1095,7 @@ export const RequestSidePanel = ({
         </div>
       )}
 
+      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
