@@ -16,3 +16,5 @@
 - Keep notification links normalized in a pure client helper and the messaging worker, and suppress local browser notifications when a real Web Push subscription exists to avoid duplicate delivery.
 - Share the public VAPID key from the edge shared config through Vite's VITE_VAPID_PUBLIC_KEY define so browser subscriptions and server signing use the same key; private credentials remain secret-store-only.
 - Use the pure pluralRu helper for Russian count labels so executive summaries and object rows share the same declension rules.
+- Keep direct Anthropic calls and model selection in functions/_shared/claude.ts; request-assistant tools use only the authenticated user's RLS client and return proposals without business-data writes.
+- Store request-assistant history in existing AI conversations titled by request number; task proposals use the existing planner mutation only after user confirmation and the shared dialog for edits.

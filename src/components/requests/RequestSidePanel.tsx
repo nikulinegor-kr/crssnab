@@ -1238,6 +1238,7 @@ export const RequestSidePanel = ({
         </DropdownMenu>
         </div>
       </div>
+      </>}
     </aside>
   );
 
