@@ -1,0 +1,30 @@
+import {beforeAll,test,expect,describe} from "bun:test";
+import {execFileSync} from "node:child_process";
+import {readFileSync} from "node:fs";
+const socket=process.env.LOCAL_TRUST_TEST_SOCKET;
+const suite=socket?describe:describe.skip;
+const org="00000000-0000-0000-0000-000000000004",actor="00000000-0000-0000-0000-000000000001";
+function sql(q:string){if(!socket?.startsWith('/tmp/'))throw Error('Disposable database required');return execFileSync('psql',['-h',socket,'-p','55441','-U','lovable','-d','postgres','-X','-v','ON_ERROR_STOP=1','-At'],{input:q,encoding:'utf8',env:{...process.env,PGPASSWORD:''}});}
+suite('actual trust-letter PostgreSQL policies',()=>{
+ beforeAll(()=>{sql(`CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth; CREATE SCHEMA storage;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT '${actor}'::uuid $$;
+ CREATE TABLE organizations(id uuid PRIMARY KEY); CREATE TABLE suppliers(id uuid);
+ CREATE TABLE user_permissions(user_id uuid,organization_id uuid,permission_key text,allowed boolean);
+ CREATE TABLE requests(id uuid PRIMARY KEY,organization_id uuid,applicant_user_id uuid,client_id uuid,transport_company text,request_number text,document_urls text[]);
+ CREATE TABLE clients(id uuid,user_id uuid);
+ CREATE TABLE request_activities(request_id uuid,organization_id uuid,user_id uuid,action text,description text);
+ CREATE TABLE storage.objects(bucket_id text,name text,owner_id text); ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+ GRANT USAGE ON SCHEMA public,storage,auth TO authenticated; GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects TO authenticated;
+ CREATE FUNCTION user_is_org_admin(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT current_setting('test.admin',true)='true' $$;
+ CREATE FUNCTION user_has_permission(uuid,uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT current_setting('test.allowed',true)='true' OR current_setting('test.admin',true)='true' $$;
+ CREATE FUNCTION user_can_view_request(uuid,uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;
+ `);sql(readFileSync(new URL('../drizzle/migrations/0013_trust_letters_private_templates.sql',import.meta.url),'utf8'));sql(`INSERT INTO organizations VALUES('${org}'); INSERT INTO storage.objects VALUES('letter-templates','${org}/blank.docx','${actor}'); INSERT INTO trust_letters(organization_id,number,created_by,request_ids,carrier,payload,file_path) VALUES('${org}','ДП-2026-001','${actor}','{}','ТК СЛТК','{}','${org}/${actor}/letter.docx');`);});
+ const count=(allowed:boolean,admin:boolean,q:string)=>sql(`BEGIN; SELECT set_config('test.allowed','${allowed}',true); SELECT set_config('test.admin','${admin}',true); SET LOCAL ROLE authenticated; ${q} ROLLBACK;`);
+ test('no permission cannot read letter-templates',()=>expect(count(false,false,"SELECT count(*) FROM storage.objects WHERE bucket_id='letter-templates';")).toContain('\n0\n'));
+ test('no permission cannot read trust_letters',()=>expect(count(false,false,'SELECT count(*) FROM trust_letters;')).toContain('\n0\n'));
+ test('granted permission reads template',()=>expect(count(true,false,"SELECT count(*) FROM storage.objects WHERE bucket_id='letter-templates';")).toContain('\n1\n'));
+ test('owner/admin reads template without explicit permission',()=>expect(count(false,true,"SELECT count(*) FROM storage.objects WHERE bucket_id='letter-templates';")).toContain('\n1\n'));
+ test('parent CRM denial overrides child permission',()=>{expect(sql(`BEGIN; INSERT INTO user_permissions VALUES('${actor}','${org}','crm',false); SELECT set_config('test.allowed','true',true); SELECT set_config('test.admin','false',true); SET LOCAL ROLE authenticated; SELECT count(*) FROM trust_letters; ROLLBACK;`)).toContain('\n0\n');});
+ test('permission alone cannot replace template',()=>expect(count(true,false,"UPDATE storage.objects SET name='changed' WHERE bucket_id='letter-templates';")).toContain('UPDATE 0'));
+ test('direct journal inserts are rejected',()=>expect(()=>count(true,false,`INSERT INTO trust_letters(organization_id,number,created_by,request_ids,carrier,payload,file_path) VALUES('${org}','fake','${actor}','{}','ТК СЛТК','{}','fake');`)).toThrow());
+});
