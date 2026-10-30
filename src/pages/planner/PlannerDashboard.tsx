@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarClock, KanbanSquare, ListTodo, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
-import { usePlannerTasks, PRIORITY_META, PLANNER_COLUMNS } from "@/hooks/usePlannerTasks";
+import { usePlannerTasks, PRIORITY_META, PLANNER_COLUMNS, normalizeStatus } from "@/hooks/usePlannerTasks";
 import { format, isPast, isToday, isAfter, startOfDay, differenceInCalendarDays } from "date-fns";
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ export default function PlannerDashboard() {
   const stats = useMemo(() => {
     const today = tasks.filter((t) => t.due_date && isToday(new Date(t.due_date)) && t.status !== "done");
     const overdue = tasks.filter((t) => t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)) && t.status !== "done");
-    const inProgress = tasks.filter((t) => t.status === "in_progress");
+    const inProgress = tasks.filter((t) => normalizeStatus(t.status) === "in_progress");
     const done = tasks.filter((t) => t.status === "done");
     const tomorrow = startOfDay(new Date());
     const upcoming = tasks
@@ -102,7 +102,7 @@ export default function PlannerDashboard() {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {PLANNER_COLUMNS.map((col) => {
-              const count = tasks.filter((t) => t.status === col.id).length;
+              const count = tasks.filter((t) => normalizeStatus(t.status) === col.id).length;
               return (
                 <Link
                   key={col.id}
