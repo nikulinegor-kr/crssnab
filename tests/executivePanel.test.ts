@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { CLOSED_REQUEST_STATUSES, isStale } from "./requestStaleness";
-import { formatExecAmount, overdueDays, sortAttention, sortEvents, sortObjects, type ExecAttentionItem } from "./executivePanel";
+import { CLOSED_REQUEST_STATUSES, isStale } from "../src/lib/requestStaleness";
+import { formatExecAmount, overdueDays, sortAttention, sortEvents, sortObjects, type ExecAttentionItem } from "../src/lib/executivePanel";
 
 describe("executive panel rules", () => {
   test("closed statuses match the required five values", () => {
