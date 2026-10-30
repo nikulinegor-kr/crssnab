@@ -37,6 +37,8 @@ suite("actual PostgreSQL planner transition triggers", () => {
       CREATE TABLE public.user_organizations(user_id uuid, organization_id uuid, role organization_role);
       CREATE FUNCTION public.user_has_org_access(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM user_organizations WHERE user_id=$1 AND organization_id=$2) $$;
       CREATE FUNCTION public.user_has_org_role(uuid,uuid,organization_role) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM user_organizations WHERE user_id=$1 AND organization_id=$2 AND role=$3) $$;
+      CREATE FUNCTION public.user_can_see_all_tasks(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
+      CREATE TABLE public.tasks(id uuid);
       CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=now(); RETURN NEW; END $$;
       CREATE TABLE public.planner_tasks(id uuid PRIMARY KEY, organization_id uuid, title text, description text, status text, priority text, assignee_id uuid, created_by uuid, due_date timestamptz, request_id uuid, source text);
       CREATE TABLE public.planner_task_activity(task_id uuid, organization_id uuid, user_id uuid, action text, field_name text, old_value text, new_value text, description text);
@@ -45,6 +47,8 @@ suite("actual PostgreSQL planner transition triggers", () => {
       CREATE FUNCTION public.enqueue_notification(uuid,text,text,text,text,jsonb,text) RETURNS integer LANGUAGE sql AS $$ SELECT 0 $$;
     `);
     sql(readFileSync(new URL("../drizzle/migrations/0008_planner_foundation_departments_and_transitions.sql", import.meta.url), "utf8"));
+    sql(`ALTER TABLE planner_tasks ADD COLUMN is_private boolean DEFAULT false; CREATE POLICY "Planner read own or managed tasks" ON planner_tasks FOR SELECT USING (true); CREATE POLICY "Planner update own or managed tasks" ON planner_tasks FOR UPDATE USING (true);`);
+    sql(readFileSync(new URL("../drizzle/migrations/0009_task_hub_transition_security_and_indexes.sql", import.meta.url), "utf8"));
     sql(`
       CREATE TRIGGER planner_tasks_activity AFTER INSERT OR UPDATE ON public.planner_tasks FOR EACH ROW EXECUTE FUNCTION public.planner_task_log_and_notify();
       INSERT INTO organizations VALUES ('${org}');
@@ -55,27 +59,27 @@ suite("actual PostgreSQL planner transition triggers", () => {
   });
   afterAll(() => { /* The caller destroys the disposable cluster. */ });
 
-  const rejects = (update: string, message: string) => {
-    expect(check(`DO $$ BEGIN
+  const rejects = (update: string, message: string, user: string | null = actor, setup = "") => {
+    expect(check(`${setup} DO $$ BEGIN
       BEGIN ${update}; RAISE EXCEPTION 'Expected rejection did not occur';
       EXCEPTION WHEN OTHERS THEN IF SQLERRM <> '${message}' THEN RAISE; END IF; END;
-    END $$;`)).toContain("ROLLBACK");
+    END $$;`, user)).toContain("ROLLBACK");
   };
   test("acceptance requires a reviewer", () => {
-    rejects(`UPDATE planner_tasks SET requires_acceptance=true WHERE id='${task}'`, "Для задачи с приёмкой нужен контролёр");
+    rejects(`UPDATE planner_tasks SET requires_acceptance=true WHERE id='${task}'`, "Для задачи с приёмкой нужен контролёр", creator);
   });
   test("waiting rejects a blank blocked reason", () => {
     rejects(`UPDATE planner_tasks SET status='waiting',blocked_reason='  ' WHERE id='${task}'`, "Укажите причину ожидания");
   });
   test("rework rejects a blank change reason", () => {
-    rejects(`UPDATE planner_tasks SET status='rework',change_reason='  ' WHERE id='${task}'`, "Укажите, что доработать");
+    rejects(`UPDATE planner_tasks SET status='rework',change_reason='  ' WHERE id='${task}'`, "Укажите, что доработать", creator);
   });
   test("an assignee cannot close a task requiring acceptance", () => {
-    rejects(`UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${reviewer}',status='done' WHERE id='${task}'`, "Задачу с приёмкой закрывает контролёр — передайте её на проверку");
+    rejects(`UPDATE planner_tasks SET status='done' WHERE id='${task}'`, "Задачу с приёмкой закрывает контролёр — передайте её на проверку", actor, `SELECT set_config('test.actor','${creator}',true); UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${reviewer}',status='review'; SELECT set_config('test.actor','${actor}',true);`);
   });
   for (const [name, user] of [["reviewer", reviewer], ["creator", creator]] as const) {
     test(`${name} can close a task requiring acceptance`, () => {
-      expect(check(`UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${reviewer}',status='done' WHERE id='${task}'; SELECT status FROM planner_tasks WHERE id='${task}';`, user)).toContain("done");
+      expect(check(`SELECT set_config('test.actor','${creator}',true); UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${reviewer}',status='review'; SELECT set_config('test.actor','${user}',true); UPDATE planner_tasks SET status='done' WHERE id='${task}'; SELECT status FROM planner_tasks WHERE id='${task}';`, user)).toContain("done");
     });
   }
   for (const role of ["owner", "admin"]) {
@@ -98,9 +102,30 @@ suite("actual PostgreSQL planner transition triggers", () => {
       DO $$ BEGIN
         IF (SELECT count(*) FROM planner_task_activity WHERE task_id='${task}' AND reason='Исправить результат' AND field_name IN ('status','due_date','assignee_id','priority','reviewer_id','department_id')) <> 6 THEN RAISE EXCEPTION 'Missing activity reasons'; END IF;
         IF (SELECT change_reason IS NOT NULL FROM planner_tasks WHERE id='${task}') THEN RAISE EXCEPTION 'Reason was not cleared'; END IF;
-      END $$;`)).toContain("ROLLBACK");
+      END $$;`, creator)).toContain("ROLLBACK");
   });
   test("a later update without reason cannot inherit an earlier reason", () => {
     expect(check(`UPDATE planner_tasks SET priority='high',change_reason='Срочно' WHERE id='${task}'; UPDATE planner_tasks SET priority='low' WHERE id='${task}'; SELECT reason IS NULL FROM planner_task_activity WHERE new_value='low';`)).toContain("\nt\n");
+  });
+  test("assignee cannot appoint themselves reviewer", () => {
+    rejects(`UPDATE planner_tasks SET reviewer_id='${actor}' WHERE id='${task}'`, "Контролёра и приёмку меняет постановщик");
+  });
+  test("assignee cannot change acceptance", () => {
+    rejects(`UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${reviewer}' WHERE id='${task}'`, "Контролёра и приёмку меняет постановщик");
+  });
+  test("assignee cannot send a task for rework", () => {
+    rejects(`UPDATE planner_tasks SET status='rework',change_reason='Исправить' WHERE id='${task}'`, "На доработку отправляет контролёр или постановщик");
+  });
+  test("INSERT requiring acceptance without reviewer fails", () => {
+    rejects(`INSERT INTO planner_tasks(id,organization_id,title,status,priority,requires_acceptance) VALUES (gen_random_uuid(),'${org}','Проверка','backlog','medium',true)`, "Для задачи с приёмкой нужен контролёр");
+  });
+  test("INSERT reviewer cannot equal assignee", () => {
+    rejects(`INSERT INTO planner_tasks(id,organization_id,title,status,priority,requires_acceptance,reviewer_id,assignee_id) VALUES (gen_random_uuid(),'${org}','Проверка','backlog','medium',true,'${actor}','${actor}')`, "Контролёр не может быть исполнителем");
+  });
+  test("UPDATE reviewer cannot equal assignee", () => {
+    rejects(`UPDATE planner_tasks SET requires_acceptance=true,reviewer_id='${actor}',assignee_id='${actor}' WHERE id='${task}'`, "Контролёр не может быть исполнителем", creator);
+  });
+  test("reviewer can request rework with a reason", () => {
+    expect(check(`SELECT set_config('test.actor','${creator}',true); UPDATE planner_tasks SET reviewer_id='${reviewer}',status='review'; SELECT set_config('test.actor','${reviewer}',true); UPDATE planner_tasks SET status='rework',change_reason='Исправить'; SELECT status FROM planner_tasks;`, reviewer)).toContain("rework");
   });
 });

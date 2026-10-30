@@ -64,6 +64,13 @@
       "when": 1793335621759,
       "tag": "0008_planner_foundation_departments_and_transitions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793336174115,
+      "tag": "0009_task_hub_transition_security_and_indexes",
+      "breakpoints": true
     }
   ]
 }
