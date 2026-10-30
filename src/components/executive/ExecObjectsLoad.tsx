@@ -16,7 +16,7 @@ export function ExecObjectsLoad({ items, loading, error }: { items: ExecObjectLo
         </Link>
         <div className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground tabular-nums">
           <span>{item.requests} заявок</span>
-          <Button variant="link" asChild className={`min-h-11 sm:min-h-5 sm:h-5 px-0 text-xs font-normal tabular-nums ${item.overdueTasks > 0 ? "text-destructive" : "text-muted-foreground"}`}><Link to={execObjectTasksLink(item.id)}>· {item.overdueTasks} просрочено</Link></Button>
+          <Button variant="link" asChild className={`h-auto min-h-11 sm:min-h-5 sm:h-5 px-0 py-0 text-xs font-normal tabular-nums ${item.overdueTasks > 0 ? "text-destructive" : "text-muted-foreground"}`}><Link to={execObjectTasksLink(item.id)}>· {item.overdueTasks} просрочено</Link></Button>
         </div>
         <Progress value={max > 0 ? Math.max(0, item.amount / max * 100) : 0} className="h-0.5 bg-muted [&>div]:bg-foreground/20" />
       </div>)}</div>}

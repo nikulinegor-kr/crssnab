@@ -17,7 +17,7 @@ export function ExecAttentionList({ groups, loading, error, onOpenTask }: { grou
           const className = "h-auto min-h-11 w-full justify-start gap-2 rounded-md px-0 py-1.5 text-left";
           return item.kind === "task" ? <Button key={item.id} variant="ghost" className={className} onClick={() => onOpenTask(item.id)}>{content}</Button> : <Button key={item.id} variant="ghost" asChild className={className}><Link to={execRequestLink(item.id)}>{content}</Link></Button>;
         })}</div>
-        <Button variant="link" asChild className="min-h-11 sm:min-h-8 px-0 text-xs text-muted-foreground"><Link to={EXEC_LINKS[group.key]}>Все {group.count} →</Link></Button>
+        <Button variant="link" asChild className="h-auto min-h-11 sm:min-h-8 px-0 py-0 text-xs text-muted-foreground"><Link to={EXEC_LINKS[group.key]}>Все {group.count} →</Link></Button>
       </div>)}</div>}
   </section>;
 }
