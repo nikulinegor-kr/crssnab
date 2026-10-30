@@ -71,7 +71,7 @@ export function useExecutivePanel() {
 
   const events = useQuery({ ...options, queryKey: ["executive", orgId, "events"], queryFn: async () => {
     const [requests, tasks] = await Promise.all([
-      supabase.from("request_activities").select("id,request_id,user_id,description,action,created_at,request:requests(request_number)").eq("organization_id", orgId ?? "").order("created_at", { ascending: false }).limit(10),
+      supabase.from("request_activities").select("id,request_id,user_id,description,action,created_at,request:requests(request_number)").eq("organization_id", orgId ?? "").not("created_at", "is", null).order("created_at", { ascending: false }).limit(10),
       supabase.from("planner_task_activity").select("id,task_id,user_id,description,action,created_at,task:planner_tasks(title)").eq("organization_id", orgId ?? "").order("created_at", { ascending: false }).limit(10),
     ]);
     if (requests.error) throw requests.error;
