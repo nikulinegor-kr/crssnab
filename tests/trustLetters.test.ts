@@ -1,8 +1,6 @@
 import {test,expect} from "bun:test";
-import {plugin} from "bun";
 import PizZip from "pizzip";
 import {groupTrustLetters,carrierName,invoiceWarnings,DEMO_LETTER,renderTrustLetter,validateLetterTemplate,validateLetterPayload,type LetterSource} from "../src/lib/trustLetters";
-plugin({name:"deno-zod",setup(build){build.onResolve({filter:/^npm:zod/},()=>({path:require.resolve("zod")}));}});
 const {parseInvoiceJson,attachedInvoice,extractAttachedInvoice}=await import("../supabase/functions/_shared/invoiceExtract");
 function source(id:string,change:Partial<LetterSource>={}):LetterSource{return {requestId:id,requestNumber:id,carrier:"СЛТК",fromInvoice:true,extracted:{supplier_name:"ООО «КДК-Инжиниринг»",supplier_inn:null,invoice_number:"160",invoice_date:"2026-10-22",total_amount:10400,director_position:"Генеральному директору",director_name:"Клыпа В.А.",director_name_dative:"Клыпе В.А.",items:[{name:"Товар",qty:1,unit:"шт."}]},...change};}
 test("one group per supplier and invoice",()=>{const a=source("a"),b=source("b");expect(groupTrustLetters([a,b])[0].payload.groups).toHaveLength(1);b.extracted={...b.extracted,invoice_number:"161"};expect(groupTrustLetters([a,b])[0].payload.groups).toHaveLength(2);});
