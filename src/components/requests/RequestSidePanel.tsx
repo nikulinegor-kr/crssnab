@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip, Tag, Sparkles } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ import { PanelItemsTable } from "./PanelItemsTable";
 import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDocuments";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
+import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -88,6 +89,7 @@ export const RequestSidePanel = ({
   onFullscreenChange,
 }: RequestSidePanelProps) => {
   const STATUSES = useOrgStatuses();
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -132,6 +134,7 @@ export const RequestSidePanel = ({
   useEffect(() => {
     const blocked =
       !open ||
+      assistantOpen ||
       isFullscreen ||
       editMode ||
       editorOpen ||
@@ -155,7 +158,7 @@ export const RequestSidePanel = ({
       window.clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isFullscreen, editMode, editorOpen, statusPromptOpen, editingTitle, uploads.length, keepPanelVisible]);
+  }, [open, assistantOpen, isFullscreen, editMode, editorOpen, statusPromptOpen, editingTitle, uploads.length, keepPanelVisible]);
 
   const exitEditMode = useCallback(
     (confirmIfDirty: boolean) => {
@@ -242,6 +245,7 @@ export const RequestSidePanel = ({
 
   useEffect(() => {
     setEditMode(false);
+    setAssistantOpen(false);
     setEditDirty(false);
   }, [request?.id, open]);
 
@@ -900,6 +904,7 @@ export const RequestSidePanel = ({
     <aside
       className={cn(
         "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
+        assistantOpen && "max-sm:!fixed max-sm:!inset-0 max-sm:!z-[220] max-sm:!h-[100dvh] max-sm:!w-screen",
         idleHidden && !isFullscreen && "translate-x-full pointer-events-none",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
@@ -970,6 +975,7 @@ export const RequestSidePanel = ({
       )}
 
       {/* Header */}
+      {!assistantOpen && <>
       <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
         {(editingTitle || editMode) && !readOnly ? (
           <textarea
@@ -1006,6 +1012,7 @@ export const RequestSidePanel = ({
           </h2>
         )}
         <div className="flex shrink-0 items-center gap-0.5">
+          <Button type="button" variant="ghost" className="min-h-11 gap-1 px-2" onClick={() => setAssistantOpen(true)} aria-label="Claude"><Sparkles className="h-4 w-4"/><span>Claude</span></Button>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
@@ -1088,6 +1095,8 @@ export const RequestSidePanel = ({
       )}
 
       {/* Body */}
+      </>}
+      {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
       <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain py-3", isFullscreen ? "px-0" : "px-4")}>
         {wideFullscreen ? (
           <div
@@ -1229,6 +1238,7 @@ export const RequestSidePanel = ({
         </DropdownMenu>
         </div>
       </div>
+      </>}
     </aside>
   );
 
