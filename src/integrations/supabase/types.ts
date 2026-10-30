@@ -1037,30 +1037,42 @@ export type Database = {
       }
       device_push_tokens: {
         Row: {
+          auth: string | null
           created_at: string
           device_name: string | null
+          fail_count: number
           id: string
+          last_success_at: string | null
           organization_id: string | null
+          p256dh: string | null
           platform: string
           token: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          auth?: string | null
           created_at?: string
           device_name?: string | null
+          fail_count?: number
           id?: string
+          last_success_at?: string | null
           organization_id?: string | null
+          p256dh?: string | null
           platform?: string
           token: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          auth?: string | null
           created_at?: string
           device_name?: string | null
+          fail_count?: number
           id?: string
+          last_success_at?: string | null
           organization_id?: string | null
+          p256dh?: string | null
           platform?: string
           token?: string
           updated_at?: string

@@ -71,6 +71,13 @@
       "when": 1793336174115,
       "tag": "0009_task_hub_transition_security_and_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793337554244,
+      "tag": "0010_web_push_subscription_fields",
+      "breakpoints": true
     }
   ]
 }
