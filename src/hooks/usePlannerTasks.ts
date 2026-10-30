@@ -181,6 +181,7 @@ const TASK_QUERY_KEYS = [
   "task-hub", "task-hub-kpi", "planner-activity", "executive",
 ];
 export const invalidatePlannerTaskQueries = (qc: { invalidateQueries: (f: { queryKey: string[] }) => unknown }) => {
+  qc.invalidateQueries({ queryKey: ["me"] });
   TASK_QUERY_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 };
 
