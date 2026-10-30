@@ -6,7 +6,7 @@ const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID");
 const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID");
 const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "app.lovable.p03d26285f32f457cbdfeb9b17be007d2";
 const APNS_PRODUCTION = (Deno.env.get("APNS_PRODUCTION") ?? "true") === "true";
-const APNS_HOOK_SECRET = Deno.env.get("APNS_HOOK_SECRET");
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -63,9 +63,12 @@ Deno.serve(async (req) => {
 
   try {
     const hook = req.headers.get("x-apns-hook");
-    const authorized =
-      (APNS_HOOK_SECRET && hook === APNS_HOOK_SECRET) ||
-      req.headers.get("authorization") === `Bearer ${SERVICE_ROLE}`;
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    let authorized = req.headers.get("authorization") === `Bearer ${SERVICE_ROLE}`;
+    if (!authorized && hook) {
+      const { data, error } = await admin.rpc("verify_push_hook_secret", { candidate: hook });
+      authorized = !error && data === true;
+    }
     if (!authorized) return json({ error: "unauthorized" }, 401);
 
     const body = await req.json().catch(() => null);
@@ -81,7 +84,6 @@ Deno.serve(async (req) => {
       return json({ skipped: true, reason: "apns_not_configured" });
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: tokens, error } = await admin
       .from("device_push_tokens")
       .select("token")
