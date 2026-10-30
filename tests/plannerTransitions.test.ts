@@ -13,10 +13,10 @@ const task = "00000000-0000-0000-0000-000000000005";
 
 function sql(query: string): string {
   if (!socket?.startsWith("/tmp/")) throw new Error("A disposable local test socket is required");
-  return execFileSync("psql", ["-h", socket, "-p", "55439", "-U", "nobody", "-d", "postgres", "-X", "-v", "ON_ERROR_STOP=1", "-At"], {
+  return execFileSync("psql", ["-h", socket, "-p", "55439", "-U", "lovable", "-d", "postgres", "-X", "-v", "ON_ERROR_STOP=1", "-At"], {
     input: query,
     encoding: "utf8",
-    env: { ...process.env, PGHOST: socket, PGPORT: "55439", PGUSER: "nobody", PGDATABASE: "postgres", PGPASSWORD: "" },
+    env: { ...process.env, PGHOST: socket, PGPORT: "55439", PGUSER: "lovable", PGDATABASE: "postgres", PGPASSWORD: "" },
     stdio: ["pipe", "pipe", "pipe"],
   });
 }
