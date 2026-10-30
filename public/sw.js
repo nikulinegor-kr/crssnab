@@ -1,3 +1,11 @@
+function normalizeNotificationLink(link) {
+  if (!link || !link.startsWith('/') || link.startsWith('//')) return '/me';
+  const request = link.match(/^\/requests\/([0-9a-f-]{36})(?:[?#].*)?$/i);
+  if (request) return '/requests?request=' + request[1];
+  const task = link.match(/^\/tasks\/([0-9a-f-]{36})$/i);
+  if (task) return '/tasks?task=' + task[1];
+  return link.replace(/^\/planner\?task=/, '/tasks?task=');
+}
 // CRSS Снаб — Service Worker для браузерных уведомлений
 // Обрабатывает: notification click (фокус/навигация), push, message (триггер из приложения).
 
@@ -17,12 +25,12 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       self.registration.showNotification(title || 'Уведомление', {
         body: body || '',
-        icon: icon || '/favicon.png',
-        badge: badge || '/favicon.png',
+        icon: icon || '/icons/icon-192.png',
+        badge: badge || '/icons/icon-192.png',
         tag: tag || undefined,
-        renotify: !!tag,
+        renotify: false,
         requireInteraction: false,
-        data: { url: url || '/' },
+        data: { url: normalizeNotificationLink(url) },
       })
     );
   }
@@ -40,11 +48,11 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: icon || '/favicon.png',
-      badge: badge || '/favicon.png',
+      icon: icon || '/icons/icon-192.png',
+      badge: badge || '/icons/icon-192.png',
       tag,
-      renotify: !!tag,
-      data: { url },
+      renotify: false,
+      data: { url: normalizeNotificationLink(url) },
     })
   );
 });
@@ -52,7 +60,7 @@ self.addEventListener('push', (event) => {
 // Клик по уведомлению → фокус на открытой вкладке или открытие новой
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  const targetUrl = normalizeNotificationLink(event.notification.data && event.notification.data.url);
 
   event.waitUntil((async () => {
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });

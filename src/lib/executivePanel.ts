@@ -41,11 +41,12 @@ export type ExecAttentionGroup = { key: "overdueTasks" | "overdueDeliveries" | "
 export const isOldNewRequest = (r: { status: string; created_at: string | null }, today: Date) =>
   r.status === "Новая заявка" && !!r.created_at && differenceInDays(today, new Date(r.created_at)) > 2;
 
-export const REQUEST_URL_FILTER_KEYS = ["status", "priority", "new", "filter", "payment_status", "contractor", "object", "open"] as const;
+export const REQUEST_URL_FILTER_KEYS = ["status", "priority", "new", "filter", "payment_status", "contractor", "object", "open", "mine"] as const;
 export const requestUrlFilterKey = (params: URLSearchParams) => REQUEST_URL_FILTER_KEYS.filter(k => params.has(k)).map(k => `${k}=${params.get(k)}`).join("&");
 export const requestUrlFilterDescription = (params: URLSearchParams, objectName?: string) => {
   const labels: string[] = [];
   if (params.get("status")) labels.push(params.get("status") ?? "");
+  if (params.get("mine") === "1") labels.push("мои заявки");
   if (params.get("open") === "1") labels.push("заявки в работе");
   if (params.get("object")) labels.push(objectName || "выбранный объект");
   const filterNames: Record<string, string> = { stale: "без движения", overdueDelivery: "просроченные поставки", overdue: "просроченные заявки", unpaid: "ждут оплаты", paid: "оплаченные", invoiced: "счета в бухгалтерии", deliveryToday: "приходы сегодня", overdueShipment: "просроченные отгрузки", deliveredLast7Days: "приходы за 7 дней", upcomingNext7Days: "приходы на 7 дней" };

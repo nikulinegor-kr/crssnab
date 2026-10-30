@@ -1,3 +1,4 @@
+import { normalizeNotificationLink } from "@/lib/notificationLinks";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ export function NotificationBell() {
   const handleNotificationClick = (notification: any) => {
     markAsRead(notification.id);
     if (notification.link) {
-      navigate(notification.link);
+      navigate(normalizeNotificationLink(notification.link));
     }
   };
 

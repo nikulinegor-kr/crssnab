@@ -20,7 +20,7 @@ export default function TasksHubPage() {
   const tab = TASK_TABS.find(t => t.id === params.get("tab"))?.id ?? "all";
   const requestedPage = Number(params.get("page"));
   const page = Number.isFinite(requestedPage) ? Math.max(0, Math.floor(requestedPage)) : 0;
-  const filters = { search: params.get("search") ?? "", object: params.get("object") ?? "", assignee: params.get("assignee") ?? "", priority: params.get("priority") ?? "", department: params.get("department") ?? "" };
+  const filters = { search: params.get("search") ?? "", object: params.get("object") ?? "", assignee: params.get("assignee") ?? "", priority: params.get("priority") ?? "", department: params.get("department") ?? "", overdue: params.get("overdue") === "1", today: params.get("today") === "1" };
   const panel = useTasksHub(tab, filters, page);
   const { data: members = [] } = useOrgMembers({ includeInactive: true });
   const { data: departments = [] } = useDepartments();

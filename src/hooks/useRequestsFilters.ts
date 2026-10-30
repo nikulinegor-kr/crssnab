@@ -1,3 +1,5 @@
+import { useAuthUserId } from "./useOrgMembership";
+import { isMyOpenRequest } from "@/lib/personalCabinet";
 import { isRecentArrival } from "@/lib/requestArrivals";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -157,7 +159,9 @@ export const useRequestsFilters = (
   requests: Request[] | undefined,
   activeTab: string
 ) => {
+  const { data: authUserId } = useAuthUserId();
   const [searchParams, setSearchParams] = useSearchParams();
+  const mineOnly = searchParams.get("mine") === "1";
   const urlFilterKey = requestUrlFilterKey(searchParams);
   const hasUrlFilters = Boolean(urlFilterKey);
   const appliedUrlKey = useRef<string | null>(null);
@@ -292,6 +296,7 @@ export const useRequestsFilters = (
     const sevenDaysFromNow = addDays(today, 7);
     
     return requests?.filter((request) => {
+      if (mineOnly && !isMyOpenRequest(request, authUserId ?? null)) return false;
       if (openOnly && !isOpenRequest(request)) return false;
       // Special date filter
       if (specialDateFilter === "deliveredLast7Days") {
@@ -392,6 +397,8 @@ export const useRequestsFilters = (
   }, [
     requests,
     openOnly,
+    mineOnly,
+    authUserId,
     searchQuery,
     statusFilter,
     priorityFilter,
