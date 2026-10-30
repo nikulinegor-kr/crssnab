@@ -23,6 +23,8 @@ export interface Request {
   payment_status: string;
   shipment_date: string | null;
   delivery_date: string | null;
+  planned_delivery_date?: string | null;
+  actual_arrival_date?: string | null;
   transport_company: string | null;
   waybill_number: string | null;
   comments: string | null;
