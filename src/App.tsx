@@ -31,7 +31,7 @@ const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
 const ProjectsPage = lazyWithRetry(() => import("./pages/ProjectsPage"));
 const Suppliers = lazyWithRetry(() => import("./pages/Suppliers"));
 const CalendarPage = lazyWithRetry(() => import("./pages/CalendarPage"));
-const TasksPage = lazyWithRetry(() => import("./pages/TasksPage"));
+const TasksHubPage = lazyWithRetry(() => import("./pages/TasksHubPage"));
 const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
 const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"));
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
@@ -249,7 +249,7 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <TasksPage />
+                    <TasksHubPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

@@ -21,6 +21,7 @@ export interface PlannerActivity {
   old_value: string | null;
   new_value: string | null;
   description: string | null;
+  reason: string | null;
   created_at: string;
 }
 

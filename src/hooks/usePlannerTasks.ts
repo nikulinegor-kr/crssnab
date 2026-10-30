@@ -178,6 +178,7 @@ export const useArchivedPlannerTasks = () => {
 const TASK_QUERY_KEYS = [
   "planner-tasks","planner-tasks-archived","request-linked-tasks","request-task-counts",
   "planner-my-tasks","planner-workload-tasks","planner-requests-without-tasks",
+  "task-hub", "task-hub-kpi", "planner-activity", "executive",
 ];
 export const invalidatePlannerTaskQueries = (qc: { invalidateQueries: (f: { queryKey: string[] }) => unknown }) => {
   TASK_QUERY_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
@@ -199,6 +200,10 @@ export const useCreatePlannerTask = () => {
         status: input.status ?? "backlog",
         priority: input.priority ?? "medium",
         assignee_id: input.assignee_id ?? null,
+        reviewer_id: input.reviewer_id ?? null,
+        co_assignee_ids: input.co_assignee_ids ?? [],
+        department_id: input.department_id ?? null,
+        requires_acceptance: input.requires_acceptance ?? false,
         object_id: input.object_id ?? null,
         stage_id: input.stage_id ?? null,
         request_id: input.request_id ?? null,

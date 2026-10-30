@@ -46,6 +46,10 @@ import { usePlannerDependencies, useAddPlannerDependency, useRemovePlannerDepend
 import { PlannerAttachmentsField } from "./PlannerAttachmentsField";
 import { AiImproveButton } from "./AiImproveButton";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTaskHubIdentity } from "@/hooks/useTaskHubIdentity";
+import { useDepartments } from "@/hooks/useDepartments";
+import { TaskLookupSelect } from "@/components/tasks/TaskLookupSelect";
+import { TaskStatusActions } from "@/components/tasks/TaskStatusActions";
 import {
   ACTIVE_STATUSES,
   BUSY_STATUS_META,
@@ -90,6 +94,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [objectId, setObjectId] = useState<string | null>(null);
   const [stageId, setStageId] = useState<string | null>(null);
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [reviewerId, setReviewerId] = useState<string | null>(null);
+  const [coAssigneeIds, setCoAssigneeIds] = useState<string[]>([]);
+  const [departmentId, setDepartmentId] = useState<string | null>(null);
+  const [requiresAcceptance, setRequiresAcceptance] = useState(false);
+  const [changeReason, setChangeReason] = useState("");
+  const [actionTask, setActionTask] = useState<PlannerTask | null>(null);
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState<string>("");
@@ -107,6 +117,10 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const [onlyFreeEquipment, setOnlyFreeEquipment] = useState(true);
   const [overriddenConflicts, setOverriddenConflicts] = useState<Set<string>>(new Set());
   const { isAdmin } = useUserRole();
+  const { userId } = useTaskHubIdentity();
+  const { data: departments = [] } = useDepartments();
+  const canConfigureAcceptance = !!userId && (!task || task.created_by === userId || isAdmin);
+  const needsChangeReason = !!task && (dueDate !== (task.due_date?.slice(0, 10) ?? "") || dueTime !== (task.due_time?.slice(0, 5) ?? "") || assigneeId !== task.assignee_id || priority !== task.priority);
 
   // CRITICAL: reset state whenever dialog opens or task changes.
   // Fixes "fields cleared/reset when editing" bug caused by useState initializers only running once.
@@ -119,6 +133,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setObjectId(task?.object_id ?? defaultObjectId ?? null);
     setStageId(task?.stage_id ?? null);
     setAssigneeId(task?.assignee_id ?? defaultAssigneeId ?? null);
+    setReviewerId(task?.reviewer_id ?? null);
+    setCoAssigneeIds(task?.co_assignee_ids ?? []);
+    setDepartmentId(task?.department_id ?? null);
+    setRequiresAcceptance(task?.requires_acceptance ?? false);
+    setChangeReason("");
+    setActionTask(task ?? null);
     setStartDate(task?.start_date?.slice(0, 10) ?? "");
     setDueDate(task?.due_date?.slice(0, 10) ?? defaultDueDate ?? "");
     setDueTime((task as any)?.due_time?.slice(0, 5) ?? "");
@@ -237,8 +257,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const objectsById = useMemo(() => new Map(objects.map((o: any) => [o.id, o])), [objects]);
   const selectedRequest = requestId ? (requestsList as any[]).find((r) => r.id === requestId) : null;
 
-  const { data: activity = [] } = usePlannerTaskActivity(isEdit ? task!.id : null);
-  const { data: deps = [] } = usePlannerDependencies(isEdit ? task!.id : null);
+  const { data: activity = [] } = usePlannerTaskActivity(task?.id ?? null);
+  const { data: deps = [] } = usePlannerDependencies(task?.id ?? null);
   const addDep = useAddPlannerDependency();
   const removeDep = useRemovePlannerDependency();
   const [depCandidate, setDepCandidate] = useState("");
@@ -275,6 +295,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     const miss: string[] = [];
     const errs: Record<string, boolean> = {};
     if (!title.trim()) { miss.push("Название"); errs.title = true; }
+    if (requiresAcceptance && (!reviewerId || reviewerId === assigneeId)) { miss.push(!reviewerId ? "Контролёр" : "Контролёр не может быть исполнителем"); errs.reviewerId = true; }
     setErrors(errs);
     return { ok: miss.length === 0, missing: miss };
   };
@@ -310,6 +331,11 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       stage_id: stageId,
       request_id: requestId,
       assignee_id: assigneeId,
+      reviewer_id: reviewerId,
+      co_assignee_ids: coAssigneeIds,
+      department_id: departmentId,
+      requires_acceptance: requiresAcceptance,
+      ...(needsChangeReason ? { change_reason: changeReason.trim() || null } : {}),
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       due_time: dueTime || null,
@@ -321,12 +347,14 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       recurrence,
       estimated_hours: estimatedHours ? Number(estimatedHours) : null,
     };
-    if (isEdit && task) {
-      await update.mutateAsync({ id: task.id, patch: payload as any });
-    } else {
-      await create.mutateAsync(payload as any);
-    }
-    onOpenChange(false);
+    try {
+      if (isEdit && task) {
+        await update.mutateAsync({ id: task.id, patch: payload as any });
+      } else {
+        await create.mutateAsync(payload as any);
+      }
+      onOpenChange(false);
+    } catch { /* The mutation displays the database message and keeps the form open. */ }
   };
 
   const handleDelete = async () => {
@@ -406,6 +434,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                     {PLANNER_COLUMNS.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {actionTask && <TaskStatusActions task={actionTask} onUpdated={updated => { setActionTask(updated); setStatus(updated.status); }} />}
               </div>
 
               <div className="space-y-1.5">
@@ -473,6 +502,18 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                 </Popover>
               </div>
 
+              <div className="space-y-1.5">
+                <Label>Контролёр</Label>
+                <TaskLookupSelect label="Выберите контролёра" value={reviewerId} disabled={!canConfigureAcceptance} options={assignableMembers.map(m => ({ id: m.user_id, name: m.full_name || m.email || "—" }))} onChange={id => { setReviewerId(id); if (!id) setRequiresAcceptance(false); }} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Соисполнители</Label>
+                <Popover><PopoverTrigger asChild><Button variant="outline" role="combobox" aria-label="Соисполнители" className="w-full justify-between font-normal"><span className="truncate">{coAssigneeIds.length ? coAssigneeIds.map(id => memberLabel(id)).join(", ") : "Выберите…"}</span><ChevronsUpDown className="shrink-0 opacity-50" /></Button></PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command filter={(value, search) => search.toLowerCase().split(/\s+/).filter(Boolean).every(term => value.toLowerCase().includes(term)) ? 1 : 0}><CommandInput placeholder="Поиск сотрудника…" /><CommandList><CommandEmpty>Не найдено</CommandEmpty><CommandGroup>{assignableMembers.map(m => <CommandItem key={m.user_id} value={`${m.full_name ?? ""} ${m.email ?? ""}`} onSelect={() => setCoAssigneeIds(previous => previous.includes(m.user_id) ? previous.filter(id => id !== m.user_id) : [...previous, m.user_id])}><Check className={cn("mr-2 h-4 w-4", coAssigneeIds.includes(m.user_id) ? "opacity-100" : "opacity-0")} />{m.full_name || m.email || "—"}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
+                </Popover>
+              </div>
+              <label className="flex items-center gap-2 text-sm"><Checkbox checked={requiresAcceptance} disabled={!canConfigureAcceptance || !reviewerId} onCheckedChange={checked => setRequiresAcceptance(checked === true)} />Требует приёмки</label>
+              {departments.length > 0 && <div className="space-y-1.5"><Label>Подразделение</Label><TaskLookupSelect label="Выберите подразделение" value={departmentId} options={departments.filter(d => d.is_active || d.id === departmentId)} onChange={setDepartmentId} /></div>}
               <div className="space-y-1.5">
                 <Label>Объект</Label>
                 <Select value={objectId ?? "none"} onValueChange={(v) => { setObjectId(v === "none" ? null : v); setStageId(null); }}>
@@ -796,6 +837,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               </div>
             </div>
 
+            {needsChangeReason && <div className="space-y-2"><Label htmlFor="task-change-reason">Причина изменения</Label><Textarea id="task-change-reason" value={changeReason} onChange={event => setChangeReason(event.target.value)} /></div>}
             <div className="space-y-2">
               <Label>Вложения</Label>
               <PlannerAttachmentsField value={attachments} onChange={setAttachments} />
@@ -826,13 +868,13 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                     <SelectTrigger><SelectValue placeholder="Выберите задачу…" /></SelectTrigger>
                     <SelectContent>
                       {allTasks
-                        .filter((t) => t.id !== task!.id && !deps.some((d) => d.blocked_by_task_id === t.id))
+                        .filter((t) => t.id !== task?.id && !deps.some((d) => d.blocked_by_task_id === t.id))
                         .slice(0, 100)
                         .map((t) => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Button type="button" disabled={!depCandidate}
-                    onClick={async () => { await addDep.mutateAsync({ taskId: task!.id, blockedById: depCandidate }); setDepCandidate(""); }}>
+                    onClick={async () => { if (!task) return; await addDep.mutateAsync({ taskId: task.id, blockedById: depCandidate }); setDepCandidate(""); }}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -850,6 +892,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                       <History className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
                       <div className="flex-1">
                         <div className="text-foreground">{a.description || `${a.action}${a.field_name ? ` · ${a.field_name}` : ""}`}</div>
+                        {a.reason && <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{a.reason}</p>}
                         <div className="text-[10px] text-muted-foreground">
                           {memberLabel(a.user_id)} · {format(new Date(a.created_at), "d MMM, HH:mm", { locale: ru })}
                         </div>

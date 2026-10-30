@@ -107,7 +107,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
-        {pathname !== "/executive" && <QuickRequestFab />}
+        {pathname !== "/executive" && pathname !== "/tasks" && <QuickRequestFab />}
         <MobileBottomNav />
       </div>
     </SidebarProvider>

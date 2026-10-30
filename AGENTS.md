@@ -6,3 +6,4 @@
 - Keep the shared closed-request status list in `requestStaleness.ts`; executive aggregates use it without changing existing staleness predicates.
 - Keep planner status normalization and labels in a pure shared module, re-exported by usePlannerTasks, so compatibility mappings can be tested without browser dependencies.
 - Enforce planner transitions and activity reasons in database triggers; preserve notification logic and use the existing user-first organization access function signatures.
+- Keep /tasks server-filtered and paginated over planner_tasks with pure taskHub tab/action logic; reuse PlannerTaskDialog and enforce collaborator visibility through RLS rather than client-side filtering.
