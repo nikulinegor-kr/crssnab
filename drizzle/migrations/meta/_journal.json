@@ -85,6 +85,13 @@
       "when": 1793337800208,
       "tag": "0011_push_hook_verification_and_notification_routes",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793338327161,
+      "tag": "0012_preserve_notification_dedup_for_legacy_links",
+      "breakpoints": true
     }
   ]
 }
