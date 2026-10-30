@@ -24,6 +24,7 @@ import { useMobileKeyboardFocus } from "./hooks/useMobileKeyboardFocus";
 const Index = lazyWithRetry(() => import("./pages/Index"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const ExecutivePanelPage = lazyWithRetry(() => import("./pages/ExecutivePanelPage"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
@@ -158,6 +159,16 @@ const App = () => {
                 <ProtectedRoute>
                   <AppLayout>
                     <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/executive"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ExecutivePanelPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
