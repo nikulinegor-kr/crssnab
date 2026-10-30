@@ -42,7 +42,7 @@ export function PlannerTaskRow({ task, members, onClick, className, hideDate }: 
         className
       )}
     >
-      <TaskDoneToggle taskId={task.id} status={task.status} />
+      <TaskDoneToggle task={task} />
       <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
       <div className="flex-1 min-w-0">
         <div

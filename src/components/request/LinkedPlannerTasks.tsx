@@ -109,7 +109,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
             }}
             className="group w-full cursor-pointer text-left flex items-center gap-3 rounded-md border border-border/40 px-3 py-2 hover:bg-muted/40 transition-colors"
           >
-            <TaskDoneToggle taskId={t.id} status={t.status} />
+            <TaskDoneToggle task={t} />
             <span className="text-base shrink-0">
               {PRIORITY_DOT[t.priority] ?? "🟡"}
             </span>
@@ -128,7 +128,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
             <Badge variant="outline" className="text-[10px] shrink-0">
               {PLANNER_STATUS_LABELS[t.status] ?? t.status}
             </Badge>
-            <TaskDoneToggle taskId={t.id} status={t.status} variant="button" />
+            <TaskDoneToggle task={t} variant="button" />
           </div>
         ))}
       </CardContent>

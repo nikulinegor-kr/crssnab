@@ -11,28 +11,28 @@ export const TASK_TABS: { id: TaskTab; label: string; empty: string }[] = [
   { id: "recurring", label: "Повторяющиеся", empty: "Повторяющихся задач нет" },
 ];
 
-interface FilterQuery<Q> {
-  is(column: string, value: null): Q;
-  eq(column: string, value: string | boolean): Q;
-  neq(column: string, value: string): Q;
-  or(filter: string): Q;
-  lt(column: string, value: string): Q;
-  not(column: string, operator: string, value: null): Q;
-  order(column: string, options: { ascending: boolean; nullsFirst?: boolean }): Q;
+interface FilterQuery {
+  is(column: string, value: null): FilterQuery;
+  eq(column: string, value: string | boolean): FilterQuery;
+  neq(column: string, value: string): FilterQuery;
+  or(filter: string): FilterQuery;
+  lt(column: string, value: string): FilterQuery;
+  not(column: string, operator: string, value: null): FilterQuery;
+  order(column: string, options: { ascending: boolean; nullsFirst?: boolean }): FilterQuery;
 }
 
-export function applyTabFilter<Q extends FilterQuery<Q>>(query: Q, tab: TaskTab, userId: string, todayISO: string): Q {
-  let filtered = query.is("archived_at", null).eq("hidden_auto", false);
-  if (tab === "done") return filtered.eq("status", "done").order("completed_at", { ascending: false, nullsFirst: false });
+export function applyTabFilter<Q>(query: Q, tab: TaskTab, userId: string, todayISO: string): Q {
+  let filtered = (query as unknown as FilterQuery).is("archived_at", null).eq("hidden_auto", false);
+  if (tab === "done") return filtered.eq("status", "done").order("completed_at", { ascending: false, nullsFirst: false }) as unknown as Q;
   filtered = filtered.neq("status", "done");
   switch (tab) {
-    case "mine": return filtered.or(`assignee_id.eq.${userId},co_assignee_ids.cs.{${userId}}`);
-    case "created": return filtered.eq("created_by", userId).or(`assignee_id.is.null,assignee_id.neq.${userId}`);
-    case "control": return filtered.eq("reviewer_id", userId).eq("status", "review");
-    case "overdue": return filtered.lt("due_date", todayISO);
-    case "recurring": return filtered.not("recurrence", "is", null);
-    default: return filtered;
+    case "mine": filtered = filtered.or(`assignee_id.eq.${userId},co_assignee_ids.cs.{${userId}}`); break;
+    case "created": filtered = filtered.eq("created_by", userId).or(`assignee_id.is.null,assignee_id.neq.${userId}`); break;
+    case "control": filtered = filtered.eq("reviewer_id", userId).eq("status", "review"); break;
+    case "overdue": filtered = filtered.lt("due_date", todayISO); break;
+    case "recurring": filtered = filtered.not("recurrence", "is", null); break;
   }
+  return filtered as unknown as Q;
 }
 
 export interface TransitionTask {

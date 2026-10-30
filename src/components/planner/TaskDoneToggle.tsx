@@ -1,13 +1,16 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { invalidatePlannerTaskQueries, type PlannerTask } from "@/hooks/usePlannerTasks";
+import { useTaskHubIdentity } from "@/hooks/useTaskHubIdentity";
+import { canReviewTask } from "@/lib/taskHub";
 
 interface Props {
-  taskId: string;
-  status: string;
+  task: PlannerTask;
   className?: string;
   /** "circle" — компактный кружок, "button" — кнопка с подписью «Выполнить» */
   variant?: "circle" | "button";
@@ -18,22 +21,24 @@ interface Props {
  * Shared "mark as done" toggle used by planner rows and the request task list.
  * Optimistic, no confirmation, toast with a 5s undo.
  */
-export function TaskDoneToggle({ taskId, status, className, variant = "circle" }: Props) {
+export function TaskDoneToggle({ task, className, variant = "circle" }: Props) {
+  const { id: taskId, status } = task;
+  const { userId, isAdmin } = useTaskHubIdentity();
   const queryClient = useQueryClient();
+  const [pending, setPending] = useState(false);
   const [localStatus, setLocalStatus] = useState<string | null>(null);
   const prevStatusRef = useRef<string>(status !== "done" ? status : "todo");
   const current = localStatus ?? status;
   const done = current === "done";
+  const sendToReview = task.requires_acceptance && !canReviewTask(task, userId, isAdmin);
+  useEffect(() => { setLocalStatus(null); }, [status]);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["planner-tasks"] });
-    queryClient.invalidateQueries({ queryKey: ["planner-tasks-archived"] });
-    queryClient.invalidateQueries({ queryKey: ["request-linked-tasks"] });
-    queryClient.invalidateQueries({ queryKey: ["request-task-counts"] });
-    queryClient.invalidateQueries({ queryKey: ["planner-requests-without-tasks"] });
+    invalidatePlannerTaskQueries(queryClient);
   };
 
   const setStatus = async (next: string) => {
+    setPending(true);
     setLocalStatus(next);
     const { error } = await supabase
       .from("planner_tasks")
@@ -44,25 +49,29 @@ export function TaskDoneToggle({ taskId, status, className, variant = "circle" }
       .eq("id", taskId);
     if (error) {
       setLocalStatus(null);
+      setPending(false);
       toast.error("Не удалось изменить статус", { description: error.message });
-      return;
+      return false;
     }
     invalidate();
+    setPending(false);
+    return true;
   };
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    if (pending || !userId) return;
     const prev = current;
     let next: string;
     if (done) {
       next = prevStatusRef.current || "todo";
     } else {
       prevStatusRef.current = prev;
-      next = "done";
+      next = sendToReview ? "review" : "done";
     }
-    await setStatus(next);
-    toast(next === "done" ? "Задача выполнена" : "Задача возвращена в работу", {
+    if (!await setStatus(next)) return;
+    toast(next === "review" ? "Передано на проверку" : next === "done" ? "Задача выполнена" : "Задача возвращена в работу", {
       duration: 5000,
       action: {
         label: "Отменить",
@@ -75,8 +84,9 @@ export function TaskDoneToggle({ taskId, status, className, variant = "circle" }
 
   if (variant === "button") {
     return (
-      <button
+      <Button variant="outline"
         type="button"
+        disabled={pending || !userId}
         title={done ? "Вернуть в работу" : "Отметить выполненной"}
         aria-pressed={done}
         onClick={handleClick}
@@ -90,14 +100,15 @@ export function TaskDoneToggle({ taskId, status, className, variant = "circle" }
         )}
       >
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
-        {done ? "Выполнено" : "Выполнить"}
-      </button>
+        {done ? "Выполнено" : sendToReview ? "На проверку" : "Выполнить"}
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button variant="ghost" size="icon"
       type="button"
+      disabled={pending || !userId}
       title="Отметить выполненной"
       aria-label="Отметить выполненной"
       aria-pressed={done}
@@ -119,6 +130,6 @@ export function TaskDoneToggle({ taskId, status, className, variant = "circle" }
       >
         <Check className="h-3 w-3" strokeWidth={3} />
       </span>
-    </button>
+    </Button>
   );
 }

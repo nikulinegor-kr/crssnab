@@ -272,7 +272,7 @@ export default function PlannerTasksList() {
                             onCheckedChange={() => toggleSelected(t.id)}
                           />
                         </span>
-                        <TaskDoneToggle taskId={t.id} status={t.status} />
+                        <TaskDoneToggle task={t} />
                         <span className={cn("h-2 w-2 rounded-full shrink-0", pr.dot)} />
                         <div className="flex-1 min-w-0">
                           <div className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>
