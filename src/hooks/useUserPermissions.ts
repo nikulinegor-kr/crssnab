@@ -8,6 +8,7 @@ export const ALL_PERMISSION_KEYS = [
   "crm",
   "crm.requests",
   "crm.objects",
+  "crm.trust_letters",
   "project",
   "project.material_statements",
   "project.documents",
@@ -34,6 +35,7 @@ export const PERMISSION_TREE = [
     children: [
       { key: "crm.requests" as PermissionKey, label: "Заявки" },
       { key: "crm.objects" as PermissionKey, label: "Объекты" },
+      { key: "crm.trust_letters" as PermissionKey, label: "Доверительные письма" },
     ],
   },
   {

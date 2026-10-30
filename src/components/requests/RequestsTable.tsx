@@ -71,6 +71,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PRIORITIES } from "@/hooks/useRequestsFilters";
+import { TrustLetterButton } from "./TrustLetterDialog";
 
 
 const moneyShort = (n: number) =>
@@ -1869,6 +1870,7 @@ export const RequestsTable = ({
         {selectedRequestIds.size > 0 && (
           <div className="flex flex-none flex-wrap items-center gap-2 border-t border-border bg-muted/40 px-2 py-1.5 text-xs">
             <span className="font-medium">Выбрано {selectedRequestIds.size}</span>
+            <TrustLetterButton requestIds={[...selectedRequestIds]}/>
             <Select disabled={bulkSaving} onValueChange={(v) => applyBulk("status", v)}>
               <SelectTrigger className="h-7 w-[190px] text-xs">
                 <SelectValue placeholder="Статус" />

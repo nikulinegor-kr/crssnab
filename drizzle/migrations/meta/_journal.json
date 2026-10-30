@@ -92,6 +92,13 @@
       "when": 1793338327161,
       "tag": "0012_preserve_notification_dedup_for_legacy_links",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793341356062,
+      "tag": "0013_trust_letters_private_templates",
+      "breakpoints": true
     }
   ]
 }

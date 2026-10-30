@@ -24,6 +24,7 @@ import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminder
 import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import ErrorLogsPage from "@/pages/ErrorLogsPage";
+import { LetterTemplateSettings } from "@/components/settings/LetterTemplateSettings";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -161,6 +162,7 @@ const OrganizationSettings = () => {
             <SettingsSection title="Объекты" description="Управление объектами для заявок" icon={Building2}>
               <ObjectsManagement />
             </SettingsSection>
+            {currentOrgId && <SettingsSection title="Бланки писем" icon={FileText}><LetterTemplateSettings organizationId={currentOrgId} /></SettingsSection>}
           </TabsContent>
         )}
 

@@ -2442,6 +2442,35 @@ export type Database = {
           },
         ]
       }
+      organization_letter_settings: {
+        Row: {
+          destination: string
+          organization_id: string
+          template_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          destination?: string
+          organization_id: string
+          template_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          destination?: string
+          organization_id?: string
+          template_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_letter_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           contact_email: string | null
@@ -3212,6 +3241,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "request_favorites_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_invoice_extracts: {
+        Row: {
+          created_at: string
+          created_by: string
+          extracted: Json
+          file_path: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          extracted: Json
+          file_path: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          extracted?: Json
+          file_path?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_invoice_extracts_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "requests"
@@ -4543,6 +4607,9 @@ export type Database = {
           contact_person: string | null
           created_at: string
           created_by: string | null
+          director_name: string | null
+          director_name_dative: string | null
+          director_position: string | null
           email: string | null
           id: string
           inn: string | null
@@ -4567,6 +4634,9 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
+          director_name?: string | null
+          director_name_dative?: string | null
+          director_position?: string | null
           email?: string | null
           id?: string
           inn?: string | null
@@ -4591,6 +4661,9 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
+          director_name?: string | null
+          director_name_dative?: string | null
+          director_position?: string | null
           email?: string | null
           id?: string
           inn?: string | null
@@ -4851,6 +4924,50 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_letters: {
+        Row: {
+          carrier: string
+          created_at: string
+          created_by: string
+          file_path: string
+          id: string
+          number: string
+          organization_id: string
+          payload: Json
+          request_ids: string[]
+        }
+        Insert: {
+          carrier: string
+          created_at?: string
+          created_by: string
+          file_path: string
+          id?: string
+          number: string
+          organization_id: string
+          payload: Json
+          request_ids: string[]
+        }
+        Update: {
+          carrier?: string
+          created_at?: string
+          created_by?: string
+          file_path?: string
+          id?: string
+          number?: string
+          organization_id?: string
+          payload?: Json
+          request_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_letters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_organizations: {
         Row: {
           can_manage_tasks: boolean
@@ -5080,6 +5197,10 @@ export type Database = {
         Args: { _request_id: string }
         Returns: string
       }
+      can_use_trust_letters: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
+      }
       check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
@@ -5103,6 +5224,32 @@ export type Database = {
         Returns: undefined
       }
       filter_element_stock: { Args: { _id: string }; Returns: number }
+      finalize_trust_letter: {
+        Args: {
+          _carrier: string
+          _org: string
+          _path: string
+          _payload: Json
+          _requests: string[]
+        }
+        Returns: {
+          carrier: string
+          created_at: string
+          created_by: string
+          file_path: string
+          id: string
+          number: string
+          organization_id: string
+          payload: Json
+          request_ids: string[]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trust_letters"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       find_user_by_full_name: {
         Args: { _name: string; _org_id: string }
         Returns: string
@@ -5221,6 +5368,7 @@ export type Database = {
       }
       spare_part_stock: { Args: { _id: string }; Returns: number }
       telegram_bot_configured: { Args: { _org_id: string }; Returns: boolean }
+      trust_storage_org: { Args: { _name: string }; Returns: string }
       user_can_create_requests: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
