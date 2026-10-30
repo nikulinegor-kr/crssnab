@@ -49,7 +49,7 @@ const playNotificationSound = () => {
   } catch (_) { /* noop */ }
 };
 
-const showBrowserNotification = async (title: string, body: string, link?: string | null) => {
+const showBrowserNotification = async (title: string, body: string, link?: string | null, notificationId?: string) => {
   if (localStorage.getItem(PUSH_BROWSER_ENABLED_KEY) === "off") return;
   if (!("Notification" in window) || Notification.permission !== "granted") return;
 
@@ -67,7 +67,7 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
           title,
           body,
           url,
-          tag: url || undefined,
+          tag: notificationId || undefined,
           icon: "/favicon.png",
           badge: "/favicon.png",
         });
@@ -75,7 +75,7 @@ const showBrowserNotification = async (title: string, body: string, link?: strin
       }
     }
     // Fallback: прямой Notification API (откроется/сфокусируется текущая вкладка)
-    const n = new Notification(title, { body, icon: "/favicon.png", tag: url || undefined });
+    const n = new Notification(title, { body, icon: "/favicon.png", tag: notificationId || undefined });
     n.onclick = () => { window.focus(); window.location.href = url; n.close(); };
   } catch (error) {
     console.error("Error showing browser notification:", error);
@@ -117,7 +117,7 @@ export const useNotifications = () => {
       void queryClient.invalidateQueries({queryKey:["my-notifications"]});
       const notification = payload.new as Notification;
       toast({title:notification.title,description:notification.message});
-      void showBrowserNotification(notification.title,notification.message,notification.link);
+      void showBrowserNotification(notification.title,notification.message,notification.link,notification.id);
     }).subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [userId, queryClient, toast]);
