@@ -2,7 +2,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 import { z } from "npm:zod@3.23.8";
-import { deliverWebPush } from "../_shared/webPushDelivery.ts";
+import { deliverWebPush, isAllowedPushEndpoint } from "../_shared/webPushDelivery.ts";
 const bodySchema = z.object({ user_ids: z.array(z.string().uuid()).min(1).max(100), title: z.string().max(200).default("CRSS"), body: z.string().max(800).default(""), route: z.string().max(2048).nullable().optional(), notification_id: z.string().uuid() });
 Deno.serve(async req => {
   const json = (body: unknown, status=200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type":"application/json" } });
@@ -34,7 +34,7 @@ Deno.serve(async req => {
     const payload=JSON.stringify({title:body.title,body:body.body,url:route,tag:body.notification_id,icon:"/icons/icon-192.png",badge:"/icons/icon-192.png"});
     const results=[];
     for (const device of devices ?? []) {
-      if(!device.p256dh || !device.auth) { results.push("failed");continue; }
+      if(!device.p256dh || !device.auth || !isAllowedPushEndpoint(device.token)) { await admin.from("device_push_tokens").update({fail_count:device.fail_count+1}).eq("id",device.id);results.push("failed");continue; }
       results.push(await deliverWebPush(device,()=>webpush.sendNotification({endpoint:device.token,keys:{p256dh:device.p256dh,auth:device.auth}},payload,{TTL:86400,timeout:10000}),{
         remove:async id=>{const {error}=await admin.from("device_push_tokens").delete().eq("id",id);if(error)throw error;},
         update:async(id,patch)=>{const {error}=await admin.from("device_push_tokens").update(patch).eq("id",id);if(error)throw error;},

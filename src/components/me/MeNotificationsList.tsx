@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { normalizeNotificationLink } from "@/lib/notificationLinks";
 import { useMyNotifications } from "@/hooks/useMyNotifications";
 import { MeSection,MeEmpty } from "./MeSection";
-export function MeNotificationsList({page=0,pageSize=10,full=false,onCount}:{page?:number;pageSize?:number;full?:boolean;onCount?:(count:number)=>void}){
+export function MeNotificationsList({page=0,pageSize=10,full=false}:{page?:number;pageSize?:number;full?:boolean}){
  const {list,mark}=useMyNotifications(page,pageSize);const navigate=useNavigate();
  const rows=list.data?.rows??[];
  return <MeSection title="Уведомления" link={full?undefined:"/me/notifications"} loading={list.isLoading} error={list.isError} rows={10}>
