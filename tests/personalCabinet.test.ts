@@ -3,7 +3,7 @@ import {normalizeNotificationLink} from "../src/lib/notificationLinks";
 import {getWebPushState} from "../src/lib/webPush";
 import {isMyOpenRequest,taskStatistics} from "../src/lib/personalCabinet";
 import {applyTabFilter} from "../src/lib/taskHub";
-import {deliverWebPush} from "../supabase/functions/_shared/webPushDelivery";
+import {deliverWebPush,isAllowedPushEndpoint} from "../supabase/functions/_shared/webPushDelivery";
 const id="00000000-0000-0000-0000-000000000001";
 test("old request links open side panel",()=>expect(normalizeNotificationLink(`/requests/${id}`)).toBe(`/requests?request=${id}`));
 test("new request links remain unchanged",()=>expect(normalizeNotificationLink(`/requests?request=${id}`)).toBe(`/requests?request=${id}`));
@@ -21,3 +21,5 @@ test("mine overdue combines ownership and due date",()=>{const calls:unknown[][]
 test("expired 410 web subscription is deleted",async()=>{const removed:string[]=[];const result=await deliverWebPush({id,token:"https://push.example",p256dh:"public",auth:"auth",fail_count:0},async()=>{throw{statusCode:410};},{remove:async x=>{removed.push(x);},update:async()=>{throw Error("must not update expired device");}});expect(result).toBe("removed");expect(removed).toEqual([id]);});
 test("other web failures increment count",async()=>{let count=0;const result=await deliverWebPush({id,token:"",p256dh:null,auth:null,fail_count:3},async()=>{throw{statusCode:503};},{remove:async()=>{throw Error("must not delete");},update:async(_,patch)=>{count=patch.fail_count;}});expect(result).toBe("failed");expect(count).toBe(4);});
 test("task statistics use completion deadline and elapsed days",()=>{expect(taskStatistics([{created_at:"2026-10-01",completed_at:"2026-10-03",due_date:"2026-10-03"},{created_at:"2026-10-01",completed_at:"2026-10-05",due_date:"2026-10-04"}],2)).toEqual({completed:2,onTime:50,averageDays:3,rework:2});});
+
+test("push endpoints cannot target private or arbitrary hosts",()=>{expect(isAllowedPushEndpoint("https://fcm.googleapis.com/fcm/send/a")).toBe(true);expect(isAllowedPushEndpoint("https://web.push.apple.com/a")).toBe(true);expect(isAllowedPushEndpoint("http://127.0.0.1/a")).toBe(false);expect(isAllowedPushEndpoint("https://example.com/a")).toBe(false);});
