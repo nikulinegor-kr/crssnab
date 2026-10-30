@@ -1,7 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { ClipboardList, Plus, CalendarRange, Menu, Truck } from "lucide-react";
+import { ClipboardList, Plus, ListChecks, Menu, House } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Item = ({
@@ -19,7 +21,7 @@ const Item = ({
     to={to}
     className={({ isActive }) =>
       cn(
-        "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] font-medium transition-colors",
+        "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors",
         (isActive || active) ? "text-primary" : "text-muted-foreground",
       )
     }
@@ -30,6 +32,7 @@ const Item = ({
 );
 
 export const MobileBottomNav = () => {
+  const { isAdmin } = useUserRole();
   const { open } = useQuickRequest();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
@@ -42,35 +45,35 @@ export const MobileBottomNav = () => {
       className={cn(
         "md:hidden fixed bottom-0 inset-x-0 z-40",
         "bg-background/95 backdrop-blur border-t border-border",
-        "h-16 pb-[env(safe-area-inset-bottom)]",
+        "h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]",
       )}
       aria-label="Основная навигация"
     >
       <div className="flex items-stretch h-16">
+        <Item to={isAdmin ? "/executive" : "/tasks?tab=mine"} label="Главная" icon={House} active={!isAdmin && location.pathname === "/tasks" && location.search.includes("tab=mine")} />
         <Item to="/requests" label="Заявки" icon={ClipboardList} />
-        <Item to="/planner" label="Задачи" icon={CalendarRange} />
 
-        <button
+        <Button variant="ghost"
           type="button"
           onClick={open}
           aria-label="Быстрая заявка"
-          className="flex flex-col items-center justify-center flex-1 h-full"
+          className="flex flex-col items-center justify-center flex-1 h-full rounded-none px-0"
         >
           <span className="-mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform">
             <Plus className="h-6 w-6" />
           </span>
-          <span className="text-[10px] font-medium text-muted-foreground mt-0.5">Быстро</span>
-        </button>
+          <span className="text-xs font-medium text-muted-foreground mt-0.5">Быстро</span>
+        </Button>
 
-        <Item to="/shipments" label="Поставки" icon={Truck} />
-        <button
+        <Item to="/tasks" label="Задачи" icon={ListChecks} />
+        <Button variant="ghost"
           type="button"
           onClick={toggleSidebar}
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[10px] font-medium text-muted-foreground"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium text-muted-foreground"
         >
           <Menu className="h-5 w-5" />
           <span>Меню</span>
-        </button>
+        </Button>
       </div>
     </nav>
   );

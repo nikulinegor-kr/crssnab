@@ -1,27 +1,25 @@
 import { Link } from "react-router-dom";
-import { ListChecks, Inbox, ShoppingCart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EXEC_LINKS } from "@/lib/executivePanel";
 
 type Metric = { data?: number; isLoading: boolean; isError: boolean };
-export function ExecKpiTiles({ activeTasks, newRequests, openRequests, overdueTasks, overdueDeliveries }: {
-  activeTasks: Metric; newRequests: Metric; openRequests: Metric; overdueTasks: Metric; overdueDeliveries: Metric;
+export function ExecKpiTiles({ activeTasks, newRequests, oldNewRequests, staleRequests, overdueTasks, overdueDeliveries }: {
+  activeTasks: Metric; newRequests: Metric; oldNewRequests: Metric; staleRequests: Metric; overdueTasks: Metric; overdueDeliveries: Metric;
 }) {
-  const overdue = { data: (overdueTasks.data ?? 0) + (overdueDeliveries.data ?? 0), isLoading: overdueTasks.isLoading || overdueDeliveries.isLoading, isError: overdueTasks.isError || overdueDeliveries.isError };
+  const value = (metric: Metric) => metric.isLoading || metric.isError ? "—" : metric.data ?? "—";
   const tiles = [
-    { title: "Активные задачи", icon: ListChecks, metric: activeTasks, url: "/planner/tasks", caption: "задач в планировщике" },
-    { title: "Новые заявки", icon: Inbox, metric: newRequests, url: "/requests", caption: "ждут обработки" },
-    { title: "Заявки в работе", icon: ShoppingCart, metric: openRequests, url: "/requests", caption: "открытых заявок" },
-    { title: "Просрочено", icon: AlertTriangle, metric: overdue, url: null, caption: overdue.isError ? "Не удалось загрузить" : `${overdueTasks.data ?? "—"} задач · ${overdueDeliveries.data ?? "—"} поставок` },
+    { title: "Новые заявки", metric: newRequests, url: EXEC_LINKS.newRequests, caption: `из них старше 2 дн.: ${value(oldNewRequests)}`, overdue: false },
+    { title: "Без движения", metric: staleRequests, url: EXEC_LINKS.staleRequests, caption: "дольше 2 дней без изменений", overdue: false },
+    { title: "Просроченные поставки", metric: overdueDeliveries, url: EXEC_LINKS.overdueDeliveries, caption: "плановая дата прошла", overdue: true },
+    { title: "Просроченные задачи", metric: overdueTasks, url: EXEC_LINKS.overdueTasks, caption: `из ${value(activeTasks)} активных`, overdue: true },
   ];
-  return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-    {tiles.map(({ title, icon: Icon, metric, url, caption }) => {
-      const content = <><span className="flex w-full items-center justify-between gap-2 text-xs font-medium sm:text-sm"><span className="whitespace-normal">{title}</span><Icon className="text-muted-foreground" /></span>
-        {metric.isLoading ? <Skeleton className="h-9 w-20" /> : <span className={`text-3xl font-semibold tabular-nums ${url ? "text-foreground" : "text-destructive"}`}>{metric.isError ? "—" : metric.data?.toLocaleString("ru-RU") ?? "—"}</span>}
-        <span className="whitespace-normal text-xs font-normal text-muted-foreground tabular-nums">{metric.isError ? "Не удалось загрузить" : caption}</span></>;
-      const className = "h-36 min-w-0 flex-col items-start justify-between border border-border bg-card p-4 text-left text-foreground";
-      return url ? <Button key={title} variant="ghost" asChild className={className}><Link to={url}>{content}</Link></Button> :
-        <Button key={title} variant="ghost" className={className} onClick={() => document.getElementById("executive-attention")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" })}>{content}</Button>;
-    })}
+  return <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+    {tiles.map(({ title, metric, url, caption, overdue }) => <Button key={title} variant="ghost" asChild className="h-[104px] min-w-0 flex-col items-start justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left text-foreground sm:h-28 sm:p-4">
+      <Link to={url}><span className="w-full whitespace-normal text-xs font-medium leading-4">{title}</span>
+        {metric.isLoading ? <Skeleton className="h-8 w-16" /> : <span className={`text-[28px] font-semibold leading-8 tabular-nums ${overdue && !metric.isError && (metric.data ?? 0) > 0 ? "text-destructive" : "text-foreground"}`}>{value(metric)}</span>}
+        <span className="whitespace-normal text-xs font-normal leading-4 text-muted-foreground">{metric.isError ? "Не удалось загрузить" : caption}</span>
+      </Link>
+    </Button>)}
   </div>;
 }
