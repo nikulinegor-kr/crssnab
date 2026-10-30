@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Truck, MapPin, User as UserIcon, Calendar } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { ru } from "date-fns/locale";
-import { usePlannerTasks, PRIORITY_META, PLANNER_COLUMNS, type PlannerTask } from "@/hooks/usePlannerTasks";
+import { usePlannerTasks, PRIORITY_META, PLANNER_STATUS_LABELS, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { usePlannerLookups, equipmentLabel } from "@/hooks/usePlannerEquipment";
 import { useOrgMembers } from "@/hooks/useOrgMembers";
 import { usePlannerFilters } from "@/contexts/PlannerFiltersContext";
@@ -139,7 +139,7 @@ export default function PlannerEquipmentLoad() {
                       const due = t.due_date ? new Date(t.due_date) : null;
                       const overdue = due && isPast(due);
                       const assignee = t.assignee_id ? members.find((m) => m.user_id === t.assignee_id) : null;
-                      const statusLabel = PLANNER_COLUMNS.find((c) => c.id === t.status)?.title;
+                      const statusLabel = PLANNER_STATUS_LABELS[t.status];
                       const startDt = t.start_date ? new Date(t.start_date) : null;
                       const period = startDt && due
                         ? `${format(startDt, "d MMM", { locale: ru })} — ${format(due, "d MMM", { locale: ru })}`

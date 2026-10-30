@@ -13,7 +13,7 @@ import { ExecRecentEvents } from "@/components/executive/ExecRecentEvents";
 import { ExecSectionsGrid } from "@/components/executive/ExecSectionsGrid";
 
 const TaskDialog = lazy(() => import("@/components/planner/PlannerTaskDialog").then(m => ({ default: m.PlannerTaskDialog })));
-const taskColumns = "id,organization_id,object_id,stage_id,request_id,equipment_id,equipment_ids,parent_task_id,title,description,status,priority,assignee_id,created_by,start_date,due_date,completed_at,position,tags,checklist,attachments,is_private,recurrence,estimated_hours,actual_hours,source,source_rule,due_time,archived_at,created_at,updated_at";
+const taskColumns = "id,organization_id,object_id,stage_id,request_id,equipment_id,equipment_ids,parent_task_id,title,description,status,priority,assignee_id,reviewer_id,co_assignee_ids,department_id,requires_acceptance,accepted_at,blocked_reason,blocked_until,change_reason,created_by,start_date,due_date,completed_at,position,tags,checklist,attachments,is_private,recurrence,estimated_hours,actual_hours,source,source_rule,due_time,archived_at,created_at,updated_at";
 
 export default function ExecutivePanelPage() {
   const panel = useExecutivePanel();

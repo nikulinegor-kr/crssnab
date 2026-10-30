@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PlannerTaskMeta } from "@/components/planner/PlannerTaskMeta";
 import { PlannerTaskActions } from "@/components/planner/PlannerTaskActions";
 import { TaskDoneToggle } from "@/components/planner/TaskDoneToggle";
-import { PLANNER_COLUMNS, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
+import { PLANNER_STATUS_LABELS, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
 import { initialsOf, type OrgMember } from "@/hooks/useOrgMembers";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ export function PlannerTaskRow({ task, members, onClick, className, hideDate }: 
           {task.title}
         </div>
         <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
-          <span>{PLANNER_COLUMNS.find((c) => c.id === task.status)?.title}</span>
+          <span>{PLANNER_STATUS_LABELS[task.status]}</span>
           {(task.checklist ?? []).length > 0 && (
             <span className="inline-flex items-center gap-1">
               <ListChecks className="h-3 w-3" />
