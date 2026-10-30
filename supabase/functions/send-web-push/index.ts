@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 import { z } from "npm:zod@3.23.8";
 import { deliverWebPush, isAllowedPushEndpoint } from "../_shared/webPushDelivery.ts";
+import { VAPID_PUBLIC_KEY } from "../_shared/webPushConfig.ts";
 const bodySchema = z.object({ user_ids: z.array(z.string().uuid()).min(1).max(100), title: z.string().max(200).default("CRSS"), body: z.string().max(800).default(""), route: z.string().max(2048).nullable().optional(), notification_id: z.string().uuid() });
 Deno.serve(async req => {
   const json = (body: unknown, status=200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type":"application/json" } });
@@ -13,7 +14,7 @@ Deno.serve(async req => {
   if (req.method === "GET" && new URL(req.url).searchParams.get("config") === "1") {
     const bearer=req.headers.get("authorization")?.replace(/^Bearer /,"");
     if (!bearer || (await admin.auth.getUser(bearer)).error) return json({error:"unauthorized"},401);
-    const publicKey=Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
+    const publicKey=VAPID_PUBLIC_KEY;
     return json({configured:Boolean(publicKey && Deno.env.get("VAPID_PRIVATE_KEY") && Deno.env.get("VAPID_SUBJECT")), publicKey});
   }
   if (req.method !== "POST") return json({error:"method_not_allowed"},405);
@@ -23,7 +24,7 @@ Deno.serve(async req => {
   if (!authorized) return json({error:"unauthorized"},401);
   const parsed=bodySchema.safeParse(await req.json().catch(()=>null));
   if (!parsed.success) return json({error:"invalid_payload"},400);
-  const publicKey=Deno.env.get("VAPID_PUBLIC_KEY");const privateKey=Deno.env.get("VAPID_PRIVATE_KEY");const subject=Deno.env.get("VAPID_SUBJECT");
+  const publicKey=VAPID_PUBLIC_KEY;const privateKey=Deno.env.get("VAPID_PRIVATE_KEY");const subject=Deno.env.get("VAPID_SUBJECT");
   if (!publicKey || !privateKey || !subject) return json({error:"web_push_not_configured"},503);
   try {
     webpush.setVapidDetails(subject,publicKey,privateKey);

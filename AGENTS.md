@@ -14,3 +14,4 @@
 - Scope personal-cabinet queries explicitly to auth user and reuse PlannerTaskDialog, TaskStatusActions and ProfilePage so personal views never fork task or profile editing.
 - Verify push-hook headers through a service-role-only boolean RPC against private DB config; rotate the DB value without returning it, avoiding shared secret literals and environment synchronization.
 - Keep notification links normalized in a pure client helper and the messaging worker, and suppress local browser notifications when a real Web Push subscription exists to avoid duplicate delivery.
+- Share the public VAPID key from the edge shared config through Vite's VITE_VAPID_PUBLIC_KEY define so browser subscriptions and server signing use the same key; private credentials remain secret-store-only.
