@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   PLANNER_COLUMNS,
+  PLANNER_STATUS_LABELS,
   PRIORITY_META,
   PRIORITY_CHOICES,
   type PlannerTask,
@@ -400,7 +401,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
               <div className="space-y-1.5">
                 <Label>Статус</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as PlannerTaskStatus)}>
-                  <SelectTrigger className={errCls("status")}><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={errCls("status")}><SelectValue>{PLANNER_STATUS_LABELS[status]}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {PLANNER_COLUMNS.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
                   </SelectContent>
@@ -637,7 +638,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             const assignee = c.assignee_id ? memberById(c.assignee_id) : null;
                             const s = c.start_date ? format(new Date(c.start_date), "dd.MM.yyyy HH:mm", { locale: ru }) : "—";
                             const d = c.due_date ? format(new Date(c.due_date), "dd.MM.yyyy HH:mm", { locale: ru }) : "—";
-                            const statusLabel = PLANNER_COLUMNS.find((col) => col.id === c.status)?.title ?? c.status;
+                            const statusLabel = PLANNER_STATUS_LABELS[c.status] ?? c.status;
                             return (
                               <div key={c.id} className="space-y-0.5 pl-1 border-l-2 border-current/20">
                                 <div className="text-sm font-medium">{c.title}</div>

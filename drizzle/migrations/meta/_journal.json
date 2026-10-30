@@ -57,6 +57,13 @@
       "when": 1790851875481,
       "tag": "0007_deprecate_planner_tasks_archived_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793335621759,
+      "tag": "0008_planner_foundation_departments_and_transitions",
+      "breakpoints": true
     }
   ]
 }

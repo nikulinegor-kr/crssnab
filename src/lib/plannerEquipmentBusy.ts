@@ -1,7 +1,7 @@
 import type { PlannerTask, PlannerTaskStatus } from "@/hooks/usePlannerTasks";
 
 // Statuses that keep equipment busy. `done` is treated as released.
-export const ACTIVE_STATUSES: PlannerTaskStatus[] = ["backlog", "todo", "in_progress", "review"];
+export const ACTIVE_STATUSES: PlannerTaskStatus[] = ["backlog", "todo", "accepted", "in_progress", "waiting", "review", "rework"];
 
 export type EquipmentBusyStatus = "free" | "planned" | "working" | "overloaded";
 

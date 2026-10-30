@@ -54,7 +54,7 @@ export default function PlannerKanban({ taskFilter, defaultAssigneeId, hideHeade
 
   const grouped = useMemo(() => {
     const map: Record<PlannerTaskStatus, PlannerTask[]> = {
-      backlog: [], todo: [], in_progress: [], review: [], done: [],
+      backlog: [], todo: [], accepted: [], in_progress: [], waiting: [], review: [], rework: [], done: [],
     };
     for (const t of tasks) map[normalizeStatus(t.status)]?.push(t);
     return map;
@@ -80,9 +80,9 @@ export default function PlannerKanban({ taskFilter, defaultAssigneeId, hideHeade
     let targetStatus: PlannerTaskStatus | undefined;
     const overData: any = over.data?.current;
     if (overData?.type === "column") targetStatus = overData.status;
-    else if (overData?.type === "task") targetStatus = overData.task.status;
+    else if (overData?.type === "task") targetStatus = normalizeStatus(overData.task.status);
 
-    if (!targetStatus || targetStatus === dragged.status) return;
+    if (!targetStatus || targetStatus === normalizeStatus(dragged.status)) return;
     await update.mutateAsync({ id: dragged.id, patch: { status: targetStatus } });
   };
 

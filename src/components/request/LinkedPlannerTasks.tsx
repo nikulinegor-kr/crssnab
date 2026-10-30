@@ -11,6 +11,7 @@ import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 import { PlannerTaskDialog } from "@/components/planner/PlannerTaskDialog";
 import type { PlannerTask } from "@/hooks/usePlannerTasks";
+import { PLANNER_STATUS_LABELS } from "@/lib/plannerStatuses";
 
 const PRIORITY_DOT: Record<string, string> = {
   critical: "🔴",
@@ -20,13 +21,6 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "🟢",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  backlog: "Новая",
-  todo: "Новая",
-  in_progress: "В работе",
-  review: "На проверке",
-  done: "Выполнено",
-};
 
 interface Props {
   requestId: string;
@@ -132,7 +126,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
               </span>
             )}
             <Badge variant="outline" className="text-[10px] shrink-0">
-              {STATUS_LABEL[t.status] ?? t.status}
+              {PLANNER_STATUS_LABELS[t.status] ?? t.status}
             </Badge>
             <TaskDoneToggle taskId={t.id} status={t.status} variant="button" />
           </div>

@@ -11,6 +11,8 @@ import {
   usePlannerTasks,
   PRIORITY_META,
   PLANNER_COLUMNS,
+  PLANNER_STATUS_LABELS,
+  normalizeStatus,
   type PlannerTask,
   type PlannerTaskStatus,
 } from "@/hooks/usePlannerTasks";
@@ -62,7 +64,7 @@ export default function PlannerTasksList() {
   const filtered = useMemo(() => {
     const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
     return tasks.filter((t) => {
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (statusFilter !== "all" && normalizeStatus(t.status) !== statusFilter) return false;
       if (onlyMine && t.assignee_id !== me) return false;
       if (terms.length === 0) return true;
       const hay = `${t.title} ${t.description ?? ""}`.toLowerCase();
@@ -277,7 +279,7 @@ export default function PlannerTasksList() {
                             {t.title}
                           </div>
                           <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span>{PLANNER_COLUMNS.find((c) => c.id === t.status)?.title}</span>
+                            <span>{PLANNER_STATUS_LABELS[t.status]}</span>
                             {t.checklist.length > 0 && (
                               <span className="inline-flex items-center gap-1">
                                 <ListChecks className="h-3 w-3" />

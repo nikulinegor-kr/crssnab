@@ -5,8 +5,9 @@ import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { usePlannerScope } from "@/contexts/PlannerScopeContext";
 import { usePlannerAccess } from "./usePlannerAccess";
+import type { PlannerTaskStatus } from "@/lib/plannerStatuses";
+export { normalizeStatus, PLANNER_STATUS_LABELS, type PlannerTaskStatus } from "@/lib/plannerStatuses";
 
-export type PlannerTaskStatus = "backlog" | "todo" | "in_progress" | "review" | "done";
 export type PlannerTaskPriority = "low" | "medium" | "high" | "urgent" | "critical";
 export type PlannerTaskSource = "manual" | "auto_rule" | "crm_request";
 
@@ -44,6 +45,14 @@ export interface PlannerTask {
   status: PlannerTaskStatus;
   priority: PlannerTaskPriority;
   assignee_id: string | null;
+  reviewer_id: string | null;
+  co_assignee_ids: string[];
+  department_id: string | null;
+  requires_acceptance: boolean;
+  accepted_at: string | null;
+  blocked_reason: string | null;
+  blocked_until: string | null;
+  change_reason: string | null;
   created_by: string | null;
   start_date: string | null;
   due_date: string | null;
@@ -70,10 +79,6 @@ export const PLANNER_COLUMNS: { id: PlannerTaskStatus; title: string }[] = [
   { id: "review", title: "На проверке" },
   { id: "done", title: "Выполнено" },
 ];
-
-/** Legacy "todo" tasks are shown in the "Новые" column. */
-export const normalizeStatus = (s: PlannerTaskStatus): PlannerTaskStatus =>
-  s === "todo" ? "backlog" : s;
 
 export const PRIORITY_META: Record<
   PlannerTaskPriority,

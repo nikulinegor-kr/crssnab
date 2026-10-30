@@ -980,6 +980,61 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          created_at: string | null
+          head_user_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          parent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          head_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          head_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_head_user_id_fkey"
+            columns: ["head_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_push_tokens: {
         Row: {
           created_at: string
@@ -2489,6 +2544,7 @@ export type Database = {
           new_value: string | null
           old_value: string | null
           organization_id: string
+          reason: string | null
           task_id: string
           user_id: string | null
         }
@@ -2501,6 +2557,7 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
           organization_id: string
+          reason?: string | null
           task_id: string
           user_id?: string | null
         }
@@ -2513,6 +2570,7 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
           organization_id?: string
+          reason?: string | null
           task_id?: string
           user_id?: string | null
         }
@@ -2691,17 +2749,23 @@ export type Database = {
       }
       planner_tasks: {
         Row: {
+          accepted_at: string | null
           actual_hours: number | null
           archived: boolean
           archived_at: string | null
           assignee_id: string | null
           assignee_name: string | null
           attachments: Json
+          blocked_reason: string | null
+          blocked_until: string | null
+          change_reason: string | null
           checklist: Json
+          co_assignee_ids: string[]
           completed_at: string | null
           created_at: string
           created_by: string | null
           delegated_to: string | null
+          department_id: string | null
           description: string | null
           due_date: string | null
           due_time: string | null
@@ -2719,6 +2783,8 @@ export type Database = {
           priority: string
           recurrence: Json | null
           request_id: string | null
+          requires_acceptance: boolean
+          reviewer_id: string | null
           source: string
           source_rule: string | null
           stage_id: string | null
@@ -2729,17 +2795,23 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           actual_hours?: number | null
           archived?: boolean
           archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           attachments?: Json
+          blocked_reason?: string | null
+          blocked_until?: string | null
+          change_reason?: string | null
           checklist?: Json
+          co_assignee_ids?: string[]
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           delegated_to?: string | null
+          department_id?: string | null
           description?: string | null
           due_date?: string | null
           due_time?: string | null
@@ -2757,6 +2829,8 @@ export type Database = {
           priority?: string
           recurrence?: Json | null
           request_id?: string | null
+          requires_acceptance?: boolean
+          reviewer_id?: string | null
           source?: string
           source_rule?: string | null
           stage_id?: string | null
@@ -2767,17 +2841,23 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           actual_hours?: number | null
           archived?: boolean
           archived_at?: string | null
           assignee_id?: string | null
           assignee_name?: string | null
           attachments?: Json
+          blocked_reason?: string | null
+          blocked_until?: string | null
+          change_reason?: string | null
           checklist?: Json
+          co_assignee_ids?: string[]
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
           delegated_to?: string | null
+          department_id?: string | null
           description?: string | null
           due_date?: string | null
           due_time?: string | null
@@ -2795,6 +2875,8 @@ export type Database = {
           priority?: string
           recurrence?: Json | null
           request_id?: string | null
+          requires_acceptance?: boolean
+          reviewer_id?: string | null
           source?: string
           source_rule?: string | null
           stage_id?: string | null
@@ -2805,6 +2887,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "planner_tasks_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "planner_tasks_object_id_fkey"
             columns: ["object_id"]
@@ -4756,6 +4845,7 @@ export type Database = {
           created_at: string | null
           deactivated_at: string | null
           deactivated_by: string | null
+          department_id: string | null
           id: string
           is_active: boolean
           organization_id: string
@@ -4768,6 +4858,7 @@ export type Database = {
           created_at?: string | null
           deactivated_at?: string | null
           deactivated_by?: string | null
+          department_id?: string | null
           id?: string
           is_active?: boolean
           organization_id: string
@@ -4780,6 +4871,7 @@ export type Database = {
           created_at?: string | null
           deactivated_at?: string | null
           deactivated_by?: string | null
+          department_id?: string | null
           id?: string
           is_active?: boolean
           organization_id?: string
@@ -4788,6 +4880,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_organizations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_organizations_organization_id_fkey"
             columns: ["organization_id"]
