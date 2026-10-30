@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "npm:zod@3.23.8";
 export const invoiceExtractSchema = z.object({
  supplier_name:z.string().max(500).nullable(), supplier_inn:z.string().regex(/^\d{10}(\d{2})?$/).nullable(),
  invoice_number:z.string().max(100).nullable(), invoice_date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
