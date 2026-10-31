@@ -7,7 +7,7 @@ import { type LabelInput } from '@/lib/warehouseLabels';
 import { saveImageFile } from '@/lib/saveImage';
 
 export function LabelExporter({labels,preview=false}:{labels:LabelInput[];preview?:boolean}){
- [index,setIndex]=useState('0');const [file,setFile]=useState<File|null>(null),[url,setUrl]=useState(''),[error,setError]=useState('');
+ const [index,setIndex]=useState('0');const [file,setFile]=useState<File|null>(null),[url,setUrl]=useState(''),[error,setError]=useState('');
  const label=labels[Number(index)]??labels[0],size=LABEL_SIZE;
  const isTouch=useMemo(()=>{try{return typeof matchMedia==='function'?matchMedia('(pointer: coarse)').matches:(navigator.maxTouchPoints??0)>0;}catch{return (navigator.maxTouchPoints??0)>0;}},[]);
  useEffect(()=>{let active=true,objectUrl='';setFile(null);setUrl('');setError('');if(label)labelPng(label,preview).then(blob=>{if(!active)return;const f=new File([blob],`CRSS-${label.token||'preview'}-${size.width}x${size.height}.png`,{type:'image/png'});objectUrl=URL.createObjectURL(f);setFile(f);setUrl(objectUrl);}).catch(e=>{if(active)setError(String(e.message??e));});return()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};},[label?.title,label?.token,JSON.stringify(label?.lines),label?.applicant,label?.receiver,preview]);
