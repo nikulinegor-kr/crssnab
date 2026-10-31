@@ -34,3 +34,15 @@ describe("operation pre-check", () => {
   test("return limited by issued remainder", () => expect(validateOperation({ type: "return", kind: "batch", quantity: 5, issueId: "i", returnable: 4 })).toContain("Можно вернуть не больше 4"));
   test("valid move passes", () => expect(validateOperation({ type: "move", kind: "batch", quantity: 30, available: 100, fromWarehouseId: "w", fromCellId: "a", toWarehouseId: "w", toCellId: "b" })).toEqual([]));
 });
+
+import { qrLink } from "../src/lib/warehouseQr";
+import { describe as d2, it as i2, expect as e2 } from "bun:test";
+d2("camera links", () => {
+  i2("unit QR is an absolute CRM link that the in-app scanner also reads", () => {
+    const t = "a".repeat(32);
+    const link = qrLink("unit", t, "https://id-preview--x.lovable.app");
+    e2(link).toBe(`https://crssnab.com/warehouse?qr=${t}`);
+    e2(parseQrInput(link)).toEqual({ kind: "unit", token: t });
+    e2(parseQrInput(`CRSS:U:${t}`)).toEqual({ kind: "unit", token: t });
+  });
+});
