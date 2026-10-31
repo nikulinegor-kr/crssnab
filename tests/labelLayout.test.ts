@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { computeLabelLayout, compactFio, type LabelBox } from '../src/lib/labelLayout';
-import { LABEL_SIZES } from '../src/lib/labelPng';
+import { LABEL_SIZE, withPhysicalSize } from '../src/lib/labelPng';
+const LABEL_SIZES = [LABEL_SIZE];
 
 // Approximate font metric: width proportional to px, bold wider; real canvas metrics are verified by the PNG script.
 const measure = (t: string, f: string) => { const px = Number(/(\d+)px/.exec(f)![1]); return t.length * px * (f.startsWith('700') ? 0.6 : 0.55); };
@@ -18,7 +19,8 @@ describe('label layout bounds', () => {
     const w = size.width * 12, h = size.height * 12;
     const L = computeLabelLayout({ ...c, lines: [] }, w, h, measure);
     for (const b of L.boxes) {
-      expect(b.x).toBeGreaterThanOrEqual(L.qr.x + L.qr.size);
+      expect(b.y).toBeGreaterThanOrEqual(L.qr.y + L.qr.size);
+      expect(b.x).toBeGreaterThanOrEqual(0);
       expect(b.x + b.width).toBeLessThanOrEqual(w);
       expect(b.y).toBeGreaterThanOrEqual(0);
       expect(b.y + b.height).toBeLessThanOrEqual(h);
@@ -30,17 +32,24 @@ describe('label layout bounds', () => {
     expect(L.boxes.filter(b => b.role === 'signature-name').length).toBe(2);
     const titleBottom = Math.max(...L.boxes.filter(b => b.role === 'title').map(b => b.y + b.height));
     expect(titleBottom).toBeLessThan(Math.min(...sigs.map(b => b.y)));
-    expect(L.qr).toEqual({ x: 0, y: Math.round((h - Math.min(h - 8, Math.floor(w * 0.48))) / 2), size: Math.min(h - 8, Math.floor(w * 0.48)) });
+    expect(L.qr.x + L.qr.size).toBeLessThanOrEqual(w);
   });
   test('model names are never split by letters', () => {
-    const L = computeLabelLayout({ ...CASES[1], lines: [] }, 600, 360, measure);
+    const L = computeLabelLayout({ ...CASES[1], lines: [] }, 600, 960, measure);
     const text = L.boxes.filter(b => b.role === 'title').map(b => b.text);
     expect(text.some(r => r.includes('BW 141') || r.endsWith('BW'))).toBe(true);
     expect(text.every(r => !r.endsWith('-'))).toBe(true);
   });
   test('short names are not giant', () => {
-    const L = computeLabelLayout({ ...CASES[2], lines: [] }, 600, 360, measure);
-    expect(L.boxes.find(b => b.role === 'title')!.height).toBeLessThanOrEqual(Math.round(360 * 0.12));
+    const L = computeLabelLayout({ ...CASES[2], lines: [] }, 600, 960, measure);
+    expect(L.boxes.find(b => b.role === 'title')!.height).toBeLessThanOrEqual(Math.round(600 * 0.085));
+  });
+  test('only 50x80 mm (5:8) is exported, with pHYs metadata', () => {
+    expect(LABEL_SIZE).toEqual({ width: 50, height: 80 });
+    const png = new Uint8Array(33 + 12); png.set([137,80,78,71,13,10,26,10]);
+    const out = withPhysicalSize(png, 12000); const v = new DataView(out.buffer);
+    expect(String.fromCharCode(...out.subarray(37, 41))).toBe('pHYs');
+    expect([v.getUint32(41), v.getUint32(45), out[49]]).toEqual([12000, 12000, 1]);
   });
   test('compact FIO', () => {
     expect(compactFio('Переведенцев Михаил Леонидович')).toBe('Переведенцев М.Л.');
