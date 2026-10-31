@@ -72,7 +72,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PRIORITIES } from "@/hooks/useRequestsFilters";
 import { TrustLetterButton } from "./TrustLetterDialog";
-import { RequestReceiptButton } from "@/components/warehouse-qr/RequestReceiptButton";
 
 
 const moneyShort = (n: number) =>
