@@ -49,7 +49,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
   const fallback=readdirSync('drizzle/migrations').find(f=>f.includes('receipt_fallback_labels'));
   if(!fallback)throw Error('Fallback missing');sql(readFileSync(`drizzle/migrations/${fallback}`,'utf8'));
-  for(const name of ['safe_warehouse_delete','preserve_warehouse_delete_admin_access','receipt_for_all_org_members']){const f=readdirSync('drizzle/migrations').find(f=>f.includes(name));if(!f)throw Error(`Migration ${name} missing`);sql(readFileSync(`drizzle/migrations/${f}`,'utf8'));}
+  for(const name of ['safe_warehouse_delete','preserve_warehouse_delete_admin_access','receipt_for_all_org_members','post_request_receipt_for_members']){const f=readdirSync('drizzle/migrations').find(f=>f.includes(name));if(!f)throw Error(`Migration ${name} missing`);sql(readFileSync(`drizzle/migrations/${f}`,'utf8'));}
  });
  test('creates warehouse with existing fields and enforces name and org isolation',()=>{
   sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('${WH}','${ORG}',' Новый склад ','Адрес и ответственный');`));
