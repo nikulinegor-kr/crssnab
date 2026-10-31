@@ -8,7 +8,16 @@ const KIND_CODE: Record<QrKind, string> = { cell: "C", unit: "U", request:"R" };
 /** Payload printed into the QR. The token is permanent, so reprints are identical. */
 export function qrPayload(kind: QrKind, token: string): string {
   if(kind==='request') return `/requests?request=${encodeURIComponent(token)}`;
+  if(kind==='unit') return `/warehouse?qr=${encodeURIComponent(token)}`;
   return `${PREFIX}:${KIND_CODE[kind]}:${token}`;
+}
+
+/** Absolute link for printed QR so a plain phone camera opens the CRM. Preview hosts print the production domain. */
+export function qrLink(kind: QrKind, token: string, origin: string): string {
+  const payload = qrPayload(kind, token);
+  if (!payload.startsWith('/')) return payload;
+  const base = /lovable\.app|lovableproject\.com|localhost/.test(origin) ? 'https://crssnab.com' : origin;
+  return new URL(payload, base).href;
 }
 
 /** Parses scanner/camera/manual input. Accepts full payload or bare token. */
@@ -17,6 +26,7 @@ export function parseQrInput(raw: string): { kind: QrKind | null; token: string 
   const value = raw.trim().replace(/\s+/g, "");
   if (!value) return null;
   try {const url=new URL(value,'https://local.invalid');const id=url.searchParams.get('request');if(url.pathname==='/requests'&&id&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return {kind:'request',token:id.toLowerCase()};}catch { /* Continue with permanent TMC formats. */ }
+  try {const url=new URL(value,'https://local.invalid');const q=url.searchParams.get('qr');if(url.pathname.startsWith('/warehouse')&&q)return parseQrInput(decodeURIComponent(q));}catch { /* not a link */ }
   const m = /^CRSS[:;]([CU])[:;]([0-9a-f]{16,64})$/i.exec(value);
   if (m) return { kind: m[1].toUpperCase() === "C" ? "cell" : "unit", token: m[2].toLowerCase() };
   if (/^[0-9a-f]{32}$/i.test(value)) return { kind: null, token: value.toLowerCase() };
