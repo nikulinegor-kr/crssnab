@@ -5616,6 +5616,7 @@ export type Database = {
       }
       warehouse_request_receipts: {
         Row: {
+          confirmed_lines: Json | null
           created_by: string
           document_id: string
           id: string
@@ -5627,6 +5628,7 @@ export type Database = {
           warehouse_id: string
         }
         Insert: {
+          confirmed_lines?: Json | null
           created_by?: string
           document_id: string
           id?: string
@@ -5638,6 +5640,7 @@ export type Database = {
           warehouse_id: string
         }
         Update: {
+          confirmed_lines?: Json | null
           created_by?: string
           document_id?: string
           id?: string
@@ -5691,7 +5694,10 @@ export type Database = {
           product_id: string | null
           qr_token: string
           request_item_id: string | null
+          request_number: string | null
+          request_title: string | null
           serial_number: string | null
+          source_request_id: string | null
           unit: string
         }
         Insert: {
@@ -5705,7 +5711,10 @@ export type Database = {
           product_id?: string | null
           qr_token?: string
           request_item_id?: string | null
+          request_number?: string | null
+          request_title?: string | null
           serial_number?: string | null
+          source_request_id?: string | null
           unit?: string
         }
         Update: {
@@ -5719,7 +5728,10 @@ export type Database = {
           product_id?: string | null
           qr_token?: string
           request_item_id?: string | null
+          request_number?: string | null
+          request_title?: string | null
           serial_number?: string | null
+          source_request_id?: string | null
           unit?: string
         }
         Relationships: [
@@ -5742,6 +5754,13 @@ export type Database = {
             columns: ["request_item_id"]
             isOneToOne: false
             referencedRelation: "request_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_units_source_request_id_fkey"
+            columns: ["source_request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
             referencedColumns: ["id"]
           },
         ]
