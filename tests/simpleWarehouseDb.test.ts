@@ -34,6 +34,8 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
    GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;`);
   const file=readdirSync('drizzle/migrations').find(f=>f.includes('simple_request_warehouse'));
   if(!file)throw Error('Migration missing');sql(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+  const guard=readdirSync('drizzle/migrations').find(f=>f.includes('protect_request_receipt_sources'));
+  if(!guard)throw Error('Receipt protection missing');sql(readFileSync(`drizzle/migrations/${guard}`,'utf8'));
  });
  test('Delivered alone does not create inbound stock',()=>{
   sql(`CREATE TRIGGER test_stock AFTER INSERT OR UPDATE OF status ON requests FOR EACH ROW EXECUTE FUNCTION handle_request_stock_movement();UPDATE requests SET product_id=gen_random_uuid(),warehouse_id='${WH}',quantity=100,status='В пути' WHERE id='${REQ}';UPDATE requests SET status='Доставлено' WHERE id='${REQ}';`);
@@ -87,5 +89,16 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   const id=scalar(as(`INSERT INTO warehouse_documents(organization_id,doc_type,request_id) VALUES('${ORG}','receipt','${REQ}') RETURNING id;`));
   sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${id}','${batch}',1,'${WH}');`));
   expect(()=>sql(as(`SELECT post_warehouse_document('${id}');`))).toThrow(/из заявки/);expect(total(batch,WH)).toBe('70');
+ });
+ test('unlinked generic receipt cannot receive request TMC again',()=>{
+  const id=scalar(as(`INSERT INTO warehouse_documents(organization_id,doc_type) VALUES('${ORG}','receipt') RETURNING id;`));
+  sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${id}','${batch}',1,'${WH}');`));
+  expect(()=>sql(as(`SELECT post_warehouse_document('${id}');`))).toThrow(/Повторная приёмка/);expect(total(batch,WH)).toBe('70');
+ });
+ test('employee without warehouse permission is blocked and no roles are changed',()=>{
+  sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
+  expect(scalar(`SELECT role FROM user_organizations WHERE user_id='${USER}';`)).toBe('member');
+  expect(total(batch,WH)).toBe('70');
  });
 });
