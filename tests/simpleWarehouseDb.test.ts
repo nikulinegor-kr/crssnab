@@ -26,6 +26,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
    CREATE TABLE equipment(id uuid PRIMARY KEY,organization_id uuid,current_object_id uuid);
    CREATE TABLE request_items(id uuid PRIMARY KEY,organization_id uuid,request_id uuid REFERENCES requests(id),name text,quantity integer);
    ALTER TABLE requests ADD COLUMN status text DEFAULT 'Доставлено';ALTER TABLE requests ADD COLUMN applicant_user_id uuid;ALTER TABLE requests ADD COLUMN request_number text DEFAULT 'TEST';
+   ALTER TABLE requests ADD COLUMN description text DEFAULT 'Рации на участок';
    ALTER TABLE requests ADD COLUMN product_id uuid;ALTER TABLE requests ADD COLUMN warehouse_id uuid;ALTER TABLE requests ADD COLUMN reserve_on_warehouse boolean;ALTER TABLE requests ADD COLUMN quantity numeric;ALTER TABLE requests ADD COLUMN created_by uuid;
    CREATE TABLE stock_movements(organization_id uuid,product_id uuid,warehouse_id uuid,type text,quantity numeric,request_id uuid,comment text,created_by uuid);
    CREATE FUNCTION user_can_view_request(u uuid,o uuid,a uuid) RETURNS boolean LANGUAGE sql AS $$SELECT user_has_org_access(u,o)$$;
@@ -45,6 +46,8 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!guard)throw Error('Receipt protection missing');sql(readFileSync(`drizzle/migrations/${guard}`,'utf8'));
   const directory=readdirSync('drizzle/migrations').find(f=>f.includes('secure_warehouse_directory'));
   if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
+  const fallback=readdirSync('drizzle/migrations').find(f=>f.includes('receipt_fallback_labels'));
+  if(!fallback)throw Error('Fallback missing');sql(readFileSync(`drizzle/migrations/${fallback}`,'utf8'));
  });
  test('creates warehouse with existing fields and enforces name and org isolation',()=>{
   sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('${WH}','${ORG}',' Новый склад ','Адрес и ответственный');`));
