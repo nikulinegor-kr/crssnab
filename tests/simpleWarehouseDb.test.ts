@@ -122,6 +122,39 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${id}','${batch}',1,'${WH}');`));
   expect(()=>sql(as(`SELECT post_warehouse_document('${id}');`))).toThrow(/Повторная приёмка/);expect(total(batch,WH)).toBe('70');
  });
+ test('fallback requires explicit quantity and unit and rolls back invalid receipt',()=>{
+  const req='00000000-0000-0000-0000-00000000d020';sql(`INSERT INTO requests(id,organization_id,description) VALUES('${req}','${ORG}','Рации на участок');`);
+  const call=(line:string)=>as(`SELECT receive_warehouse_request('${req}','${WH}','${USER}','[${line}]');`);
+  expect(()=>sql(call('{"quantity":null,"kind":"batch","unit":"шт"}'))).toThrow(/количество/);
+  expect(()=>sql(call('{"quantity":3,"kind":"batch","unit":""}'))).toThrow(/единицу/);
+  expect(scalar(`SELECT count(*) FROM warehouse_documents WHERE request_id='${req}';`)).toBe('0');
+  sql(call('{"quantity":2.5,"kind":"batch","unit":"м"}'));
+  expect(scalar(`SELECT sum(b.quantity) FROM warehouse_balances b JOIN warehouse_units u ON u.id=b.unit_id WHERE u.source_request_id='${req}';`)).toBe('2.5');
+  expect(scalar(`SELECT request_title FROM warehouse_units WHERE source_request_id='${req}';`)).toBe('Рации на участок');
+  expect(sql(call('{"quantity":2.5,"kind":"batch","unit":"м"}'))).toContain('"already_received": true');
+  expect(()=>sql(call('{"quantity":3,"kind":"batch","unit":"м"}'))).toThrow(/другими параметрами/);
+  expect(()=>sql(as(`SELECT receive_warehouse_request('${req}','${WH}','${USER}','[{"quantity":2.5,"kind":"batch","unit":"м"}]');`,STRANGER))).toThrow(/Нет доступа/);
+  expect(()=>sql(`INSERT INTO request_items VALUES(gen_random_uuid(),'${ORG}','${req}','Новая позиция',1);`)).toThrow(/нельзя изменять/);
+ });
+ test('concurrent fallback creates three distinct permanent QR once',async()=>{
+  const req='00000000-0000-0000-0000-00000000d021';sql(`INSERT INTO requests(id,organization_id,description) VALUES('${req}','${ORG}','Насосы');`);
+  const call=as(`SELECT receive_warehouse_request('${req}','${WH}','${USER}','[{"quantity":3,"kind":"item","unit":"шт"}]');`);
+  const result=await Promise.all([concurrent(call),concurrent(call)]);expect(result.map(r=>r.code)).toEqual([0,0]);
+  expect(scalar(`SELECT count(DISTINCT qr_token) FROM warehouse_units WHERE source_request_id='${req}';`)).toBe('3');
+  const tokens=scalar(`SELECT string_agg(qr_token,',' ORDER BY qr_token) FROM warehouse_units WHERE source_request_id='${req}';`);
+  sql(call);expect(scalar(`SELECT string_agg(qr_token,',' ORDER BY qr_token) FROM warehouse_units WHERE source_request_id='${req}';`)).toBe(tokens);
+  expect(scalar(`SELECT sum(quantity)::int FROM warehouse_balances WHERE unit_id IN(SELECT id FROM warehouse_units WHERE source_request_id='${req}');`)).toBe('3');
+  const u=scalar(`SELECT id FROM warehouse_units WHERE source_request_id='${req}' LIMIT 1;`);
+  const doc=scalar(as(`INSERT INTO warehouse_documents(organization_id,doc_type) VALUES('${ORG}','receipt') RETURNING id;`));
+  sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${doc}','${u}',1,'${WH}');`));
+  expect(()=>sql(as(`SELECT post_warehouse_document('${doc}');`))).toThrow(/Повторная приёмка/);
+ });
+ test('fallback cannot bypass existing positions or foreign warehouse',()=>{
+  expect(()=>sql(as(`SELECT receive_warehouse_request('${REQ3}','${WH}','${USER}','[{"quantity":1,"kind":"batch","unit":"шт"}]');`))).toThrow(/другими параметрами/);
+  const req='00000000-0000-0000-0000-00000000d022';sql(`INSERT INTO requests(id,organization_id,description) VALUES('${req}','${ORG}','Кабель');`);
+  expect(()=>sql(as(`SELECT receive_warehouse_request('${req}','${FOREIGN}','${USER}','[{"quantity":1,"kind":"batch","unit":"м"}]');`))).toThrow(/другой организации/);
+  expect(scalar(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${req}';`)).toBe('0');
+ });
  test('employee without warehouse permission is blocked and no roles are changed',()=>{
   sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
   expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
