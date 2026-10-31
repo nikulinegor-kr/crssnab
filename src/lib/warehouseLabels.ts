@@ -1,5 +1,6 @@
 import QRCode from "qrcode";
 import { qrPayload, type QrKind } from "./warehouseQr";
+import type { LabelSize } from './labelPng';
 
 export interface LabelInput {
   kind: QrKind;
@@ -11,18 +12,18 @@ export interface LabelInput {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 
 /** Prints 58×40 mm labels through a hidden iframe. Same token → same QR on every reprint. */
-export async function printLabels(labels: LabelInput[]) {
+export async function printLabels(labels: LabelInput[], size: LabelSize = {width:60,height:40}) {
   const items = await Promise.all(
     labels.map(async (l) => ({
       ...l,
-      img: await QRCode.toDataURL(qrPayload(l.kind, l.token), { errorCorrectionLevel: "M", margin: 0, width: 300 }),
+      img: await QRCode.toDataURL(qrPayload(l.kind, l.token), { errorCorrectionLevel: "M", margin: 4, width: 300 }),
     })),
   );
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Этикетки</title><style>
-    @page { size: 58mm 40mm; margin: 0 }
+    @page { size: ${size.width}mm ${size.height}mm; margin: 0 }
     body { margin: 0; font-family: Manrope, Arial, sans-serif; }
-    .l { width: 58mm; height: 40mm; box-sizing: border-box; padding: 2mm; display: flex; gap: 2mm; page-break-after: always; overflow: hidden }
-    .l img { width: 30mm; height: 30mm; flex: none; align-self: center }
+    .l { width: ${size.width}mm; height: ${size.height}mm; box-sizing: border-box; padding: 2mm; display: flex; gap: 2mm; page-break-after: always; overflow: hidden }
+    .l img { width: ${size.height*0.6}mm; height: ${size.height*0.6}mm; flex: none; align-self: center }
     .t { font-size: 10pt; font-weight: 700; line-height: 1.15; margin-bottom: 1mm; word-break: break-word }
     .s { font-size: 7.5pt; line-height: 1.2; word-break: break-word }
     .c { font-size: 6pt; color: #555; margin-top: 1mm; font-family: monospace }

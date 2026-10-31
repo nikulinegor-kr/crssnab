@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { PackageCheck, Printer, Loader2 } from 'lucide-react';
+import { PackageCheck, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TaskLookupSelect } from '@/components/tasks/TaskLookupSelect';
-import { receiptLabels, warehouseRows } from '@/lib/simpleWarehouse';
+import { loadReceiptLabels, warehouseRows } from '@/lib/simpleWarehouse';
+import { LabelExporter } from './LabelExporter';
+import { receiptDraft, validReceiptLines, type ReceiptLine } from '@/lib/receiptDraft';
 
-type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string };
+type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string; description?:string|null };
 type Receipt = { request_id: string; document_id: string; warehouse_id: string; receiver_name: string; received_at: string };
-type Line = { id: string; name: string; quantity: number; kind: 'item' | 'batch'; unit: string };
+type Line = ReceiptLine;
 export function RequestReceiptButton({ request, openSignal = 0 }: { request: RequestInfo; openSignal?: number }) {
  const org = request.organization_id;
  const [open,setOpen] = useState(false);
@@ -30,6 +32,7 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
  }});
  const {data:receipts=[],error:receiptError}=useQuery({queryKey:['wh-receipts',org],enabled:!!org&&allowed,queryFn:()=>warehouseRows<Receipt>((f,t)=>supabase.from('warehouse_request_receipts').select('request_id,document_id,warehouse_id,receiver_name,received_at').eq('organization_id',org ?? '').order('id').range(f,t))});
  const receipt=receipts.find(r=>r.request_id===request.id);
+ const {data:labels=[],error:labelError}=useQuery({queryKey:['wh-receipt-labels',receipt?.document_id],enabled:open&&!!receipt,queryFn:()=>loadReceiptLabels(receipt?.document_id??'')});
  const handledSignal = useRef(0);
  useEffect(()=>{
   if(openSignal>handledSignal.current&&allowed&&request.status==='Доставлено'){
@@ -48,11 +51,10 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
   if(pe) throw pe;
   return {items:items??[],members:(members??[]).map(m=>({...m,name:profiles?.find(p=>p.id===m.user_id)?.full_name??'—'})),userId:user?.id??null};
  }});
- useEffect(()=>{if(details){setLines(details.items.map(i=>({...i,kind:'batch',unit:'шт'})));setReceiver(details.userId);}},[details,open]);
+ useEffect(()=>{if(details){setLines(receiptDraft(details.items,request.description??''));setReceiver(details.userId);}},[details,open,request.id]);
  const notifyError=(e:unknown)=>toast({title:'Приёмка не выполнена',description:(e as {message?:string})?.message??String(e),variant:'destructive'});
- const print=async(id:string)=>{try{await receiptLabels(id);}catch(e){toast({title:'Не удалось напечатать',description:(e as {message?:string})?.message,variant:'destructive'});}};
  const save=async()=>{
-  if(!warehouse||!receiver) return; setBusy(true);
+  if(!warehouse||!receiver||!validReceiptLines(lines)) return; setBusy(true);
   try {const {data,error}=await supabase.rpc('receive_warehouse_request',{_request_id:request.id,_warehouse_id:warehouse,_received_by:receiver,_lines:lines.map(l=>({item_id:l.id,quantity:l.quantity,kind:l.kind,unit:l.unit}))});if(error)throw error;
    await Promise.all([qc.invalidateQueries({queryKey:['wh-receipts']}),qc.invalidateQueries({queryKey:['wh-qr']}),qc.invalidateQueries({queryKey:['requests']})]);
    setConfirm(false);toast({title:'Принято на склад'});
@@ -66,17 +68,17 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
   </Button>
   {receipt&&<p className="text-xs text-muted-foreground break-words mt-1">{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')} · {warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p>}
   <Dialog open={open} onOpenChange={v=>{if(!busy)setOpen(v);}}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
-   <DialogHeader><DialogTitle>Приёмка · {request.request_number.replace(/^REQ-/,'')}</DialogTitle></DialogHeader>
+   <DialogHeader><DialogTitle className="break-words">Приёмка · {request.description||'—'}</DialogTitle><p className="text-sm text-muted-foreground">{request.request_number.replace(/^REQ-/,'')}</p></DialogHeader>
    {(warehouseError||receiptError)&&<p role="alert" className="text-destructive">Не удалось загрузить данные приёмки: {(warehouseError??receiptError)?.message}</p>}
-   {receipt?<div className="space-y-3"><p className="font-medium text-success">Принято на склад</p><p>{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')}</p><p>{warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p><Button className="min-h-11" onClick={()=>print(receipt.document_id)}><Printer className="h-4 w-4 mr-2"/>Печатать QR-наклейки</Button></div>:<>
+   {receipt?<div className="space-y-3"><p className="font-medium text-success">Принято на склад</p><p>{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')}</p><p>{warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p>{labelError?<p role="alert" className="text-destructive">Не удалось загрузить наклейки: {labelError.message}</p>:labels.length?<LabelExporter labels={labels}/>:<p>Загрузка наклеек…</p>}</div>:<>
     {isLoading?<Loader2 className="animate-spin"/>:error?<p className="text-destructive">Не удалось загрузить позиции и сотрудников</p>:<div className="space-y-4">
     <Label>Склад</Label><TaskLookupSelect label="Выберите склад" value={warehouse} onChange={setWarehouse} options={warehouses.map(w=>({id:w.id,name:whLabel(w)}))} disabled={confirm}/>
     <Label>Кто осуществил приёмку</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members??[]).map(m=>({id:m.user_id,name:m.name}))} disabled={confirm}/>
     <p className="text-sm text-muted-foreground">Дата: {format(new Date(),'dd.MM.yyyy')}</p>
-    {lines.length===0&&<p className="text-destructive">В заявке нет позиций. Заполните позиции в заявке до приёмки.</p>}
-    {lines.map((l,i)=><div key={l.id} className="border-b pb-3 space-y-2"><p className="font-medium break-words">{l.name}</p><div className="flex items-center gap-2"><span className="font-numeric">{l.quantity}</span><Input aria-label={`Единица: ${l.name}`} className="w-20 min-h-11" value={l.unit} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,unit:e.target.value}:x))}/><Select value={l.kind} disabled={confirm} onValueChange={v=>setLines(old=>old.map((x,n)=>n===i?{...x,kind:v as Line['kind']}:x))}><SelectTrigger className="min-w-0 flex-1 min-h-11"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="batch">Материал / партия</SelectItem><SelectItem value="item">Индивидуальные изделия</SelectItem></SelectContent></Select></div></div>)}
+    {lines.map((l,i)=><div key={l.id??'request'} className="border-b pb-3 space-y-2"><p className="font-medium break-words">{l.name||'Укажите название заявки'}</p><div className="flex flex-wrap items-center gap-2">{l.id?<span className="font-numeric">{l.quantity}</span>:<Input type="number" min="0.000001" step="any" inputMode="decimal" aria-label="Количество" placeholder="Количество *" required className="w-32 min-h-11" value={l.quantity} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,quantity:e.target.value===''?'':Number(e.target.value)}:x))}/>}<Input aria-label={`Единица: ${l.name}`} placeholder="Ед. *" required maxLength={40} className="w-24 min-h-11" value={l.unit} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,unit:e.target.value}:x))}/><Select value={l.kind} disabled={confirm} onValueChange={v=>setLines(old=>old.map((x,n)=>n===i?{...x,kind:v as Line['kind']}:x))}><SelectTrigger className="min-w-0 flex-1 min-h-11"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="batch">Материал / партия</SelectItem><SelectItem value="item">Индивидуальные изделия</SelectItem></SelectContent></Select></div></div>)}
+    {lines[0]&&<LabelExporter preview labels={[{kind:'unit',token:'',title:request.description??lines[0].name,lines:[lines[0].name,request.request_number,`${lines[0].quantity||'—'} ${lines[0].unit||'—'}`]}]}/>}
     </div>}
-    <DialogFooter className="gap-2">{confirm?<><Button variant="outline" className="min-h-11" disabled={busy} onClick={()=>setConfirm(false)}>Назад</Button><Button className="min-h-11" disabled={busy||!!warehouseError||!!receiptError} onClick={save}>{busy?'Сохранение…':'Подтвердить приёмку'}</Button></>:<Button className="min-h-11" disabled={!warehouse||!receiver||!lines.length||isLoading||!!error||!!warehouseError||!!receiptError} onClick={()=>setConfirm(true)}>Сохранить приёмку</Button>}</DialogFooter>
+    <DialogFooter className="gap-2">{confirm?<><Button variant="outline" className="min-h-11" disabled={busy} onClick={()=>setConfirm(false)}>Назад</Button><Button className="min-h-11" disabled={busy||!validReceiptLines(lines)||!!warehouseError||!!receiptError} onClick={save}>{busy?'Сохранение…':'Подтвердить приёмку'}</Button></>:<Button className="min-h-11" disabled={!warehouse||!receiver||!validReceiptLines(lines)||isLoading||!!error||!!warehouseError||!!receiptError} onClick={()=>setConfirm(true)}>Сохранить приёмку</Button>}</DialogFooter>
    </>}
   </DialogContent></Dialog>
  </div>;
