@@ -91,6 +91,13 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   expect(scalar(`SELECT posted_by FROM warehouse_documents WHERE operation_key='00000000-0000-0000-0000-000000000102';`)).toBe(USER);
   expect(scalar(`SELECT count(*) FROM warehouse_ledger WHERE unit_id='${batch}' AND created_by='${USER}' AND created_at IS NOT NULL;`)).toBe('4');
  });
+ test('foreign destination move rolls back both warehouse balances',()=>{
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000110','move',1,WH,FOREIGN)))).toThrow(/организац/);
+  expect([total(batch,WH),total(batch,WH2),total(batch,FOREIGN)]).toEqual(['70','20','0']);
+ });
+ test('internal trigger functions cannot be called anonymously',()=>{
+  expect(scalar(`SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN('warehouse_source_item_guard','warehouse_line_draft_guard','warehouse_request_receipt_guard') AND has_function_privilege('anon',p.oid,'EXECUTE');`)).toBe('0');
+ });
  test('concurrent issues cannot make stock negative',async()=>{
   const a=concurrent(as(op(batch,'00000000-0000-0000-0000-000000000106','issue',15,WH2,null,EQ)));
   const b=concurrent(as(op(batch,'00000000-0000-0000-0000-000000000107','issue',15,WH2,null,EQ)));
