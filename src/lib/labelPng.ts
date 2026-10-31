@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import type { LabelInput } from './warehouseLabels';
 import { qrLink } from './warehouseQr';
 import { labelTextGroups, wrapLabelText } from './labelText';
+import { labelPeopleLines } from './labelPeople';
 export const LABEL_SIZES = [{width:50,height:30},{width:60,height:40},{width:40,height:30}] as const;
 export type LabelSize = {width:number;height:number};
 /** Local monochrome print artifact; no data leaves the browser. QR large on the left, all data on the right. */
@@ -18,7 +19,7 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
   c.font=font;
   return wrapLabelText(text,maxWidth,text=>c.measureText(text).width);
  }
- const meta=[...label.lines,...(preview?[]:[`ID: ${label.token.slice(-8)}`])].filter(text=>text&&text!==label.title);
+ const meta=[...label.lines,...labelPeopleLines(label)].filter(text=>text&&text!==label.title);
  let metaFont=18;
  const metaGroups=meta.flatMap(labelTextGroups);
  while(metaFont>12){c.font=`${metaFont}px Manrope, Arial, sans-serif`;if(metaGroups.every(text=>c.measureText(text).width<=textWidth))break;metaFont--;}

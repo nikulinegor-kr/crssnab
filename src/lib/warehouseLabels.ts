@@ -1,7 +1,8 @@
 import { type QrKind } from "./warehouseQr";
 import { labelPng, type LabelSize } from './labelPng';
 
-export interface LabelInput {
+import type { LabelPeople } from './labelPeople';
+export interface LabelInput extends LabelPeople {
   kind: QrKind;
   token: string;
   title: string;

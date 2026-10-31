@@ -42,14 +42,14 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
  },[openSignal,allowed,request.status]);
  const {data:warehouses=[],error:warehouseError}=useQuery({queryKey:['wh-qr','warehouses',org],enabled:allowed,queryFn:()=>warehouseRows<{id:string;name:string;request_objects:{name:string}|null}>((f,t)=>supabase.from('warehouses').select('id,name,description,request_objects!warehouses_object_id_fkey(name)').eq('organization_id',org ?? '').order('name').range(f,t))});
  const {data:details,isLoading,error}=useQuery({queryKey:['wh-receipt-details',request.id],enabled:open&&!receipt,queryFn:async()=>{
-  const [{data:items,error:ie},{data:members,error:me},{data:{user}}]=await Promise.all([
+  const [{data:items,error:ie},{data:members,error:me},{data:{user}},{data:sourceRequest,error:re}]=await Promise.all([
    supabase.from('request_items').select('id,name,quantity').eq('request_id',request.id).order('created_at'),
-   supabase.from('user_organizations').select('user_id').eq('organization_id',org ?? '').eq('is_active',true),supabase.auth.getUser()]);
-  if(ie) throw ie; if(me) throw me;
+   supabase.from('user_organizations').select('user_id').eq('organization_id',org ?? '').eq('is_active',true),supabase.auth.getUser(),supabase.from('requests').select('applicant').eq('id',request.id).single()]);
+  if(ie) throw ie; if(me) throw me; if(re)throw re;
   const ids=(members??[]).map(m=>m.user_id);
   const {data:profiles,error:pe}=await supabase.from('profiles').select('id,full_name').in('id',ids);
   if(pe) throw pe;
-  return {items:items??[],members:(members??[]).map(m=>({...m,name:profiles?.find(p=>p.id===m.user_id)?.full_name??'—'})),userId:user?.id??null};
+  return {items:items??[],applicant:sourceRequest?.applicant,members:(members??[]).map(m=>({...m,name:profiles?.find(p=>p.id===m.user_id)?.full_name??'—'})),userId:user?.id??null};
  }});
  useEffect(()=>{if(details){setLines(receiptDraft(details.items,request.description??''));setReceiver(details.userId);}},[details,open,request.id]);
  const notifyError=(e:unknown)=>toast({title:'Приёмка не выполнена',description:(e as {message?:string})?.message??String(e),variant:'destructive'});
@@ -76,7 +76,7 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
     <Label>Кто осуществил приёмку</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members??[]).map(m=>({id:m.user_id,name:m.name}))} disabled={confirm}/>
     <p className="text-sm text-muted-foreground">Дата: {format(new Date(),'dd.MM.yyyy')}</p>
     {lines.map((l,i)=><div key={l.id??'request'} className="border-b pb-3 space-y-2"><p className="font-medium break-words">{l.name||'Укажите название заявки'}</p><div className="flex flex-wrap items-center gap-2">{l.id?<span className="font-numeric">{l.quantity}</span>:<Input type="number" min="0.000001" step="any" inputMode="decimal" aria-label="Количество" placeholder="Количество *" required className="w-32 min-h-11" value={l.quantity} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,quantity:e.target.value===''?'':Number(e.target.value)}:x))}/>}<Input aria-label={`Единица: ${l.name}`} placeholder="Ед. *" required maxLength={40} className="w-24 min-h-11" value={l.unit} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,unit:e.target.value}:x))}/><Select value={l.kind} disabled={confirm} onValueChange={v=>setLines(old=>old.map((x,n)=>n===i?{...x,kind:v as Line['kind']}:x))}><SelectTrigger className="min-w-0 flex-1 min-h-11"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="batch">Материал / партия</SelectItem><SelectItem value="item">Индивидуальные изделия</SelectItem></SelectContent></Select></div></div>)}
-    {lines.length>0&&<LabelExporter preview labels={lines.map(l=>({kind:'unit',token:l.id??'',title:request.description||l.name,lines:[l.name,request.request_number,`${l.quantity||'—'} ${l.unit||'—'}`]}))}/>}
+    {lines.length>0&&<LabelExporter preview labels={lines.map(l=>({kind:'unit',token:l.id??'',title:request.description||l.name,applicant:details?.applicant,receiver:details?.members.find(m=>m.user_id===receiver)?.name,lines:[l.name,`${l.quantity||'—'} ${l.unit||'—'}`]}))}/>}
     </div>}
     <DialogFooter className="gap-2">{confirm?<><Button variant="outline" className="min-h-11" disabled={busy} onClick={()=>setConfirm(false)}>Назад</Button><Button className="min-h-11" disabled={busy||!validReceiptLines(lines)||!!warehouseError||!!receiptError} onClick={save}>{busy?'Сохранение…':'Подтвердить приёмку'}</Button></>:<Button className="min-h-11" disabled={!warehouse||!receiver||!validReceiptLines(lines)||isLoading||!!error||!!warehouseError||!!receiptError} onClick={()=>setConfirm(true)}>Сохранить приёмку</Button>}</DialogFooter>
    </>}
