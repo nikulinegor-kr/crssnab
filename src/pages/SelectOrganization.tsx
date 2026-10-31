@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,10 @@ interface UserOrganization {
 
 const SelectOrganization = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const requested = params.get('next');
+  const destination = requested?.startsWith('/') && !requested.startsWith('//') && !requested.startsWith('/select-organization')
+    ? requested : organizationEntryRoute(window.matchMedia('(max-width: 767px)').matches);
   const { toast } = useToast();
   const { setCurrentOrgId } = useCurrentOrganization();
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
@@ -29,7 +33,7 @@ const SelectOrganization = () => {
     // Если уже выбранная организация сохранена — сразу в дашборд
     const saved = localStorage.getItem("currentOrganizationId");
     if (saved) {
-      navigate(organizationEntryRoute(window.matchMedia('(max-width: 767px)').matches));
+      navigate(destination);
       return;
     }
     fetchOrganizations();
@@ -87,7 +91,7 @@ const SelectOrganization = () => {
 
   const selectOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
-    navigate(organizationEntryRoute(window.matchMedia('(max-width: 767px)').matches));
+    navigate(destination);
   };
 
   const getRoleBadge = (role: string) => {

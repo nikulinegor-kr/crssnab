@@ -24,6 +24,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
   const [error, setError] = useState('');
   const [receiptSignal, setReceiptSignal] = useState(0);
   const handled = useRef(false);
+  useEffect(() => { if (qrEntry) { handled.current = false; setOpen(true); } }, [qrEntry]);
   const org = request.organization_id;
   // Always read the current server row on QR entry, never dispatch from a stale list/cache.
   const fresh = useQuery({ queryKey: ['request-qr-workflow', org, request.id], enabled: open, staleTime: 0, refetchOnMount: 'always', queryFn: async () => {
