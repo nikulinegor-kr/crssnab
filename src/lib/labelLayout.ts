@@ -39,8 +39,8 @@ export function wrapGroups(text: string, max: number, m: (t: string) => number, 
     let pieces = [group];
     if (m(group) > max) {
       const words = group.split(' ');
+      if (!allowSplit) return null;
       if (words.length > 1 && words.every(w => m(w) <= max)) pieces = words;
-      else if (!allowSplit) return null;
       else pieces = words.flatMap(w => m(w) > max ? splitToken(w, max, m) : [w]);
     }
     for (const p of pieces) {
