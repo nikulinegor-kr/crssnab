@@ -29,7 +29,13 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
    ALTER TABLE requests ADD COLUMN product_id uuid;ALTER TABLE requests ADD COLUMN warehouse_id uuid;ALTER TABLE requests ADD COLUMN reserve_on_warehouse boolean;ALTER TABLE requests ADD COLUMN quantity numeric;ALTER TABLE requests ADD COLUMN created_by uuid;
    CREATE TABLE stock_movements(organization_id uuid,product_id uuid,warehouse_id uuid,type text,quantity numeric,request_id uuid,comment text,created_by uuid);
    CREATE FUNCTION user_can_view_request(u uuid,o uuid,a uuid) RETURNS boolean LANGUAGE sql AS $$SELECT user_has_org_access(u,o)$$;
-   INSERT INTO warehouses VALUES('${WH2}','${ORG}');INSERT INTO equipment VALUES('${EQ}','${ORG}',NULL);
+   ALTER TABLE warehouses ADD COLUMN name text DEFAULT 'Склад';ALTER TABLE warehouses ADD COLUMN description text;ALTER TABLE warehouses ADD COLUMN object_id uuid;ALTER TABLE warehouses ALTER COLUMN id SET DEFAULT gen_random_uuid();
+   ALTER TABLE warehouses ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "Users can create org warehouses" ON warehouses FOR INSERT TO authenticated WITH CHECK(user_has_org_access(auth.uid(),organization_id));
+   CREATE POLICY "Users can update org warehouses" ON warehouses FOR UPDATE TO authenticated USING(user_has_org_access(auth.uid(),organization_id));
+   CREATE POLICY test_wh_select ON warehouses FOR SELECT TO authenticated USING(user_has_org_access(auth.uid(),organization_id));
+   GRANT INSERT,UPDATE ON warehouses TO authenticated;
+   INSERT INTO warehouses(id,organization_id) VALUES('${WH2}','${ORG}');INSERT INTO equipment VALUES('${EQ}','${ORG}',NULL);
    INSERT INTO requests(id,organization_id) VALUES('${REQ}','${ORG}'),('${REQ3}','${ORG}');
    INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Болты',100),('${ITEM3}','${ORG}','${REQ3}','Изделие',3);
    GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;`);
@@ -37,6 +43,18 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!file)throw Error('Migration missing');sql(readFileSync(`drizzle/migrations/${file}`,'utf8'));
   const guard=readdirSync('drizzle/migrations').find(f=>f.includes('protect_request_receipt_sources'));
   if(!guard)throw Error('Receipt protection missing');sql(readFileSync(`drizzle/migrations/${guard}`,'utf8'));
+  const directory=readdirSync('drizzle/migrations').find(f=>f.includes('secure_warehouse_directory'));
+  if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
+ });
+ test('creates warehouse with existing fields and enforces name and org isolation',()=>{
+  sql(`DELETE FROM warehouses WHERE id='${WH}' AND NOT EXISTS(SELECT 1 FROM warehouse_balances WHERE warehouse_id='${WH}');`);
+  // The legacy fixture used WH, so create a fresh warehouse for the complete new receipt flow instead.
+  sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('00000000-0000-0000-0000-00000000c004','${ORG}',' Новый склад ','Адрес и ответственный');`));
+  expect(scalar(as(`SELECT name FROM warehouses WHERE id='00000000-0000-0000-0000-00000000c004';`))).toBe('Новый склад');
+  expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}',' ');`))).toThrow(/название/);
+  expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Чужой');`,STRANGER))).toThrow(/row-level security/);
+  expect(scalar(as(`SELECT count(*) FROM warehouses WHERE organization_id='${ORG}';`,STRANGER))).toBe('0');
+  expect(()=>sql(as(`UPDATE warehouses SET organization_id='00000000-0000-0000-0000-0000000000b2' WHERE id='${WH2}';`))).toThrow(/организац/);
  });
  test('Delivered alone does not create inbound stock',()=>{
   sql(`CREATE TRIGGER test_stock AFTER INSERT OR UPDATE OF status ON requests FOR EACH ROW EXECUTE FUNCTION handle_request_stock_movement();UPDATE requests SET product_id=gen_random_uuid(),warehouse_id='${WH}',quantity=100,status='В пути' WHERE id='${REQ}';UPDATE requests SET status='Доставлено' WHERE id='${REQ}';`);
@@ -99,6 +117,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
  test('employee without warehouse permission is blocked and no roles are changed',()=>{
   sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
   expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
+  expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Запрещённый склад');`))).toThrow(/row-level security/);
   expect(scalar(`SELECT role FROM user_organizations WHERE user_id='${USER}';`)).toBe('member');
   expect(total(batch,WH)).toBe('70');
  });
