@@ -58,18 +58,18 @@ function ellipsize(text: string, max: number, m: (t: string) => number) {
 }
 
 export function computeLabelLayout(input: { title: string; lines: string[]; applicant?: string | null; receiver?: string | null }, w: number, h: number, measure: Measure): LabelLayout {
-  // QR geometry is intentionally unchanged from previous releases.
-  const qrSize = Math.min(h - 8, Math.floor(w * 0.48));
-  const qr = { x: 0, y: Math.round((h - qrSize) / 2), size: qrSize };
-  const padY = Math.round(h * 0.05), padR = Math.round(w * 0.025), gap = Math.round(w * 0.025);
-  const text = { x: qrSize + gap, y: padY, width: w - padR - (qrSize + gap), height: h - padY * 2 };
+  // Portrait 50x80: same QR payload/quiet zone, centred on top; text block fills the area below.
+  const pad = Math.round(w * 0.05);
+  const qrSize = Math.round(w * 0.8);
+  const qr = { x: Math.round((w - qrSize) / 2), y: Math.round(pad / 2), size: qrSize };
+  const text = { x: pad, y: qr.y + qrSize + Math.round(pad / 2), width: w - pad * 2, height: h - (qr.y + qrSize + Math.round(pad / 2)) - pad };
   if (text.width < 60) throw Error('Этикетка слишком узкая для выбранного размера. Выберите большую этикетку.');
   const boxes: LabelBox[] = []; let truncated = false;
 
   // Signatures: one row each, shared size, shrink to readable minimum, then compact FIO, then explicit ellipsis.
   const people = [['Заявитель:', input.applicant?.trim() || '—'], ['Приёмщик:', input.receiver?.trim() || '—']] as const;
   // Readable minimum ~1.25 mm; prefer a comfortable size with compact FIO before shrinking further.
-  const minSig = 15, comfortSig = Math.max(minSig, Math.round(h * 0.05)), maxSig = Math.round(h * 0.068);
+  const minSig = 15, comfortSig = Math.max(minSig, Math.round(w * 0.042)), maxSig = Math.round(w * 0.05);
   const rowWidth = (label: string, name: string, px: number) => measure(`${label} `, bodyFont(px)) + measure(name, nameFont(px));
   const fits = (ns: string[], px: number) => people.every((p, i) => rowWidth(p[0], ns[i], px) <= text.width);
   const largest = (ns: string[], lo: number, hi: number) => { for (let px = hi; px >= lo; px--) if (fits(ns, px)) return px; return 0; };
@@ -101,7 +101,7 @@ export function computeLabelLayout(input: { title: string; lines: string[]; appl
 
   // Title: largest size (capped so short names are not huge) whose word-wrapped rows fit the remaining area.
   const titleBottom = (extras.length ? extrasTop : sigTop) - Math.round(sig * 0.6);
-  const avail = titleBottom - text.y, maxTitle = Math.round(h * 0.12), minTitle = Math.max(14, Math.round(h * 0.045));
+  const avail = titleBottom - text.y, maxTitle = Math.round(w * 0.085), minTitle = 18;
   let chosen: { px: number; rows: string[] } | null = null;
   for (let pass = 0; pass < 2 && !chosen; pass++) for (let px = maxTitle; px >= minTitle; px--) {
     const rows = wrapGroups(input.title.trim() || '—', text.width, t => measure(t, titleFont(px)), pass === 1);
