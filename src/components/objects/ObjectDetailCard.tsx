@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, Trash2, Warehouse, FileText, Truck, DollarSign, Info, Pencil, Archive, Upload, Download, Eye, FolderOpen, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { ObjectIssuesView } from "@/components/warehouse-qr/ObjectIssuesView";
 
 interface ObjectDetailCardProps {
   objectData: any;
@@ -280,6 +281,7 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
           <TabsTrigger value="deliveries" className="gap-1"><Truck className="h-3.5 w-3.5" /> Поставки</TabsTrigger>
           <TabsTrigger value="finances" className="gap-1"><DollarSign className="h-3.5 w-3.5" /> Финансы</TabsTrigger>
           <TabsTrigger value="documents" className="gap-1"><FolderOpen className="h-3.5 w-3.5" /> Документы</TabsTrigger>
+          <TabsTrigger value="issues" className="gap-1"><Truck className="h-3.5 w-3.5" /> ТМЦ / Выдачи</TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
@@ -546,6 +548,10 @@ export const ObjectDetailCard = ({ objectData, onBack, onEdit, onArchive, onDele
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="issues">
+          <Card><CardContent className="pt-6">{currentOrgId ? <ObjectIssuesView orgId={currentOrgId} objectId={objectData.id} /> : null}</CardContent></Card>
         </TabsContent>
 
         {/* Documents Tab */}
