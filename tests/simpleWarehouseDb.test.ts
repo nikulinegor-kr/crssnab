@@ -20,6 +20,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   execFileSync('bun',['test','tests/qrWarehouseDb.test.ts'],{env:process.env,stdio:'pipe'});
   sql(`CREATE TABLE user_permissions(user_id uuid,organization_id uuid,permission_key text,allowed boolean);
    CREATE TABLE user_organizations(user_id uuid,organization_id uuid,is_active boolean,role text);
+   CREATE OR REPLACE FUNCTION user_has_permission(u uuid,o uuid,k text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT public.user_has_org_access(u,o) AND NOT EXISTS(SELECT 1 FROM public.user_permissions WHERE user_id=u AND organization_id=o AND permission_key=k AND allowed=false) $$;
    INSERT INTO user_organizations SELECT user_id,organization_id,true,'admin' FROM members;
    CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text);INSERT INTO profiles VALUES('${USER}','Тестовый сотрудник');
    CREATE TABLE equipment(id uuid PRIMARY KEY,organization_id uuid,current_object_id uuid);
