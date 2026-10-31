@@ -11,6 +11,7 @@ import { ExecAttentionList } from "@/components/executive/ExecAttentionList";
 import { ExecObjectsLoad } from "@/components/executive/ExecObjectsLoad";
 import { ExecRecentEvents } from "@/components/executive/ExecRecentEvents";
 import { ExecSectionsGrid } from "@/components/executive/ExecSectionsGrid";
+import { ExecWarehouseMoves } from "@/components/executive/ExecWarehouseMoves";
 import { pluralRu } from "@/lib/pluralRu";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ export default function ExecutivePanelPage() {
       <ExecSectionsGrid />
       <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="min-w-0 lg:col-start-1 lg:row-start-1"><ExecAttentionList groups={panel.attention.groups} loading={panel.attention.isLoading} error={panel.attention.isError} onOpenTask={openTask} /></div>
-        <div className="min-w-0 space-y-3 lg:col-start-2 lg:row-start-1"><ExecObjectsLoad items={panel.objects.data ?? []} loading={panel.objects.isLoading} error={panel.objects.isError} /><ExecRecentEvents items={panel.events.data ?? []} loading={panel.events.isLoading} error={panel.events.isError} onOpenTask={openTask} /></div>
+        <div className="min-w-0 space-y-3 lg:col-start-2 lg:row-start-1"><ExecWarehouseMoves orgId={panel.orgId} /><ExecObjectsLoad items={panel.objects.data ?? []} loading={panel.objects.isLoading} error={panel.objects.isError} /><ExecRecentEvents items={panel.events.data ?? []} loading={panel.events.isLoading} error={panel.events.isError} onOpenTask={openTask} /></div>
       </div>
     </>}
     {task && <Suspense fallback={<p role="status" className="text-sm text-muted-foreground">Открывается задача…</p>}><TaskDialog open task={task} onOpenChange={open => { if (!open) { setTask(null); void qc.invalidateQueries({ queryKey: ["executive", panel.orgId] }); } }} /></Suspense>}

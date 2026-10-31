@@ -45,14 +45,15 @@ export const menuGroups: MenuGroup[] = [
     label: "Работа",
     icon: FileText,
     items: [
-      { id: "me", title: "Личный кабинет", url: "/me", icon: UserRound },
       { id: "executive", title: "Панель руководителя", url: "/executive", icon: Gauge },
-      { id: "tasks", title: "Задачи", url: "/tasks", icon: ListChecks },
-      { id: "dashboard", title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
       { id: "requests", title: "Заявки", url: "/requests", icon: FileText },
-      { id: "board", title: "Доска", url: "/board", icon: KanbanSquare },
-      { id: "planner", title: "Планировщик", url: "/planner", icon: ClipboardList },
+      { id: "warehouse", title: "Склад", url: "/warehouse", icon: Warehouse },
+      { id: "tasks", title: "Задачи", url: "/tasks", icon: ListChecks },
       { id: "shipments", title: "Поставки", url: "/shipments", icon: Truck },
+      { id: "planner", title: "Планировщик", url: "/planner", icon: ClipboardList },
+      { id: "board", title: "Доска", url: "/board", icon: KanbanSquare },
+      { id: "dashboard", title: "Дашборд", url: "/dashboard", icon: LayoutGrid },
+      { id: "me", title: "Личный кабинет", url: "/me", icon: UserRound },
     ],
   },
   {
@@ -62,7 +63,6 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { id: "objects", title: "Объекты", url: "/objects", icon: Building2 },
       { id: "nomenclature", title: "Номенклатура", url: "/nomenclature", icon: Layers },
-      { id: "warehouse", title: "Склад", url: "/warehouse", icon: Warehouse },
       { id: "equipment", title: "Техника", url: "/equipment", icon: Truck },
       { id: "spare-parts", title: "Запчасти", url: "/spare-parts", icon: Wrench },
       { id: "filter-elements", title: "Фильтрующие элементы", url: "/filter-elements", icon: Filter },
