@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 const socket=process.env.LOCAL_WAREHOUSE_TEST_SOCKET;
 const suite=socket?describe:describe.skip;
 const ORG='00000000-0000-0000-0000-0000000000a1',USER='00000000-0000-0000-0000-000000000011',STRANGER='00000000-0000-0000-0000-000000000022';
-const WH='00000000-0000-0000-0000-00000000c001',WH2='00000000-0000-0000-0000-00000000c003',FOREIGN='00000000-0000-0000-0000-00000000c002';
+const WH='00000000-0000-0000-0000-00000000c004',WH2='00000000-0000-0000-0000-00000000c003',FOREIGN='00000000-0000-0000-0000-00000000c002';
 const REQ='00000000-0000-0000-0000-00000000d010',ITEM='00000000-0000-0000-0000-00000000e010',REQ3='00000000-0000-0000-0000-00000000d011',ITEM3='00000000-0000-0000-0000-00000000e011',EQ='00000000-0000-0000-0000-00000000f001';
 const args=()=>['-h',socket??'', '-p',process.env.LOCAL_WAREHOUSE_TEST_PORT??'55442','-U','lovable','-d','postgres','-X','-q','-v','ON_ERROR_STOP=1','-At'];
 function sql(q:string){if(!socket?.startsWith('/tmp/'))throw Error('Disposable local database required');return execFileSync('psql',args(),{input:q,encoding:'utf8',stdio:['pipe','pipe','pipe']});}
@@ -47,10 +47,8 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
  });
  test('creates warehouse with existing fields and enforces name and org isolation',()=>{
-  sql(`DELETE FROM warehouses WHERE id='${WH}' AND NOT EXISTS(SELECT 1 FROM warehouse_balances WHERE warehouse_id='${WH}');`);
-  // The legacy fixture used WH, so create a fresh warehouse for the complete new receipt flow instead.
-  sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('00000000-0000-0000-0000-00000000c004','${ORG}',' Новый склад ','Адрес и ответственный');`));
-  expect(scalar(as(`SELECT name FROM warehouses WHERE id='00000000-0000-0000-0000-00000000c004';`))).toBe('Новый склад');
+  sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('${WH}','${ORG}',' Новый склад ','Адрес и ответственный');`));
+  expect(scalar(as(`SELECT name FROM warehouses WHERE id='${WH}';`))).toBe('Новый склад');
   expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}',' ');`))).toThrow(/название/);
   expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Чужой');`,STRANGER))).toThrow(/row-level security/);
   expect(scalar(as(`SELECT count(*) FROM warehouses WHERE organization_id='${ORG}';`,STRANGER))).toBe('0');
