@@ -84,6 +84,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/documents": "project.documents",
   "/nomenclature": "erp.nomenclature",
   "/warehouse": "erp.warehouse",
+  "/warehouse/qr": "erp.warehouse",
   "/equipment": "erp.equipment",
   "/suppliers": "erp.suppliers",
   "/shipments": "erp.shipments",
