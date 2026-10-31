@@ -57,6 +57,7 @@ suite("QR warehouse posting on real PostgreSQL", () => {
       CREATE TABLE request_objects(id uuid PRIMARY KEY, organization_id uuid);
       CREATE FUNCTION user_has_org_access(u uuid, o uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.members WHERE user_id=u AND organization_id=o) $$;
       CREATE FUNCTION user_has_permission(u uuid, o uuid, k text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT public.user_has_org_access(u,o) $$;
+      GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
       INSERT INTO organizations VALUES('${ORG}'),('${OTHER}');
       INSERT INTO members VALUES('${USER}','${ORG}'),('${STRANGER}','${OTHER}');
       INSERT INTO warehouses VALUES('${WH}','${ORG}'),('${WH_OTHER}','${OTHER}');
