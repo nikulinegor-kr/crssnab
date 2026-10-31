@@ -26,6 +26,7 @@ function splitToken(token: string, max: number, m: (t: string) => number): strin
     if (cut < 1) cut = 1;
     const sep = Math.max(...['-', '/', '.', '_'].map(s => rest.slice(0, cut).lastIndexOf(s)));
     if (sep >= Math.floor(cut / 2)) { out.push(rest.slice(0, sep + 1)); rest = rest.slice(sep + 1); }
+    else if (rest[cut] === '-') { out.push(rest.slice(0, cut + 1)); rest = rest.slice(cut + 1); }
     else { out.push(rest.slice(0, cut) + '-'); rest = rest.slice(cut); }
   }
   if (rest) out.push(rest);
@@ -67,7 +68,7 @@ export function computeLabelLayout(input: { title: string; lines: string[]; appl
 
   // Signatures: one row each, shared size, shrink to readable minimum, then compact FIO, then explicit ellipsis.
   const people = [['Заявитель:', input.applicant?.trim() || '—'], ['Приёмщик:', input.receiver?.trim() || '—']] as const;
-  const minSig = Math.max(14, Math.round(h * 0.045)), maxSig = Math.round(h * 0.068);
+  const minSig = Math.max(13, Math.round(h * 0.04)), maxSig = Math.round(h * 0.068);
   const rowWidth = (label: string, name: string, px: number) => measure(`${label} `, bodyFont(px)) + measure(name, nameFont(px));
   let sig = maxSig, names = people.map(p => p[1]);
   while (sig > minSig && people.some((p, i) => rowWidth(p[0], names[i], sig) > text.width)) sig--;

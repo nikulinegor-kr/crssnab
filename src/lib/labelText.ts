@@ -8,6 +8,8 @@ export function labelTextGroups(text: string): string[] {
     let group = words[i];
     while (i + 1 < words.length && connects.test(words[i])) group += ` ${words[++i]}`;
     if (i + 1 < words.length && /^\d+(?:[.,]\d+)?$/.test(words[i]) && unit.test(words[i + 1])) group += ` ${words[++i]}`;
+    // Model designations: "BW 141", "ZX 200-3" stay together.
+    if (i + 1 < words.length && /^[A-Z]{1,5}$/.test(words[i]) && /^\d[\w./-]*$/.test(words[i + 1])) group += ` ${words[++i]}`;
     groups.push(group);
   }
   return groups;
