@@ -34,5 +34,6 @@
 - Serve the warehouse directory and warehouse-scoped TMC balances at /warehouse and its /warehouse/qr alias; retain /warehouse/legacy separately and never combine its legacy movements with warehouse_balances to avoid double counting.
 - Store optional warehouse contact details in the existing description field with a versioned encoding, preserving legacy free text; use the explicit warehouses_object_id_fkey for object embeds to avoid ambiguous reverse relationships.
 - Derive request QR links from the existing immutable primary UUID, using RequestQrButton and LabelExporter; keep request links distinct from permanent individual TMC QR tokens so no backfill or duplicate identifiers are needed.
+- Dispatch request QR entries through RequestQrWorkflow using a fresh organization-scoped row; confirm shipment and actual delivery through the locked confirm_request_qr_logistics RPC, preserving existing logistics fields, permissions and stock-free status transitions.
 - Show object issues only from posted warehouse_issues via the pure objectIssues helper in one shared ObjectIssuesView (warehouse tab and object card), grouping by stable unit id and never merging units.
 - Reuse the warehouse form for create/edit; guard deletion on the server by inspecting incoming foreign keys so cascade and set-null cannot erase inventory history or request links.

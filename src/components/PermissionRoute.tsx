@@ -32,7 +32,7 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     "/organization/settings",
   ];
 
-  if (!currentOrgId) return <Navigate to="/select-organization" replace />;
+  if (!currentOrgId) return <Navigate to={`/select-organization?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`} replace />;
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRequests, Request } from "@/hooks/useRequests";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -153,6 +153,11 @@ const Requests = () => {
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const location = useLocation();
+  const [qrRequestId, setQrRequestId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('request'));
+  useEffect(() => {
+    if (location.state?.qrEntry) setQrRequestId(new URLSearchParams(location.search).get('request'));
+  }, [location.key, location.search, location.state]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [duplicateInitialData, setDuplicateInitialData] = useState<any>(null);
@@ -202,12 +207,14 @@ const Requests = () => {
   );
 
   const handleEditClick = (request: Request) => {
+    setQrRequestId(null);
     setSelectedRequest(request);
     setPanelOpen(true);
     setRequestParams(request.id, isFullView);
   };
 
   const closePanel = useCallback(() => {
+    setQrRequestId(null);
     setPanelOpen(false);
     setRequestParams(null, false);
   }, [setRequestParams]);
@@ -217,6 +224,7 @@ const Requests = () => {
     : -1;
 
   const selectAdjacentRequest = (offset: -1 | 1) => {
+    setQrRequestId(null);
     const next = panelRequestOrder[selectedRequestIndex + offset];
     if (next) {
       setSelectedRequest(next);
@@ -780,6 +788,7 @@ const Requests = () => {
               width={panelWidth}
               onWidthChange={setPanelWidth}
               request={selectedRequest as any}
+              qrEntry={selectedRequest?.id === qrRequestId}
               open={panelOpen}
               onClose={closePanel}
               onPrevious={() => selectAdjacentRequest(-1)}
@@ -819,6 +828,7 @@ const Requests = () => {
           width={panelWidth}
           onWidthChange={setPanelWidth}
           request={selectedRequest as any}
+          qrEntry={selectedRequest?.id === qrRequestId}
           open={panelOpen}
           onClose={closePanel}
           onPrevious={() => selectAdjacentRequest(-1)}

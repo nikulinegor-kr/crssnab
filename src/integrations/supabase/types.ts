@@ -5854,6 +5854,18 @@ export type Database = {
       check_upcoming_events: { Args: never; Returns: undefined }
       cleanup_notification_dedup: { Args: never; Returns: undefined }
       cleanup_notification_queue: { Args: never; Returns: undefined }
+      confirm_request_qr_logistics: {
+        Args: {
+          _action: string
+          _actual_arrival?: string
+          _carrier?: string
+          _organization_id: string
+          _planned_arrival?: string
+          _request_id: string
+          _shipment_date?: string
+        }
+        Returns: Json
+      }
       create_arrival_check_tasks: { Args: never; Returns: number }
       enqueue_notification: {
         Args: {
