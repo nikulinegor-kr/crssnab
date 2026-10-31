@@ -147,7 +147,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   const u=scalar(`SELECT id FROM warehouse_units WHERE source_request_id='${req}' LIMIT 1;`);
   const doc=scalar(as(`INSERT INTO warehouse_documents(organization_id,doc_type) VALUES('${ORG}','receipt') RETURNING id;`));
   sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${doc}','${u}',1,'${WH}');`));
-  expect(()=>sql(as(`SELECT post_warehouse_document('${doc}');`))).toThrow(/Повторная приёмка/);
+  expect(()=>sql(as(`SELECT post_warehouse_document('${doc}');`))).toThrow(/уже числится/);
  });
  test('fallback cannot bypass existing positions or foreign warehouse',()=>{
   expect(()=>sql(as(`SELECT receive_warehouse_request('${REQ3}','${WH}','${USER}','[{"quantity":1,"kind":"batch","unit":"шт"}]');`))).toThrow(/другими параметрами/);
