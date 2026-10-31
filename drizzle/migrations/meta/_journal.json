@@ -169,6 +169,13 @@
       "when": 1793430889619,
       "tag": "0023_manual_warehouse_receipt",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793435309537,
+      "tag": "0024_receipt_units_sht_komplekt",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { printLabels, type LabelInput } from './warehouseLabels';
+import { type LabelInput } from './warehouseLabels';
 import type { LabelPeople } from './labelPeople';
 
 export type WarehouseDetails = { address: string; responsible: string };
@@ -41,9 +41,6 @@ export async function loadUnitLabelPeople(unitIds:string[],org:string):Promise<M
  const {data:profiles,error}=ids.length?await supabase.from('profiles').select('id,full_name').in('id',ids):{data:[],error:null};if(error)throw error;
  for(const row of rows){const doc=row.warehouse_documents;if(!doc||people.has(row.unit_id))continue;people.set(row.unit_id,{applicant:doc.requests?.applicant,receiver:doc.warehouse_request_receipts?.receiver_name??profiles?.find(p=>p.id===doc.created_by)?.full_name});}
  return people;
-}
-export async function receiptLabels(documentId:string) {
- await printLabels(await loadReceiptLabels(documentId));
 }
 export function validateSimpleIssue(recipient: string, date: string, equipmentId: string | null, objectId: string | null) {
   const errors: string[] = [];

@@ -1,49 +1,22 @@
 import QRCode from 'qrcode';
 import type { LabelInput } from './warehouseLabels';
 import { qrLink } from './warehouseQr';
-import { labelTextGroups, wrapLabelText } from './labelText';
-import { labelPeopleLines, labelVisibleLines } from './labelPeople';
+import { labelVisibleLines } from './labelPeople';
+import { computeLabelLayout } from './labelLayout';
 export const LABEL_SIZES = [{width:50,height:30},{width:60,height:40},{width:40,height:30}] as const;
 export type LabelSize = {width:number;height:number};
-/** Local monochrome print artifact; no data leaves the browser. QR large on the left, all data on the right. */
+/** Local monochrome PNG; QR on the left (geometry unchanged), measured text block on the right. */
 export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Promise<Blob> {
  await document.fonts.ready;
  const scale=12,w=size.width*scale,h=size.height*scale;
  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
  const c=canvas.getContext('2d');if(!c)throw Error('PNG недоступен');
  c.fillStyle='#fff';c.fillRect(0,0,w,h);c.fillStyle='#000';
- const pad=4,gap=4,qrX=0;
- const q=Math.min(h-pad*2,Math.floor(w*0.48)),textX=qrX+q+gap,textWidth=w-pad-textX;
- if(textWidth<60)throw Error('Этикетка слишком узкая для выбранного размера. Выберите большую этикетку.');
- function wrap(text:string,font:string,maxWidth:number){
-  c.font=font;
-  return wrapLabelText(text,maxWidth,text=>c.measureText(text).width);
- }
- const people=labelPeopleLines(label);
- const meta=[...labelVisibleLines(label.lines),...people].filter(text=>text&&text!==label.title);
- let metaFont=20;
- const metaGroups=meta.flatMap(text=>people.includes(text)?[text]:labelTextGroups(text));
- while(metaFont>12){c.font=`${metaFont}px Manrope, Arial, sans-serif`;if(metaGroups.every(text=>c.measureText(text).width<=textWidth))break;metaFont--;}
- c.font=`${metaFont}px Manrope, Arial, sans-serif`;
- if(metaGroups.some(text=>c.measureText(text).width>textWidth))throw Error('Обозначение слишком длинное. Выберите большую этикетку.');
- const metaLine=metaFont+3;
- const metaSpec=`${metaFont}px Manrope, Arial, sans-serif`;
- const metaRows=meta.flatMap(text=>people.includes(text)&&c.measureText(text).width<=textWidth?[text]:wrap(text,metaSpec,textWidth));
- const titleSpace=h-pad*2-metaRows.length*metaLine-(metaRows.length?7:0);
- const titleWords=labelTextGroups(label.title);
- let wordFont=40;while(wordFont>12&&titleWords.some(word=>{c.font=`600 ${wordFont}px Manrope, Arial, sans-serif`;return c.measureText(word).width>textWidth;}))wordFont--;
- let font=wordFont,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
- while(rows.length*(font+2)>titleSpace&&font>12){font--;rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);}
- c.font=`600 ${font}px Manrope, Arial, sans-serif`;
- if(rows.length*(font+2)>titleSpace||rows.some(row=>c.measureText(row).width>textWidth))throw Error('Название слишком длинное для выбранного размера. Выберите большую этикетку.');
- const top=pad;
+ const layout=computeLabelLayout({title:label.title,lines:labelVisibleLines(label.lines).filter(t=>t!==label.title),applicant:label.applicant,receiver:label.receiver},w,h,(t,f)=>{c.font=f;return c.measureText(t).width;});
  c.textBaseline='top';
- c.font=`600 ${font}px Manrope, Arial, sans-serif`;
- rows.forEach((row,i)=>c.fillText(row,textX,top+i*(font+2)));
- c.font=metaSpec;let my=top+rows.length*(font+2)+7;
- for(const row of metaRows){c.fillText(row,textX,my);my+=metaLine;}
- const y=Math.round((h-q)/2);
- if(preview){c.strokeRect(qrX,y,q,q);c.font='18px Arial';c.fillText('QR после',qrX+12,y+q/2-8);c.fillText('приёмки',qrX+12,y+q/2+16);}
- else{const image=new Image();image.src=await QRCode.toDataURL(qrLink(label.kind,label.token,window.location.origin),{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,qrX,y,q,q);}
+ for(const b of layout.boxes){c.font=b.font;c.fillText(b.text,b.x,b.y);}
+ const {x,y,size:q}=layout.qr;
+ if(preview){c.strokeRect(x,y,q,q);c.font='18px Arial';c.fillText('QR после',x+12,y+q/2-8);c.fillText('приёмки',x+12,y+q/2+16);}
+ else{const image=new Image();image.src=await QRCode.toDataURL(qrLink(label.kind,label.token,window.location.origin),{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,x,y,q,q);}
  return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG недоступен')),'image/png'));
 }
