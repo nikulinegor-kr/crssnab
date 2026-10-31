@@ -103,7 +103,7 @@ export function computeLabelLayout(input: { title: string; lines: string[]; appl
   const titleBottom = (extras.length ? extrasTop : sigTop) - Math.round(sig * 0.6);
   const avail = titleBottom - text.y, maxTitle = Math.round(w * 0.085), minTitle = 18;
   let chosen: { px: number; rows: string[] } | null = null;
-  for (let pass = 0; pass < 2 && !chosen; pass++) for (let px = maxTitle; px >= minTitle; px--) {
+  for (let pass = 0; pass < 2 && !chosen; pass++) for (let px = maxTitle; px >= (pass === 0 ? Math.max(minTitle, Math.round(maxTitle * 0.6)) : minTitle); px--) {
     const rows = wrapGroups(input.title.trim() || '—', text.width, t => measure(t, titleFont(px)), pass === 1);
     if (rows && rows.length * Math.round(px * 1.18) - Math.round(px * 0.18) <= avail) { chosen = { px, rows }; break; }
   }
