@@ -29,7 +29,9 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
  const metaSpec=`${metaFont}px Manrope, Arial, sans-serif`;
  const metaRows=meta.flatMap(text=>wrap(text,metaSpec,textWidth));
  const titleSpace=h-pad*2-metaRows.length*metaLine-(metaRows.length?14:0);
- let font=44,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
+ const titleWords=label.title.split(/\s+/).filter(Boolean);
+ let wordFont=44;while(wordFont>12&&titleWords.some(word=>{c.font=`600 ${wordFont}px Manrope, Arial, sans-serif`;return c.measureText(word).width>textWidth;}))wordFont--;
+ let font=wordFont,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
  while(rows.length*(font+4)>titleSpace&&font>12){font--;rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);}
  if(rows.length*(font+4)>titleSpace)throw Error('Название слишком длинное для выбранного размера. Выберите большую этикетку.');
  const block=rows.length*(font+4)+(metaRows.length?14+metaRows.length*metaLine:0);
@@ -38,7 +40,7 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
  rows.forEach((row,i)=>c.fillText(row,textX,top+font+i*(font+4)));
  c.font=metaSpec;let my=top+rows.length*(font+4)+18;
  for(const row of metaRows){c.fillText(row,textX,my);my+=metaLine;}
- const y=pad;
+ const y=Math.round((h-q)/2);
  if(preview){c.strokeRect(pad,y,q,q);c.font='18px Arial';c.fillText('QR после',pad+12,y+q/2-8);c.fillText('приёмки',pad+12,y+q/2+16);}
  else{const image=new Image();image.src=await QRCode.toDataURL(qrLink(label.kind,label.token,window.location.origin),{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,pad,y,q,q);}
  return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG недоступен')),'image/png'));
