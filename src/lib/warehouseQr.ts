@@ -26,7 +26,7 @@ export function parseQrInput(raw: string): { kind: QrKind | null; token: string 
   const value = raw.trim().replace(/\s+/g, "");
   if (!value) return null;
   try {const url=new URL(value,'https://local.invalid');const id=url.searchParams.get('request');if(url.pathname==='/requests'&&id&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return {kind:'request',token:id.toLowerCase()};}catch { /* Continue with permanent TMC formats. */ }
-  try {const url=new URL(value,'https://local.invalid');const q=url.searchParams.get('qr');if(url.pathname.startsWith('/warehouse')&&q)return parseQrInput(decodeURIComponent(q));}catch { /* not a link */ }
+  try {const url=new URL(value,'https://local.invalid');const q=url.searchParams.get('qr');if(url.pathname.startsWith('/warehouse')&&q){const r=parseQrInput(decodeURIComponent(q));return r&&!r.kind?{kind:'unit',token:r.token}:r;}}catch { /* not a link */ }
   const m = /^CRSS[:;]([CU])[:;]([0-9a-f]{16,64})$/i.exec(value);
   if (m) return { kind: m[1].toUpperCase() === "C" ? "cell" : "unit", token: m[2].toLowerCase() };
   if (/^[0-9a-f]{32}$/i.test(value)) return { kind: null, token: value.toLowerCase() };
