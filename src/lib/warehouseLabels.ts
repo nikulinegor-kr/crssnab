@@ -8,7 +8,7 @@ export interface LabelInput {
   lines: string[];
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 
 /** Prints 58×40 mm labels through a hidden iframe. Same token → same QR on every reprint. */
 export async function printLabels(labels: LabelInput[]) {
@@ -37,7 +37,8 @@ export async function printLabels(labels: LabelInput[]) {
   const frame = document.createElement("iframe");
   frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
   document.body.appendChild(frame);
-  const doc = frame.contentDocument!;
+  const doc = frame.contentDocument;
+  if (!doc) { frame.remove(); throw new Error("Не удалось открыть печать"); }
   doc.open();
   doc.write(html);
   doc.close();

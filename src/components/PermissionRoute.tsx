@@ -40,7 +40,7 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
 
   // Find matching route key (handle dynamic segments like /requests/:id)
   const path = location.pathname;
-  const matchedRoute = Object.keys(ROUTE_PERMISSION_MAP).find(route => path === route || path.startsWith(route + "/"));
+  const matchedRoute = Object.keys(ROUTE_PERMISSION_MAP).sort((a, b) => b.length - a.length).find(route => path === route || path.startsWith(route + "/"));
   const firstAccessibleRoute = fallbackRoutes.find(route => hasRouteAccess(route));
 
   if (matchedRoute && !hasRouteAccess(matchedRoute)) {

@@ -72,6 +72,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PRIORITIES } from "@/hooks/useRequestsFilters";
 import { TrustLetterButton } from "./TrustLetterDialog";
+import { RequestReceiptButton } from "@/components/warehouse-qr/RequestReceiptButton";
 
 
 const moneyShort = (n: number) =>
@@ -243,6 +244,7 @@ const MobileRequestCard = memo(({
         </div>
 
         {/* Object */}
+        <RequestReceiptButton request={request} />
         {(request as any).object_name && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
@@ -1525,6 +1527,7 @@ export const RequestsTable = ({
                               </div>
                             }
                           />
+                          <RequestReceiptButton request={request} />
                         </div>
                         <button
                           data-row-action

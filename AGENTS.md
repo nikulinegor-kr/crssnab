@@ -20,4 +20,5 @@
 - Store request-assistant history in existing AI conversations titled by request number; task proposals use the existing planner mutation only after user confirmation and the shared dialog for edits.
 - Keep trust-letter templates and completed files in separate private buckets; browser rendering uses shared pure grouping/validation, and a permission-checked transactional RPC alone finalizes numbers, attachments and activities to prevent partial journals.
 - Parse attached invoices through the authenticated Claude assistant and its user-token storage client; persist extraction caches and verified supplier directors separately from read-only chat tools.
-- Mutate QR-warehouse stock only through the post_warehouse_document RPC over draft documents; balances, issues and ledger are read-only to clients so posting stays atomic, idempotent and lock-protected.
+- Expose request receiving and stock moves/issues through receive_warehouse_request and simple_warehouse_operation; both atomically reuse post_warehouse_document internally, keeping draft documents hidden and stock read-only to clients.
+- Keep receipt UI and reprinting in RequestReceiptButton, shared by request rows and the side panel, so received metadata and permanent labels never diverge.
