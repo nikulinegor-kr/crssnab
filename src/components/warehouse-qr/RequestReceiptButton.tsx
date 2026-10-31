@@ -26,9 +26,9 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
  const [busy,setBusy] = useState(false);
  const [confirm,setConfirm] = useState(false);
  const qc = useQueryClient(); const { toast } = useToast();
- const { data: allowed = false } = useQuery({queryKey:['wh-permission',org],enabled:!!org,queryFn:async()=>{
-  if(!org) return false; const {data:{user}}=await supabase.auth.getUser(); if(!user) return false;
-  const {data,error}=await supabase.rpc('user_can_use_qr_warehouse',{_user:user.id,_org:org}); if(error) throw error; return data===true;
+ const { data: allowed = false } = useQuery({queryKey:['wh-receipt-permission',org],enabled:!!org,queryFn:async()=>{
+   if(!org) return false; const {data:{user}}=await supabase.auth.getUser(); if(!user) return false;
+  const {data,error}=await supabase.rpc('user_has_org_access',{_user_id:user.id,_org_id:org}); if(error) throw error; return data===true;
  }});
  const {data:receipts=[],error:receiptError}=useQuery({queryKey:['wh-receipts',org],enabled:!!org&&allowed,queryFn:()=>warehouseRows<Receipt>((f,t)=>supabase.from('warehouse_request_receipts').select('request_id,document_id,warehouse_id,receiver_name,received_at').eq('organization_id',org ?? '').order('id').range(f,t))});
  const receipt=receipts.find(r=>r.request_id===request.id);
