@@ -1,6 +1,21 @@
 import { supabase } from '@/integrations/supabase/client';
 import { printLabels } from './warehouseLabels';
 
+export type WarehouseDetails = { address: string; responsible: string };
+export function warehouseDescription(details: WarehouseDetails) {
+  return JSON.stringify({ warehouse_details: 1, address: details.address.trim(), responsible: details.responsible.trim() });
+}
+export function readWarehouseDescription(description: string | null): WarehouseDetails {
+  try {
+    const value = JSON.parse(description ?? '');
+    if (value.warehouse_details === 1) return { address: typeof value.address === 'string' ? value.address : '', responsible: typeof value.responsible === 'string' ? value.responsible : '' };
+  } catch { /* Existing free-text descriptions are preserved. */ }
+  return { address: description ?? '', responsible: '' };
+}
+export function warehouseQuantity(balances: { unit_id: string; warehouse_id: string; quantity: number }[], unitId: string, warehouseId: string) {
+  return balances.filter(b => b.unit_id === unitId && b.warehouse_id === warehouseId).reduce((total, b) => total + Number(b.quantity), 0);
+}
+
 export async function warehouseRows<T>(build: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; ; from += 1000) {

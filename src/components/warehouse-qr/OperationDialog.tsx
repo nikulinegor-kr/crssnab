@@ -19,11 +19,12 @@ export function OperationDialog({open,onOpenChange,orgId,type,unit,warehouses,ba
  const [key,setKey]=useState('');const [confirm,setConfirm]=useState(false);const [busy,setBusy]=useState(false);
  const stocks=useMemo(()=>warehouses.map(w=>({...w,quantity:balances.filter(b=>b.unit_id===unit?.id&&b.warehouse_id===w.id).reduce((s,b)=>s+Number(b.quantity),0)})).filter(w=>w.quantity>0),[balances,warehouses,unit]);
  useEffect(()=>{if(open){setSource(fromWarehouseId??stocks[0]?.id??null);setTarget(null);setQty('1');setRecipient('');setDate(format(new Date(),'yyyy-MM-dd'));setDestination(null);setConfirm(false);setKey(crypto.randomUUID());}},[open]); // eslint-disable-line react-hooks/exhaustive-deps
- const {data:objects=[]}=useQuery({queryKey:['wh-objects',orgId],enabled:open&&type==='issue',queryFn:()=>warehouseRows<{id:string;name:string}>((f,t)=>supabase.from('request_objects').select('id,name').eq('organization_id',orgId).order('name').range(f,t))});
- const {data:equipment=[]}=useQuery({queryKey:['wh-equipment',orgId],enabled:open&&type==='issue',queryFn:()=>warehouseRows<{id:string;model:string;plate_number:string|null;brand:string}>((f,t)=>supabase.from('equipment').select('id,model,plate_number,brand').eq('organization_id',orgId).order('model').range(f,t))});
+ const {data:objects=[],error:objectError}=useQuery({queryKey:['wh-objects',orgId],enabled:open&&type==='issue',queryFn:()=>warehouseRows<{id:string;name:string}>((f,t)=>supabase.from('request_objects').select('id,name').eq('organization_id',orgId).order('name').range(f,t))});
+ const {data:equipment=[],error:equipmentError}=useQuery({queryKey:['wh-equipment',orgId],enabled:open&&type==='issue',queryFn:()=>warehouseRows<{id:string;model:string;plate_number:string|null;brand:string}>((f,t)=>supabase.from('equipment').select('id,model,plate_number,brand').eq('organization_id',orgId).order('model').range(f,t))});
  if(!unit)return null;
  const quantity=Number(qty.replace(',','.'));const available=stocks.find(s=>s.id===source)?.quantity??0;
  const errors:string[]=[];
+ if(type==='issue'&&(mode==='equipment'?equipmentError:objectError))errors.push(`Не удалось загрузить справочник: ${(mode==='equipment'?equipmentError:objectError)?.message}`);
  if(!Number.isFinite(quantity)||quantity<=0)errors.push('Количество должно быть больше 0');
  if(quantity>available)errors.push(`Недостаточно остатка: ${available}`);
  if(unit.kind==='item'&&quantity!==1)errors.push('Изделие учитывается поштучно');

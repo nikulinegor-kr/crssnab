@@ -23,4 +23,5 @@
 - Expose request receiving and stock moves/issues through receive_warehouse_request and simple_warehouse_operation; both atomically reuse post_warehouse_document internally, keeping draft documents hidden and stock read-only to clients.
 - Keep receipt UI and reprinting in RequestReceiptButton, shared by request rows and the side panel, so received metadata and permanent labels never diverge.
 - Open receipt UI only after a successful delivered-status save; synchronize the selected request with refreshed request data so the side panel never keeps a stale status.
-- Serve the simple TMC screen at /warehouse and its /warehouse/qr alias; retain the historical warehouse page at /warehouse/legacy without making it the primary workflow.
+- Serve the warehouse directory and warehouse-scoped TMC balances at /warehouse and its /warehouse/qr alias; retain /warehouse/legacy separately and never combine its legacy movements with warehouse_balances to avoid double counting.
+- Store optional warehouse contact details in the existing description field with a versioned encoding, preserving legacy free text; use the explicit warehouses_object_id_fkey for object embeds to avoid ambiguous reverse relationships.

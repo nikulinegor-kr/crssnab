@@ -98,7 +98,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("warehouses")
-        .select("*, request_objects(name)")
+        .select("*, request_objects!warehouses_object_id_fkey(name)")
         .eq("organization_id", currentOrgId!)
         .order("name");
       if (error) throw error;
@@ -126,7 +126,7 @@ export default function WarehousePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_movements")
-        .select("*, warehouse_products(name, article), warehouses(name, object_id, request_objects(name)), requests(request_number, description)")
+        .select("*, warehouse_products(name, article), warehouses(name, object_id, request_objects!warehouses_object_id_fkey(name)), requests(request_number, description)")
         .eq("organization_id", currentOrgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
