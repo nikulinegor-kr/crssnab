@@ -1,12 +1,13 @@
 // Pure helpers for permanent warehouse QR codes (no browser/DB dependencies).
-export type QrKind = "cell" | "unit";
+export type QrKind = "cell" | "unit" | "request";
 export type WarehouseDocType = "receipt" | "move" | "issue" | "return";
 
 const PREFIX = "CRSS";
-const KIND_CODE: Record<QrKind, string> = { cell: "C", unit: "U" };
+const KIND_CODE: Record<QrKind, string> = { cell: "C", unit: "U", request:"R" };
 
 /** Payload printed into the QR. The token is permanent, so reprints are identical. */
 export function qrPayload(kind: QrKind, token: string): string {
+  if(kind==='request') return `/requests?request=${encodeURIComponent(token)}`;
   return `${PREFIX}:${KIND_CODE[kind]}:${token}`;
 }
 
@@ -15,6 +16,7 @@ export function parseQrInput(raw: string): { kind: QrKind | null; token: string 
   // USB scanners on a Russian keyboard layout may type "СКЫЫ" etc.; normalise common cases.
   const value = raw.trim().replace(/\s+/g, "");
   if (!value) return null;
+  try {const url=new URL(value,'https://local.invalid');const id=url.searchParams.get('request');if(url.pathname==='/requests'&&id&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return {kind:'request',token:id.toLowerCase()};}catch { /* Continue with permanent TMC formats. */ }
   const m = /^CRSS[:;]([CU])[:;]([0-9a-f]{16,64})$/i.exec(value);
   if (m) return { kind: m[1].toUpperCase() === "C" ? "cell" : "unit", token: m[2].toLowerCase() };
   if (/^[0-9a-f]{32}$/i.test(value)) return { kind: null, token: value.toLowerCase() };

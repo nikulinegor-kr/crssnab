@@ -17,7 +17,7 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
  c.font=`600 ${font}px Manrope, Arial, sans-serif`;rows.forEach((row,i)=>c.fillText(row,pad,pad+font+i*(font+4)));
  const y=h-q-pad;
  if(preview){c.strokeRect(pad,y,q,q);c.font='18px Arial';c.fillText('QR после',pad+12,y+q/2-8);c.fillText('приёмки',pad+12,y+q/2+16);}
- else {const image=new Image();image.src=await QRCode.toDataURL(qrPayload(label.kind,label.token),{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,pad,y,q,q);}
+ else {const image=new Image();const payload=qrPayload(label.kind,label.token);image.src=await QRCode.toDataURL(label.kind==='request'?new URL(payload,window.location.origin).href:payload,{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,pad,y,q,q);}
  c.font='18px Manrope, Arial, sans-serif';const meta=[...label.lines,...(preview?[]:[`ID: ${label.token.slice(-8)}`])].filter(Boolean);
  let my=y+22;for(const text of meta){let row='';for(const char of text){if(c.measureText(row+char).width>w-q-pad*3&&row){c.fillText(row,q+pad*2,my);my+=22;row='';}row+=char;}c.fillText(row,q+pad*2,my);my+=22;}
  return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG недоступен')),'image/png'));

@@ -4,6 +4,14 @@ import { parseQrInput, qrPayload, validateOperation } from "../src/lib/warehouse
 const token = "0123456789abcdef0123456789abcdef";
 
 describe("warehouse QR payload", () => {
+  test('request QR is automatically tied to its unique primary ID and stable',()=>{
+    const id='214fcffe-5afa-4c7f-ba21-e91a4e4df34c';const other='214fcffe-5afa-4c7f-ba21-e91a4e4df34d';
+    expect(qrPayload('request',id)).toBe(`/requests?request=${id}`);
+    expect(qrPayload('request',id)).not.toBe(qrPayload('request',other));
+    expect(parseQrInput(`https://crssnab.com${qrPayload('request',id)}`)).toEqual({kind:'request',token:id});
+    expect(parseQrInput(qrPayload('request',id))).toEqual({kind:'request',token:id});
+    expect(parseQrInput('/requests?request=not-valid')).toBeNull();
+  });
   test("round-trips cell and unit codes", () => {
     expect(parseQrInput(qrPayload("cell", token))).toEqual({ kind: "cell", token });
     expect(parseQrInput(qrPayload("unit", token))).toEqual({ kind: "unit", token });
