@@ -226,6 +226,13 @@ const Requests = () => {
 
   // Восстановление заявки из адресной строки (перезагрузка, ссылка)
   useEffect(() => {
+    setSelectedRequest(previous => {
+      if (!previous) return previous;
+      return requests?.find(r => r.id === previous.id) ?? previous;
+    });
+  }, [requests]);
+
+  useEffect(() => {
     if (!urlRequestId) return;
     if (selectedRequest?.id === urlRequestId) {
       if (!panelOpen) setPanelOpen(true);
