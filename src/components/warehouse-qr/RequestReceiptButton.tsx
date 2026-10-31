@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { PackageCheck, Printer, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TaskLookupSelect } from '@/components/tasks/TaskLookupSelect';
+import { receiptLabels, warehouseRows } from '@/lib/simpleWarehouse';
+
+type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string };
+type Receipt = { request_id: string; document_id: string; warehouse_id: string; receiver_name: string; received_at: string };
+type Line = { id: string; name: string; quantity: number; kind: 'item' | 'batch'; unit: string };
+export function RequestReceiptButton({ request }: { request: RequestInfo }) {
+ const org = request.organization_id;
+ const [open,setOpen] = useState(false);
+ const [warehouse,setWarehouse] = useState<string | null>(null);
+ const [receiver,setReceiver] = useState<string | null>(null);
+ const [lines,setLines] = useState<Line[]>([]);
+ const [busy,setBusy] = useState(false);
+ const [confirm,setConfirm] = useState(false);
+ const qc = useQueryClient(); const { toast } = useToast();
+ const { data: allowed = false } = useQuery({queryKey:['wh-permission',org],enabled:!!org,queryFn:async()=>{
+  if(!org) return false; const {data:{user}}=await supabase.auth.getUser(); if(!user) return false;
+  const {data,error}=await supabase.rpc('user_can_use_qr_warehouse',{_user:user.id,_org:org}); if(error) throw error; return data===true;
+ }});
+ const {data:receipts=[]}=useQuery({queryKey:['wh-receipts',org],enabled:!!org&&allowed,queryFn:()=>warehouseRows<Receipt>((f,t)=>supabase.from('warehouse_request_receipts').select('request_id,document_id,warehouse_id,receiver_name,received_at').eq('organization_id',org ?? '').order('id').range(f,t))});
+ const receipt=receipts.find(r=>r.request_id===request.id);
+ const {data:warehouses=[]}=useQuery({queryKey:['wh-qr','warehouses',org],enabled:allowed,queryFn:()=>warehouseRows<{id:string;name:string;request_objects:{name:string}|null}>((f,t)=>supabase.from('warehouses').select('id,name,request_objects(name)').eq('organization_id',org ?? '').order('name').range(f,t))});
+ const {data:details,isLoading,error}=useQuery({queryKey:['wh-receipt-details',request.id],enabled:open&&!receipt,queryFn:async()=>{
+  const [{data:items,error:ie},{data:members,error:me},{data:{user}}]=await Promise.all([
+   supabase.from('request_items').select('id,name,quantity').eq('request_id',request.id).order('created_at'),
+   supabase.from('user_organizations').select('user_id').eq('organization_id',org ?? '').eq('is_active',true),supabase.auth.getUser()]);
+  if(ie) throw ie; if(me) throw me;
+  const ids=(members??[]).map(m=>m.user_id);
+  const {data:profiles,error:pe}=await supabase.from('profiles').select('id,full_name').in('id',ids);
+  if(pe) throw pe;
+  return {items:items??[],members:(members??[]).map(m=>({...m,name:profiles?.find(p=>p.id===m.user_id)?.full_name??'—'})),userId:user?.id??null};
+ }});
+ useEffect(()=>{if(details){setLines(details.items.map(i=>({...i,kind:'batch',unit:'шт'})));setReceiver(details.userId);}},[details,open]);
+ const notifyError=(e:unknown)=>toast({title:'Приёмка не выполнена',description:(e as {message?:string})?.message??String(e),variant:'destructive'});
+ const print=async(id:string)=>{try{await receiptLabels(id);}catch(e){toast({title:'Не удалось напечатать',description:(e as {message?:string})?.message,variant:'destructive'});}};
+ const save=async()=>{
+  if(!warehouse||!receiver) return; setBusy(true);
+  try {const {data,error}=await supabase.rpc('receive_warehouse_request',{_request_id:request.id,_warehouse_id:warehouse,_received_by:receiver,_lines:lines.map(l=>({item_id:l.id,quantity:l.quantity,kind:l.kind,unit:l.unit}))});if(error)throw error;
+   await Promise.all([qc.invalidateQueries({queryKey:['wh-receipts']}),qc.invalidateQueries({queryKey:['wh-qr']}),qc.invalidateQueries({queryKey:['requests']})]);
+   setConfirm(false);toast({title:'Принято на склад'});
+  }catch(e){notifyError(e);}finally{setBusy(false);}
+ };
+ if(!allowed||(!receipt&&request.status!=='Доставлено'))return null;
+ const whLabel=(w:typeof warehouses[number])=>[w.request_objects?.name,w.name].filter(Boolean).join(' — ');
+ return <div data-row-action onClick={e=>e.stopPropagation()} className="min-w-0">
+  <Button variant={receipt?'outline':'default'} className="min-h-11 h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs" onClick={()=>{setOpen(true);setConfirm(false);}}>
+   <PackageCheck className="h-4 w-4 shrink-0"/>{receipt?'Принято на склад':'Осуществить приёмку'}
+  </Button>
+  {receipt&&<p className="text-xs text-muted-foreground break-words mt-1">{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')} · {warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p>}
+  <Dialog open={open} onOpenChange={v=>{if(!busy)setOpen(v);}}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
+   <DialogHeader><DialogTitle>Приёмка · {request.request_number.replace(/^REQ-/,'')}</DialogTitle></DialogHeader>
+   {receipt?<div className="space-y-3"><p className="font-medium text-success">Принято на склад</p><p>{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')}</p><p>{warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p><Button className="min-h-11" onClick={()=>print(receipt.document_id)}><Printer className="h-4 w-4 mr-2"/>Печатать QR-наклейки</Button></div>:<>
+    {isLoading?<Loader2 className="animate-spin"/>:error?<p className="text-destructive">Не удалось загрузить позиции и сотрудников</p>:<div className="space-y-4">
+    <Label>Склад</Label><TaskLookupSelect label="Выберите склад" value={warehouse} onChange={setWarehouse} options={warehouses.map(w=>({id:w.id,name:whLabel(w)}))} disabled={confirm}/>
+    <Label>Кто осуществил приёмку</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members??[]).map(m=>({id:m.user_id,name:m.name}))} disabled={confirm}/>
+    <p className="text-sm text-muted-foreground">Дата: {format(new Date(),'dd.MM.yyyy')}</p>
+    {lines.length===0&&<p className="text-destructive">В заявке нет позиций. Заполните позиции в заявке до приёмки.</p>}
+    {lines.map((l,i)=><div key={l.id} className="border-b pb-3 space-y-2"><p className="font-medium break-words">{l.name}</p><div className="flex items-center gap-2"><span className="font-numeric">{l.quantity}</span><Input aria-label={`Единица: ${l.name}`} className="w-20 min-h-11" value={l.unit} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,unit:e.target.value}:x))}/><Select value={l.kind} disabled={confirm} onValueChange={v=>setLines(old=>old.map((x,n)=>n===i?{...x,kind:v as Line['kind']}:x))}><SelectTrigger className="min-w-0 flex-1 min-h-11"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="batch">Материал / партия</SelectItem><SelectItem value="item">Индивидуальные изделия</SelectItem></SelectContent></Select></div></div>)}
+    </div>}
+    <DialogFooter className="gap-2">{confirm?<><Button variant="outline" className="min-h-11" disabled={busy} onClick={()=>setConfirm(false)}>Назад</Button><Button className="min-h-11" disabled={busy} onClick={save}>{busy?'Сохранение…':'Подтвердить приёмку'}</Button></>:<Button className="min-h-11" disabled={!warehouse||!receiver||!lines.length||isLoading||!!error} onClick={()=>setConfirm(true)}>Сохранить приёмку</Button>}</DialogFooter>
+   </>}
+  </DialogContent></Dialog>
+ </div>;
+}

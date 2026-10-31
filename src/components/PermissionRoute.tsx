@@ -1,6 +1,7 @@
 import { Navigate, useLocation, Link } from "react-router-dom";
 import { useUserPermissions, ROUTE_PERMISSION_MAP } from "@/hooks/useUserPermissions";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 interface PermissionRouteProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface PermissionRouteProps {
 
 export const PermissionRoute = ({ children }: PermissionRouteProps) => {
   const location = useLocation();
+  const { currentOrgId } = useCurrentOrganization();
   const { hasRouteAccess, loading } = useUserPermissions();
   const fallbackRoutes = [
     "/dashboard",
@@ -30,6 +32,8 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     "/organization/settings",
   ];
 
+  if (!currentOrgId) return <Navigate to="/select-organization" replace />;
+
   if (loading) {
     return (
       <div className="min-h-[200px] flex items-center justify-center">
@@ -40,7 +44,7 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
 
   // Find matching route key (handle dynamic segments like /requests/:id)
   const path = location.pathname;
-  const matchedRoute = Object.keys(ROUTE_PERMISSION_MAP).find(route => path === route || path.startsWith(route + "/"));
+  const matchedRoute = Object.keys(ROUTE_PERMISSION_MAP).sort((a, b) => b.length - a.length).find(route => path === route || path.startsWith(route + "/"));
   const firstAccessibleRoute = fallbackRoutes.find(route => hasRouteAccess(route));
 
   if (matchedRoute && !hasRouteAccess(matchedRoute)) {

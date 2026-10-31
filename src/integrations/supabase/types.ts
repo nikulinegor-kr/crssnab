@@ -5278,9 +5278,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           doc_type: string
+          equipment_id: string | null
           id: string
           number: string | null
           object_id: string | null
+          operation_date: string | null
+          operation_key: string | null
           organization_id: string
           posted_at: string | null
           posted_by: string | null
@@ -5294,9 +5297,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           doc_type: string
+          equipment_id?: string | null
           id?: string
           number?: string | null
           object_id?: string | null
+          operation_date?: string | null
+          operation_key?: string | null
           organization_id: string
           posted_at?: string | null
           posted_by?: string | null
@@ -5310,9 +5316,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           doc_type?: string
+          equipment_id?: string | null
           id?: string
           number?: string | null
           object_id?: string | null
+          operation_date?: string | null
+          operation_key?: string | null
           organization_id?: string
           posted_at?: string | null
           posted_by?: string | null
@@ -5322,6 +5331,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "warehouse_documents_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "warehouse_documents_object_id_fkey"
             columns: ["object_id"]
@@ -5350,9 +5366,11 @@ export type Database = {
           cell_id: string | null
           created_at: string
           document_id: string
+          equipment_id: string | null
           id: string
           issued_qty: number
           object_id: string | null
+          operation_date: string | null
           organization_id: string
           recipient_name: string
           recipient_user_id: string | null
@@ -5365,9 +5383,11 @@ export type Database = {
           cell_id?: string | null
           created_at?: string
           document_id: string
+          equipment_id?: string | null
           id?: string
           issued_qty: number
           object_id?: string | null
+          operation_date?: string | null
           organization_id: string
           recipient_name: string
           recipient_user_id?: string | null
@@ -5380,9 +5400,11 @@ export type Database = {
           cell_id?: string | null
           created_at?: string
           document_id?: string
+          equipment_id?: string | null
           id?: string
           issued_qty?: number
           object_id?: string | null
+          operation_date?: string | null
           organization_id?: string
           recipient_name?: string
           recipient_user_id?: string | null
@@ -5404,6 +5426,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
             referencedColumns: ["id"]
           },
           {
@@ -5585,6 +5614,71 @@ export type Database = {
           },
         ]
       }
+      warehouse_request_receipts: {
+        Row: {
+          created_by: string
+          document_id: string
+          id: string
+          organization_id: string
+          received_at: string
+          received_by: string
+          receiver_name: string
+          request_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          created_by?: string
+          document_id: string
+          id?: string
+          organization_id: string
+          received_at?: string
+          received_by: string
+          receiver_name: string
+          request_id: string
+          warehouse_id: string
+        }
+        Update: {
+          created_by?: string
+          document_id?: string
+          id?: string
+          organization_id?: string
+          received_at?: string
+          received_by?: string
+          receiver_name?: string
+          request_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_request_receipts_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_request_receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_request_receipts_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_request_receipts_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_units: {
         Row: {
           batch_number: string | null
@@ -5596,6 +5690,7 @@ export type Database = {
           organization_id: string
           product_id: string | null
           qr_token: string
+          request_item_id: string | null
           serial_number: string | null
           unit: string
         }
@@ -5609,6 +5704,7 @@ export type Database = {
           organization_id: string
           product_id?: string | null
           qr_token?: string
+          request_item_id?: string | null
           serial_number?: string | null
           unit?: string
         }
@@ -5622,6 +5718,7 @@ export type Database = {
           organization_id?: string
           product_id?: string | null
           qr_token?: string
+          request_item_id?: string | null
           serial_number?: string | null
           unit?: string
         }
@@ -5638,6 +5735,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "warehouse_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_units_request_item_id_fkey"
+            columns: ["request_item_id"]
+            isOneToOne: false
+            referencedRelation: "request_items"
             referencedColumns: ["id"]
           },
         ]
@@ -5888,9 +5992,33 @@ export type Database = {
       planner_priority_label: { Args: { _p: string }; Returns: string }
       planner_status_label: { Args: { _s: string }; Returns: string }
       post_warehouse_document: { Args: { _document_id: string }; Returns: Json }
+      receive_warehouse_request: {
+        Args: {
+          _lines: Json
+          _received_by: string
+          _request_id: string
+          _warehouse_id: string
+        }
+        Returns: Json
+      }
       seed_notification_routing: {
         Args: { _org_id: string }
         Returns: undefined
+      }
+      simple_warehouse_operation: {
+        Args: {
+          _equipment_id: string
+          _from_warehouse_id: string
+          _object_id: string
+          _operation_date: string
+          _operation_key: string
+          _quantity: number
+          _recipient: string
+          _to_warehouse_id: string
+          _type: string
+          _unit_id: string
+        }
+        Returns: Json
       }
       spare_part_stock: { Args: { _id: string }; Returns: number }
       telegram_bot_configured: { Args: { _org_id: string }; Returns: boolean }

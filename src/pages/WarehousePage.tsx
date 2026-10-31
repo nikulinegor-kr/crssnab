@@ -397,7 +397,7 @@ export default function WarehousePage() {
                 <ClipboardCheck className="h-4 w-4 mr-1" /> Инвентаризация
               </Button>
               <Button onClick={() => navigate("/warehouse/qr")} size="sm" variant="outline">
-                QR-склад
+                ТМЦ и QR
               </Button>
               <Button onClick={() => navigate("/warehouse/journal")} size="sm" variant="ghost">
                 <BookOpen className="h-4 w-4 mr-1" /> Журнал
