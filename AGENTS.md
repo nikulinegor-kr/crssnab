@@ -22,4 +22,5 @@
 - Parse attached invoices through the authenticated Claude assistant and its user-token storage client; persist extraction caches and verified supplier directors separately from read-only chat tools.
 - Expose request receiving and stock moves/issues through receive_warehouse_request and simple_warehouse_operation; both atomically reuse post_warehouse_document internally, keeping draft documents hidden and stock read-only to clients.
 - Keep receipt UI and reprinting in RequestReceiptButton, shared by request rows and the side panel, so received metadata and permanent labels never diverge.
+- Open receipt UI only after a successful delivered-status save; synchronize the selected request with refreshed request data so the side panel never keeps a stale status.
 - Serve the simple TMC screen at /warehouse and its /warehouse/qr alias; retain the historical warehouse page at /warehouse/legacy without making it the primary workflow.
