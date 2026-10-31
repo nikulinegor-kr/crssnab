@@ -13,17 +13,30 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
  const pad=20,gap=18,metaFont=18,metaLine=24;
  const q=Math.min(h-pad*2,Math.floor(w*0.5)),textX=pad+q+gap,textWidth=w-pad-textX;
  if(textWidth<60)throw Error('Этикетка слишком узкая для выбранного размера. Выберите большую этикетку.');
- function wrap(text:string,font:string,maxWidth:number){c.font=font;const rows:string[]=[];let row='';for(const char of text){if(c.measureText(row+char).width>maxWidth&&row){rows.push(row.trim());row='';}row+=char;}if(row)rows.push(row.trim());return rows;}
+ function wrap(text:string,font:string,maxWidth:number){
+  c.font=font;const rows:string[]=[];let row='';
+  for(const word of text.split(/\s+/).filter(Boolean)){
+   if(c.measureText(row?`${row} ${word}`:word).width<=maxWidth){row=row?`${row} ${word}`:word;continue;}
+   if(row)rows.push(row.trim());
+   row='';
+   if(c.measureText(word).width>maxWidth){let part='';for(const char of word){if(c.measureText(part+char).width>maxWidth&&part){rows.push(part);part='';}part+=char;}row=part;continue;}
+   row=word;
+  }
+  if(row)rows.push(row.trim());
+  return rows;
+ }
  const meta=[...label.lines,...(preview?[]:[`ID: ${label.token.slice(-8)}`])].filter(text=>text&&text!==label.title);
  const metaSpec=`${metaFont}px Manrope, Arial, sans-serif`;
  const metaRows=meta.flatMap(text=>wrap(text,metaSpec,textWidth));
  const titleSpace=h-pad*2-metaRows.length*metaLine-(metaRows.length?14:0);
- let font=30,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
+ let font=44,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
  while(rows.length*(font+4)>titleSpace&&font>12){font--;rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);}
  if(rows.length*(font+4)>titleSpace)throw Error('Название слишком длинное для выбранного размера. Выберите большую этикетку.');
+ const block=rows.length*(font+4)+(metaRows.length?14+metaRows.length*metaLine:0);
+ const top=pad+Math.max(0,(h-pad*2-block)/2);
  c.font=`600 ${font}px Manrope, Arial, sans-serif`;
- rows.forEach((row,i)=>c.fillText(row,textX,pad+font+i*(font+4)));
- c.font=metaSpec;let my=pad+rows.length*(font+4)+18;
+ rows.forEach((row,i)=>c.fillText(row,textX,top+font+i*(font+4)));
+ c.font=metaSpec;let my=top+rows.length*(font+4)+18;
  for(const row of metaRows){c.fillText(row,textX,my);my+=metaLine;}
  const y=pad;
  if(preview){c.strokeRect(pad,y,q,q);c.font='18px Arial';c.fillText('QR после',pad+12,y+q/2-8);c.fillText('приёмки',pad+12,y+q/2+16);}
