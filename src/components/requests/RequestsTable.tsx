@@ -244,7 +244,6 @@ const MobileRequestCard = memo(({
         </div>
 
         {/* Object */}
-        <RequestReceiptButton request={request} />
         {(request as any).object_name && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
@@ -1527,7 +1526,6 @@ export const RequestsTable = ({
                               </div>
                             }
                           />
-                          <RequestReceiptButton request={request} />
                         </div>
                         <button
                           data-row-action
