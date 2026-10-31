@@ -42,6 +42,7 @@ import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
 import { TrustLetterButton } from "./TrustLetterDialog";
 import { RequestReceiptButton } from "@/components/warehouse-qr/RequestReceiptButton";
+import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -1082,7 +1083,7 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestReceiptButton key={request.id} request={request} openSignal={receiptOpenSignal}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestReceiptButton key={request.id} request={request} openSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
         <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>
