@@ -7,6 +7,7 @@ import { Bot, X, Send, Loader2, User, Sparkles, Minimize2, Maximize2 } from "luc
 import { cn } from "@/lib/utils";
 import { useAiChat, type AiMessage, type PageContext } from "@/hooks/useAiChat";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PAGE_NAMES: Record<string, string> = {
   "/requests": "Заявки",
@@ -79,6 +80,7 @@ const QUICK_PROMPTS = [
 ];
 
 export function FloatingAiChat() {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState("");
@@ -116,12 +118,14 @@ export function FloatingAiChat() {
     }
   };
 
+  if (isMobile) return null;
+
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
         size="icon"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
+        className="hidden md:flex fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
         aria-label="Открыть AI-ассистент"
       >
         <Bot className="h-6 w-6" />

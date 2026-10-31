@@ -1,6 +1,7 @@
 # Project Architecture Rules
 
 - Keep the default organization entry route in mobileNavigation; apply it only at organization selection so explicit request and warehouse QR links retain their destinations and existing route permissions remain enforced.
+- Do not mount global quick-add controls on mobile; guard FloatingAiChat itself so alternate layouts cannot reintroduce the floating chat.
 
 - Keep request staleness logic in `src/lib/requestStaleness.ts` so counters, filters, and row indicators cannot diverge.
 - Keep dashboard operational queues in dedicated widgets fed by the unfiltered request list so period controls do not alter actionable totals.
