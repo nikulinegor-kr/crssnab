@@ -2,7 +2,7 @@ export type RequestQrAction = 'shipment' | 'transit' | 'receipt' | 'received' | 
 export function requestQrAction(status: string, received = false): RequestQrAction {
   if (received) return 'received';
   if (status === 'Готов к отгрузке') return 'shipment';
-  if (status === 'В пути') return 'transit';
+  if (status === 'В пути' || status === 'Доставлено в ТК') return 'transit';
   if (status === 'Доставлено') return 'receipt';
   return 'details';
 }

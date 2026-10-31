@@ -183,6 +183,13 @@
       "when": 1793436950511,
       "tag": "0025_confirm_request_qr_logistics",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793437706759,
+      "tag": "0026_request_qr_delivery_from_carrier",
+      "breakpoints": true
     }
   ]
 }

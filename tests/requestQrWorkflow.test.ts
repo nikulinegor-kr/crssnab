@@ -4,6 +4,7 @@ import { qrPayload, parseQrInput } from '../src/lib/warehouseQr';
 describe('Permanent request QR workflow', () => {
   test('ready dispatches shipment',()=>expect(requestQrAction('Готов к отгрузке')).toBe('shipment'));
   test('transit dispatches read-only summary',()=>expect(requestQrAction('В пути')).toBe('transit'));
+  test('delivered to carrier offers explicit delivery confirmation',()=>expect(requestQrAction('Доставлено в ТК')).toBe('transit'));
   test('delivered dispatches existing receipt',()=>expect(requestQrAction('Доставлено')).toBe('receipt'));
   test('received takes precedence over status',()=>expect(requestQrAction('Готов к отгрузке',true)).toBe('received'));
   test('other statuses do not dispatch mutations',()=>expect(requestQrAction('В работе')).toBe('details'));
