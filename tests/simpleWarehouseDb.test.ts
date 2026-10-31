@@ -49,7 +49,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
   const fallback=readdirSync('drizzle/migrations').find(f=>f.includes('receipt_fallback_labels'));
   if(!fallback)throw Error('Fallback missing');sql(readFileSync(`drizzle/migrations/${fallback}`,'utf8'));
-  for(const name of ['safe_warehouse_delete','preserve_warehouse_delete_admin_access']){const f=readdirSync('drizzle/migrations').find(f=>f.includes(name));if(!f)throw Error('Delete guard missing');sql(readFileSync(`drizzle/migrations/${f}`,'utf8'));}
+  for(const name of ['safe_warehouse_delete','preserve_warehouse_delete_admin_access','receipt_for_all_org_members']){const f=readdirSync('drizzle/migrations').find(f=>f.includes(name));if(!f)throw Error(`Migration ${name} missing`);sql(readFileSync(`drizzle/migrations/${f}`,'utf8'));}
  });
  test('creates warehouse with existing fields and enforces name and org isolation',()=>{
   sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('${WH}','${ORG}',' Новый склад ','Адрес и ответственный');`));
@@ -177,9 +177,16 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
  test('employee without warehouse permission is blocked and no roles are changed',()=>{
   sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
   expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
-  expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Запрещённый склад');`))).toThrow(/row-level security/);
+   expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Запрещённый склад');`))).toThrow(/row-level security/);
   expect(scalar(as(`WITH removed AS(DELETE FROM warehouses WHERE id='${WH}' RETURNING id) SELECT count(*) FROM removed;`))).toBe('0');
   expect(scalar(`SELECT role FROM user_organizations WHERE user_id='${USER}';`)).toBe('member');
   expect(total(batch,WH)).toBe('70');
+ });
+ test('any active org member can receive a delivered request',()=>{
+  const req='00000000-0000-0000-0000-00000000d023';sql(`INSERT INTO requests(id,organization_id,description) VALUES('${req}','${ORG}','Перчатки');`);
+  sql(as(`SELECT receive_warehouse_request('${req}','${WH}','${USER}','[{"quantity":5,"kind":"batch","unit":"пар"}]');`));
+  expect(scalar(`SELECT sum(b.quantity)::int FROM warehouse_balances b JOIN warehouse_units u ON u.id=b.unit_id WHERE u.source_request_id='${req}';`)).toBe('5');
+  expect(scalar(as(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${req}';`))).toBe('1');
+  expect(()=>sql(as(`SELECT receive_warehouse_request('${req}','${WH}','${USER}','[{"quantity":5,"kind":"batch","unit":"пар"}]');`,STRANGER))).toThrow(/Нет доступа/);
  });
 });
