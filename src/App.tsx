@@ -503,10 +503,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <WarehousePage />
+                    <QrWarehousePage />
                   </AppLayout>
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/warehouse/legacy"
+              element={<ProtectedRoute><AppLayout><WarehousePage /></AppLayout></ProtectedRoute>}
             />
             <Route
               path="/warehouse/qr"

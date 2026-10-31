@@ -1,6 +1,7 @@
 import { Navigate, useLocation, Link } from "react-router-dom";
 import { useUserPermissions, ROUTE_PERMISSION_MAP } from "@/hooks/useUserPermissions";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 
 interface PermissionRouteProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface PermissionRouteProps {
 
 export const PermissionRoute = ({ children }: PermissionRouteProps) => {
   const location = useLocation();
+  const { currentOrgId } = useCurrentOrganization();
   const { hasRouteAccess, loading } = useUserPermissions();
   const fallbackRoutes = [
     "/dashboard",
@@ -29,6 +31,8 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     
     "/organization/settings",
   ];
+
+  if (!currentOrgId) return <Navigate to="/select-organization" replace />;
 
   if (loading) {
     return (
