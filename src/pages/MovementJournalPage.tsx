@@ -45,7 +45,7 @@ export default function MovementJournalPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_movements")
-        .select("*, warehouse_products(name, article), warehouses(name, request_objects(name)), requests(request_number, description)")
+        .select("*, warehouse_products(name, article), warehouses(name, request_objects!warehouses_object_id_fkey(name)), requests(request_number, description)")
         .eq("organization_id", currentOrgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
