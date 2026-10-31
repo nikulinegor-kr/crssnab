@@ -13,17 +13,18 @@ import { CameraScanDialog } from '@/components/warehouse-qr/CameraScanDialog';
 import { OperationDialog } from '@/components/warehouse-qr/OperationDialog';
 import { warehouseRows, warehouseQuantity, readWarehouseDescription } from '@/lib/simpleWarehouse';
 import { parseQrInput } from '@/lib/warehouseQr';
-import { printLabels } from '@/lib/warehouseLabels';
+import { LabelExporter } from '@/components/warehouse-qr/LabelExporter';
 import type { WhBalance, WhUnit, WhWarehouse } from '@/components/warehouse-qr/types';
 export default function QrWarehousePage(){
  const {currentOrgId:org}=useCurrentOrganization();const {toast}=useToast();const [params,setParams]=useSearchParams();
  const [scan,setScan]=useState('');const [camera,setCamera]=useState(false);const [search,setSearch]=useState('');const warehouse=params.get('warehouse');const [adding,setAdding]=useState(false);
  const chooseWarehouse=(id:string|null)=>{setSearch('');setParams(previous=>{const next=new URLSearchParams(previous);next.delete('qr');if(id)next.set('warehouse',id);else next.delete('warehouse');return next;});};
  const [card,setCard]=useState<WhUnit|null>(null);const [source,setSource]=useState<string|undefined>();const [op,setOp]=useState<'move'|'issue'|null>(null);const ref=useRef<HTMLInputElement>(null);
+ const [exportUnits,setExportUnits]=useState<WhUnit[]>([]);
  const {data:allowed=false,isLoading:permissionLoading,error:permissionError}=useQuery({queryKey:['wh-permission',org],enabled:!!org,queryFn:async()=>{if(!org)return false;const {data:{user}}=await supabase.auth.getUser();if(!user)return false;const {data,error}=await supabase.rpc('user_can_use_qr_warehouse',{_user:user.id,_org:org});if(error)throw error;return data===true;}});
  const enabled=!!org&&allowed;
  const {data:warehouses=[],error:we,isLoading:warehousesLoading}=useQuery({queryKey:['wh-qr','warehouses',org],enabled,queryFn:()=>warehouseRows<WhWarehouse&{description:string|null;request_objects:{name:string}|null}>((f,t)=>supabase.from('warehouses').select('id,name,description,request_objects!warehouses_object_id_fkey(name)').eq('organization_id',org??'').order('name').range(f,t))});
- const {data:units=[],error:ue,isLoading}=useQuery({queryKey:['wh-qr','units',org],enabled,queryFn:()=>warehouseRows<WhUnit>((f,t)=>supabase.from('warehouse_units').select('id,kind,name,serial_number,batch_number,unit,qr_token,product_id,created_at').eq('organization_id',org??'').order('created_at',{ascending:false}).range(f,t))});
+ const {data:units=[],error:ue,isLoading}=useQuery({queryKey:['wh-qr','units',org],enabled,queryFn:()=>warehouseRows<WhUnit>((f,t)=>supabase.from('warehouse_units').select('id,kind,name,request_title,request_number,source_request_id,serial_number,batch_number,unit,qr_token,product_id,created_at').eq('organization_id',org??'').order('created_at',{ascending:false}).range(f,t))});
  const {data:balances=[],error:be,isLoading:balancesLoading}=useQuery({queryKey:['wh-qr','balances',org],enabled,queryFn:()=>warehouseRows<WhBalance>((f,t)=>supabase.from('warehouse_balances').select('id,unit_id,warehouse_id,cell_id,quantity').eq('organization_id',org??'').gt('quantity',0).order('id').range(f,t))});
  const {data:products=[],error:productError}=useQuery({queryKey:['wh-qr','products',org],enabled,queryFn:()=>warehouseRows<{id:string;article:string|null}>((f,t)=>supabase.from('warehouse_products').select('id,article').eq('organization_id',org??'').order('id').range(f,t))});
  const article=(u:WhUnit)=>products.find(p=>p.id===u.product_id)?.article??'';
@@ -36,8 +37,8 @@ export default function QrWarehousePage(){
  const currentWarehouse=warehouses.find(w=>w.id===warehouse);
  const hasStock=!!warehouse&&balances.some(b=>b.warehouse_id===warehouse&&Number(b.quantity)>0);
  const [limit,setLimit]=useState(60);useEffect(()=>setLimit(60),[search,warehouse]);
- const label=(u:WhUnit)=>({kind:'unit' as const,token:u.qr_token,title:u.name,lines:[u.serial_number??u.batch_number??'',u.kind==='item'?'Изделие':`Материал · ${u.unit}`]});
- const print=async(u:WhUnit[])=>{try{await printLabels(u.map(label));}catch(e){toast({title:'Печать недоступна',description:(e as {message?:string})?.message,variant:'destructive'});}};
+ const label=(u:WhUnit)=>({kind:'unit' as const,token:u.qr_token,title:u.request_title||u.name,lines:[u.name,u.request_number??u.batch_number??'',u.serial_number??'',u.kind==='item'?`Изделие · ${u.unit}`:`Материал · ${u.unit}`]});
+ const print=(u:WhUnit[])=>setExportUnits(u);
  if(permissionLoading)return <p className="p-4">Загрузка…</p>;
  if(permissionError)return <p role="alert" className="text-destructive p-4">Не удалось проверить доступ: {permissionError.message}</p>;
  if(!allowed)return <div className="p-4"><h1 className="text-xl font-semibold">Нет доступа к складу</h1><p className="text-muted-foreground mt-2">Требуется существующее право «Склад».</p></div>;
@@ -50,6 +51,7 @@ export default function QrWarehousePage(){
  </>}
  {filtered.length>limit&&<Button variant="outline" className="min-h-11" onClick={()=>setLimit(n=>n+60)}>Показать ещё</Button>}
  <CameraScanDialog open={camera} onOpenChange={setCamera} onResult={openCode}/>
+ <Dialog open={exportUnits.length>0} onOpenChange={v=>{if(!v)setExportUnits([]);}}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Печать QR</DialogTitle></DialogHeader><LabelExporter labels={exportUnits.map(label)}/></DialogContent></Dialog>
  <Dialog open={!!card} onOpenChange={v=>{if(!v){setCard(null);setOp(null);}}}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">{card&&<><DialogHeader><DialogTitle className="flex gap-2 items-start"><QrCode className="h-5 w-5 shrink-0"/>{card.name}</DialogTitle></DialogHeader><p className="text-muted-foreground text-sm break-words">{card.kind==='item'?'Изделие':'Материал / партия'} · {card.serial_number??card.batch_number??'—'}</p><div className="space-y-2">{stocks(card.id).length?stocks(card.id).map(w=><div key={w.id} className="flex justify-between gap-3"><span>{w.name}</span><span className="font-numeric shrink-0">{w.quantity} {card.unit}</span></div>):<p>Остаток: 0 {card.unit}</p>}</div>
  <DialogFooter className="gap-2 sm:justify-start"><Button className="min-h-11" disabled={!stocks(card.id).length} onClick={()=>setOp('move')}><ArrowRightLeft className="h-4 w-4 mr-2"/>Переместить</Button><Button className="min-h-11" disabled={!stocks(card.id).length} onClick={()=>setOp('issue')}><PackageMinus className="h-4 w-4 mr-2"/>Выдать</Button><Button variant="outline" className="min-h-11" onClick={()=>print([card])}><Printer className="h-4 w-4 mr-2"/>Этикетка</Button></DialogFooter>
  {history.length>0&&<div className="border-t pt-3 space-y-2"><h2 className="text-sm font-medium">Последние операции</h2>{history.map(h=><p key={h.id} className="text-xs text-muted-foreground">{({receipt:'Приёмка',move_out:'Перемещение',move_in:'Прибытие',issue:'Выдача',return:'Возврат'} as Record<string,string>)[h.operation]??h.operation} · {h.delta} · {h.author} · {new Date(h.created_at).toLocaleString('ru-RU')}</p>)}</div>}
