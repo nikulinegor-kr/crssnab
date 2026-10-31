@@ -51,13 +51,13 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
   }});
   const action = requestQrAction(current.status, receipt.data === true);
   useEffect(() => {
-    if (!open || !fresh.data || fresh.isFetching || receipt.isPending || receipt.error || handled.current) return;
+    if (!open || !fresh.data || fresh.isFetching || receipt.isPending || receipt.isFetching || receipt.error || handled.current) return;
     handled.current = true;
     setCarrier(fresh.data.transport_company);
     setShipment(fresh.data.shipment_date ?? '');
     setArrival(fresh.data.planned_delivery_date ?? fresh.data.delivery_date ?? '');
     if (action === 'receipt' || action === 'received') { setReceiptSignal(n => n + 1); setOpen(false); }
-  }, [open, fresh.data, fresh.isFetching, receipt.isPending, receipt.error, action]);
+  }, [open, fresh.data, fresh.isFetching, receipt.isPending, receipt.isFetching, receipt.error, action]);
   const save = async () => {
     if (busy || !org || !permission.data) return;
     const problem = delivery ? (!actual ? 'Укажите фактическую дату прихода' : actual < (current.shipment_date ?? '') ? 'Приход не раньше отгрузки' : actual > format(new Date(),'yyyy-MM-dd') ? 'Дата не может быть в будущем' : null) : shipmentDatesError(carrier,shipment,arrival);
