@@ -5996,6 +5996,19 @@ export type Database = {
         }
         Returns: string
       }
+      manual_warehouse_receipt: {
+        Args: {
+          _code: string
+          _comment: string
+          _kind: string
+          _name: string
+          _operation_key: string
+          _quantity: number
+          _unit: string
+          _warehouse_id: string
+        }
+        Returns: Json
+      }
       normalize_notification_link: { Args: { link: string }; Returns: string }
       planner_check_task_deadlines: { Args: never; Returns: undefined }
       planner_notify_users: {
