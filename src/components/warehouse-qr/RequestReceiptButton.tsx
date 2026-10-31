@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PackageCheck, Printer, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -15,7 +15,7 @@ import { receiptLabels, warehouseRows } from '@/lib/simpleWarehouse';
 type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string };
 type Receipt = { request_id: string; document_id: string; warehouse_id: string; receiver_name: string; received_at: string };
 type Line = { id: string; name: string; quantity: number; kind: 'item' | 'batch'; unit: string };
-export function RequestReceiptButton({ request }: { request: RequestInfo }) {
+export function RequestReceiptButton({ request, openSignal = 0 }: { request: RequestInfo; openSignal?: number }) {
  const org = request.organization_id;
  const [open,setOpen] = useState(false);
  const [warehouse,setWarehouse] = useState<string | null>(null);
@@ -30,6 +30,13 @@ export function RequestReceiptButton({ request }: { request: RequestInfo }) {
  }});
  const {data:receipts=[]}=useQuery({queryKey:['wh-receipts',org],enabled:!!org&&allowed,queryFn:()=>warehouseRows<Receipt>((f,t)=>supabase.from('warehouse_request_receipts').select('request_id,document_id,warehouse_id,receiver_name,received_at').eq('organization_id',org ?? '').order('id').range(f,t))});
  const receipt=receipts.find(r=>r.request_id===request.id);
+ const handledSignal = useRef(0);
+ useEffect(()=>{
+  if(openSignal>handledSignal.current&&allowed&&request.status==='Доставлено'){
+   handledSignal.current=openSignal;
+   setOpen(true);setConfirm(false);
+  }
+ },[openSignal,allowed,request.status]);
  const {data:warehouses=[]}=useQuery({queryKey:['wh-qr','warehouses',org],enabled:allowed,queryFn:()=>warehouseRows<{id:string;name:string;request_objects:{name:string}|null}>((f,t)=>supabase.from('warehouses').select('id,name,request_objects(name)').eq('organization_id',org ?? '').order('name').range(f,t))});
  const {data:details,isLoading,error}=useQuery({queryKey:['wh-receipt-details',request.id],enabled:open&&!receipt,queryFn:async()=>{
   const [{data:items,error:ie},{data:members,error:me},{data:{user}}]=await Promise.all([

@@ -120,6 +120,7 @@ export const RequestSidePanel = ({
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
   const [statusPromptOpen, setStatusPromptOpen] = useState(false);
+  const [receiptOpenSignal, setReceiptOpenSignal] = useState(0);
   const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
@@ -249,6 +250,7 @@ export const RequestSidePanel = ({
     setEditMode(false);
     setAssistantOpen(false);
     setEditDirty(false);
+    setReceiptOpenSignal(0);
   }, [request?.id, open]);
 
   useEffect(() => {
@@ -285,6 +287,9 @@ export const RequestSidePanel = ({
       try {
         const { error } = await supabase.from("requests").update({ [field]: next }).eq("id", request.id);
         if (error) throw error;
+        if (field === "status" && next === DELIVERED_STATUS && previous !== DELIVERED_STATUS) {
+          setReceiptOpenSignal(n => n + 1);
+        }
         if (!options?.silent) {
           toast({
             title: "Сохранено",
@@ -1077,6 +1082,7 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
+      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestReceiptButton key={request.id} request={request} openSignal={receiptOpenSignal}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
         <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>
@@ -1096,7 +1102,6 @@ export const RequestSidePanel = ({
         </div>
       )}
 
-      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestReceiptButton request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
@@ -1203,7 +1208,12 @@ export const RequestSidePanel = ({
             const today = new Date().toISOString().slice(0, 10);
             void saveField("actual_arrival_date" as any, today);
             void (async () => {
-              await supabase.from("requests").update({ status: "Доставлено", actual_arrival_date: today } as any).eq("id", request.id);
+              const { error } = await supabase.from("requests").update({ status: "Доставлено", actual_arrival_date: today } as any).eq("id", request.id);
+              if (error) {
+                toast({ title: "Не удалось отметить приход", description: error.message, variant: "destructive" });
+                return;
+              }
+              setReceiptOpenSignal(n => n + 1);
               queryClient.invalidateQueries({ queryKey: ["requests"] });
             })();
           }}
