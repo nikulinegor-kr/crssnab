@@ -30,6 +30,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
    ALTER TABLE requests ADD COLUMN product_id uuid;ALTER TABLE requests ADD COLUMN warehouse_id uuid;ALTER TABLE requests ADD COLUMN reserve_on_warehouse boolean;ALTER TABLE requests ADD COLUMN quantity numeric;ALTER TABLE requests ADD COLUMN created_by uuid;
    CREATE TABLE stock_movements(organization_id uuid,product_id uuid,warehouse_id uuid,type text,quantity numeric,request_id uuid,comment text,created_by uuid);
    CREATE FUNCTION user_can_view_request(u uuid,o uuid,a uuid) RETURNS boolean LANGUAGE sql AS $$SELECT user_has_org_access(u,o)$$;
+   CREATE FUNCTION user_is_org_admin(u uuid,o uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.user_organizations WHERE user_id=u AND organization_id=o AND is_active AND role IN ('owner','admin')) $$;
    ALTER TABLE warehouses ADD COLUMN name text DEFAULT 'Склад';ALTER TABLE warehouses ADD COLUMN description text;ALTER TABLE warehouses ADD COLUMN object_id uuid;ALTER TABLE warehouses ALTER COLUMN id SET DEFAULT gen_random_uuid();
    ALTER TABLE warehouses ENABLE ROW LEVEL SECURITY;
    CREATE POLICY "Users can create org warehouses" ON warehouses FOR INSERT TO authenticated WITH CHECK(user_has_org_access(auth.uid(),organization_id));
@@ -48,6 +49,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   if(!directory)throw Error('Directory protection missing');sql(readFileSync(`drizzle/migrations/${directory}`,'utf8'));
   const fallback=readdirSync('drizzle/migrations').find(f=>f.includes('receipt_fallback_labels'));
   if(!fallback)throw Error('Fallback missing');sql(readFileSync(`drizzle/migrations/${fallback}`,'utf8'));
+  for(const name of ['safe_warehouse_delete','preserve_warehouse_delete_admin_access']){const f=readdirSync('drizzle/migrations').find(f=>f.includes(name));if(!f)throw Error('Delete guard missing');sql(readFileSync(`drizzle/migrations/${f}`,'utf8'));}
  });
  test('creates warehouse with existing fields and enforces name and org isolation',()=>{
   sql(as(`INSERT INTO warehouses(id,organization_id,name,description) VALUES('${WH}','${ORG}',' Новый склад ','Адрес и ответственный');`));
@@ -62,6 +64,15 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   expect(scalar(`SELECT count(*) FROM stock_movements WHERE request_id='${REQ}' AND type='IN';`)).toBe('0');
   expect(scalar(`SELECT count(*) FROM warehouse_request_receipts;`)).toBe('0');
  });
+ test('edits existing warehouse fields and deletes only unused warehouses',()=>{
+  sql(as(`UPDATE warehouses SET name='Переименованный склад',description='Новый адрес' WHERE id='${WH}';`));
+  expect(scalar(as(`SELECT name FROM warehouses WHERE id='${WH}';`))).toBe('Переименованный склад');
+  const id=scalar(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Пустой временный') RETURNING id;`));
+  expect(scalar(as(`DELETE FROM warehouses WHERE id='${id}' RETURNING id;`))).toBe(id);
+  expect(scalar(`SELECT count(*) FROM warehouses WHERE id='${id}';`)).toBe('0');
+  expect(scalar(as(`DELETE FROM warehouses WHERE id='${WH}' RETURNING id;`,STRANGER))).toBe('');
+  expect(scalar(`SELECT count(*) FROM warehouses WHERE id='${WH}';`)).toBe('1');
+ });
  test('rejects non-delivered, excess quantity and foreign warehouse without partial writes',()=>{
   sql(`UPDATE requests SET status='В пути' WHERE id='${REQ}';`);expect(()=>sql(as(receive()))).toThrow(/Доставлено/);
   sql(`UPDATE requests SET status='Доставлено' WHERE id='${REQ}';`);
@@ -74,6 +85,14 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   expect(total(batch,WH)).toBe('100');expect(sql(as(receive()))).toContain('"already_received": true');
   expect(total(batch,WH)).toBe('100');expect(()=>sql(`UPDATE request_items SET quantity=200 WHERE id='${ITEM}';`)).toThrow(/нельзя изменять/);
   expect(()=>sql(as(receive(REQ,ITEM,100,'batch',WH2)))).toThrow(/другими параметрами/);
+ });
+ test('warehouse deletion cannot remove balances, receipts or cascade legacy movements',()=>{
+  expect(()=>sql(as(`DELETE FROM warehouses WHERE id='${WH}';`))).toThrow(/Склад используется/);
+  expect(total(batch,WH)).toBe('100');
+  const id=scalar(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Связанный') RETURNING id;`));
+  sql(`INSERT INTO stock_movements(organization_id,warehouse_id,quantity,type) VALUES('${ORG}','${id}',1,'IN');ALTER TABLE stock_movements ADD CONSTRAINT test_delete_cascade FOREIGN KEY(warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE;`);
+  expect(()=>sql(as(`DELETE FROM warehouses WHERE id='${id}';`))).toThrow(/Склад используется/);
+  expect(scalar(`SELECT count(*) FROM stock_movements WHERE warehouse_id='${id}';`)).toBe('1');
  });
  test('3 individual units receive distinct permanent QR; concurrent request receives once',async()=>{
   const results=await Promise.all([concurrent(as(receive(REQ3,ITEM3,3,'item'))),concurrent(as(receive(REQ3,ITEM3,3,'item')))]);
@@ -159,6 +178,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
   expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
   expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Запрещённый склад');`))).toThrow(/row-level security/);
+  expect(scalar(as(`DELETE FROM warehouses WHERE id='${WH}' RETURNING id;`))).toBe('');
   expect(scalar(`SELECT role FROM user_organizations WHERE user_id='${USER}';`)).toBe('member');
   expect(total(batch,WH)).toBe('70');
  });
