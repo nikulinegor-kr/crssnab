@@ -148,6 +148,13 @@
       "when": 1793427608165,
       "tag": "0020_preserve_warehouse_delete_admin_access",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793428660175,
+      "tag": "0021_receipt_for_all_org_members",
+      "breakpoints": true
     }
   ]
 }
