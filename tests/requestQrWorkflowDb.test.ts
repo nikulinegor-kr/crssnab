@@ -32,6 +32,7 @@ suite('QR logistics on disposable PostgreSQL',()=>{
     sql(readFileSync('drizzle/migrations/0023_manual_warehouse_receipt.sql','utf8'));
     sql(readFileSync('drizzle/migrations/0024_receipt_units_sht_komplekt.sql','utf8'));
     sql(readFileSync('drizzle/migrations/0025_confirm_request_qr_logistics.sql','utf8'));
+    sql(readFileSync('drizzle/migrations/0026_request_qr_delivery_from_carrier.sql','utf8'));
   });
   test('reading/scanning ready does not ship or receive',()=>{expect(scalar(`SELECT status FROM requests WHERE id='${id(902)}';`)).toBe('Готов к отгрузке');expect(scalar(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${id(902)}';`)).toBe('0');});
   test('mandatory carrier enforced',()=>expect(()=>sql(as(ship(902,'NULL')))).toThrow(/Укажите ТК/));
@@ -58,4 +59,17 @@ suite('QR logistics on disposable PostgreSQL',()=>{
   test('concurrent existing receipt receives exactly once with same QR',async()=>{const call=as(`SELECT receive_warehouse_request('${id(902)}','${WH}','${USER}','[{"item_id":null,"quantity":2,"kind":"batch","unit":"комплект"}]');`);const r=await Promise.all([concurrent(call),concurrent(call)]);expect(r.map(x=>x.code)).toEqual([0,0]);expect(scalar(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${id(902)}';`)).toBe('1');expect(scalar(`SELECT sum(b.quantity) FROM warehouse_balances b JOIN warehouse_units u ON b.unit_id=u.id WHERE u.source_request_id='${id(902)}';`)).toBe('2');const token=scalar(`SELECT qr_token FROM warehouse_units WHERE source_request_id='${id(902)}';`);sql(call);expect(scalar(`SELECT qr_token FROM warehouse_units WHERE source_request_id='${id(902)}';`)).toBe(token);expect(()=>sql(as(ship(902)))).toThrow(/Готов к отгрузке/);});
   test('receipt rejects forbidden unit and zero quantity',()=>{sql(as(deliver(904)));expect(()=>sql(as(`SELECT receive_warehouse_request('${id(904)}','${WH}','${USER}','[{"quantity":2,"kind":"batch","unit":"кг"}]');`))).toThrow(/только шт/);expect(()=>sql(as(`SELECT receive_warehouse_request('${id(904)}','${WH}','${USER}','[{"quantity":0,"kind":"batch","unit":"шт"}]');`))).toThrow(/больше нуля/);});
   test('anonymous cannot call RPC',()=>expect(scalar(`SELECT has_function_privilege('anon','public.confirm_request_qr_logistics(uuid,uuid,text,text,date,date,date)','EXECUTE');`)).toBe('f'));
+  test('carrier status delivers concurrently once, then receives once',async()=>{
+    sql(`UPDATE requests SET status='Доставлено в ТК',shipment_date='2026-10-30',planned_delivery_date='2026-11-02' WHERE id='${id(907)}';`);
+    expect(()=>sql(as(deliver(907,"'2026-10-29'")))).toThrow(/не раньше/);
+    expect(()=>sql(as(deliver(907),STRANGER))).toThrow(/Нет доступа/);
+    const r=await Promise.all([concurrent(as(deliver(907))),concurrent(as(deliver(907)))]);
+    expect(r.map(x=>x.code)).toEqual([0,0]);
+    expect(scalar(`SELECT status FROM requests WHERE id='${id(907)}';`)).toBe('Доставлено');
+    expect(scalar(`SELECT count(*) FROM qr_test_events WHERE request_id='${id(907)}' AND status='Доставлено';`)).toBe('1');
+    expect(scalar(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${id(907)}';`)).toBe('0');
+    const call=as(`SELECT receive_warehouse_request('${id(907)}','${WH}','${USER}','[{"quantity":1,"kind":"batch","unit":"шт"}]');`);
+    sql(call);sql(call);
+    expect(scalar(`SELECT count(*) FROM warehouse_request_receipts WHERE request_id='${id(907)}';`)).toBe('1');
+  });
 });
