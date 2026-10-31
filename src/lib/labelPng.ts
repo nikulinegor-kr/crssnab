@@ -12,34 +12,34 @@ export async function labelPng(label:LabelInput,size:LabelSize,preview=false):Pr
  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
  const c=canvas.getContext('2d');if(!c)throw Error('PNG недоступен');
  c.fillStyle='#fff';c.fillRect(0,0,w,h);c.fillStyle='#000';
- const pad=20,gap=18;
- const q=Math.min(h-pad*2,Math.floor(w*0.5)),textX=pad+q+gap,textWidth=w-pad-textX;
+ const pad=8,gap=6;
+ const q=Math.min(h-pad*2,Math.floor(w*0.53)),textX=pad+q+gap,textWidth=w-pad-textX;
  if(textWidth<60)throw Error('Этикетка слишком узкая для выбранного размера. Выберите большую этикетку.');
  function wrap(text:string,font:string,maxWidth:number){
   c.font=font;
   return wrapLabelText(text,maxWidth,text=>c.measureText(text).width);
  }
  const meta=[...label.lines,...labelPeopleLines(label)].filter(text=>text&&text!==label.title);
- let metaFont=18;
+ let metaFont=20;
  const metaGroups=meta.flatMap(labelTextGroups);
  while(metaFont>12){c.font=`${metaFont}px Manrope, Arial, sans-serif`;if(metaGroups.every(text=>c.measureText(text).width<=textWidth))break;metaFont--;}
  c.font=`${metaFont}px Manrope, Arial, sans-serif`;
  if(metaGroups.some(text=>c.measureText(text).width>textWidth))throw Error('Обозначение слишком длинное. Выберите большую этикетку.');
- const metaLine=metaFont+6;
+ const metaLine=metaFont+3;
  const metaSpec=`${metaFont}px Manrope, Arial, sans-serif`;
  const metaRows=meta.flatMap(text=>wrap(text,metaSpec,textWidth));
- const titleSpace=h-pad*2-metaRows.length*metaLine-(metaRows.length?14:0);
+ const titleSpace=h-pad*2-metaRows.length*metaLine-(metaRows.length?7:0);
  const titleWords=labelTextGroups(label.title);
- let wordFont=34;while(wordFont>12&&titleWords.some(word=>{c.font=`600 ${wordFont}px Manrope, Arial, sans-serif`;return c.measureText(word).width>textWidth;}))wordFont--;
+ let wordFont=40;while(wordFont>12&&titleWords.some(word=>{c.font=`600 ${wordFont}px Manrope, Arial, sans-serif`;return c.measureText(word).width>textWidth;}))wordFont--;
  let font=wordFont,rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);
- while(rows.length*(font+4)>titleSpace&&font>12){font--;rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);}
+ while(rows.length*(font+2)>titleSpace&&font>12){font--;rows=wrap(label.title,`600 ${font}px Manrope, Arial, sans-serif`,textWidth);}
  c.font=`600 ${font}px Manrope, Arial, sans-serif`;
- if(rows.length*(font+4)>titleSpace||rows.some(row=>c.measureText(row).width>textWidth))throw Error('Название слишком длинное для выбранного размера. Выберите большую этикетку.');
- const block=rows.length*(font+4)+(metaRows.length?14+metaRows.length*metaLine:0);
- const top=pad+Math.max(0,(h-pad*2-block)/2);
+ if(rows.length*(font+2)>titleSpace||rows.some(row=>c.measureText(row).width>textWidth))throw Error('Название слишком длинное для выбранного размера. Выберите большую этикетку.');
+ const top=pad;
+ c.textBaseline='top';
  c.font=`600 ${font}px Manrope, Arial, sans-serif`;
- rows.forEach((row,i)=>c.fillText(row,textX,top+font+i*(font+4)));
- c.font=metaSpec;let my=top+rows.length*(font+4)+18;
+ rows.forEach((row,i)=>c.fillText(row,textX,top+i*(font+2)));
+ c.font=metaSpec;let my=top+rows.length*(font+2)+7;
  for(const row of metaRows){c.fillText(row,textX,my);my+=metaLine;}
  const y=Math.round((h-q)/2);
  if(preview){c.strokeRect(pad,y,q,q);c.font='18px Arial';c.fillText('QR после',pad+12,y+q/2-8);c.fillText('приёмки',pad+12,y+q/2+16);}
