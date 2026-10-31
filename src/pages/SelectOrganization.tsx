@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { organizationEntryRoute } from '@/lib/mobileNavigation';
 
 interface UserOrganization {
   id: string;
@@ -28,7 +29,7 @@ const SelectOrganization = () => {
     // Если уже выбранная организация сохранена — сразу в дашборд
     const saved = localStorage.getItem("currentOrganizationId");
     if (saved) {
-      navigate("/requests");
+      navigate(organizationEntryRoute(window.matchMedia('(max-width: 767px)').matches));
       return;
     }
     fetchOrganizations();
@@ -86,7 +87,7 @@ const SelectOrganization = () => {
 
   const selectOrganization = (orgId: string) => {
     setCurrentOrgId(orgId);
-    navigate("/requests");
+    navigate(organizationEntryRoute(window.matchMedia('(max-width: 767px)').matches));
   };
 
   const getRoleBadge = (role: string) => {

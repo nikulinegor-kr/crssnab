@@ -79,7 +79,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-1">
-              <QuickAddErpMenu />
+              <div className="hidden md:block"><QuickAddErpMenu /></div>
               <NotificationBell />
             </div>
           </header>
@@ -107,7 +107,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
-        {pathname !== "/executive" && pathname !== "/tasks" && !pathname.startsWith("/me") && <QuickRequestFab />}
+        {pathname !== "/executive" && pathname !== "/tasks" && !pathname.startsWith("/me") && <QuickRequestFab className="hidden md:flex" />}
         <MobileBottomNav />
       </div>
     </SidebarProvider>

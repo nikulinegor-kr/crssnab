@@ -1,8 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { ClipboardList, Plus, ListChecks, Menu, House } from "lucide-react";
+import { ClipboardList, Zap, ListChecks, Menu, Warehouse } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +31,6 @@ const Item = ({
 );
 
 export const MobileBottomNav = () => {
-  const { hasRouteAccess } = useUserPermissions();
-  const isAdmin = hasRouteAccess("/executive");
   const { open } = useQuickRequest();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
@@ -51,22 +48,20 @@ export const MobileBottomNav = () => {
       aria-label="Основная навигация"
     >
       <div className="flex items-stretch h-16">
-        <Item to={isAdmin ? "/executive" : "/me"} label="Главная" icon={House} active={isAdmin ? location.pathname === "/executive" : location.pathname.startsWith("/me")} />
         <Item to="/requests" label="Заявки" icon={ClipboardList} />
+        <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks"} />
 
         <Button variant="ghost"
           type="button"
           onClick={open}
           aria-label="Быстрая заявка"
-          className="flex flex-col items-center justify-center flex-1 h-full rounded-none px-0"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-none px-0 text-primary"
         >
-          <span className="-mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform">
-            <Plus className="h-6 w-6" />
-          </span>
-          <span className="text-xs font-medium text-muted-foreground mt-0.5">Быстро</span>
+          <Zap className="h-5 w-5" />
+          <span className="text-xs font-medium">Быстро</span>
         </Button>
 
-        <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks"} />
+        <Item to="/warehouse" label="Склад" icon={Warehouse} />
         <Button variant="ghost"
           type="button"
           onClick={toggleSidebar}
