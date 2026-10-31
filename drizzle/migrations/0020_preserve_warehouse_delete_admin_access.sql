@@ -1,0 +1,2 @@
+ALTER POLICY "Users can delete org warehouses" ON public.warehouses USING (public.user_is_org_admin(auth.uid(),organization_id) AND public.user_can_use_qr_warehouse(auth.uid(),organization_id));
+ALTER POLICY warehouse_delete_permission_guard ON public.warehouses USING (public.user_is_org_admin(auth.uid(),organization_id) AND public.user_can_use_qr_warehouse(auth.uid(),organization_id));
