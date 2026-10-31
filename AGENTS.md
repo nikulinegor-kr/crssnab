@@ -1,5 +1,7 @@
 # Project Architecture Rules
 
+- Keep the default organization entry route in mobileNavigation; apply it only at organization selection so explicit request and warehouse QR links retain their destinations and existing route permissions remain enforced.
+
 - Keep request staleness logic in `src/lib/requestStaleness.ts` so counters, filters, and row indicators cannot diverge.
 - Keep dashboard operational queues in dedicated widgets fed by the unfiltered request list so period controls do not alter actionable totals.
 - Keep executive-panel queries organization-scoped and independent in `useExecutivePanel`, with exact head-only counts and paginated aggregate rows; reuse the planner task dialog for drill-down to avoid inconsistent editing behavior.
