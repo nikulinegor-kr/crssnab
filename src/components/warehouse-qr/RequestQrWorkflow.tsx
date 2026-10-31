@@ -31,7 +31,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
     if (error) throw error;
     return data as unknown as Request;
   }});
-  const current = fresh.data ?? request;
+  const current = qrEntry ? fresh.data ?? request : request;
   const receipt = useQuery({ queryKey: ['request-qr-received', org, request.id], enabled: open && !!fresh.data, queryFn: async () => {
     const { data, error } = await supabase.from('warehouse_request_receipts').select('id').eq('request_id', request.id).eq('organization_id', org ?? '').maybeSingle();
     if (error) throw error;
@@ -50,13 +50,13 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
   }});
   const action = requestQrAction(current.status, receipt.data === true);
   useEffect(() => {
-    if (!open || !fresh.data || receipt.isPending || receipt.error || handled.current) return;
+    if (!open || !fresh.data || fresh.isFetching || receipt.isPending || receipt.error || handled.current) return;
     handled.current = true;
     setCarrier(fresh.data.transport_company);
     setShipment(fresh.data.shipment_date ?? '');
     setArrival(fresh.data.planned_delivery_date ?? fresh.data.delivery_date ?? '');
     if (action === 'receipt' || action === 'received') { setReceiptSignal(n => n + 1); setOpen(false); }
-  }, [open, fresh.data, receipt.isPending, receipt.error, action]);
+  }, [open, fresh.data, fresh.isFetching, receipt.isPending, receipt.error, action]);
   const save = async () => {
     if (busy || !org || !permission.data) return;
     const problem = delivery ? (!actual ? 'Укажите фактическую дату прихода' : actual < (current.shipment_date ?? '') ? 'Приход не раньше отгрузки' : actual > format(new Date(),'yyyy-MM-dd') ? 'Дата не может быть в будущем' : null) : shipmentDatesError(carrier,shipment,arrival);
@@ -74,7 +74,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
     finally { setBusy(false); }
   };
   const date = (v: string | null | undefined) => v ? format(new Date(v),'dd.MM.yyyy') : '—';
-  const loading = fresh.isPending || receipt.isPending || permission.isPending;
+  const loading = fresh.isPending || (!handled.current && fresh.isFetching) || receipt.isPending || permission.isPending;
   return <>
     <RequestReceiptButton request={current} openSignal={receiptOpenSignal + receiptSignal} />
     <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
@@ -92,7 +92,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
         {error && <p role="alert" className="text-destructive">{error}</p>}
         <DialogFooter className="gap-2">
           <Button variant="outline" className="min-h-11" disabled={busy} onClick={()=>delivery ? setDelivery(false) : setOpen(false)}>{delivery ? 'Назад' : 'Закрыть'}</Button>
-          {permission.data && (action === 'shipment' || delivery) && <Button className="min-h-11" disabled={busy || !!carriers.error || (delivery ? !actual : !!shipmentDatesError(carrier,shipment,arrival))} onClick={save}>{busy ? 'Сохранение…' : delivery ? 'Подтвердить доставку и перейти к приёмке' : 'Подтвердить отгрузку'}</Button>}
+          {permission.data && (action === 'shipment' || delivery) && <Button className="min-h-11 h-auto whitespace-normal" disabled={busy || !!carriers.error || (delivery ? !actual : !!shipmentDatesError(carrier,shipment,arrival))} onClick={save}>{busy ? 'Сохранение…' : delivery ? 'Подтвердить доставку и перейти к приёмке' : 'Подтвердить отгрузку'}</Button>}
           {permission.data && action === 'transit' && !delivery && <Button className="min-h-11" onClick={()=>{setError('');setDelivery(true);}}>Доставлено / Перейти к приёмке</Button>}
         </DialogFooter>
       </>}

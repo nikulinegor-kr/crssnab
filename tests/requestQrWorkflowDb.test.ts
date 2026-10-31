@@ -29,6 +29,7 @@ suite('QR logistics on disposable PostgreSQL',()=>{
     CREATE TABLE qr_test_events(request_id uuid,status text);
     CREATE FUNCTION qr_test_notify() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.status IS DISTINCT FROM NEW.status THEN INSERT INTO qr_test_events VALUES(NEW.id,NEW.status); END IF; RETURN NEW; END $$;
     CREATE TRIGGER qr_test_notify AFTER UPDATE ON requests FOR EACH ROW EXECUTE FUNCTION qr_test_notify();`);
+    sql(readFileSync('drizzle/migrations/0023_manual_warehouse_receipt.sql','utf8'));
     sql(readFileSync('drizzle/migrations/0024_receipt_units_sht_komplekt.sql','utf8'));
     sql(readFileSync('drizzle/migrations/0025_confirm_request_qr_logistics.sql','utf8'));
   });
