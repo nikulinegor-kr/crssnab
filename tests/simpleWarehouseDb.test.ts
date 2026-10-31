@@ -70,7 +70,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   const id=scalar(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Пустой временный') RETURNING id;`));
   expect(scalar(as(`DELETE FROM warehouses WHERE id='${id}' RETURNING id;`))).toBe(id);
   expect(scalar(`SELECT count(*) FROM warehouses WHERE id='${id}';`)).toBe('0');
-  expect(scalar(as(`DELETE FROM warehouses WHERE id='${WH}' RETURNING id;`,STRANGER))).toBe('');
+  expect(scalar(as(`WITH removed AS(DELETE FROM warehouses WHERE id='${WH}' RETURNING id) SELECT count(*) FROM removed;`,STRANGER))).toBe('0');
   expect(scalar(`SELECT count(*) FROM warehouses WHERE id='${WH}';`)).toBe('1');
  });
  test('rejects non-delivered, excess quantity and foreign warehouse without partial writes',()=>{
@@ -178,7 +178,7 @@ suite('Simple warehouse on disposable PostgreSQL',()=>{
   sql(`UPDATE user_organizations SET role='member' WHERE user_id='${USER}';INSERT INTO user_permissions VALUES('${USER}','${ORG}','erp.warehouse',false);`);
   expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000109','move',1)))).toThrow(/Нет доступа/);
   expect(()=>sql(as(`INSERT INTO warehouses(organization_id,name) VALUES('${ORG}','Запрещённый склад');`))).toThrow(/row-level security/);
-  expect(scalar(as(`DELETE FROM warehouses WHERE id='${WH}' RETURNING id;`))).toBe('');
+  expect(scalar(as(`WITH removed AS(DELETE FROM warehouses WHERE id='${WH}' RETURNING id) SELECT count(*) FROM removed;`))).toBe('0');
   expect(scalar(`SELECT role FROM user_organizations WHERE user_id='${USER}';`)).toBe('member');
   expect(total(batch,WH)).toBe('70');
  });

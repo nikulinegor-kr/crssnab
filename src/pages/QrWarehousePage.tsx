@@ -62,7 +62,7 @@ export default function QrWarehousePage(){
  {historyError&&<p role="alert" className="text-destructive">Не удалось загрузить операции: {historyError.message}</p>}
  </>}</DialogContent></Dialog>
  {org&&<OperationDialog open={!!op} onOpenChange={v=>{if(!v)setOp(null);}} orgId={org} type={op??'move'} unit={card} warehouses={warehouses} balances={balances} fromWarehouseId={source}/>}
- {org&&<AddWarehouseDialog open={adding||!!editing} onOpenChange={v=>{if(!v){setAdding(false);setEditing(null);}} orgId={org} warehouse={editing}/>}
+ {org&&<AddWarehouseDialog open={adding||!!editing} onOpenChange={v=>{if(!v){setAdding(false);setEditing(null);}}} orgId={org} warehouse={editing}/>}
  <Dialog open={!!deleting} onOpenChange={v=>{if(!v&&!deleteBusy)setDeleting(null);}}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Удалить склад «{deleting?.name}»?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Удаление возможно только без остатков, операций и связанных заявок или объектов.</p>{deleteError&&<p role="alert" className="text-destructive text-sm">{deleteError}</p>}<DialogFooter><Button variant="outline" className="min-h-11" disabled={deleteBusy} onClick={()=>setDeleting(null)}>Отмена</Button><Button variant="destructive" className="min-h-11" disabled={deleteBusy} onClick={remove}>{deleteBusy?'Удаление…':'Удалить склад'}</Button></DialogFooter></DialogContent></Dialog>
  </div>;
 }
