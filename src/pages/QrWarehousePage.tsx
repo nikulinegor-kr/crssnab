@@ -13,7 +13,6 @@ import { CameraScanDialog } from '@/components/warehouse-qr/CameraScanDialog';
 import { OperationDialog } from '@/components/warehouse-qr/OperationDialog';
 import { warehouseRows, warehouseQuantity, readWarehouseDescription } from '@/lib/simpleWarehouse';
 import { parseQrInput } from '@/lib/warehouseQr';
-import { printLabels } from '@/lib/warehouseLabels';
 import { LabelExporter } from '@/components/warehouse-qr/LabelExporter';
 import type { WhBalance, WhUnit, WhWarehouse } from '@/components/warehouse-qr/types';
 export default function QrWarehousePage(){
