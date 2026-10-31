@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { Building2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLayoutProps) {
   const { logoUrl, orgName } = useOrgBranding();
   const { pathname } = useLocation();
+  const isMobile = useIsMobile();
 
   const SIDEBAR_STATE_KEY = "sidebar:open:v1";
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
@@ -79,7 +81,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-1">
-              <div className="hidden md:block"><QuickAddErpMenu /></div>
+              {!isMobile && <div className="hidden md:block"><QuickAddErpMenu /></div>}
               <NotificationBell />
             </div>
           </header>
@@ -107,7 +109,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
         </div>
         {/* AI chat panel removed from default layout per user preference. */}
-        {pathname !== "/executive" && pathname !== "/tasks" && !pathname.startsWith("/me") && <QuickRequestFab className="hidden md:flex" />}
+        {!isMobile && pathname !== "/executive" && pathname !== "/tasks" && !pathname.startsWith("/me") && <QuickRequestFab className="hidden md:flex" />}
         <MobileBottomNav />
       </div>
     </SidebarProvider>
