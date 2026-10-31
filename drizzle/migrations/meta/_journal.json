@@ -162,6 +162,13 @@
       "when": 1793428767728,
       "tag": "0022_post_request_receipt_for_members",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793430889619,
+      "tag": "0023_manual_warehouse_receipt",
+      "breakpoints": true
     }
   ]
 }
