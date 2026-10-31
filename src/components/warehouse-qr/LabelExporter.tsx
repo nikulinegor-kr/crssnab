@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Download, Printer, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { labelPng, LABEL_SIZES } from '@/lib/labelPng';
 import { printLabels, type LabelInput } from '@/lib/warehouseLabels';
+import { saveImageFile } from '@/lib/saveImage';
 export function LabelExporter({labels,preview=false}:{labels:LabelInput[];preview?:boolean}){
  const [sizeIndex,setSizeIndex]=useState('0'),[index,setIndex]=useState('0');const [file,setFile]=useState<File|null>(null),[url,setUrl]=useState(''),[error,setError]=useState('');
  const label=labels[Number(index)]??labels[0],size=LABEL_SIZES[Number(sizeIndex)]??LABEL_SIZES[0];
