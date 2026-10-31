@@ -21,13 +21,13 @@ export async function labelPng(label:LabelInput,preview=false):Promise<Blob> {
  if(preview){c.strokeRect(x,y,q,q);c.font='18px Arial';c.fillText('QR после',x+12,y+q/2-8);c.fillText('приёмки',x+12,y+q/2+16);}
  else{const image=new Image();image.src=await QRCode.toDataURL(qrLink(label.kind,label.token,window.location.origin),{width:q,margin:4,errorCorrectionLevel:'M'});await image.decode();c.imageSmoothingEnabled=false;c.drawImage(image,x,y,q,q);}
  const raw=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG недоступен')),'image/png'));
- return new Blob([withPhysicalSize(new Uint8Array(await raw.arrayBuffer()),scale*1000)],{type:'image/png'});
+ return new Blob([withPhysicalSize(new Uint8Array(await raw.arrayBuffer()),scale*1000) as Uint8Array<ArrayBuffer>],{type:'image/png'});
 }
 
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 function crc32(b:Uint8Array){let c=0xffffffff;for(const x of b)c=CRC[(c^x)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
 /** Insert a pHYs chunk (pixels per metre) after IHDR so apps import the PNG as exactly 50x80 mm (304.8 dpi). */
-export function withPhysicalSize(png:Uint8Array,pxPerMetre:number):Uint8Array{
+export function withPhysicalSize(png:Uint8Array,pxPerMetre:number):Uint8Array<ArrayBuffer>{
  const chunk=new Uint8Array(21),v=new DataView(chunk.buffer);
  v.setUint32(0,9);chunk.set([112,72,89,115],4);v.setUint32(8,pxPerMetre);v.setUint32(12,pxPerMetre);chunk[16]=1;
  v.setUint32(17,crc32(chunk.subarray(4,17)));
