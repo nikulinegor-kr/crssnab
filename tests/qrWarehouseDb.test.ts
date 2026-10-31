@@ -61,8 +61,8 @@ suite("QR warehouse posting on real PostgreSQL", () => {
       INSERT INTO members VALUES('${USER}','${ORG}'),('${STRANGER}','${OTHER}');
       INSERT INTO warehouses VALUES('${WH}','${ORG}'),('${WH_OTHER}','${OTHER}');
       INSERT INTO requests VALUES('${REQ}','${ORG}');`);
-    const file = readdirSync(new URL("../drizzle/migrations", import.meta.url)).find((f) => f.includes("qr_warehouse"))!;
-    sql(readFileSync(new URL(`../drizzle/migrations/${file}`, import.meta.url), "utf8"));
+    const file = readdirSync(new URL("../drizzle/migrations", import.meta.url)).find((f) => f.includes("qr_warehouse"));
+    sql(readFileSync(process.env.LOCAL_WAREHOUSE_SQL ?? new URL(`../drizzle/migrations/${file}`, import.meta.url), "utf8"));
     cellA = scalar(as(USER, `INSERT INTO warehouse_cells(organization_id,warehouse_id,code) VALUES('${ORG}','${WH}','A-01') RETURNING id;`));
     cellB = scalar(as(USER, `INSERT INTO warehouse_cells(organization_id,warehouse_id,code) VALUES('${ORG}','${WH}','B-01') RETURNING id;`));
     batch = scalar(as(USER, `INSERT INTO warehouse_units(organization_id,kind,name,batch_number,unit) VALUES('${ORG}','batch','Болт М16','П-1','шт') RETURNING id;`));
