@@ -134,6 +134,13 @@
       "when": 1793427129123,
       "tag": "0018_receipt_fallback_labels",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793427561094,
+      "tag": "0019_safe_warehouse_delete",
+      "breakpoints": true
     }
   ]
 }
