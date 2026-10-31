@@ -21,12 +21,12 @@ import { CameraScanDialog } from "@/components/warehouse-qr/CameraScanDialog";
 import { OperationDialog } from "@/components/warehouse-qr/OperationDialog";
 import type { WhBalance, WhCell, WhIssue, WhUnit, WhWarehouse } from "@/components/warehouse-qr/types";
 
-async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>): Promise<T[]> {
   const out: T[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await build(from, from + 999);
     if (error) throw error;
-    out.push(...(data ?? []));
+    out.push(...((data ?? []) as T[]));
     if (!data || data.length < 1000) return out;
   }
 }
