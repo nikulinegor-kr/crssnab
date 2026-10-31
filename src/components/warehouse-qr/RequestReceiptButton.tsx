@@ -34,8 +34,12 @@ export function RequestReceiptButton({ request }: { request: RequestInfo }) {
  const {data:details,isLoading,error}=useQuery({queryKey:['wh-receipt-details',request.id],enabled:open&&!receipt,queryFn:async()=>{
   const [{data:items,error:ie},{data:members,error:me},{data:{user}}]=await Promise.all([
    supabase.from('request_items').select('id,name,quantity').eq('request_id',request.id).order('created_at'),
-   supabase.from('user_organizations').select('user_id,profiles(full_name)').eq('organization_id',org ?? '').eq('is_active',true),supabase.auth.getUser()]);
-  if(ie) throw ie; if(me) throw me; return {items:items??[],members:members??[],userId:user?.id??null};
+   supabase.from('user_organizations').select('user_id').eq('organization_id',org ?? '').eq('is_active',true),supabase.auth.getUser()]);
+  if(ie) throw ie; if(me) throw me;
+  const ids=(members??[]).map(m=>m.user_id);
+  const {data:profiles,error:pe}=await supabase.from('profiles').select('id,full_name').in('id',ids);
+  if(pe) throw pe;
+  return {items:items??[],members:(members??[]).map(m=>({...m,name:profiles?.find(p=>p.id===m.user_id)?.full_name??'—'})),userId:user?.id??null};
  }});
  useEffect(()=>{if(details){setLines(details.items.map(i=>({...i,kind:'batch',unit:'шт'})));setReceiver(details.userId);}},[details,open]);
  const notifyError=(e:unknown)=>toast({title:'Приёмка не выполнена',description:(e as {message?:string})?.message??String(e),variant:'destructive'});
@@ -59,7 +63,7 @@ export function RequestReceiptButton({ request }: { request: RequestInfo }) {
    {receipt?<div className="space-y-3"><p className="font-medium text-success">Принято на склад</p><p>{receipt.receiver_name} · {format(new Date(receipt.received_at),'dd.MM.yyyy HH:mm')}</p><p>{warehouses.find(w=>w.id===receipt.warehouse_id)?.name??'—'}</p><Button className="min-h-11" onClick={()=>print(receipt.document_id)}><Printer className="h-4 w-4 mr-2"/>Печатать QR-наклейки</Button></div>:<>
     {isLoading?<Loader2 className="animate-spin"/>:error?<p className="text-destructive">Не удалось загрузить позиции и сотрудников</p>:<div className="space-y-4">
     <Label>Склад</Label><TaskLookupSelect label="Выберите склад" value={warehouse} onChange={setWarehouse} options={warehouses.map(w=>({id:w.id,name:whLabel(w)}))} disabled={confirm}/>
-    <Label>Кто осуществил приёмку</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members??[]).map(m=>({id:m.user_id,name:m.profiles?.full_name??'—'}))} disabled={confirm}/>
+    <Label>Кто осуществил приёмку</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members??[]).map(m=>({id:m.user_id,name:m.name}))} disabled={confirm}/>
     <p className="text-sm text-muted-foreground">Дата: {format(new Date(),'dd.MM.yyyy')}</p>
     {lines.length===0&&<p className="text-destructive">В заявке нет позиций. Заполните позиции в заявке до приёмки.</p>}
     {lines.map((l,i)=><div key={l.id} className="border-b pb-3 space-y-2"><p className="font-medium break-words">{l.name}</p><div className="flex items-center gap-2"><span className="font-numeric">{l.quantity}</span><Input aria-label={`Единица: ${l.name}`} className="w-20 min-h-11" value={l.unit} disabled={confirm} onChange={e=>setLines(old=>old.map((x,n)=>n===i?{...x,unit:e.target.value}:x))}/><Select value={l.kind} disabled={confirm} onValueChange={v=>setLines(old=>old.map((x,n)=>n===i?{...x,kind:v as Line['kind']}:x))}><SelectTrigger className="min-w-0 flex-1 min-h-11"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="batch">Материал / партия</SelectItem><SelectItem value="item">Индивидуальные изделия</SelectItem></SelectContent></Select></div></div>)}
