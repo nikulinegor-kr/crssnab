@@ -68,14 +68,13 @@ export function computeLabelLayout(input: { title: string; lines: string[]; appl
 
   // Signatures: one row each, shared size, shrink to readable minimum, then compact FIO, then explicit ellipsis.
   const people = [['Заявитель:', input.applicant?.trim() || '—'], ['Приёмщик:', input.receiver?.trim() || '—']] as const;
-  const minSig = Math.max(13, Math.round(h * 0.04)), maxSig = Math.round(h * 0.068);
+  const minSig = Math.max(14, Math.round(h * 0.05)), maxSig = Math.round(h * 0.068);
   const rowWidth = (label: string, name: string, px: number) => measure(`${label} `, bodyFont(px)) + measure(name, nameFont(px));
-  let sig = maxSig, names = people.map(p => p[1]);
-  while (sig > minSig && people.some((p, i) => rowWidth(p[0], names[i], sig) > text.width)) sig--;
-  if (people.some((p, i) => rowWidth(p[0], names[i], sig) > text.width)) {
-    names = names.map(compactFio); sig = maxSig;
-    while (sig > minSig && people.some((p, i) => rowWidth(p[0], names[i], sig) > text.width)) sig--;
-  }
+  const fits = (ns: string[], px: number) => people.every((p, i) => rowWidth(p[0], ns[i], px) <= text.width);
+  const largest = (ns: string[]) => { for (let px = maxSig; px >= minSig; px--) if (fits(ns, px)) return px; return 0; };
+  let names = people.map(p => p[1]) as string[];
+  let sig = largest(names);
+  if (!sig) { names = names.map(compactFio); sig = largest(names) || minSig; }
   names = names.map((n, i) => {
     const room = text.width - measure(`${people[i][0]} `, bodyFont(sig));
     if (measure(n, nameFont(sig)) <= room) return n; truncated = true; return ellipsize(n, room, t => measure(t, nameFont(sig)));
