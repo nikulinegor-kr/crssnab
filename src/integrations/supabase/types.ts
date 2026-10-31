@@ -5063,6 +5063,474 @@ export type Database = {
           },
         ]
       }
+      warehouse_balances: {
+        Row: {
+          cell_id: string | null
+          id: string
+          organization_id: string
+          quantity: number
+          unit_id: string
+          updated_at: string
+          warehouse_id: string
+        }
+        Insert: {
+          cell_id?: string | null
+          id?: string
+          organization_id: string
+          quantity?: number
+          unit_id: string
+          updated_at?: string
+          warehouse_id: string
+        }
+        Update: {
+          cell_id?: string | null
+          id?: string
+          organization_id?: string
+          quantity?: number
+          unit_id?: string
+          updated_at?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_balances_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_cells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_balances_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_balances_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_cells: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          qr_token: string
+          warehouse_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          qr_token?: string
+          warehouse_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          qr_token?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_cells_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_cells_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_document_lines: {
+        Row: {
+          created_at: string
+          document_id: string
+          from_cell_id: string | null
+          from_warehouse_id: string | null
+          id: string
+          issue_id: string | null
+          organization_id: string
+          quantity: number
+          to_cell_id: string | null
+          to_warehouse_id: string | null
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          from_cell_id?: string | null
+          from_warehouse_id?: string | null
+          id?: string
+          issue_id?: string | null
+          organization_id: string
+          quantity: number
+          to_cell_id?: string | null
+          to_warehouse_id?: string | null
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          from_cell_id?: string | null
+          from_warehouse_id?: string | null
+          id?: string
+          issue_id?: string | null
+          organization_id?: string
+          quantity?: number
+          to_cell_id?: string | null
+          to_warehouse_id?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_from_cell_id_fkey"
+            columns: ["from_cell_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_cells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_from_warehouse_id_fkey"
+            columns: ["from_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_to_cell_id_fkey"
+            columns: ["to_cell_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_cells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_to_warehouse_id_fkey"
+            columns: ["to_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_document_lines_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_documents: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          id: string
+          number: string | null
+          object_id: string | null
+          organization_id: string
+          posted_at: string | null
+          posted_by: string | null
+          recipient_name: string | null
+          recipient_user_id: string | null
+          request_id: string | null
+          status: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          id?: string
+          number?: string | null
+          object_id?: string | null
+          organization_id: string
+          posted_at?: string | null
+          posted_by?: string | null
+          recipient_name?: string | null
+          recipient_user_id?: string | null
+          request_id?: string | null
+          status?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          id?: string
+          number?: string | null
+          object_id?: string | null
+          organization_id?: string
+          posted_at?: string | null
+          posted_by?: string | null
+          recipient_name?: string | null
+          recipient_user_id?: string | null
+          request_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_documents_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_issues: {
+        Row: {
+          cell_id: string | null
+          created_at: string
+          document_id: string
+          id: string
+          issued_qty: number
+          object_id: string | null
+          organization_id: string
+          recipient_name: string
+          recipient_user_id: string | null
+          request_id: string | null
+          returned_qty: number
+          unit_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          cell_id?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          issued_qty: number
+          object_id?: string | null
+          organization_id: string
+          recipient_name: string
+          recipient_user_id?: string | null
+          request_id?: string | null
+          returned_qty?: number
+          unit_id: string
+          warehouse_id: string
+        }
+        Update: {
+          cell_id?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          issued_qty?: number
+          object_id?: string | null
+          organization_id?: string
+          recipient_name?: string
+          recipient_user_id?: string | null
+          request_id?: string | null
+          returned_qty?: number
+          unit_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_issues_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_cells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "request_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issues_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_ledger: {
+        Row: {
+          balance_after: number
+          cell_id: string | null
+          created_at: string
+          created_by: string | null
+          delta: number
+          document_id: string
+          id: number
+          line_id: string | null
+          operation: string
+          organization_id: string
+          unit_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          balance_after: number
+          cell_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delta: number
+          document_id: string
+          id?: number
+          line_id?: string | null
+          operation: string
+          organization_id: string
+          unit_id: string
+          warehouse_id: string
+        }
+        Update: {
+          balance_after?: number
+          cell_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          document_id?: string
+          id?: number
+          line_id?: string | null
+          operation?: string
+          organization_id?: string
+          unit_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_ledger_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_cells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_ledger_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_ledger_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_document_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_ledger_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_ledger_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_products: {
         Row: {
           article: string | null
@@ -5113,6 +5581,63 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_units: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          name: string
+          organization_id: string
+          product_id: string | null
+          qr_token: string
+          serial_number: string | null
+          unit: string
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          name: string
+          organization_id: string
+          product_id?: string | null
+          qr_token?: string
+          serial_number?: string | null
+          unit?: string
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          organization_id?: string
+          product_id?: string | null
+          qr_token?: string
+          serial_number?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_units_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_units_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_products"
             referencedColumns: ["id"]
           },
         ]
@@ -5362,6 +5887,7 @@ export type Database = {
       }
       planner_priority_label: { Args: { _p: string }; Returns: string }
       planner_status_label: { Args: { _s: string }; Returns: string }
+      post_warehouse_document: { Args: { _document_id: string }; Returns: Json }
       seed_notification_routing: {
         Args: { _org_id: string }
         Returns: undefined
@@ -5383,6 +5909,10 @@ export type Database = {
       }
       user_can_see_all_tasks: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_use_qr_warehouse: {
+        Args: { _org: string; _user: string }
         Returns: boolean
       }
       user_can_view_request: {
@@ -5414,6 +5944,20 @@ export type Database = {
         Returns: boolean
       }
       verify_push_hook_secret: { Args: { candidate: string }; Returns: boolean }
+      warehouse_apply_delta: {
+        Args: {
+          _actor: string
+          _cell: string
+          _delta: number
+          _doc: string
+          _line: string
+          _op: string
+          _org: string
+          _unit: string
+          _wh: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       organization_role: "owner" | "admin" | "member" | "editor" | "viewer"
