@@ -41,12 +41,13 @@ import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
 import { TrustLetterButton } from "./TrustLetterDialog";
-import { RequestReceiptButton } from "@/components/warehouse-qr/RequestReceiptButton";
+import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
   open: boolean;
+  qrEntry?: boolean;
   onClose: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -78,6 +79,7 @@ const sanitizeName = (name: string) => name.replace(/[^\w.\-]+/g, "_") || `file_
 export const RequestSidePanel = ({
   request,
   open,
+  qrEntry = false,
   onClose,
   onPrevious,
   onNext,
@@ -1083,7 +1085,7 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestReceiptButton key={request.id} request={request} openSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
         <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>

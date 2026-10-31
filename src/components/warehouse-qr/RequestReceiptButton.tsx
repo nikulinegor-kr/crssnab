@@ -35,11 +35,11 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
  const {data:labels=[],error:labelError}=useQuery({queryKey:['wh-receipt-labels',receipt?.document_id],enabled:open&&!!receipt,queryFn:()=>loadReceiptLabels(receipt?.document_id??'')});
  const handledSignal = useRef(0);
  useEffect(()=>{
-  if(openSignal>handledSignal.current&&allowed&&request.status==='Доставлено'){
+  if(openSignal>handledSignal.current&&allowed&&(request.status==='Доставлено'||!!receipt)){
    handledSignal.current=openSignal;
    setOpen(true);setConfirm(false);
   }
- },[openSignal,allowed,request.status]);
+ },[openSignal,allowed,request.status,receipt]);
  const {data:warehouses=[],error:warehouseError}=useQuery({queryKey:['wh-qr','warehouses',org],enabled:allowed,queryFn:()=>warehouseRows<{id:string;name:string;request_objects:{name:string}|null}>((f,t)=>supabase.from('warehouses').select('id,name,description,request_objects!warehouses_object_id_fkey(name)').eq('organization_id',org ?? '').order('name').range(f,t))});
  const {data:details,isLoading,error}=useQuery({queryKey:['wh-receipt-details',request.id],enabled:open&&!receipt,queryFn:async()=>{
   const [{data:items,error:ie},{data:members,error:me},{data:{user}},{data:sourceRequest,error:re}]=await Promise.all([

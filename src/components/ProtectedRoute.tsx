@@ -110,7 +110,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!isAuthenticated) {
     // Save the current location to redirect back after login
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to={`/auth?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
