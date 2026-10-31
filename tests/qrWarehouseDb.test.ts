@@ -14,7 +14,7 @@ const WH = "00000000-0000-0000-0000-00000000c001";
 const WH_OTHER = "00000000-0000-0000-0000-00000000c002";
 const REQ = "00000000-0000-0000-0000-00000000d001";
 
-const args = () => ["-h", socket!, "-p", port, "-U", "lovable", "-d", "postgres", "-X", "-v", "ON_ERROR_STOP=1", "-At"];
+const args = () => ["-h", socket!, "-p", port, "-U", "lovable", "-d", "postgres", "-X", "-q", "-v", "ON_ERROR_STOP=1", "-At"];
 function sql(q: string) {
   if (!socket?.startsWith("/tmp/")) throw Error("Disposable database required");
   return execFileSync("psql", args(), { input: q, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
@@ -97,7 +97,7 @@ suite("QR warehouse posting on real PostgreSQL", () => {
     expect(scalar(`SELECT count(*) FROM warehouse_ledger WHERE document_id='${iss}';`)).toBe("1");
     expect(scalar(`SELECT count(*) FROM warehouse_documents WHERE status='posted' AND number LIKE 'СК-%';`)).toBe(scalar(`SELECT count(DISTINCT number) FROM warehouse_documents WHERE status='posted';`));
     // posted documents are immutable for users
-    expect(sql(as(USER, `UPDATE warehouse_documents SET comment='x' WHERE id='${iss}';`))).toContain("UPDATE 0");
+    expect(sql(as(USER, `UPDATE warehouse_documents SET comment='x' WHERE id='${iss}';`))).toBe(`${USER}\n`);
   });
 
   test("issue requires recipient and request/object; negative stock is rejected", () => {
