@@ -1,0 +1,91 @@
+import { beforeAll, describe, expect, test } from 'bun:test';
+import { execFileSync, spawn } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
+const socket=process.env.LOCAL_WAREHOUSE_TEST_SOCKET;
+const suite=socket?describe:describe.skip;
+const ORG='00000000-0000-0000-0000-0000000000a1',USER='00000000-0000-0000-0000-000000000011',STRANGER='00000000-0000-0000-0000-000000000022';
+const WH='00000000-0000-0000-0000-00000000c001',WH2='00000000-0000-0000-0000-00000000c003',FOREIGN='00000000-0000-0000-0000-00000000c002';
+const REQ='00000000-0000-0000-0000-00000000d010',ITEM='00000000-0000-0000-0000-00000000e010',REQ3='00000000-0000-0000-0000-00000000d011',ITEM3='00000000-0000-0000-0000-00000000e011',EQ='00000000-0000-0000-0000-00000000f001';
+const args=()=>['-h',socket??'', '-p',process.env.LOCAL_WAREHOUSE_TEST_PORT??'55442','-U','lovable','-d','postgres','-X','-q','-v','ON_ERROR_STOP=1','-At'];
+function sql(q:string){if(!socket?.startsWith('/tmp/'))throw Error('Disposable local database required');return execFileSync('psql',args(),{input:q,encoding:'utf8',stdio:['pipe','pipe','pipe']});}
+const scalar=(q:string)=>sql(q).trim().split('\n').pop()??'';
+const as=(q:string,u=USER)=>`BEGIN;SELECT set_config('test.uid','${u}',true);SET LOCAL ROLE authenticated;${q} COMMIT;`;
+const receive=(req=REQ,item=ITEM,qty=100,kind='batch',wh=WH)=>`SELECT receive_warehouse_request('${req}','${wh}','${USER}','[{"item_id":"${item}","quantity":${qty},"kind":"${kind}","unit":"шт"}]');`;
+const op=(unit:string,key:string,type:string,qty:number,from=WH,to:string|null=WH2,eq:string|null=null,obj:string|null=null)=>`SELECT simple_warehouse_operation('${key}','${unit}','${type}','${from}',${to?`'${to}'`:'NULL'},${qty},'Иванов','2026-10-31',${eq?`'${eq}'`:'NULL'},${obj?`'${obj}'`:'NULL'});`;
+const total=(unit:string,wh:string)=>scalar(`SELECT coalesce(sum(quantity),0)::int FROM warehouse_balances WHERE unit_id='${unit}' AND warehouse_id='${wh}';`);
+function concurrent(q:string){return new Promise<{code:number,out:string}>(resolve=>{const p=spawn('psql',args());let out='';p.stdout.on('data',d=>out+=d);p.stderr.on('data',d=>out+=d);p.on('close',code=>resolve({code:code??1,out}));p.stdin.end(q);});}
+suite('Simple warehouse on disposable PostgreSQL',()=>{
+ let batch='';
+ beforeAll(()=>{
+  execFileSync('bun',['test','tests/qrWarehouseDb.test.ts'],{env:process.env,stdio:'pipe'});
+  sql(`CREATE TABLE user_permissions(user_id uuid,organization_id uuid,permission_key text,allowed boolean);
+   CREATE TABLE user_organizations(user_id uuid,organization_id uuid,is_active boolean,role text);
+   INSERT INTO user_organizations SELECT user_id,organization_id,true,'admin' FROM members;
+   CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text);INSERT INTO profiles VALUES('${USER}','Тестовый сотрудник');
+   CREATE TABLE equipment(id uuid PRIMARY KEY,organization_id uuid,current_object_id uuid);
+   CREATE TABLE request_items(id uuid PRIMARY KEY,organization_id uuid,request_id uuid REFERENCES requests(id),name text,quantity integer);
+   ALTER TABLE requests ADD COLUMN status text DEFAULT 'Доставлено';ALTER TABLE requests ADD COLUMN applicant_user_id uuid;ALTER TABLE requests ADD COLUMN request_number text DEFAULT 'TEST';
+   ALTER TABLE requests ADD COLUMN product_id uuid;ALTER TABLE requests ADD COLUMN warehouse_id uuid;ALTER TABLE requests ADD COLUMN reserve_on_warehouse boolean;ALTER TABLE requests ADD COLUMN quantity numeric;ALTER TABLE requests ADD COLUMN created_by uuid;
+   CREATE TABLE stock_movements(organization_id uuid,product_id uuid,warehouse_id uuid,type text,quantity numeric,request_id uuid,comment text,created_by uuid);
+   CREATE FUNCTION user_can_view_request(u uuid,o uuid,a uuid) RETURNS boolean LANGUAGE sql AS $$SELECT user_has_org_access(u,o)$$;
+   INSERT INTO warehouses VALUES('${WH2}','${ORG}');INSERT INTO equipment VALUES('${EQ}','${ORG}',NULL);
+   INSERT INTO requests(id,organization_id) VALUES('${REQ}','${ORG}'),('${REQ3}','${ORG}');
+   INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Болты',100),('${ITEM3}','${ORG}','${REQ3}','Изделие',3);
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;`);
+  const file=readdirSync('drizzle/migrations').find(f=>f.includes('simple_request_warehouse'));
+  if(!file)throw Error('Migration missing');sql(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+ });
+ test('Delivered alone does not create inbound stock',()=>{
+  sql(`CREATE TRIGGER test_stock AFTER INSERT OR UPDATE OF status ON requests FOR EACH ROW EXECUTE FUNCTION handle_request_stock_movement();UPDATE requests SET product_id=gen_random_uuid(),warehouse_id='${WH}',quantity=100,status='В пути' WHERE id='${REQ}';UPDATE requests SET status='Доставлено' WHERE id='${REQ}';`);
+  expect(scalar(`SELECT count(*) FROM stock_movements WHERE request_id='${REQ}' AND type='IN';`)).toBe('0');
+  expect(scalar(`SELECT count(*) FROM warehouse_request_receipts;`)).toBe('0');
+ });
+ test('rejects non-delivered, excess quantity and foreign warehouse without partial writes',()=>{
+  sql(`UPDATE requests SET status='В пути' WHERE id='${REQ}';`);expect(()=>sql(as(receive()))).toThrow(/Доставлено/);
+  sql(`UPDATE requests SET status='Доставлено' WHERE id='${REQ}';`);
+  expect(()=>sql(as(receive(REQ,ITEM,101)))).toThrow(/превышает/);
+  expect(()=>sql(as(receive(REQ,ITEM,100,'batch',FOREIGN)))).toThrow(/другой организации/);
+  expect(scalar(`SELECT count(*) FROM warehouse_request_receipts;`)).toBe('0');
+ });
+ test('100 received, repeat request is idempotent and cannot receive after consumption',()=>{
+  sql(as(receive()));batch=scalar(`SELECT id FROM warehouse_units WHERE request_item_id='${ITEM}';`);
+  expect(total(batch,WH)).toBe('100');expect(sql(as(receive()))).toContain('"already_received": true');
+  expect(total(batch,WH)).toBe('100');expect(()=>sql(`UPDATE request_items SET quantity=200 WHERE id='${ITEM}';`)).toThrow(/нельзя изменять/);
+  expect(()=>sql(as(receive(REQ,ITEM,100,'batch',WH2)))).toThrow(/другими параметрами/);
+ });
+ test('3 individual units receive distinct permanent QR; concurrent request receives once',async()=>{
+  const results=await Promise.all([concurrent(as(receive(REQ3,ITEM3,3,'item'))),concurrent(as(receive(REQ3,ITEM3,3,'item')))]);
+  expect(results.map(r=>r.code)).toEqual([0,0]);expect(scalar(`SELECT count(DISTINCT qr_token) FROM warehouse_units WHERE request_item_id='${ITEM3}';`)).toBe('3');
+  expect(scalar(`SELECT sum(quantity)::int FROM warehouse_balances WHERE unit_id IN(SELECT id FROM warehouse_units WHERE request_item_id='${ITEM3}');`)).toBe('3');
+ });
+ test('100 -> move 30 -> issue 10 to equipment without object = 70+20; operation retry stable',()=>{
+  const key1='00000000-0000-0000-0000-000000000101',key2='00000000-0000-0000-0000-000000000102';
+  sql(as(op(batch,key1,'move',30)));sql(as(op(batch,key2,'issue',10,WH2,null,EQ)));
+  expect([total(batch,WH),total(batch,WH2)]).toEqual(['70','20']);
+  expect(sql(as(op(batch,key2,'issue',10,WH2,null,EQ)))).toContain('"already_posted": true');
+  expect(total(batch,WH2)).toBe('20');expect(scalar(`SELECT operation_date FROM warehouse_issues WHERE equipment_id='${EQ}' LIMIT 1;`)).toBe('2026-10-31');
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000103','issue',21,WH2,null,EQ)))).toThrow(/Недостаточно/);
+ });
+ test('issuance requires exactly equipment OR object and records actor/time',()=>{
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000104','issue',1,WH2,null)))).toThrow(/технику либо объект/);
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000105','issue',1,WH2,null,EQ,EQ)))).toThrow(/технику либо объект/);
+  expect(scalar(`SELECT posted_by FROM warehouse_documents WHERE operation_key='00000000-0000-0000-0000-000000000102';`)).toBe(USER);
+  expect(scalar(`SELECT count(*) FROM warehouse_ledger WHERE unit_id='${batch}' AND created_by='${USER}' AND created_at IS NOT NULL;`)).toBe('4');
+ });
+ test('concurrent issues cannot make stock negative',async()=>{
+  const a=concurrent(as(op(batch,'00000000-0000-0000-0000-000000000106','issue',15,WH2,null,EQ)));
+  const b=concurrent(as(op(batch,'00000000-0000-0000-0000-000000000107','issue',15,WH2,null,EQ)));
+  const result=await Promise.all([a,b]);expect(result.map(r=>r.code).sort()).toEqual([0,3]);expect(total(batch,WH2)).toBe('5');
+ });
+ test('foreign organization cannot see receipt or invoke operations',()=>{
+  expect(scalar(as(`SELECT count(*) FROM warehouse_request_receipts;`,STRANGER))).toBe('0');
+  expect(()=>sql(as(receive(),STRANGER))).toThrow(/Нет доступа/);
+  expect(()=>sql(as(op(batch,'00000000-0000-0000-0000-000000000108','move',1),STRANGER))).toThrow(/Нет доступа/);
+  expect(()=>sql(as(`INSERT INTO warehouse_request_receipts(organization_id,request_id,document_id,warehouse_id,received_by,receiver_name) VALUES('${ORG}','${REQ}',gen_random_uuid(),'${WH}','${USER}','hack');`))).toThrow();
+ });
+ test('generic receipt cannot bypass the request receipt flow',()=>{
+  const id=scalar(as(`INSERT INTO warehouse_documents(organization_id,doc_type,request_id) VALUES('${ORG}','receipt','${REQ}') RETURNING id;`));
+  sql(as(`INSERT INTO warehouse_document_lines(organization_id,document_id,unit_id,quantity,to_warehouse_id) VALUES('${ORG}','${id}','${batch}',1,'${WH}');`));
+  expect(()=>sql(as(`SELECT post_warehouse_document('${id}');`))).toThrow(/из заявки/);expect(total(batch,WH)).toBe('70');
+ });
+});
