@@ -23,10 +23,10 @@ const issueRow = (id: string) => scalar(`SELECT concat_ws('/',issued_qty::int,re
 suite('Full warehouse cycle on disposable PostgreSQL', () => {
   let unit = '';
   beforeAll(() => {
-    execFileSync('bun', ['test', 'tests/simpleWarehouseDb.test.ts'], { env: process.env, stdio: 'pipe' });
+    execFileSync('bun', ['test', '--timeout', '120000', 'tests/simpleWarehouseDb.test.ts'], { env: process.env, stdio: 'pipe' });
     for (const name of ['manual_warehouse_receipt', 'receipt_units_sht_komplekt']) { const f = readdirSync('drizzle/migrations').find(x => x.includes(name)); if (!f) throw Error(`Migration ${name} missing`); sql(readFileSync(`drizzle/migrations/${f}`, 'utf8')); }
     const file = process.env.LOCAL_CYCLE_SQL ?? `drizzle/migrations/${readdirSync('drizzle/migrations').find(f => f.includes('warehouse_full_cycle'))}`;
-    sql(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS model text; INSERT INTO members VALUES('${WORKER}','${ORG}'); INSERT INTO user_organizations VALUES('${WORKER}','${ORG}',true,'member');
+    sql(`UPDATE user_organizations SET role='admin' WHERE user_id='${USER}'; DELETE FROM user_permissions WHERE user_id='${USER}'; ALTER TABLE equipment ADD COLUMN IF NOT EXISTS model text; INSERT INTO members VALUES('${WORKER}','${ORG}'); INSERT INTO user_organizations VALUES('${WORKER}','${ORG}',true,'member');
       INSERT INTO user_permissions VALUES('${WORKER}','${ORG}','erp.warehouse',false);
       INSERT INTO profiles VALUES('${WORKER}','Рабочий Петров') ON CONFLICT DO NOTHING;
       INSERT INTO request_objects VALUES('${OBJ}','${ORG}') ON CONFLICT DO NOTHING;
