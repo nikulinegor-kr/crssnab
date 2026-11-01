@@ -5173,6 +5173,55 @@ export type Database = {
           },
         ]
       }
+      warehouse_damaged_balances: {
+        Row: {
+          id: string
+          organization_id: string
+          quantity: number
+          unit_id: string
+          updated_at: string
+          warehouse_id: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          quantity?: number
+          unit_id: string
+          updated_at?: string
+          warehouse_id: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          quantity?: number
+          unit_id?: string
+          updated_at?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_damaged_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_damaged_balances_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_damaged_balances_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_document_lines: {
         Row: {
           created_at: string
@@ -5361,17 +5410,306 @@ export type Database = {
           },
         ]
       }
+      warehouse_inventories: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_id: string | null
+          id: string
+          organization_id: string
+          posted_at: string | null
+          posted_by: string | null
+          snapshot_at: string
+          snapshot_ledger_id: number
+          status: string
+          warehouse_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          document_id?: string | null
+          id?: string
+          organization_id: string
+          posted_at?: string | null
+          posted_by?: string | null
+          snapshot_at?: string
+          snapshot_ledger_id?: number
+          status?: string
+          warehouse_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_id?: string | null
+          id?: string
+          organization_id?: string
+          posted_at?: string | null
+          posted_by?: string | null
+          snapshot_at?: string
+          snapshot_ledger_id?: number
+          status?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_inventories_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_inventories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_inventories_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_inventory_lines: {
+        Row: {
+          counted_at: string | null
+          counted_by: string | null
+          counted_qty: number | null
+          expected_qty: number
+          id: string
+          inventory_id: string
+          organization_id: string
+          reason: string | null
+          unit_id: string
+        }
+        Insert: {
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_qty?: number | null
+          expected_qty?: number
+          id?: string
+          inventory_id: string
+          organization_id: string
+          reason?: string | null
+          unit_id: string
+        }
+        Update: {
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_qty?: number | null
+          expected_qty?: number
+          id?: string
+          inventory_id?: string
+          organization_id?: string
+          reason?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_inventory_lines_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_inventories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_inventory_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_inventory_lines_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_issue_returns: {
+        Row: {
+          condition: string
+          created_at: string
+          created_by: string
+          document_id: string | null
+          id: string
+          issue_id: string
+          note: string | null
+          operation_key: string
+          organization_id: string
+          quantity: number
+          reason: string | null
+          reversal_of: string | null
+          warehouse_id: string
+        }
+        Insert: {
+          condition: string
+          created_at?: string
+          created_by: string
+          document_id?: string | null
+          id?: string
+          issue_id: string
+          note?: string | null
+          operation_key: string
+          organization_id: string
+          quantity: number
+          reason?: string | null
+          reversal_of?: string | null
+          warehouse_id: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          created_by?: string
+          document_id?: string | null
+          id?: string
+          issue_id?: string
+          note?: string | null
+          operation_key?: string
+          organization_id?: string
+          quantity?: number
+          reason?: string | null
+          reversal_of?: string | null
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_issue_returns_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_returns_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_returns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_returns_reversal_of_fkey"
+            columns: ["reversal_of"]
+            isOneToOne: true
+            referencedRelation: "warehouse_issue_returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_returns_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_issue_usages: {
+        Row: {
+          created_at: string
+          created_by: string
+          equipment_id: string | null
+          id: string
+          issue_id: string
+          kind: string
+          note: string | null
+          operation_date: string
+          operation_key: string
+          organization_id: string
+          quantity: number
+          reason: string | null
+          reversal_of: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          equipment_id?: string | null
+          id?: string
+          issue_id: string
+          kind: string
+          note?: string | null
+          operation_date: string
+          operation_key: string
+          organization_id: string
+          quantity: number
+          reason?: string | null
+          reversal_of?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          equipment_id?: string | null
+          id?: string
+          issue_id?: string
+          kind?: string
+          note?: string | null
+          operation_date?: string
+          operation_key?: string
+          organization_id?: string
+          quantity?: number
+          reason?: string | null
+          reversal_of?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_issue_usages_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_usages_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_usages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_issue_usages_reversal_of_fkey"
+            columns: ["reversal_of"]
+            isOneToOne: true
+            referencedRelation: "warehouse_issue_usages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_issues: {
         Row: {
           cell_id: string | null
+          consumed_qty: number
           created_at: string
           document_id: string
           equipment_id: string | null
           id: string
+          installed_qty: number
           issued_qty: number
+          note: string | null
           object_id: string | null
           operation_date: string | null
           organization_id: string
+          received_confirmed_at: string | null
+          received_confirmed_by: string | null
+          received_confirmed_proxy: boolean
           recipient_name: string
           recipient_user_id: string | null
           request_id: string | null
@@ -5381,14 +5719,20 @@ export type Database = {
         }
         Insert: {
           cell_id?: string | null
+          consumed_qty?: number
           created_at?: string
           document_id: string
           equipment_id?: string | null
           id?: string
+          installed_qty?: number
           issued_qty: number
+          note?: string | null
           object_id?: string | null
           operation_date?: string | null
           organization_id: string
+          received_confirmed_at?: string | null
+          received_confirmed_by?: string | null
+          received_confirmed_proxy?: boolean
           recipient_name: string
           recipient_user_id?: string | null
           request_id?: string | null
@@ -5398,14 +5742,20 @@ export type Database = {
         }
         Update: {
           cell_id?: string | null
+          consumed_qty?: number
           created_at?: string
           document_id?: string
           equipment_id?: string | null
           id?: string
+          installed_qty?: number
           issued_qty?: number
+          note?: string | null
           object_id?: string | null
           operation_date?: string | null
           organization_id?: string
+          received_confirmed_at?: string | null
+          received_confirmed_by?: string | null
+          received_confirmed_proxy?: boolean
           recipient_name?: string
           recipient_user_id?: string | null
           request_id?: string | null
@@ -5614,6 +5964,151 @@ export type Database = {
           },
         ]
       }
+      warehouse_receipt_batch_lines: {
+        Row: {
+          accepted_qty: number
+          batch_id: string
+          created_at: string
+          defect_qty: number
+          expected_qty: number
+          id: string
+          note: string | null
+          organization_id: string
+          photo_paths: string[]
+          request_item_id: string | null
+          unit: string
+          unit_id: string | null
+        }
+        Insert: {
+          accepted_qty?: number
+          batch_id: string
+          created_at?: string
+          defect_qty?: number
+          expected_qty: number
+          id?: string
+          note?: string | null
+          organization_id: string
+          photo_paths?: string[]
+          request_item_id?: string | null
+          unit: string
+          unit_id?: string | null
+        }
+        Update: {
+          accepted_qty?: number
+          batch_id?: string
+          created_at?: string
+          defect_qty?: number
+          expected_qty?: number
+          id?: string
+          note?: string | null
+          organization_id?: string
+          photo_paths?: string[]
+          request_item_id?: string | null
+          unit?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_receipt_batch_lines_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_receipt_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batch_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batch_lines_request_item_id_fkey"
+            columns: ["request_item_id"]
+            isOneToOne: false
+            referencedRelation: "request_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batch_lines_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_receipt_batches: {
+        Row: {
+          created_at: string
+          created_by: string
+          discrepancy_confirmed: boolean
+          document_id: string | null
+          id: string
+          operation_key: string
+          organization_id: string
+          received_by: string
+          receiver_name: string
+          request_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          discrepancy_confirmed?: boolean
+          document_id?: string | null
+          id?: string
+          operation_key: string
+          organization_id: string
+          received_by: string
+          receiver_name: string
+          request_id: string
+          warehouse_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          discrepancy_confirmed?: boolean
+          document_id?: string | null
+          id?: string
+          operation_key?: string
+          organization_id?: string
+          received_by?: string
+          receiver_name?: string
+          request_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_receipt_batches_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "warehouse_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batches_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_batches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_request_receipts: {
         Row: {
           confirmed_lines: Json | null
@@ -5767,6 +6262,8 @@ export type Database = {
       }
       warehouses: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           description: string | null
           id: string
@@ -5776,6 +6273,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -5785,6 +6284,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -5849,11 +6350,16 @@ export type Database = {
         Args: { _org: string; _user: string }
         Returns: boolean
       }
+      cancel_warehouse_inventory: {
+        Args: { _inventory_id: string }
+        Returns: Json
+      }
       check_delivery_arrived: { Args: never; Returns: undefined }
       check_request_deadlines: { Args: never; Returns: undefined }
       check_upcoming_events: { Args: never; Returns: undefined }
       cleanup_notification_dedup: { Args: never; Returns: undefined }
       cleanup_notification_queue: { Args: never; Returns: undefined }
+      confirm_issue_received: { Args: { _issue_id: string }; Returns: Json }
       confirm_request_qr_logistics: {
         Args: {
           _action: string
@@ -6036,6 +6542,21 @@ export type Database = {
       planner_priority_label: { Args: { _p: string }; Returns: string }
       planner_status_label: { Args: { _s: string }; Returns: string }
       post_warehouse_document: { Args: { _document_id: string }; Returns: Json }
+      post_warehouse_inventory: {
+        Args: { _confirm: boolean; _inventory_id: string }
+        Returns: Json
+      }
+      receive_request_partial: {
+        Args: {
+          _confirm_discrepancy: boolean
+          _lines: Json
+          _operation_key: string
+          _received_by: string
+          _request_id: string
+          _warehouse_id: string
+        }
+        Returns: Json
+      }
       receive_warehouse_request: {
         Args: {
           _lines: Json
@@ -6045,9 +6566,26 @@ export type Database = {
         }
         Returns: Json
       }
+      refresh_warehouse_inventory: {
+        Args: { _inventory_id: string }
+        Returns: Json
+      }
       seed_notification_routing: {
         Args: { _org_id: string }
         Returns: undefined
+      }
+      set_inventory_count: {
+        Args: {
+          _counted: number
+          _inventory_id: string
+          _reason: string
+          _unit_id: string
+        }
+        Returns: Json
+      }
+      set_warehouse_archived: {
+        Args: { _archived: boolean; _warehouse_id: string }
+        Returns: Json
       }
       simple_warehouse_operation: {
         Args: {
@@ -6065,6 +6603,10 @@ export type Database = {
         Returns: Json
       }
       spare_part_stock: { Args: { _id: string }; Returns: number }
+      start_warehouse_inventory: {
+        Args: { _warehouse_id: string }
+        Returns: Json
+      }
       telegram_bot_configured: { Args: { _org_id: string }; Returns: boolean }
       trust_storage_org: { Args: { _name: string }; Returns: string }
       user_can_create_requests: {
@@ -6129,6 +6671,54 @@ export type Database = {
           _wh: string
         }
         Returns: number
+      }
+      warehouse_issue: {
+        Args: {
+          _equipment_id: string
+          _from_warehouse_id: string
+          _note: string
+          _object_id: string
+          _operation_date: string
+          _operation_key: string
+          _quantity: number
+          _recipient: string
+          _recipient_user_id: string
+          _unit_id: string
+        }
+        Returns: Json
+      }
+      warehouse_issue_usage: {
+        Args: {
+          _equipment_id: string
+          _issue_id: string
+          _kind: string
+          _note: string
+          _operation_date: string
+          _operation_key: string
+          _quantity: number
+        }
+        Returns: Json
+      }
+      warehouse_next_number: { Args: { _org: string }; Returns: string }
+      warehouse_return_issue: {
+        Args: {
+          _condition: string
+          _issue_id: string
+          _note: string
+          _operation_key: string
+          _quantity: number
+          _warehouse_id: string
+        }
+        Returns: Json
+      }
+      warehouse_reverse_operation: {
+        Args: {
+          _id: string
+          _kind: string
+          _operation_key: string
+          _reason: string
+        }
+        Returns: Json
       }
     }
     Enums: {
