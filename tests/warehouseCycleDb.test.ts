@@ -35,7 +35,7 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
       INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Фильтр масляный',10);`);
     sql(readFileSync(file, 'utf8'));
     sql('GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;');
-  });
+  }, 120000);
 
   test('partial receipt 8 of 10 then 2: never above expected, discrepancy must be confirmed', () => {
     expect(() => sql(partial(key(), `[{"item_id":"${ITEM}","accepted":8,"unit":"шт"}]`, false))).toThrow(/подтвердите/);
