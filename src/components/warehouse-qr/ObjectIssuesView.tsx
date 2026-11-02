@@ -21,7 +21,7 @@ export function ObjectIssuesView({ orgId, objectId: fixed }: { orgId: string; ob
     queryKey: ['wh-qr', 'object-issues', orgId],
     queryFn: async () => {
       const [issues, units, objects, warehouses, equipment, products] = await Promise.all([
-        warehouseRows<IssueRow>((f, t) => supabase.from('warehouse_issues').select('id,organization_id,unit_id,warehouse_id,recipient_name,request_id,object_id,equipment_id,operation_date,created_at,issued_qty,returned_qty').eq('organization_id', orgId).order('created_at', { ascending: false }).range(f, t)),
+        warehouseRows<IssueRow>((f, t) => supabase.from('warehouse_issues').select('id,organization_id,unit_id,warehouse_id,recipient_name,request_id,object_id,equipment_id,operation_date,created_at,issued_qty,returned_qty,installed_qty,consumed_qty').eq('organization_id', orgId).order('created_at', { ascending: false }).range(f, t)),
         warehouseRows<Unit>((f, t) => supabase.from('warehouse_units').select('id,name,unit,product_id,qr_token').eq('organization_id', orgId).order('id').range(f, t)),
         warehouseRows<{ id: string; name: string; address: string | null }>((f, t) => supabase.from('request_objects').select('id,name,address').eq('organization_id', orgId).order('name').range(f, t)),
         warehouseRows<{ id: string; name: string }>((f, t) => supabase.from('warehouses').select('id,name').eq('organization_id', orgId).order('id').range(f, t)),
@@ -64,14 +64,14 @@ export function ObjectIssuesView({ orgId, objectId: fixed }: { orgId: string; ob
   const text = (r: IssueRow) => `${unit(r.unit_id)?.name ?? ''} ${article(r.unit_id)} ${r.recipient_name} ${eq(r.equipment_id)} ${wh(r.warehouse_id)} ${req(r.request_id)?.description ?? ''}`;
   const rows = filterIssues(own, { from: from || undefined, to: to || undefined, search, text });
   const totals = positionTotals(own, data.units);
-  const hasReturns = own.some(r => Number(r.returned_qty) > 0);
+  const hasReturns = own.some(r => Number(r.returned_qty) + Number(r.installed_qty ?? 0) + Number(r.consumed_qty ?? 0) > 0);
   return <div className="space-y-4">
     {!fixed && <div className="flex flex-wrap items-center gap-3"><Button variant="outline" className="min-h-11" onClick={() => { setSelected(null); setSearch(''); }}><ArrowLeft className="h-4 w-4 mr-2" />Назад к объектам</Button><h2 className="text-lg font-semibold break-words min-w-0 flex-1">{objName}</h2></div>}
     {!own.length ? <p className="text-muted-foreground py-6">На этот объект пока ничего не выдавали</p> : <>
       <section className="space-y-2"><h3 className="text-sm font-medium">Что выдано</h3>
         <div className="divide-y border-y border-border">{totals.map(t => <div key={t.unitId} className="py-2 flex gap-3 items-start text-sm">
           <span className="flex-1 min-w-0"><span className="block font-medium break-words">{t.name}</span>{article(t.unitId) && <span className="block text-xs text-muted-foreground">Арт. {article(t.unitId)}</span>}</span>
-          <span className="text-right font-numeric shrink-0">Выдано {fmtQty(t.issued)} {t.unit}{hasReturns && <><br /><span className="text-xs text-muted-foreground">Возвращено {fmtQty(t.returned)} · На объекте {fmtQty(t.onObject)} {t.unit}</span></>}</span></div>)}</div>
+          <span className="text-right font-numeric shrink-0">Выдано {fmtQty(t.issued)} {t.unit}{hasReturns && <><br /><span className="text-xs text-muted-foreground">Возвращено {fmtQty(t.returned)} · Числится {fmtQty(t.onObject)} {t.unit}</span></>}</span></div>)}</div>
       </section>
       <section className="space-y-2"><h3 className="text-sm font-medium">История выдач</h3>
         <div className="flex flex-wrap gap-2"><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск ТМЦ, получателя, техники" aria-label="Поиск по выдачам" className="min-h-11 flex-1 min-w-48" />
