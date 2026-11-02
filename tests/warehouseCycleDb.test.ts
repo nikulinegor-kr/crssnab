@@ -25,7 +25,8 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
   beforeAll(() => {
     execFileSync('bun', ['test', '--timeout', '120000', 'tests/simpleWarehouseDb.test.ts'], { env: process.env, stdio: 'pipe' });
     for (const name of ['manual_warehouse_receipt', 'receipt_units_sht_komplekt']) { const f = readdirSync('drizzle/migrations').find(x => x.includes(name)); if (!f) throw Error(`Migration ${name} missing`); sql(readFileSync(`drizzle/migrations/${f}`, 'utf8')); }
-    const file = process.env.LOCAL_CYCLE_SQL ?? `drizzle/migrations/${readdirSync('drizzle/migrations').find(f => f.includes('warehouse_full_cycle'))}`;
+    if (process.env.LOCAL_CYCLE_SQL) sql(readFileSync(process.env.LOCAL_CYCLE_SQL, 'utf8'));
+    else for (const name of ['warehouse_full_cycle', 'warehouse_issue_manual_recipient', 'post_document_manual_recipient']) { const f = readdirSync('drizzle/migrations').find(x => x.includes(name)); if (!f) throw Error(`Migration ${name} missing`); sql(readFileSync(`drizzle/migrations/${f}`, 'utf8')); }
     sql(`UPDATE user_organizations SET role='admin' WHERE user_id='${USER}'; DELETE FROM user_permissions WHERE user_id='${USER}'; ALTER TABLE equipment ADD COLUMN IF NOT EXISTS model text; INSERT INTO members VALUES('${WORKER}','${ORG}'); INSERT INTO user_organizations VALUES('${WORKER}','${ORG}',true,'member');
       INSERT INTO user_permissions VALUES('${WORKER}','${ORG}','erp.warehouse',false);
       INSERT INTO profiles VALUES('${WORKER}','Рабочий Петров') ON CONFLICT DO NOTHING;
@@ -33,7 +34,6 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
       INSERT INTO warehouses(id,organization_id,name) VALUES('${WHA}','${ORG}','Склад А'),('${WHB}','${ORG}','Склад Б');
       INSERT INTO requests(id,organization_id,status,request_number,description) VALUES('${REQ}','${ORG}','В пути','R-1','Фильтры'),('${REQ0}','${ORG}','Доставлено','R-0','Рации без позиций');
       INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Фильтр масляный',10);`);
-    sql(readFileSync(file, 'utf8'));
     sql('GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;');
   }, 120000);
 
@@ -102,6 +102,22 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
     // Stranger organization cannot operate.
     expect(() => sql(as(`SELECT warehouse_issue_usage('${key()}','${iss}','consume',1,NULL,'2026-11-02','');`, STRANGER))).toThrow(/доступа/);
     expect(() => sql(as(`SELECT warehouse_issue_usage('${key()}','${iss}','consume',1,NULL,'2026-11-02','');`, WORKER))).toThrow(/доступа/);
+  });
+
+  test('manual recipient without a user account can receive an issue; listed-user rules still enforced', () => {
+    const m = scalar(as(`SELECT manual_warehouse_receipt('${key()}','${WHA}','Ведро','batch',5,'шт',NULL,NULL)->>'document_id';`));
+    const u = scalar(`SELECT unit_id FROM warehouse_document_lines WHERE document_id='${m}';`);
+    const k = key();
+    sql(as(`SELECT warehouse_issue('${k}','${u}','${WHA}',2,'Подрядчик Иванов',NULL,'2026-11-02',NULL,NULL,'');`));
+    sql(as(`SELECT warehouse_issue('${k}','${u}','${WHA}',2,'Подрядчик Иванов',NULL,'2026-11-02',NULL,NULL,'');`));
+    expect(stock(u, WHA)).toBe('3');
+    const iss = scalar(`SELECT id FROM warehouse_issues WHERE unit_id='${u}' AND recipient_user_id IS NULL;`);
+    expect(issueRow(iss)).toBe('2/0/0/0');
+    expect(() => sql(as(`SELECT confirm_issue_received('${iss}');`, STRANGER))).toThrow(/доступа/);
+    sql(as(`SELECT confirm_issue_received('${iss}');`, USER));
+    expect(scalar(`SELECT received_confirmed_proxy::text FROM warehouse_issues WHERE id='${iss}';`)).toBe('true');
+    expect(() => sql(as(`SELECT warehouse_issue('${key()}','${u}','${WHA}',1,'X','${STRANGER}','2026-11-02',NULL,NULL,'');`))).toThrow(/не является сотрудником/);
+    expect(stock(u, WHA)).toBe('3');
   });
 
   test('reversal needs reason, is linked, single, and cannot drive stock negative', () => {
