@@ -115,7 +115,7 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
     expect(issueRow(iss)).toBe('2/0/0/0');
     expect(() => sql(as(`SELECT confirm_issue_received('${iss}');`, STRANGER))).toThrow(/доступа/);
     sql(as(`SELECT confirm_issue_received('${iss}');`, USER));
-    expect(scalar(`SELECT received_confirmed_proxy FROM warehouse_issues WHERE id='${iss}';`)).toBe('true');
+    expect(scalar(`SELECT received_confirmed_proxy::text FROM warehouse_issues WHERE id='${iss}';`)).toBe('true');
     expect(() => sql(as(`SELECT warehouse_issue('${key()}','${u}','${WHA}',1,'X','${STRANGER}','2026-11-02',NULL,NULL,'');`))).toThrow(/не является сотрудником/);
     expect(stock(u, WHA)).toBe('3');
   });
