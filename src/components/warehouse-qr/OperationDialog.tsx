@@ -34,7 +34,7 @@ export function OperationDialog({open,onOpenChange,orgId,type,unit,warehouses,ba
  if(type==='move'&&(!target||target===source))errors.push('Выберите другой склад');
  if(type==='issue'){if(!recipient.trim())errors.push('Укажите получателя');if(!date)errors.push('Укажите дату выдачи');if(mode!=='employee'&&!destination)errors.push(mode==='equipment'?'Выберите технику':'Выберите объект');if(mode==='employee'&&!recipientUser)errors.push('Выберите сотрудника');}
  const save=async()=>{setBusy(true);try{
-  const {error}=type==='move'?await supabase.rpc('simple_warehouse_operation',{_operation_key:key,_unit_id:unit.id,_type:'move',_from_warehouse_id:source??'',_to_warehouse_id:target??undefined,_quantity:quantity,_recipient:'',_operation_date:date})
+  const {error}=type==='move'?await supabase.rpc('simple_warehouse_operation',{_operation_key:key,_unit_id:unit.id,_type:'move',_from_warehouse_id:source??'',_to_warehouse_id:target??undefined,_quantity:quantity,_recipient:'',_operation_date:date,_equipment_id:undefined as unknown as string,_object_id:undefined as unknown as string})
    :await supabase.rpc('warehouse_issue',{_operation_key:key,_unit_id:unit.id,_from_warehouse_id:source??'',_quantity:quantity,_recipient:recipient,_recipient_user_id:recipientUser??undefined,_operation_date:date,_equipment_id:mode==='equipment'?destination??undefined:undefined,_object_id:mode==='object'?destination??undefined:undefined,_note:note});
   if(error)throw error;await qc.invalidateQueries({queryKey:['wh-qr']});toast({title:type==='move'?'Перемещено':'Выдано'});onOpenChange(false);
  }catch(e){toast({title:'Операция не выполнена',description:(e as {message?:string})?.message??String(e),variant:'destructive'});}finally{setBusy(false);}};
