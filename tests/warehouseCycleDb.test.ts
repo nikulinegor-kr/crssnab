@@ -25,7 +25,8 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
   beforeAll(() => {
     execFileSync('bun', ['test', '--timeout', '120000', 'tests/simpleWarehouseDb.test.ts'], { env: process.env, stdio: 'pipe' });
     for (const name of ['manual_warehouse_receipt', 'receipt_units_sht_komplekt']) { const f = readdirSync('drizzle/migrations').find(x => x.includes(name)); if (!f) throw Error(`Migration ${name} missing`); sql(readFileSync(`drizzle/migrations/${f}`, 'utf8')); }
-    const file = process.env.LOCAL_CYCLE_SQL ?? `drizzle/migrations/${readdirSync('drizzle/migrations').find(f => f.includes('warehouse_full_cycle'))}`;
+    if (process.env.LOCAL_CYCLE_SQL) sql(readFileSync(process.env.LOCAL_CYCLE_SQL, 'utf8'));
+    else for (const name of ['warehouse_full_cycle', 'warehouse_issue_manual_recipient']) { const f = readdirSync('drizzle/migrations').find(x => x.includes(name)); if (!f) throw Error(`Migration ${name} missing`); sql(readFileSync(`drizzle/migrations/${f}`, 'utf8')); }
     sql(`UPDATE user_organizations SET role='admin' WHERE user_id='${USER}'; DELETE FROM user_permissions WHERE user_id='${USER}'; ALTER TABLE equipment ADD COLUMN IF NOT EXISTS model text; INSERT INTO members VALUES('${WORKER}','${ORG}'); INSERT INTO user_organizations VALUES('${WORKER}','${ORG}',true,'member');
       INSERT INTO user_permissions VALUES('${WORKER}','${ORG}','erp.warehouse',false);
       INSERT INTO profiles VALUES('${WORKER}','Рабочий Петров') ON CONFLICT DO NOTHING;
