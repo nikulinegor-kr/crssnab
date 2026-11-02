@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { WhUnit, WhWarehouse } from './types';
 
 type Kind = 'all' | 'move' | 'issue' | 'receipt';
-const LABEL: Record<string, string> = { receipt: 'Приёмка', move: 'Перемещение', issue: 'Выдача', return: 'Возврат' };
+const LABEL: Record<string, string> = { receipt: 'Приёмка', move: 'Перемещение', issue: 'Выдача', return: 'Возврат', inventory: 'Инвентаризация', return_reversal: 'Исправление возврата' };
 
 interface Row { id: number; document_id: string; line_id: string | null; unit_id: string; warehouse_id: string; operation: string; delta: number; created_at: string; created_by: string | null }
 interface Doc { id: string; recipient_name: string | null; object_id: string | null; equipment_id: string | null; operation_date: string | null }
@@ -29,13 +29,14 @@ export function foldLedger(rows: Row[], docs: Doc[], whName: (id: string) => str
   return out;
 }
 
-export function WarehouseJournal({ orgId, units, warehouses, unitId }: { orgId: string; units: WhUnit[]; warehouses: WhWarehouse[]; unitId?: string }) {
+export function WarehouseJournal({ orgId, units, warehouses, unitId, warehouseId }: { orgId: string; units: WhUnit[]; warehouses: WhWarehouse[]; unitId?: string; warehouseId?: string }) {
   const [kind, setKind] = useState<Kind>('all'); const [search, setSearch] = useState(''); const [limit, setLimit] = useState(100);
   const { data, error, isLoading } = useQuery({
-    queryKey: ['wh-qr', 'journal', orgId, unitId ?? 'all', limit],
+    queryKey: ['wh-qr', 'journal', orgId, unitId ?? 'all', warehouseId ?? 'all', limit],
     queryFn: async () => {
       let q = supabase.from('warehouse_ledger').select('id,document_id,line_id,unit_id,warehouse_id,operation,delta,created_at,created_by').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(limit * 2);
       if (unitId) q = q.eq('unit_id', unitId);
+      if (warehouseId) q = q.eq('warehouse_id', warehouseId);
       const { data: rows, error } = await q; if (error) throw error;
       const docIds = [...new Set((rows ?? []).map(r => r.document_id))];
       const { data: docs, error: de } = docIds.length ? await supabase.from('warehouse_documents').select('id,recipient_name,object_id,equipment_id,operation_date').in('id', docIds) : { data: [], error: null };

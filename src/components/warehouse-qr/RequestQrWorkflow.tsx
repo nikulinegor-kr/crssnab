@@ -21,6 +21,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
   const [arrival, setArrival] = useState('');
   const [actual, setActual] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [busy, setBusy] = useState(false);
+  const [track, setTrack] = useState('');
   const [error, setError] = useState('');
   const [receiptSignal, setReceiptSignal] = useState(0);
   const handled = useRef(false);
@@ -56,6 +57,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
     setCarrier(fresh.data.transport_company);
     setShipment(fresh.data.shipment_date ?? '');
     setArrival(fresh.data.planned_delivery_date ?? fresh.data.delivery_date ?? '');
+    setTrack((fresh.data as { waybill_number?: string | null }).waybill_number ?? '');
     if (action === 'receipt' || action === 'received') { setReceiptSignal(n => n + 1); setOpen(false); }
   }, [open, fresh.data, fresh.isFetching, receipt.isPending, receipt.isFetching, receipt.error, action]);
   const save = async () => {
@@ -67,6 +69,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
       const { data, error } = await supabase.rpc('confirm_request_qr_logistics', { _request_id: request.id, _organization_id: org, _action: delivery ? 'deliver' : 'ship', _carrier: carrier, _shipment_date: shipment || null, _planned_arrival: arrival || null, _actual_arrival: delivery ? actual : null });
       if (error) throw error;
       const result = data as unknown as { request: Request };
+      if (!delivery && track.trim() && track.trim() !== ((result.request as { waybill_number?: string | null }).waybill_number ?? '')) { const { error: te } = await supabase.from('requests').update({ waybill_number: track.trim() }).eq('id', request.id).eq('organization_id', org); if (te) throw te; }
       qc.setQueryData(['request-qr-workflow',org,request.id],result.request);
       qc.setQueriesData({ queryKey: ['requests'] }, (old: unknown) => Array.isArray(old) ? old.map(r => r.id === request.id ? { ...r, ...result.request } : r) : old);
       await Promise.all([qc.invalidateQueries({queryKey:['requests']}), qc.invalidateQueries({queryKey:['request-qr-workflow',org,request.id]}), qc.invalidateQueries({queryKey:['request-shipments']})]);
@@ -86,7 +89,7 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
           <Label>Транспортная компания</Label><TaskLookupSelect label="Выберите ТК" value={carrier} onChange={setCarrier} options={(carriers.data ?? []).map(c => ({id:c,name:c}))} disabled={busy || !permission.data}/>
           {carriers.error && <p role="alert" className="text-destructive">{carriers.error.message}</p>}
           <Label htmlFor="qr-shipment">Дата отгрузки</Label><Input id="qr-shipment" type="date" className="min-h-11" value={shipment} onChange={e=>setShipment(e.target.value)} disabled={busy || !permission.data}/>
-          <Label htmlFor="qr-planned">Плановая дата прихода</Label><Input id="qr-planned" type="date" className="min-h-11" min={shipment || undefined} value={arrival} onChange={e=>setArrival(e.target.value)} disabled={busy || !permission.data}/>
+          <Label htmlFor="qr-planned">Плановая дата прихода</Label><Input id="qr-planned" type="date" className="min-h-11" min={shipment || undefined} value={arrival} onChange={e=>setArrival(e.target.value)} disabled={busy || !permission.data}/><Label htmlFor="qr-track">Трек / ТТН (необязательно)</Label><Input id="qr-track" className="min-h-11" value={track} onChange={e=>setTrack(e.target.value)} disabled={busy || !permission.data}/>
         </div> : <dl className="grid grid-cols-2 gap-3 text-sm"><dt>ТК</dt><dd className="break-words">{current.transport_company || '—'}</dd><dt>Отгрузка</dt><dd>{date(current.shipment_date)}</dd><dt>Ожидаемый приход</dt><dd>{date(current.planned_delivery_date ?? current.delivery_date)}</dd></dl>}
         {delivery && <div className="space-y-2"><Label htmlFor="qr-actual">Фактическая дата прихода</Label><Input id="qr-actual" type="date" className="min-h-11" min={current.shipment_date ?? undefined} max={format(new Date(),'yyyy-MM-dd')} value={actual} onChange={e=>setActual(e.target.value)} disabled={busy}/></div>}
         {!permission.data && <p className="text-muted-foreground">Нет права изменять логистику заявки.</p>}

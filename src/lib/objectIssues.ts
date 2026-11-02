@@ -1,6 +1,6 @@
 /** Pure aggregation of posted warehouse issues by CRM object. Rows come only from warehouse_issues,
  * which the server writes exclusively when an issue document is posted (drafts never appear). */
-export interface IssueRow { id: string; organization_id: string; unit_id: string; warehouse_id: string; recipient_name: string; request_id: string | null; object_id: string | null; equipment_id: string | null; operation_date: string | null; created_at: string; issued_qty: number; returned_qty: number }
+export interface IssueRow { id: string; organization_id: string; unit_id: string; warehouse_id: string; recipient_name: string; request_id: string | null; object_id: string | null; equipment_id: string | null; operation_date: string | null; created_at: string; issued_qty: number; returned_qty: number; installed_qty?: number | null; consumed_qty?: number | null }
 export interface IssueUnit { id: string; name: string; unit: string; product_id: string | null }
 export const NO_OBJECT = 'none';
 
@@ -28,7 +28,7 @@ export function positionTotals(rows: IssueRow[], units: IssueUnit[]): PositionTo
   for (const r of rows) {
     const u = units.find(x => x.id === r.unit_id);
     const t = out.get(r.unit_id) ?? { unitId: r.unit_id, name: u?.name ?? '—', unit: u?.unit ?? '', issued: 0, returned: 0, onObject: 0, issues: 0 };
-    t.issued += Number(r.issued_qty); t.returned += Number(r.returned_qty); t.onObject = t.issued - t.returned; t.issues++;
+    t.issued += Number(r.issued_qty); t.returned += Number(r.returned_qty); t.onObject += Number(r.issued_qty) - Number(r.returned_qty) - Number(r.installed_qty ?? 0) - Number(r.consumed_qty ?? 0); t.issues++;
     out.set(r.unit_id, t);
   }
   return [...out.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
