@@ -6587,21 +6587,35 @@ export type Database = {
         Args: { _archived: boolean; _warehouse_id: string }
         Returns: Json
       }
-      simple_warehouse_operation: {
-        Args: {
-          _equipment_id: string
-          _from_warehouse_id: string
-          _object_id: string
-          _operation_date: string
-          _operation_key: string
-          _quantity: number
-          _recipient: string
-          _to_warehouse_id: string
-          _type: string
-          _unit_id: string
-        }
-        Returns: Json
-      }
+      simple_warehouse_operation:
+        | {
+            Args: {
+              _equipment_id: string
+              _from_warehouse_id: string
+              _operation_date: string
+              _operation_key: string
+              _quantity: number
+              _recipient: string
+              _type: string
+              _unit_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _equipment_id: string
+              _from_warehouse_id: string
+              _object_id: string
+              _operation_date: string
+              _operation_key: string
+              _quantity: number
+              _recipient: string
+              _to_warehouse_id: string
+              _type: string
+              _unit_id: string
+            }
+            Returns: Json
+          }
       spare_part_stock: { Args: { _id: string }; Returns: number }
       start_warehouse_inventory: {
         Args: { _warehouse_id: string }
