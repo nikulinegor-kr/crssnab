@@ -104,6 +104,22 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
     expect(() => sql(as(`SELECT warehouse_issue_usage('${key()}','${iss}','consume',1,NULL,'2026-11-02','');`, WORKER))).toThrow(/доступа/);
   });
 
+  test('manual recipient without a user account can receive an issue; listed-user rules still enforced', () => {
+    const m = scalar(as(`SELECT manual_warehouse_receipt('${key()}','${WHA}','Ведро','batch',5,'шт',NULL,NULL)->>'document_id';`));
+    const u = scalar(`SELECT unit_id FROM warehouse_document_lines WHERE document_id='${m}';`);
+    const k = key();
+    sql(as(`SELECT warehouse_issue('${k}','${u}','${WHA}',2,'Подрядчик Иванов',NULL,'2026-11-02',NULL,NULL,'');`));
+    sql(as(`SELECT warehouse_issue('${k}','${u}','${WHA}',2,'Подрядчик Иванов',NULL,'2026-11-02',NULL,NULL,'');`));
+    expect(stock(u, WHA)).toBe('3');
+    const iss = scalar(`SELECT id FROM warehouse_issues WHERE unit_id='${u}' AND recipient_user_id IS NULL;`);
+    expect(issueRow(iss)).toBe('2/0/0/0');
+    expect(() => sql(as(`SELECT confirm_issue_received('${iss}');`, STRANGER))).toThrow(/доступа/);
+    sql(as(`SELECT confirm_issue_received('${iss}');`, USER));
+    expect(scalar(`SELECT received_confirmed_proxy FROM warehouse_issues WHERE id='${iss}';`)).toBe('true');
+    expect(() => sql(as(`SELECT warehouse_issue('${key()}','${u}','${WHA}',1,'X','${STRANGER}','2026-11-02',NULL,NULL,'');`))).toThrow(/не является сотрудником/);
+    expect(stock(u, WHA)).toBe('3');
+  });
+
   test('reversal needs reason, is linked, single, and cannot drive stock negative', () => {
     const iss = scalar(`SELECT i.id FROM warehouse_issues i JOIN warehouse_units u ON u.id=i.unit_id WHERE u.name='Перчатки';`);
     const u = scalar(`SELECT unit_id FROM warehouse_issues WHERE id='${iss}';`);
