@@ -34,7 +34,6 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
       INSERT INTO warehouses(id,organization_id,name) VALUES('${WHA}','${ORG}','Склад А'),('${WHB}','${ORG}','Склад Б');
       INSERT INTO requests(id,organization_id,status,request_number,description) VALUES('${REQ}','${ORG}','В пути','R-1','Фильтры'),('${REQ0}','${ORG}','Доставлено','R-0','Рации без позиций');
       INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Фильтр масляный',10);`);
-    sql(readFileSync(file, 'utf8'));
     sql('GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;');
   }, 120000);
 
