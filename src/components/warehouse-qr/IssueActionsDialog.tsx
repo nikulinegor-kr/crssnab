@@ -46,7 +46,7 @@ export function IssueActionsDialog({ issue, unitName, unit, orgId, open, onOpenC
   const fail = (e: unknown) => toast({ title: 'Операция не выполнена', description: (e as { message?: string })?.message ?? String(e), variant: 'destructive' });
   const save = async () => { setBusy(true); try {
     const { error } = mode === 'return' ? await supabase.rpc('warehouse_return_issue', { _operation_key: key, _issue_id: issue.id, _quantity: q, _warehouse_id: wh ?? '', _condition: cond, _note: note })
-      : await supabase.rpc('warehouse_issue_usage', { _operation_key: key, _issue_id: issue.id, _kind: mode, _quantity: q, _equipment_id: mode === 'install' ? eq ?? undefined : undefined, _operation_date: date, _note: note });
+      : await supabase.rpc('warehouse_issue_usage', { _operation_key: key, _issue_id: issue.id, _kind: mode, _quantity: q, _equipment_id: mode === 'install' ? (eq ?? null) as unknown as string : (null as unknown as string), _operation_date: date, _note: note });
     if (error) throw error; await done(mode === 'return' ? 'Возврат проведён' : mode === 'install' ? 'Установка записана' : 'Расход записан'); onOpenChange(false);
   } catch (e) { fail(e); } finally { setBusy(false); } };
   const confirmReceived = async () => { setBusy(true); try { const { error } = await supabase.rpc('confirm_issue_received', { _issue_id: issue.id }); if (error) throw error; await done('Получение подтверждено'); onOpenChange(false); } catch (e) { fail(e); } finally { setBusy(false); } };
