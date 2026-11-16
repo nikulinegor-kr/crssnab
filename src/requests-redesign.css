@@ -838,3 +838,26 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   overflow-wrap: anywhere;
   white-space: normal;
 }
+
+/* Белая отбивка внутри карточки таблицы: шапка, строки и итоги не касаются края. */
+.requests-registry .requests-table-surface {
+  padding: 12px;
+  gap: 8px;
+}
+.requests-registry .requests-table-scroll {
+  border: 1px solid var(--requests-border);
+  border-radius: 12px;
+}
+.requests-registry .requests-pagination {
+  border-radius: 12px;
+}
+@media (max-width: 480px) {
+  .requests-registry .requests-table-surface { padding: 7px; gap: 6px; }
+}
+/* Липкая шапка: вертикальный и горизонтальный скролл — у одного контейнера таблицы. */
+.requests-registry .requests-table-scroll > div { overflow: visible; }
+.requests-registry table td[data-numeric] :is(span, div) { white-space: nowrap; }
+.requests-registry table button[role="checkbox"] {
+  width: 16px !important; height: 16px !important;
+  min-width: 16px !important; min-height: 16px !important;
+}
