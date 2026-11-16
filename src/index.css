@@ -140,7 +140,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 219 26% 8%;
 
-    --primary: 187 87% 32%;
+    --primary: 224 37% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 17% 95%;
@@ -149,7 +149,7 @@ All colors MUST be HSL.
     --muted: 210 17% 95%;
     --muted-foreground: 213 11% 40%;
 
-    --accent: 187 87% 32%;
+    --accent: 224 37% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 64% 47%;
@@ -157,7 +157,7 @@ All colors MUST be HSL.
 
     --border: 214 19% 91%;
     --input: 214 14% 84%;
-    --ring: 187 87% 32%;
+    --ring: 224 37% 50%;
 
     --success: 160 89% 25%;
     --warning: 37 100% 30%;
@@ -167,7 +167,7 @@ All colors MUST be HSL.
     --surface-2: 210 25% 99%;
     --surface-3: 210 17% 95%;
     --text-3: 214 10% 59%;
-    --primary-soft: 186 42% 94%;
+    --primary-soft: 222 60% 96%;
     --destructive-soft: 0 46% 95%;
     --warning-soft: 37 44% 92%;
     --success-soft: 160 45% 93%;
@@ -176,16 +176,16 @@ All colors MUST be HSL.
     --panel-shadow: 0 16px 40px hsl(216 45% 11% / 0.13);
 
     --row-hover: 210 20% 96%;
-    --row-sel: 186 41% 94%;
+    --row-sel: 222 60% 96%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 219 26% 8%;
-    --sidebar-primary: 187 87% 32%;
+    --sidebar-primary: 224 37% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 17% 95%;
     --sidebar-accent-foreground: 219 26% 8%;
     --sidebar-border: 214 19% 91%;
-    --sidebar-ring: 187 87% 32%;
+    --sidebar-ring: 224 37% 50%;
   }
 
   .dark,
@@ -201,8 +201,8 @@ All colors MUST be HSL.
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 93%;
 
-    --primary: 185 81% 47%;
-    --primary-foreground: 190 84% 8%;
+    --primary: 224 50% 69%;
+    --primary-foreground: 226 40% 10%;
 
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 93%;
@@ -210,15 +210,15 @@ All colors MUST be HSL.
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 185 81% 47%;
-    --accent-foreground: 190 84% 8%;
+    --accent: 224 50% 69%;
+    --accent-foreground: 226 40% 10%;
 
     --destructive: 0 100% 71%;
     --destructive-foreground: 0 0% 10%;
 
     --border: 0 0% 18%;
     --input: 0 0% 23%;
-    --ring: 185 81% 47%;
+    --ring: 224 50% 69%;
 
     --success: 162 62% 51%;
     --warning: 36 91% 55%;
@@ -228,7 +228,7 @@ All colors MUST be HSL.
     --surface-2: 0 0% 13%;
     --surface-3: 0 0% 15%;
     --text-3: 0 0% 44%;
-    --primary-soft: 185 30% 14%;
+    --primary-soft: 224 30% 17%;
     --destructive-soft: 0 30% 16%;
     --warning-soft: 36 28% 15%;
     --success-soft: 162 24% 14%;
@@ -241,12 +241,12 @@ All colors MUST be HSL.
 
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 93%;
-    --sidebar-primary: 185 81% 47%;
-    --sidebar-primary-foreground: 190 84% 8%;
+    --sidebar-primary: 224 50% 69%;
+    --sidebar-primary-foreground: 226 40% 10%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 93%;
     --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 185 81% 47%;
+    --sidebar-ring: 224 50% 69%;
   }
 
   html[data-theme="light"] {
@@ -524,3 +524,7 @@ All colors MUST be HSL.
 @media (prefers-reduced-motion: reduce) {
   .request-fullscreen { animation: none; }
 }
+
+/* Brand indigo hover for primary buttons */
+.bg-primary.hover\:bg-primary\/90:hover { background-color: #40578f; }
+.dark .bg-primary.hover\:bg-primary\/90:hover { background-color: hsl(224 50% 62%); }

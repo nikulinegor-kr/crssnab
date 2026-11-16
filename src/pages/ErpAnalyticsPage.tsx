@@ -16,7 +16,7 @@ const COLORS = [
   "hsl(30, 80%, 55%)",
   "hsl(280, 60%, 55%)",
   "hsl(0, 70%, 55%)",
-  "hsl(180, 50%, 45%)",
+  "hsl(232, 30%, 42%)",
 ];
 
 export default function ErpAnalyticsPage() {
