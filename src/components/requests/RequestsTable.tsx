@@ -3,6 +3,7 @@ import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
 import { RECENT_ARRIVAL_DAYS, isRecentArrival } from "@/lib/requestArrivals";
 import { sortRequestsByDateDesc } from "@/lib/requestRegistry";
+import { calculateRequestTableLayout } from "@/lib/requestTableLayout";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
 import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
@@ -240,19 +241,36 @@ export const RequestsTable = ({
 
 
   const tableWrapRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [tableContainerWidth, setTableContainerWidth] = useState(0);
   const visibility = columnVisibility;
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
+  const tableLayout = useMemo(
+    () => calculateRequestTableLayout(tableContainerWidth, widths, visibility),
+    [tableContainerWidth, visibility, widths],
+  );
+  const displayWidths = tableLayout.widths;
   const totalColCount = useMemo(() => {
     const keys = ["request_date","description","object","priority","status","availability","contractor","amount","invoice_number","payment_prepay","payment_percentage","shipment_date","delivery_date","transport_company","waybill_number","applicant","executor","equipment","comments"] as const;
-    return 1 + keys.filter((k) => visibility[k]).length + 1;
-  }, [visibility]);
-  const tableMinWidth = useMemo(() => {
-    const columnsWidth = Object.entries(visibility).reduce((sum, [key, visible]) => {
-      if (!visible || key === "select") return sum;
-      return sum + (widths[key as keyof ColumnWidths] ?? 0);
-    }, 0);
-    return columnsWidth + (visibility.select === false ? 8 : 32) + 40;
-  }, [visibility, widths]);
+    return 1 + keys.filter((k) => visibility[k]).length + 1 + (tableLayout.fillerWidth > 0 ? 1 : 0);
+  }, [tableLayout.fillerWidth, visibility]);
+
+  useEffect(() => {
+    const element = tableScrollRef.current;
+    if (!element) return;
+    const measure = () => {
+      const nextWidth = element.clientWidth;
+      setTableContainerWidth((current) => current === nextWidth ? current : nextWidth);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [isLoading, requests?.length]);
   const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
@@ -616,31 +634,32 @@ export const RequestsTable = ({
       >
 
         <div className="flex min-h-0 flex-1 flex-col border-0 bg-card" ref={tableWrapRef}>
-        <div className="requests-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain">
+        <div ref={tableScrollRef} className="requests-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain">
 
-        <Table className="border-collapse" style={{ tableLayout: 'fixed', width: tableMinWidth, minWidth: tableMinWidth }}>
+        <Table className="border-collapse" style={{ tableLayout: 'fixed', width: tableLayout.tableWidth, minWidth: tableLayout.baseWidth }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
-            {visibility.request_date && <col style={{ width: widths.request_date }} />}
-            {visibility.description && <col style={{ width: widths.description }} />}
-            {visibility.object && <col style={{ width: widths.object }} />}
-            {visibility.priority && <col style={{ width: widths.priority }} />}
-            {visibility.status && <col style={{ width: widths.status }} />}
+            {visibility.request_date && <col style={{ width: displayWidths.request_date }} />}
+            {visibility.description && <col style={{ width: displayWidths.description }} />}
+            {visibility.object && <col style={{ width: displayWidths.object }} />}
+            {visibility.priority && <col style={{ width: displayWidths.priority }} />}
+            {visibility.status && <col style={{ width: displayWidths.status }} />}
 
-            {visibility.availability && <col style={{ width: widths.availability }} />}
-            {visibility.contractor && <col style={{ width: widths.contractor }} />}
-            {visibility.amount && <col style={{ width: widths.amount }} />}
-            {visibility.invoice_number && <col style={{ width: widths.invoice_number }} />}
-            {visibility.payment_prepay && <col style={{ width: widths.payment_prepay }} />}
-            {visibility.payment_percentage && <col style={{ width: widths.payment_percentage }} />}
-            {visibility.shipment_date && <col style={{ width: widths.shipment_date }} />}
-            {visibility.delivery_date && <col style={{ width: widths.delivery_date }} />}
-            {visibility.transport_company && <col style={{ width: widths.transport_company }} />}
-            {visibility.waybill_number && <col style={{ width: widths.waybill_number }} />}
-            {visibility.applicant && <col style={{ width: widths.applicant }} />}
-            {visibility.executor && <col style={{ width: widths.executor }} />}
-            {visibility.equipment && <col style={{ width: widths.equipment }} />}
-            {visibility.comments && <col style={{ width: widths.comments }} />}
+            {visibility.availability && <col style={{ width: displayWidths.availability }} />}
+            {visibility.contractor && <col style={{ width: displayWidths.contractor }} />}
+            {visibility.amount && <col style={{ width: displayWidths.amount }} />}
+            {visibility.invoice_number && <col style={{ width: displayWidths.invoice_number }} />}
+            {visibility.payment_prepay && <col style={{ width: displayWidths.payment_prepay }} />}
+            {visibility.payment_percentage && <col style={{ width: displayWidths.payment_percentage }} />}
+            {visibility.shipment_date && <col style={{ width: displayWidths.shipment_date }} />}
+            {visibility.delivery_date && <col style={{ width: displayWidths.delivery_date }} />}
+            {visibility.transport_company && <col style={{ width: displayWidths.transport_company }} />}
+            {visibility.waybill_number && <col style={{ width: displayWidths.waybill_number }} />}
+            {visibility.applicant && <col style={{ width: displayWidths.applicant }} />}
+            {visibility.executor && <col style={{ width: displayWidths.executor }} />}
+            {visibility.equipment && <col style={{ width: displayWidths.equipment }} />}
+            {visibility.comments && <col style={{ width: displayWidths.comments }} />}
+            {tableLayout.fillerWidth > 0 && <col data-table-filler style={{ width: tableLayout.fillerWidth }} />}
             <col style={{ width: 40 }} />
           </colgroup>
 
@@ -715,6 +734,7 @@ export const RequestsTable = ({
               {visibility.comments && (
                 <ResizableTableHeader resizable align="left" column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
+              {tableLayout.fillerWidth > 0 && <TableHead aria-hidden className="border-b p-0" />}
               <TableHead className="w-10 p-1 text-center">
                 <MoreVertical className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
               </TableHead>
@@ -1072,7 +1092,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.priority && (
-                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <TableCell data-col="priority" data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="priority"
@@ -1093,7 +1113,7 @@ export const RequestsTable = ({
                   )}
                   {visibility.status && (
 
-                    <TableCell data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <TableCell data-col="status" data-row-action className="px-3 py-2 border-b overflow-hidden" onClick={(e) => e.stopPropagation()}>
                       <QuickBadgeSelect
                         requestId={request.id}
                         field="status"
@@ -1143,15 +1163,15 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-col="amount" data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
                         value={request.amount ?? ""}
                         displayValue={
                           request.amount && request.amount > 0 ? (
-                            <span className="font-medium">
-                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))} ₽
+                            <span className="whitespace-nowrap font-medium">
+                              {new Intl.NumberFormat("ru-RU").format(Number(request.amount))}{"\u00A0"}₽
                             </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
@@ -1161,7 +1181,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.invoice_number && (
-                    <TableCell className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-col="invoice_number" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       {request.invoice_number ? (
                         <div className="line-clamp-2 text-foreground leading-snug">
                           <HighlightText text={request.invoice_number} searchQuery={searchQuery} />
@@ -1184,7 +1204,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.payment_percentage && (
-                    <TableCell className="px-2 py-1.5 border-b font-mono font-semibold overflow-hidden" data-numeric>
+                    <TableCell data-col="payment_percentage" className="px-2 py-1.5 border-b font-mono font-semibold overflow-hidden" data-numeric>
                       <InlinePaymentStatusCell
                         requestId={request.id}
                         paymentPercent={(request as any).payment_percent ?? 0}
@@ -1229,7 +1249,7 @@ export const RequestsTable = ({
                   )}
 
                   {visibility.waybill_number && (
-                    <TableCell data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-col="waybill_number" data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1320,6 +1340,7 @@ export const RequestsTable = ({
                       />
                     </TableCell>
                   )}
+                  {tableLayout.fillerWidth > 0 && <TableCell aria-hidden className="border-b p-0" />}
                   {/* Row Action Menu */}
                   <TableCell data-row-action className="w-10 text-center px-1 py-2 border-b" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>

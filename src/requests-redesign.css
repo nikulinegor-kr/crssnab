@@ -115,6 +115,9 @@
 }
 
 .requests-registry .requests-table-surface {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--requests-border);
   border-radius: var(--requests-menu-radius);
@@ -875,7 +878,20 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .requests-registry tbody td:not([data-align="left"]) > [role="button"][aria-haspopup] { justify-content: center; }
 .requests-registry table tbody td:not([data-align="left"]):not([data-align="right"]) > :is(span, div, button) { justify-content: center; }
-.requests-registry table tbody td[data-numeric] :is(div, span) { overflow-wrap: anywhere; word-break: break-all; white-space: normal !important; }
+.requests-registry table tbody td[data-numeric],
+.requests-registry table tbody td[data-numeric] :is(div, span) {
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap !important;
+}
+.requests-registry table tbody td[data-col="request_date"] { white-space: nowrap !important; }
+.requests-registry table tbody td[data-col="payment_percentage"] > button { justify-content: center; }
+.requests-registry table tbody td .request-payment-badge { flex: none; }
+.requests-registry table tbody td:is([data-col="status"], [data-col="priority"]) > [role="button"] {
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
+}
 .requests-registry table tbody td .group\/ttn { position: relative; justify-content: center; }
 .requests-registry table tbody td .group\/ttn > .flex-1 { flex: 0 1 auto; }
 .requests-registry table tbody td .group\/ttn > button { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); }

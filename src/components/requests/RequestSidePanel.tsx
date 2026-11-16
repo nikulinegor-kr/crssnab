@@ -844,7 +844,7 @@ export const RequestSidePanel = ({
   );
   const wideFullscreen = isFullscreen && viewportWide;
   const containerClass = isFullscreen ? "mx-auto w-[min(1440px,100%-96px)]" : undefined;
-  const columnClass = "flex h-full min-w-0 flex-col rounded-[10px] border border-border bg-card p-5";
+  const columnClass = "flex h-full min-w-0 flex-col rounded-[16px] border border-border bg-card p-5";
   const sectionTitleClass = "mb-3 text-[15px] font-semibold text-foreground";
 
 
