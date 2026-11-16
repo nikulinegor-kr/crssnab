@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, FileText, Download, ExternalLink, Paperclip, Tag, Pin } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +45,6 @@ import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 import { RequestInlineField } from "./RequestInlineField";
 import { RequestRoute } from "./RequestRoute";
-import { useRequestCardTimer } from "@/hooks/useRequestCardTimer";
 import { getRequestObjectLabel } from "@/lib/requestCard";
 
 interface RequestSidePanelProps {
@@ -82,7 +81,7 @@ const dt = (v?: string | null) => (v ? format(new Date(v), "dd.MM.yy") : null);
 const sanitizeName = (name: string) => name.replace(/[^\w.\-]+/g, "_") || `file_${Date.now()}`;
 
 export const RequestSidePanel = ({
-  request,
+  request: requestedRequest,
   open,
   initialTab = "overview",
   qrEntry = false,
@@ -99,6 +98,8 @@ export const RequestSidePanel = ({
   fullscreen,
   onFullscreenChange,
 }: RequestSidePanelProps) => {
+  const [editingRequest, setEditingRequest] = useState<RequestSidePanelProps["request"]>(null);
+  const request = requestedRequest ?? editingRequest;
   const STATUSES = useOrgStatuses();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
@@ -123,8 +124,7 @@ export const RequestSidePanel = ({
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [activeEditor, setActiveEditor] = useState<string | null>(null);
-  const [pinned, setPinned] = useState(false);
+  const [, setActiveEditor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
@@ -133,14 +133,6 @@ export const RequestSidePanel = ({
   const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
-
-  const { remainingSeconds, restart } = useRequestCardTimer({
-    open,
-    resetKey: request?.id,
-    pinned,
-    paused: Boolean(activeEditor) || editMode || editorOpen || statusPromptOpen,
-    onClose,
-  });
 
   const exitEditMode = useCallback(
     (confirmIfDirty: boolean) => {
@@ -231,7 +223,6 @@ export const RequestSidePanel = ({
     setEditDirty(false);
     setReceiptOpenSignal(0);
     setActiveEditor(null);
-    setPinned(false);
     setTab(initialTab);
     setUploads([]);
   }, [request?.id, open, initialTab]);
@@ -468,7 +459,7 @@ export const RequestSidePanel = ({
     return steps;
   }, [request]);
 
-  if (!open || !request) return null;
+  if (!request || (!open && !editorOpen)) return null;
 
   // Боковая панель — только быстрая правка: поля и файлы.
   // Позиции, история и прочее тяжёлое живут в полном экране.
@@ -898,11 +889,6 @@ export const RequestSidePanel = ({
       }
 
       aria-label="Карточка заявки"
-      onPointerDownCapture={restart}
-      onKeyDownCapture={restart}
-      onWheel={restart}
-      onTouchStart={restart}
-      onScrollCapture={restart}
       onDragOver={(e) => {
         if (readOnly) return;
         e.preventDefault();
@@ -985,9 +971,6 @@ export const RequestSidePanel = ({
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           )}
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPinned((value) => !value)} aria-pressed={pinned} aria-label={pinned ? "Открепить карточку" : "Закрепить карточку"}>
-            <Pin className={pinned ? "h-4 w-4 fill-current text-primary" : "h-4 w-4"} />
-          </Button>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Закрыть">
             <X className="h-4 w-4" />
           </Button>
@@ -1032,21 +1015,18 @@ export const RequestSidePanel = ({
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
         {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
-        <span className="request-card-timer request-card-timer--inline" role="timer" aria-live="off">
-          {pinned ? "Закреплено" : activeEditor || editMode || editorOpen || statusPromptOpen ? "Пауза при редактировании" : `Закроется через ${remainingSeconds} с`}
-        </span>
       </div>
 
       {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
       {!wideFullscreen && (
-        <div className={cn("mt-2 flex flex-none gap-4 border-b border-border px-4", containerClass)}>
+        <div className={cn("mt-2 flex flex-none gap-4 overflow-x-auto border-b border-border px-4", containerClass)}>
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id as any)}
               className={cn(
-                "relative flex min-h-8 items-center pb-1.5 text-sm transition-colors",
+                "relative flex min-h-8 shrink-0 items-center pb-1.5 text-sm transition-colors",
                 tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1118,7 +1098,7 @@ export const RequestSidePanel = ({
 
       {/* Footer */}
       <div className="flex-none border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex items-center gap-3", containerClass)}>
+        <div className={cn("flex flex-wrap items-center gap-3", containerClass)}>
         {editMode ? (
           <>
             <Button
@@ -1145,7 +1125,9 @@ export const RequestSidePanel = ({
               event.currentTarget.blur();
               setEditMode(false);
               setEditDirty(false);
+              setEditingRequest(request);
               setEditorOpen(true);
+              onClose();
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -1212,7 +1194,7 @@ export const RequestSidePanel = ({
     </aside>
   );
 
-  const panelBody = content;
+  const panelBody = open ? content : null;
 
   const handleStatusFromPrompt = async (status: string) => {
     setStatusPromptOpen(false);
@@ -1233,6 +1215,7 @@ export const RequestSidePanel = ({
           if (!o) {
             queryClient.invalidateQueries({ queryKey: ["requests"] });
             queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+            setEditingRequest(null);
           }
         }}
       />

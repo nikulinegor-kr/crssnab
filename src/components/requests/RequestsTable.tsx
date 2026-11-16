@@ -61,7 +61,6 @@ import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { formatPersonName } from "@/lib/personName";
 import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 
-import { RequestQuickView } from "./RequestQuickView";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
 import { useAuthUserId } from "@/hooks/useOrgMembership";
@@ -143,7 +142,7 @@ interface RequestsTableProps {
   toggleAllRequests: () => void;
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
   onEditClick?: (request: Request) => void;
-  onOpenRequestSection?: (request: Request, section: "docs" | "tasks" | "history") => void;
+  onOpenRequest?: (request: Request) => void;
   onDuplicateClick?: (request: Request) => void;
   onCreateProcurement?: (request: Request) => void;
   searchQuery?: string;
@@ -165,7 +164,7 @@ export const RequestsTable = ({
   toggleAllRequests,
   onDeleteClick,
   onEditClick,
-  onOpenRequestSection,
+  onOpenRequest,
   onDuplicateClick,
   onCreateProcurement,
   searchQuery = "",
@@ -269,10 +268,6 @@ export const RequestsTable = ({
     return saved === "normal" || saved === "roomy" ? saved : "compact";
   });
   
-  // Quick View state — only store ID to avoid re-renders from table data updates
-  const [quickViewRequestId, setQuickViewRequestId] = useState<string | null>(null);
-  const [quickViewOpen, setQuickViewOpen] = useState(false);
-
   // Меню статуса / приоритета / исполнителя (клик по ячейке либо клавиши S / P / I)
   const [openMenu, setOpenMenu] = useState<{ id: string; field: "status" | "priority" | "executor" } | null>(null);
 
@@ -302,16 +297,6 @@ export const RequestsTable = ({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeRequestId]);
 
-
-  const openQuickView = useCallback((request: Request) => {
-    setQuickViewRequestId(request.id);
-    setQuickViewOpen(true);
-  }, []);
-
-  const closeQuickView = useCallback(() => {
-    setQuickViewOpen(false);
-    setQuickViewRequestId(null);
-  }, []);
 
   // Label print dialog state
   const [labelRequest, setLabelRequest] = useState<Request | null>(null);
@@ -1128,7 +1113,7 @@ export const RequestsTable = ({
                                   aria-label={`Открыть карточку: ${request.description}`}
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    openQuickView(request);
+                                    onOpenRequest?.(request);
                                   }}
                                 >
                                   <HighlightText text={request.description} searchQuery={searchQuery} />
@@ -1525,15 +1510,6 @@ export const RequestsTable = ({
         </div>
       </div>
       </div>
-
-      <RequestQuickView
-        requestId={quickViewRequestId}
-        open={quickViewOpen}
-        onClose={closeQuickView}
-        onEdit={onEditClick}
-        onOpenSection={onOpenRequestSection}
-        formOpen={Boolean(activeRequestId)}
-      />
 
       <LabelPrintDialog
         open={!!labelRequest}

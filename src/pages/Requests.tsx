@@ -153,7 +153,7 @@ const Requests = () => {
   const [panelInitialTab, setPanelInitialTab] = useState<"overview" | "docs" | "tasks" | "history">("overview");
   const [panelOpen, setPanelOpen] = useState(false);
   const location = useLocation();
-  const [qrRequestId, setQrRequestId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('request'));
+  const [qrRequestId, setQrRequestId] = useState<string | null>(null);
   useEffect(() => {
     if (location.state?.qrEntry) setQrRequestId(new URLSearchParams(location.search).get('request'));
   }, [location.key, location.search, location.state]);
@@ -213,14 +213,6 @@ const Requests = () => {
     setRequestParams(request.id, isFullView);
   };
 
-  const handleOpenRequestSection = useCallback((request: Request, section: "docs" | "tasks" | "history") => {
-    setQrRequestId(null);
-    setPanelInitialTab(section);
-    setSelectedRequest(request);
-    setPanelOpen(true);
-    setRequestParams(request.id, false);
-  }, [setRequestParams]);
-
   const closePanel = useCallback(() => {
     setQrRequestId(null);
     setPanelOpen(false);
@@ -228,6 +220,10 @@ const Requests = () => {
     setPanelInitialTab("overview");
     setRequestParams(null, false);
   }, [setRequestParams]);
+
+  const closePanelFromTable = useCallback(() => {
+    if (panelOpen) closePanel();
+  }, [closePanel, panelOpen]);
 
   const selectedRequestIndex = selectedRequest
     ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
@@ -636,7 +632,7 @@ const Requests = () => {
             <Button variant="link" className="min-h-11 px-1 text-xs" onClick={() => { filters.clearUrlFilters(); setSemanticSearchIds(null); }}>Сбросить</Button>
           </div>}
           {/* LEVEL 7: Table */}
-          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card" onClickCapture={closePanelFromTable}>
 
             <RequestsTable
               requests={visibleRequests}
@@ -646,7 +642,7 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
-              onOpenRequestSection={handleOpenRequestSection}
+              onOpenRequest={handleEditClick}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
@@ -712,7 +708,7 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card" onClickCapture={closePanelFromTable}>
 
             <RequestsTable
               requests={visibleRequests}
@@ -722,7 +718,7 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
-              onOpenRequestSection={handleOpenRequestSection}
+              onOpenRequest={handleEditClick}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
@@ -746,7 +742,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+            <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card" onClickCapture={closePanelFromTable}>
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}
@@ -755,7 +751,7 @@ const Requests = () => {
                 toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
-              onOpenRequestSection={handleOpenRequestSection}
+              onOpenRequest={handleEditClick}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery=""
