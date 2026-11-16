@@ -1,3 +1,4 @@
+import { formatRequestPublicNumber } from "@/lib/requestPublicNumber";
 import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
@@ -362,7 +363,7 @@ export const RequestSidePanel = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: !!request?.id && open && tab === "history",
+    enabled: !!request?.id && open,
   });
 
   const photoUrls = useMemo(() => request ? getRequestFileUrls(request, "photo") : [], [request]);
@@ -833,7 +834,7 @@ export const RequestSidePanel = ({
             {(history || []).length === 0 && <div className="text-sm text-muted-foreground">Записей нет</div>}
             {(history || []).map((h: any) => (
               <div key={h.id} className="flex items-center justify-between gap-2 border-b border-border/70 py-1.5">
-                <span className="truncate text-sm leading-5">{h.action}</span>
+                <span className="min-w-0 break-words text-sm leading-5">{h.action}</span>
                 <span className="font-numeric shrink-0 text-xs leading-4 text-muted-foreground">
                   {h.created_at ? format(new Date(h.created_at), "dd.MM.yy HH:mm") : ""}
                 </span>
@@ -1010,32 +1011,13 @@ export const RequestSidePanel = ({
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
         />
-        <span className="font-numeric">{request.request_number}</span>
+        <span className="font-numeric" title={request.request_number || undefined}>{formatRequestPublicNumber(request) ?? request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
         {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
       {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
-      {/* Tabs — в полноэкранном режиме на широком экране всё видно сразу */}
-      {!wideFullscreen && (
-        <div className={cn("mt-2 flex flex-none gap-4 overflow-x-auto border-b border-border px-4", containerClass)}>
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id as any)}
-              className={cn(
-                "relative flex min-h-8 shrink-0 items-center pb-1.5 text-sm transition-colors",
-                tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t.label}
-              {tab === t.id && <span className="absolute inset-x-0 -bottom-px h-[1.5px] bg-foreground/70" />}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
@@ -1064,7 +1046,7 @@ export const RequestSidePanel = ({
           </div>
         ) : (
           <div className={cn("w-full min-w-0", containerClass, isFullscreen && "px-0")}>
-            {tab === "overview" && (
+            {(
               <>
                 {fieldsBlock}
                 {isFullscreen ? (
@@ -1084,11 +1066,10 @@ export const RequestSidePanel = ({
                 )}
                 <div className={cardClass}>{linkedTasksBlock}</div>
                 {movementBlock}
+                <div className={cardClass}>{docsBlock}</div>
+                <div className={cardClass}><div className={sectionTitleClass}>История</div>{historyBlock}</div>
               </>
             )}
-            {tab === "tasks" && <div className={cardClass}>{linkedTasksBlock}</div>}
-            {tab === "docs" && <div className={cardClass}>{docsBlock}</div>}
-            {tab === "history" && <div className={cardClass}>{historyBlock}</div>}
           </div>
         )}
 

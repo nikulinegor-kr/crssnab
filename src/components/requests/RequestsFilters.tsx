@@ -283,7 +283,7 @@ export const RequestsFilters = ({
         {/* Active filter chips — inline, horizontally scrollable */}
         {chips.length > 0 && (
           <div
-            className="flex min-w-0 max-w-[55%] shrink-0 items-center gap-1 overflow-x-auto"
+            className="flex min-w-0 max-w-[55%] shrink items-center gap-1 overflow-x-auto"
             aria-label="Активные фильтры"
           >
             {chips.map((chip) => (

@@ -1,3 +1,4 @@
+import { formatRequestPublicNumber } from "@/lib/requestPublicNumber";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1001,8 +1002,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         </div>
         <p className="text-sm text-muted-foreground">
           {isViewer 
-            ? `Просмотр заявки ${request?.request_number}` 
-            : `Заявка ${request?.request_number}`
+            ? `Просмотр заявки ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}` 
+            : `Заявка ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}`
           }
           {!isViewer && (
             <span className="ml-2 text-xs opacity-70">
