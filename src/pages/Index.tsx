@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Sun, Moon, Shield, Users } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import LoginShell from "@/components/auth/LoginShell";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -25,12 +25,6 @@ export default function Index() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
@@ -99,79 +93,17 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Left Side - Logo */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
-        <div className="flex flex-col items-center text-center gap-4">
-          <img 
-            src="/logo.png" 
-            alt="CRSS Logo" 
-            className="h-36 w-auto"
-          />
-          <div className="flex flex-col gap-1">
-            <h1 className="text-5xl font-bold text-foreground tracking-wide">CRSS</h1>
-            <p className="text-lg text-muted-foreground leading-tight">
-              Система управления заявками
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative">
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleTheme}
-          className="absolute top-4 right-4 p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </button>
-
-        <div className="w-full max-w-md space-y-6">
-          {/* Mobile Logo */}
-          <div className="flex lg:hidden items-center justify-center mb-8">
-            <img 
-              src="/logo.png" 
-              alt="CRSS Logo" 
-              className="h-16 w-auto"
-            />
-          </div>
-
-          {/* Role Selector */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
-            <div
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-background shadow-sm text-foreground text-sm font-medium cursor-default"
-            >
-              <Sun className="h-4 w-4 text-primary" />
-              Администратор
-            </div>
-            <Link
-              to="/employee-login"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-muted-foreground text-sm font-medium hover:text-foreground transition-colors"
-            >
-              <Users className="h-4 w-4" />
-              Сотрудник
-            </Link>
-          </div>
-
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-bold text-foreground">Вход для администратора</h2>
-            <p className="text-xs text-muted-foreground">
-              Введите данные для доступа к панели управления
-            </p>
-          </div>
-
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+    <LoginShell role="admin" lead="Для администратора: управление заявками, складом и командой.">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-foreground text-xs font-extralight">
+              <Label htmlFor="email" className="crss-label">
                 Email
               </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                className="h-10 text-sm bg-background border-border focus:border-primary"
+                className="crss-field text-sm"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
@@ -180,7 +112,7 @@ export default function Index() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="password" className="text-foreground text-xs font-extralight">
+              <Label htmlFor="password" className="crss-label">
                 Пароль
               </Label>
               <div className="relative">
@@ -188,13 +120,14 @@ export default function Index() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="h-10 text-sm bg-background border-border focus:border-primary pr-10"
+                  className="crss-field text-sm pr-10"
                   {...form.register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 crss-muted transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -211,13 +144,13 @@ export default function Index() {
                   className="h-4 w-4"
                   onCheckedChange={(checked) => form.setValue("rememberMe", !!checked)}
                 />
-                <Label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer font-extralight">
+                <Label htmlFor="rememberMe" className="text-sm crss-muted cursor-pointer">
                   Запомнить меня
                 </Label>
               </div>
               <Link 
                 to="/auth" 
-                className="text-xs text-primary hover:text-primary/80 transition-colors"
+                className="text-sm crss-link transition-colors"
               >
                 Забыли пароль?
               </Link>
@@ -225,7 +158,7 @@ export default function Index() {
 
             <Button
               type="submit"
-              className="w-full h-10 text-sm font-medium bg-primary hover:bg-primary/90"
+              className="w-full crss-submit"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -233,17 +166,15 @@ export default function Index() {
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm crss-muted">
             Нет аккаунта?{" "}
             <Link 
               to="/auth" 
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
+              className="crss-link transition-colors"
             >
               Зарегистрироваться
             </Link>
           </p>
-        </div>
-      </div>
-    </div>
+    </LoginShell>
   );
 }

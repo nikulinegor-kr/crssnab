@@ -1,0 +1,48 @@
+/* Local styles for the login screens only. */
+.crss-login {
+  --cl-panel: #edf1fa; --cl-surface: #ffffff; --cl-text: #1d1d1f; --cl-muted: #626267;
+  --cl-accent: #5069ad; --cl-accent-hover: #40578f; --cl-switch: #f1f3f8; --cl-done: #34865e;
+  --cl-line: #c9d3ec; --cl-border: #dde2ec;
+  min-height: 100dvh; display: flex; flex-direction: column; background: var(--cl-surface); color: var(--cl-text);
+}
+.dark .crss-login {
+  --cl-panel: #161a24; --cl-surface: #0f1117; --cl-text: #f2f3f5; --cl-muted: #a1a1a8;
+  --cl-switch: #1c2030; --cl-line: #343b52; --cl-border: #2a2f3d;
+}
+@media (min-width: 1024px) { .crss-login { flex-direction: row; } }
+.crss-login__aside { display: none; position: relative; background: var(--cl-panel); }
+@media (min-width: 1024px) { .crss-login__aside { display: flex; width: 44%; align-items: center; justify-content: center; padding: 48px; } }
+.crss-login__aside-logo { position: absolute; top: 32px; left: 40px; }
+.crss-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.crss-logo__mark { width: 34px; height: 34px; }
+.crss-logo__word { font-weight: 700; font-size: 21px; letter-spacing: 0.01em; color: var(--cl-text); line-height: 1; }
+.crss-logo__sub { font-weight: 600; font-size: 12px; color: var(--cl-muted); margin-left: 4px; letter-spacing: 0.04em; }
+.crss-login__hero { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 440px; }
+.crss-login__hero-mark { width: 148px; height: 148px; margin-bottom: 28px; }
+.crss-login__hero-title { font-size: 44px; font-weight: 610; line-height: 1.07; letter-spacing: 0; margin: 0; color: var(--cl-text); }
+.crss-stages { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; margin-top: 40px; list-style: none; padding: 0; }
+.crss-stages::before { content: ""; position: absolute; top: 6px; left: 12.5%; right: 12.5%; height: 2px; background: var(--cl-line); }
+.crss-stages li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 13px; color: var(--cl-muted); }
+.crss-stages__dot { width: 14px; height: 14px; border-radius: 9999px; background: var(--cl-surface); border: 2px solid var(--cl-accent); }
+.crss-stages li:last-child .crss-stages__dot { background: var(--cl-done); border-color: var(--cl-done); }
+.crss-login__main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; position: relative; }
+@media (min-width: 1024px) { .crss-login__main { padding: 48px; } }
+.crss-login__mobile-head { align-self: stretch; margin-bottom: 32px; }
+@media (min-width: 1024px) { .crss-login__mobile-head { display: none; } }
+.crss-login__theme { position: absolute; top: 16px; right: 16px; padding: 8px; border-radius: 11px; background: var(--cl-switch); color: var(--cl-muted); }
+.crss-login__theme:hover { color: var(--cl-text); }
+.crss-login__form { width: 100%; max-width: 405px; display: flex; flex-direction: column; gap: 20px; }
+.crss-login__title { font-size: 28px; font-weight: 650; letter-spacing: -0.018em; line-height: 1.15; margin: 0; color: var(--cl-text); }
+.crss-login__lead { font-size: 14px; color: var(--cl-muted); margin-top: 6px; }
+.crss-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--cl-switch); border-radius: 12px; }
+.crss-switch > * { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--cl-muted); text-decoration: none; transition: color .15s; }
+.crss-switch > *:hover { color: var(--cl-text); }
+.crss-switch > [aria-current="page"] { background: var(--cl-surface); color: var(--cl-text); box-shadow: 0 1px 2px rgb(0 0 0 / .08); cursor: default; }
+.crss-login .crss-field { height: 44px; border-radius: 11px; border-color: var(--cl-border); background: var(--cl-surface); color: var(--cl-text); }
+.crss-login .crss-label { font-size: 13px; color: var(--cl-text); font-weight: 500; }
+.crss-login .crss-muted { color: var(--cl-muted); }
+.crss-login .crss-link { color: var(--cl-accent); font-weight: 500; }
+.crss-login .crss-link:hover { color: var(--cl-accent-hover); }
+.crss-login .crss-submit { height: 44px; border-radius: 11px; background: var(--cl-accent); color: #fff; font-weight: 600; }
+.crss-login .crss-submit:hover { background: var(--cl-accent-hover); }
+.crss-login button[role="checkbox"] { min-height: 0; min-width: 0; height: 16px; width: 16px; border-radius: 4px; }
