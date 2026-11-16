@@ -45,6 +45,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle, Paperclip } from "lucide-react";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./create-request/FormSectionCard";
+import { RequestFormNav } from "./create-request/RequestFormNav";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { notifyTelegram } from "@/lib/telegram";
@@ -698,11 +699,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       <form
         id={formId}
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5 sm:space-y-6"
+        className="request-form-stack"
         onFocus={handleInputFocus as any}
       >
         
-        {/* 1. Context Block: Description + Comment */}
+        
+        <section id="req-sec-main" data-request-section="req-sec-main" className="request-top">
         <ContextSection 
           ref={descriptionRef}
           form={form} 
@@ -729,6 +731,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         />
 
         {/* 4. Счёт и оплата */}
+        </section>
         <FinanceSection
           form={form}
           suppliers={suppliers}
@@ -753,6 +756,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         {/* 8. Files — always visible */}
         <FormSectionCard
           title="Файлы"
+            summary="Фото и документы заявки"
+            sectionId="req-sec-files"
+            collapsible
+            defaultCollapsed
           icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -795,7 +802,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   );
 
   const desktopActions = (
-    <div className="request-form-actions shrink-0 sticky bottom-0 z-10 flex justify-end gap-2 border-t bg-background px-6 py-3">
+    <div className="request-form-actions shrink-0 sticky bottom-0 z-10 flex justify-end gap-2 border-t bg-card px-6 py-3">
       <Button
         type="button"
         variant="outline"
@@ -870,9 +877,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
               <SheetTitle>Новая заявка</SheetTitle>
             </SheetHeader>
+            <RequestFormNav />
             <SheetDescription className="sr-only">Заполните форму для создания заявки</SheetDescription>
             <div
-              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overscroll-contain overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+              className="request-form-body flex-1 min-h-0 w-full max-w-full overflow-y-auto overscroll-contain overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
             >
 
               {formContent}
@@ -891,14 +899,15 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       {exitWarningDialog}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="request-form-redesign max-w-3xl max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
-          <DialogHeader className="shrink-0 px-6 pt-6 pb-3">
+        <DialogContent className="request-form-redesign request-form-window flex flex-col overflow-hidden p-0 gap-0">
+          <DialogHeader className="request-form-header shrink-0 px-6 pt-6 pb-4 pr-16 text-left">
             <DialogTitle>Новая заявка</DialogTitle>
             <DialogDescription>
-              Заполните форму для создания заявки
+              Заполните поля со звёздочкой. Счёт и доставку можно добавить позже.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pb-2">
+          <RequestFormNav />
+          <div className="request-form-body flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5">
             {formContent}
           </div>
           {desktopActions}

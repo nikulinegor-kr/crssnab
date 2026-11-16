@@ -231,7 +231,9 @@ export const AdditionalSection = ({
 
   return (
     <FormSectionCard 
-      title="ЗРС" 
+      title="ЗРС"
+      summary="Сводка заявки для согласования"
+      sectionId="req-sec-zrs"
       icon={<MoreHorizontal className="h-4 w-4 text-muted-foreground" />}
       collapsible
       defaultCollapsed

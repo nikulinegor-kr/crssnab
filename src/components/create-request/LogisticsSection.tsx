@@ -42,6 +42,13 @@ export const LogisticsSection = ({
   }, [autoApplied, requestId, existingShipments.length]);
 
   return (
+    <FormSectionCard
+      title="Логистика"
+      summary="Перевозчик, ТТН и сроки"
+      sectionId="req-sec-logistics"
+      collapsible
+      defaultCollapsed
+    >
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <span className="text-xs text-muted-foreground">Тип доставки</span>
@@ -59,6 +66,7 @@ export const LogisticsSection = ({
 
       {mode === "single" ? (
         <FormSectionCard
+          bare
           title="Логистика · Обычная доставка"
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
         >
@@ -178,6 +186,7 @@ export const LogisticsSection = ({
         </FormSectionCard>
       ) : (
         <FormSectionCard
+          bare
           title="Логистика · Несколько перевозок"
           icon={<Boxes className="h-4 w-4 text-muted-foreground" />}
         >
@@ -200,5 +209,6 @@ export const LogisticsSection = ({
         </FormSectionCard>
       )}
     </div>
+    </FormSectionCard>
   );
 };

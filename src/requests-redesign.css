@@ -492,3 +492,134 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
     padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* ===== Согласованный макет формы заявки (создание и редактирование) ===== */
+.request-form-redesign.request-form-window {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  transform: none;
+  translate: none;
+  width: min(1080px, calc(100vw - 32px));
+  max-width: none;
+  height: min(880px, calc(100dvh - 32px));
+  max-height: none;
+  border: 1px solid var(--requests-border);
+  border-radius: var(--requests-window-radius) !important;
+  overflow: hidden;
+}
+.request-form-redesign .request-form-header,
+.request-form-redesign > [class*="border-b"]:first-child { background: var(--requests-surface); }
+.request-form-redesign .request-form-header h2,
+.request-form-redesign .request-form-header [id$="-title"] {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15;
+}
+.request-form-redesign > button.absolute.right-4.top-4 {
+  background: var(--requests-bg); opacity: 1; color: var(--requests-text); border-radius: 10px;
+}
+@media (min-width: 640px) {
+  .request-form-redesign > button.absolute.right-4.top-4 { right: 24px; top: 22px; width: 36px; height: 36px; }
+}
+
+.request-form-nav {
+  display: flex; flex-shrink: 0; gap: 4px; overflow-x: auto; scrollbar-width: none;
+  border-top: 1px solid var(--requests-border); border-bottom: 1px solid var(--requests-border);
+  background: var(--requests-surface); padding: 6px 16px;
+}
+.request-form-nav::-webkit-scrollbar { display: none; }
+.request-form-nav__item {
+  flex-shrink: 0; min-height: 36px; border-radius: 10px; padding: 0 10px;
+  font-size: 14px; font-weight: 600; color: var(--requests-text); white-space: nowrap;
+}
+.request-form-nav__item:hover { background: var(--requests-indigo-soft); color: var(--requests-indigo); }
+.request-form-nav__item:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 1px; }
+
+.request-form-redesign .request-form-body { background: var(--requests-bg); }
+.request-form-redesign .request-form-stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.request-form-redesign .request-form-stack > * { min-width: 0; }
+
+/* Compact sections */
+.request-form-redesign .request-section { border-radius: 18px; }
+.request-section__header {
+  display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; text-align: left; color: var(--requests-text);
+}
+button.request-section__header:hover { background: color-mix(in srgb, var(--requests-indigo-soft) 50%, transparent); }
+button.request-section__header:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: -2px; }
+.request-section__heading { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.request-section__title { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.request-section__summary { font-size: 13px; color: var(--requests-muted); overflow-wrap: anywhere; }
+.request-section__chevron { color: var(--requests-muted); transition: transform .15s; }
+.request-section__body { padding: 0 20px 20px; min-width: 0; }
+.request-section__body[hidden] { display: none; }
+
+/* Combined top section */
+.request-form-redesign .request-top {
+  display: grid; gap: 14px 16px; align-items: start;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, .62fr) minmax(0, .62fr);
+  grid-template-areas: "ctx date priority" "ctx applicant object" "proj status executor";
+  border: 1px solid var(--requests-border); border-radius: 18px;
+  background: var(--requests-surface); padding: 20px;
+}
+.request-top .req-flat { display: contents; }
+.request-top .req-a-ctx { grid-area: ctx; min-width: 0; }
+.request-top .req-a-date { grid-area: date; }
+.request-top .req-a-priority { grid-area: priority; }
+.request-top .req-a-applicant { grid-area: applicant; }
+.request-top .req-a-object { grid-area: object; }
+.request-top .req-a-status { grid-area: status; }
+.request-top .req-a-executor { grid-area: executor; }
+.request-top .req-a-proj { grid-area: proj; }
+.request-top [class*="req-a-"] { min-width: 0; margin: 0; }
+.request-top [class*="req-a-"] label { font-size: 13px; font-weight: 600; color: var(--requests-text); }
+.request-top .req-a-ctx > div { padding: 0 !important; }
+.request-top .req-a-ctx .request-disclosure { margin: 12px 0 0 !important; }
+.request-top .req-a-ctx label { font-size: 16px; }
+.request-top :is(input, [role="combobox"], .request-date-input) { height: 40px; min-width: 0; width: 100%; max-width: 100%; }
+.request-top .request-description-input {
+  border: 1px solid var(--requests-border); border-radius: var(--requests-field-radius);
+  background: #f8f9fc; padding: 10px 12px; overflow-wrap: anywhere;
+}
+.dark .request-top .request-description-input { background: var(--requests-bg); }
+
+.request-disclosure > summary {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer;
+  list-style: none; font-size: 13px; font-weight: 600; color: var(--requests-indigo);
+}
+.request-disclosure > summary::-webkit-details-marker { display: none; }
+.request-disclosure > summary::before { content: "▸"; font-size: 11px; transition: transform .15s; }
+.request-disclosure[open] > summary::before { transform: rotate(90deg); }
+.request-disclosure > summary:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 2px; border-radius: 6px; }
+
+/* Invoices */
+.request-finance-grid {
+  display: grid; gap: 16px; grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr); align-items: start;
+}
+.request-finance-doc { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
+.request-finance-doc > .flex { display: flex; flex-wrap: wrap; gap: 8px; }
+.request-finance-doc > .flex > button { flex: 1 1 140px; min-width: 0; white-space: normal; }
+.request-invoice-card--empty { color: var(--requests-muted); }
+.request-payment-row { margin-top: 16px; align-items: end; }
+.request-payment-row > * { min-width: 0; }
+
+.request-form-redesign :is(p, span, div, label, button) { overflow-wrap: anywhere; }
+.request-form-redesign .font-numeric, .request-form-redesign input { overflow-wrap: normal; }
+.request-form-redesign .request-form-actions { justify-content: flex-end; }
+
+@media (max-width: 900px) {
+  .request-form-redesign .request-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "ctx ctx" "date priority" "applicant object" "status executor" "proj proj";
+  }
+  .request-finance-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .request-form-redesign .request-top {
+    grid-template-columns: minmax(0, 1fr); padding: 16px;
+    grid-template-areas: "ctx" "date" "object" "priority" "applicant" "status" "executor" "proj";
+  }
+  .request-section__header { padding: 14px 16px; }
+  .request-section__body { padding: 0 16px 16px; }
+  .request-form-nav { padding: 6px 8px; }
+  .request-form-redesign .request-form-body { padding: 12px !important; padding-bottom: 24px !important; }
+}

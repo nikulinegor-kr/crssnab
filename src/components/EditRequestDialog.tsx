@@ -65,6 +65,7 @@ import { AdditionalSection } from "./create-request/AdditionalSection";
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./create-request/FormSectionCard";
+import { RequestFormNav } from "./create-request/RequestFormNav";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -1019,13 +1020,14 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <form
         id={formId}
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5 sm:space-y-6"
+        className="request-form-stack"
         onFocus={handleInputFocus as any}
       >
         {/* Draft Recovery Banner */}
         <DraftRecoveryBanner />
 
-        <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5">
+        <div className="request-form-stack">
+          <section id="req-sec-main" data-request-section="req-sec-main" className="request-top">
           <ContextSection
             form={form}
             draftSaveState={draftSaveState}
@@ -1048,7 +1050,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             currentOrgId={request?.organization_id || null}
             disabled={isViewer}
           />
+          </section>
           <FinanceSection
+            defaultOpen
             form={form}
             suppliers={suppliers}
             recentContractors={recentContractors}
@@ -1071,6 +1075,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           />
           <FormSectionCard
             title="Файлы"
+            summary="Фото и документы заявки"
+            sectionId="req-sec-files"
+            collapsible
+            defaultCollapsed
             icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
           >
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -1239,10 +1247,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
               {headerContent}
             </SheetHeader>
+            <RequestFormNav />
             <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
             <SheetDescription className="sr-only">Изменение данных заявки</SheetDescription>
             <div
-              className="flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+              className="request-form-body flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
               style={{
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
@@ -1265,15 +1274,16 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
           side="right"
-          className="request-form-redesign w-[min(1280px,94vw)] max-w-none sm:max-w-none p-0 gap-0 flex flex-col bg-card"
+          className="request-form-redesign request-form-window p-0 gap-0 flex flex-col bg-card"
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
+          <SheetHeader className="request-form-header text-left px-6 pt-6 pb-4 pr-16 flex-shrink-0">
             {headerContent}
           </SheetHeader>
+          <RequestFormNav />
           <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
           <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+          <div className="request-form-body flex-1 min-h-0 overflow-y-auto px-6 py-5">
             {formContent}
           </div>
           {footerActions}

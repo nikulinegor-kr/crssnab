@@ -1,3 +1,4 @@
+import crssMark from "@/assets/crss-mark.svg";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ReactNode, useEffect, useState } from "react";
@@ -11,7 +12,6 @@ import { QuickRequestFab } from "./quick-request/QuickRequestFab";
 import { QuickAddErpMenu } from "./erp/QuickAddErpMenu";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
-import { Building2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -22,7 +22,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLayoutProps) {
-  const { logoUrl, orgName } = useOrgBranding();
+  const { orgName } = useOrgBranding();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
 
@@ -59,22 +59,15 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover:bg-background/10 transition-colors rounded-md" />
-              {logoUrl ? (
-                <div className="p-1.5 rounded-md bg-muted/60 shrink-0">
-                  <img
-                    src={logoUrl}
-                    alt={orgName}
-                    className="h-10 w-10 object-contain rounded"
-                    style={{ imageRendering: 'auto' }}
-                  />
-                </div>
-              ) : (
-                <div className="p-1.5 rounded-md bg-muted/60 shrink-0">
-                  <Building2 className="h-7 w-7 text-muted-foreground" />
-                </div>
-              )}
+              <span className="inline-flex shrink-0 items-center gap-2" aria-label="CRSS CRM">
+                <img src={crssMark} alt="" className="h-8 w-8" />
+                <span className="text-[17px] font-bold leading-none tracking-[0.01em] text-foreground">
+                  CRSS<span className="ml-1 text-[10px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
+                </span>
+              </span>
+              <span className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden="true" />
               <span className="text-sm font-semibold text-foreground truncate hidden sm:block max-w-[220px]">
-                {orgName || "CRSS CRM"}
+                {orgName}
               </span>
             </div>
             <div className="flex-1 flex justify-center px-2">

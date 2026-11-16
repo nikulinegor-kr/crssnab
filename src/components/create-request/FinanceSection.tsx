@@ -35,6 +35,7 @@ interface FinanceSectionProps {
   invoiceFile?: File | null;
   invoiceUrl?: string | null;
   onInvoiceSelected?: (file: File) => void;
+  defaultOpen?: boolean;
 }
 
 export const FinanceSection = ({
@@ -45,7 +46,14 @@ export const FinanceSection = ({
   invoiceFile,
   invoiceUrl,
   onInvoiceSelected,
+  defaultOpen = false,
 }: FinanceSectionProps) => {
+  const rawContractor = form.watch("contractor");
+  const summaryContractor = suppliers?.find((x) => x.id === rawContractor)?.name || rawContractor;
+  const summaryAmount = form.watch("amount");
+  const summaryText = summaryContractor || summaryAmount
+    ? [summaryContractor, summaryAmount != null && summaryAmount !== "" ? `${Number(summaryAmount).toLocaleString("ru-RU")} ₽` : null].filter(Boolean).join(" · ")
+    : "Прикрепите счёт или заполните реквизиты вручную";
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -160,12 +168,56 @@ export const FinanceSection = ({
 
   return (
     <FormSectionCard 
-      title="Счёт и оплата" 
-      icon={<Banknote className="h-4 w-4 text-primary" />}
-      className="border-primary/20"
-      titleClassName="text-base font-semibold"
+      title="Счета и оплата"
+      summary={summaryText}
+      sectionId="req-sec-invoice"
+      collapsible
+      defaultCollapsed={!defaultOpen}
     >
       <div className="space-y-3 sm:space-y-4">
+        <div className="request-finance-grid">
+          <div className="request-finance-doc">
+        {(invoiceFile || invoiceUrl) && (() => {
+          const storageName = invoiceUrl ? decodeURIComponent(invoiceUrl.split("/").pop() || "Счёт") : "";
+          const name = invoiceFile?.name || storageName.replace(/^\d+-/, "") || "Счёт";
+          const format = name.includes(".") ? name.split(".").pop()?.toUpperCase() : "ФАЙЛ";
+          return (
+            <div className="request-invoice-card">
+              <FileText className="h-5 w-5 shrink-0 text-primary" />
+              <div className="request-invoice-card__name">
+                <div>{name}</div>
+                <div className="mt-0.5 text-xs font-normal text-muted-foreground">{format}</div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 px-2 text-primary"
+                onClick={() => {
+                  if (invoiceFile) {
+                    const url = URL.createObjectURL(invoiceFile);
+                    window.open(url, "_blank", "noopener,noreferrer");
+                    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                  } else if (invoiceUrl) {
+                    void openStoredFile(invoiceUrl);
+                  }
+                }}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Открыть
+              </Button>
+            </div>
+          );
+        })()}
+        {!(invoiceFile || invoiceUrl) && (
+          <div className="request-invoice-card request-invoice-card--empty">
+            <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <div className="request-invoice-card__name">
+              <div>Счёт не прикреплён</div>
+              <div className="mt-0.5 text-xs font-normal text-muted-foreground">PDF, изображение или таблица</div>
+            </div>
+          </div>
+        )}
         {/* Оба действия используют существующие обработчики файла и OCR. */}
         <div className="flex flex-wrap gap-2">
           <input
@@ -217,38 +269,8 @@ export const FinanceSection = ({
           </Button>
         </div>
 
-        {(invoiceFile || invoiceUrl) && (() => {
-          const storageName = invoiceUrl ? decodeURIComponent(invoiceUrl.split("/").pop() || "Счёт") : "";
-          const name = invoiceFile?.name || storageName.replace(/^\d+-/, "") || "Счёт";
-          const format = name.includes(".") ? name.split(".").pop()?.toUpperCase() : "ФАЙЛ";
-          return (
-            <div className="request-invoice-card">
-              <FileText className="h-5 w-5 shrink-0 text-primary" />
-              <div className="request-invoice-card__name">
-                <div>{name}</div>
-                <div className="mt-0.5 text-xs font-normal text-muted-foreground">{format}</div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1.5 px-2 text-primary"
-                onClick={() => {
-                  if (invoiceFile) {
-                    const url = URL.createObjectURL(invoiceFile);
-                    window.open(url, "_blank", "noopener,noreferrer");
-                    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-                  } else if (invoiceUrl) {
-                    void openStoredFile(invoiceUrl);
-                  }
-                }}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Открыть
-              </Button>
-            </div>
-          );
-        })()}
+          </div>
+          <div className="request-finance-fields min-w-0 space-y-3">
 
         {/* Contractor */}
         <FormField
@@ -374,88 +396,9 @@ export const FinanceSection = ({
                 )}
               </div>
 
-              <FormField
-                control={form.control}
-                name="payment_percentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">% предоплаты</FormLabel>
-                    <Select
-                      value={field.value != null ? String(field.value) : ""}
-                      onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
-                      disabled={disabled}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="—" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="0">0%</SelectItem>
-                        <SelectItem value="50">50%</SelectItem>
-                        <SelectItem value="100">100%</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
           );
         })()}
-
-        {/* Actual payment */}
-        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
-          <FormField
-            control={form.control}
-            name="payment_percent"
-            render={({ field }) => {
-              const val = field.value ?? 0;
-              const prepay = form.watch("payment_percentage") ?? 0;
-              const underpaid = prepay > 0 && val < prepay;
-              return (
-                <FormItem>
-                  <FormLabel className="text-xs">Факт оплаты (%)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="0"
-                      className={cn("h-9 select-all min-w-0 text-sm", underpaid && "border-destructive")}
-                      disabled={disabled}
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        const v = e.target.value === "" ? null : Math.min(100, Math.max(0, parseInt(e.target.value, 10)));
-                        field.onChange(isNaN(v as number) ? null : v);
-                      }}
-                    />
-                  </FormControl>
-                  {underpaid && (
-                    <p className="text-[11px] text-destructive">Недоплата: факт {val}% &lt; план {prepay}%</p>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-          <FormItem>
-            <FormLabel className="text-xs">Статус оплаты</FormLabel>
-            <div className="request-payment-status">
-              {(() => {
-                const val = form.watch("payment_percent") ?? 0;
-                const color = val === 0 ? "bg-destructive" : val >= 100 ? "bg-success" : "bg-warning";
-                const label = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : `Частично оплачено · ${val}%`;
-                return (
-                  <>
-                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color)} aria-hidden="true" />
-                    <span className={cn(val === 0 ? "text-destructive" : val >= 100 ? "text-success" : "text-warning")}>{label}</span>
-                  </>
-                );
-              })()}
-            </div>
-          </FormItem>
-        </div>
 
         {/* Availability row */}
         <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
@@ -510,6 +453,88 @@ export const FinanceSection = ({
             />
           )}
         </div>
+          </div>
+        </div>
+        {/* Actual payment */}
+        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3 request-payment-row">
+              <FormField
+                control={form.control}
+                name="payment_percentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">% предоплаты</FormLabel>
+                    <Select
+                      value={field.value != null ? String(field.value) : ""}
+                      onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
+                      disabled={disabled}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="0">0%</SelectItem>
+                        <SelectItem value="50">50%</SelectItem>
+                        <SelectItem value="100">100%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+          <FormField
+            control={form.control}
+            name="payment_percent"
+            render={({ field }) => {
+              const val = field.value ?? 0;
+              const prepay = form.watch("payment_percentage") ?? 0;
+              const underpaid = prepay > 0 && val < prepay;
+              return (
+                <FormItem>
+                  <FormLabel className="text-xs">Факт оплаты (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      className={cn("h-9 select-all min-w-0 text-sm", underpaid && "border-destructive")}
+                      disabled={disabled}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value === "" ? null : Math.min(100, Math.max(0, parseInt(e.target.value, 10)));
+                        field.onChange(isNaN(v as number) ? null : v);
+                      }}
+                    />
+                  </FormControl>
+                  {underpaid && (
+                    <p className="text-[11px] text-destructive">Недоплата: факт {val}% &lt; план {prepay}%</p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <FormItem>
+            <FormLabel className="text-xs">Статус оплаты</FormLabel>
+            <div className="request-payment-status">
+              {(() => {
+                const val = form.watch("payment_percent") ?? 0;
+                const color = val === 0 ? "bg-destructive" : val >= 100 ? "bg-success" : "bg-warning";
+                const label = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : `Частично оплачено · ${val}%`;
+                return (
+                  <>
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color)} aria-hidden="true" />
+                    <span className={cn(val === 0 ? "text-destructive" : val >= 100 ? "text-success" : "text-warning")}>{label}</span>
+                  </>
+                );
+              })()}
+            </div>
+          </FormItem>
+        </div>
+
       </div>
     </FormSectionCard>
   );

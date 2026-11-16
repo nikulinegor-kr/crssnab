@@ -96,7 +96,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
     };
 
     return (
-      <div className="request-form-section rounded-lg border border-border/40 bg-card/50 overflow-hidden">
+      <div className="req-a-ctx request-context">
         {/* Description - Primary, Autofocus */}
         <div className="p-3.5 sm:p-5 pb-2 sm:pb-3">
           <div className="flex items-center justify-between mb-2">
@@ -115,12 +115,8 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                 <FormControl>
                   <Textarea
                     ref={descriptionRef}
-                    placeholder="Опишите заявку — это главное поле..."
-                    className={cn(
-                      "min-h-[60px] sm:min-h-[72px] resize-none border-0 p-0 text-base sm:text-lg leading-normal",
-                      "focus-visible:ring-0 focus-visible:ring-offset-0",
-                      "bg-transparent placeholder:text-muted-foreground/50 font-normal"
-                    )}
+                    placeholder="Например, комплект фильтров для дорожного катка"
+                    className="request-description-input min-h-[76px] resize-y text-sm leading-normal"
                     autoFocus={autoFocus && !disabled}
                     disabled={disabled}
                     {...field}
@@ -132,49 +128,28 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
           />
         </div>
 
-        {/* Comment - Collapsible, shown on demand */}
-        {showCommentField ? (
-          <>
-            <div className="mx-3 sm:mx-4 border-t border-border/30" />
-            <div className="p-3 sm:p-4 pt-2 sm:pt-3">
-              <FormField
-                control={form.control}
-                name="comments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs text-muted-foreground">Комментарий</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Дополнительная информация..."
-                        className={cn(
-                          "min-h-[50px] sm:min-h-[60px] resize-none border-0 p-0 text-sm leading-relaxed",
-                          "focus-visible:ring-0 focus-visible:ring-offset-0",
-                          "bg-transparent text-muted-foreground placeholder:text-muted-foreground/40"
-                        )}
-                        disabled={disabled}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="px-3 sm:px-4 pb-2 sm:pb-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowCommentField(true)}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Добавить комментарий
-            </Button>
-          </div>
-        )}
+        {/* Comment - disclosure, opened automatically when it has content */}
+        <details className="request-disclosure mx-3.5 sm:mx-5 mb-3" open={showCommentField || undefined} onToggle={(e) => setShowCommentField((e.currentTarget as HTMLDetailsElement).open)}>
+          <summary>Комментарий</summary>
+          <FormField
+            control={form.control}
+            name="comments"
+            render={({ field }) => (
+              <FormItem className="mt-2">
+                <FormLabel className="sr-only">Комментарий</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Дополнительная информация..."
+                    className="min-h-[64px] resize-y text-sm leading-relaxed"
+                    disabled={disabled}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </details>
       </div>
     );
   }

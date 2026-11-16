@@ -1,8 +1,8 @@
-import { ReactNode, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ReactNode, useEffect, useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export const REQUEST_SECTION_OPEN_EVENT = "request-form-open-section";
 
 interface FormSectionCardProps {
   title: string;
@@ -12,58 +12,76 @@ interface FormSectionCardProps {
   defaultCollapsed?: boolean;
   className?: string;
   titleClassName?: string;
+  /** Short summary shown under the title of a compact section. */
+  summary?: ReactNode;
+  /** Anchor id used by the form navigation. */
+  sectionId?: string;
+  /** Render children without a card (used inside the combined top section). */
+  bare?: boolean;
 }
 
 export const FormSectionCard = ({
   title,
-  icon,
   children,
   collapsible = false,
   defaultCollapsed = false,
   className,
   titleClassName,
+  summary,
+  sectionId,
+  bare = false,
 }: FormSectionCardProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [isCollapsed, setIsCollapsed] = useState(collapsible && defaultCollapsed);
+  const contentId = useId();
+
+  useEffect(() => {
+    if (!sectionId) return;
+    const onOpen = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === sectionId) setIsCollapsed(false);
+    };
+    window.addEventListener(REQUEST_SECTION_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(REQUEST_SECTION_OPEN_EVENT, onOpen);
+  }, [sectionId]);
+
+  if (bare) return <div className="req-flat">{children}</div>;
+
+  const header = (
+    <>
+      <span className="request-section__heading">
+        <span className={cn("request-section__title", titleClassName)}>{title}</span>
+        {summary && <span className="request-section__summary">{summary}</span>}
+      </span>
+      {collapsible && (
+        <ChevronDown
+          className={cn("request-section__chevron h-5 w-5 shrink-0", !isCollapsed && "rotate-180")}
+          aria-hidden="true"
+        />
+      )}
+    </>
+  );
 
   return (
-    <Card className={cn("request-form-section border-border/40 bg-card/50 overflow-hidden", className)}>
-      <CardHeader 
-        className={cn(
-          "pb-2 sm:pb-3 pt-3.5 sm:pt-5 px-3.5 sm:px-5",
-          collapsible && "cursor-pointer select-none hover:bg-muted/30 transition-colors"
-        )}
-        onClick={collapsible ? () => setIsCollapsed(!isCollapsed) : undefined}
-      >
-        <div className="flex items-center justify-between">
-          <CardTitle className={cn("text-sm font-semibold flex items-center gap-2 text-foreground", titleClassName)}>
-            {icon}
-            {title}
-          </CardTitle>
-          {collapsible && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsCollapsed(!isCollapsed);
-              }}
-            >
-              {isCollapsed ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      {!isCollapsed && (
-        <CardContent className="px-3.5 sm:px-5 pb-3.5 sm:pb-5 pt-0">
-          {children}
-        </CardContent>
+    <section
+      id={sectionId}
+      data-request-section={sectionId}
+      className={cn("request-form-section request-section", className)}
+    >
+      {collapsible ? (
+        <button
+          type="button"
+          className="request-section__header"
+          aria-expanded={!isCollapsed}
+          aria-controls={contentId}
+          onClick={() => setIsCollapsed((v) => !v)}
+        >
+          {header}
+        </button>
+      ) : (
+        <div className="request-section__header">{header}</div>
       )}
-    </Card>
+      <div id={contentId} className="request-section__body" hidden={isCollapsed}>
+        {children}
+      </div>
+    </section>
   );
 };

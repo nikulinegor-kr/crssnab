@@ -66,15 +66,16 @@ export const CoreParamsSection = ({
 
   return (
     <FormSectionCard
+      bare
       title="Основные параметры"
       icon={<CalendarDays className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="request-mobile-stack request-date-object grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+      <div className="req-flat request-mobile-stack request-date-object grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
         <FormField
           control={form.control}
           name="request_date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="req-a-date">
               <FormLabel className="text-xs">Дата заявки *</FormLabel>
               <FormControl>
                 <Input
@@ -94,7 +95,7 @@ export const CoreParamsSection = ({
           control={form.control}
           name="object_id"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="req-a-object">
               <FormLabel className="text-xs">Объект</FormLabel>
               <FormControl>
                 <ObjectSelectWithAdd
@@ -111,6 +112,9 @@ export const CoreParamsSection = ({
         />
       </div>
 
+      {(showProjectField || isRepairObject) && (
+      <details className="req-a-proj request-disclosure" open={!!form.watch("parent_request_id") || isRepairObject || undefined}>
+        <summary>Проект и назначение</summary>
       {showProjectField && (
         <div className="mt-3">
           <FormField
@@ -198,6 +202,8 @@ export const CoreParamsSection = ({
             )}
           </FormSectionCard>
         </div>
+      )}
+      </details>
       )}
     </FormSectionCard>
   );

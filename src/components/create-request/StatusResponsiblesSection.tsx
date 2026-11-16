@@ -44,17 +44,18 @@ export const StatusResponsiblesSection = ({
 
   return (
     <FormSectionCard
+      bare
       title="Статус и ответственные"
       icon={<Users className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="space-y-3 sm:space-y-4">
+      <div className="req-flat space-y-3 sm:space-y-4">
         {/* Status & Priority */}
-        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+        <div className="req-flat request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
           <FormField
             control={form.control}
             name="status"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="req-a-status">
                 <FormLabel className="text-xs">Статус *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                   <FormControl>
@@ -76,7 +77,7 @@ export const StatusResponsiblesSection = ({
             control={form.control}
             name="priority"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="req-a-priority">
                 <FormLabel className="text-xs">Приоритет *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                   <FormControl>
@@ -97,12 +98,12 @@ export const StatusResponsiblesSection = ({
         </div>
 
         {/* Applicant & Executor */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+        <div className="req-flat grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="applicant"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="req-a-applicant">
                 <FormLabel className="text-xs">Заявитель *</FormLabel>
                 <FormControl>
                   <ParticipantSelect
@@ -149,7 +150,7 @@ export const StatusResponsiblesSection = ({
             control={form.control}
             name="executor"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="req-a-executor">
                 <FormLabel className="text-xs">Исполнитель</FormLabel>
                 <FormControl>
                   <ParticipantSelect

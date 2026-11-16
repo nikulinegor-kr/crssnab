@@ -108,6 +108,10 @@ export const RequestItemsSection = ({
   return (
     <FormSectionCard
       title="Позиции заявки"
+      summary={items.length ? `${items.length} поз. · из счёта или вручную` : "Заполняются из счёта или вручную"}
+      sectionId="req-sec-items"
+      collapsible
+      defaultCollapsed
       icon={<Package className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-3">
