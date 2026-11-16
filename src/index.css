@@ -160,6 +160,7 @@ All colors MUST be HSL.
     --ring: 224 37% 50%;
 
     --success: 160 89% 25%;
+    --success-foreground: 0 0% 100%;
     --warning: 37 100% 30%;
     --warning-foreground: 0 0% 100%;
     --info: 219 68% 47%;
@@ -221,6 +222,7 @@ All colors MUST be HSL.
     --ring: 224 50% 69%;
 
     --success: 162 62% 51%;
+    --success-foreground: 160 60% 8%;
     --warning: 36 91% 55%;
     --warning-foreground: 36 91% 55%;
     --info: 219 100% 72%;
