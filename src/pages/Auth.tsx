@@ -45,10 +45,10 @@ type ForgotFormData = z.infer<typeof forgotSchema>;
 type ResetFormData = z.infer<typeof resetSchema>;
 
 const TITLES: Record<AuthMode, string> = {
-  login: "Вход в CRSS CRM",
-  signup: "Регистрация организации",
+  login: "Вход",
+  signup: "Регистрация",
   forgot: "Восстановление пароля",
-  reset: "Новый пароль",
+  reset: "Восстановление пароля",
 };
 
 export default function Auth() {

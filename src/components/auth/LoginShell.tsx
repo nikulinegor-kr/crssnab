@@ -9,7 +9,7 @@ const STAGES = ["Заявка", "Закупка", "Логистика", "Пос�
 
 export function CrssLogo() {
   return (
-    <span className="crss-logo" aria-label="CRSS CRM">
+    <span className="crss-logo" role="img" aria-label="CRSS CRM">
       <img src={crssMark} alt="" className="crss-logo__mark" />
       <span className="crss-logo__word">CRSS<span className="crss-logo__sub">CRM</span></span>
     </span>
@@ -27,7 +27,7 @@ interface LoginShellProps {
 /** Общий фирменный каркас входа, регистрации и восстановления. */
 export default function LoginShell({
   role,
-  title = "Вход в CRSS CRM",
+  title = "Вход",
   lead,
   showRoleSwitch = true,
   children,
@@ -36,7 +36,6 @@ export default function LoginShell({
   return (
     <div className="crss-login">
       <aside className="crss-login__aside">
-        <div className="crss-login__aside-logo"><CrssLogo /></div>
         <div className="crss-login__hero">
           <p className="crss-login__hero-title">От заявки<br />до поставки.</p>
           <ol className="crss-stages">
@@ -56,9 +55,8 @@ export default function LoginShell({
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
-        <div className="crss-login__mobile-head"><CrssLogo /></div>
-
         <div className="crss-login__form">
+          <div className="crss-login__form-logo"><CrssLogo /></div>
           <div>
             <h1 className="crss-login__title">{title}</h1>
             {lead && <p className="crss-login__lead">{lead}</p>}

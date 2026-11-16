@@ -13,7 +13,6 @@
 @media (min-width: 1024px) { .crss-login { flex-direction: row; } }
 .crss-login__aside { display: none; position: relative; background: var(--cl-panel); }
 @media (min-width: 1024px) { .crss-login__aside { display: flex; width: 44%; align-items: center; justify-content: center; padding: 48px; } }
-.crss-login__aside-logo { position: absolute; top: 32px; left: 40px; }
 .crss-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
 .crss-logo__mark { width: 34px; height: 34px; }
 .crss-logo__word { font-weight: 700; font-size: 21px; letter-spacing: 0.01em; color: var(--cl-text); line-height: 1; }
@@ -27,8 +26,10 @@
 .crss-stages li:last-child .crss-stages__dot { background: var(--cl-done); border-color: var(--cl-done); }
 .crss-login__main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; position: relative; }
 @media (min-width: 1024px) { .crss-login__main { padding: 48px; } }
-.crss-login__mobile-head { align-self: stretch; margin-bottom: 32px; }
-@media (min-width: 1024px) { .crss-login__mobile-head { display: none; } }
+.crss-login__form-logo { flex-shrink: 0; }
+.crss-login__form-logo .crss-logo__mark { width: 44px; height: 44px; }
+.crss-login__form-logo .crss-logo__word { font-size: 28px; }
+.crss-login__form-logo .crss-logo__sub { margin-left: 6px; font-size: 14px; }
 .crss-login__theme { position: absolute; top: 16px; right: 16px; padding: 8px; border-radius: 11px; background: var(--cl-switch); color: var(--cl-muted); }
 .crss-login__theme:hover { color: var(--cl-text); }
 .crss-login__form { width: 100%; max-width: 405px; display: flex; flex-shrink: 0; flex-direction: column; gap: 20px; }
@@ -64,4 +65,3 @@
 .crss-auth-tabs button[aria-pressed="true"] { background: var(--cl-surface); color: var(--cl-text); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
 .crss-auth-notice { display: flex; flex-direction: column; gap: 12px; border-radius: 12px; background: var(--cl-panel); padding: 16px; color: var(--cl-text); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .crss-login__hero-title { margin: 0; }
-.crss-login__mobile-head, .crss-login__aside-logo { flex-shrink: 0; }
