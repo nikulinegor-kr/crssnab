@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BiometricLoginButton from "@/components/native/BiometricLoginButton";
+import LoginShell from "@/components/auth/LoginShell";
+import { parseAuthMode, safeNext, type AuthMode } from "@/lib/authNavigation";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -30,96 +30,94 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const forgotSchema = z.object({ email: z.string().email("Неверный формат email") });
+const resetSchema = z.object({
+  password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Пароли не совпадают",
+  path: ["confirmPassword"],
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type ForgotFormData = z.infer<typeof forgotSchema>;
+type ResetFormData = z.infer<typeof resetSchema>;
 
-// Only allow same-origin relative paths as `next` to prevent open-redirects.
-function safeNext(raw: string | null): string {
-  if (!raw) return "/select-organization";
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/select-organization";
-  return raw;
-}
+const TITLES: Record<AuthMode, string> = {
+  login: "Вход в CRSS CRM",
+  signup: "Регистрация организации",
+  forgot: "Восстановление пароля",
+  reset: "Новый пароль",
+};
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [recoverySent, setRecoverySent] = useState(false);
   const { toast } = useToast();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const next = safeNext(params.get("next"));
+  const mode = parseAuthMode(params.get("mode"));
+
+  const setMode = (value: AuthMode) => {
+    setRecoverySent(false);
+    setParams((previous) => {
+      const updated = new URLSearchParams(previous);
+      if (value === "login") updated.delete("mode");
+      else updated.set("mode", value);
+      return updated;
+    }, { replace: true });
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        window.location.href = next;
-      }
+      if (session && mode !== "reset") window.location.href = next;
     });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        window.location.href = next;
-      }
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && mode !== "reset") window.location.href = next;
     });
-
     return () => subscription.unsubscribe();
-  }, [navigate, next]);
+  }, [mode, next]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
-
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    defaultValues: {
-      organizationName: "",
-      inn: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { organizationName: "", inn: "", email: "", phone: "", password: "", confirmPassword: "" },
   });
+  const forgotForm = useForm<ForgotFormData>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: "" },
+  });
+  const resetForm = useForm<ResetFormData>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
+  const showError = (error: any, fallback: string, retry: () => void) => {
+    const isNetworkError = error?.message === "Failed to fetch" || error?.message === "Load failed" || /fetch|network/i.test(error?.message || "");
+    let description = error?.message || fallback;
+    if (isNetworkError) description = "Ошибка сети. Проверьте подключение к интернету или попробуйте отключить VPN.";
+    else if (error?.message?.includes("Invalid login")) description = "Неверный email или пароль";
+    else if (error?.message?.includes("already registered")) description = "Пользователь с таким email уже зарегистрирован";
+    toast({
+      variant: "destructive",
+      title: "Ошибка",
+      description,
+      action: isNetworkError ? <Button variant="outline" size="sm" onClick={retry} className="shrink-0">Повторить</Button> : undefined,
+    });
+  };
 
   const onLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
       if (error) throw error;
-
-      toast({
-        title: "Успешно",
-        description: "Вы вошли в систему",
-      });
+      toast({ title: "Успешно", description: "Вы вошли в систему" });
     } catch (error: any) {
-      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch") || error.message === "Load failed" || error.message?.includes("NetworkError") || error.message?.includes("network") || error.name === "TypeError";
-      let errorMessage = error.message || "Не удалось войти";
-      if (isNetworkError) {
-        errorMessage = "Ошибка сети. Проверьте подключение к интернету или попробуйте отключить VPN.";
-      } else if (error.message?.includes("Invalid login")) {
-        errorMessage = "Неверный email или пароль";
-      }
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: errorMessage,
-        action: isNetworkError ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loginForm.handleSubmit(onLogin)()}
-            className="shrink-0 border-destructive-foreground/30 text-destructive-foreground hover:bg-destructive-foreground/10"
-          >
-            Повторить
-          </Button>
-        ) : undefined,
-      });
+      showError(error, "Не удалось войти", () => loginForm.handleSubmit(onLogin)());
     } finally {
       setIsLoading(false);
     }
@@ -128,234 +126,171 @@ export default function Auth() {
   const onSignup = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
-      const { error: signUpError, data: authData } = await supabase.auth.signUp({
+      const { error, data: authData } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           emailRedirectTo: `${window.location.origin}${next}`,
-          data: {
-            organization_name: data.organizationName,
-            inn: data.inn,
-            phone: data.phone,
-          },
+          data: { organization_name: data.organizationName, inn: data.inn, phone: data.phone },
         },
       });
-
-      if (signUpError) throw signUpError;
-
-      if (authData.user) {
-        toast({
-          title: "Успешно",
-          description: "Регистрация завершена. Перенаправление...",
-        });
-      }
+      if (error) throw error;
+      if (authData.user) toast({ title: "Регистрация завершена", description: "Проверьте почту для подтверждения аккаунта." });
     } catch (error: any) {
-      const isNetworkError = error.message === "Failed to fetch" || error.message?.includes("fetch") || error.message === "Load failed" || error.message?.includes("NetworkError") || error.message?.includes("network") || error.name === "TypeError";
-      let errorMessage = error.message || "Не удалось зарегистрироваться";
-      if (isNetworkError) {
-        errorMessage = "Ошибка сети. Проверьте подключение к интернету или попробуйте отключить VPN.";
-      } else if (error.message?.includes("already registered")) {
-        errorMessage = "Пользователь с таким email уже зарегистрирован";
-      }
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: errorMessage,
-        action: isNetworkError ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => signupForm.handleSubmit(onSignup)()}
-            className="shrink-0 border-destructive-foreground/30 text-destructive-foreground hover:bg-destructive-foreground/10"
-          >
-            Повторить
-          </Button>
-        ) : undefined,
-      });
+      showError(error, "Не удалось зарегистрироваться", () => signupForm.handleSubmit(onSignup)());
     } finally {
       setIsLoading(false);
     }
   };
 
+  const onForgot = async (data: ForgotFormData) => {
+    setIsLoading(true);
+    try {
+      const redirect = new URL("/auth", window.location.origin);
+      redirect.searchParams.set("mode", "reset");
+      redirect.searchParams.set("next", next);
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, { redirectTo: redirect.toString() });
+      if (error) throw error;
+      setRecoverySent(true);
+    } catch (error: any) {
+      showError(error, "Не удалось отправить письмо", () => forgotForm.handleSubmit(onForgot)());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onReset = async (data: ResetFormData) => {
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Ссылка для сброса недействительна или устарела. Запросите новую.");
+      const { error } = await supabase.auth.updateUser({ password: data.password });
+      if (error) throw error;
+      toast({ title: "Пароль обновлён", description: "Выполняется вход в CRSS CRM." });
+      window.location.href = next;
+    } catch (error: any) {
+      showError(error, "Не удалось обновить пароль", () => resetForm.handleSubmit(onReset)());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const lead = mode === "forgot"
+    ? "Отправим ссылку для смены пароля на ваш email."
+    : mode === "reset"
+      ? "Задайте новый пароль для своего аккаунта."
+      : undefined;
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
-      
-      <div className="w-full max-w-md relative">
-        <Button
-          variant="ghost"
-          className="mb-6 hover:bg-secondary/80"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Вернуться на главную
-        </Button>
+    <LoginShell role="admin" title={TITLES[mode]} lead={lead} showRoleSwitch={false}>
+      {(mode === "login" || mode === "signup") && (
+        <div className="crss-auth-tabs" aria-label="Действие">
+          <button type="button" aria-pressed={mode === "login"} onClick={() => setMode("login")}>Вход</button>
+          <button type="button" aria-pressed={mode === "signup"} onClick={() => setMode("signup")}>Регистрация</button>
+        </div>
+      )}
 
-        <Card className="glassmorphism border-border/50 shadow-2xl">
-          <CardHeader className="space-y-2 text-center pb-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <img src="/logo.png" alt="CRSS" className="h-8 w-8 object-contain" />
-              <span className="text-2xl font-bold text-foreground">CRSS</span>
+      {mode === "login" && (
+        <>
+          <BiometricLoginButton />
+          <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="auth-email" className="crss-label">Email</Label>
+              <Input id="auth-email" type="email" autoComplete="email" placeholder="your@email.com" className="crss-field text-sm" {...loginForm.register("email")} />
+              {loginForm.formState.errors.email && <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>}
             </div>
-            <CardTitle className="text-2xl font-black text-foreground">
-              Добро пожаловать
-            </CardTitle>
-            <p className="text-muted-foreground text-sm">
-              Войдите или создайте новый аккаунт
-            </p>
-          </CardHeader>
+            <div className="space-y-1">
+              <Label htmlFor="auth-password" className="crss-label">Пароль</Label>
+              <Input id="auth-password" type="password" autoComplete="current-password" placeholder="••••••••" className="crss-field text-sm" {...loginForm.register("password")} />
+              {loginForm.formState.errors.password && <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>}
+            </div>
+            <Button type="submit" className="w-full crss-submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Войти
+            </Button>
+            <button type="button" className="crss-link text-sm" onClick={() => setMode("forgot")}>Забыли пароль?</button>
+          </form>
+        </>
+      )}
 
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6 glassmorphism">
-                <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Вход
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Регистрация
-                </TabsTrigger>
-              </TabsList>
+      {mode === "signup" && (
+        <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="signup-email" className="crss-label">Email</Label>
+            <Input id="signup-email" type="email" autoComplete="email" placeholder="your@email.com" className="crss-field text-sm" {...signupForm.register("email")} />
+            {signupForm.formState.errors.email && <p className="text-xs text-destructive">{signupForm.formState.errors.email.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="organizationName" className="crss-label">Название организации</Label>
+            <Input id="organizationName" autoComplete="organization" placeholder="ООО Компания" className="crss-field text-sm" {...signupForm.register("organizationName")} />
+            {signupForm.formState.errors.organizationName && <p className="text-xs text-destructive">{signupForm.formState.errors.organizationName.message}</p>}
+          </div>
+          <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="inn" className="crss-label">ИНН</Label>
+              <Input id="inn" inputMode="numeric" placeholder="1234567890" className="crss-field text-sm" {...signupForm.register("inn")} />
+              {signupForm.formState.errors.inn && <p className="text-xs text-destructive">{signupForm.formState.errors.inn.message}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="phone" className="crss-label">Телефон</Label>
+              <Input id="phone" type="tel" autoComplete="tel" placeholder="+7 (999) 123-45-67" className="crss-field text-sm" {...signupForm.register("phone")} />
+              {signupForm.formState.errors.phone && <p className="text-xs text-destructive">{signupForm.formState.errors.phone.message}</p>}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="signup-password" className="crss-label">Пароль</Label>
+            <Input id="signup-password" type="password" autoComplete="new-password" placeholder="••••••••" className="crss-field text-sm" {...signupForm.register("password")} />
+            {signupForm.formState.errors.password && <p className="text-xs text-destructive">{signupForm.formState.errors.password.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="confirmPassword" className="crss-label">Подтвердите пароль</Label>
+            <Input id="confirmPassword" type="password" autoComplete="new-password" placeholder="••••••••" className="crss-field text-sm" {...signupForm.register("confirmPassword")} />
+            {signupForm.formState.errors.confirmPassword && <p className="text-xs text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>}
+          </div>
+          <Button type="submit" className="w-full crss-submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Создать аккаунт
+          </Button>
+        </form>
+      )}
 
-              <TabsContent value="login" className="space-y-4 animate-fade-in">
-                <BiometricLoginButton />
-                <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your@email.com"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...loginForm.register("email")}
-                    />
-                    {loginForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
-                    )}
-                  </div>
+      {mode === "forgot" && (recoverySent ? (
+        <div className="crss-auth-notice" role="status">
+          <p>Ссылка отправлена на <strong>{forgotForm.getValues("email")}</strong>.</p>
+          <button type="button" className="crss-link text-sm" onClick={() => setRecoverySent(false)}>Отправить повторно</button>
+        </div>
+      ) : (
+        <form onSubmit={forgotForm.handleSubmit(onForgot)} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="forgot-email" className="crss-label">Email</Label>
+            <Input id="forgot-email" type="email" autoComplete="email" placeholder="your@email.com" className="crss-field text-sm" {...forgotForm.register("email")} />
+            {forgotForm.formState.errors.email && <p className="text-xs text-destructive">{forgotForm.formState.errors.email.message}</p>}
+          </div>
+          <Button type="submit" className="w-full crss-submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Отправить ссылку
+          </Button>
+        </form>
+      ))}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground">Пароль</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...loginForm.register("password")}
-                    />
-                    {loginForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
-                    )}
-                  </div>
+      {mode === "reset" && (
+        <form onSubmit={resetForm.handleSubmit(onReset)} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="reset-password" className="crss-label">Новый пароль</Label>
+            <Input id="reset-password" type="password" autoComplete="new-password" placeholder="••••••••" className="crss-field text-sm" {...resetForm.register("password")} />
+            {resetForm.formState.errors.password && <p className="text-xs text-destructive">{resetForm.formState.errors.password.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="reset-confirm" className="crss-label">Подтвердите пароль</Label>
+            <Input id="reset-confirm" type="password" autoComplete="new-password" placeholder="••••••••" className="crss-field text-sm" {...resetForm.register("confirmPassword")} />
+            {resetForm.formState.errors.confirmPassword && <p className="text-xs text-destructive">{resetForm.formState.errors.confirmPassword.message}</p>}
+          </div>
+          <Button type="submit" className="w-full crss-submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Сохранить пароль
+          </Button>
+        </form>
+      )}
 
-                  <Button
-                    type="submit"
-                    className="w-full h-11 text-base font-bold hover-scale"
-                    disabled={isLoading}
-                  >
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Войти
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup" className="space-y-4 animate-fade-in">
-                <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-foreground">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("email")}
-                    />
-                    {signupForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.email.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="organizationName" className="text-foreground">Название организации</Label>
-                    <Input
-                      id="organizationName"
-                      placeholder="ООО Компания"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("organizationName")}
-                    />
-                    {signupForm.formState.errors.organizationName && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.organizationName.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="inn" className="text-foreground">ИНН</Label>
-                    <Input
-                      id="inn"
-                      placeholder="1234567890"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("inn")}
-                    />
-                    {signupForm.formState.errors.inn && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.inn.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-foreground">Телефон</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+7 (999) 123-45-67"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("phone")}
-                    />
-                    {signupForm.formState.errors.phone && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.phone.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-foreground">Пароль</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("password")}
-                    />
-                    {signupForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.password.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-foreground">Подтвердите пароль</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      className="glassmorphism border-border/50 focus:border-primary"
-                      {...signupForm.register("confirmPassword")}
-                    />
-                    {signupForm.formState.errors.confirmPassword && (
-                      <p className="text-xs text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
-                    )}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full h-11 text-base font-bold hover-scale"
-                    disabled={isLoading}
-                  >
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Создать аккаунт
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      {(mode === "forgot" || mode === "reset") && (
+        <button type="button" className="crss-link text-sm" onClick={() => setMode("login")}>Вернуться ко входу</button>
+      )}
+    </LoginShell>
   );
 }

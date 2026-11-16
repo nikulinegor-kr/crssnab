@@ -484,10 +484,12 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
   }
   .request-form-redesign .request-date-input {
     -webkit-appearance: none; appearance: none; display: block;
+    inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; overflow: hidden;
     line-height: 44px; text-align: left; font-size: 16px;
   }
-  .request-form-redesign .request-date-input::-webkit-date-and-time-value { text-align: left; margin: 0; }
-  .request-form-redesign .request-date-input::-webkit-datetime-edit { padding: 0; line-height: 1; }
+  .request-form-redesign .request-date-input::-webkit-date-and-time-value { text-align: left; margin: 0; max-width: 100%; }
+  .request-form-redesign .request-date-input::-webkit-datetime-edit { max-width: 100%; padding: 0; line-height: 1; }
+  .request-form-redesign .request-date-input::-webkit-datetime-edit-fields-wrapper { max-width: 100%; }
   .request-form-redesign .request-form-actions {
     padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
   }

@@ -1015,6 +1015,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     </div>
   );
 
+  const handleOpenAutoFocus = (event: Event) => {
+    if (!isMobile) return;
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+  };
+
   const formContent = (
     <Form {...form}>
       <form
@@ -1031,7 +1037,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           <ContextSection
             form={form}
             draftSaveState={draftSaveState}
-            autoFocus={!isViewer}
+            autoFocus={!isViewer && !isMobile}
             disabled={isViewer}
           />
           <CoreParamsSection
@@ -1243,6 +1249,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           <SheetContent
             side="bottom"
             className="request-form-redesign p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            tabIndex={-1}
+            onOpenAutoFocus={handleOpenAutoFocus}
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >

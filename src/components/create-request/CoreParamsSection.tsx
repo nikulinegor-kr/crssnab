@@ -75,7 +75,7 @@ export const CoreParamsSection = ({
           control={form.control}
           name="request_date"
           render={({ field }) => (
-            <FormItem className="req-a-date">
+            <FormItem className="req-a-date min-w-0 w-full max-w-full">
               <FormLabel className="text-xs">Дата заявки *</FormLabel>
               <FormControl>
                 <Input

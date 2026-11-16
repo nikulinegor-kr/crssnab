@@ -77,7 +77,7 @@ export const StatusResponsiblesSection = ({
             control={form.control}
             name="priority"
             render={({ field }) => (
-              <FormItem className="req-a-priority">
+              <FormItem className="req-a-priority min-w-0 w-full max-w-full">
                 <FormLabel className="text-xs">Приоритет *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                   <FormControl>

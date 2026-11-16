@@ -1141,7 +1141,8 @@ export const RequestSidePanel = ({
             size="sm"
             className="h-9 gap-1 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90"
             disabled={readOnly}
-            onClick={() => {
+            onClick={(event) => {
+              event.currentTarget.blur();
               setEditMode(false);
               setEditDirty(false);
               setEditorOpen(true);

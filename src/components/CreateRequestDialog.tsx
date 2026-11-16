@@ -386,14 +386,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     open
   );
 
-  // Autofocus on description when dialog opens
+  // На телефоне клавиатура открывается только после явного тапа по полю.
   useEffect(() => {
-    if (open && descriptionRef.current) {
-      setTimeout(() => {
-        descriptionRef.current?.focus();
-      }, 100);
-    }
-  }, [open]);
+    if (!open || isMobile || !descriptionRef.current) return;
+    const timer = setTimeout(() => descriptionRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, [open, isMobile]);
 
   // Auto-bind warehouse when object changes
   const watchedObjectId = form.watch("object_id");
@@ -694,6 +692,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     }
   };
 
+  const handleOpenAutoFocus = (event: Event) => {
+    if (!isMobile) return;
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+  };
+
   const formContent = (
     <Form {...form}>
       <form
@@ -709,7 +713,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           ref={descriptionRef}
           form={form} 
           draftSaveState={draftSaveState}
-          autoFocus={true}
+          autoFocus={!isMobile}
         />
 
         {/* 2. Основные поля сразу после описания */}
@@ -873,6 +877,8 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           <SheetContent
             side="bottom"
             className="request-form-redesign p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            tabIndex={-1}
+            onOpenAutoFocus={handleOpenAutoFocus}
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >

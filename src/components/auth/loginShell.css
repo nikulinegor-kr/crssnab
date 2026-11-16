@@ -4,6 +4,7 @@
   --cl-accent: #5069ad; --cl-accent-hover: #40578f; --cl-switch: #f1f3f8; --cl-done: #34865e;
   --cl-line: #c9d3ec; --cl-border: #dde2ec;
   min-height: 100dvh; display: flex; flex-direction: column; background: var(--cl-surface); color: var(--cl-text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .dark .crss-login {
   --cl-panel: #161a24; --cl-surface: #0f1117; --cl-text: #f2f3f5; --cl-muted: #a1a1a8;
@@ -18,7 +19,6 @@
 .crss-logo__word { font-weight: 700; font-size: 21px; letter-spacing: 0.01em; color: var(--cl-text); line-height: 1; }
 .crss-logo__sub { font-weight: 600; font-size: 12px; color: var(--cl-muted); margin-left: 4px; letter-spacing: 0.04em; }
 .crss-login__hero { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 440px; }
-.crss-login__hero-mark { width: 148px; height: 148px; margin-bottom: 28px; }
 .crss-login__hero-title { font-size: 44px; font-weight: 610; line-height: 1.07; letter-spacing: 0; margin: 0; color: var(--cl-text); }
 .crss-stages { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; margin-top: 40px; list-style: none; padding: 0; }
 .crss-stages::before { content: ""; position: absolute; top: 6px; left: 12.5%; right: 12.5%; height: 2px; background: var(--cl-line); }
@@ -31,7 +31,8 @@
 @media (min-width: 1024px) { .crss-login__mobile-head { display: none; } }
 .crss-login__theme { position: absolute; top: 16px; right: 16px; padding: 8px; border-radius: 11px; background: var(--cl-switch); color: var(--cl-muted); }
 .crss-login__theme:hover { color: var(--cl-text); }
-.crss-login__form { width: 100%; max-width: 405px; display: flex; flex-direction: column; gap: 20px; }
+.crss-login__form { width: 100%; max-width: 405px; display: flex; flex-shrink: 0; flex-direction: column; gap: 20px; }
+@media (max-width: 1023px) { .crss-login__main { justify-content: flex-start; } .crss-login__form { margin-bottom: 24px; } }
 .crss-login__title { font-size: 28px; font-weight: 650; letter-spacing: -0.018em; line-height: 1.15; margin: 0; color: var(--cl-text); }
 .crss-login__lead { font-size: 14px; color: var(--cl-muted); margin-top: 6px; }
 .crss-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--cl-switch); border-radius: 12px; }
@@ -58,3 +59,9 @@
 .crss-login a:focus-visible, .crss-login button:not([role="checkbox"]):focus-visible { outline: 2px solid var(--cl-accent); outline-offset: 2px; --tw-ring-color: var(--cl-accent); --tw-ring-offset-width: 0; }
 .crss-login .crss-muted:is(button):hover { color: var(--cl-text); }
 .crss-login ::selection { background: color-mix(in srgb, var(--cl-accent) 25%, transparent); }
+.crss-auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--cl-switch); }
+.crss-auth-tabs button { min-height: 40px; padding: 8px 12px; border-radius: 9px; color: var(--cl-muted); font-size: 14px; font-weight: 500; }
+.crss-auth-tabs button[aria-pressed="true"] { background: var(--cl-surface); color: var(--cl-text); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.crss-auth-notice { display: flex; flex-direction: column; gap: 12px; border-radius: 12px; background: var(--cl-panel); padding: 16px; color: var(--cl-text); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.crss-login__hero-title { margin: 0; }
+.crss-login__mobile-head, .crss-login__aside-logo { flex-shrink: 0; }

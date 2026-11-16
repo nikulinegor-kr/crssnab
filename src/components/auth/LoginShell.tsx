@@ -7,7 +7,7 @@ import "./loginShell.css";
 
 const STAGES = ["Заявка", "Закупка", "Логистика", "Поставка"];
 
-function Logo() {
+export function CrssLogo() {
   return (
     <span className="crss-logo" aria-label="CRSS CRM">
       <img src={crssMark} alt="" className="crss-logo__mark" />
@@ -18,23 +18,30 @@ function Logo() {
 
 interface LoginShellProps {
   role: "admin" | "employee";
-  lead: string;
+  title?: string;
+  lead?: string;
+  showRoleSwitch?: boolean;
   children: ReactNode;
 }
 
-/** Shared visual frame for the admin and employee login screens. */
-export default function LoginShell({ role, lead, children }: LoginShellProps) {
+/** Общий фирменный каркас входа, регистрации и восстановления. */
+export default function LoginShell({
+  role,
+  title = "Вход в CRSS CRM",
+  lead,
+  showRoleSwitch = true,
+  children,
+}: LoginShellProps) {
   const { theme, setTheme } = useTheme();
   return (
     <div className="crss-login">
       <aside className="crss-login__aside">
-        <div className="crss-login__aside-logo"><Logo /></div>
+        <div className="crss-login__aside-logo"><CrssLogo /></div>
         <div className="crss-login__hero">
-          <img src={crssMark} alt="" className="crss-login__hero-mark" />
-          <h1 className="crss-login__hero-title">От заявки<br />до поставки.</h1>
+          <p className="crss-login__hero-title">От заявки<br />до поставки.</p>
           <ol className="crss-stages">
-            {STAGES.map((s) => (
-              <li key={s}><span className="crss-stages__dot" />{s}</li>
+            {STAGES.map((stage) => (
+              <li key={stage}><span className="crss-stages__dot" />{stage}</li>
             ))}
           </ol>
         </div>
@@ -49,25 +56,27 @@ export default function LoginShell({ role, lead, children }: LoginShellProps) {
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
-        <div className="crss-login__mobile-head"><Logo /></div>
+        <div className="crss-login__mobile-head"><CrssLogo /></div>
 
         <div className="crss-login__form">
           <div>
-            <h2 className="crss-login__title">Вход в CRSS</h2>
-            <p className="crss-login__lead">{lead}</p>
+            <h1 className="crss-login__title">{title}</h1>
+            {lead && <p className="crss-login__lead">{lead}</p>}
           </div>
-          <nav className="crss-switch" aria-label="Роль">
-            {role === "admin" ? (
-              <span aria-current="page"><Shield className="h-4 w-4" />Администратор</span>
-            ) : (
-              <Link to="/"><Shield className="h-4 w-4" />Администратор</Link>
-            )}
-            {role === "employee" ? (
-              <span aria-current="page"><Users className="h-4 w-4" />Сотрудник</span>
-            ) : (
-              <Link to="/employee-login"><Users className="h-4 w-4" />Сотрудник</Link>
-            )}
-          </nav>
+          {showRoleSwitch && (
+            <nav className="crss-switch" aria-label="Роль">
+              {role === "admin" ? (
+                <span aria-current="page"><Shield className="h-4 w-4" />Администратор</span>
+              ) : (
+                <Link to="/"><Shield className="h-4 w-4" />Администратор</Link>
+              )}
+              {role === "employee" ? (
+                <span aria-current="page"><Users className="h-4 w-4" />Сотрудник</span>
+              ) : (
+                <Link to="/employee-login"><Users className="h-4 w-4" />Сотрудник</Link>
+              )}
+            </nav>
+          )}
           {children}
         </div>
       </main>

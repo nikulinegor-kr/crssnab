@@ -149,7 +149,7 @@ export default function Index() {
                 </Label>
               </div>
               <Link 
-                to="/auth" 
+                to="/auth?mode=forgot"
                 className="text-sm crss-link transition-colors"
               >
                 Забыли пароль?
@@ -169,7 +169,7 @@ export default function Index() {
           <p className="text-sm crss-muted">
             Нет аккаунта?{" "}
             <Link 
-              to="/auth" 
+              to="/auth?mode=signup"
               className="crss-link transition-colors"
             >
               Зарегистрироваться
