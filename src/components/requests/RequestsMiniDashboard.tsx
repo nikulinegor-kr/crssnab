@@ -35,7 +35,7 @@ export const RequestsMiniDashboard = ({
   ];
 
   return (
-    <div className="flex min-h-9 items-center gap-2 overflow-x-auto border-b border-border bg-card px-2 py-1.5">
+    <div className="requests-attention-surface flex min-h-9 items-center gap-2 overflow-x-auto bg-card px-2 py-1.5">
       <span className="shrink-0 text-xs font-semibold text-foreground">Требует внимания</span>
       <span className="h-4 w-px shrink-0 bg-border" />
       {items.map((item) => {

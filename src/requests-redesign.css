@@ -101,6 +101,12 @@
   padding: 10px;
   container-type: inline-size;
 }
+
+.requests-registry .requests-attention-surface {
+  border: 1px solid var(--requests-border);
+  border-radius: var(--requests-menu-radius);
+  background: var(--requests-surface);
+}
 .requests-view-desktop { display: none; }
 .requests-view-compact { display: block; }
 @container (min-width: 1100px) {

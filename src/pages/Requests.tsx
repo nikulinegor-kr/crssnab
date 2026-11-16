@@ -608,6 +608,7 @@ const Requests = () => {
         className="grid min-h-0 flex-1 items-stretch gap-2"
         style={{
           gridTemplateColumns: `minmax(0,1fr) ${panelInline && panelOpen ? panelWidth : 0}px`,
+          gap: panelInline && panelOpen ? "8px" : "0px",
           transition: "grid-template-columns var(--dur) var(--ease)",
         }}
       >
