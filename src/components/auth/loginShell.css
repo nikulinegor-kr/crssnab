@@ -46,3 +46,15 @@
 .crss-login .crss-submit { height: 44px; border-radius: 11px; background: var(--cl-accent); color: #fff; font-weight: 600; }
 .crss-login .crss-submit:hover { background: var(--cl-accent-hover); }
 .crss-login button[role="checkbox"] { min-height: 0; min-width: 0; height: 16px; width: 16px; border-radius: 4px; }
+/* Brand accent overrides (replace inherited teal theme accents inside login only) */
+.crss-login { --cl-check-border: #b8bfcc; }
+.dark .crss-login { --cl-check-border: #5a6070; --cl-accent: #7089cc; --cl-accent-hover: #8aa0d8; }
+.crss-login button[role="checkbox"] { border: 1.5px solid var(--cl-check-border); background: var(--cl-surface); color: #fff; transition: background-color .15s, border-color .15s; }
+.crss-login button[role="checkbox"]:hover { border-color: var(--cl-accent); }
+.crss-login button[role="checkbox"][data-state="checked"] { background: #5069ad; border-color: #5069ad; color: #fff; }
+.crss-login button[role="checkbox"][data-state="checked"]:hover { background: #40578f; border-color: #40578f; }
+.crss-login button[role="checkbox"]:focus-visible { outline: 2px solid var(--cl-accent); outline-offset: 2px; box-shadow: none; }
+.crss-login .crss-field:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cl-accent) 25%, transparent); border-color: var(--cl-accent); --tw-ring-color: transparent; }
+.crss-login a:focus-visible, .crss-login button:not([role="checkbox"]):focus-visible { outline: 2px solid var(--cl-accent); outline-offset: 2px; --tw-ring-color: var(--cl-accent); --tw-ring-offset-width: 0; }
+.crss-login .crss-muted:is(button):hover { color: var(--cl-text); }
+.crss-login ::selection { background: color-mix(in srgb, var(--cl-accent) 25%, transparent); }
