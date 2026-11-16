@@ -1,39 +1,57 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ExternalLink, Pencil, Building2, User, Truck, Calendar, FileText, Download, Pin } from "lucide-react";
+import { X, ExternalLink, Pencil, Building2, User, FileText, Download, Pin, ClipboardList, History, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Request } from "@/hooks/useRequests";
-import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
-import { cn } from "@/lib/utils";
+import { getPriorityColor, getStatusColor, PRIORITIES } from "@/hooks/useRequestsFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { SignedImage } from "@/components/SignedImage";
 import { openStoredFile } from "@/lib/storageUrl";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useOrgStatuses } from "@/hooks/useOrgStatuses";
+import { deliveryDatesError } from "@/lib/requestDeliveryValidation";
+import { getRequestObjectLabel } from "@/lib/requestCard";
+import { useRequestCardTimer } from "@/hooks/useRequestCardTimer";
+import { RequestInlineField } from "./RequestInlineField";
+import { RequestRoute } from "./RequestRoute";
 
 interface RequestQuickViewProps {
   requestId: string | null;
   open: boolean;
   onClose: () => void;
   onEdit?: (request: Request) => void;
+  onOpenSection?: (request: Request, section: "docs" | "tasks" | "history") => void;
   formOpen?: boolean;
 }
 
-const AUTO_CLOSE_MS = 7000;
+type QuickRequest = Request & { object_name?: string | null };
 
 export const RequestQuickView = memo(function RequestQuickView({
   requestId,
   open,
   onClose,
   onEdit,
+  onOpenSection,
   formOpen = false,
 }: RequestQuickViewProps) {
   const navigate = useNavigate();
-  const [request, setRequest] = useState<Request | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { canEdit } = useUserRole();
+  const statuses = useOrgStatuses();
+  const [request, setRequest] = useState<QuickRequest | null>(null);
   const [pinned, setPinned] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [interacting, setInteracting] = useState(false);
+  const [activeEditor, setActiveEditor] = useState<string | null>(null);
+  const { remainingSeconds, restart } = useRequestCardTimer({
+    open,
+    resetKey: requestId,
+    pinned,
+    paused: Boolean(activeEditor) || formOpen,
+    onClose,
+  });
 
   useEffect(() => {
     if (!requestId) {
@@ -42,72 +60,96 @@ export const RequestQuickView = memo(function RequestQuickView({
     }
     let cancelled = false;
     setRequest(null);
-    supabase.from("requests").select("*").eq("id", requestId).single()
-      .then(({ data }) => {
-        if (!cancelled && data) setRequest(data as Request);
+    void supabase.from("requests").select("*, request_objects(id, name)").eq("id", requestId).single()
+      .then(async ({ data, error }) => {
+        if (cancelled || error || !data) return;
+        let contractor = data.contractor;
+        if (contractor && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(contractor)) {
+          const { data: supplier } = await supabase.from("suppliers").select("name").eq("id", contractor).maybeSingle();
+          if (supplier?.name) contractor = supplier.name;
+        }
+        if (!cancelled) setRequest({ ...data, contractor, object_name: (data as any).request_objects?.name || null } as QuickRequest);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [requestId]);
 
   useEffect(() => {
     if (!open) return;
     setPinned(false);
-    setHovered(false);
-    setFocused(false);
-    setInteracting(false);
+    setActiveEditor(null);
   }, [open, requestId]);
-
-  useEffect(() => {
-    if (!open || pinned || hovered || focused || interacting || formOpen) return;
-    const timer = window.setTimeout(onClose, AUTO_CLOSE_MS);
-    return () => window.clearTimeout(timer);
-  }, [open, pinned, hovered, focused, interacting, formOpen, onClose]);
 
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !formOpen) onClose();
+      if (event.key === "Escape" && !formOpen && !activeEditor) onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, formOpen]);
+  }, [open, onClose, formOpen, activeEditor]);
+
+  const saveField = useCallback(async (field: string, value: string) => {
+    if (!request || !canEdit) return;
+    if (field === "status" && value === "Доставлено") {
+      const error = deliveryDatesError(request);
+      if (error) {
+        toast({ title: "Нельзя поставить «Доставлено»", description: error, variant: "destructive" });
+        return;
+      }
+    }
+    let next: string | number | null = value;
+    if (field === "payment_percent") next = Math.min(100, Math.max(0, Number(value) || 0));
+    if (next === "") next = null;
+    const update: Record<string, string | number | null> = { [field]: next };
+    if (field === "payment_percent") {
+      update.payment_status = Number(next) >= 100 ? "Оплачено" : Number(next) > 0 ? "Частично оплачено" : "Не оплачено";
+    }
+    const previous = request;
+    const optimistic = { ...request, ...update };
+    setRequest(optimistic);
+    queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
+      Array.isArray(old) ? old.map((row: any) => row?.id === request.id ? { ...row, ...update } : row) : old
+    );
+    try {
+      const { error } = await supabase.from("requests").update(update).eq("id", request.id);
+      if (error) throw error;
+      toast({ title: "Сохранено" });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+    } catch (error: any) {
+      setRequest(previous);
+      queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
+        Array.isArray(old) ? old.map((row: any) => row?.id === request.id ? previous : row) : old
+      );
+      toast({ title: "Не удалось сохранить", description: error?.message || "Значение осталось прежним", variant: "destructive" });
+      throw error;
+    }
+  }, [canEdit, queryClient, request, toast]);
 
   if (!open || !request) return null;
 
-  const formatCurrency = (value: number) =>
-    `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
-
+  const formatCurrency = (value: number) => `${new Intl.NumberFormat("ru-RU").format(value)} ₽`;
   const formatDate = (value?: string | null) => {
     if (!value) return "—";
-    try {
-      return format(new Date(value), "dd.MM.yyyy");
-    } catch {
-      return value;
-    }
+    try { return format(new Date(value), "dd.MM.yyyy"); } catch { return value; }
   };
-
   const allPhotos: string[] = [
     ...(request.photo_urls || []),
     ...(request.photo_url && !request.photo_urls?.includes(request.photo_url) ? [request.photo_url] : []),
   ].filter(Boolean);
-
   const allDocuments: string[] = [
     ...(request.document_urls || []),
     ...(request.document_url && !request.document_urls?.includes(request.document_url) ? [request.document_url] : []),
   ].filter(Boolean);
-
   const totalFiles = allPhotos.length + allDocuments.length;
-  const totalAmount = Number(request.amount || 0)
-    + Number((request as Request & { amount_2?: number }).amount_2 || 0)
-    + Number((request as Request & { amount_3?: number }).amount_3 || 0);
+  const totalAmount = Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0);
   const paymentPercent = Number(request.payment_percent || 0);
-  const paymentLabel = paymentPercent >= 100
-    ? "Оплачено"
-    : paymentPercent > 0
-      ? `Частично оплачено · ${paymentPercent}%`
-      : "Не оплачено";
+  const paymentLabel = paymentPercent >= 100 ? "Оплачено" : paymentPercent > 0 ? `Частично оплачено · ${paymentPercent}%` : "Не оплачено";
+  const objectLabel = getRequestObjectLabel(request.object_id, request.object_name);
+  const editorProps = (field: string) => ({
+    readOnly: !canEdit,
+    onEditingChange: (editing: boolean) => setActiveEditor(editing ? field : null),
+  });
 
   return (
     <aside
@@ -115,180 +157,82 @@ export const RequestQuickView = memo(function RequestQuickView({
       role="dialog"
       aria-modal="false"
       aria-label={`Карточка заявки: ${request.description}`}
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => {
-        setHovered(false);
-        setInteracting(false);
-      }}
-      onPointerDown={() => setInteracting(true)}
-      onPointerUp={() => setInteracting(false)}
-      onPointerCancel={() => setInteracting(false)}
-      onFocusCapture={() => setFocused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
-      }}
+      onPointerDownCapture={restart}
+      onKeyDownCapture={restart}
+      onWheel={restart}
+      onTouchStart={restart}
+      onScrollCapture={restart}
     >
       <div className="request-quick-view__header">
-        <h3 className="request-quick-view__title">{request.description || "Заявка"}</h3>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={cn("h-9 w-9 shrink-0", pinned && "bg-primary/10 text-primary")}
-          onClick={() => setPinned((value) => !value)}
-          aria-pressed={pinned}
-          aria-label={pinned ? "Открепить карточку" : "Закрепить карточку"}
-          title={pinned ? "Открепить" : "Закрепить: не закрывать автоматически"}
-        >
-          <Pin className={cn("h-4 w-4", pinned && "fill-current")} />
+        <RequestInlineField
+          label="Название заявки"
+          value={request.description}
+          hideLabel
+          display={<span className="request-quick-view__title">{request.description || "Заявка"}</span>}
+          onSave={(value) => saveField("description", value)}
+          {...editorProps("description")}
+        />
+        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => setPinned((value) => !value)} aria-pressed={pinned} aria-label={pinned ? "Открепить карточку" : "Закрепить карточку"}>
+          <Pin className={pinned ? "h-4 w-4 fill-current text-primary" : "h-4 w-4"} />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 shrink-0"
-          onClick={onClose}
-          aria-label="Закрыть карточку"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={onClose} aria-label="Закрыть карточку"><X className="h-4 w-4" /></Button>
       </div>
 
-      <div className="flex items-center gap-2 px-[18px] pb-3 pt-4">
-        <Badge variant="outline" className="gap-2 px-2.5 py-1 text-xs font-medium">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} />
-          {request.status}
-        </Badge>
-        <Badge
-          variant="outline"
-          className="gap-2 px-2.5 py-1 text-xs font-medium"
-          style={{ borderColor: getPriorityColor(request.priority || "Планово") }}
-        >
-          {request.priority || "Планово"}
-        </Badge>
-      </div>
-
-      <div className="request-quick-view__summary">
-        <div className="request-quick-view__metric">
-          <span>Сумма</span>
-          <strong>{totalAmount > 0 ? formatCurrency(totalAmount) : "—"}</strong>
-        </div>
-        <div className="request-quick-view__metric">
-          <span>Приход</span>
-          <strong>{formatDate(request.delivery_date)}</strong>
-        </div>
+      <div className="request-card-timer" role="timer" aria-live="off">
+        {pinned ? "Карточка закреплена" : activeEditor || formOpen ? "Отсчёт на паузе во время редактирования" : `Закроется через ${remainingSeconds} с`}
       </div>
 
       <div className="request-quick-view__body">
-        <section className="request-quick-view__section space-y-3" aria-label="Обзор заявки">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Обзор</h4>
-          <div className="flex items-start gap-2 text-sm">
-            <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <div className="text-xs text-muted-foreground">Контрагент</div>
-              <div className="break-words font-medium">{request.contractor || "—"}</div>
-            </div>
+        <RequestRoute request={request} onDeliverySave={(value) => saveField("delivery_date", value)} {...editorProps("route-date")} />
+
+        <section className="request-quick-view__section" aria-label="Статус и приоритет">
+          <div className="request-card-two-columns">
+            <RequestInlineField label="Статус" type="select" value={request.status} options={statuses.map((value) => ({ value, label: value }))} display={<span className="request-card-status"><i style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>} onSave={(value) => saveField("status", value)} {...editorProps("status")} />
+            <RequestInlineField label="Приоритет" type="select" value={request.priority} options={PRIORITIES.map((value) => ({ value, label: value }))} display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>} onSave={(value) => saveField("priority", value)} {...editorProps("priority")} />
           </div>
-          <div className="flex items-start gap-2 text-sm">
-            <span className={cn(
-              "mt-1.5 ml-1.5 h-2 w-2 shrink-0 rounded-full",
-              paymentPercent >= 100 ? "bg-success" : paymentPercent > 0 ? "bg-warning" : "bg-destructive",
-            )} />
-            <div className="min-w-0">
-              <div className="text-xs text-muted-foreground">Оплата</div>
-              <div className="break-words font-medium">{paymentLabel}</div>
-            </div>
+        </section>
+
+        <section className="request-quick-view__section" aria-label="Объект и контрагент">
+          <div className="request-card-object"><Building2 className="h-4 w-4 shrink-0 text-primary" /><div><span>Объект</span><strong>{objectLabel}</strong></div></div>
+          <div className="request-card-kv"><span>Контрагент</span><strong>{request.contractor || "—"}</strong></div>
+          {(request.applicant || request.executor) && <div className="request-card-person"><User className="h-4 w-4 shrink-0" /><span>{[request.applicant && `Заявитель: ${request.applicant}`, request.executor && `Исполнитель: ${request.executor}`].filter(Boolean).join(" · ")}</span></div>}
+        </section>
+
+        <section className="request-quick-view__section" aria-label="Сумма и оплата">
+          <div className="request-quick-view__summary">
+            <div className="request-quick-view__metric"><span>Сумма</span><strong>{totalAmount > 0 ? formatCurrency(totalAmount) : "—"}</strong></div>
+            <div className="request-quick-view__metric"><span>Оплата</span><strong>{paymentLabel}</strong></div>
           </div>
-          {(request.applicant || request.executor) && (
-            <div className="flex items-start gap-2 text-sm">
-              <User className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 break-words">
-                {request.applicant && <div>Заявитель: {request.applicant}</div>}
-                {request.executor && <div>Исполнитель: {request.executor}</div>}
-              </div>
-            </div>
-          )}
-          {(request.transport_company || request.shipment_date) && (
-            <div className="flex items-start gap-2 text-sm">
-              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 break-words">
-                {request.transport_company && <div>{request.transport_company}</div>}
-                {request.shipment_date && <div>Отгрузка: {formatDate(request.shipment_date)}</div>}
-              </div>
-            </div>
-          )}
-          {request.delivery_date && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4 shrink-0" />
-              <span>Приход: {formatDate(request.delivery_date)}</span>
-            </div>
-          )}
-          {request.comments && (
-            <p className="break-words text-sm text-muted-foreground">«{request.comments}»</p>
-          )}
+          <RequestInlineField label="Факт оплаты, %" type="number" value={paymentPercent} onSave={(value) => saveField("payment_percent", value)} {...editorProps("payment")} />
+        </section>
+
+        <section className="request-quick-view__section" aria-label="Логистика">
+          <RequestInlineField label="Транспортная компания" value={request.transport_company} onSave={(value) => saveField("transport_company", value)} {...editorProps("carrier")} />
+          <RequestInlineField label="Дата отгрузки" type="date" value={request.shipment_date} display={formatDate(request.shipment_date)} onSave={(value) => saveField("shipment_date", value)} {...editorProps("shipment")} />
+          <RequestInlineField label="Дата доставки (приход)" type="date" value={request.delivery_date} display={formatDate(request.delivery_date)} onSave={(value) => saveField("delivery_date", value)} {...editorProps("delivery")} />
+        </section>
+
+        <section className="request-quick-view__section" aria-label="Комментарий">
+          <RequestInlineField label="Комментарий" type="textarea" value={request.comments} display={<span className="request-card-comment">{request.comments || "—"}</span>} onSave={(value) => saveField("comments", value)} {...editorProps("comments")} />
         </section>
 
         {totalFiles > 0 && (
-          <section className="request-quick-view__section mt-4 space-y-2" aria-label="Документы">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <FileText className="h-3.5 w-3.5" />
-              Документы ({totalFiles})
-            </p>
-            {allPhotos.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {allPhotos.slice(0, 4).map((url, index) => (
-                  <div key={url} className="h-12 w-12 overflow-hidden rounded-lg border border-border">
-                    <SignedImage src={url} alt={`Фото ${index + 1}`} className="h-full w-full object-cover" />
-                  </div>
-                ))}
-                {allPhotos.length > 4 && (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground">
-                    +{allPhotos.length - 4}
-                  </div>
-                )}
-              </div>
-            )}
-            {allDocuments.slice(0, 3).map((url, index) => (
-              <div key={url} className="flex items-center gap-2 text-xs text-muted-foreground">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate">Документ {index + 1}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => openStoredFile(url)}
-                  aria-label={`Открыть документ ${index + 1}`}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
+          <section className="request-quick-view__section" aria-label="Документы">
+            <p className="request-card-section-title"><FileText className="h-3.5 w-3.5" />Документы ({totalFiles})</p>
+            {allPhotos.length > 0 && <div className="flex flex-wrap gap-1.5">{allPhotos.slice(0, 4).map((url, index) => <div key={url} className="h-12 w-12 overflow-hidden rounded-lg border border-border"><SignedImage src={url} alt={`Фото ${index + 1}`} className="h-full w-full object-cover" /></div>)}</div>}
+            {allDocuments.slice(0, 3).map((url, index) => <div key={url} className="request-card-document"><FileText className="h-3.5 w-3.5 shrink-0 text-primary" /><span>Документ {index + 1}</span><Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => openStoredFile(url)} aria-label={`Открыть документ ${index + 1}`}><Download className="h-3.5 w-3.5" /></Button></div>)}
           </section>
         )}
       </div>
 
-      <div className="request-quick-view__footer flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 gap-2"
-          onClick={() => {
-            onClose();
-            navigate(`/requests/${request.id}`);
-          }}
-        >
-          <ExternalLink className="h-4 w-4" />
-          Открыть
-        </Button>
-        <Button
-          type="button"
-          className="h-10 flex-1 gap-2"
-          onClick={() => onEdit?.(request)}
-        >
-          <Pencil className="h-4 w-4" />
-          Редактировать
-        </Button>
+      <div className="request-card-section-links" aria-label="Разделы заявки">
+        <Button type="button" variant="ghost" size="sm" onClick={() => onOpenSection?.(request, "docs")}><Paperclip />Документы</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onOpenSection?.(request, "tasks")}><ClipboardList />Задачи</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onOpenSection?.(request, "history")}><History />История</Button>
+      </div>
+      <div className="request-quick-view__footer">
+        <Button type="button" variant="outline" className="h-10 gap-2" onClick={() => { onClose(); navigate(`/requests/${request.id}`); }}><ExternalLink className="h-4 w-4" />Открыть</Button>
+        <Button type="button" className="h-10 flex-1 gap-2" onClick={() => onEdit?.(request)}><Pencil className="h-4 w-4" />Редактировать</Button>
       </div>
     </aside>
   );

@@ -509,9 +509,6 @@ export const FinanceSection = ({
                       }}
                     />
                   </FormControl>
-                  {underpaid && (
-                    <p className="text-[11px] text-destructive">Недоплата: факт {val}% &lt; план {prepay}%</p>
-                  )}
                   <FormMessage />
                 </FormItem>
               );
@@ -534,6 +531,11 @@ export const FinanceSection = ({
             </div>
           </FormItem>
         </div>
+        {Number(form.watch("payment_percentage") ?? 0) > 0 && Number(form.watch("payment_percent") ?? 0) < Number(form.watch("payment_percentage") ?? 0) && (
+          <p className="request-payment-warning" role="alert">
+            Недоплата: факт {Number(form.watch("payment_percent") ?? 0)}% &lt; план {Number(form.watch("payment_percentage") ?? 0)}%
+          </p>
+        )}
 
       </div>
     </FormSectionCard>

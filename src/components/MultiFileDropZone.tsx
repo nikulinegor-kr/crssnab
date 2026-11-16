@@ -15,6 +15,8 @@ interface MultiFileDropZoneProps {
   icon?: "image" | "document";
   maxSizeMB?: number;
   maxFiles?: number;
+  /** В формах заявок: сначала равные зоны выбора, затем списки вложений. */
+  attachmentsBelow?: boolean;
 }
 
 export const MultiFileDropZone = ({
@@ -28,6 +30,7 @@ export const MultiFileDropZone = ({
   icon = "document",
   maxSizeMB = 10,
   maxFiles = 10,
+  attachmentsBelow = false,
 }: MultiFileDropZoneProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,64 +47,46 @@ export const MultiFileDropZone = ({
     setIsDragOver(false);
   }, []);
 
-  const validateFile = (file: File): boolean => {
-    const maxSize = maxSizeMB * 1024 * 1024;
-    return file.size <= maxSize;
-  };
+  const validateFile = (file: File): boolean => file.size <= maxSizeMB * 1024 * 1024;
 
-  const handleDrop = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      const validFiles = droppedFiles.filter(validateFile);
-      const totalFiles = files.length + existingUrls.length + validFiles.length;
-      
-      if (totalFiles > maxFiles) {
-        const allowedCount = maxFiles - files.length - existingUrls.length;
-        onFilesChange([...files, ...validFiles.slice(0, allowedCount)]);
-      } else {
-        onFilesChange([...files, ...validFiles]);
-      }
-    },
-    [onFilesChange, files, existingUrls.length, maxFiles, maxSizeMB]
-  );
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const validFiles = selectedFiles.filter(validateFile);
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles = droppedFiles.filter(validateFile);
     const totalFiles = files.length + existingUrls.length + validFiles.length;
-    
     if (totalFiles > maxFiles) {
       const allowedCount = maxFiles - files.length - existingUrls.length;
       onFilesChange([...files, ...validFiles.slice(0, allowedCount)]);
     } else {
       onFilesChange([...files, ...validFiles]);
     }
-    
-    if (inputRef.current) {
-      inputRef.current.value = "";
+  }, [onFilesChange, files, existingUrls.length, maxFiles, maxSizeMB]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    const validFiles = selectedFiles.filter(validateFile);
+    const totalFiles = files.length + existingUrls.length + validFiles.length;
+    if (totalFiles > maxFiles) {
+      const allowedCount = maxFiles - files.length - existingUrls.length;
+      onFilesChange([...files, ...validFiles.slice(0, allowedCount)]);
+    } else {
+      onFilesChange([...files, ...validFiles]);
     }
+    if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleRemoveFile = (index: number) => {
-    const newFiles = files.filter((_, i) => i !== index);
-    onFilesChange(newFiles);
-  };
+  const handleRemoveFile = (index: number) => onFilesChange(files.filter((_, i) => i !== index));
 
   const getFileName = (url: string): string => {
     try {
       const urlObj = new URL(url);
-      const path = urlObj.pathname;
-      const parts = path.split('/');
-      const fileName = parts[parts.length - 1];
-      // Remove timestamp prefix if exists
+      const fileName = urlObj.pathname.split("/").pop() || "file";
       const match = fileName.match(/^(\d+)-(.*)$/);
-      return match ? match[2] : fileName;
+      return decodeURIComponent(match ? match[2] : fileName);
     } catch {
-      return url.split('/').pop() || 'file';
+      return url.split("/").pop() || "file";
     }
   };
 
@@ -109,40 +94,25 @@ export const MultiFileDropZone = ({
   const totalCount = files.length + existingUrls.length;
   const canAddMore = totalCount < maxFiles;
 
-  return (
-    <div className="space-y-2 w-full min-w-0">
-      <span className="text-sm font-medium">{label} ({totalCount}/{maxFiles})</span>
-      
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleInputChange}
-        className="hidden"
-        multiple
-      />
+  const header = (
+    <div className="request-file-zone__header">
+      <span className="text-sm font-medium">{label} <span className="request-file-zone__count">({totalCount}/{maxFiles})</span></span>
+      {attachmentsBelow && <span className="request-file-zone__hint">{hint}</span>}
+    </div>
+  );
 
-      {/* Existing files */}
+  const attachments = (
+    <>
       {existingUrls.length > 0 && (
         <div className="space-y-2">
           {existingUrls.map((url, index) => (
-            <div key={`existing-${index}`} className="flex min-w-0 items-center gap-2 p-3 border rounded-lg bg-muted/30">
-              <Icon className="h-5 w-5 text-primary shrink-0" />
-              <button
-                type="button"
-                onClick={() => openStoredFile(url)}
-                className="text-sm truncate flex-1 min-w-0 text-left text-primary hover:underline"
-              >
+            <div key={`existing-${index}`} className="request-file-attachment flex min-w-0 items-start gap-2 rounded-lg border bg-muted/30 p-3">
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <button type="button" onClick={() => openStoredFile(url)} className="request-file-attachment__name min-w-0 flex-1 text-left text-sm text-primary hover:underline">
                 {getFileName(url)}
               </button>
               {onRemoveExisting && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
-                  onClick={() => onRemoveExisting(url)}
-                >
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive" onClick={() => onRemoveExisting(url)} aria-label={`Удалить ${getFileName(url)}`}>
                   <X className="h-4 w-4" />
                 </Button>
               )}
@@ -150,68 +120,60 @@ export const MultiFileDropZone = ({
           ))}
         </div>
       )}
-
-      {/* New files */}
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((file, index) => (
-            <div key={`new-${index}`} className="flex min-w-0 items-center gap-2 p-3 border rounded-lg bg-muted/50">
-              <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate flex-1 min-w-0">{file.name}</span>
-              <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
-                {(file.size / 1024).toFixed(0)} KB
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0"
-                onClick={() => handleRemoveFile(index)}
-              >
+            <div key={`new-${index}`} className="request-file-attachment flex min-w-0 items-start gap-2 rounded-lg border bg-muted/50 p-3">
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+              <span className="request-file-attachment__name min-w-0 flex-1 text-sm">{file.name}</span>
+              <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveFile(index)} aria-label={`Удалить ${file.name}`}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
       )}
+    </>
+  );
 
-      {/* Drop zone */}
-      {canAddMore && (
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className={cn(
-            "flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200",
-            isDragOver
-              ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
-          )}
-        >
-          <div
-            className={cn(
-              "p-2 rounded-full transition-colors",
-              isDragOver ? "bg-primary/10" : "bg-muted"
-            )}
-          >
-            <Upload
-              className={cn(
-                "h-5 w-5 transition-colors",
-                isDragOver ? "text-primary" : "text-muted-foreground"
-              )}
-            />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium">
-              {isDragOver ? "Отпустите для загрузки" : "Перетащите файлы сюда"}
-            </p>
-            <p className="text-xs text-muted-foreground">или нажмите для выбора</p>
-          </div>
-        </div>
+  const dropZone = canAddMore ? (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Выбрать: ${label}`}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      className={cn(
+        "request-file-zone__drop flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 transition-all duration-200",
+        isDragOver ? "scale-[1.02] border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50",
       )}
-      
-      <p className="text-xs text-muted-foreground">{hint}</p>
+    >
+      <div className={cn("rounded-full p-2 transition-colors", isDragOver ? "bg-primary/10" : "bg-muted")}>
+        <Upload className={cn("h-5 w-5 transition-colors", isDragOver ? "text-primary" : "text-muted-foreground")} />
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-medium">{isDragOver ? "Отпустите для загрузки" : "Перетащите файлы сюда"}</p>
+        <p className="text-xs text-muted-foreground">или нажмите для выбора</p>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <div className={cn("w-full min-w-0 space-y-2", attachmentsBelow && "request-file-zone")}>
+      {header}
+      <input ref={inputRef} type="file" accept={accept} onChange={handleInputChange} className="hidden" multiple />
+      {!attachmentsBelow && attachments}
+      {dropZone}
+      {attachmentsBelow ? attachments : <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 };

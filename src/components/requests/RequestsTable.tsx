@@ -143,6 +143,7 @@ interface RequestsTableProps {
   toggleAllRequests: () => void;
   onDeleteClick: (request: Request, e: React.MouseEvent) => void;
   onEditClick?: (request: Request) => void;
+  onOpenRequestSection?: (request: Request, section: "docs" | "tasks" | "history") => void;
   onDuplicateClick?: (request: Request) => void;
   onCreateProcurement?: (request: Request) => void;
   searchQuery?: string;
@@ -164,6 +165,7 @@ export const RequestsTable = ({
   toggleAllRequests,
   onDeleteClick,
   onEditClick,
+  onOpenRequestSection,
   onDuplicateClick,
   onCreateProcurement,
   searchQuery = "",
@@ -308,6 +310,7 @@ export const RequestsTable = ({
 
   const closeQuickView = useCallback(() => {
     setQuickViewOpen(false);
+    setQuickViewRequestId(null);
   }, []);
 
   // Label print dialog state
@@ -1534,6 +1537,7 @@ export const RequestsTable = ({
         open={quickViewOpen}
         onClose={closeQuickView}
         onEdit={onEditClick}
+        onOpenSection={onOpenRequestSection}
         formOpen={Boolean(activeRequestId)}
       />
 

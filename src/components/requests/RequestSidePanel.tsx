@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, PanelRightOpen, FileText, Download, ExternalLink, Paperclip, Tag, Sparkles } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, FileText, Download, ExternalLink, Paperclip, Tag, Pin } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,10 +43,15 @@ import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
 import { TrustLetterButton } from "./TrustLetterDialog";
 import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
+import { RequestInlineField } from "./RequestInlineField";
+import { RequestRoute } from "./RequestRoute";
+import { useRequestCardTimer } from "@/hooks/useRequestCardTimer";
+import { getRequestObjectLabel } from "@/lib/requestCard";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
   open: boolean;
+  initialTab?: "overview" | "docs" | "tasks" | "history";
   qrEntry?: boolean;
   onClose: () => void;
   onPrevious?: () => void;
@@ -79,6 +84,7 @@ const sanitizeName = (name: string) => name.replace(/[^\w.\-]+/g, "_") || `file_
 export const RequestSidePanel = ({
   request,
   open,
+  initialTab = "overview",
   qrEntry = false,
   onClose,
   onPrevious,
@@ -117,8 +123,8 @@ export const RequestSidePanel = ({
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleValue, setTitleValue] = useState("");
+  const [activeEditor, setActiveEditor] = useState<string | null>(null);
+  const [pinned, setPinned] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
@@ -128,43 +134,13 @@ export const RequestSidePanel = ({
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
 
-  // Автоскрытие панели после 10 секунд бездействия: прячется, возвращается при активности.
-  const IDLE_HIDE_MS = 10_000;
-  const [idleHidden, setIdleHidden] = useState(false);
-  const lastActivityRef = useRef(Date.now());
-  const keepPanelVisible = useCallback(() => {
-    lastActivityRef.current = Date.now();
-    setIdleHidden((prev) => (prev ? false : prev));
-  }, []);
-
-  useEffect(() => {
-    const blocked =
-      !open ||
-      assistantOpen ||
-      isFullscreen ||
-      editMode ||
-      editorOpen ||
-      statusPromptOpen ||
-      editingTitle ||
-      uploads.length > 0 ||
-      resizingRef.current;
-    if (blocked) {
-      setIdleHidden(false);
-      return;
-    }
-    lastActivityRef.current = Date.now();
-    const events = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "scroll"] as const;
-    events.forEach((evt) => window.addEventListener(evt, keepPanelVisible, { passive: true }));
-    const timer = window.setInterval(() => {
-      if (document.hidden) return;
-      if (Date.now() - lastActivityRef.current >= IDLE_HIDE_MS) setIdleHidden(true);
-    }, 1000);
-    return () => {
-      events.forEach((evt) => window.removeEventListener(evt, keepPanelVisible));
-      window.clearInterval(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, assistantOpen, isFullscreen, editMode, editorOpen, statusPromptOpen, editingTitle, uploads.length, keepPanelVisible]);
+  const { remainingSeconds, restart } = useRequestCardTimer({
+    open,
+    resetKey: request?.id,
+    pinned,
+    paused: Boolean(activeEditor) || editMode || editorOpen || statusPromptOpen,
+    onClose,
+  });
 
   const exitEditMode = useCallback(
     (confirmIfDirty: boolean) => {
@@ -254,13 +230,11 @@ export const RequestSidePanel = ({
     setAssistantOpen(false);
     setEditDirty(false);
     setReceiptOpenSignal(0);
-  }, [request?.id, open]);
-
-  useEffect(() => {
-    setTitleValue(request?.description || "");
-    setEditingTitle(false);
+    setActiveEditor(null);
+    setPinned(false);
+    setTab(initialTab);
     setUploads([]);
-  }, [request?.id, request?.description]);
+  }, [request?.id, open, initialTab]);
 
   /** Оптимистичное сохранение любого поля заявки + тост с «Отменить». */
   const saveField = useCallback(
@@ -282,13 +256,17 @@ export const RequestSidePanel = ({
 
       if (next !== previous) setEditDirty(true);
       setSavingField(field);
+      const updateData: Record<string, string | number | null> = { [field]: next };
+      if (field === "payment_percent") {
+        updateData.payment_status = Number(next) >= 100 ? "Оплачено" : Number(next) > 0 ? "Частично оплачено" : "Не оплачено";
+      }
 
       queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
-        Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, [field]: next } : r)) : old
+        Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, ...updateData } : r)) : old
       );
 
       try {
-        const { error } = await supabase.from("requests").update({ [field]: next }).eq("id", request.id);
+        const { error } = await supabase.from("requests").update(updateData).eq("id", request.id);
         if (error) throw error;
         if (field === "status" && next === DELIVERED_STATUS && previous !== DELIVERED_STATUS) {
           setReceiptOpenSignal(n => n + 1);
@@ -360,22 +338,6 @@ export const RequestSidePanel = ({
         .order("name");
       if (error) throw error;
       return data || [];
-    },
-    enabled: !!currentOrgId && open,
-  });
-
-  const { data: carriers } = useQuery({
-    queryKey: ["panel-carriers", currentOrgId],
-    queryFn: async () => {
-      if (!currentOrgId) return [];
-      const { data, error } = await supabase
-        .from("requests")
-        .select("transport_company")
-        .eq("organization_id", currentOrgId)
-        .not("transport_company", "is", null)
-        .limit(1000);
-      if (error) throw error;
-      return Array.from(new Set((data || []).map((r: any) => r.transport_company).filter(Boolean))).sort();
     },
     enabled: !!currentOrgId && open,
   });
@@ -473,11 +435,6 @@ export const RequestSidePanel = ({
     () => (suppliers || []).map((s: any) => ({ value: s.name, label: s.name })),
     [suppliers]
   );
-  const carrierOptions: PanelFieldOption[] = useMemo(
-    () => (carriers || []).map((c: any) => ({ value: c, label: c })),
-    [carriers]
-  );
-
   const movement = useMemo(() => {
     if (!request) return [] as { title: string; sub: string; done: boolean }[];
     const steps: { title: string; sub: string; done: boolean }[] = [
@@ -519,12 +476,13 @@ export const RequestSidePanel = ({
     { id: "overview", label: "Обзор" },
     { id: "tasks", label: "Задачи" },
     { id: "docs", label: `Документы ${docsCount || ""}`.trim() },
+    { id: "history", label: "История" },
   ] as const;
 
 
   const asOverlay = !inline || isFullscreen;
 
-  const cardClass = cn("mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", "border border-border bg-card px-3 py-2.5");
+  const cardClass = cn("request-side-card mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", "border border-border bg-card px-3 py-2.5");
   const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
     <div className={cardClass}>
@@ -534,7 +492,7 @@ export const RequestSidePanel = ({
               type="select"
               options={objectOptions}
               value={request.object_id}
-              display={(request as any).object_name}
+              display={getRequestObjectLabel(request.object_id, objects?.find((object) => object.id === request.object_id)?.name || request.object_name)}
               readOnly={readOnly}
               alwaysEdit={editMode}
               onSave={(v) => saveField("object_id", v)}
@@ -586,15 +544,13 @@ export const RequestSidePanel = ({
           <span className={request.delivery_date ? "font-semibold text-foreground" : "text-muted-foreground"}>{dt(request.delivery_date) ?? "—"}</span>
         </div>
       )}
-              <PanelField
-              label="Перевозчик"
-              type="select"
-              options={carrierOptions}
-              value={request.transport_company}
-              readOnly={readOnly}
-              alwaysEdit={editMode}
-              onSave={(v) => saveField("transport_company", v)}
-            />
+              <RequestInlineField
+                label="Транспортная компания"
+                value={request.transport_company}
+                readOnly={readOnly}
+                onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}
+                onSave={(v) => saveField("transport_company", v)}
+              />
               <PanelField
               label="№ ТТН"
               type="text"
@@ -606,24 +562,24 @@ export const RequestSidePanel = ({
               copyLabel="Номер ТТН скопирован"
               extraAction={<TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} />}
             />
-              <PanelField
-              label="Отгрузка"
-              type="date"
-              value={request.shipment_date}
-              display={dt(request.shipment_date)}
-              readOnly={readOnly}
-              alwaysEdit={editMode}
-              onSave={(v) => saveField("shipment_date", v)}
-            />
-              <PanelField
-              label="Приход"
-              type="date"
-              value={request.delivery_date}
-              display={dt(request.delivery_date)}
-              readOnly={readOnly}
-              alwaysEdit={editMode}
-              onSave={(v) => saveField("delivery_date", v)}
-            />
+              <RequestInlineField
+                label="Дата отгрузки"
+                type="date"
+                value={request.shipment_date}
+                display={dt(request.shipment_date) || "—"}
+                readOnly={readOnly}
+                onEditingChange={(editing) => setActiveEditor(editing ? "shipment" : null)}
+                onSave={(v) => saveField("shipment_date", v)}
+              />
+              <RequestInlineField
+                label="Дата доставки (приход)"
+                type="date"
+                value={request.delivery_date}
+                display={dt(request.delivery_date) || "—"}
+                readOnly={readOnly}
+                onEditingChange={(editing) => setActiveEditor(editing ? "delivery" : null)}
+                onSave={(v) => saveField("delivery_date", v)}
+              />
     </div>
   );
   const invoiceNumberField = (
@@ -763,26 +719,18 @@ export const RequestSidePanel = ({
             </div>
             {/* Оплата — отдельной строкой под блоком сумм */}
             <div className="mt-2 px-3">
-              <PanelField
-                label="Оплата, %"
+              <RequestInlineField
+                label="Факт оплаты, %"
                 type="number"
                 value={paid}
                 display={
-                  <span
-                    className={cn(
-                      "font-numeric text-[0.9375rem] font-semibold",
-                      paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-destructive"
-                    )}
-                  >
+                  <span className={cn("font-numeric text-[0.9375rem] font-semibold", paid >= 100 ? "text-success" : paid > 0 ? "text-warning" : "text-destructive")}>
                     {paid} % — {paid >= 100 ? "оплачено полностью" : paid > 0 ? "оплачено частично" : "не оплачено"}
                   </span>
                 }
                 readOnly={readOnly}
-                alwaysEdit={editMode}
-                onSave={(v) => {
-                  const pct = Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
-                  return saveField("payment_percent", pct);
-                }}
+                onEditingChange={(editing) => setActiveEditor(editing ? "payment" : null)}
+                onSave={(v) => saveField("payment_percent", Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0)))}
               />
               {!readOnly && (
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -830,6 +778,17 @@ export const RequestSidePanel = ({
       </div>
       {logisticsBlock}
       {peopleBlock}
+      <div className={cardClass}>
+        <RequestInlineField
+          label="Комментарий"
+          type="textarea"
+          value={request.comments}
+          display={<span className="request-card-comment">{request.comments || "—"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
+          onSave={(value) => saveField("comments", value)}
+        />
+      </div>
     </>
   );
 
@@ -913,9 +872,8 @@ export const RequestSidePanel = ({
   const content = (
     <aside
       className={cn(
-        "requests-registry flex min-h-0 flex-col border-l border-border bg-card",
+        "request-side-panel requests-registry flex min-h-0 flex-col border-l border-border bg-card",
         assistantOpen && "max-sm:!fixed max-sm:!inset-0 max-sm:!z-[220] max-sm:!h-[100dvh] max-sm:!w-screen",
-        idleHidden && !isFullscreen && "translate-x-full pointer-events-none",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
           ? cn(
@@ -940,7 +898,11 @@ export const RequestSidePanel = ({
       }
 
       aria-label="Карточка заявки"
-      aria-hidden={idleHidden && !isFullscreen ? true : undefined}
+      onPointerDownCapture={restart}
+      onKeyDownCapture={restart}
+      onWheel={restart}
+      onTouchStart={restart}
+      onScrollCapture={restart}
       onDragOver={(e) => {
         if (readOnly) return;
         e.preventDefault();
@@ -987,40 +949,16 @@ export const RequestSidePanel = ({
       {/* Header */}
       {!assistantOpen && <>
       <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
-        {(editingTitle || editMode) && !readOnly ? (
-          <textarea
-            autoFocus
-            value={titleValue}
-            onChange={(e) => setTitleValue(e.target.value)}
-            onBlur={() => {
-              setEditingTitle(false);
-              if (titleValue.trim() && titleValue.trim() !== request.description) saveField("description", titleValue.trim());
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                (e.target as HTMLTextAreaElement).blur();
-              } else if (e.key === "Escape") {
-                setTitleValue(request.description || "");
-                setEditingTitle(false);
-              }
-            }}
-            rows={2}
-            className="min-w-0 flex-1 resize-none rounded border border-input bg-background px-1.5 py-1 text-[1.125rem] font-semibold leading-tight focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        ) : (
-          <h2
-            className={cn(
-              "min-w-0 flex-1 rounded px-1 -mx-1 text-[1.125rem] font-semibold leading-tight",
-              !readOnly && "cursor-text hover:bg-muted/50"
-            )}
-            title={readOnly ? undefined : "Клик — изменить название"}
-            onClick={() => !readOnly && setEditingTitle(true)}
-          >
-            {request.description}
-            {savingField === "description" && <Loader2 className="ml-1 inline h-3 w-3 animate-spin" />}
-          </h2>
-        )}
+        <RequestInlineField
+          label="Название заявки"
+          type="textarea"
+          hideLabel
+          value={request.description}
+          display={<span className="request-side-panel__title">{request.description || "Заявка"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
+          onSave={(value) => saveField("description", value.trim())}
+        />
         <div className="flex shrink-0 items-center gap-0.5">
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
@@ -1047,41 +985,56 @@ export const RequestSidePanel = ({
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           )}
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPinned((value) => !value)} aria-pressed={pinned} aria-label={pinned ? "Открепить карточку" : "Закрепить карточку"}>
+            <Pin className={pinned ? "h-4 w-4 fill-current text-primary" : "h-4 w-4"} />
+          </Button>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Закрыть">
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      <div className={cn("px-4 pt-2", containerClass)}>
+        <RequestRoute
+          request={request}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "route-date" : null)}
+          onDeliverySave={(value) => saveField("delivery_date", value)}
+        />
+      </div>
+
       <div className={cn("flex flex-none flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
-        <select
+        <RequestInlineField
+          label="Статус"
+          type="select"
+          hideLabel
+          className="request-card-meta-field"
           value={request.status}
-          disabled={readOnly || savingField === "status"}
-          onChange={(e) => saveField("status", e.target.value)}
-          className="h-8 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          style={{ borderLeft: `3px solid ${getStatusColor(request.status)}` }}
-          aria-label="Статус"
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
+          options={STATUSES.map((value) => ({ value, label: value }))}
+          display={<span className="request-card-status"><i style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
+          onSave={(value) => saveField("status", value)}
+        />
+        <RequestInlineField
+          label="Приоритет"
+          type="select"
+          hideLabel
+          className="request-card-meta-field"
           value={request.priority || "Планово"}
-          disabled={readOnly || savingField === "priority"}
-          onChange={(e) => saveField("priority", e.target.value)}
-          className="h-8 cursor-pointer rounded border border-input bg-card pl-1.5 pr-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          style={{ borderLeft: `3px solid ${getPriorityColor(request.priority || "Планово")}` }}
-          aria-label="Приоритет"
-        >
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
+          options={PRIORITIES.map((value) => ({ value, label: value }))}
+          display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
+          onSave={(value) => saveField("priority", value)}
+        />
         <span className="font-numeric">{request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
         {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
+        <span className="request-card-timer request-card-timer--inline" role="timer" aria-live="off">
+          {pinned ? "Закреплено" : activeEditor || editMode || editorOpen || statusPromptOpen ? "Пауза при редактировании" : `Закроется через ${remainingSeconds} с`}
+        </span>
       </div>
 
       {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
@@ -1132,7 +1085,7 @@ export const RequestSidePanel = ({
           </div>
         ) : (
           <div className={cn(containerClass, isFullscreen && "px-0")}>
-            {tab !== "docs" && tab !== "tasks" && (
+            {tab === "overview" && (
               <>
                 {fieldsBlock}
                 {isFullscreen ? (
@@ -1156,6 +1109,7 @@ export const RequestSidePanel = ({
             )}
             {tab === "tasks" && linkedTasksBlock}
             {tab === "docs" && docsBlock}
+            {tab === "history" && historyBlock}
           </div>
         )}
 
@@ -1257,28 +1211,7 @@ export const RequestSidePanel = ({
     </aside>
   );
 
-  const idleHandle =
-    open && idleHidden && !isFullscreen ? (
-      <button
-        type="button"
-        aria-label="Показать панель заявки"
-        onClick={(e) => {
-          e.stopPropagation();
-          lastActivityRef.current = Date.now();
-          setIdleHidden(false);
-        }}
-        className="fixed right-0 top-1/2 z-[60] -translate-y-1/2 rounded-l-lg border border-r-0 border-border bg-card px-1 py-4 text-muted-foreground shadow-panel hover:bg-accent hover:text-foreground"
-      >
-        <PanelRightOpen className="h-4 w-4" />
-      </button>
-    ) : null;
-
-  const panelBody = (
-    <>
-      {content}
-      {idleHandle}
-    </>
-  );
+  const panelBody = content;
 
   const handleStatusFromPrompt = async (status: string) => {
     setStatusPromptOpen(false);

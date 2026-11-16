@@ -1,5 +1,4 @@
 import { UseFormReturn } from "react-hook-form";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
@@ -241,9 +240,9 @@ export const AdditionalSection = ({
       <div className="space-y-3 sm:space-y-4">
         {/* ZRS Summary */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="request-zrs-toolbar">
             <Label className="text-xs">ЗРС (сводка заявки)</Label>
-            <div className="flex items-center gap-2">
+            <div className="request-zrs-actions">
               <input
                 ref={pdfInputRef}
                 type="file"
@@ -306,19 +305,9 @@ export const AdditionalSection = ({
               )}
             </div>
           </div>
-          <Textarea
-            readOnly
-            className="min-h-[80px] sm:min-h-[100px] bg-muted/50 font-mono text-xs"
-            value={`Дата заявки: ${formValues.request_date ? new Date(formValues.request_date).toLocaleDateString("ru-RU") : "-"}
-Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
-Заявка: ${formValues.description || "-"}
-Заявитель: ${formValues.applicant || "-"}
-Приоритет: ${formValues.priority || "-"}
-Наличие: ${availabilityText}
-Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
-Оплата: ${formValues.payment_percentage ?? 0}%
-Исполнил: ${formValues.executor || "-"}`}
-          />
+          <div className="request-zrs-preview" aria-label="Предпросмотр ЗРС">
+            {getZrsLines().map((line) => <p key={line}>{line}</p>)}
+          </div>
         </div>
 
 

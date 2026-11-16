@@ -1081,7 +1081,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             defaultCollapsed
             icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
           >
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="request-files-grid">
               <MultiFileDropZone
                 accept="image/*"
                 files={photoFiles}
@@ -1089,10 +1089,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 existingUrls={existingPhotoUrls}
                 onRemoveExisting={(url) => setExistingPhotoUrls((current) => current.filter((item) => item !== url))}
                 label="Фото"
-                hint="JPG, PNG, WEBP до 5 МБ, макс. 10"
+                hint="до 5 МБ · 10 файлов"
                 icon="image"
                 maxSizeMB={5}
                 maxFiles={10}
+                attachmentsBelow
               />
               <MultiFileDropZone
                 accept=".pdf,.doc,.docx,.xls,.xlsx"
@@ -1100,11 +1101,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 onFilesChange={setDocumentFiles}
                 existingUrls={existingDocumentUrls}
                 onRemoveExisting={(url) => setExistingDocumentUrls((current) => current.filter((item) => item !== url))}
-                label="Документы (Счёт/КП)"
-                hint="PDF, DOC, XLS до 10 МБ, макс. 10"
+                label="Документы"
+                hint="до 10 МБ · 10 файлов"
                 icon="document"
                 maxSizeMB={10}
                 maxFiles={10}
+                attachmentsBelow
               />
             </div>
           </FormSectionCard>

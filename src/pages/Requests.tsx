@@ -150,6 +150,7 @@ const Requests = () => {
 
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [panelInitialTab, setPanelInitialTab] = useState<"overview" | "docs" | "tasks" | "history">("overview");
   const [panelOpen, setPanelOpen] = useState(false);
   const location = useLocation();
   const [qrRequestId, setQrRequestId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('request'));
@@ -206,14 +207,25 @@ const Requests = () => {
 
   const handleEditClick = (request: Request) => {
     setQrRequestId(null);
+    setPanelInitialTab("overview");
     setSelectedRequest(request);
     setPanelOpen(true);
     setRequestParams(request.id, isFullView);
   };
 
+  const handleOpenRequestSection = useCallback((request: Request, section: "docs" | "tasks" | "history") => {
+    setQrRequestId(null);
+    setPanelInitialTab(section);
+    setSelectedRequest(request);
+    setPanelOpen(true);
+    setRequestParams(request.id, false);
+  }, [setRequestParams]);
+
   const closePanel = useCallback(() => {
     setQrRequestId(null);
     setPanelOpen(false);
+    setSelectedRequest(null);
+    setPanelInitialTab("overview");
     setRequestParams(null, false);
   }, [setRequestParams]);
 
@@ -634,6 +646,7 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onOpenRequestSection={handleOpenRequestSection}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
@@ -709,6 +722,7 @@ const Requests = () => {
               toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onOpenRequestSection={handleOpenRequestSection}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery={filters.searchQuery}
@@ -741,6 +755,7 @@ const Requests = () => {
                 toggleAllRequests={toggleAllRequests}
               onDeleteClick={handleDeleteClick}
               onEditClick={handleEditClick}
+              onOpenRequestSection={handleOpenRequestSection}
               onDuplicateClick={handleDuplicateClick}
               onCreateProcurement={handleCreateProcurement}
               searchQuery=""
@@ -776,6 +791,7 @@ const Requests = () => {
               width={panelWidth}
               onWidthChange={setPanelWidth}
               request={selectedRequest as any}
+              initialTab={panelInitialTab}
               qrEntry={selectedRequest?.id === qrRequestId}
               open={panelOpen}
               onClose={closePanel}
@@ -816,6 +832,7 @@ const Requests = () => {
           width={panelWidth}
           onWidthChange={setPanelWidth}
           request={selectedRequest as any}
+          initialTab={panelInitialTab}
           qrEntry={selectedRequest?.id === qrRequestId}
           open={panelOpen}
           onClose={closePanel}

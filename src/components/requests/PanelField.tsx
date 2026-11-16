@@ -96,7 +96,7 @@ export const PanelField = ({
         accent ? "text-primary" : "text-foreground"
       )}
     >
-      <span className="min-w-0 flex-1 truncate">
+      <span className="min-w-0 flex-1 whitespace-normal break-words">
         {shown ?? (
           <span className="text-muted-foreground">
             <span className={cn(!readOnly && "group-hover/pf:hidden")}>—</span>
