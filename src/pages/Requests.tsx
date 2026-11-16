@@ -33,6 +33,9 @@ import { MeetingReportButton } from "@/components/requests/MeetingReportButton";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
+import { RequestsViewControls } from "@/components/requests/RequestsViewControls";
+import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
+import { useAuthUserId } from "@/hooks/useOrgMembership";
 
 import { Plus, ShoppingCart, Star, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -163,6 +166,61 @@ const Requests = () => {
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const { data: columnUserId } = useAuthUserId();
+  const { visibility: columnVisibility, updateVisibility, resetToDefaults: resetColumns } = useTableColumnVisibility(columnUserId);
+  const [groupByObject, setGroupByObject] = useState(false);
+  const [groupByProject, setGroupByProject] = useState(false);
+  const [groupByPhase, setGroupByPhase] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("requests-group-by-phase", "1");
+    localStorage.setItem("requests-group-by-object", "0");
+    localStorage.setItem("requests-group-by-project", "0");
+  }, []);
+
+  useEffect(() => {
+    if (!columnUserId) return;
+    const migrationKey = `requests-redesign-date-column-v1:${columnUserId}`;
+    if (localStorage.getItem(migrationKey)) return;
+    if (!columnVisibility.request_date) updateVisibility({ ...columnVisibility, request_date: true });
+    localStorage.setItem(migrationKey, "1");
+  }, [columnUserId, columnVisibility, updateVisibility]);
+
+  const changeGroupByObject = useCallback((value: boolean) => {
+    setGroupByObject(value);
+    localStorage.setItem("requests-group-by-object", value ? "1" : "0");
+    if (value) {
+      setGroupByProject(false);
+      setGroupByPhase(false);
+      localStorage.setItem("requests-group-by-project", "0");
+      localStorage.setItem("requests-group-by-phase", "0");
+    }
+  }, []);
+
+  const changeGroupByPhase = useCallback((value: boolean) => {
+    setGroupByPhase(value);
+    localStorage.setItem("requests-group-by-phase", value ? "1" : "0");
+    if (value) {
+      setGroupByObject(false);
+      setGroupByProject(false);
+      setPanelOpen(false);
+      localStorage.setItem("requests-group-by-object", "0");
+      localStorage.setItem("requests-group-by-project", "0");
+    }
+  }, []);
+
+  const viewControls = (
+    <RequestsViewControls
+      groupByObject={groupByObject}
+      groupByPhase={groupByPhase}
+      onGroupByObject={changeGroupByObject}
+      onGroupByPhase={changeGroupByPhase}
+      visibility={columnVisibility}
+      onVisibilityChange={updateVisibility}
+      onResetColumns={resetColumns}
+    />
+  );
+
   const toggleRequestSelection = (requestId: string) => {
     setSelectedRequestIds((prev) => {
       const newSet = new Set(prev);
@@ -224,6 +282,10 @@ const Requests = () => {
   const closePanelFromTable = useCallback(() => {
     if (panelOpen) closePanel();
   }, [closePanel, panelOpen]);
+
+  const patchSelectedRequest = useCallback((patch: Record<string, unknown>) => {
+    setSelectedRequest((previous) => previous ? { ...previous, ...patch } : previous);
+  }, []);
 
   const selectedRequestIndex = selectedRequest
     ? panelRequestOrder.findIndex((request) => request.id === selectedRequest.id)
@@ -612,6 +674,7 @@ const Requests = () => {
             requests={requests}
             specialDateFilter={filters.specialDateFilter}
             setSpecialDateFilter={filters.setSpecialDateFilter}
+            viewControls={viewControls}
           />
 
           {/* Bulk Actions Toolbar */}
@@ -651,7 +714,10 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
-              onMaximize={() => setPanelOpen(false)}
+              groupByObject={groupByObject}
+              groupByProject={groupByProject}
+              groupByPhase={groupByPhase}
+              columnVisibility={columnVisibility}
             />
           </div>
         </div>
@@ -694,6 +760,7 @@ const Requests = () => {
             requests={requests}
             specialDateFilter={filters.specialDateFilter}
             setSpecialDateFilter={filters.setSpecialDateFilter}
+            viewControls={viewControls}
           />
 
           <RequestsBulkActions
@@ -725,7 +792,10 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
-              onMaximize={() => setPanelOpen(false)}
+              groupByObject={groupByObject}
+              groupByProject={groupByProject}
+              groupByPhase={groupByPhase}
+              columnVisibility={columnVisibility}
             />
           </div>
         </div>
@@ -760,7 +830,10 @@ const Requests = () => {
               activeRequestId={panelOpen ? selectedRequest?.id : null}
               onRequestOrderChange={handleRequestOrderChange}
               onClearSelection={() => setSelectedRequestIds(new Set())}
-              onMaximize={() => setPanelOpen(false)}
+              groupByObject={groupByObject}
+              groupByProject={groupByProject}
+              groupByPhase={groupByPhase}
+              columnVisibility={columnVisibility}
             />
             </div>
           )}
@@ -791,6 +864,7 @@ const Requests = () => {
               qrEntry={selectedRequest?.id === qrRequestId}
               open={panelOpen}
               onClose={closePanel}
+              onRequestPatch={patchSelectedRequest}
               onPrevious={() => selectAdjacentRequest(-1)}
               onNext={() => selectAdjacentRequest(1)}
               hasPrevious={selectedRequestIndex > 0}

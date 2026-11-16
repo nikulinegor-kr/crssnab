@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, Pencil, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,9 @@ import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 import { RequestInlineField } from "./RequestInlineField";
 import { RequestRoute } from "./RequestRoute";
 import { getRequestObjectLabel } from "@/lib/requestCard";
+import { getRequestFileUrls } from "@/lib/requestDocuments";
+import { RequestDocumentDeleteButton } from "./RequestDocumentDeleteButton";
+import { RequestInvoiceActions } from "./RequestInvoiceActions";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -66,6 +69,7 @@ interface RequestSidePanelProps {
   /** Полноэкранный режим — состояние хранится снаружи (в адресной строке). */
   fullscreen?: boolean;
   onFullscreenChange?: (value: boolean) => void;
+  onRequestPatch?: (patch: Record<string, unknown>) => void;
 }
 
 
@@ -97,9 +101,12 @@ export const RequestSidePanel = ({
   onWidthChange,
   fullscreen,
   onFullscreenChange,
+  onRequestPatch,
 }: RequestSidePanelProps) => {
   const [editingRequest, setEditingRequest] = useState<RequestSidePanelProps["request"]>(null);
-  const request = requestedRequest ?? editingRequest;
+  const [localRequestPatch, setLocalRequestPatch] = useState<Record<string, unknown>>({});
+  const baseRequest = requestedRequest ?? editingRequest;
+  const request = baseRequest ? { ...baseRequest, ...localRequestPatch } as NonNullable<RequestSidePanelProps["request"]> : null;
   const STATUSES = useOrgStatuses();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
@@ -218,6 +225,7 @@ export const RequestSidePanel = ({
 
 
   useEffect(() => {
+    setLocalRequestPatch({});
     setEditMode(false);
     setAssistantOpen(false);
     setEditDirty(false);
@@ -226,6 +234,11 @@ export const RequestSidePanel = ({
     setTab(initialTab);
     setUploads([]);
   }, [request?.id, open, initialTab]);
+
+  const applyLocalRequestPatch = useCallback((patch: Record<string, unknown>) => {
+    setLocalRequestPatch((previous) => ({ ...previous, ...patch }));
+    onRequestPatch?.(patch);
+  }, [onRequestPatch]);
 
   /** Оптимистичное сохранение любого поля заявки + тост с «Отменить». */
   const saveField = useCallback(
@@ -251,6 +264,7 @@ export const RequestSidePanel = ({
       if (field === "payment_percent") {
         updateData.payment_status = Number(next) >= 100 ? "Оплачено" : Number(next) > 0 ? "Частично оплачено" : "Не оплачено";
       }
+      applyLocalRequestPatch(updateData);
 
       queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
         Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, ...updateData } : r)) : old
@@ -276,6 +290,7 @@ export const RequestSidePanel = ({
         queryClient.invalidateQueries({ queryKey: ["requests"] });
       } catch (e) {
         console.error("SidePanel save:", e);
+        applyLocalRequestPatch({ [field]: previous });
         queryClient.setQueriesData({ queryKey: ["requests"] }, (old: any) =>
           Array.isArray(old) ? old.map((r: any) => (r?.id === request.id ? { ...r, [field]: previous } : r)) : old
         );
@@ -284,7 +299,7 @@ export const RequestSidePanel = ({
         setSavingField(null);
       }
     },
-    [queryClient, request, toast]
+    [applyLocalRequestPatch, queryClient, request, toast]
   );
 
   const { data: items } = useQuery({
@@ -350,12 +365,8 @@ export const RequestSidePanel = ({
     enabled: !!request?.id && open && tab === "history",
   });
 
-  const photoUrls = useMemo(() => (request?.photo_urls || []).filter(Boolean) as string[], [request]);
-  const documentUrls = useMemo(() => {
-    const list = [...((request?.document_urls || []) as string[])].filter(Boolean);
-    if (!list.length && request?.document_url) list.push(request.document_url);
-    return list;
-  }, [request]);
+  const photoUrls = useMemo(() => request ? getRequestFileUrls(request, "photo") : [], [request]);
+  const documentUrls = useMemo(() => request ? getRequestFileUrls(request, "document") : [], [request]);
   const docsCount = photoUrls.length + documentUrls.length;
 
   /** Загрузка файлов: свой прогресс и своя ошибка у каждого файла. */
@@ -388,6 +399,7 @@ export const RequestSidePanel = ({
             .update({ [column]: nextList })
             .eq("id", request.id);
           if (updateError) throw updateError;
+          applyLocalRequestPatch({ [column]: nextList });
           setUploads((u) => u.map((t) => (t.id === id ? { ...t, progress: 100 } : t)));
           setTimeout(() => setUploads((u) => u.filter((t) => t.id !== id)), 1200);
           queryClient.invalidateQueries({ queryKey: ["requests"] });
@@ -402,7 +414,7 @@ export const RequestSidePanel = ({
       }
       if (files.length) setTab("docs");
     },
-    [documentUrls, photoUrls, queryClient, readOnly, request]
+    [applyLocalRequestPatch, documentUrls, photoUrls, queryClient, readOnly, request]
   );
 
   const goods = request?.amount || 0;
@@ -526,15 +538,6 @@ export const RequestSidePanel = ({
   const logisticsBlock = (
     <div className={cardClass}>
       <div className={cardTitleClass}>Логистика</div>
-      {(request.shipment_date || request.delivery_date) && (
-        <div className="mb-2 flex items-center gap-2 rounded bg-muted/60 px-2 py-1.5 font-numeric text-[13px]">
-          <span className={request.shipment_date ? "text-foreground" : "text-muted-foreground"}>{dt(request.shipment_date) ?? "—"}</span>
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-muted-foreground">→</span>
-          <span className="h-px flex-1 bg-border" />
-          <span className={request.delivery_date ? "font-semibold text-foreground" : "text-muted-foreground"}>{dt(request.delivery_date) ?? "—"}</span>
-        </div>
-      )}
               <RequestInlineField
                 label="Транспортная компания"
                 value={request.transport_company}
@@ -561,15 +564,6 @@ export const RequestSidePanel = ({
                 readOnly={readOnly}
                 onEditingChange={(editing) => setActiveEditor(editing ? "shipment" : null)}
                 onSave={(v) => saveField("shipment_date", v)}
-              />
-              <RequestInlineField
-                label="Дата доставки (приход)"
-                type="date"
-                value={request.delivery_date}
-                display={dt(request.delivery_date) || "—"}
-                readOnly={readOnly}
-                onEditingChange={(editing) => setActiveEditor(editing ? "delivery" : null)}
-                onSave={(v) => saveField("delivery_date", v)}
               />
     </div>
   );
@@ -608,9 +602,9 @@ export const RequestSidePanel = ({
       <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
       {mainInvoiceDoc ? (
         <>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1 truncate text-sm" title={docFileName(mainInvoiceDoc)}>
+            <span className="min-w-[160px] flex-1 break-words text-sm" title={docFileName(mainInvoiceDoc)}>
               {docFileName(mainInvoiceDoc)}
             </span>
             <Button
@@ -631,11 +625,12 @@ export const RequestSidePanel = ({
               <Download className="mr-1 h-3.5 w-3.5" />
               Скачать
             </Button>
+            <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
           </div>
           {invoiceDocs.length > 1 && (
             <div className="mt-1.5 space-y-1">
               {invoiceDocs.slice(1).map((url) => (
-                <div key={url} className="flex items-center gap-2">
+                <div key={url} className="flex flex-wrap items-center gap-2">
                   <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground" title={docFileName(url)}>
                     {docFileName(url)}
@@ -647,6 +642,7 @@ export const RequestSidePanel = ({
                   >
                     Скачать
                   </button>
+                  <RequestDocumentDeleteButton request={request} url={url} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
                 </div>
               ))}
             </div>
@@ -728,30 +724,28 @@ export const RequestSidePanel = ({
                   <Button
                     type="button"
                     size="sm"
-                    variant={paid === 50 ? "default" : "outline"}
-                    className="h-8 px-2 text-sm"
+                    variant="default"
+                    className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90"
                     onClick={async () => {
                       await saveField("payment_percent", 50);
-                      await saveField("payment_status", "partial");
                       setPendingPaymentPercent(50);
                       setStatusPromptOpen(true);
                     }}
                   >
-                    Оплачено 50%
+                    50%
                   </Button>
                   <Button
                     type="button"
                     size="sm"
-                    variant={paid >= 100 ? "default" : "outline"}
-                    className="h-8 px-2 text-sm"
+                    variant="default"
+                    className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90"
                     onClick={async () => {
                       await saveField("payment_percent", 100);
-                      await saveField("payment_status", "paid");
                       setPendingPaymentPercent(100);
                       setStatusPromptOpen(true);
                     }}
                   >
-                    Оплачено 100%
+                    100%
                   </Button>
                 </div>
               )}
@@ -764,22 +758,12 @@ export const RequestSidePanel = ({
       <div className={cardClass}>
         <div className={cardTitleClass}>Финансы и счёт</div>
         {invoiceNumberField}
+        <RequestInvoiceActions request={request} readOnly={readOnly} onUpdated={applyLocalRequestPatch} />
         {totalsBlock}
         {invoiceBlock}
       </div>
       {logisticsBlock}
       {peopleBlock}
-      <div className={cardClass}>
-        <RequestInlineField
-          label="Комментарий"
-          type="textarea"
-          value={request.comments}
-          display={<span className="request-card-comment">{request.comments || "—"}</span>}
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
-          onSave={(value) => saveField("comments", value)}
-        />
-      </div>
     </>
   );
 
@@ -836,9 +820,12 @@ export const RequestSidePanel = ({
             requestNumber={request.request_number}
             photoUrls={photoUrls}
             documentUrls={documentUrls}
+            documentUrl={request.document_url}
+            photoUrl={request.photo_url}
             readOnly={readOnly}
             uploads={uploads}
             onUpload={handleUpload}
+            onDeleted={applyLocalRequestPatch}
           />
   );
   const historyBlock = (
@@ -977,6 +964,18 @@ export const RequestSidePanel = ({
         </div>
       </div>
 
+      <div className={cn("request-card-comment-block px-4 pt-1", containerClass)}>
+        <RequestInlineField
+          label="Комментарий"
+          type="textarea"
+          value={request.comments}
+          display={<span className="request-card-comment">{request.comments || "—"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
+          onSave={(value) => saveField("comments", value)}
+        />
+      </div>
+
       <div className={cn("px-4 pt-2", containerClass)}>
         <RequestRoute
           request={request}
@@ -986,7 +985,7 @@ export const RequestSidePanel = ({
         />
       </div>
 
-      <div className={cn("flex flex-none flex-wrap items-center gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
+      <div className={cn("request-card-meta flex-none gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <RequestInlineField
           label="Статус"
           type="select"
@@ -1130,7 +1129,6 @@ export const RequestSidePanel = ({
               onClose();
             }}
           >
-            <Pencil className="h-3.5 w-3.5" />
             Редактировать
           </Button>
         )}

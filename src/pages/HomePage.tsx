@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, LayoutGrid, Package, ShoppingCart, CheckCircle, Sun, Moon } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Brain, LayoutGrid, Package, ShoppingCart, CheckCircle } from "lucide-react";
 
 const features = [
   {
@@ -38,8 +37,6 @@ const checkpoints = [
 ];
 
 export default function HomePage() {
-  const { theme, setTheme } = useTheme();
-
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground">
       {/* Header */}
@@ -54,13 +51,6 @@ export default function HomePage() {
           <a className="text-muted-foreground text-sm font-medium hover:text-primary transition-colors" href="#interface">Интерфейс</a>
         </div>
         <div className="flex gap-3 items-center">
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
           <Link to="/" className="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-muted text-foreground text-sm font-bold hover:bg-accent transition-all">
             Войти
           </Link>

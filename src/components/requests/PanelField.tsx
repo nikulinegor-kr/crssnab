@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Pencil, Search } from "lucide-react";
+import { ChevronDown, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -105,9 +105,6 @@ export const PanelField = ({
         )}
       </span>
       {saving && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />}
-      {!readOnly && !saving && (
-        <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/pf:opacity-100" />
-      )}
     </button>
   );
 
@@ -126,7 +123,7 @@ export const PanelField = ({
             )}
           >
             <span className="min-w-0 truncate">{shown ?? "—"}</span>
-            <Pencil className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
           </button>
         </PopoverTrigger>
 
@@ -195,8 +192,8 @@ export const PanelField = ({
   }
 
   return (
-    <div className="flex min-h-8 items-center gap-3 py-[2px]">
-      <div className="w-[8.125rem] shrink-0 text-[13px] leading-5 text-muted-foreground">{label}</div>
+    <div className="request-panel-field flex min-h-8 items-start gap-3 py-[2px]">
+      <div className="w-[8.125rem] shrink-0 pt-1.5 text-[13px] leading-5 text-muted-foreground">{label}</div>
       <div className="min-w-0 flex-1">
         {editing || forced ? editor : staticView}
       </div>

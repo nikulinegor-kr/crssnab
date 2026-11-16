@@ -3,6 +3,16 @@ import { Upload, X, Image, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { openStoredFile } from "@/lib/storageUrl";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface MultiFileDropZoneProps {
   accept: string;
@@ -17,6 +27,7 @@ interface MultiFileDropZoneProps {
   maxFiles?: number;
   /** В формах заявок: сначала равные зоны выбора, затем списки вложений. */
   attachmentsBelow?: boolean;
+  confirmExistingRemoval?: boolean;
 }
 
 export const MultiFileDropZone = ({
@@ -31,8 +42,10 @@ export const MultiFileDropZone = ({
   maxSizeMB = 10,
   maxFiles = 10,
   attachmentsBelow = false,
+  confirmExistingRemoval = false,
 }: MultiFileDropZoneProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pendingExistingRemoval, setPendingExistingRemoval] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -112,7 +125,7 @@ export const MultiFileDropZone = ({
                 {getFileName(url)}
               </button>
               {onRemoveExisting && (
-                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive" onClick={() => onRemoveExisting(url)} aria-label={`Удалить ${getFileName(url)}`}>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive" onClick={() => confirmExistingRemoval ? setPendingExistingRemoval(url) : onRemoveExisting(url)} aria-label={icon === "document" ? `Удалить документ ${getFileName(url)}` : `Удалить фото ${getFileName(url)}`}>
                   <X className="h-4 w-4" />
                 </Button>
               )}
@@ -168,6 +181,7 @@ export const MultiFileDropZone = ({
   ) : null;
 
   return (
+    <>
     <div className={cn("w-full min-w-0 space-y-2", attachmentsBelow && "request-file-zone")}>
       {header}
       <input ref={inputRef} type="file" accept={accept} onChange={handleInputChange} className="hidden" multiple />
@@ -175,5 +189,24 @@ export const MultiFileDropZone = ({
       {dropZone}
       {attachmentsBelow ? attachments : <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
+    <AlertDialog open={!!pendingExistingRemoval} onOpenChange={(open) => !open && setPendingExistingRemoval(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{icon === "image" ? "Удалить фото?" : "Удалить документ?"}</AlertDialogTitle>
+          <AlertDialogDescription>
+            <span className="mt-2 block break-words font-medium text-foreground">{pendingExistingRemoval ? getFileName(pendingExistingRemoval) : ""}</span>
+            <span className="mt-1 block">Файл будет удалён из заявки при её сохранении.</span>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Отмена</AlertDialogCancel>
+          <AlertDialogAction onClick={() => {
+            if (pendingExistingRemoval) onRemoveExisting?.(pendingExistingRemoval);
+            setPendingExistingRemoval(null);
+          }}>{icon === "image" ? "Удалить фото" : "Удалить документ"}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };

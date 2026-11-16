@@ -57,6 +57,8 @@ import { RequestContextBlock } from "@/components/request/RequestContextBlock";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { SupplierTextBlock } from "@/components/request/SupplierTextBlock";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
+import { RequestDocumentDeleteButton } from "@/components/requests/RequestDocumentDeleteButton";
+import { RequestInvoiceActions } from "@/components/requests/RequestInvoiceActions";
 
 interface Activity {
   id: string;
@@ -409,32 +411,6 @@ export default function RequestDetail() {
       toast({
         title: "Ошибка",
         description: "Не удалось удалить фото",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteDocument = async (urlToDelete: string) => {
-    if (!request) return;
-    
-    try {
-      const updatedUrls = (request.document_urls || []).filter(url => url !== urlToDelete);
-      const updatedDocUrl = request.document_url === urlToDelete ? null : request.document_url;
-      
-      await updateRequestMutation.mutateAsync({ 
-        document_urls: updatedUrls,
-        document_url: updatedDocUrl
-      });
-      
-      toast({
-        title: "Успешно",
-        description: "Документ удалён",
-      });
-    } catch (error) {
-      console.error("Delete document error:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось удалить документ",
         variant: "destructive",
       });
     }
@@ -889,6 +865,7 @@ export default function RequestDetail() {
                     </p>
                   </div>
                 </div>
+                <RequestInvoiceActions request={request} readOnly={!canEdit} />
               </CardContent>
             </Card>
 
@@ -1062,16 +1039,7 @@ export default function RequestDetail() {
                                   Печать
                                 </Button>
 
-                                {canEdit && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => handleDeleteDocument(url)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
+                                <RequestDocumentDeleteButton request={request} url={url} readOnly={!canEdit} />
                               </div>
                             </div>
                           </div>

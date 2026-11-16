@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { downloadStoredFile, openStoredFile, useSignedUrl } from "@/lib/storageUrl";
+import { deleteRequestFile, getRequestFileRemovalPatch, requestFileName } from "@/lib/requestDocuments";
 
 export type DocKind = "photo" | "document";
 
@@ -104,7 +105,7 @@ function DocFileRow({
       {!readOnly && (
         <button
           type="button"
-          aria-label="Удалить"
+          aria-label={kind === "photo" ? "Удалить фото" : "Удалить документ"}
           onClick={onDelete}
           className="text-muted-foreground hover:text-destructive"
         >
@@ -127,9 +128,12 @@ interface PanelDocumentsProps {
   requestNumber: string;
   photoUrls: string[];
   documentUrls: string[];
+  documentUrl?: string | null;
+  photoUrl?: string | null;
   readOnly?: boolean;
   uploads: UploadTask[];
   onUpload: (files: File[]) => void;
+  onDeleted?: (patch: Record<string, string[] | string | null>) => void;
 }
 
 const fileNameFromUrl = (url: string) => decodeURIComponent(url.split("/").pop() || "Файл");
@@ -140,9 +144,12 @@ export const PanelDocuments = ({
   requestNumber,
   photoUrls,
   documentUrls,
+  documentUrl,
+  photoUrl,
   readOnly,
   uploads,
   onUpload,
+  onDeleted,
 }: PanelDocumentsProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -175,15 +182,27 @@ export const PanelDocuments = ({
     const { url, kind } = pendingDelete;
     setDeleting(true);
     try {
-      const column = kind === "photo" ? "photo_urls" : "document_urls";
-      const list = (kind === "photo" ? photoUrls : documentUrls).filter((u) => u !== url);
-      const { error } = await supabase.from("requests").update({ [column]: list }).eq("id", requestId);
-      if (error) throw error;
-      const bucket = kind === "photo" ? "request-photos" : "request-documents";
-      const path = url.split(`/${bucket}/`)[1];
-      if (path) await supabase.storage.from(bucket).remove([decodeURIComponent(path)]);
+      await deleteRequestFile({
+        id: requestId,
+        photo_url: photoUrl,
+        photo_urls: photoUrls,
+        document_url: documentUrl,
+        document_urls: documentUrls,
+      }, url, kind);
+      const patch = getRequestFileRemovalPatch({
+        id: requestId,
+        photo_url: photoUrl,
+        photo_urls: photoUrls,
+        document_url: documentUrl,
+        document_urls: documentUrls,
+      }, url, kind);
+      queryClient.setQueriesData({ queryKey: ["requests"] }, (old: unknown) =>
+        Array.isArray(old) ? old.map((item) => item?.id === requestId ? { ...item, ...patch } : item) : old
+      );
       queryClient.invalidateQueries({ queryKey: ["requests"] });
-      toast({ title: "Файл удалён" });
+      queryClient.invalidateQueries({ queryKey: ["request", requestId] });
+      toast({ title: kind === "photo" ? "Фото удалено" : "Документ удалён" });
+      onDeleted?.(patch);
     } catch (e) {
       console.error("doc delete:", e);
       toast({ title: "Не удалось удалить файл", variant: "destructive" });
@@ -306,12 +325,15 @@ export const PanelDocuments = ({
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить файл?</AlertDialogTitle>
-            <AlertDialogDescription>Файл будет удалён из заявки без возможности вернуть.</AlertDialogDescription>
+            <AlertDialogTitle>{pendingDelete?.kind === "photo" ? "Удалить фото?" : "Удалить документ?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="mt-2 block break-words font-medium text-foreground">{pendingDelete ? requestFileName(pendingDelete.url) : ""}</span>
+              <span className="mt-1 block">Файл будет удалён из выбранной заявки без возможности вернуть.</span>
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={remove} disabled={deleting}>Удалить</AlertDialogAction>
+            <AlertDialogAction onClick={remove} disabled={deleting}>{pendingDelete?.kind === "photo" ? "Удалить фото" : "Удалить документ"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

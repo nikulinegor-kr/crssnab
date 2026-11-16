@@ -6,13 +6,12 @@ import { sortRequestsByDateDesc } from "@/lib/requestRegistry";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
 import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
-import React, { useState, useEffect, useCallback, useRef, memo, useMemo, ReactNode } from "react";
+import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from "react";
 import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList, ListTree } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ChevronDown, MapPin, Tag, FolderOpen, Loader2, ClipboardList } from "lucide-react";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { useShipmentsSummary } from "@/hooks/useRequestShipments";
@@ -46,8 +45,7 @@ import {
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { HighlightText } from "@/components/HighlightText";
-import { TableColumnSettings } from "./TableColumnSettings";
-import { useTableColumnVisibility } from "@/hooks/useTableColumnVisibility";
+import type { ColumnVisibility } from "./TableColumnSettings";
 import { useTableColumnWidths, ColumnWidths, DEFAULT_COLUMN_WIDTHS } from "@/hooks/useTableColumnWidths";
 import { ResizableTableHeader } from "./ResizableTableHeader";
 import { InlineEditCell } from "./InlineEditCell";
@@ -63,7 +61,6 @@ import { InlinePaymentStatusCell } from "./InlinePaymentStatusCell";
 
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { useProjectOptions } from "@/hooks/useProjects";
-import { useAuthUserId } from "@/hooks/useOrgMembership";
 import { endOfToday, isBefore, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,7 +107,6 @@ const PAGE_SIZE_OPTIONS = [0, 25, 50, 100, 250];
 const pageSizeLabel = (size: number) => (size === 0 ? "Все" : String(size));
 const STORAGE_KEY = "requests-page-size-v2";
 const DENSITY_STORAGE_KEY = "requests-table-density";
-const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
 
 const REQUEST_PHASES = [
   { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
@@ -148,11 +144,13 @@ interface RequestsTableProps {
   searchQuery?: string;
   favoriteIds?: Set<string>;
   onToggleFavorite?: (requestId: string) => void;
-  headerActions?: ReactNode;
   activeRequestId?: string | null;
   onRequestOrderChange?: (requests: Request[]) => void;
   onClearSelection?: () => void;
-  onMaximize?: () => void;
+  groupByObject: boolean;
+  groupByProject: boolean;
+  groupByPhase: boolean;
+  columnVisibility: ColumnVisibility;
 
 }
 
@@ -170,11 +168,13 @@ export const RequestsTable = ({
   searchQuery = "",
   favoriteIds,
   onToggleFavorite,
-  headerActions,
   activeRequestId,
   onRequestOrderChange,
   onClearSelection,
-  onMaximize,
+  groupByObject,
+  groupByProject,
+  groupByPhase,
+  columnVisibility,
 }: RequestsTableProps) => {
   const STATUSES = useOrgStatuses();
   const navigate = useNavigate();
@@ -239,17 +239,8 @@ export const RequestsTable = ({
   }, [queryClient, selectedRequestIds, toast]);
 
 
-  const { data: userId } = useAuthUserId();
-  const { visibility: storedVisibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
-  useEffect(() => {
-    if (!userId) return;
-    const migrationKey = `requests-redesign-date-column-v1:${userId}`;
-    if (localStorage.getItem(migrationKey)) return;
-    if (!storedVisibility.request_date) updateVisibility({ ...storedVisibility, request_date: true });
-    localStorage.setItem(migrationKey, "1");
-  }, [userId, storedVisibility, updateVisibility]);
   const tableWrapRef = useRef<HTMLDivElement>(null);
-  const visibility = storedVisibility;
+  const visibility = columnVisibility;
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
   const totalColCount = useMemo(() => {
     const keys = ["request_date","description","object","priority","status","availability","contractor","amount","invoice_number","payment_prepay","payment_percentage","shipment_date","delivery_date","transport_company","waybill_number","applicant","executor","equipment","comments"] as const;
@@ -312,22 +303,11 @@ export const RequestsTable = ({
   }, [updateWidth]);
 
   // Group by object
-  const [groupByObject, setGroupByObject] = useState<boolean>(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const PHASE_STEP = 30;
   const [phaseLimits, setPhaseLimits] = useState<Record<string, number>>({});
   const showMorePhase = useCallback((key: string) => {
     setPhaseLimits((prev) => ({ ...prev, [key]: (prev[key] ?? PHASE_STEP) + PHASE_STEP * 3 }));
-  }, []);
-  const toggleGroupByObject = useCallback((v: boolean) => {
-    setGroupByObject(v);
-    localStorage.setItem("requests-group-by-object", v ? "1" : "0");
-    if (v) {
-      setGroupByProject(false);
-      setGroupByPhase(false);
-      localStorage.setItem("requests-group-by-project", "0");
-      localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "0");
-    }
   }, []);
   const toggleGroup = useCallback((key: string) => {
     setCollapsedGroups((prev) => {
@@ -338,35 +318,7 @@ export const RequestsTable = ({
   }, []);
 
   // Group by project (родительская заявка → дочерние)
-  const [groupByProject, setGroupByProject] = useState<boolean>(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
-  const toggleGroupByProject = useCallback((v: boolean) => {
-    setGroupByProject(v);
-    localStorage.setItem("requests-group-by-project", v ? "1" : "0");
-    if (v) {
-      setGroupByObject(false);
-      setGroupByPhase(false);
-      localStorage.setItem("requests-group-by-object", "0");
-      localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "0");
-    }
-  }, []);
-  const [groupByPhase, setGroupByPhase] = useState<boolean>(true);
-  useEffect(() => {
-    localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "1");
-    localStorage.setItem("requests-group-by-object", "0");
-    localStorage.setItem("requests-group-by-project", "0");
-  }, []);
-  const toggleGroupByPhase = useCallback((v: boolean) => {
-    setGroupByPhase(v);
-    localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, v ? "1" : "0");
-    if (v) {
-      setGroupByObject(false);
-      setGroupByProject(false);
-      localStorage.setItem("requests-group-by-object", "0");
-      localStorage.setItem("requests-group-by-project", "0");
-      onMaximize?.();
-    }
-  }, [onMaximize]);
   const toggleProject = useCallback((key: string) => {
     setExpandedProjects((prev) => {
       const next = new Set(prev);
@@ -663,40 +615,6 @@ export const RequestsTable = ({
         }}
       >
 
-        <div className="requests-table-toolbar flex flex-none items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
-          <Toggle
-            pressed={groupByProject}
-            onPressedChange={toggleGroupByProject}
-            size="sm"
-            aria-label="Группировать по проектам"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            Проекты
-          </Toggle>
-          <Toggle
-            pressed={groupByObject}
-            onPressedChange={toggleGroupByObject}
-            size="sm"
-            aria-label="Группировать по объектам"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <Layers className="h-3.5 w-3.5" />
-            Группировать по объектам
-          </Toggle>
-          <Toggle
-            pressed={groupByPhase}
-            onPressedChange={toggleGroupByPhase}
-            size="sm"
-            aria-label="Группировать по фазам"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <ListTree className="h-3.5 w-3.5" />
-            По фазам
-          </Toggle>
-          {headerActions}
-          <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
-        </div>
         <div className="flex min-h-0 flex-1 flex-col border-0 bg-card" ref={tableWrapRef}>
         <div className="requests-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain">
 

@@ -26,6 +26,19 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { openStoredFile } from "@/lib/storageUrl";
+import { requestFileName } from "@/lib/requestDocuments";
+import { getInvoiceDeletePatch, getInvoiceResetPatch, getRequestInvoiceRequisites, hasInvoiceRequisites, type RequestInvoiceSlot } from "@/lib/requestInvoices";
+import { RequestInvoiceRequisites } from "@/components/requests/RequestInvoiceActions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface FinanceSectionProps {
   form: UseFormReturn<any>;
@@ -35,6 +48,7 @@ interface FinanceSectionProps {
   invoiceFile?: File | null;
   invoiceUrl?: string | null;
   onInvoiceSelected?: (file: File) => void;
+  onRemoveInvoiceDocument?: () => void;
   defaultOpen?: boolean;
 }
 
@@ -46,6 +60,7 @@ export const FinanceSection = ({
   invoiceFile,
   invoiceUrl,
   onInvoiceSelected,
+  onRemoveInvoiceDocument,
   defaultOpen = false,
 }: FinanceSectionProps) => {
   const rawContractor = form.watch("contractor");
@@ -58,6 +73,8 @@ export const FinanceSection = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRecognizing, setIsRecognizing] = useState(false);
+  const [invoiceAction, setInvoiceAction] = useState<{ action: "reset" | "delete"; slot: RequestInvoiceSlot } | null>(null);
+  const [documentDeleteOpen, setDocumentDeleteOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachInputRef = useRef<HTMLInputElement>(null);
 
@@ -166,6 +183,18 @@ export const FinanceSection = ({
     }
   };
 
+  const applyInvoiceAction = () => {
+    if (!invoiceAction) return;
+    const patch = invoiceAction.action === "reset"
+      ? getInvoiceResetPatch(invoiceAction.slot)
+      : getInvoiceDeletePatch(invoiceAction.slot);
+    Object.entries(patch).forEach(([key, value]) => form.setValue(key, value, { shouldDirty: true }));
+    if (invoiceAction.action === "delete" && invoiceAction.slot > 1) {
+      form.setValue(`_showInv${invoiceAction.slot}` as any, false, { shouldDirty: true });
+    }
+    setInvoiceAction(null);
+  };
+
   return (
     <FormSectionCard 
       title="Счета и оплата"
@@ -206,6 +235,11 @@ export const FinanceSection = ({
                 <ExternalLink className="h-3.5 w-3.5" />
                 Открыть
               </Button>
+              {invoiceUrl && onRemoveInvoiceDocument && (
+                <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-destructive hover:text-destructive" onClick={() => setDocumentDeleteOpen(true)} disabled={disabled}>
+                  <X className="h-3.5 w-3.5" />Удалить документ
+                </Button>
+              )}
             </div>
           );
         })()}
@@ -365,16 +399,17 @@ export const FinanceSection = ({
           return (
             <div className="space-y-3">
               {renderInvoiceRow("invoice_number", "amount", multi ? "Счёт №1" : "Номер счёта")}
-              {showInv2 && renderInvoiceRow("invoice_number_2", "amount_2", "Счёт №2", () => {
-                form.setValue("invoice_number_2", "");
-                form.setValue("amount_2", null);
-                form.setValue("_showInv2" as any, false);
-              })}
-              {showInv3 && renderInvoiceRow("invoice_number_3", "amount_3", "Счёт №3", () => {
-                form.setValue("invoice_number_3", "");
-                form.setValue("amount_3", null);
-                form.setValue("_showInv3" as any, false);
-              })}
+              {showInv2 && renderInvoiceRow("invoice_number_2", "amount_2", "Счёт №2", () => setInvoiceAction({ action: "delete", slot: 2 }))}
+              {showInv3 && renderInvoiceRow("invoice_number_3", "amount_3", "Счёт №3", () => setInvoiceAction({ action: "delete", slot: 3 }))}
+
+              <div className="flex flex-wrap gap-2 border-t border-border pt-2">
+                <Button type="button" variant="outline" size="sm" className="h-8 text-xs" disabled={disabled || !hasInvoiceRequisites(form.getValues(), 1)} onClick={() => setInvoiceAction({ action: "reset", slot: 1 })}>
+                  Сбросить реквизиты
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive" disabled={disabled || !hasInvoiceRequisites(form.getValues(), 1)} onClick={() => setInvoiceAction({ action: "delete", slot: 1 })}>
+                  <X className="mr-1 h-3.5 w-3.5" />Удалить счёт
+                </Button>
+              </div>
 
               <div className="flex items-center justify-between gap-2">
                 {!showInv3 && (
@@ -537,6 +572,48 @@ export const FinanceSection = ({
           </p>
         )}
 
+        <AlertDialog open={!!invoiceAction} onOpenChange={(open) => !open && setInvoiceAction(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {invoiceAction?.action === "reset" ? "Сбросить реквизиты основного счёта?" : `Удалить счёт №${invoiceAction?.slot ?? 1}?`}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {invoiceAction?.action === "reset"
+                  ? "Будут очищены только сумма, номер и контрагент. Дата, документы и другие счета сохранятся. Изменение применится при сохранении заявки."
+                  : "Связанные документы и другие счета сохранятся. Изменение применится при сохранении заявки."}
+              </AlertDialogDescription>
+              {invoiceAction?.slot === 1 ? (
+                <RequestInvoiceRequisites request={form.getValues()} />
+              ) : invoiceAction ? (
+                <div className="mt-3 text-left text-sm text-foreground">
+                  Номер: {getRequestInvoiceRequisites(form.getValues(), invoiceAction.slot).invoiceNumber || "—"}<br />
+                  Сумма: {getRequestInvoiceRequisites(form.getValues(), invoiceAction.slot).amount ?? "—"}
+                </div>
+              ) : null}
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={applyInvoiceAction}>{invoiceAction?.action === "reset" ? "Сбросить реквизиты" : "Удалить счёт"}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={documentDeleteOpen} onOpenChange={setDocumentDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить документ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                <span className="mt-2 block break-words font-medium text-foreground">{invoiceUrl ? requestFileName(invoiceUrl) : "Документ"}</span>
+                <span className="mt-1 block">Файл будет удалён из заявки при её сохранении. Реквизиты счёта сохранятся.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { onRemoveInvoiceDocument?.(); setDocumentDeleteOpen(false); }}>Удалить документ</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </FormSectionCard>
   );

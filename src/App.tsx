@@ -125,7 +125,7 @@ const App = () => {
   
   
   return (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+  <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ErrorBoundary>

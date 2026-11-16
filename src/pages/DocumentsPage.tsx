@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, FileText, FileImage, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { openStoredFile } from "@/lib/storageUrl";
+import { RequestDocumentDeleteButton } from "@/components/requests/RequestDocumentDeleteButton";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface DocEntry {
   url: string;
@@ -25,6 +27,7 @@ interface DocEntry {
 const DocumentsPage = () => {
   const navigate = useNavigate();
   const { data: requests, isLoading } = useRequests();
+  const { canEdit } = useUserRole();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [contractorFilter, setContractorFilter] = useState<string>("all");
@@ -108,6 +111,8 @@ const DocumentsPage = () => {
       })
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [requests, search, typeFilter, contractorFilter]);
+
+  const requestById = useMemo(() => new Map((requests ?? []).map((request) => [request.id, request])), [requests]);
 
   const uniqueContractors = useMemo(() => {
     if (!requests) return [];
@@ -214,14 +219,24 @@ const DocumentsPage = () => {
                       {format(new Date(doc.date), "dd.MM.yyyy")}
                     </TableCell>
                     <TableCell>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); openStoredFile(doc.url); }}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Открыть файл"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openStoredFile(doc.url); }}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Открыть файл"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </button>
+                        {requestById.has(doc.requestId) && (
+                          <RequestDocumentDeleteButton
+                            request={requestById.get(doc.requestId)!}
+                            url={doc.url}
+                            kind={doc.type}
+                            readOnly={!canEdit}
+                          />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

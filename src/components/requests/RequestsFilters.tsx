@@ -1,5 +1,5 @@
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { Search, X, RotateCcw, Sparkles, Loader2, Eye, EyeOff, MapPin, Filter, Truck } from "lucide-react";
 import { formatPersonName } from "@/lib/personName";
 import { Input } from "@/components/ui/input";
@@ -70,6 +70,7 @@ interface RequestsFiltersProps {
   requests: Request[] | undefined;
   specialDateFilter?: SpecialDateFilter;
   setSpecialDateFilter?: (value: SpecialDateFilter) => void;
+  viewControls?: ReactNode;
 }
 
 export const RequestsFilters = ({
@@ -106,6 +107,7 @@ export const RequestsFilters = ({
   requests,
   specialDateFilter,
   setSpecialDateFilter,
+  viewControls,
 }: RequestsFiltersProps) => {
   const STATUSES = useOrgStatuses();
   const { toast } = useToast();
@@ -486,6 +488,8 @@ export const RequestsFilters = ({
             </div>
           </PopoverContent>
         </Popover>
+
+        {viewControls}
 
         {hasActiveFilters && (
           <Button

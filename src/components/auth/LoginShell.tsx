@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Sun, Moon, Shield, Users } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Shield, Users } from "lucide-react";
 import crssMark from "@/assets/crss-mark.svg";
 import "./loginShell.css";
 
@@ -32,11 +31,11 @@ export default function LoginShell({
   showRoleSwitch = true,
   children,
 }: LoginShellProps) {
-  const { theme, setTheme } = useTheme();
   return (
     <div className="crss-login">
       <aside className="crss-login__aside">
         <div className="crss-login__hero">
+          <div className="crss-login__hero-logo"><CrssLogo /></div>
           <p className="crss-login__hero-title">От заявки<br />до поставки.</p>
           <ol className="crss-stages">
             {STAGES.map((stage) => (
@@ -47,16 +46,7 @@ export default function LoginShell({
       </aside>
 
       <main className="crss-login__main">
-        <button
-          type="button"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="crss-login__theme"
-          aria-label="Переключить тему"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </button>
         <div className="crss-login__form">
-          <div className="crss-login__form-logo"><CrssLogo /></div>
           <div>
             <h1 className="crss-login__title">{title}</h1>
             {lead && <p className="crss-login__lead">{lead}</p>}

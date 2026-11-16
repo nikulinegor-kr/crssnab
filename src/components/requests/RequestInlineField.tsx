@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,7 +136,6 @@ export function RequestInlineField({
             title={readOnly ? undefined : "Нажать для редактирования"}
           >
             <span>{shown}</span>
-            {!readOnly && <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
           </button>
         )}
       </div>

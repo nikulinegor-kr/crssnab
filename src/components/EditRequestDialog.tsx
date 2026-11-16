@@ -1066,6 +1066,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             invoiceFile={documentFiles[documentFiles.length - 1] || null}
             invoiceUrl={existingDocumentUrls[0] || request?.document_url || null}
             onInvoiceSelected={(file) => setDocumentFiles((current) => [...current, file])}
+            onRemoveInvoiceDocument={() => {
+              const url = existingDocumentUrls[0] || request?.document_url;
+              if (url) setExistingDocumentUrls((current) => current.filter((item) => item !== url));
+            }}
           />
           <RequestItemsSection
             items={requestItems}
@@ -1100,6 +1104,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 maxSizeMB={5}
                 maxFiles={10}
                 attachmentsBelow
+                confirmExistingRemoval
               />
               <MultiFileDropZone
                 accept=".pdf,.doc,.docx,.xls,.xlsx"
@@ -1113,6 +1118,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 maxSizeMB={10}
                 maxFiles={10}
                 attachmentsBelow
+                confirmExistingRemoval
               />
             </div>
           </FormSectionCard>

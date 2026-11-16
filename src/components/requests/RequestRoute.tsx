@@ -12,7 +12,6 @@ interface RequestRouteProps {
 
 export function RequestRoute({ request, readOnly, onDeliverySave, onEditingChange }: RequestRouteProps) {
   const current = getRequestRouteStage(request);
-  const finished = Boolean(request.actual_arrival_date || request.status === "Доставлено");
   return (
     <div className="request-route-block">
       <ol className="request-route" aria-label="Этап заявки">
@@ -21,7 +20,7 @@ export function RequestRoute({ request, readOnly, onDeliverySave, onEditingChang
           return (
             <li
               key={label}
-              className={cn("request-route__step", index === current && "is-current", done && "is-done", finished && "is-finished", index > current && !done && "is-future")}
+              className={cn("request-route__step", `request-route__step--${index}`, index === current && "is-current", done && "is-done", index > current && !done && "is-future")}
               aria-current={index === current ? "step" : undefined}
             >
               <span className="request-route__dot" aria-hidden="true" />

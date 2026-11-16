@@ -1,6 +1,4 @@
 import {
-  Sun,
-  Moon,
   LogOut,
   ChevronRight,
   Star,
@@ -19,7 +17,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,19 +44,6 @@ import { useSidebarPrefs } from "@/hooks/useSidebarPrefs";
 
 const OPEN_KEY = "sidebar:groups-open:v1";
 const SCROLL_KEY = "sidebar:scroll-top:v1";
-
-function ThemeToggle({ showText }: { showText: boolean }) {
-  const { theme, setTheme } = useTheme();
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton onClick={toggleTheme} className="min-h-9 hover:bg-accent/50">
-        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        {showText && <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>}
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -398,7 +382,6 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <SidebarMenu>
-          <ThemeToggle showText={showText} />
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleLogout} className="min-h-9 hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="h-4 w-4" />

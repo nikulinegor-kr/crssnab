@@ -82,12 +82,14 @@ interface TableColumnSettingsProps {
   visibility: ColumnVisibility;
   onVisibilityChange: (visibility: ColumnVisibility) => void;
   onReset?: () => void;
+  alwaysShowLabel?: boolean;
 }
 
 export const TableColumnSettings = ({
   visibility,
   onVisibilityChange,
   onReset,
+  alwaysShowLabel = false,
 }: TableColumnSettingsProps) => {
   const handleToggle = (column: keyof ColumnVisibility) => {
     onVisibilityChange({
@@ -105,7 +107,7 @@ export const TableColumnSettings = ({
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-1.5">
           <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Колонки</span>
+          <span className={alwaysShowLabel ? "inline" : "hidden sm:inline"}>Колонки</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 bg-background border shadow-lg z-50" align="end">
