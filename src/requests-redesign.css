@@ -867,10 +867,15 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 /* Центр значения как группы: служебные иконки у края, вне потока. */
 .requests-registry tbody td:not([data-align="left"]) { text-align: center; }
 .requests-registry tbody td:not([data-align="left"]) > button.w-full {
-  position: relative; justify-content: center; text-align: center; padding-inline: 16px;
+  position: relative; justify-content: center; text-align: center;
 }
+.requests-registry tbody td:not([data-align="left"]) > button.w-full:has(> svg.lucide-chevrons-up-down) { padding-inline: 16px; }
 .requests-registry tbody td:not([data-align="left"]) > button.w-full > svg.lucide-chevrons-up-down {
   position: absolute; right: 0; top: 50%; transform: translateY(-50%);
 }
 .requests-registry tbody td:not([data-align="left"]) > [role="button"][aria-haspopup] { justify-content: center; }
 .requests-registry table tbody td:not([data-align="left"]):not([data-align="right"]) > :is(span, div, button) { justify-content: center; }
+.requests-registry table tbody td[data-numeric] :is(div, span) { overflow-wrap: anywhere; word-break: break-all; white-space: normal !important; }
+.requests-registry table tbody td .group\/ttn { position: relative; justify-content: center; }
+.requests-registry table tbody td .group\/ttn > .flex-1 { flex: 0 1 auto; }
+.requests-registry table tbody td .group\/ttn > button { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); }
