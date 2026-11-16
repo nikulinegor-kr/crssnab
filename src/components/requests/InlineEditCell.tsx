@@ -142,7 +142,7 @@ export const InlineEditCell = ({
         title={editOnClick ? "Клик — редактировать" : "Двойной клик — редактировать"}
       >
 
-        <div className="min-w-0 flex-1">{displayValue}</div>
+        <div className="min-w-0 flex-1 px-4">{displayValue}</div>
         <button
           type="button"
           data-row-action
@@ -151,7 +151,7 @@ export const InlineEditCell = ({
             e.stopPropagation();
             setIsEditing(true);
           }}
-          className="shrink-0 opacity-0 group-hover/inline:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+          className="inline-edit-hint absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/inline:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>

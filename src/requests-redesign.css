@@ -861,3 +861,16 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   width: 16px !important; height: 16px !important;
   min-width: 16px !important; min-height: 16px !important;
 }
+/* Подсказка редактирования у края — не участвует в центрировании значения. */
+.requests-registry td .inline-edit-hint { min-width: 0 !important; min-height: 0 !important; }
+.requests-registry td[data-align="left"] [data-inline-edit] > div:first-child { padding-left: 0; }
+/* Центр значения как группы: служебные иконки у края, вне потока. */
+.requests-registry tbody td:not([data-align="left"]) { text-align: center; }
+.requests-registry tbody td:not([data-align="left"]) > button.w-full {
+  position: relative; justify-content: center; text-align: center; padding-inline: 16px;
+}
+.requests-registry tbody td:not([data-align="left"]) > button.w-full > svg.lucide-chevrons-up-down {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+}
+.requests-registry tbody td:not([data-align="left"]) > [role="button"][aria-haspopup] { justify-content: center; }
+.requests-registry table tbody td:not([data-align="left"]):not([data-align="right"]) > :is(span, div, button) { justify-content: center; }

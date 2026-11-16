@@ -112,17 +112,17 @@ export const QuickBadgeSelect = ({
           role="button"
           tabIndex={0}
           aria-label={`${label}: ${value}`}
-          className={cn("inline-flex items-center gap-1", !trigger && "group/qs cursor-pointer")}
+          className={cn("relative inline-flex items-center gap-1", !trigger && "group/qs cursor-pointer")}
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
         >
           {trigger ?? (
             <>
               {badge}
-              <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-hover/qs:opacity-100" />
+              <ChevronDown aria-hidden className="pointer-events-none absolute left-full top-1/2 ml-0.5 h-3 w-3 -translate-y-1/2 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-hover/qs:opacity-100" />
             </>
           )}
-          {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+          {isSaving && <Loader2 className="absolute left-full top-1/2 ml-0.5 h-3 w-3 -translate-y-1/2 animate-spin text-muted-foreground" />}
         </span>
       </PopoverTrigger>
       <PopoverContent
