@@ -867,7 +867,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
-            <SheetHeader className="text-left border-b pb-3 pt-3 px-4 flex-shrink-0 flex-row items-center justify-between space-y-0">
+            <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
               <SheetTitle>Новая заявка</SheetTitle>
             </SheetHeader>
             <SheetDescription className="sr-only">Заполните форму для создания заявки</SheetDescription>

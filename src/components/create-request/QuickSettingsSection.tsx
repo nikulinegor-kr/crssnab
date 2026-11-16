@@ -318,18 +318,6 @@ export const QuickSettingsSection = ({
           />
         </div>
 
-        {/* Telegram username - at the very end */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <Input
-            value={telegramUsername}
-            onChange={(e) => setTelegramUsername(e.target.value)}
-            onBlur={(e) => handleSaveTelegram(e.target.value)}
-            placeholder={selectedApplicant ? "Telegram заявителя (ник без @)" : "Сначала выберите заявителя"}
-            className="h-8 text-xs min-w-0"
-            disabled={!selectedApplicant}
-          />
-        </div>
       </div>
     </FormSectionCard>
   );

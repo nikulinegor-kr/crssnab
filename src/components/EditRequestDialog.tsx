@@ -1236,7 +1236,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
-            <SheetHeader className="text-left border-b pb-3 pt-3 px-4 flex-shrink-0 flex-row items-center justify-between space-y-0">
+            <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
               {headerContent}
             </SheetHeader>
             <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>

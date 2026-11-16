@@ -462,3 +462,33 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Single Radix close in request forms */
+.request-form-redesign > button.absolute.right-4.top-4 {
+  width: 44px; height: 44px; right: 8px; top: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .request-form-redesign .request-date-object {
+    display: grid; grid-template-columns: minmax(0, 1fr) !important; row-gap: 12px;
+  }
+  .request-form-redesign .request-date-object > *,
+  .request-form-redesign .request-date-object button,
+  .request-form-redesign .request-date-input {
+    min-width: 0; width: 100%; max-width: 100%;
+  }
+  .request-form-redesign .request-date-object .request-date-input,
+  .request-form-redesign .request-date-object button[role="combobox"] {
+    height: 44px; min-height: 44px; box-sizing: border-box; padding: 0 12px;
+  }
+  .request-form-redesign .request-date-input {
+    -webkit-appearance: none; appearance: none; display: block;
+    line-height: 44px; text-align: left; font-size: 16px;
+  }
+  .request-form-redesign .request-date-input::-webkit-date-and-time-value { text-align: left; margin: 0; }
+  .request-form-redesign .request-date-input::-webkit-datetime-edit { padding: 0; line-height: 1; }
+  .request-form-redesign .request-form-actions {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}

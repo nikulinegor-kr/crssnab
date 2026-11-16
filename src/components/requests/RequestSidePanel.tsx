@@ -1022,7 +1022,6 @@ export const RequestSidePanel = ({
           </h2>
         )}
         <div className="flex shrink-0 items-center gap-0.5">
-          <Button type="button" variant="ghost" className="min-h-11 gap-1 px-2" onClick={() => setAssistantOpen(true)} aria-label="Claude"><Sparkles className="h-4 w-4"/><span>Claude</span></Button>
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>

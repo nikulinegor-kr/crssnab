@@ -481,6 +481,7 @@ const Requests = () => {
                 )}
                 <Button
                   onClick={() => setIsCreateDialogOpen(true)}
+                  aria-label="Новая заявка"
                   size="sm"
                   className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sm:sticky sm:top-16 sm:z-10"
                 >

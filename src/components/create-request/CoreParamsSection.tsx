@@ -69,7 +69,7 @@ export const CoreParamsSection = ({
       title="Основные параметры"
       icon={<CalendarDays className="h-4 w-4 text-muted-foreground" />}
     >
-      <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+      <div className="request-mobile-stack request-date-object grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
         <FormField
           control={form.control}
           name="request_date"
@@ -79,7 +79,7 @@ export const CoreParamsSection = ({
               <FormControl>
                 <Input
                   type="date"
-                  className="h-9 min-w-0 text-sm"
+                  className="request-date-input h-9 min-w-0 w-full max-w-full text-sm"
                   title="Дата создания заявки"
                   disabled={disabled}
                   {...field}

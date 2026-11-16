@@ -105,23 +105,6 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
             </FormLabel>
             <div className="flex items-center gap-2">
               <DraftIndicator />
-              {!disabled && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleImproveDescription}
-                disabled={isImprovingDescription}
-                className="h-7 px-2 text-xs text-primary hover:text-primary/80"
-              >
-                {isImprovingDescription ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3 w-3 mr-1" />
-                )}
-                Улучшить
-              </Button>
-              )}
             </div>
           </div>
           <FormField
