@@ -428,20 +428,8 @@ export const RequestsTable = ({
     setCurrentPage(1);
   }, []);
 
-  const handleDesktopRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    // Clicks from portaled menus/dialogs bubble through React tree — ignore them
-    if (!(e.currentTarget as HTMLElement).contains(target)) return;
-    if (target.closest("[data-row-action]")) return;
-    e.preventDefault();
-    e.stopPropagation();
-    onEditClick?.(request);
-  }, [onEditClick]);
-
-  const handleRowDoubleClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
-    // Double click inside an inline-editable cell starts editing, not quick view
-    if ((e.target as HTMLElement).closest('[data-inline-edit]')) return;
+  const handleRowDoubleClick = useCallback((_request: Request, e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-row-action], [data-inline-edit]')) return;
     e.preventDefault();
   }, []);
 
@@ -1026,7 +1014,7 @@ export const RequestsTable = ({
                   <TableRow
 
                   className={cn(
-                    "cursor-pointer group border-b border-border",
+                    "group border-b border-border",
                     selectedRequestIds.has(request.id) || activeRequestId === request.id
                       ? "bg-[hsl(var(--row-sel))] hover:bg-[hsl(var(--row-sel))]"
                       : isNewRequest
@@ -1038,7 +1026,6 @@ export const RequestsTable = ({
                             : "hover:bg-[hsl(var(--row-hover))]"
                   )}
                   data-state={selectedRequestIds.has(request.id) ? "selected" : undefined}
-                  onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
                   style={{ minHeight: 'var(--row-h)' }}
                 >
@@ -1074,7 +1061,14 @@ export const RequestsTable = ({
                   </TableCell>
 
                   {visibility.request_date && (
-                    <TableCell data-col="request_date" className="p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
+                    <TableCell
+                      data-col="request_date"
+                      data-row-action
+                      className="p-1 border-b text-[11px] text-muted-foreground font-mono"
+                      data-numeric
+                      onClick={(event) => event.stopPropagation()}
+                      onDoubleClick={(event) => event.stopPropagation()}
+                    >
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}
@@ -1295,7 +1289,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.shipment_date && (
-                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell data-col="shipment_date" data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         editOnClick
                         requestId={request.id}
@@ -1308,7 +1302,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.delivery_date && (
-                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
+                    <TableCell data-col="delivery_date" data-row-action onClick={(e) => e.stopPropagation()} className="px-2 py-1.5 border-b text-foreground text-xs font-mono overflow-hidden" data-numeric>
                       <InlineEditCell
                         editOnClick
                         requestId={request.id}
