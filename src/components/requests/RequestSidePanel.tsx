@@ -485,7 +485,7 @@ export const RequestSidePanel = ({
 
   const asOverlay = !inline || isFullscreen;
 
-  const cardClass = cn("request-side-card mt-3 w-full rounded-md", !isFullscreen && "max-w-[480px]", "border border-border bg-card px-3 py-2.5");
+  const cardClass = "request-side-card mt-3 w-full min-w-0 rounded-[16px] border border-border bg-card px-3 py-2.5 break-words";
   const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
     <div className={cardClass}>
@@ -679,7 +679,7 @@ export const RequestSidePanel = ({
     </div>
   );
   const totalsBlock = (
-    <div className={cn("mx-0 w-full", !isFullscreen && "max-w-[480px]")}>
+    <div className="w-full min-w-0">
             <div className="mt-2 rounded bg-muted/60 px-3 py-2.5">
               <PanelField
                 label="Товар"
@@ -1063,12 +1063,12 @@ export const RequestSidePanel = ({
             </div>
           </div>
         ) : (
-          <div className={cn(containerClass, isFullscreen && "px-0")}>
+          <div className={cn("w-full min-w-0", containerClass, isFullscreen && "px-0")}>
             {tab === "overview" && (
               <>
                 {fieldsBlock}
                 {isFullscreen ? (
-                  <div className="mt-4">
+                  <div className={cardClass}>
                     <div className={sectionTitleClass}>Позиции</div>
                     {itemsBlock}
                   </div>
@@ -1082,13 +1082,13 @@ export const RequestSidePanel = ({
                     <span className="text-primary">Открыть на полный экран</span>
                   </button>
                 )}
-                <div className="mt-4">{linkedTasksBlock}</div>
+                <div className={cardClass}>{linkedTasksBlock}</div>
                 {movementBlock}
               </>
             )}
-            {tab === "tasks" && linkedTasksBlock}
-            {tab === "docs" && docsBlock}
-            {tab === "history" && historyBlock}
+            {tab === "tasks" && <div className={cardClass}>{linkedTasksBlock}</div>}
+            {tab === "docs" && <div className={cardClass}>{docsBlock}</div>}
+            {tab === "history" && <div className={cardClass}>{historyBlock}</div>}
           </div>
         )}
 
