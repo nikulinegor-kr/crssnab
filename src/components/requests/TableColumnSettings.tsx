@@ -34,7 +34,7 @@ export interface ColumnVisibility {
 
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   select: true,
-  request_date: false,
+  request_date: true,
   description: true,
   object: true,
   priority: false,

@@ -869,9 +869,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           >
             <SheetHeader className="text-left border-b pb-3 pt-3 px-4 flex-shrink-0 flex-row items-center justify-between space-y-0">
               <SheetTitle>Новая заявка</SheetTitle>
-              <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0">
-                ✕
-              </Button>
             </SheetHeader>
             <SheetDescription className="sr-only">Заполните форму для создания заявки</SheetDescription>
             <div

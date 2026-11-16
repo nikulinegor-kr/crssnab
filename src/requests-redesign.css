@@ -35,6 +35,15 @@
   color: var(--requests-text);
 }
 
+.requests-registry .font-numeric,
+.requests-registry [data-numeric],
+.request-form-redesign .font-numeric,
+.request-form-redesign input[type="date"],
+.request-form-redesign input[type="number"] {
+  font-family: "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
 .requests-registry .bg-background,
 .request-form-redesign .bg-background {
   background-color: var(--requests-bg);

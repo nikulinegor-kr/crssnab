@@ -240,6 +240,13 @@ export const RequestsTable = ({
 
   const { data: userId } = useAuthUserId();
   const { visibility: storedVisibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
+  useEffect(() => {
+    if (!userId) return;
+    const migrationKey = `requests-redesign-date-column-v1:${userId}`;
+    if (localStorage.getItem(migrationKey)) return;
+    if (!storedVisibility.request_date) updateVisibility({ ...storedVisibility, request_date: true });
+    localStorage.setItem(migrationKey, "1");
+  }, [userId, storedVisibility, updateVisibility]);
   const tableWrapRef = useRef<HTMLDivElement>(null);
   const visibility = storedVisibility;
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
@@ -1064,7 +1071,7 @@ export const RequestsTable = ({
                   </TableCell>
 
                   {visibility.request_date && (
-                    <TableCell className="p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
+                    <TableCell data-col="request_date" className="p-1 border-b text-[11px] text-muted-foreground font-mono" data-numeric>
                       {format(new Date(request.request_date), "dd.MM.yy")}
                     </TableCell>
                   )}

@@ -96,7 +96,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
     };
 
     return (
-      <div className="rounded-lg border border-border/40 bg-card/50 overflow-hidden">
+      <div className="request-form-section rounded-lg border border-border/40 bg-card/50 overflow-hidden">
         {/* Description - Primary, Autofocus */}
         <div className="p-3.5 sm:p-5 pb-2 sm:pb-3">
           <div className="flex items-center justify-between mb-2">
