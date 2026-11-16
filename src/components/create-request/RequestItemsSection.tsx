@@ -111,10 +111,13 @@ export const RequestItemsSection = ({
       icon={<Package className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-3">
+        <p className="rounded-xl bg-primary/5 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          Позиции можно заполнить из счёта: выберите файл ниже, и распознавание добавит артикулы, названия и количество.
+        </p>
         {items.length > 0 && (
           <div className="space-y-2">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_1.5fr_80px_32px] gap-2 text-xs font-medium text-muted-foreground px-1">
+            <div className="hidden grid-cols-[1fr_1.5fr_80px_32px] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid">
               <span>Артикул</span>
               <span>Наименование</span>
               <span>Кол-во</span>
@@ -123,7 +126,7 @@ export const RequestItemsSection = ({
 
             {/* Rows */}
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-[1fr_1.5fr_80px_32px] gap-2 items-center">
+              <div key={index} className="request-mobile-stack grid grid-cols-1 items-center gap-2 rounded-xl border border-border/60 p-2 sm:grid-cols-[1fr_1.5fr_80px_32px] sm:rounded-none sm:border-0 sm:p-0">
                 <Input
                   placeholder="Артикул"
                   value={item.article}
@@ -197,13 +200,13 @@ export const RequestItemsSection = ({
             ) : (
               <ScanText className="h-3.5 w-3.5 mr-1" />
             )}
-            Распознать счёт
+            Распознать позиции из счёта
           </Button>
         </div>
 
         {items.length === 0 && (
           <p className="text-xs text-muted-foreground">
-            Добавьте позиции вручную или загрузите счёт для автоматического распознавания
+            Пока позиций нет. Добавьте вручную или заполните их из счёта.
           </p>
         )}
       </div>

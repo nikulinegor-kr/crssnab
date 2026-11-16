@@ -66,11 +66,13 @@ export const ResizableTableHeader = ({
     [column, width, onResize]
   );
 
-  const Icon = isActive
+  const Icon = sortDirection
     ? sortDirection === "asc"
       ? ArrowUp
       : ArrowDown
-    : ArrowUpDown;
+    : isActive
+      ? ArrowDown
+      : ArrowUpDown;
 
   return (
     <TableHead
@@ -79,10 +81,11 @@ export const ResizableTableHeader = ({
       data-col={column}
       className={cn(
         "relative p-2 font-medium border-b select-none text-muted-foreground transition-all duration-150 ease-out",
-        sortable && "cursor-pointer hover:bg-muted/60",
+        sortable && onSort && "cursor-pointer hover:bg-muted/60",
         className
       )}
       onClick={sortable ? onSort : undefined}
+      aria-label={column === "request_date" && sortDirection === "desc" ? "Дата: сначала новые" : undefined}
     >
       {children ? (
         <div className="flex items-center justify-start">{children}</div>
@@ -99,7 +102,7 @@ export const ResizableTableHeader = ({
           <Icon
             className={cn(
               "h-3 w-3 flex-none",
-              !sortable ? "invisible" : isActive ? "text-primary" : "text-muted-foreground/50"
+              !sortable && !sortDirection ? "invisible" : sortDirection || isActive ? "text-primary" : "text-muted-foreground/50"
             )}
           />
         </div>

@@ -225,7 +225,7 @@ export const RequestsFilters = ({
   ];
 
   return (
-    <div className="flex flex-col gap-1.5 border border-border bg-card p-2">
+    <div className="requests-filter-surface flex flex-col gap-1.5 border border-border bg-card p-2">
       {/* === Search + Filter button row === */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">

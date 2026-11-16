@@ -178,7 +178,7 @@ export const useRequestsFilters = (
   const [applicantFilter, setApplicantFilter] = useState(savedFilters?.applicantFilter || "all");
   const [executorFilter, setExecutorFilter] = useState(savedFilters?.executorFilter || "all");
   const [hideDelivered, setHideDelivered] = useState(savedFilters?.hideDelivered ?? true);
-  const [phaseMode, setPhaseMode] = useState<boolean>(() => typeof localStorage !== "undefined" && localStorage.getItem("requests-group-by-phase") === "1");
+  const [phaseMode, setPhaseMode] = useState<boolean>(true);
   useEffect(() => {
     const h = (e: Event) => setPhaseMode(Boolean((e as CustomEvent).detail));
     window.addEventListener("requests-group-by-phase-change", h);

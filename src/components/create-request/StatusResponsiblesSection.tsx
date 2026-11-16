@@ -1,6 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
 import {
   FormControl,
   FormField,
@@ -15,10 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { ParticipantSelect } from "@/components/ParticipantSelect";
 import { FormSectionCard } from "./FormSectionCard";
-import { Users, AtSign } from "lucide-react";
+import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,33 +42,6 @@ export const StatusResponsiblesSection = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const selectedApplicantName = form.watch("applicant");
-
-  const selectedApplicant = useMemo(() => {
-    if (!selectedApplicantName) return null;
-    return applicants.find((a) => a.name === selectedApplicantName) || null;
-  }, [selectedApplicantName, applicants]);
-
-  const [telegramUsername, setTelegramUsername] = useState("");
-
-  useEffect(() => {
-    setTelegramUsername(selectedApplicant?.telegram_username || "");
-  }, [selectedApplicant]);
-
-  const handleSaveTelegram = async (username: string) => {
-    if (!selectedApplicant?.id) return;
-    const cleanUsername = username.replace(/^@/, "").trim();
-    const { error } = await supabase
-      .from("request_participants")
-      .update({ telegram_username: cleanUsername || null })
-      .eq("id", selectedApplicant.id);
-    if (error) {
-      toast({ title: "Ошибка", description: "Не удалось сохранить Telegram", variant: "destructive" });
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ["request-participants", currentOrgId] });
-  };
-
   return (
     <FormSectionCard
       title="Статус и ответственные"
@@ -78,7 +49,7 @@ export const StatusResponsiblesSection = ({
     >
       <div className="space-y-3 sm:space-y-4">
         {/* Status & Priority */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
           <FormField
             control={form.control}
             name="status"
@@ -223,18 +194,6 @@ export const StatusResponsiblesSection = ({
           />
         </div>
 
-        {/* Telegram username */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <Input
-            value={telegramUsername}
-            onChange={(e) => setTelegramUsername(e.target.value)}
-            onBlur={(e) => handleSaveTelegram(e.target.value)}
-            placeholder={selectedApplicant ? "Telegram заявителя (ник без @)" : "Сначала выберите заявителя"}
-            className="h-8 text-xs min-w-0"
-            disabled={!selectedApplicant || disabled}
-          />
-        </div>
       </div>
     </FormSectionCard>
   );

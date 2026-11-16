@@ -38,8 +38,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Loader2, 
-  FileText, 
-  Trash2, 
+  Trash2,
+  Paperclip, 
   Save,
   Check,
   AlertTriangle,
@@ -63,7 +63,8 @@ import { FinanceSection } from "./create-request/FinanceSection";
 import { AdditionalSection } from "./create-request/AdditionalSection";
 
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
-import { openStoredFile } from "@/lib/storageUrl";
+import { MultiFileDropZone } from "@/components/MultiFileDropZone";
+import { FormSectionCard } from "./create-request/FormSectionCard";
 
 const requestSchema = z.object({
   request_date: z.string()
@@ -1009,18 +1010,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           )}
         </p>
       </div>
-      {request?.document_url && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => openStoredFile(request.document_url!)}
-          className="gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          Открыть счёт
-        </Button>
-      )}
+
     </div>
   );
 
@@ -1035,104 +1025,134 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         {/* Draft Recovery Banner */}
         <DraftRecoveryBanner />
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:items-start">
-          {/* Левая колонка — паспорт заявки */}
-          <div className="min-w-0 space-y-5 lg:sticky lg:top-0 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pr-1">
-            <CoreParamsSection
-          showProjectField
-          form={form}
-          objectsData={objectsData}
-          currentOrgId={request?.organization_id || null}
-          disabled={isViewer}
-        />
-            <StatusResponsiblesSection
-          form={form}
-          statuses={statuses}
-          priorities={priorities}
-          applicants={applicants}
-          executors={executors}
-          currentOrgId={request?.organization_id || null}
-          disabled={isViewer}
-        />
-            <FinanceSection 
-          form={form} 
-          suppliers={suppliers}
-          recentContractors={recentContractors}
-          disabled={isViewer}
-        />
-            <LogisticsSection
-          form={form}
-          recentTransportCompanies={recentTransportCompanies}
-          disabled={isViewer}
-          requestId={request?.id}
-          organizationId={request?.organization_id}
-        />
-          </div>
-          {/* Правая колонка — рабочая область */}
-          <div className="min-w-0 space-y-5">
-            <ContextSection 
-          form={form} 
-          draftSaveState={draftSaveState}
-          autoFocus={!isViewer}
-          disabled={isViewer}
-        />
-            <RequestItemsSection
-          items={requestItems}
-          onItemsChange={setRequestItems}
-          disabled={isViewer}
-        />
-            <AdditionalSection
-          form={form}
-          formValues={formValues}
-          objectsData={objectsData}
-          photoFiles={photoFiles}
-          setPhotoFiles={setPhotoFiles}
-          documentFiles={documentFiles}
-          setDocumentFiles={setDocumentFiles}
-          disabled={isViewer}
-          existingPhotoUrls={existingPhotoUrls}
-          onRemoveExistingPhoto={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
-          existingDocumentUrls={existingDocumentUrls}
-          onRemoveExistingDocument={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
-          organizationId={request?.organization_id || null}
-        />
-          </div>
+        <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5">
+          <ContextSection
+            form={form}
+            draftSaveState={draftSaveState}
+            autoFocus={!isViewer}
+            disabled={isViewer}
+          />
+          <CoreParamsSection
+            showProjectField
+            form={form}
+            objectsData={objectsData}
+            currentOrgId={request?.organization_id || null}
+            disabled={isViewer}
+          />
+          <StatusResponsiblesSection
+            form={form}
+            statuses={statuses}
+            priorities={priorities}
+            applicants={applicants}
+            executors={executors}
+            currentOrgId={request?.organization_id || null}
+            disabled={isViewer}
+          />
+          <FinanceSection
+            form={form}
+            suppliers={suppliers}
+            recentContractors={recentContractors}
+            disabled={isViewer}
+            invoiceFile={documentFiles[documentFiles.length - 1] || null}
+            invoiceUrl={existingDocumentUrls[0] || request?.document_url || null}
+            onInvoiceSelected={(file) => setDocumentFiles((current) => [...current, file])}
+          />
+          <RequestItemsSection
+            items={requestItems}
+            onItemsChange={setRequestItems}
+            disabled={isViewer}
+          />
+          <LogisticsSection
+            form={form}
+            recentTransportCompanies={recentTransportCompanies}
+            disabled={isViewer}
+            requestId={request?.id}
+            organizationId={request?.organization_id}
+          />
+          <FormSectionCard
+            title="Файлы"
+            icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <MultiFileDropZone
+                accept="image/*"
+                files={photoFiles}
+                onFilesChange={setPhotoFiles}
+                existingUrls={existingPhotoUrls}
+                onRemoveExisting={(url) => setExistingPhotoUrls((current) => current.filter((item) => item !== url))}
+                label="Фото"
+                hint="JPG, PNG, WEBP до 5 МБ, макс. 10"
+                icon="image"
+                maxSizeMB={5}
+                maxFiles={10}
+              />
+              <MultiFileDropZone
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                files={documentFiles}
+                onFilesChange={setDocumentFiles}
+                existingUrls={existingDocumentUrls}
+                onRemoveExisting={(url) => setExistingDocumentUrls((current) => current.filter((item) => item !== url))}
+                label="Документы (Счёт/КП)"
+                hint="PDF, DOC, XLS до 10 МБ, макс. 10"
+                icon="document"
+                maxSizeMB={10}
+                maxFiles={10}
+              />
+            </div>
+          </FormSectionCard>
+          <AdditionalSection
+            form={form}
+            formValues={formValues}
+            objectsData={objectsData}
+            photoFiles={photoFiles}
+            setPhotoFiles={setPhotoFiles}
+            documentFiles={documentFiles}
+            setDocumentFiles={setDocumentFiles}
+            disabled={isViewer}
+            existingPhotoUrls={existingPhotoUrls}
+            onRemoveExistingPhoto={(url) => setExistingPhotoUrls(prev => prev.filter(u => u !== url))}
+            existingDocumentUrls={existingDocumentUrls}
+            onRemoveExistingDocument={(url) => setExistingDocumentUrls(prev => prev.filter(u => u !== url))}
+            organizationId={request?.organization_id || null}
+          />
         </div>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 z-10 -mx-3 flex flex-col-reverse justify-between gap-3 border-t bg-card px-3 py-3 md:-mx-5 md:px-5 sm:flex-row">
-          {canEdit && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={isSubmitting || isDeleting}
-              className="gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Удалить
-            </Button>
-          )}
-          <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting || isDeleting}
-            >
-              {isViewer ? "Закрыть" : "Отмена"}
-            </Button>
-            {canEdit && (
-              <Button type="submit" disabled={isSubmitting || isDeleting} className="gap-2">
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                <Save className="h-4 w-4" />
-                Сохранить
-              </Button>
-            )}
-          </div>
-        </div>
       </form>
     </Form>
+  );
+
+  const footerActions = (
+    <div className="request-form-actions flex flex-col-reverse justify-between gap-3 border-t bg-card px-3 py-3 sm:flex-row sm:px-5">
+      {canEdit && (
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={() => setShowDeleteDialog(true)}
+          disabled={isSubmitting || isDeleting}
+          className="gap-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          Удалить
+        </Button>
+      )}
+      <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleClose}
+          disabled={isSubmitting || isDeleting}
+        >
+          {isViewer ? "Закрыть" : "Отмена"}
+        </Button>
+        {canEdit && (
+          <Button type="submit" form={formId} disabled={isSubmitting || isDeleting} className="gap-2">
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Save className="h-4 w-4" />
+            Сохранить
+          </Button>
+        )}
+      </div>
+    </div>
   );
 
   // Delete confirmation dialog
@@ -1212,7 +1232,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
           <SheetContent
             side="bottom"
-            className="p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            className="request-form-redesign p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
@@ -1230,6 +1250,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             >
               {formContent}
             </div>
+            {footerActions}
           </SheetContent>
         </Sheet>
         {deleteDialogContent}
@@ -1244,7 +1265,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
           side="right"
-          className="w-[min(1280px,94vw)] max-w-none sm:max-w-none p-0 gap-0 flex flex-col bg-card"
+          className="request-form-redesign w-[min(1280px,94vw)] max-w-none sm:max-w-none p-0 gap-0 flex flex-col bg-card"
           onInteractOutside={(e) => e.preventDefault()}
         >
           <SheetHeader className="text-left border-b px-5 py-3 pr-12 flex-shrink-0">
@@ -1252,9 +1273,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           </SheetHeader>
           <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
           <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
             {formContent}
           </div>
+          {footerActions}
         </SheetContent>
       </Sheet>
       {deleteDialogContent}

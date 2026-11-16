@@ -34,8 +34,7 @@ import { RequestsTable } from "@/components/requests/RequestsTable";
 import { RequestsMiniDashboard } from "@/components/requests/RequestsMiniDashboard";
 import { ProcurementList } from "@/components/procurement/ProcurementList";
 
-import { Plus, ShoppingCart, Star, Zap, Printer } from "lucide-react";
-import { useQuickRequest } from "@/components/quick-request/QuickRequestProvider";
+import { Plus, ShoppingCart, Star, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Requests = () => {
@@ -43,7 +42,6 @@ const Requests = () => {
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const { canCreate } = useUserRole();
-  const { open: openQuickRequest } = useQuickRequest();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
@@ -482,17 +480,6 @@ const Requests = () => {
                   </div>
                 )}
                 <Button
-                  onClick={openQuickRequest}
-                  size="sm"
-                  variant="secondary"
-                  title="Быстрая заявка (Cmd/Ctrl+Shift+Q)"
-                  className="h-8 gap-1.5 px-3 text-xs font-semibold"
-                >
-                  <Zap className="h-4 w-4" />
-                  <span className="hidden sm:inline">Быстрая заявка</span>
-                  <span className="sm:hidden">Быстро</span>
-                </Button>
-                <Button
                   onClick={() => setIsCreateDialogOpen(true)}
                   size="sm"
                   className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sm:sticky sm:top-16 sm:z-10"
@@ -636,7 +623,7 @@ const Requests = () => {
             <Button variant="link" className="min-h-11 px-1 text-xs" onClick={() => { filters.clearUrlFilters(); setSemanticSearchIds(null); }}>Сбросить</Button>
           </div>}
           {/* LEVEL 7: Table */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
 
             <RequestsTable
               requests={visibleRequests}
@@ -711,7 +698,7 @@ const Requests = () => {
             isArchiveTab={true}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
 
             <RequestsTable
               requests={visibleRequests}
@@ -744,7 +731,7 @@ const Requests = () => {
               </p>
             </Card>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+            <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <RequestsTable
                 requests={favoriteRequests}
                 isLoading={isLoading}

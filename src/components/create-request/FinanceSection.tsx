@@ -19,26 +19,39 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
-import { Banknote, ScanText, Loader2, Plus, X } from "lucide-react";
+import { Banknote, ScanText, Loader2, Plus, X, FileText, Upload, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { openStoredFile } from "@/lib/storageUrl";
 
 interface FinanceSectionProps {
   form: UseFormReturn<any>;
   suppliers?: Array<{ id: string; name: string }>;
   recentContractors?: string[];
   disabled?: boolean;
+  invoiceFile?: File | null;
+  invoiceUrl?: string | null;
+  onInvoiceSelected?: (file: File) => void;
 }
 
-export const FinanceSection = ({ form, suppliers, recentContractors, disabled = false }: FinanceSectionProps) => {
+export const FinanceSection = ({
+  form,
+  suppliers,
+  recentContractors,
+  disabled = false,
+  invoiceFile,
+  invoiceUrl,
+  onInvoiceSelected,
+}: FinanceSectionProps) => {
   const { currentOrgId } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRecognizing, setIsRecognizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddContractor = async (name: string, extra?: { phone: string; nomenclature: string }) => {
     if (!currentOrgId) {
@@ -147,14 +160,14 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
 
   return (
     <FormSectionCard 
-      title="Финансы" 
+      title="Счёт и оплата" 
       icon={<Banknote className="h-4 w-4 text-primary" />}
       className="border-primary/20"
       titleClassName="text-base font-semibold"
     >
       <div className="space-y-3 sm:space-y-4">
-        {/* Recognize invoice button */}
-        <div className="flex justify-end">
+        {/* Оба действия используют существующие обработчики файла и OCR. */}
+        <div className="flex flex-wrap gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -165,13 +178,24 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
               if (f) handleRecognizeInvoice(f);
             }}
           />
+          <input
+            ref={attachInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onInvoiceSelected?.(file);
+              e.target.value = "";
+            }}
+          />
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isRecognizing}
-            className="h-8"
+            className="h-9"
           >
             {isRecognizing ? (
               <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
@@ -180,7 +204,51 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
             )}
             Распознать счёт
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => attachInputRef.current?.click()}
+            disabled={disabled || !onInvoiceSelected}
+            className="h-9"
+          >
+            <Upload className="h-3.5 w-3.5 mr-1" />
+            Выбрать файл
+          </Button>
         </div>
+
+        {(invoiceFile || invoiceUrl) && (() => {
+          const storageName = invoiceUrl ? decodeURIComponent(invoiceUrl.split("/").pop() || "Счёт") : "";
+          const name = invoiceFile?.name || storageName.replace(/^\d+-/, "") || "Счёт";
+          const format = name.includes(".") ? name.split(".").pop()?.toUpperCase() : "ФАЙЛ";
+          return (
+            <div className="request-invoice-card">
+              <FileText className="h-5 w-5 shrink-0 text-primary" />
+              <div className="request-invoice-card__name">
+                <div>{name}</div>
+                <div className="mt-0.5 text-xs font-normal text-muted-foreground">{format}</div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 px-2 text-primary"
+                onClick={() => {
+                  if (invoiceFile) {
+                    const url = URL.createObjectURL(invoiceFile);
+                    window.open(url, "_blank", "noopener,noreferrer");
+                    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                  } else if (invoiceUrl) {
+                    void openStoredFile(invoiceUrl);
+                  }
+                }}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Открыть
+              </Button>
+            </div>
+          );
+        })()}
 
         {/* Contractor */}
         <FormField
@@ -229,7 +297,7 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
             label: string,
             onRemove?: () => void,
           ) => (
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 sm:gap-3 items-end">
+            <div className="request-mobile-stack grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto] sm:gap-3">
               <FormField
                 control={form.control}
                 name={numField}
@@ -337,14 +405,12 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
         })()}
 
         {/* Actual payment */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
           <FormField
             control={form.control}
             name="payment_percent"
             render={({ field }) => {
               const val = field.value ?? 0;
-              const statusLabel = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : "Частично оплачено";
-              const statusColor = val === 0 ? "text-destructive" : val >= 100 ? "text-success" : "text-warning";
               const prepay = form.watch("payment_percentage") ?? 0;
               const underpaid = prepay > 0 && val < prepay;
               return (
@@ -375,19 +441,24 @@ export const FinanceSection = ({ form, suppliers, recentContractors, disabled = 
           />
           <FormItem>
             <FormLabel className="text-xs">Статус оплаты</FormLabel>
-            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm">
+            <div className="request-payment-status">
               {(() => {
                 const val = form.watch("payment_percent") ?? 0;
-                if (val === 0) return <span className="text-destructive font-medium">Не оплачено</span>;
-                if (val >= 100) return <span className="text-success font-medium">Оплачено</span>;
-                return <span className="text-warning font-medium">Частично ({val}%)</span>;
+                const color = val === 0 ? "bg-destructive" : val >= 100 ? "bg-success" : "bg-warning";
+                const label = val === 0 ? "Не оплачено" : val >= 100 ? "Оплачено" : `Частично оплачено · ${val}%`;
+                return (
+                  <>
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color)} aria-hidden="true" />
+                    <span className={cn(val === 0 ? "text-destructive" : val >= 100 ? "text-success" : "text-warning")}>{label}</span>
+                  </>
+                );
               })()}
             </div>
           </FormItem>
         </div>
 
         {/* Availability row */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
           <FormField
             control={form.control}
             name="availability_delivery_time"

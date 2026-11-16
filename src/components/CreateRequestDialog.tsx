@@ -710,14 +710,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           autoFocus={true}
         />
 
-        {/* 2. Request Items */}
-        <RequestItemsSection
-          items={requestItems}
-          onItemsChange={setRequestItems}
-        />
-
-
-        {/* 4. Core Params: Date, Object */}
+        {/* 2. Основные поля сразу после описания */}
         <CoreParamsSection
           form={form}
           objectsData={objectsData}
@@ -725,7 +718,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           showProjectField
         />
 
-        {/* 5. Status & Responsibles */}
+        {/* 3. Статус и исполнитель видимы без прокрутки */}
         <StatusResponsiblesSection
           form={form}
           statuses={statuses}
@@ -735,8 +728,20 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           currentOrgId={currentOrgId}
         />
 
-        {/* 6. Finance */}
-        <FinanceSection form={form} suppliers={suppliers} recentContractors={recentContractors} />
+        {/* 4. Счёт и оплата */}
+        <FinanceSection
+          form={form}
+          suppliers={suppliers}
+          recentContractors={recentContractors}
+          invoiceFile={documentFiles[documentFiles.length - 1] || null}
+          onInvoiceSelected={(file) => setDocumentFiles((current) => [...current, file])}
+        />
+
+        {/* 5. Позиции заполняются вручную или существующим OCR счёта */}
+        <RequestItemsSection
+          items={requestItems}
+          onItemsChange={setRequestItems}
+        />
 
         {/* 7. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
@@ -790,7 +795,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   );
 
   const desktopActions = (
-    <div className="shrink-0 sticky bottom-0 z-10 flex justify-end gap-2 border-t bg-background px-6 py-3">
+    <div className="request-form-actions shrink-0 sticky bottom-0 z-10 flex justify-end gap-2 border-t bg-background px-6 py-3">
       <Button
         type="button"
         variant="outline"
@@ -858,7 +863,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           <DrawerTrigger asChild>{children}</DrawerTrigger>
           <SheetContent
             side="bottom"
-            className="p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
+            className="request-form-redesign p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
             onInteractOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
@@ -875,7 +880,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
               {formContent}
             </div>
-            <div className="shrink-0 border-t bg-background/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="request-form-actions shrink-0 border-t bg-background/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               {mobileActions}
             </div>
           </SheetContent>
@@ -889,7 +894,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       {exitWarningDialog}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogContent className="request-form-redesign max-w-3xl max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
           <DialogHeader className="shrink-0 px-6 pt-6 pb-3">
             <DialogTitle>Новая заявка</DialogTitle>
             <DialogDescription>

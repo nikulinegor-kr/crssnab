@@ -231,7 +231,7 @@ export const AdditionalSection = ({
 
   return (
     <FormSectionCard 
-      title="Дополнительно" 
+      title="ЗРС" 
       icon={<MoreHorizontal className="h-4 w-4 text-muted-foreground" />}
       collapsible
       defaultCollapsed

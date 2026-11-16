@@ -26,7 +26,7 @@ export const FormSectionCard = ({
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   return (
-    <Card className={cn("border-border/40 bg-card/50 overflow-hidden", className)}>
+    <Card className={cn("request-form-section border-border/40 bg-card/50 overflow-hidden", className)}>
       <CardHeader 
         className={cn(
           "pb-2 sm:pb-3 pt-3.5 sm:pt-5 px-3.5 sm:px-5",

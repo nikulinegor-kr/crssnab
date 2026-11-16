@@ -1,7 +1,8 @@
 import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
-import { RECENT_ARRIVAL_DAYS, arrivalTime, isRecentArrival } from "@/lib/requestArrivals";
+import { RECENT_ARRIVAL_DAYS, isRecentArrival } from "@/lib/requestArrivals";
+import { sortRequestsByDateDesc } from "@/lib/requestRegistry";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { CopyValueButton } from "@/components/requests/CopyValueButton";
 import { TrackCargoButton } from "@/components/requests/TrackCargoButton";
@@ -10,7 +11,7 @@ import { useUiScale } from "@/hooks/useUiScale";
 
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, Eye, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList, ListTree } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ChevronDown, MapPin, Layers, Tag, FolderOpen, Loader2, ClipboardList, ListTree } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
 import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
@@ -42,7 +43,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { RequestQuickPreview } from "@/components/RequestQuickPreview";
 import { Request } from "@/hooks/useRequests";
 import { getStatusColor, getPriorityColor } from "@/hooks/useRequestsFilters";
 import { HighlightText } from "@/components/HighlightText";
@@ -110,7 +110,6 @@ function summarizeGroup(items: any[]) {
 const PAGE_SIZE_OPTIONS = [0, 25, 50, 100, 250];
 const pageSizeLabel = (size: number) => (size === 0 ? "Все" : String(size));
 const STORAGE_KEY = "requests-page-size-v2";
-const SORT_STORAGE_KEY = "requests-sort";
 const DENSITY_STORAGE_KEY = "requests-table-density";
 const GROUP_BY_PHASE_STORAGE_KEY = "requests-group-by-phase";
 
@@ -136,30 +135,6 @@ const statusDotClass = (status: string) => {
 };
 
 
-type SortField = 
-  | "request_date" 
-  | "description" 
-  | "object"
-  | "priority" 
-  | "status" 
-  | "contractor" 
-  | "payment_percentage" 
-  | "applicant" 
-  | "executor"
-  | "shipment_date"
-  | "delivery_date"
-  | "invoice_number"
-  | "transport_company"
-  | "waybill_number"
-  | "amount";
-
-type SortDirection = "asc" | "desc";
-
-interface SortConfig {
-  field: SortField;
-  direction: SortDirection;
-}
-
 interface RequestsTableProps {
   requests: Request[] | undefined;
   isLoading: boolean;
@@ -180,113 +155,6 @@ interface RequestsTableProps {
   onMaximize?: () => void;
 
 }
-
-// Memoized mobile card component for better performance
-const MobileRequestCard = memo(({
-  request,
-  isSelected,
-  onToggleSelection,
-  onRowClick,
-  onDelete,
-  searchQuery,
-}: {
-  request: Request;
-  isSelected: boolean;
-  onToggleSelection: () => void;
-  onRowClick: (e: React.MouseEvent) => void;
-  onDelete: (e: React.MouseEvent) => void;
-  searchQuery: string;
-}) => (
-  <Card
-    className="p-2 cursor-pointer hover:bg-muted/30 transition-colors active:bg-muted/50"
-    onClick={onRowClick}
-  >
-    <div className="flex items-center gap-2">
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={onToggleSelection}
-        onClick={(e) => e.stopPropagation()}
-        className="h-4 w-4 flex-shrink-0"
-      />
-      <div className="flex-1 min-w-0 space-y-1">
-        {/* Header row with date, priority, status */}
-        <div className="flex items-center justify-between gap-1 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">
-            {format(new Date(request.request_date), "dd.MM.yy")}
-          </span>
-          <div className="flex items-center gap-1">
-            <Badge
-              variant="outline"
-              className="text-[9px] px-1 py-0 h-4 leading-none"
-              style={{
-                borderColor: getPriorityColor(request.priority || "Планово"),
-                color: getPriorityColor(request.priority || "Планово"),
-              }}
-            >
-              {request.priority || "Планово"}
-            </Badge>
-            <Badge
-              className="text-[9px] px-1 py-0 h-4 leading-none"
-              style={{
-                backgroundColor: getStatusColor(request.status),
-                color: "white",
-              }}
-            >
-              {request.status}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="font-medium text-xs leading-tight line-clamp-2">
-          <HighlightText text={request.description} searchQuery={searchQuery} />
-        </div>
-
-        {/* Object */}
-        {(request as any).object_name && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">
-              <HighlightText text={(request as any).object_name} searchQuery={searchQuery} />
-            </span>
-          </div>
-        )}
-
-        {/* Compact info row */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-          {request.contractor && (
-            <span className="truncate max-w-[100px]">
-              <span className="font-medium">К:</span> <HighlightText text={request.contractor} searchQuery={searchQuery} />
-            </span>
-          )}
-          {request.applicant && (
-            <span className="truncate max-w-[80px]">
-              <span className="font-medium">З:</span> <HighlightText text={formatPersonName(request.applicant)} searchQuery={searchQuery} />
-            </span>
-          )}
-          {(() => {
-            const pct = (request as any).payment_percent ?? request.payment_percentage ?? 0;
-            if (pct === 0) return null;
-            if (pct >= 100) return <span className="font-semibold text-success">Оплачено</span>;
-            return <span className="font-semibold text-warning">{pct}%</span>;
-          })()}
-        </div>
-      </div>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
-        onClick={onDelete}
-        aria-label="Архивировать заявку"
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
-    </div>
-  </Card>
-));
-
-MobileRequestCard.displayName = "MobileRequestCard";
 
 export const RequestsTable = ({
   requests,
@@ -373,32 +241,19 @@ export const RequestsTable = ({
   const { data: userId } = useAuthUserId();
   const { visibility: storedVisibility, updateVisibility, resetToDefaults } = useTableColumnVisibility(userId);
   const tableWrapRef = useRef<HTMLDivElement>(null);
-  const [availableWidth, setAvailableWidth] = useState(2000);
-
-  useEffect(() => {
-    const el = tableWrapRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 2000;
-      setAvailableWidth(w);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  /** Мало места (открыта панель) — прячем колонки справа налево. */
-  const visibility = useMemo(() => {
-    const v = { ...storedVisibility };
-    if (availableWidth < 1000) v.executor = false;
-    if (availableWidth < 880) v.delivery_date = false;
-    if (availableWidth < 760) v.contractor = false;
-    return v;
-  }, [storedVisibility, availableWidth]);
+  const visibility = storedVisibility;
   const { widths, updateWidth, resetToDefaults: resetColumnWidths } = useTableColumnWidths();
   const totalColCount = useMemo(() => {
     const keys = ["request_date","description","object","priority","status","availability","contractor","amount","invoice_number","payment_prepay","payment_percentage","shipment_date","delivery_date","transport_company","waybill_number","applicant","executor","equipment","comments"] as const;
-    return 1 + keys.filter((k) => (visibility as Record<string, boolean | undefined>)[k]).length + 1;
+    return 1 + keys.filter((k) => visibility[k]).length + 1;
   }, [visibility]);
+  const tableMinWidth = useMemo(() => {
+    const columnsWidth = Object.entries(visibility).reduce((sum, [key, visible]) => {
+      if (!visible || key === "select") return sum;
+      return sum + (widths[key as keyof ColumnWidths] ?? 0);
+    }, 0);
+    return 72 + columnsWidth + (visibility.select === false ? 0 : widths.checkbox);
+  }, [visibility, widths]);
   const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
     const saved = localStorage.getItem(DENSITY_STORAGE_KEY);
@@ -462,11 +317,7 @@ export const RequestsTable = ({
   }, [updateWidth]);
 
   // Group by object
-  const [groupByObject, setGroupByObject] = useState<boolean>(() => {
-    return localStorage.getItem("requests-group-by-object") === "1"
-      && localStorage.getItem("requests-group-by-project") !== "1"
-      && localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) !== "1";
-  });
+  const [groupByObject, setGroupByObject] = useState<boolean>(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const PHASE_STEP = 30;
   const [phaseLimits, setPhaseLimits] = useState<Record<string, number>>({});
@@ -492,10 +343,7 @@ export const RequestsTable = ({
   }, []);
 
   // Group by project (родительская заявка → дочерние)
-  const [groupByProject, setGroupByProject] = useState<boolean>(() => {
-    return localStorage.getItem("requests-group-by-project") === "1"
-      && localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) !== "1";
-  });
+  const [groupByProject, setGroupByProject] = useState<boolean>(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const toggleGroupByProject = useCallback((v: boolean) => {
     setGroupByProject(v);
@@ -507,9 +355,12 @@ export const RequestsTable = ({
       localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "0");
     }
   }, []);
-  const [groupByPhase, setGroupByPhase] = useState<boolean>(() => {
-    return localStorage.getItem(GROUP_BY_PHASE_STORAGE_KEY) === "1";
-  });
+  const [groupByPhase, setGroupByPhase] = useState<boolean>(true);
+  useEffect(() => {
+    localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, "1");
+    localStorage.setItem("requests-group-by-object", "0");
+    localStorage.setItem("requests-group-by-project", "0");
+  }, []);
   const toggleGroupByPhase = useCallback((v: boolean) => {
     setGroupByPhase(v);
     localStorage.setItem(GROUP_BY_PHASE_STORAGE_KEY, v ? "1" : "0");
@@ -552,77 +403,8 @@ export const RequestsTable = ({
     const parsed = saved !== null ? parseInt(saved, 10) : NaN;
     return Number.isFinite(parsed) ? parsed : 50; // по умолчанию 50 — быстрее рендер
   });
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : true
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const onChange = () => setIsDesktop(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  // Sort state
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(() => {
-    const saved = localStorage.getItem(SORT_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return { field: "request_date", direction: "desc" };
-  });
-
-  const handleSort = useCallback((field: SortField) => {
-    setSortConfig((prev) => {
-      let newConfig: SortConfig;
-      if (prev?.field === field) {
-        newConfig = { field, direction: prev.direction === "asc" ? "desc" : "asc" };
-      } else {
-        newConfig = { field, direction: "desc" };
-      }
-      localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(newConfig));
-      return newConfig;
-    });
-    setCurrentPage(1);
-  }, []);
-
-  // Sort requests
-  const sortedRequests = useMemo(() => {
-    if (!requests || !sortConfig) return requests;
-
-    return [...requests].sort((a, b) => {
-      const { field, direction } = sortConfig;
-      let aVal: any;
-      let bVal: any;
-
-      if (field === "object") {
-        aVal = (a as any).object_name;
-        bVal = (b as any).object_name;
-      } else {
-        aVal = a[field];
-        bVal = b[field];
-      }
-
-      // Handle null/undefined
-      if (aVal == null && bVal == null) return 0;
-      if (aVal == null) return direction === "asc" ? 1 : -1;
-      if (bVal == null) return direction === "asc" ? -1 : 1;
-
-      // Compare based on type
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return direction === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      // String comparison
-      const aStr = String(aVal).toLowerCase();
-      const bStr = String(bVal).toLowerCase();
-      const comparison = aStr.localeCompare(bStr, "ru");
-      return direction === "asc" ? comparison : -comparison;
-    });
-  }, [requests, sortConfig]);
+  // Дата — постоянный индикатор порядка, а не переключатель сортировки.
+  const sortedRequests = useMemo(() => sortRequestsByDateDesc(requests), [requests]);
 
   // Reset to page 1 when requests change
   useEffect(() => {
@@ -635,11 +417,6 @@ export const RequestsTable = ({
     localStorage.setItem(STORAGE_KEY, value);
     setCurrentPage(1);
   }, []);
-
-  const handleRowClick = useCallback((request: Request, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"], button, [role="button"]')) return;
-    onEditClick?.(request);
-  }, [onEditClick]);
 
   const handleDesktopRowClick = useCallback((request: Request, e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -737,7 +514,7 @@ export const RequestsTable = ({
         items: other,
       } as unknown as (typeof grouped)[number]);
     }
-    const recent = paginatedRequests.filter(isRecentArrival).sort((a, b) => arrivalTime(b) - arrivalTime(a));
+    const recent = paginatedRequests.filter(isRecentArrival);
     if (recent.length > 0) {
       grouped.push({
         key: "recent-arrivals",
@@ -749,8 +526,7 @@ export const RequestsTable = ({
     }
     // Остальные доставленные/выполненные — видны, когда «Скрыть доставленные» выключен
     const closed = paginatedRequests
-      .filter((r) => (r.status === "Доставлено" || r.status === "Выполнено") && !isRecentArrival(r))
-      .sort((a, b) => arrivalTime(b) - arrivalTime(a));
+      .filter((r) => (r.status === "Доставлено" || r.status === "Выполнено") && !isRecentArrival(r));
     if (closed.length > 0) {
       grouped.push({
         key: "delivered",
@@ -797,7 +573,7 @@ export const RequestsTable = ({
 
   // Compact Pagination UI
   const PaginationControls = () => (
-    <div className="flex flex-none flex-wrap items-center justify-between gap-2 border-t border-border bg-card px-2 py-2">
+    <div className="requests-pagination flex flex-none flex-wrap items-center justify-between gap-2 border-t border-border bg-card px-2 py-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
           <SelectTrigger className="w-16 h-6 text-xs px-2">
@@ -890,172 +666,9 @@ export const RequestsTable = ({
   return (
     <div className="flex h-full min-h-0 gap-2 items-stretch" data-density={density}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* Mobile View - Compact Cards (не строим на ПК) */}
-      {!isDesktop && (
-      <div className="lg:hidden min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain">
-
-        <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <Toggle
-            pressed={groupByProject}
-            onPressedChange={toggleGroupByProject}
-            size="sm"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            По проектам
-          </Toggle>
-          <Toggle
-            pressed={groupByObject}
-            onPressedChange={toggleGroupByObject}
-            size="sm"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <Layers className="h-3.5 w-3.5" />
-            По объектам
-          </Toggle>
-          <Toggle
-            pressed={groupByPhase}
-            onPressedChange={toggleGroupByPhase}
-            size="sm"
-            className="h-7 px-2 text-xs gap-1 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
-          >
-            <ListTree className="h-3.5 w-3.5" />
-            По фазам
-          </Toggle>
-        </div>
-        {groupByPhase && phaseGroups ? (
-          phaseGroups.map((g) => {
-            const collapsed = collapsedGroups.has(`phase-${g.key}`);
-            const amount = g.items.reduce(
-              (sum, request) => sum + Number(request.amount || 0) + Number((request as any).amount_2 || 0) + Number((request as any).amount_3 || 0),
-              0
-            );
-            return (
-              <div key={g.key} className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(`phase-${g.key}`)}
-                  className="sticky top-0 z-10 flex w-full items-center gap-2 rounded bg-muted/95 px-2 py-1.5 text-xs font-semibold"
-                >
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
-                  <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", g.accent)} />
-                  <span className="truncate">{g.name}</span>
-                  <span className="ml-auto font-mono font-normal text-muted-foreground">{g.items.length} · {moneyShort(amount)}</span>
-                </button>
-                {!collapsed && g.items.slice(0, phaseLimits[g.key] ?? PHASE_STEP).map((request) => (
-                  <MobileRequestCard
-                    key={request.id}
-                    request={request}
-                    isSelected={selectedRequestIds.has(request.id)}
-                    onToggleSelection={() => toggleRequestSelection(request.id)}
-                    onRowClick={(e) => handleRowClick(request, e)}
-                    onDelete={(e) => onDeleteClick(request, e)}
-                    searchQuery={searchQuery}
-                  />
-                ))}
-                {!collapsed && g.items.length > (phaseLimits[g.key] ?? PHASE_STEP) && (
-                  <button type="button" onClick={() => showMorePhase(g.key)} className="min-h-11 w-full rounded border border-border text-[13px] font-medium text-primary">
-                    Показать ещё ({g.items.length - (phaseLimits[g.key] ?? PHASE_STEP)})
-                  </button>
-                )}
-              </div>
-            );
-          })
-        ) : groupByProject && projectGroups ? (
-          <>
-            {projectGroups.list.map((g) => {
-              const open = expandedProjects.has(g.key);
-              const s = summarizeGroup(g.items);
-              return (
-                <div key={g.key} className="space-y-1.5">
-                  <button
-                    type="button"
-                    onClick={() => toggleProject(g.key)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
-                  >
-                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
-                    <FolderOpen className="h-3.5 w-3.5 text-primary" />
-                    <span className="truncate">{g.name}</span>
-                    <span className="ml-auto text-muted-foreground font-normal">
-                      {s.total} · {moneyShort(s.amount)}
-                    </span>
-                  </button>
-                  {open && g.items.map((request) => (
-                    <MobileRequestCard
-                      key={request.id}
-                      request={request}
-                      isSelected={selectedRequestIds.has(request.id)}
-                      onToggleSelection={() => toggleRequestSelection(request.id)}
-                      onRowClick={(e) => handleRowClick(request, e)}
-                      onDelete={(e) => onDeleteClick(request, e)}
-                      searchQuery={searchQuery}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-            {projectGroups.loose.map((request) => (
-              <MobileRequestCard
-                key={request.id}
-                request={request}
-                isSelected={selectedRequestIds.has(request.id)}
-                onToggleSelection={() => toggleRequestSelection(request.id)}
-                onRowClick={(e) => handleRowClick(request, e)}
-                onDelete={(e) => onDeleteClick(request, e)}
-                searchQuery={searchQuery}
-              />
-            ))}
-          </>
-        ) : groupByObject && groupedRequests ? (
-          groupedRequests.map((g) => {
-            const collapsed = collapsedGroups.has(g.key);
-            return (
-              <div key={g.key} className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(g.key)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/70 rounded text-xs font-semibold"
-                >
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                  <span className="truncate">{g.name}</span>
-                  <span className="ml-auto text-muted-foreground font-normal">{g.items.length}</span>
-                </button>
-                {!collapsed && g.items.map((request) => (
-                  <MobileRequestCard
-                    key={request.id}
-                    request={request}
-                    isSelected={selectedRequestIds.has(request.id)}
-                    onToggleSelection={() => toggleRequestSelection(request.id)}
-                    onRowClick={(e) => handleRowClick(request, e)}
-                    onDelete={(e) => onDeleteClick(request, e)}
-                    searchQuery={searchQuery}
-                  />
-                ))}
-              </div>
-            );
-          })
-        ) : (
-          paginatedRequests.map((request) => (
-            <MobileRequestCard
-              key={request.id}
-              request={request}
-              isSelected={selectedRequestIds.has(request.id)}
-              onToggleSelection={() => toggleRequestSelection(request.id)}
-              onRowClick={(e) => handleRowClick(request, e)}
-              onDelete={(e) => onDeleteClick(request, e)}
-              searchQuery={searchQuery}
-            />
-          ))
-        )}
-        <PaginationControls />
-      </div>
-      )}
-
-
       {/* Desktop Table View */}
       <div
-        className="hidden min-h-0 lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col"
+        className="flex min-h-0 h-full flex-1 flex-col"
         onMouseOver={(e) => {
           // Тултип только когда текст реально не поместился
           const cell = (e.target as HTMLElement)?.closest?.("td") as HTMLTableCellElement | null;
@@ -1067,7 +680,7 @@ export const RequestsTable = ({
         }}
       >
 
-        <div className="flex flex-none items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
+        <div className="requests-table-toolbar flex flex-none items-center justify-end gap-1 border-b border-border bg-card px-2 py-1">
           <Toggle
             pressed={groupByProject}
             onPressedChange={toggleGroupByProject}
@@ -1102,9 +715,9 @@ export const RequestsTable = ({
           <TableColumnSettings visibility={storedVisibility} onVisibilityChange={updateVisibility} onReset={resetToDefaults} />
         </div>
         <div className="flex min-h-0 flex-1 flex-col border-0 bg-card" ref={tableWrapRef}>
-        <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
+        <div className="requests-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain">
 
-        <Table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+        <Table className="w-full border-collapse" style={{ tableLayout: 'fixed', minWidth: tableMinWidth }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
@@ -1144,62 +757,62 @@ export const RequestsTable = ({
                 )}
               </TableHead>
               {visibility.request_date && (
-                <ResizableTableHeader column="request_date" label="Дата" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "request_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("request_date")} />
+                <ResizableTableHeader column="request_date" label="Дата" sortDirection="desc" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} />
               )}
               {visibility.description && (
-                <ResizableTableHeader align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "description"} sortDirection={sortConfig?.direction} onSort={() => handleSort("description")} />
+                <ResizableTableHeader align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} />
               )}
               {visibility.object && (
-                <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "object"} sortDirection={sortConfig?.direction} onSort={() => handleSort("object")} />
+                <ResizableTableHeader align="left" column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} />
               )}
               {visibility.priority && (
-                <ResizableTableHeader column="priority" defaultWidth={DEFAULT_COLUMN_WIDTHS.priority} label="Приоритет" width={widths.priority} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "priority"} sortDirection={sortConfig?.direction} onSort={() => handleSort("priority")} />
+                <ResizableTableHeader column="priority" defaultWidth={DEFAULT_COLUMN_WIDTHS.priority} label="Приоритет" width={widths.priority} onResize={handleColumnResize} />
               )}
               {visibility.status && (
 
-                <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "status"} sortDirection={sortConfig?.direction} onSort={() => handleSort("status")} />
+                <ResizableTableHeader column="status" defaultWidth={DEFAULT_COLUMN_WIDTHS.status} label="Статус" width={widths.status} onResize={handleColumnResize} />
               )}
               {visibility.availability && (
                 <ResizableTableHeader column="availability" defaultWidth={DEFAULT_COLUMN_WIDTHS.availability} label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <ResizableTableHeader column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "contractor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("contractor")} />
+                <ResizableTableHeader align="left" column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} />
               )}
               {visibility.amount && (
-                <ResizableTableHeader align="right" column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "amount"} sortDirection={sortConfig?.direction} onSort={() => handleSort("amount")} />
+                <ResizableTableHeader align="right" column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} />
               )}
               {visibility.invoice_number && (
-                <ResizableTableHeader column="invoice_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.invoice_number} label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "invoice_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("invoice_number")} />
+                <ResizableTableHeader column="invoice_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.invoice_number} label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} />
               )}
               {visibility.payment_prepay && (
-                <ResizableTableHeader column="payment_prepay" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_prepay} label="% предопл." width={widths.payment_prepay} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
+                <ResizableTableHeader column="payment_prepay" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_prepay} label="% предопл." width={widths.payment_prepay} onResize={handleColumnResize} />
               )}
               {visibility.payment_percentage && (
-                <ResizableTableHeader column="payment_percentage" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_percentage} label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "payment_percentage"} sortDirection={sortConfig?.direction} onSort={() => handleSort("payment_percentage")} />
+                <ResizableTableHeader column="payment_percentage" defaultWidth={DEFAULT_COLUMN_WIDTHS.payment_percentage} label="Факт опл." width={widths.payment_percentage} onResize={handleColumnResize} />
               )}
               {visibility.shipment_date && (
-                <ResizableTableHeader column="shipment_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.shipment_date} label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "shipment_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("shipment_date")} />
+                <ResizableTableHeader column="shipment_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.shipment_date} label="Отгрузка" width={widths.shipment_date} onResize={handleColumnResize} />
               )}
               {visibility.delivery_date && (
-                <ResizableTableHeader column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "delivery_date"} sortDirection={sortConfig?.direction} onSort={() => handleSort("delivery_date")} />
+                <ResizableTableHeader column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} />
               )}
               {visibility.transport_company && (
-                <ResizableTableHeader column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "transport_company"} sortDirection={sortConfig?.direction} onSort={() => handleSort("transport_company")} />
+                <ResizableTableHeader align="left" column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} />
               )}
               {visibility.waybill_number && (
-                <ResizableTableHeader column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "waybill_number"} sortDirection={sortConfig?.direction} onSort={() => handleSort("waybill_number")} />
+                <ResizableTableHeader align="left" column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} />
               )}
               {visibility.applicant && (
-                <ResizableTableHeader column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "applicant"} sortDirection={sortConfig?.direction} onSort={() => handleSort("applicant")} />
+                <ResizableTableHeader align="left" column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} sortable isActive={sortConfig?.field === "executor"} sortDirection={sortConfig?.direction} onSort={() => handleSort("executor")} />
+                <ResizableTableHeader align="left" column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} />
               )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" defaultWidth={DEFAULT_COLUMN_WIDTHS.equipment} label="Техника" width={widths.equipment} onResize={handleColumnResize} />
               )}
               {visibility.comments && (
-                <ResizableTableHeader column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
+                <ResizableTableHeader align="left" column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
               <TableHead className="w-10 p-1 text-center">
                 <MoreVertical className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
@@ -1279,7 +892,7 @@ export const RequestsTable = ({
                   return (
                     <TableRow
                       key={`phase-${it.key}`}
-                      className="cursor-pointer border-y border-border bg-muted hover:bg-muted"
+                      className="requests-phase-row cursor-pointer border-y border-border bg-muted hover:bg-muted"
                       onClick={() => toggleGroup(`phase-${it.key}`)}
                     >
                       <TableCell colSpan={totalColCount} className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
@@ -1417,7 +1030,7 @@ export const RequestsTable = ({
                   data-state={selectedRequestIds.has(request.id) ? "selected" : undefined}
                   onClickCapture={(e) => handleDesktopRowClick(request, e)}
                   onDoubleClick={(e) => handleRowDoubleClick(request, e)}
-                  style={{ height: 'var(--row-h)' }}
+                  style={{ minHeight: 'var(--row-h)' }}
                 >
                   <TableCell data-row-action className="relative text-center p-1 border-b align-middle" style={{ boxShadow: priorityShadow }} onClick={(e) => e.stopPropagation()}>
                     <QuickBadgeSelect
@@ -1503,16 +1116,19 @@ export const RequestsTable = ({
                             value={request.description}
                             displayValue={
                               <div className="space-y-1">
-                                <RequestQuickPreview
-                                  request={request}
-                                  getStatusColor={getStatusColor}
-                                  getPriorityColor={getPriorityColor}
-                                  onEdit={onEditClick}
+                                <button
+                                  type="button"
+                                  data-row-action
+                                  className="request-title-button"
+                                  title={`${request.description} — открыть карточку`}
+                                  aria-label={`Открыть карточку: ${request.description}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openQuickView(request);
+                                  }}
                                 >
-                                  <div className="line-clamp-1 hover:text-primary transition-colors font-medium text-foreground leading-tight" title={request.description}>
-                                    <HighlightText text={request.description} searchQuery={searchQuery} />
-                                  </div>
-                                </RequestQuickPreview>
+                                  <HighlightText text={request.description} searchQuery={searchQuery} />
+                                </button>
                                 {shipmentsSummary?.[request.id] && (
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <ShipmentsProgressChip
@@ -1526,19 +1142,11 @@ export const RequestsTable = ({
                             }
                           />
                         </div>
-                        <button
-                          data-row-action
-                          onClick={(e) => { e.stopPropagation(); openQuickView(request); }}
-                          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                          aria-label="Быстрый просмотр"
-                        >
-                          <Eye className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-primary" />
-                        </button>
                       </div>
                     </TableCell>
                   )}
                   {visibility.object && (
-                    <TableCell data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="left" data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineObjectCell
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
@@ -1610,7 +1218,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="left" data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
@@ -1703,7 +1311,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineCarrierCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1714,7 +1322,7 @@ export const RequestsTable = ({
                   )}
 
                   {visibility.waybill_number && (
-                    <TableCell className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-align="left" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1745,7 +1353,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1756,7 +1364,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.executor && (
-                    <TableCell data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1788,7 +1396,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell className="px-3 py-2 border-b overflow-hidden">
+                    <TableCell data-align="left" className="px-3 py-2 border-b overflow-hidden">
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"
@@ -1919,6 +1527,7 @@ export const RequestsTable = ({
         open={quickViewOpen}
         onClose={closeQuickView}
         onEdit={onEditClick}
+        formOpen={Boolean(activeRequestId)}
       />
 
       <LabelPrintDialog

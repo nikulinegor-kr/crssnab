@@ -108,7 +108,7 @@ export const LogisticsSection = ({
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
               <FormField
                 control={form.control}
                 name="estimated_delivery_days"
