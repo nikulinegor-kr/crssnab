@@ -16,6 +16,7 @@ interface ResizableTableHeaderProps {
   align?: "left" | "center" | "right";
   defaultWidth?: number;
   children?: React.ReactNode;
+  resizable?: boolean;
 }
 
 export const ResizableTableHeader = ({
@@ -31,6 +32,7 @@ export const ResizableTableHeader = ({
   align = "center",
   defaultWidth,
   children,
+  resizable = false,
 }: ResizableTableHeaderProps) => {
   const headerRef = useRef<HTMLTableCellElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -92,11 +94,11 @@ export const ResizableTableHeader = ({
       ) : (
         <div
           className={cn(
-            "flex w-full items-center gap-1 overflow-hidden",
+            "flex w-full items-center gap-1",
             align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start"
           )}
         >
-          <span className="truncate text-xs font-medium normal-case tracking-normal">{label}</span>
+          <span className="whitespace-nowrap text-xs font-medium normal-case tracking-normal">{label}</span>
 
           {/* Иконка всегда занимает место — заголовок не дёргается при сортировке */}
           <Icon
@@ -109,7 +111,7 @@ export const ResizableTableHeader = ({
       )}
 
       {/* Resize handle */}
-      <div
+      {resizable && <div
         title="Потяните, чтобы изменить ширину. Двойной клик — сброс"
         className={cn(
           "absolute top-0 -right-[3px] w-[7px] h-full cursor-col-resize z-20 group/resize flex justify-center",
@@ -129,7 +131,7 @@ export const ResizableTableHeader = ({
             isResizing && "bg-primary"
           )}
         />
-      </div>
+      </div>}
 
     </TableHead>
   );

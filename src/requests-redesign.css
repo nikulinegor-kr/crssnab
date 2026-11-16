@@ -136,7 +136,6 @@
 }
 
 .requests-registry table {
-  min-width: max-content;
   font-family: "Inter", system-ui, sans-serif;
 }
 
@@ -808,4 +807,34 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   flex: 0 0 16px;
   padding: 0;
   border-radius: 4px;
+}
+
+/* Служебные колонки: заголовок и значение на одной центральной оси. */
+.requests-registry table tbody td[data-align="center"] {
+  text-align: center !important;
+}
+.requests-registry table tbody td[data-align="center"] > *,
+.requests-registry table tbody td[data-align="center"] :is(div, span, button) {
+  justify-content: center;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+.requests-registry table tbody td:not([data-align]) > div,
+.requests-registry table tbody td:not([data-align]) > button {
+  justify-content: center;
+  text-align: center;
+}
+.requests-registry table tbody td:not([data-align]) { text-align: center; }
+/* Даты и штатные статусы/приоритеты — целиком, без переноса. */
+.requests-registry table tbody td:is([data-col="shipment_date"], [data-col="delivery_date"]) :is(span, button),
+.requests-registry table tbody td[data-row-action] [role="combobox"],
+.requests-registry table tbody td[data-row-action] > button > span.inline-flex,
+.requests-registry table tbody td[data-row-action] span.inline-flex.min-h-6 {
+  white-space: nowrap;
+}
+/* Перенос длинного текста в «Заявке» и «Комментарии». */
+.requests-registry table tbody td:is([data-col="description"], [data-col="comments"]) {
+  overflow-wrap: anywhere;
+  white-space: normal;
 }

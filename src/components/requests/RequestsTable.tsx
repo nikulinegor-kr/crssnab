@@ -251,7 +251,7 @@ export const RequestsTable = ({
       if (!visible || key === "select") return sum;
       return sum + (widths[key as keyof ColumnWidths] ?? 0);
     }, 0);
-    return 72 + columnsWidth + (visibility.select === false ? 0 : widths.checkbox);
+    return columnsWidth + (visibility.select === false ? 8 : 32) + 40;
   }, [visibility, widths]);
   const { scale: uiScale, setScale: setUiScale } = useUiScale();
   const [density, setDensity] = useState<RowDensity>(() => {
@@ -618,7 +618,7 @@ export const RequestsTable = ({
         <div className="flex min-h-0 flex-1 flex-col border-0 bg-card" ref={tableWrapRef}>
         <div className="requests-table-scroll min-h-0 flex-1 overflow-auto overscroll-contain">
 
-        <Table className="w-full border-collapse" style={{ tableLayout: 'fixed', minWidth: tableMinWidth }}>
+        <Table className="border-collapse" style={{ tableLayout: 'fixed', width: tableMinWidth, minWidth: tableMinWidth }}>
           <colgroup>
             <col style={{ width: visibility.select === false ? 8 : 32 }} />
             {visibility.request_date && <col style={{ width: widths.request_date }} />}
@@ -661,10 +661,10 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="request_date" label="Дата" sortDirection="desc" width={widths.request_date} defaultWidth={DEFAULT_COLUMN_WIDTHS.request_date} onResize={handleColumnResize} />
               )}
               {visibility.description && (
-                <ResizableTableHeader align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} />
+                <ResizableTableHeader resizable align="left" column="description" defaultWidth={DEFAULT_COLUMN_WIDTHS.description} label="Заявка" width={widths.description} onResize={handleColumnResize} />
               )}
               {visibility.object && (
-                <ResizableTableHeader align="left" column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} />
+                <ResizableTableHeader column="object" data-col="object" defaultWidth={DEFAULT_COLUMN_WIDTHS.object} label="Объект" width={widths.object} onResize={handleColumnResize} />
               )}
               {visibility.priority && (
                 <ResizableTableHeader column="priority" defaultWidth={DEFAULT_COLUMN_WIDTHS.priority} label="Приоритет" width={widths.priority} onResize={handleColumnResize} />
@@ -677,10 +677,10 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="availability" defaultWidth={DEFAULT_COLUMN_WIDTHS.availability} label="Наличие" width={widths.availability} onResize={handleColumnResize} />
               )}
               {visibility.contractor && (
-                <ResizableTableHeader align="left" column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} />
+                <ResizableTableHeader column="contractor" defaultWidth={DEFAULT_COLUMN_WIDTHS.contractor} label="Контрагент" width={widths.contractor} onResize={handleColumnResize} />
               )}
               {visibility.amount && (
-                <ResizableTableHeader align="right" column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} />
+                <ResizableTableHeader column="amount" defaultWidth={DEFAULT_COLUMN_WIDTHS.amount} label="Сумма" width={widths.amount} onResize={handleColumnResize} />
               )}
               {visibility.invoice_number && (
                 <ResizableTableHeader column="invoice_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.invoice_number} label="Счёт" width={widths.invoice_number} onResize={handleColumnResize} />
@@ -698,22 +698,22 @@ export const RequestsTable = ({
                 <ResizableTableHeader column="delivery_date" defaultWidth={DEFAULT_COLUMN_WIDTHS.delivery_date} label="Приход" width={widths.delivery_date} onResize={handleColumnResize} />
               )}
               {visibility.transport_company && (
-                <ResizableTableHeader align="left" column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} />
+                <ResizableTableHeader column="transport_company" defaultWidth={DEFAULT_COLUMN_WIDTHS.transport_company} label="ТК" width={widths.transport_company} onResize={handleColumnResize} />
               )}
               {visibility.waybill_number && (
-                <ResizableTableHeader align="left" column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} />
+                <ResizableTableHeader column="waybill_number" defaultWidth={DEFAULT_COLUMN_WIDTHS.waybill_number} label="№ТТН" width={widths.waybill_number} onResize={handleColumnResize} />
               )}
               {visibility.applicant && (
-                <ResizableTableHeader align="left" column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} />
+                <ResizableTableHeader column="applicant" defaultWidth={DEFAULT_COLUMN_WIDTHS.applicant} label="Заявитель" width={widths.applicant} onResize={handleColumnResize} />
               )}
               {visibility.executor && (
-                <ResizableTableHeader align="left" column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} />
+                <ResizableTableHeader column="executor" defaultWidth={DEFAULT_COLUMN_WIDTHS.executor} label="Кто ведёт" width={widths.executor} onResize={handleColumnResize} />
               )}
               {visibility.equipment && (
                 <ResizableTableHeader column="equipment" defaultWidth={DEFAULT_COLUMN_WIDTHS.equipment} label="Техника" width={widths.equipment} onResize={handleColumnResize} />
               )}
               {visibility.comments && (
-                <ResizableTableHeader align="left" column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
+                <ResizableTableHeader resizable align="left" column="comments" defaultWidth={DEFAULT_COLUMN_WIDTHS.comments} label="Комментарий" width={widths.comments} onResize={handleColumnResize} />
               )}
               <TableHead className="w-10 p-1 text-center">
                 <MoreVertical className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" />
@@ -976,7 +976,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.description && (
-                    <TableCell data-align="left" className="px-2 py-1.5 border-b overflow-hidden">
+                    <TableCell data-align="left" data-col="description" className="px-2 py-1.5 border-b overflow-hidden">
                       <div className="flex items-center gap-1.5">
                         {(shipmentsSummary?.[request.id]?.total ?? 0) >= 1 && (
                           <Button
@@ -1053,7 +1053,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.object && (
-                    <TableCell data-align="left" data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="center" data-col="object" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineObjectCell
                         requestId={request.id}
                         organizationId={(request as any).organization_id}
@@ -1125,7 +1125,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.contractor && (
-                    <TableCell data-align="left" data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="center" data-col="contractor" className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineEditCell
                         requestId={request.id}
                         field="contractor"
@@ -1143,7 +1143,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.amount && (
-                    <TableCell data-align="right" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="amount"
@@ -1218,7 +1218,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.transport_company && (
-                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="center" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineCarrierCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1229,7 +1229,7 @@ export const RequestsTable = ({
                   )}
 
                   {visibility.waybill_number && (
-                    <TableCell data-align="left" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                    <TableCell data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1260,7 +1260,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.applicant && (
-                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="center" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1271,7 +1271,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.executor && (
-                    <TableCell data-align="left" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
+                    <TableCell data-align="center" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
                       <InlineParticipantCell
                         requestId={request.id}
                         organizationId={request.organization_id}
@@ -1303,7 +1303,7 @@ export const RequestsTable = ({
                     </TableCell>
                   )}
                   {visibility.comments && (
-                    <TableCell data-align="left" className="px-3 py-2 border-b overflow-hidden">
+                    <TableCell data-align="left" data-col="comments" className="px-3 py-2 border-b overflow-hidden">
                       <InlineEditCell
                         requestId={request.id}
                         field="comments"

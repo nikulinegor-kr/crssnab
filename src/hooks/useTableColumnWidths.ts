@@ -29,65 +29,93 @@ export interface ColumnWidths {
 export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
   checkbox: 40,
   row_number: 36,
-  request_date: 90,
-  description: 220,
-  object: 140,
-  priority: 110,
-  status: 130,
-  availability: 100,
-  contractor: 130,
-  invoice_number: 100,
-  payment_prepay: 90,
-  payment_percentage: 90,
-  shipment_date: 95,
-  delivery_date: 95,
-  transport_company: 100,
-  waybill_number: 110,
-  amount: 110,
-  applicant: 110,
-  executor: 130,
-  comments: 150,
-  equipment: 120,
+  // Фиксированные ширины: максимум из заголовка (+иконка сортировки) и самого
+  // длинного штатного значения с отступами и значками.
+  request_date: 96,
+  description: 260,
+  object: 168,
+  priority: 148,
+  status: 200,
+  availability: 120,
+  contractor: 168,
+  invoice_number: 112,
+  payment_prepay: 112,
+  payment_percentage: 104,
+  shipment_date: 104,
+  delivery_date: 96,
+  transport_company: 120,
+  waybill_number: 120,
+  amount: 128,
+  applicant: 150,
+  executor: 150,
+  comments: 220,
+  equipment: 136,
 };
 
 export const MIN_COLUMN_WIDTH = 28;
 
-export const useTableColumnWidths = () => {
-  const [widths, setWidths] = useState<ColumnWidths>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { ...DEFAULT_COLUMN_WIDTHS, ...parsed };
-      }
-    } catch (e) {
-      console.error("Failed to load column widths:", e);
-    }
-    return DEFAULT_COLUMN_WIDTHS;
+/** Только эти колонки меняют ширину; остальные фиксированы. */
+export const RESIZABLE_COLUMNS = {
+  description: { min: 160, max: 640 },
+  comments: { min: 120, max: 600 },
+} as const;
+export type ResizableColumn = keyof typeof RESIZABLE_COLUMNS;
+
+export const clampResizableWidth = (column: ResizableColumn, width: number) => {
+  const { min, max } = RESIZABLE_COLUMNS[column];
+  return Math.round(Math.min(max, Math.max(min, width)));
+};
+
+const pickResizable = (source: Partial<ColumnWidths>): ColumnWidths => {
+  const next = { ...DEFAULT_COLUMN_WIDTHS };
+  (Object.keys(RESIZABLE_COLUMNS) as ResizableColumn[]).forEach((column) => {
+    const value = Number(source[column]);
+    if (Number.isFinite(value)) next[column] = clampResizableWidth(column, value);
   });
+  return next;
+};
+
+const SYNC_EVENT = "requests-column-widths-change";
+
+const readSaved = (): ColumnWidths => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return pickResizable(JSON.parse(saved));
+  } catch (e) {
+    console.error("Failed to load column widths:", e);
+  }
+  return DEFAULT_COLUMN_WIDTHS;
+};
+
+const persist = (next: ColumnWidths) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ description: next.description, comments: next.comments }));
+  } catch (e) {
+    console.error("Failed to save column widths:", e);
+  }
+  window.dispatchEvent(new CustomEvent(SYNC_EVENT));
+};
+
+/** Ширины колонок реестра; экземпляры (таблица и меню «Колонки») синхронизированы. */
+export const useTableColumnWidths = () => {
+  const [widths, setWidths] = useState<ColumnWidths>(readSaved);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(widths));
-    } catch (e) {
-      console.error("Failed to save column widths:", e);
-    }
-  }, [widths]);
+    const sync = () => setWidths(readSaved());
+    window.addEventListener(SYNC_EVENT, sync);
+    return () => window.removeEventListener(SYNC_EVENT, sync);
+  }, []);
 
   const updateWidth = useCallback((column: keyof ColumnWidths, width: number) => {
-    setWidths((prev) => ({
-      ...prev,
-      [column]: Math.max(MIN_COLUMN_WIDTH, width),
-    }));
+    if (!(column in RESIZABLE_COLUMNS)) return;
+    const key = column as ResizableColumn;
+    const current = readSaved();
+    persist({ ...current, [key]: clampResizableWidth(key, width) });
   }, []);
 
   const resetToDefaults = useCallback(() => {
-    setWidths(DEFAULT_COLUMN_WIDTHS);
+    persist(DEFAULT_COLUMN_WIDTHS);
   }, []);
 
-  return {
-    widths,
-    updateWidth,
-    resetToDefaults,
-  };
+  return { widths, updateWidth, resetToDefaults };
 };

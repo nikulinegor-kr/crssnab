@@ -8,6 +8,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { RESIZABLE_COLUMNS, useTableColumnWidths, type ResizableColumn } from "@/hooks/useTableColumnWidths";
 
 export interface ColumnVisibility {
   select: boolean;
@@ -98,6 +100,7 @@ export const TableColumnSettings = ({
     });
   };
 
+  const { widths, updateWidth } = useTableColumnWidths();
   const isDefault = Object.keys(DEFAULT_COLUMN_VISIBILITY).every(
     (key) => visibility[key as keyof ColumnVisibility] === DEFAULT_COLUMN_VISIBILITY[key as keyof ColumnVisibility]
   );
@@ -110,7 +113,7 @@ export const TableColumnSettings = ({
           <span className={alwaysShowLabel ? "inline" : "hidden sm:inline"}>Колонки</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 bg-background border shadow-lg z-50" align="end">
+      <PopoverContent className="w-64 max-h-[70dvh] overflow-y-auto bg-background border shadow-lg z-50" align="end">
         <div className="space-y-1">
           <h4 className="font-medium text-sm mb-3">Отображение колонок</h4>
           {(Object.keys(COLUMN_LABELS) as Array<keyof ColumnVisibility>).map((column) => (
@@ -126,6 +129,25 @@ export const TableColumnSettings = ({
               >
                 {COLUMN_LABELS[column]}
               </Label>
+            </div>
+          ))}
+          <Separator className="my-2" />
+          <h4 className="font-medium text-sm mb-1">Ширина колонок</h4>
+          {(Object.keys(RESIZABLE_COLUMNS) as ResizableColumn[]).map((column) => (
+            <div key={column} className="space-y-1.5 py-1">
+              <div className="flex items-center justify-between text-sm">
+                <span id={`col-width-${column}`}>{COLUMN_LABELS[column]}</span>
+                <span className="font-numeric text-xs text-muted-foreground">{widths[column]} px</span>
+              </div>
+              <Slider
+                aria-labelledby={`col-width-${column}`}
+                aria-valuetext={`${widths[column]} пикселей`}
+                min={RESIZABLE_COLUMNS[column].min}
+                max={RESIZABLE_COLUMNS[column].max}
+                step={10}
+                value={[widths[column]]}
+                onValueChange={([value]) => updateWidth(column, value)}
+              />
             </div>
           ))}
           {onReset && (
