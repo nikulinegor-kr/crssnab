@@ -35,7 +35,7 @@ export default function LoginShell({
     <div className="crss-login">
       <aside className="crss-login__aside">
         <div className="crss-login__hero">
-          <div className="crss-login__hero-logo"><CrssLogo /></div>
+          <img src={crssMark} alt="" className="crss-login__hero-mark" />
           <p className="crss-login__hero-title">От заявки<br />до поставки.</p>
           <ol className="crss-stages">
             {STAGES.map((stage) => (
