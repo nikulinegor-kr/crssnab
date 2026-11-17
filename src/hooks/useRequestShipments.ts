@@ -62,6 +62,9 @@ export interface ShipmentItem {
 
 const sb: any = supabase;
 
+const SHIPMENT_SELECT = "id,organization_id,request_id,sequence_number,transport_type,transport_company,vehicle_number,trailer_number,driver_name,driver_phone,waybill_number,load_date,planned_arrival_date,actual_arrival_date,status,comment,document_urls,created_at,updated_at";
+const SHIPMENT_ITEM_SELECT = "id,organization_id,shipment_id,product_id,material_name,quantity,unit";
+
 export function useRequestShipments(requestId: string | null | undefined) {
   return useQuery({
     queryKey: ["request-shipments", requestId],
@@ -69,7 +72,7 @@ export function useRequestShipments(requestId: string | null | undefined) {
     queryFn: async (): Promise<RequestShipment[]> => {
       const { data, error } = await sb
         .from("request_shipments")
-        .select("*")
+        .select(SHIPMENT_SELECT)
         .eq("request_id", requestId)
         .order("sequence_number", { ascending: true });
       if (error) throw error;
@@ -85,7 +88,7 @@ export function useShipmentItems(shipmentId: string | null | undefined) {
     queryFn: async (): Promise<ShipmentItem[]> => {
       const { data, error } = await sb
         .from("shipment_items")
-        .select("*")
+        .select(SHIPMENT_ITEM_SELECT)
         .eq("shipment_id", shipmentId)
         .order("created_at", { ascending: true });
       if (error) throw error;

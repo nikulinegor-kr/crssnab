@@ -40,6 +40,23 @@ export interface Request {
   received_by?: string | null;
 }
 
+// Keep list loading separate from volatile delivery/integration metadata that no list consumer reads.
+// Full request dialogs still receive every field used by their forms, while PostgREST no longer serializes SELECT *.
+const REQUEST_LIST_SELECT = [
+  "id", "request_number", "request_date", "description", "status", "priority",
+  "applicant", "applicant_user_id", "created_by", "executor", "object_id",
+  "estimated_delivery_days", "order_days", "availability_delivery_time", "contractor",
+  "invoice_number", "invoice_number_2", "invoice_number_3", "invoice_date",
+  "amount", "amount_2", "amount_3", "payment_percentage", "payment_percent",
+  "payment_status", "payment_date", "shipment_date", "delivery_date",
+  "planned_delivery_date", "actual_arrival_date", "transport_company", "waybill_number",
+  "comments", "photo_url", "document_url", "photo_urls", "document_urls",
+  "organization_id", "created_at", "updated_at", "archived", "received_by",
+  "equipment_id", "parent_request_id", "is_project", "product_id", "warehouse_id",
+  "quantity", "unit", "operation_type", "reserve_on_warehouse",
+  "request_objects(id,name)", "equipment(id,brand,model,plate_number,vin)",
+].join(",");
+
 export const useRequests = (showArchived: boolean = false, enabled: boolean = true) => {
   const orgId =
     typeof window !== "undefined"
@@ -57,7 +74,7 @@ export const useRequests = (showArchived: boolean = false, enabled: boolean = tr
       const buildQuery = () => {
         let query = supabase
           .from("requests")
-          .select("*, request_objects(id, name), equipment(id, brand, model, plate_number, vin)")
+          .select(REQUEST_LIST_SELECT)
           .eq("archived", showArchived)
           .eq("is_project", false);
         if (orgId) query = query.eq("organization_id", orgId);

@@ -9,12 +9,14 @@ export function issueSplit(i: IssueQty): IssueSplit {
 }
 
 export type IssueGroup = 'object' | 'equipment' | 'employee';
-export interface IssueTarget { object_id: string | null; equipment_id: string | null; recipient_user_id?: string | null }
+export interface IssueTarget { object_id: string | null; equipment_id: string | null; recipient_user_id?: string | null; recipient_name?: string | null }
 /** Group key for the "Выдано" screen: object first, then equipment, then the employee personally. */
 export function issueGroup(i: IssueTarget): { group: IssueGroup; id: string } {
   if (i.object_id) return { group: 'object', id: i.object_id };
   if (i.equipment_id) return { group: 'equipment', id: i.equipment_id };
-  return { group: 'employee', id: i.recipient_user_id ?? 'unknown' };
+  if (i.recipient_user_id) return { group: 'employee', id: i.recipient_user_id };
+  const manualName = i.recipient_name?.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU');
+  return { group: 'employee', id: manualName ? `manual:${manualName}` : 'unknown' };
 }
 
 /** Totals per unit of measure — different units are never summed together. */

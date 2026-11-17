@@ -17,6 +17,14 @@ test('grouping prefers object, then equipment, then employee', () => {
   expect(issueGroup({ object_id: null, equipment_id: null, recipient_user_id: 'u' })).toEqual({ group: 'employee', id: 'u' });
 });
 
+test('manually typed employees remain separate, while spelling variants of one name stay together', () => {
+  const ivanov = issueGroup({ object_id: null, equipment_id: null, recipient_user_id: null, recipient_name: 'Иванов Иван' });
+  const petrov = issueGroup({ object_id: null, equipment_id: null, recipient_user_id: null, recipient_name: 'Петров Пётр' });
+  const ivanovVariant = issueGroup({ object_id: null, equipment_id: null, recipient_user_id: null, recipient_name: '  иванов   иван ' });
+  expect(ivanov.id).not.toBe(petrov.id);
+  expect(ivanovVariant.id).toBe(ivanov.id);
+});
+
 test('different units are never summed together', () => {
   const t = totalsByUnit([{ unit: 'шт', split: issueSplit({ issued_qty: 2, returned_qty: 0 }) }, { unit: 'комплект', split: issueSplit({ issued_qty: 1, returned_qty: 0 }) }, { unit: 'шт', split: issueSplit({ issued_qty: 3, returned_qty: 1 }) }]);
   expect(t).toHaveLength(2);
