@@ -4,7 +4,6 @@ import {
   FileText,
   UserRound,
 } from "lucide-react";
-import crssMark from "@/assets/crss-mark.svg";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -279,17 +278,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="crss-app-sidebar">
-      <SidebarHeader className="border-b border-border/40 p-4">
-        <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
-          <img src={crssMark} alt="" className="h-9 w-9 shrink-0" />
-          {showText && (
+      {showText && (
+        <SidebarHeader className="border-b border-border/40 p-4">
+          <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
             <span className="text-[20px] font-bold leading-none tracking-[0.01em] text-foreground">
               CRSS<span className="ml-1 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
             </span>
-          )}
-        </div>
-        {showText && <div className="mt-3"><OrganizationSwitcher /></div>}
-      </SidebarHeader>
+          </div>
+          <div className="mt-3"><OrganizationSwitcher /></div>
+        </SidebarHeader>
+      )}
 
       <SidebarContent ref={contentRef} className="overflow-y-auto overscroll-contain">
         {/* Favorites first */}
