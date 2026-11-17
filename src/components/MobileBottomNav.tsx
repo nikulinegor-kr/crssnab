@@ -1,7 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { ClipboardList, Zap, ListChecks, Menu, Warehouse } from "lucide-react";
+import { ClipboardList, Truck, ListChecks, Menu, Warehouse } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useQuickRequest } from "./quick-request/QuickRequestProvider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
@@ -32,7 +31,6 @@ const Item = ({
 );
 
 export const MobileBottomNav = () => {
-  const { open } = useQuickRequest();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
   const { hasRouteAccess } = useUserPermissions();
@@ -53,24 +51,17 @@ export const MobileBottomNav = () => {
         {hasRouteAccess("/requests") && <Item to="/requests" label="Заявки" icon={ClipboardList} />}
         {hasRouteAccess("/tasks") && <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks"} />}
 
-        <Button variant="ghost"
-          type="button"
-          onClick={open}
-          aria-label="Быстрая заявка"
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-none px-0 text-primary"
-        >
-          <Zap className="h-5 w-5" />
-          <span className="text-xs font-medium">Быстро</span>
-        </Button>
+{hasRouteAccess("/shipments") && <Item to="/shipments" label="Поставки" icon={Truck} />}
 
         {hasRouteAccess("/warehouse") && <Item to="/warehouse" label="Склад" icon={Warehouse} />}
         <Button variant="ghost"
           type="button"
           onClick={toggleSidebar}
+          aria-label="Ещё"
           className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium text-muted-foreground"
         >
           <Menu className="h-5 w-5" />
-          <span>Меню</span>
+          <span>Ещё</span>
         </Button>
       </div>
     </nav>

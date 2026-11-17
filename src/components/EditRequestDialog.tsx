@@ -1029,7 +1029,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
           {!isViewer && <SaveIndicator />}
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="hidden text-sm text-muted-foreground md:block">
           {isViewer 
             ? `Просмотр заявки ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}` 
             : `Заявка ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}`

@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Package } from "lucide-react";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileRequestRow } from "@/components/requests/MobileRequestList";
 
 const ShipmentsPage = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const ShipmentsPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [contractorFilter, setContractorFilter] = useState<string>("all");
   const [hideDelivered, setHideDelivered] = useState(true);
+  const isMobile = useIsMobile();
 
   const allShipments = useMemo(() => {
     if (!requests) return [];
@@ -126,7 +129,13 @@ const ShipmentsPage = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {isMobile ? (
+        <Card className="overflow-hidden px-4 max-[340px]:px-3">
+          {isLoading ? <p className="py-8 text-center text-sm text-muted-foreground">Загрузка…</p>
+            : shipments.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">Поставки не найдены</p>
+            : <ul>{shipments.map((r) => <MobileRequestRow key={r.id} request={r} onOpen={(x) => navigate(`/requests?request=${x.id}`)} />)}</ul>}
+        </Card>
+      ) : (
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -205,6 +214,7 @@ const ShipmentsPage = () => {
           </Table>
         </div>
       </Card>
+      )}
     </div>
   );
 };

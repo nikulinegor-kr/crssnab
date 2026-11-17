@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowLeft, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -964,7 +964,7 @@ export const RequestSidePanel = ({
             )
 
           : asOverlay
-            ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] overflow-hidden shadow-panel motion-reduce:animate-none"
+            ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] max-md:!w-screen max-md:!inset-x-0 max-md:border-l-0 overflow-hidden shadow-panel motion-reduce:animate-none"
             : "h-full w-full overflow-hidden"
       )}
       style={
@@ -1025,6 +1025,11 @@ export const RequestSidePanel = ({
 
       {/* Header */}
       {!assistantOpen && <>
+      <div className="flex-none px-4 pt-3 md:hidden">
+        <Button type="button" variant="ghost" size="sm" className="-ml-2 h-10 gap-1 px-2 text-sm text-primary" onClick={onClose}>
+          <ArrowLeft className="h-4 w-4" />Назад
+        </Button>
+      </div>
       <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
         <RequestInlineField
           label="Название заявки"
@@ -1036,7 +1041,7 @@ export const RequestSidePanel = ({
           onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
           onSave={(value) => saveField("description", value.trim())}
         />
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5 max-md:hidden">
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
@@ -1114,7 +1119,7 @@ export const RequestSidePanel = ({
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
         />
-        <span className="font-numeric" title={request.request_number || undefined}>{formatRequestPublicNumber(request) ?? request.request_number}</span>
+        <span className="hidden font-numeric md:inline" title={request.request_number || undefined}>{formatRequestPublicNumber(request) ?? request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
         {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}

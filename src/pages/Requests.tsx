@@ -39,12 +39,17 @@ import { useAuthUserId } from "@/hooks/useOrgMembership";
 
 import { Plus, ShoppingCart, Star, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileRequestList } from "@/components/requests/MobileRequestList";
+import { MobileAttentionChips } from "@/components/requests/MobileAttentionChips";
+import { applyMobileHideDelivered } from "@/lib/mobileRequestList";
 
 const Requests = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrgId } = useCurrentOrganization();
   const { canCreate } = useUserRole();
+  const isMobile = useIsMobile();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "procurement" | "favorites">("active");
@@ -511,7 +516,7 @@ const Requests = () => {
       <div className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-card px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
           <div className="min-w-0">
-            <h1 className="text-base font-semibold">Заявки</h1>
+            <h1 className="text-[35px] leading-tight font-semibold md:text-base">Заявки</h1>
             <p className="text-xs text-muted-foreground font-numeric">
               {filters.filteredRequests?.length || 0} найдено
               {(requests?.length || 0) > 0 && (filters.filteredRequests?.length || 0) === 0 && (
@@ -553,7 +558,7 @@ const Requests = () => {
                   onClick={() => setIsCreateDialogOpen(true)}
                   aria-label="Новая заявка"
                   size="sm"
-                  className="h-8 gap-1.5 px-3 text-xs font-semibold shadow-none sm:sticky sm:top-16 sm:z-10"
+                  className="h-[46px] gap-1.5 px-4 text-sm font-semibold shadow-none md:h-8 md:px-3 md:text-xs sm:sticky sm:top-16 sm:z-10"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="hidden xs:inline">Новая заявка</span>
@@ -617,8 +622,17 @@ const Requests = () => {
 
         <div className="flex min-h-0 flex-1 flex-col gap-2 [&>*:not(:last-child)]:flex-none">
 
+          {isMobile && (
+            <MobileAttentionChips
+              active={filters.specialDateFilter}
+              onChange={(f) => {
+                if (f) { filters.setPriorityFilter("all"); filters.setStatusFilter([]); }
+                filters.setSpecialDateFilter(f);
+              }}
+            />
+          )}
           {/* LEVEL 3: KPI Dashboard */}
-          <RequestsMiniDashboard
+          {!isMobile && <RequestsMiniDashboard
             requests={requests}
             onFilterClick={(type, value) => {
               filters.setSpecialDateFilter(null);
@@ -638,7 +652,7 @@ const Requests = () => {
             activeSpecialFilter={filters.specialDateFilter}
             activePriorityFilter={filters.priorityFilter}
             activeStatusFilter={filters.statusFilter}
-          />
+          />}
 
           {/* LEVEL 4-6: Filters (search, quick, advanced) */}
           <RequestsFilters
@@ -696,6 +710,15 @@ const Requests = () => {
             <Button variant="link" className="min-h-11 px-1 text-xs" onClick={() => { filters.clearUrlFilters(); setSemanticSearchIds(null); }}>Сбросить</Button>
           </div>}
           {/* LEVEL 7: Table */}
+          {isMobile ? (
+            <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+              <MobileRequestList
+                requests={applyMobileHideDelivered(visibleRequests, filters.hideDelivered, filters.statusFilter)}
+                isLoading={isLoading}
+                onOpen={handleEditClick}
+              />
+            </div>
+          ) : (
           <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card" onClickCapture={closePanelFromTable}>
 
             <RequestsTable
@@ -721,6 +744,7 @@ const Requests = () => {
               columnVisibility={columnVisibility}
             />
           </div>
+          )}
         </div>
       )}
 
