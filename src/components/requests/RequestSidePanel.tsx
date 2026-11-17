@@ -135,6 +135,7 @@ export const RequestSidePanel = ({
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [isRecognizingInvoice, setIsRecognizingInvoice] = useState(false);
+  const [preserveInvoiceAmount, setPreserveInvoiceAmount] = useState(false);
   const [recognizedSupplier, setRecognizedSupplier] = useState<{ name: string; inn: string | null } | null>(null);
   const [, setActiveEditor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -239,6 +240,7 @@ export const RequestSidePanel = ({
     setTab(initialTab);
     setUploads([]);
     setRecognizedSupplier(null);
+    setPreserveInvoiceAmount(false);
   }, [request?.id, open, initialTab]);
 
   const applyLocalRequestPatch = useCallback((patch: Record<string, unknown>) => {
@@ -377,7 +379,7 @@ export const RequestSidePanel = ({
 
   /** Загрузка файлов: свой прогресс и своя ошибка у каждого файла. */
   const handleUpload = useCallback(
-    async (files: File[]) => {
+    async (files: File[], forcedKind?: "document") => {
       if (!request || readOnly) return;
       for (const file of files) {
         const id = `${file.name}-${Date.now()}-${Math.random()}`;
@@ -387,7 +389,7 @@ export const RequestSidePanel = ({
           continue;
         }
         setUploads((u) => [...u, { id, name: file.name, progress: 5 }]);
-        const kind = detectKind(file);
+        const kind = forcedKind ?? detectKind(file);
         const bucket = kind === "photo" ? "request-photos" : "request-documents";
         const column = kind === "photo" ? "photo_urls" : "document_urls";
         const path = `${request.request_number}/${Date.now()}-${sanitizeName(file.name)}`;
@@ -422,6 +424,96 @@ export const RequestSidePanel = ({
     },
     [applyLocalRequestPatch, documentUrls, photoUrls, queryClient, readOnly, request]
   );
+
+  const handleRecognizeInvoice = async (file: File) => {
+    if (!request || readOnly || isRecognizingInvoice) return;
+    let addedItems = 0;
+    let fieldsSaved = false;
+    setIsRecognizingInvoice(true);
+    try {
+      const data = await recognizeInvoiceFile(file, "all");
+      const result = buildInvoiceAutofill(data, 1, suppliers || []);
+      if (!result.filledFields.length && !result.items.length) {
+        toast({ title: "Не удалось распознать", description: invoiceAutofillMessage(result, 0, 0) || "Данные не найдены", variant: "destructive" });
+        return;
+      }
+
+      const { data: currentItems, error: itemsReadError } = await supabase
+        .from("request_items")
+        .select("article, name, quantity, unit, price")
+        .eq("request_id", request.id);
+      if (itemsReadError) throw itemsReadError;
+      const existing = normalizeRecognizedItems(currentItems || []);
+      const merged = mergeRecognizedItems(existing, result.items);
+      const additions = merged.items.slice(existing.length);
+      if (result.patch.amount != null) setPreserveInvoiceAmount(true);
+      if (additions.length) {
+        const { error } = await supabase.from("request_items").insert(additions.map((item) => ({
+          request_id: request.id,
+          organization_id: request.organization_id,
+          article: item.article || null,
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          price: item.price ?? 0,
+        })));
+        if (error) throw error;
+        addedItems = additions.length;
+      }
+
+      if (Object.keys(result.patch).length) {
+        const { error } = await supabase.from("requests").update(result.patch).eq("id", request.id);
+        if (error) throw error;
+        fieldsSaved = true;
+        applyLocalRequestPatch(result.patch);
+      }
+      setRecognizedSupplier(result.contractorName && !result.matchedSupplier
+        ? { name: result.contractorName, inn: result.contractorInn }
+        : null);
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["request-items", request.id] }),
+        queryClient.invalidateQueries({ queryKey: ["requests"] }),
+        queryClient.invalidateQueries({ queryKey: ["request", request.id] }),
+      ]);
+      const alreadyAttached = documentUrls.some((url) => {
+        try { return decodeURIComponent(url.split("/").pop() || "").replace(/^\d+-/, "") === file.name; }
+        catch { return false; }
+      });
+      if (!alreadyAttached) await handleUpload([file], "document");
+      toast({
+        title: result.missing.length ? "Счёт распознан частично" : "Счёт распознан",
+        description: invoiceAutofillMessage(result, addedItems, result.items.length),
+      });
+    } catch (error) {
+      const progress = [
+        fieldsSaved ? "Реквизиты сохранены" : "",
+        addedItems ? `Добавлено позиций: ${addedItems}` : "",
+      ].filter(Boolean).join(". ");
+      toast({
+        title: fieldsSaved || addedItems ? "Счёт распознан частично" : "Ошибка распознавания",
+        description: [progress, error instanceof Error ? error.message : "Не удалось обработать документ"].filter(Boolean).join(". "),
+        variant: "destructive",
+      });
+    } finally {
+      setIsRecognizingInvoice(false);
+    }
+  };
+
+  const addRecognizedSupplier = async () => {
+    if (!recognizedSupplier || !currentOrgId) return;
+    const { error } = await supabase.from("suppliers").insert({
+      organization_id: currentOrgId,
+      name: recognizedSupplier.name,
+      inn: recognizedSupplier.inn,
+    });
+    if (error) {
+      toast({ title: "Не удалось добавить контрагента", description: error.message, variant: "destructive" });
+      return;
+    }
+    setRecognizedSupplier(null);
+    await queryClient.invalidateQueries({ queryKey: ["panel-suppliers", currentOrgId] });
+    toast({ title: "Контрагент добавлен" });
+  };
 
   const goods = request?.amount || 0;
   const extra = ((request as any)?.amount_2 || 0) + ((request as any)?.amount_3 || 0);
@@ -591,6 +683,11 @@ export const RequestSidePanel = ({
               readOnly={readOnly}
               alwaysEdit={editMode}
               onSave={(v) => saveField("contractor", v)}
+              extraAction={recognizedSupplier && !readOnly ? (
+                <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 px-2 text-xs" onClick={() => void addRecognizedSupplier()}>
+                  В справочник
+                </Button>
+              ) : undefined}
             />
     </>
   );
@@ -813,8 +910,9 @@ export const RequestSidePanel = ({
             items={(items || []) as any}
             readOnly={readOnly}
             onRecognizeInvoice={readOnly ? undefined : () => invoiceInputRef.current?.click()}
+            recognizing={isRecognizingInvoice}
             onTotalChange={(itemsTotal) => {
-              if (itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
+              if (!preserveInvoiceAmount && itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
                 void saveField("amount", itemsTotal, { silent: true });
               }
             }}
@@ -902,11 +1000,11 @@ export const RequestSidePanel = ({
         ref={invoiceInputRef}
         type="file"
         hidden
-        accept="application/pdf,image/*"
+        accept=".pdf,.xlsx,.xls,.csv,.ods,image/*"
         onChange={(e) => {
-          const files = Array.from(e.target.files || []);
+          const file = e.target.files?.[0];
           e.target.value = "";
-          if (files.length) handleUpload(files);
+          if (file) void handleRecognizeInvoice(file);
         }}
       />
       {!isFullscreen && (

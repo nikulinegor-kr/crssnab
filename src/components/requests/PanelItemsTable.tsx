@@ -134,7 +134,8 @@ export const PanelItemsTable = ({
               Добавить позицию
             </Button>
             {onRecognizeInvoice && (
-              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={onRecognizeInvoice}>
+              <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={onRecognizeInvoice} disabled={recognizing}>
+                {recognizing && <Loader2 className="h-3 w-3 animate-spin" />}
                 Распознать счёт
               </Button>
             )}
@@ -146,10 +147,11 @@ export const PanelItemsTable = ({
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-[1fr_70px_52px_64px_72px_20px] gap-1 text-[9.5px] text-muted-foreground">
+      <div className="grid grid-cols-[1fr_70px_52px_44px_64px_72px_20px] gap-1 text-[9.5px] text-muted-foreground">
         <span>Наименование</span>
         <span>Артикул</span>
         <span className="text-right">Кол-во</span>
+        <span>Ед.</span>
         <span className="text-right">Цена</span>
         <span className="text-right">Сумма</span>
         <span />
@@ -160,7 +162,7 @@ export const PanelItemsTable = ({
       {items.map((it) => (
         <div
           key={it.id}
-          className="grid grid-cols-[1fr_70px_52px_64px_72px_20px] items-center gap-1 border-b border-border/70 pb-1"
+          className="grid grid-cols-[1fr_70px_52px_44px_64px_72px_20px] items-center gap-1 border-b border-border/70 pb-1"
         >
           <input
             defaultValue={it.name}
@@ -183,6 +185,14 @@ export const PanelItemsTable = ({
             onBlur={(e) => Number(e.target.value) !== it.quantity && patch(it.id, "quantity", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             className={`${cellClass} font-numeric text-right`}
+          />
+          <input
+            defaultValue={it.unit || "шт"}
+            readOnly={readOnly}
+            aria-label="Единица"
+            onBlur={(e) => e.target.value !== (it.unit || "шт") && patch(it.id, "unit", e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            className={cellClass}
           />
           <input
             type="number"
@@ -213,8 +223,9 @@ export const PanelItemsTable = ({
       ))}
 
       {/* Подвал таблицы: «Итого» слева, сумма — в колонке «Сумма» */}
-      <div className="grid grid-cols-[1fr_70px_52px_64px_72px_20px] items-center gap-1 border-t border-border pt-1.5">
+      <div className="grid grid-cols-[1fr_70px_52px_44px_64px_72px_20px] items-center gap-1 border-t border-border pt-1.5">
         <span className="text-[11px] font-medium">Итого</span>
+        <span />
         <span />
         <span />
         <span />
@@ -223,11 +234,17 @@ export const PanelItemsTable = ({
       </div>
 
       {!readOnly && (
-        <div className="pt-1">
-          <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={addRow} disabled={adding}>
+        <div className="flex flex-wrap gap-1 pt-1">
+          <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={addRow} disabled={adding || recognizing}>
             {adding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
             Добавить позицию
           </Button>
+          {onRecognizeInvoice && (
+            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={onRecognizeInvoice} disabled={recognizing}>
+              {recognizing && <Loader2 className="h-3 w-3 animate-spin" />}
+              Распознать счёт
+            </Button>
+          )}
         </div>
       )}
 
