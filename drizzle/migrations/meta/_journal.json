@@ -239,6 +239,13 @@
       "when": 1794896064875,
       "tag": "0033_request_hard_delete_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794896982382,
+      "tag": "0034_fix_hard_delete_requests_lock",
+      "breakpoints": true
     }
   ]
 }
