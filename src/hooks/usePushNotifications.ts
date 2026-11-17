@@ -112,7 +112,7 @@ export const usePushNotifications = () => {
           type: 'show-notification',
           title,
           body: options?.body,
-          url: options?.link || '/dashboard',
+          url: options?.link || '/requests',
           tag: options?.tag,
           icon: '/favicon.png',
           badge: '/favicon.png',
@@ -125,7 +125,7 @@ export const usePushNotifications = () => {
         icon: '/favicon.png',
         tag: options?.tag,
       });
-      n.onclick = () => { window.focus(); window.location.href = options?.link || '/dashboard'; n.close(); };
+      n.onclick = () => { window.focus(); window.location.href = options?.link || '/requests'; n.close(); };
       return true;
     } catch (error) {
       console.error('Error sending notification:', error);

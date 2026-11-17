@@ -3,7 +3,9 @@ import {
   ChevronRight,
   Star,
   FileText,
+  UserRound,
 } from "lucide-react";
+import crssMark from "@/assets/crss-mark.svg";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -46,7 +48,7 @@ const OPEN_KEY = "sidebar:groups-open:v1";
 const SCROLL_KEY = "sidebar:scroll-top:v1";
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -190,8 +192,13 @@ export function AppSidebar() {
   }, [openGroups]);
 
 
+  const closeMobileMenu = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
   const handleLogout = async () => {
-    if (isDemoMode) { navigate("/"); return; }
+    closeMobileMenu();
+    if (isDemoMode) { navigate("/auth"); return; }
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({ title: "Ошибка", description: "Не удалось выйти из системы", variant: "destructive" });
@@ -201,7 +208,7 @@ export function AppSidebar() {
   };
 
   const renderItem = (item: MenuItem) => {
-    const isActive = currentPath === item.url;
+    const isActive = currentPath === item.url || currentPath.startsWith(item.url + "/");
     const url = isDemoMode ? `${item.url}?demo=true` : item.url;
     const showUnread = item.url === "/chat" && totalUnread > 0;
 
@@ -209,10 +216,10 @@ export function AppSidebar() {
       <SidebarMenuButton asChild isActive={isActive} className="min-h-9">
         <NavLink
           to={url}
-          end
-          className="hover:bg-accent/50 transition-colors rounded-md relative"
-          activeClassName="bg-primary/20 text-primary font-medium"
+          className="hover:bg-sidebar-accent/60 transition-colors rounded-md relative"
+          activeClassName="bg-sidebar-accent text-primary font-medium"
           aria-label={!showText ? item.title : undefined}
+          onClick={closeMobileMenu}
         >
           <div className="relative">
             <item.icon className="h-4 w-4" />
@@ -257,10 +264,12 @@ export function AppSidebar() {
       <DropdownMenuItem key={`${item.id}-${item.url}`} asChild className="min-h-9 cursor-pointer">
         <NavLink
           to={url}
-          end
           className="flex w-full items-center gap-2"
-          activeClassName="bg-primary/20 text-primary font-medium"
-          onClick={() => setFlyoutGroup(null)}
+          activeClassName="bg-sidebar-accent text-primary font-medium"
+          onClick={() => {
+            setFlyoutGroup(null);
+            closeMobileMenu();
+          }}
         >
           <item.icon className="h-4 w-4 shrink-0" />
           <span>{item.title}</span>
@@ -274,13 +283,17 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="crss-app-sidebar">
       <SidebarHeader className="border-b border-border/40 p-4">
-        {showText && (
-          <div className="space-y-2">
-            <OrganizationSwitcher />
-          </div>
-        )}
+        <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
+          <img src={crssMark} alt="" className="h-9 w-9 shrink-0" />
+          {showText && (
+            <span className="text-[20px] font-bold leading-none tracking-[0.01em] text-foreground">
+              CRSS<span className="ml-1 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
+            </span>
+          )}
+        </div>
+        {showText && <div className="mt-3"><OrganizationSwitcher /></div>}
       </SidebarHeader>
 
       <SidebarContent ref={contentRef} className="overflow-y-auto overscroll-contain">
@@ -352,21 +365,24 @@ export function AppSidebar() {
               >
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel
+                    asChild
                     className={
                       "group/label flex h-8 cursor-pointer items-center justify-between px-3 text-xs text-muted-foreground/70 hover:text-foreground transition-colors " +
                       (isGroupActive ? "text-foreground" : "")
                     }
                   >
-                    <span className="flex items-center gap-2">
-                      <group.icon className="h-3.5 w-3.5" />
-                      {group.label}
-                    </span>
-                    <ChevronRight
-                      className={
-                        "h-3.5 w-3.5 transition-transform duration-200 " +
-                        (isOpen ? "rotate-90" : "")
-                      }
-                    />
+                    <button type="button" className="w-full text-left">
+                      <span className="flex items-center gap-2">
+                        <group.icon className="h-3.5 w-3.5" />
+                        {group.label}
+                      </span>
+                      <ChevronRight
+                        className={
+                          "h-3.5 w-3.5 transition-transform duration-200 " +
+                          (isOpen ? "rotate-90" : "")
+                        }
+                      />
+                    </button>
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="overflow-hidden">
@@ -383,7 +399,21 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-border/40 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="min-h-9 hover:bg-destructive/10 hover:text-destructive">
+            <SidebarMenuButton asChild isActive={currentPath.startsWith("/me")} className="min-h-10">
+              <NavLink
+                to="/me"
+                className="hover:bg-sidebar-accent/60 rounded-md"
+                activeClassName="bg-sidebar-accent text-primary font-medium"
+                aria-label={!showText ? "Личный кабинет" : undefined}
+                onClick={closeMobileMenu}
+              >
+                <UserRound className="h-4 w-4" />
+                {showText && <span>Личный кабинет</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} className="min-h-10 hover:bg-destructive/10 hover:text-destructive" aria-label={!showText ? "Выход" : undefined}>
               <LogOut className="h-4 w-4" />
               {showText && <span>{isDemoMode ? "Выйти из демо" : "Выход"}</span>}
             </SidebarMenuButton>

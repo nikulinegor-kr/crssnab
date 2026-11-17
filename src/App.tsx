@@ -11,8 +11,7 @@ import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
-import { PersistentAppLayout } from "./components/PersistentAppLayout";
-import { PlannerBoardSkeleton } from "./components/planner/PlannerBoardSkeleton";
+import { LegacyRouteRedirect } from "./components/LegacyRouteRedirect";
 
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
@@ -21,9 +20,7 @@ import { QuickRequestProvider } from "./components/quick-request/QuickRequestPro
 import { useMobileKeyboardFocus } from "./hooks/useMobileKeyboardFocus";
 
 // Lazy load all pages with retry mechanism for code splitting
-const Index = lazyWithRetry(() => import("./pages/Index"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
-const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const ExecutivePanelPage = lazyWithRetry(() => import("./pages/ExecutivePanelPage"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
@@ -41,10 +38,8 @@ const SelectOrganization = lazyWithRetry(() => import("./pages/SelectOrganizatio
 const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSettings"));
 const SidebarSettings = lazyWithRetry(() => import("./pages/SidebarSettings"));
 const AgentReport = lazyWithRetry(() => import("./pages/AgentReport"));
-const AgentActReport = lazyWithRetry(() => import("./pages/AgentActReport"));
 const PercentCalculator = lazyWithRetry(() => import("./pages/PercentCalculator"));
 
-const AIAnalytics = lazyWithRetry(() => import("./pages/AIAnalytics"));
 const SpareParts = lazyWithRetry(() => import("./pages/SpareParts"));
 const FilterElements = lazyWithRetry(() => import("./pages/FilterElements"));
 const DeadstockPage = lazyWithRetry(() => import("./pages/DeadstockPage"));
@@ -64,28 +59,18 @@ const SupplyDashboardPage = lazyWithRetry(() => import("./pages/SupplyDashboardP
 const MovementJournalPage = lazyWithRetry(() => import("./pages/MovementJournalPage"));
 const QrWarehousePage = lazyWithRetry(() => import("./pages/QrWarehousePage"));
 const MaterialStatementsPage = lazyWithRetry(() => import("./pages/MaterialStatementsPage"));
-const BoardPage = lazyWithRetry(() => import("./pages/BoardPage"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Features = lazyWithRetry(() => import("./pages/Features"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const Contact = lazyWithRetry(() => import("./pages/Contact"));
 const SystemDemo = lazyWithRetry(() => import("./pages/SystemDemo"));
-const EmployeeLogin = lazyWithRetry(() => import("./pages/EmployeeLogin"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const OAuthConsent = lazyWithRetry(() => import("./pages/OAuthConsent"));
 
 const ActionLogPage = lazyWithRetry(() => import("./pages/ActionLogPage"));
 const TeamPerformancePage = lazyWithRetry(() => import("./pages/TeamPerformancePage"));
 const ErrorLogsPage = lazyWithRetry(() => import("./pages/ErrorLogsPage"));
-const PlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.CrmPlannerLayout })));
-const MyPlannerLayout = lazyWithRetry(() => import("./pages/planner/PlannerLayout").then(m => ({ default: m.MyPlannerLayout })));
-const PlannerPeople = lazyWithRetry(() => import("./pages/planner/PlannerPeople"));
-const PlannerTasksList = lazyWithRetry(() => import("./pages/planner/PlannerTasksList"));
-const PlannerKanban = lazyWithRetry(() => import("./pages/planner/PlannerKanban"));
-const PlannerCalendar = lazyWithRetry(() => import("./pages/planner/PlannerCalendar"));
-const PlannerStages = lazyWithRetry(() => import("./pages/planner/PlannerStages"));
-const PlannerTemplates = lazyWithRetry(() => import("./pages/planner/PlannerTemplates"));
 const AnalyticsExecutorsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorsPage"));
 const AnalyticsExecutorDetailPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsExecutorDetailPage"));
 const AnalyticsRequestsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsRequestsPage"));
@@ -93,8 +78,6 @@ const AnalyticsFinancePage = lazyWithRetry(() => import("./pages/analytics/Analy
 const RequestsRegistryPage = lazyWithRetry(() => import("./pages/finance/RequestsRegistryPage"));
 const AnalyticsObjectsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsObjectsPage"));
 const AnalyticsLogisticsPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsLogisticsPage"));
-const AnalyticsAiPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsAiPage"));
-const AnalyticsDayPrepPage = lazyWithRetry(() => import("./pages/analytics/AnalyticsDayPrepPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -138,11 +121,11 @@ const App = () => {
 
           <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Auth />} />
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-            <Route path="/employee-login" element={<EmployeeLogin />} />
+            <Route path="/employee-login" element={<Auth />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
@@ -156,16 +139,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
             <Route
               path="/executive"
               element={
@@ -207,16 +181,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/board"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <BoardPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/board" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
             <Route
               path="/requests/:id"
               element={
@@ -301,16 +266,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/agent-act-report"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AgentActReport />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/agent-act-report" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
             <Route
               path="/percent-calculator"
               element={
@@ -321,16 +277,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/ai-analytics"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AIAnalytics />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/ai-analytics" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
             <Route
               path="/spare-parts"
               element={
@@ -457,26 +404,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/analytics/ai"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AnalyticsAiPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics/day-prep"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AnalyticsDayPrepPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/analytics/ai" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
+            <Route path="/analytics/day-prep" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
             <Route
               path="/documents"
               element={
@@ -642,36 +571,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              element={
-                <PersistentAppLayout fullBleed fallback={<PlannerBoardSkeleton />} />
-              }
-            >
-            <Route
-              path="/planner"
-              element={<PlannerLayout />}
-            >
-
-              <Route index element={<PlannerPeople />} />
-              <Route path="people" element={<Navigate to="/planner" replace />} />
-              <Route path="tasks" element={<PlannerTasksList />} />
-              <Route path="board" element={<PlannerKanban />} />
-              <Route path="calendar" element={<PlannerCalendar />} />
-              <Route path="stages" element={<PlannerStages />} />
-              <Route path="templates" element={<PlannerTemplates />} />
-              {/* Legacy planner views — folded into the four main ones */}
-              <Route path="today" element={<Navigate to="/planner" replace />} />
-              <Route path="dashboard" element={<Navigate to="/planner" replace />} />
-              <Route path="timeline" element={<Navigate to="/planner/calendar" replace />} />
-              <Route path="workload" element={<Navigate to="/planner" replace />} />
-              <Route path="by-object" element={<Navigate to="/planner" replace />} />
-              <Route path="equipment" element={<Navigate to="/equipment" replace />} />
-            </Route>
-            </Route>
-
-            <Route path="/my-planner" element={<Navigate to="/planner" replace />} />
-            <Route path="/my-planner/*" element={<Navigate to="/planner" replace />} />
-            <Route path="/planner/my" element={<Navigate to="/planner" replace />} />
+            <Route path="/planner/*" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
+            <Route path="/my-planner/*" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

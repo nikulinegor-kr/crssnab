@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -11,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Package, Pencil, Trash2, Filter, Download, Upload, AlertTriangle, History, ShoppingCart } from "lucide-react";
+import { Plus, Search, Package, Pencil, Trash2, Filter, Download, Upload, AlertTriangle, History, ShoppingCart, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -232,6 +233,12 @@ export default function NomenclaturePage() {
           <span className="text-muted-foreground text-sm">({filtered.length})</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/spare-parts"><Wrench className="h-4 w-4 mr-1" />Запчасти</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/filter-elements"><Filter className="h-4 w-4 mr-1" />Фильтрующие элементы</Link>
+          </Button>
           <Button onClick={openCreate} size="sm">
             <Plus className="h-4 w-4 mr-1" /> Добавить товар
           </Button>

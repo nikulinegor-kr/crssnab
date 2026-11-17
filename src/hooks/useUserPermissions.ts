@@ -62,16 +62,9 @@ export const PERMISSION_TREE = [
     key: "analytics" as PermissionKey,
     label: "Аналитика",
     children: [
-      { key: "analytics.dashboard" as PermissionKey, label: "Дашборд" },
+      { key: "analytics.dashboard" as PermissionKey, label: "Операционные отчёты" },
       { key: "analytics.executive" as PermissionKey, label: "Панель руководителя" },
       { key: "analytics.reports" as PermissionKey, label: "Отчёты" },
-    ],
-  },
-  {
-    key: "planner" as PermissionKey,
-    label: "Планировщик",
-    children: [
-      { key: "planner.access" as PermissionKey, label: "Доступ к Планировщику" },
     ],
   },
 ];

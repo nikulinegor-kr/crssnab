@@ -1,29 +1,54 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { menuGroups, SIDEBAR_STRUCTURE_VERSION } from "@/config/sidebarMenu";
 
 export type SidebarPrefs = {
-  hidden: string[]; // item ids
-  order: Record<string, string[]>; // groupKey -> ordered item ids
-  favorites: string[]; // item ids (also ordered)
+  hidden: string[];
+  order: Record<string, string[]>;
+  favorites: string[];
+  structureVersion: number;
 };
 
-const DEFAULT: SidebarPrefs = { hidden: [], order: {}, favorites: [] };
+const DEFAULT: SidebarPrefs = {
+  hidden: [],
+  order: {},
+  favorites: [],
+  structureVersion: SIDEBAR_STRUCTURE_VERSION,
+};
 
 function keyFor(userId: string | null) {
   return `sidebar:prefs:v1:${userId ?? "anon"}`;
+}
+
+export function sanitizeSidebarPrefs(value: unknown): SidebarPrefs {
+  const parsed = value && typeof value === "object" ? value as Partial<SidebarPrefs> : {};
+  const validIds = new Set(menuGroups.flatMap((group) => group.items.map((item) => item.id)));
+  const validGroups = new Set(menuGroups.map((group) => group.key));
+  const uniqueValid = (input: unknown) => Array.isArray(input)
+    ? [...new Set(input.filter((id): id is string => typeof id === "string" && validIds.has(id)))]
+    : [];
+
+  const order: Record<string, string[]> = {};
+  // После смены структуры старый порядок применяется один раз: новый порядок групп становится базовым.
+  if (parsed.structureVersion === SIDEBAR_STRUCTURE_VERSION && parsed.order && typeof parsed.order === "object") {
+    for (const [groupKey, ids] of Object.entries(parsed.order)) {
+      if (validGroups.has(groupKey)) order[groupKey] = uniqueValid(ids);
+    }
+  }
+
+  return {
+    hidden: uniqueValid(parsed.hidden),
+    favorites: uniqueValid(parsed.favorites),
+    order,
+    structureVersion: SIDEBAR_STRUCTURE_VERSION,
+  };
 }
 
 function read(userId: string | null): SidebarPrefs {
   if (typeof window === "undefined") return DEFAULT;
   try {
     const raw = localStorage.getItem(keyFor(userId));
-    if (!raw) return DEFAULT;
-    const parsed = JSON.parse(raw);
-    return {
-      hidden: Array.isArray(parsed.hidden) ? parsed.hidden : [],
-      order: parsed.order && typeof parsed.order === "object" ? parsed.order : {},
-      favorites: Array.isArray(parsed.favorites) ? parsed.favorites : [],
-    };
+    return raw ? sanitizeSidebarPrefs(JSON.parse(raw)) : DEFAULT;
   } catch {
     return DEFAULT;
   }
@@ -43,9 +68,10 @@ export function useSidebarPrefs() {
 
   const save = useCallback(
     (next: SidebarPrefs) => {
-      setPrefs(next);
+      const sanitized = sanitizeSidebarPrefs(next);
+      setPrefs(sanitized);
       try {
-        localStorage.setItem(keyFor(userId), JSON.stringify(next));
+        localStorage.setItem(keyFor(userId), JSON.stringify(sanitized));
       } catch {
         // ignore
       }
@@ -62,14 +88,14 @@ export function useSidebarPrefs() {
 
   const toggleHidden = (id: string) => {
     const hidden = prefs.hidden.includes(id)
-      ? prefs.hidden.filter((x) => x !== id)
+      ? prefs.hidden.filter((itemId) => itemId !== id)
       : [...prefs.hidden, id];
     save({ ...prefs, hidden });
   };
 
   const toggleFavorite = (id: string) => {
     const favorites = prefs.favorites.includes(id)
-      ? prefs.favorites.filter((x) => x !== id)
+      ? prefs.favorites.filter((itemId) => itemId !== id)
       : [...prefs.favorites, id];
     save({ ...prefs, favorites });
   };

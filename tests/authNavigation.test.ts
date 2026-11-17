@@ -7,9 +7,16 @@ describe("auth navigation", () => {
   });
 
   test("rejects external and protocol-relative redirects", () => {
-    expect(safeNext("https://example.com/requests")).toBe("/select-organization");
-    expect(safeNext("//example.com/requests")).toBe("/select-organization");
-    expect(safeNext(null)).toBe("/select-organization");
+    expect(safeNext("https://example.com/requests")).toBe("/requests");
+    expect(safeNext("//example.com/requests")).toBe("/requests");
+    expect(safeNext("/\\example.com/requests")).toBe("/requests");
+    expect(safeNext(null)).toBe("/requests");
+  });
+
+  test("uses Requests by default and prevents an auth redirect loop", () => {
+    expect(safeNext("/")).toBe("/requests");
+    expect(safeNext("/auth?next=/tasks")).toBe("/requests");
+    expect(safeNext("/employee-login")).toBe("/requests");
   });
 
   test("recognizes all existing auth actions and defaults safely", () => {

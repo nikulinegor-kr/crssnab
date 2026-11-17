@@ -4,6 +4,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useQuickRequest } from "./quick-request/QuickRequestProvider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const Item = ({
   to,
@@ -34,6 +35,7 @@ export const MobileBottomNav = () => {
   const { open } = useQuickRequest();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
+  const { hasRouteAccess } = useUserPermissions();
   // Hide on auth/landing pages
   const hidden = ["/auth", "/employee-login", "/landing", "/"].includes(location.pathname);
   if (hidden) return null;
@@ -48,8 +50,8 @@ export const MobileBottomNav = () => {
       aria-label="Основная навигация"
     >
       <div className="flex items-stretch h-16">
-        <Item to="/requests" label="Заявки" icon={ClipboardList} />
-        <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks"} />
+        {hasRouteAccess("/requests") && <Item to="/requests" label="Заявки" icon={ClipboardList} />}
+        {hasRouteAccess("/tasks") && <Item to="/tasks" label="Задачи" icon={ListChecks} active={location.pathname === "/tasks"} />}
 
         <Button variant="ghost"
           type="button"
@@ -61,7 +63,7 @@ export const MobileBottomNav = () => {
           <span className="text-xs font-medium">Быстро</span>
         </Button>
 
-        <Item to="/warehouse" label="Склад" icon={Warehouse} />
+        {hasRouteAccess("/warehouse") && <Item to="/warehouse" label="Склад" icon={Warehouse} />}
         <Button variant="ghost"
           type="button"
           onClick={toggleSidebar}

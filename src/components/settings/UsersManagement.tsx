@@ -534,7 +534,7 @@ export const UsersManagement = ({ organizationId, isAdmin }: UsersManagementProp
                   <TableHead>Должность</TableHead>
                   <TableHead>Роль</TableHead>
                   <TableHead>Статус</TableHead>
-                  <TableHead className="text-center">Планировщик</TableHead>
+                  <TableHead className="text-center">Доступ к задачам</TableHead>
                   <TableHead className="text-center">Работа с задачами</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
                 </TableRow>

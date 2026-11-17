@@ -11,7 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const PAGE_NAMES: Record<string, string> = {
   "/requests": "Заявки",
-  "/dashboard": "Дашборд",
   "/objects": "Объекты",
   "/suppliers": "Поставщики",
   "/shipments": "Поставки",

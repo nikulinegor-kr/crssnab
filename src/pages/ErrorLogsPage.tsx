@@ -150,7 +150,7 @@ export default function ErrorLogsPage() {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/requests" replace />;
   }
 
   return (

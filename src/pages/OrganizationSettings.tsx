@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock, ShieldAlert } from "lucide-react";
+import { Loader2, User, Settings, Shield, Bell, CreditCard, UserCheck, Building2, FileText, Palette, Send, Bot, CalendarClock, ShieldAlert, LayoutList } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { MaxSettings } from "@/components/settings/MaxSettings";
@@ -25,6 +25,7 @@ import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import ErrorLogsPage from "@/pages/ErrorLogsPage";
 import { LetterTemplateSettings } from "@/components/settings/LetterTemplateSettings";
+import { Button } from "@/components/ui/button";
 
 const OrganizationSettings = () => {
   const navigate = useNavigate();
@@ -144,6 +145,11 @@ const OrganizationSettings = () => {
           <TabsContent value="profile" className="space-y-4">
             <SettingsSection title="Ваш профиль" description="Управление личными данными и уведомлениями" icon={User}>
               <ProfileSettings />
+            </SettingsSection>
+            <SettingsSection title="Меню" description="Порядок, видимость и избранные разделы" icon={LayoutList}>
+              <Button asChild variant="outline">
+                <Link to="/settings/sidebar">Настроить меню</Link>
+              </Button>
             </SettingsSection>
           </TabsContent>
         )}

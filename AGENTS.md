@@ -1,6 +1,7 @@
 # Project Architecture Rules
 
 - Keep the default organization entry route in mobileNavigation; apply it only at organization selection so explicit request and warehouse QR links retain their destinations and existing route permissions remain enforced.
+- Keep the simplified navigation in sidebarMenu.ts; retired screens use permission-aware legacyRoutes.ts redirects, one Auth component handles all sign-in entries with safe internal next=/requests fallback, and personal menu preferences are sanitized across structure versions.
 - Do not mount global quick-add controls on mobile; guard FloatingAiChat itself so alternate layouts cannot reintroduce the floating chat.
 
 - Keep request staleness logic in `src/lib/requestStaleness.ts` so counters, filters, and row indicators cannot diverge.

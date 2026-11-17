@@ -12,7 +12,6 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
   const { currentOrgId } = useCurrentOrganization();
   const { hasRouteAccess, loading } = useUserPermissions();
   const fallbackRoutes = [
-    "/dashboard",
     "/requests",
     "/material-statements",
     "/documents",
@@ -24,7 +23,6 @@ export const PermissionRoute = ({ children }: PermissionRouteProps) => {
     "/shipments",
     
     "/agent-report",
-    "/agent-act-report",
     "/percent-calculator",
     "/team-performance",
     "/action-log",

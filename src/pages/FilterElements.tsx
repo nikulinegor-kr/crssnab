@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -19,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer, ArrowLeftRight } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, MoreHorizontal, Pencil, Trash2, PackagePlus, PackageMinus, Archive, Tag, Printer, ArrowLeftRight, ArrowLeft } from "lucide-react";
 import { PartLabelPrintDialog } from "@/components/erp/PartLabelPrintDialog";
 import { BulkPartLabelPrintDialog } from "@/components/erp/BulkPartLabelPrintDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -136,9 +137,14 @@ export default function FilterElementsPage() {
             </h1>
             <p className="text-sm text-muted-foreground">Отдельный склад фильтров с совместимостью, списанием и неликвидом</p>
           </div>
-          <Button onClick={() => { setEditItem(null); setFormOpen(true); }} disabled={!currentOrgId}>
-            <Plus className="h-4 w-4 mr-1" />Добавить фильтр
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button asChild variant="outline">
+              <Link to="/nomenclature"><ArrowLeft className="h-4 w-4 mr-1" />Номенклатура</Link>
+            </Button>
+            <Button onClick={() => { setEditItem(null); setFormOpen(true); }} disabled={!currentOrgId}>
+              <Plus className="h-4 w-4 mr-1" />Добавить фильтр
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="catalog">

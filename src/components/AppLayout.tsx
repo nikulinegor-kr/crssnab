@@ -59,7 +59,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
           <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover:bg-background/10 transition-colors rounded-md" />
-              <span className="inline-flex shrink-0 items-center gap-2" aria-label="CRSS CRM">
+              <span className="inline-flex shrink-0 items-center gap-2 md:hidden" aria-label="CRSS CRM">
                 <img src={crssMark} alt="" className="h-8 w-8" />
                 <span className="text-[17px] font-bold leading-none tracking-[0.01em] text-foreground">
                   CRSS<span className="ml-1 text-[10px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>

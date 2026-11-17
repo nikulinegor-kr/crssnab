@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ReportHeader } from "@/components/agent-report/ReportHeader";
 import { ReportTable } from "@/components/agent-report/ReportTable";
 import { ExportReportButton } from "@/components/agent-report/ExportReportButton";
@@ -76,7 +77,18 @@ const AgentReport = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-  const [activeTab, setActiveTab] = useState("uu");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(requestedTab === "act" || requestedTab === "report" ? requestedTab : "uu");
+  const changeTab = (value: string) => {
+    setActiveTab(value);
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value === "uu") next.delete("tab");
+      else next.set("tab", value);
+      return next;
+    }, { replace: true });
+  };
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const { toast } = useToast();
@@ -957,7 +969,7 @@ const AgentReport = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={changeTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="uu">Отчет агента - УУ</TabsTrigger>
             <TabsTrigger value="report">Отчет агента</TabsTrigger>
