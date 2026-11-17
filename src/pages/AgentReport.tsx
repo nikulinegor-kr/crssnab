@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { Button } from "@/components/ui/button";
-import { Request } from "@/hooks/useRequests";
 import { Plus } from "lucide-react";
 import { ActCalculationTable } from "@/components/agent-act-report/ActCalculationTable";
 import { ActAdditionalTable } from "@/components/agent-act-report/ActAdditionalTable";
@@ -19,6 +18,7 @@ import { ExportActReportButton } from "@/components/agent-act-report/ExportActRe
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ReceiptManager, type RecognizedReceipt } from "@/components/agent-act-report/ReceiptManager";
+import { AGENT_REPORT_REQUEST_SELECT, agentReportPeriod, matchesAgentReportPeriod } from "@/lib/agentReportRequests";
 
 const defaultHeader = {
   report_number: "1",
@@ -178,19 +178,17 @@ const AgentReport = () => {
   // ========== SHARED: Load data from requests ==========
   const loadDataFromRequests = useCallback(async () => {
     if (!currentOrgId) return [];
+    const ALLOWED_STATUSES = ["В пути", "Доставлено"];
+    const period = agentReportPeriod(selectedYear, selectedMonth);
     const { data: requests, error } = await supabase
-      .from("requests").select("*")
+      .from("requests").select(AGENT_REPORT_REQUEST_SELECT)
       .eq("organization_id", currentOrgId)
+      .in("status", ALLOWED_STATUSES)
+      .or("amount.gt.0,amount_2.gt.0,amount_3.gt.0")
+      .or(period.filter)
       .order("request_date", { ascending: false });
     if (error) throw error;
 
-    const matchesMonth = (dateStr: string | null) => {
-      if (!dateStr) return false;
-      const [y, m] = dateStr.split("-");
-      return y === selectedYear.toString() && String(parseInt(m, 10)) === selectedMonth.toString();
-    };
-
-    const ALLOWED_STATUSES = new Set(["В пути", "Доставлено"]);
     const totalAmount = (r: any) =>
       Number(r.amount || 0) + Number(r.amount_2 || 0) + Number(r.amount_3 || 0);
     const invoicesJoined = (r: any) =>
@@ -198,17 +196,14 @@ const AgentReport = () => {
         .filter((v) => v && String(v).trim().length > 0)
         .join(", ");
 
-    // Заявка относится ровно к одному отчётному месяцу:
-    // ключевая дата — дата отгрузки, если её нет — дата доставки
-    const anchorDate = (r: any) => r.shipment_date || r.delivery_date || null;
-
-    const filtered = (requests || []).filter((r: Request) => {
+    // Keep the existing client predicate as a second guard: one request belongs to exactly one report month.
+    const filtered = (requests || []).filter((r) => {
       if (totalAmount(r) <= 0) return false;
-      if (!ALLOWED_STATUSES.has((r as any).status)) return false;
-      return matchesMonth(anchorDate(r));
+      if (!ALLOWED_STATUSES.includes(r.status)) return false;
+      return matchesAgentReportPeriod(r, selectedYear, selectedMonth);
     });
 
-    return filtered.map((req: Request, index: number) => ({
+    return filtered.map((req, index: number) => ({
       row_number: index + 1,
       tmc: req.description || "",
       contractor: req.contractor || "",

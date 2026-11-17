@@ -46,7 +46,7 @@ export function RequestShipmentsSummary({ requestId }: Props) {
     queryFn: async (): Promise<ShipmentItem[]> => {
       const { data, error } = await sb
         .from("shipment_items")
-        .select("*")
+        .select("id,shipment_id,material_name,quantity,unit")
         .in("shipment_id", ids);
       if (error) throw error;
       return (data ?? []) as ShipmentItem[];

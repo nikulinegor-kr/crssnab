@@ -35,7 +35,7 @@ serve(async (req) => {
 
     const { data: requests, error: requestsError } = await supabaseClient
       .from('requests')
-      .select('*')
+      .select('status,priority,created_at,delivery_date')
       .eq('organization_id', organizationId)
       .gte('created_at', twelveMonthsAgo.toISOString())
       .order('created_at', { ascending: true });

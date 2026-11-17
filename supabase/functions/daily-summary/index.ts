@@ -37,7 +37,7 @@ async function sendDailySummary(orgId: string, botToken: string, chatId: string)
   // Get requests with status "Доставлено в ТК" 
   const { data: requests, error } = await supabase
     .from("requests")
-    .select("*")
+    .select("id,description,transport_company,delivery_date,applicant")
     .eq("organization_id", orgId)
     .eq("archived", false)
     .ilike("status", "%доставлено в тк%")
