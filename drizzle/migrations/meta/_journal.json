@@ -232,6 +232,13 @@
       "when": 1794888716666,
       "tag": "0032_add_request_item_unit",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794896064875,
+      "tag": "0033_request_hard_delete_cascade",
+      "breakpoints": true
     }
   ]
 }

@@ -86,7 +86,7 @@ export const RequestsBulkActions = ({
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedRequestIds);
-      const { error } = await supabase.from("requests").delete().in("id", ids);
+      const { error } = await supabase.rpc("hard_delete_requests", { _ids: ids });
       if (error) throw error;
       toast({ title: "Заявки удалены", description: `Удалено навсегда: ${ids.length}` });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
@@ -765,7 +765,7 @@ export const RequestsBulkActions = ({
             <AlertDialogTitle>Удалить заявки навсегда?</AlertDialogTitle>
             <AlertDialogDescription>
               Будет безвозвратно удалено заявок: <strong>{selectedRequestIds.size}</strong>.
-              Это действие нельзя отменить — данные исчезнут полностью, без архива.
+              Это действие нельзя отменить — данные исчезнут полностью, без архива, вместе со складскими ТМЦ, QR-кодами и документами приёмки по этим заявкам.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

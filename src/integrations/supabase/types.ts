@@ -6503,6 +6503,7 @@ export type Database = {
           telegram_procurement_chat_id: string
         }[]
       }
+      hard_delete_requests: { Args: { _ids: string[] }; Returns: number }
       has_active_subscription: { Args: { _org_id: string }; Returns: boolean }
       is_client: { Args: { _user_id: string }; Returns: boolean }
       is_telegram_configured: { Args: { _org_id: string }; Returns: boolean }
