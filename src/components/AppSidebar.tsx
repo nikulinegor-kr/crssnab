@@ -1,7 +1,6 @@
 import {
   LogOut,
   ChevronRight,
-  Star,
   FileText,
   UserRound,
 } from "lucide-react";
@@ -221,14 +220,6 @@ export function AppSidebar() {
           aria-label={!showText ? item.title : undefined}
           onClick={closeMobileMenu}
         >
-          <div className="relative">
-            <item.icon className="h-4 w-4" />
-            {showUnread && (
-              <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold">
-                {totalUnread > 9 ? "9+" : totalUnread}
-              </div>
-            )}
-          </div>
           {showText && (
             <span className="flex items-center gap-2">
               {item.title}
@@ -237,6 +228,11 @@ export function AppSidebar() {
                   {item.badge}
                 </span>
               )}
+            </span>
+          )}
+          {showUnread && (
+            <span className="ml-auto bg-destructive text-destructive-foreground text-xs rounded-full h-4 min-w-4 px-1 flex items-center justify-center font-semibold">
+              {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           )}
         </NavLink>
@@ -271,7 +267,6 @@ export function AppSidebar() {
             closeMobileMenu();
           }}
         >
-          <item.icon className="h-4 w-4 shrink-0" />
           <span>{item.title}</span>
           {item.url === "/chat" && totalUnread > 0 && (
             <span className="ml-auto text-xs font-semibold text-destructive">{totalUnread > 9 ? "9+" : totalUnread}</span>
@@ -301,8 +296,7 @@ export function AppSidebar() {
         {favoriteItems.length > 0 && (
           <SidebarGroup className="py-0">
             {(!collapsed || isMobile) && (
-              <SidebarGroupLabel className="flex h-8 items-center gap-2 px-3 text-xs text-warning dark:text-warning">
-                <Star className="h-3.5 w-3.5 fill-current" />
+              <SidebarGroupLabel className="flex h-8 items-center px-3 text-xs text-warning dark:text-warning">
                 Избранное
               </SidebarGroupLabel>
             )}
@@ -329,14 +323,16 @@ export function AppSidebar() {
                       >
                         <DropdownMenuTrigger asChild>
                           <SidebarMenuButton
-                            className="min-h-9 justify-center"
+                            className="min-h-9 justify-center group-data-[collapsible=icon]:!p-1"
                             isActive={isGroupActive}
                             title={group.label}
                             aria-label={group.label}
                             onMouseEnter={() => setFlyoutGroup(group.key)}
                             onFocus={() => setFlyoutGroup(group.key)}
                           >
-                            <group.icon className="h-4 w-4" />
+                            <span aria-hidden="true" className="text-xs font-semibold leading-none">
+                              {group.label.slice(0, 2)}
+                            </span>
                           </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -372,10 +368,7 @@ export function AppSidebar() {
                     }
                   >
                     <button type="button" className="w-full text-left">
-                      <span className="flex items-center gap-2">
-                        <group.icon className="h-3.5 w-3.5" />
-                        {group.label}
-                      </span>
+                      <span>{group.label}</span>
                       <ChevronRight
                         className={
                           "h-3.5 w-3.5 transition-transform duration-200 " +
