@@ -50,6 +50,8 @@ import { getRequestObjectLabel } from "@/lib/requestCard";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
 import { RequestDocumentDeleteButton } from "./RequestDocumentDeleteButton";
 import { RequestInvoiceActions } from "./RequestInvoiceActions";
+import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
+import { buildInvoiceAutofill, invoiceAutofillMessage, mergeRecognizedItems, normalizeRecognizedItems } from "@/lib/invoiceAutofill";
 
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
@@ -132,6 +134,8 @@ export const RequestSidePanel = ({
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [isRecognizingInvoice, setIsRecognizingInvoice] = useState(false);
+  const [recognizedSupplier, setRecognizedSupplier] = useState<{ name: string; inn: string | null } | null>(null);
   const [, setActiveEditor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -234,6 +238,7 @@ export const RequestSidePanel = ({
     setActiveEditor(null);
     setTab(initialTab);
     setUploads([]);
+    setRecognizedSupplier(null);
   }, [request?.id, open, initialTab]);
 
   const applyLocalRequestPatch = useCallback((patch: Record<string, unknown>) => {
@@ -340,7 +345,7 @@ export const RequestSidePanel = ({
       if (!currentOrgId) return [];
       const { data, error } = await supabase
         .from("suppliers")
-        .select("name")
+        .select("id, name, inn")
         .eq("organization_id", currentOrgId)
         .order("name");
       if (error) throw error;

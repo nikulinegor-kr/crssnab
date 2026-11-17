@@ -21,6 +21,7 @@ export interface PanelItem {
   article: string | null;
   quantity: number;
   price: number;
+  unit: string | null;
 }
 
 interface PanelItemsTableProps {
@@ -32,6 +33,7 @@ interface PanelItemsTableProps {
   onTotalChange?: (total: number) => void;
   /** Кнопка «Распознать счёт» в пустом состоянии. */
   onRecognizeInvoice?: () => void;
+  recognizing?: boolean;
 }
 
 
@@ -46,6 +48,7 @@ export const PanelItemsTable = ({
   readOnly,
   onTotalChange,
   onRecognizeInvoice,
+  recognizing = false,
 }: PanelItemsTableProps) => {
 
   const queryClient = useQueryClient();
@@ -89,6 +92,7 @@ export const PanelItemsTable = ({
         organization_id: organizationId,
         name: "Новая позиция",
         quantity: 1,
+        unit: "шт",
         price: 0,
       } as any);
       if (error) throw error;
