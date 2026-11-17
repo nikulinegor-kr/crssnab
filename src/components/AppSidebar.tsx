@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import { menuGroups, findItemById, type MenuItem, type MenuGroup } from "@/config/sidebarMenu";
 import { useSidebarPrefs } from "@/hooks/useSidebarPrefs";
+import crssMark from "@/assets/crss-mark.svg";
 
 const OPEN_KEY = "sidebar:groups-open:v1";
 const SCROLL_KEY = "sidebar:scroll-top:v1";
@@ -278,16 +279,27 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="crss-app-sidebar">
-      {showText && (
-        <SidebarHeader className="border-b border-border/40 p-4">
-          <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
-            <span className="text-[20px] font-bold leading-none tracking-[0.01em] text-foreground">
-              CRSS<span className="ml-1 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
-            </span>
-          </div>
-          <div className="mt-3"><OrganizationSwitcher /></div>
-        </SidebarHeader>
-      )}
+      <SidebarHeader
+        className={
+          collapsed && !isMobile
+            ? "flex items-center justify-center p-2"
+            : "border-b border-border/40 p-4"
+        }
+      >
+        {collapsed && !isMobile ? (
+          <img src={crssMark} alt="CRSS CRM" className="h-8 w-8 shrink-0" />
+        ) : (
+          <>
+            <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
+              <img src={crssMark} alt="" className="h-8 w-8 shrink-0" />
+              <span className="text-[20px] font-bold leading-none tracking-[0.01em] text-foreground">
+                CRSS<span className="ml-1 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
+              </span>
+            </div>
+            <div className="mt-3"><OrganizationSwitcher /></div>
+          </>
+        )}
+      </SidebarHeader>
 
       <SidebarContent ref={contentRef} className="overflow-y-auto overscroll-contain">
         {/* Favorites first */}
