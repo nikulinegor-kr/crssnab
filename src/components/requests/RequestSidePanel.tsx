@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowLeft, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowLeft, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag, ChevronDown } from "lucide-react";
 import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useRequestParticipants } from "@/hooks/useRequestParticipants";
 import { formatPersonName } from "@/lib/personName";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
@@ -46,7 +47,7 @@ import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 import { RequestInlineField } from "./RequestInlineField";
 import { RequestRoute } from "./RequestRoute";
-import { getRequestObjectLabel } from "@/lib/requestCard";
+import { getRequestObjectLabel, getRequestRouteStage, isRequestDeliveryConfirmed, REQUEST_ROUTE_LABELS } from "@/lib/requestCard";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
 import { RequestDocumentDeleteButton } from "./RequestDocumentDeleteButton";
 import { RequestInvoiceActions } from "./RequestInvoiceActions";
@@ -111,6 +112,7 @@ export const RequestSidePanel = ({
   const baseRequest = requestedRequest ?? editingRequest;
   const request = baseRequest ? { ...baseRequest, ...localRequestPatch } as NonNullable<RequestSidePanelProps["request"]> : null;
   const STATUSES = useOrgStatuses();
+  const isPhone = useIsMobile();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
   const queryClient = useQueryClient();
@@ -945,6 +947,109 @@ export const RequestSidePanel = ({
             ))}
           </div>
   );
+  const mobileDetailsClass = "group mt-3 w-full min-w-0 rounded-[16px] border border-border bg-card";
+  const mobileSummaryClass = "flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-semibold text-foreground [&::-webkit-details-marker]:hidden";
+  const MOBILE_PHASE_COLORS = ["#485B9B", "#905019", "#466637", "#24714E"];
+  const mobileStage = getRequestRouteStage(request);
+  const mobileArrival = request.actual_arrival_date || request.planned_delivery_date || request.delivery_date;
+  const mobileBody = (
+    <div className="w-full min-w-0 px-4 pb-4">
+      <div className="mobile-phase-panel rounded-[16px] p-[14px]">
+        <RequestInlineField
+          label="Статус"
+          type="select"
+          hideLabel
+          value={request.status}
+          options={STATUSES.map((value) => ({ value, label: value }))}
+          display={<span className="inline-flex items-center gap-2 text-[15px] font-semibold"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
+          onSave={(value) => saveField("status", value)}
+        />
+        <ol className="mt-3 grid grid-cols-4 gap-1" aria-label="Этапы заявки">
+          {REQUEST_ROUTE_LABELS.map((label, index) => {
+            const reached = index < mobileStage || index === mobileStage && (index < 3 || isRequestDeliveryConfirmed(request));
+            const color = MOBILE_PHASE_COLORS[index];
+            return (
+              <li key={label} className="relative flex min-w-0 flex-col items-center text-center" aria-current={index === mobileStage ? "step" : undefined}>
+                {index > 0 && <span className="absolute right-1/2 top-[6px] h-px w-full bg-border" aria-hidden="true" />}
+                <span className="relative h-3 w-3 rounded-full border-2" style={reached ? { backgroundColor: color, borderColor: color } : { borderColor: color, backgroundColor: "transparent" }} aria-hidden="true" />
+                <span className={cn("mt-1 break-words text-[11px] leading-tight", reached ? "text-foreground font-medium" : "text-muted-foreground")}>{label}</span>
+                <span className="sr-only">{reached ? "пройден" : "не пройден"}</span>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mt-3 grid gap-1 border-t border-border pt-2 text-[14px]">
+          <RequestInlineField
+            label={request.actual_arrival_date ? "Приход (факт)" : "Приход (план)"}
+            type="date"
+            value={request.actual_arrival_date || request.delivery_date}
+            display={<span className="font-numeric">{dt(mobileArrival) || "—"}</span>}
+            readOnly={readOnly}
+            onEditingChange={(editing) => setActiveEditor(editing ? "route-date" : null)}
+            onSave={(v) => saveField(request.actual_arrival_date ? ("actual_arrival_date" as any) : "delivery_date", v)}
+          />
+          <RequestInlineField
+            label="ТК"
+            value={request.transport_company}
+            readOnly={readOnly}
+            onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}
+            onSave={(v) => saveField("transport_company", v)}
+          />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-1 px-1 text-[14px]">
+        <RequestInlineField
+          label="Приоритет"
+          type="select"
+          value={request.priority || "Планово"}
+          options={PRIORITIES.map((value) => ({ value, label: value }))}
+          display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
+          onSave={(value) => saveField("priority", value)}
+        />
+        <PanelField
+          label="Исполнитель"
+          type="select"
+          options={executorOptions}
+          value={request.executor}
+          display={formatPersonName(request.executor)}
+          readOnly={readOnly}
+          alwaysEdit={editMode}
+          onSave={(v) => saveField("executor", v)}
+        />
+      </div>
+      <details className={mobileDetailsClass}>
+        <summary className={mobileSummaryClass}>Счёт и оплата<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
+        <div className="px-3 pb-3">
+          {invoiceNumberField}
+          <RequestInvoiceActions request={request} readOnly={readOnly} onUpdated={applyLocalRequestPatch} />
+          {totalsBlock}
+          {invoiceBlock}
+          <div className="mt-3"><div className="mb-3 text-[15px] font-semibold text-foreground">Позиции</div>{itemsBlock}</div>
+        </div>
+      </details>
+      <details className={mobileDetailsClass}>
+        <summary className={mobileSummaryClass}>Логистика<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
+        <div className="px-3 pb-3 [&>.request-side-card]:mt-0 [&>.request-side-card]:border-0 [&>.request-side-card]:px-1">
+          {logisticsBlock}
+          {peopleBlock}
+          <div className="flex flex-wrap gap-2 px-1 pt-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>
+          {movementBlock}
+        </div>
+      </details>
+      <details className={mobileDetailsClass}>
+        <summary className={mobileSummaryClass}>Документы<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
+        <div className="px-3 pb-3">{docsBlock}<div className="mt-3"><div className="mb-3 text-[15px] font-semibold text-foreground">История</div>{historyBlock}</div></div>
+      </details>
+      <details className={mobileDetailsClass}>
+        <summary className={mobileSummaryClass}>Задачи<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
+        <div className="px-3 pb-3">{linkedTasksBlock}</div>
+      </details>
+    </div>
+  );
   const wideFullscreen = isFullscreen && viewportWide;
   const containerClass = isFullscreen ? "mx-auto w-[min(1440px,100%-96px)]" : undefined;
   const columnClass = "flex h-full min-w-0 flex-col rounded-[16px] border border-border bg-card p-5";
@@ -954,7 +1059,7 @@ export const RequestSidePanel = ({
   const content = (
     <aside
       className={cn(
-        "request-side-panel requests-registry flex min-h-0 flex-col border-l border-border bg-card",
+        "request-side-panel requests-registry mobile-brand flex min-h-0 flex-col border-l border-border bg-card",
         assistantOpen && "max-sm:!fixed max-sm:!inset-0 max-sm:!z-[220] max-sm:!h-[100dvh] max-sm:!w-screen",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
@@ -1085,7 +1190,7 @@ export const RequestSidePanel = ({
         />
       </div>
 
-      <div className={cn("px-4 pt-2", containerClass)}>
+      <div className={cn("px-4 pt-2 max-md:hidden", containerClass)}>
         <RequestRoute
           request={request}
           readOnly={readOnly}
@@ -1094,7 +1199,7 @@ export const RequestSidePanel = ({
         />
       </div>
 
-      <div className={cn("request-card-meta flex-none gap-2 px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
+      <div className={cn("request-card-meta flex-none gap-2 max-md:!hidden px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <RequestInlineField
           label="Статус"
           type="select"
@@ -1125,12 +1230,12 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {!assistantOpen && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      {!assistantOpen && !isPhone && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
       <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain py-3", isFullscreen ? "px-0" : "px-4")}>
-        {wideFullscreen ? (
+        {isPhone ? mobileBody : wideFullscreen ? (
           <div
             className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
             style={{ gridTemplateColumns: "440px minmax(0, 1fr) 400px" }}

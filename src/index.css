@@ -534,3 +534,25 @@ All colors MUST be HSL.
 /* Brand indigo hover for primary buttons */
 .bg-primary.hover\:bg-primary\/90:hover { background-color: #40578f; }
 .dark .bg-primary.hover\:bg-primary\/90:hover { background-color: hsl(224 50% 62%); }
+
+/* Мобильный макет CRSS: Medeo Sans и фирменные цвета только до 767 px */
+@font-face {
+  font-family: "Medeo Sans";
+  src: url("/fonts/MedeoSansVariable.woff2") format("woff2-variations"), url("/fonts/MedeoSansVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@media (max-width: 767px) {
+  :root:not(.dark) .mobile-brand {
+    --primary: 225 37% 46%;
+    --ring: 225 37% 46%;
+    --foreground: 235 21% 16%;
+    --card-foreground: 235 21% 16%;
+    --muted: 225 22% 96%;
+  }
+  .mobile-brand, .mobile-brand * { font-family: "Medeo Sans", "Inter", system-ui, sans-serif; }
+  .mobile-brand .font-numeric { font-variant-numeric: tabular-nums; }
+  .mobile-app-header { height: 54px !important; }
+}
+.mobile-phase-panel { background: #F4F5F8; }
+.dark .mobile-phase-panel { background: hsl(var(--muted)); }

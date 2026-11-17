@@ -511,7 +511,7 @@ const Requests = () => {
   const tabs = [...mainTabs, ...analyticsTabs] as const;
 
   return (
-    <div className="requests-registry flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
+    <div className="requests-registry mobile-brand flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background p-1.5 xs:p-2 sm:p-2.5 md:p-3 gap-2">
       {/* === LEVEL 1: Page Header === */}
       <div className="flex shrink-0 flex-col gap-1.5 border-b border-border bg-card px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">

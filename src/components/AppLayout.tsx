@@ -56,7 +56,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
         
         <div className="flex-1 grid min-w-0 min-h-0 h-full grid-rows-[auto_minmax(0,1fr)]">
 
-          <header className="h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
+          <header className="mobile-app-header h-14 flex items-center justify-between border-b border-border/40 glassmorphism px-4 sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="md:hidden hover:bg-background/10 hover:text-foreground transition-colors rounded-md" />
               <span className="inline-flex shrink-0 items-center gap-2" aria-label="CRSS CRM">
@@ -70,7 +70,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
                 {orgName}
               </span>
             </div>
-            <div className="flex-1 flex justify-center px-2">
+            <div className="flex-1 flex justify-center px-2 max-md:hidden">
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-1">

@@ -130,7 +130,7 @@ const ShipmentsPage = () => {
       </div>
 
       {isMobile ? (
-        <Card className="overflow-hidden px-4 max-[340px]:px-3">
+        <Card className="mobile-brand overflow-hidden px-4 max-[340px]:px-3">
           {isLoading ? <p className="py-8 text-center text-sm text-muted-foreground">Загрузка…</p>
             : shipments.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">Поставки не найдены</p>
             : <ul>{shipments.map((r) => <MobileRequestRow key={r.id} request={r} onOpen={(x) => navigate(`/requests?request=${x.id}`)} />)}</ul>}
