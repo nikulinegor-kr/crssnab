@@ -37,7 +37,8 @@ interface ContractorSelectProps {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  onAddNew?: (name: string, extra: { phone: string; nomenclature: string }) => Promise<void>;
+  onAddNew?: (name: string, extra: { phone: string; nomenclature: string; inn?: string }) => Promise<void>;
+  suggestedInn?: string | null;
   onDelete?: (value: string) => Promise<void>;
   onEdit?: (id: string, newName: string) => Promise<void>;
   disabled?: boolean;
@@ -49,6 +50,7 @@ export function ContractorSelect({
   onChange,
   options,
   onAddNew,
+  suggestedInn,
   onDelete,
   onEdit,
   disabled = false,
@@ -60,6 +62,7 @@ export function ContractorSelect({
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newNomenclature, setNewNomenclature] = useState("");
+  const [newInn, setNewInn] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ value: string; label: string } | null>(null);
@@ -129,12 +132,13 @@ export function ContractorSelect({
 
     setIsAdding(true);
     try {
-      await onAddNew(formattedName, { phone: newPhone.trim(), nomenclature: newNomenclature.trim() });
+      await onAddNew(formattedName, { phone: newPhone.trim(), nomenclature: newNomenclature.trim(), inn: newInn.trim() || undefined });
       onChange(formattedName);
       setIsAddOpen(false);
       setNewName("");
       setNewPhone("");
       setNewNomenclature("");
+      setNewInn("");
     } finally {
       setIsAdding(false);
     }
@@ -386,7 +390,17 @@ export function ContractorSelect({
 
       {/* Кнопка добавления (+) */}
       {onAddNew && (
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog
+          open={isAddOpen}
+          onOpenChange={(open) => {
+            setIsAddOpen(open);
+            if (open) {
+              const isKnown = options.some((option) => option.value === value || option.label === value);
+              if (value && !isKnown) setNewName(value);
+              if (suggestedInn) setNewInn(suggestedInn);
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button
               type="button"
@@ -394,6 +408,8 @@ export function ContractorSelect({
               size="icon"
               className="shrink-0"
               disabled={disabled}
+              aria-label="Добавить контрагента"
+              title="Добавить контрагента"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -419,6 +435,16 @@ export function ContractorSelect({
                       handleAddNew();
                     }
                   }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contractor-inn">ИНН</Label>
+                <Input
+                  id="contractor-inn"
+                  value={newInn}
+                  onChange={(e) => setNewInn(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                  placeholder="10 или 12 цифр"
+                  inputMode="numeric"
                 />
               </div>
               <div className="grid gap-2">
@@ -461,6 +487,7 @@ export function ContractorSelect({
                   setNewName("");
                   setNewPhone("");
                   setNewNomenclature("");
+                  setNewInn("");
                 }}
               >
                 Отмена

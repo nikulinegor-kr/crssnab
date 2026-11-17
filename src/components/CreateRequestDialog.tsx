@@ -224,6 +224,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const { currentOrgId } = useCurrentOrganization();
   const { recentContractors, recentTransportCompanies } = useContractorSuggestions();
 
+  const addDocumentFile = (file: File) => {
+    setDocumentFiles((current) => current.some((item) =>
+      item.name === file.name && item.size === file.size && item.lastModified === file.lastModified
+    ) ? current : [...current, file]);
+  };
+
   // Fetch participants
   const { data: participants } = useQuery({
     queryKey: ["request-participants", currentOrgId],
@@ -252,7 +258,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       if (!currentOrgId) return [];
       const { data, error } = await supabase
         .from("suppliers")
-        .select("id, name")
+        .select("id, name, inn")
         .eq("organization_id", currentOrgId)
         .eq("status", "Активный")
         .order("name");
@@ -377,11 +383,13 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   
   // Auto-save draft (localStorage only, NO server calls until submit)
   const { clearDraft, draftSaveState, hasUnsavedChanges } = useRequestDraft(
-    formValues as Record<string, unknown>,
+    { ...formValues, requestItems },
     (values) => {
-      Object.entries(values).forEach(([key, value]) => {
-        form.setValue(key as keyof RequestFormData, value as never);
+      const { requestItems: draftItems, ...fields } = values;
+      Object.entries(fields).forEach(([key, value]) => {
+        form.setValue(key as keyof RequestFormData, value as never, { shouldDirty: true });
       });
+      if (Array.isArray(draftItems)) setRequestItems(draftItems as RequestItem[]);
     },
     open
   );
@@ -589,10 +597,13 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
               article: item.article || null,
               name: item.name,
               quantity: item.quantity || 1,
+              unit: item.unit || "шт",
+              price: item.price ?? 0,
             }));
 
           if (itemsToInsert.length > 0) {
-            await supabase.from("request_items").insert(itemsToInsert);
+            const { error: itemsError } = await supabase.from("request_items").insert(itemsToInsert);
+            if (itemsError) throw itemsError;
           }
 
           // Auto-create nomenclature entries for items with article
@@ -624,8 +635,12 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
             }
           }
           queryClient.invalidateQueries({ queryKey: ["warehouse-products"] });
-        } catch {
-          // Non-critical, don't block request creation
+        } catch (itemsError: any) {
+          toast({
+            title: "Заявка создана, но позиции не сохранены",
+            description: itemsError?.message || "Откройте заявку и повторите сохранение позиций",
+            variant: "destructive",
+          });
         }
       }
 
@@ -741,7 +756,9 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           suppliers={suppliers}
           recentContractors={recentContractors}
           invoiceFile={documentFiles[documentFiles.length - 1] || null}
-          onInvoiceSelected={(file) => setDocumentFiles((current) => [...current, file])}
+          items={requestItems}
+          onItemsChange={setRequestItems}
+          onInvoiceSelected={addDocumentFile}
         />
 
         {/* 5. Позиции заполняются вручную или существующим OCR счёта */}

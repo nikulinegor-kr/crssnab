@@ -179,6 +179,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const { canEdit, isViewer } = useUserRole();
   const { recentContractors, recentTransportCompanies } = useContractorSuggestions();
   const formId = "edit-request-form";
+
+  const addDocumentFile = (file: File) => {
+    setDocumentFiles((current) => current.some((item) =>
+      item.name === file.name && item.size === file.size && item.lastModified === file.lastModified
+    ) ? current : [...current, file]);
+  };
   
   const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const conflictCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -211,7 +217,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       if (!request?.organization_id) return [];
       const { data, error } = await supabase
         .from("suppliers")
-        .select("id, name")
+        .select("id, name, inn")
         .eq("organization_id", request.organization_id)
         .eq("status", "Активный")
         .order("name");
@@ -276,6 +282,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         article: item.article || "",
         name: item.name,
         quantity: item.quantity || 1,
+        unit: item.unit || "шт",
+        price: Number(item.price) > 0 ? Number(item.price) : null,
       })));
     }
   }, [requestItemsData]);
@@ -378,6 +386,17 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     };
   }, [request]);
 
+  const originalDraftValues = useMemo(() => originalValues ? {
+    ...originalValues,
+    requestItems: (requestItemsData || []).map((item) => ({
+      article: item.article || "",
+      name: item.name,
+      quantity: item.quantity || 1,
+      unit: item.unit || "шт",
+      price: Number(item.price) > 0 ? Number(item.price) : null,
+    })),
+  } : null, [originalValues, requestItemsData]);
+
   const formValues = form.watch();
   
   // Draft hook with enhanced features
@@ -388,16 +407,18 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     draftSaveState, 
     draftInfo,
     hasUnsavedChanges,
-  } = useEditRequestDraft(
+  } = useEditRequestDraft<RequestFormData & { requestItems: RequestItem[] }>(
     request?.id,
-    formValues,
+    { ...(formValues as RequestFormData), requestItems },
     (values) => {
-      Object.entries(values).forEach(([key, value]) => {
-        form.setValue(key as keyof RequestFormData, value as any);
+      const { requestItems: draftItems, ...fields } = values;
+      Object.entries(fields).forEach(([key, value]) => {
+        form.setValue(key as keyof RequestFormData, value as any, { shouldDirty: true });
       });
+      if (Array.isArray(draftItems)) setRequestItems(draftItems as RequestItem[]);
     },
     open,
-    originalValues
+    originalDraftValues
   );
 
   // Initialize form with request data
@@ -452,7 +473,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       setServerUpdatedAt(request.updated_at || null);
       setServerSaveState('idle');
     }
-  }, [request, open, form]);
+    // Инициализируем только при открытии или смене заявки: добавление файла и OCR
+    // не должны сбрасывать уже заполненные поля старым объектом request.
+  }, [request?.id, open, form]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -778,10 +801,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
       // Save request items: delete old, insert new
       if (request.organization_id) {
-        await supabase
+        const { error: deleteItemsError } = await supabase
           .from("request_items")
           .delete()
           .eq("request_id", request.id);
+        if (deleteItemsError) throw deleteItemsError;
 
         const itemsToInsert = requestItems
           .filter(item => item.name.trim())
@@ -791,10 +815,13 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             article: item.article || null,
             name: item.name,
             quantity: item.quantity || 1,
+            unit: item.unit || "шт",
+            price: item.price ?? 0,
           }));
 
         if (itemsToInsert.length > 0) {
-          await supabase.from("request_items").insert(itemsToInsert);
+          const { error: insertItemsError } = await supabase.from("request_items").insert(itemsToInsert);
+          if (insertItemsError) throw insertItemsError;
         }
 
         // Auto-create nomenclature for items with article
@@ -840,9 +867,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      queryClient.invalidateQueries({ queryKey: ["request-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["request", request.id] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["requests"] }),
+        queryClient.invalidateQueries({ queryKey: ["request-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["request", request.id] }),
+      ]);
 
       clearDraft();
       setServerSaveState('saved');
@@ -1066,7 +1095,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             disabled={isViewer}
             invoiceFile={documentFiles[documentFiles.length - 1] || null}
             invoiceUrl={existingDocumentUrls[0] || request?.document_url || null}
-            onInvoiceSelected={(file) => setDocumentFiles((current) => [...current, file])}
+            items={requestItems}
+            onItemsChange={setRequestItems}
+            onInvoiceSelected={addDocumentFile}
             onRemoveInvoiceDocument={() => {
               const url = existingDocumentUrls[0] || request?.document_url;
               if (url) setExistingDocumentUrls((current) => current.filter((item) => item !== url));

@@ -29,6 +29,14 @@ import { openStoredFile } from "@/lib/storageUrl";
 import { requestFileName } from "@/lib/requestDocuments";
 import { getInvoiceDeletePatch, getInvoiceResetPatch, getRequestInvoiceRequisites, hasInvoiceRequisites, type RequestInvoiceSlot } from "@/lib/requestInvoices";
 import { RequestInvoiceRequisites } from "@/components/requests/RequestInvoiceActions";
+import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
+import {
+  buildInvoiceAutofill,
+  invoiceAutofillMessage,
+  mergeRecognizedItems,
+  type InvoiceSupplier,
+  type RequestItem,
+} from "@/lib/invoiceAutofill";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,11 +50,13 @@ import {
 
 interface FinanceSectionProps {
   form: UseFormReturn<any>;
-  suppliers?: Array<{ id: string; name: string }>;
+  suppliers?: InvoiceSupplier[];
   recentContractors?: string[];
   disabled?: boolean;
   invoiceFile?: File | null;
   invoiceUrl?: string | null;
+  items?: RequestItem[];
+  onItemsChange?: (items: RequestItem[]) => void;
   onInvoiceSelected?: (file: File) => void;
   onRemoveInvoiceDocument?: () => void;
   defaultOpen?: boolean;
@@ -59,6 +69,8 @@ export const FinanceSection = ({
   disabled = false,
   invoiceFile,
   invoiceUrl,
+  items = [],
+  onItemsChange,
   onInvoiceSelected,
   onRemoveInvoiceDocument,
   defaultOpen = false,
@@ -75,10 +87,13 @@ export const FinanceSection = ({
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [invoiceAction, setInvoiceAction] = useState<{ action: "reset" | "delete"; slot: RequestInvoiceSlot } | null>(null);
   const [documentDeleteOpen, setDocumentDeleteOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<RequestInvoiceSlot>(1);
+  const [visibleInvoiceSlots, setVisibleInvoiceSlots] = useState<RequestInvoiceSlot[]>([]);
+  const [unmatchedContractor, setUnmatchedContractor] = useState<{ name: string; inn: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddContractor = async (name: string, extra?: { phone: string; nomenclature: string }) => {
+  const handleAddContractor = async (name: string, extra?: { phone: string; nomenclature: string; inn?: string }) => {
     if (!currentOrgId) {
       toast({ title: "Ошибка", description: "Организация не выбрана", variant: "destructive" });
       return;
@@ -96,6 +111,7 @@ export const FinanceSection = ({
       status: "Активный",
       phone: extra?.phone || null,
       nomenclature: extra?.nomenclature || null,
+      inn: extra?.inn || null,
     });
     if (error) {
       toast({ title: "Ошибка", description: error.message || "Не удалось добавить контрагента", variant: "destructive" });
@@ -125,56 +141,37 @@ export const FinanceSection = ({
     queryClient.invalidateQueries({ queryKey: ["suppliers", currentOrgId] });
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleRecognizeInvoice = async (file: File) => {
     setIsRecognizing(true);
     try {
-      const base64 = await fileToBase64(file);
-      const { data, error } = await supabase.functions.invoke("recognize-invoice", {
-        body: { file: base64, fileName: file.name, fileType: file.type, mode: "finance" },
+      const data = await recognizeInvoiceFile(file, "all");
+      const result = buildInvoiceAutofill(data, selectedSlot, suppliers);
+      const merged = mergeRecognizedItems(items, result.items);
+
+      Object.entries(result.patch).forEach(([key, value]) => {
+        form.setValue(key, value, { shouldDirty: true, shouldValidate: true });
       });
-      if (error) throw error;
+      onItemsChange?.(merged.items);
+      setUnmatchedContractor(
+        selectedSlot === 1 && result.contractorName && !result.matchedSupplier
+          ? { name: result.contractorName, inn: result.contractorInn }
+          : null,
+      );
 
-      let filled = 0;
-
-      if (data?.contractor) {
-        // Normalize full legal forms to abbreviations
-        const { formatCompanyName } = await import("@/lib/companyFormat");
-        const normalizedContractor = formatCompanyName(data.contractor);
-        // Try to match supplier by name
-        const match = suppliers?.find(s => 
-          s.name.toLowerCase().includes(normalizedContractor.toLowerCase()) ||
-          normalizedContractor.toLowerCase().includes(s.name.toLowerCase())
-        );
-        if (match) {
-          form.setValue("contractor", match.id);
-        } else {
-          form.setValue("contractor", normalizedContractor);
-        }
-        filled++;
-      }
-      if (data?.invoice_number) {
-        form.setValue("invoice_number", data.invoice_number);
-        filled++;
-      }
-      if (data?.amount != null) {
-        form.setValue("amount", data.amount);
-        filled++;
+      if (!result.filledFields.length && !result.items.length) {
+        toast({
+          title: "Не удалось распознать",
+          description: invoiceAutofillMessage(result, 0, 0) || "Данные не найдены в документе",
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (filled > 0) {
-        toast({ title: "Распознано", description: `Заполнено ${filled} полей из документа` });
-      } else {
-        toast({ title: "Не удалось распознать", description: "Данные не найдены в документе", variant: "destructive" });
-      }
+      onInvoiceSelected?.(file);
+      toast({
+        title: result.missing.length ? "Счёт распознан частично" : "Счёт распознан",
+        description: invoiceAutofillMessage(result, merged.added, result.items.length),
+      });
     } catch (err: any) {
       toast({ title: "Ошибка распознавания", description: err.message || "Не удалось обработать документ", variant: "destructive" });
     } finally {
@@ -190,6 +187,8 @@ export const FinanceSection = ({
       : getInvoiceDeletePatch(invoiceAction.slot);
     Object.entries(patch).forEach(([key, value]) => form.setValue(key, value, { shouldDirty: true }));
     if (invoiceAction.action === "delete" && invoiceAction.slot > 1) {
+      setVisibleInvoiceSlots((current) => current.filter((slot) => slot !== invoiceAction.slot));
+      setSelectedSlot(1);
       form.setValue(`_showInv${invoiceAction.slot}` as any, false, { shouldDirty: true });
     }
     setInvoiceAction(null);
@@ -253,11 +252,32 @@ export const FinanceSection = ({
           </div>
         )}
         {/* Оба действия используют существующие обработчики файла и OCR. */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={String(selectedSlot)}
+            onValueChange={(value) => {
+              const slot = Number(value) as RequestInvoiceSlot;
+              setSelectedSlot(slot);
+              if (slot > 1) {
+                setVisibleInvoiceSlots((current) => current.includes(slot) ? current : [...current, slot]);
+                form.setValue(`_showInv${slot}`, true, { shouldDirty: true });
+              }
+            }}
+            disabled={disabled || isRecognizing}
+          >
+            <SelectTrigger aria-label="Счёт для заполнения" className="h-9 w-[132px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Счёт №1</SelectItem>
+              <SelectItem value="2">Счёт №2</SelectItem>
+              <SelectItem value="3">Счёт №3</SelectItem>
+            </SelectContent>
+          </Select>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,image/*"
+            accept=".pdf,.xlsx,.xls,.csv,.ods,image/*"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -325,11 +345,17 @@ export const FinanceSection = ({
                       .map(c => ({ value: c, label: c })),
                   ]}
                   onAddNew={handleAddContractor}
+                  suggestedInn={unmatchedContractor?.name === rawContractor ? unmatchedContractor.inn : null}
                   onDelete={handleDeleteContractor}
                   onEdit={handleEditContractor}
                   placeholder="Выбрать или добавить..."
                 />
               </FormControl>
+              {unmatchedContractor?.name === rawContractor && (
+                <p className="text-xs text-muted-foreground">
+                  Контрагента нет в справочнике. Нажмите «+», чтобы добавить его с распознанными реквизитами.
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -339,8 +365,8 @@ export const FinanceSection = ({
         {(() => {
           const inv2Filled = !!form.watch("invoice_number_2") || form.watch("amount_2") != null;
           const inv3Filled = !!form.watch("invoice_number_3") || form.watch("amount_3") != null;
-          const showInv2 = inv2Filled || (form.watch("_showInv2") as boolean);
-          const showInv3 = inv3Filled || (form.watch("_showInv3") as boolean);
+          const showInv2 = inv2Filled || visibleInvoiceSlots.includes(2) || (form.watch("_showInv2") as boolean);
+          const showInv3 = inv3Filled || visibleInvoiceSlots.includes(3) || (form.watch("_showInv3") as boolean);
           const a1 = Number(form.watch("amount") || 0);
           const a2 = Number(form.watch("amount_2") || 0);
           const a3 = Number(form.watch("amount_3") || 0);
@@ -351,9 +377,13 @@ export const FinanceSection = ({
             numField: "invoice_number" | "invoice_number_2" | "invoice_number_3",
             amtField: "amount" | "amount_2" | "amount_3",
             label: string,
+            slot: RequestInvoiceSlot,
             onRemove?: () => void,
           ) => (
-            <div className="request-mobile-stack grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto] sm:gap-3">
+            <div
+              className="request-mobile-stack grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto] sm:gap-3"
+              onFocusCapture={() => setSelectedSlot(slot)}
+            >
               <FormField
                 control={form.control}
                 name={numField}
@@ -398,9 +428,9 @@ export const FinanceSection = ({
 
           return (
             <div className="space-y-3">
-              {renderInvoiceRow("invoice_number", "amount", multi ? "Счёт №1" : "Номер счёта")}
-              {showInv2 && renderInvoiceRow("invoice_number_2", "amount_2", "Счёт №2", () => setInvoiceAction({ action: "delete", slot: 2 }))}
-              {showInv3 && renderInvoiceRow("invoice_number_3", "amount_3", "Счёт №3", () => setInvoiceAction({ action: "delete", slot: 3 }))}
+              {renderInvoiceRow("invoice_number", "amount", multi ? "Счёт №1" : "Номер счёта", 1)}
+              {showInv2 && renderInvoiceRow("invoice_number_2", "amount_2", "Счёт №2", 2, () => setInvoiceAction({ action: "delete", slot: 2 }))}
+              {showInv3 && renderInvoiceRow("invoice_number_3", "amount_3", "Счёт №3", 3, () => setInvoiceAction({ action: "delete", slot: 3 }))}
 
               <div className="flex flex-wrap gap-2 border-t border-border pt-2">
                 <Button type="button" variant="outline" size="sm" className="h-8 text-xs" disabled={disabled || !hasInvoiceRequisites(form.getValues(), 1)} onClick={() => setInvoiceAction({ action: "reset", slot: 1 })}>
@@ -419,7 +449,11 @@ export const FinanceSection = ({
                     size="sm"
                     className="h-8 text-xs"
                     disabled={disabled}
-                    onClick={() => form.setValue((showInv2 ? "_showInv3" : "_showInv2") as any, true)}
+                    onClick={() => {
+                      const slot: RequestInvoiceSlot = showInv2 ? 3 : 2;
+                      setVisibleInvoiceSlots((current) => current.includes(slot) ? current : [...current, slot]);
+                      form.setValue(`_showInv${slot}`, true, { shouldDirty: true });
+                    }}
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> Ещё счёт
                   </Button>

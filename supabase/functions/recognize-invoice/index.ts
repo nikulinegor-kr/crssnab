@@ -23,26 +23,39 @@ Deno.serve(async (req) => {
     }
 
     const isFinanceMode = mode === "finance";
+    const isAllMode = mode === "all";
 
-    const systemPrompt = isFinanceMode
-      ? `You are an invoice/receipt parser for Russian documents. Extract the following financial details from the document.
-Return ONLY a JSON object with this structure:
-{"contractor": "string or empty", "invoice_number": "string or empty", "amount": number or null}
-- "contractor" is the SUPPLIER (Поставщик) company name. Look for the field labeled "Поставщик" or "Продавец". It typically starts with "ООО", "ИП", "АО", "ПАО", "ЗАО" followed by the company name in quotes. Extract the full legal name including the organizational form (e.g. "ООО \"Компания\"", "ИП Иванов И.И."). Do NOT use the "Покупатель" (buyer) field.
-- "invoice_number" is the invoice number (номер счёта). Look for "Счет №" or "Счёт на оплату №" in the document header.
-- "amount" is the total amount (Итого / Всего к оплате) as a number without currency symbols.
-Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`
-      : `You are an invoice/receipt parser. Extract line items from the document. 
-Return ONLY a JSON object with this structure:
-{"items": [{"article": "string or empty", "name": "string", "quantity": number}]}
-- "article" is the part number / SKU / артикул
+    const financeRules = `- "contractor" is the SUPPLIER (Поставщик) company name. Look for "Поставщик" or "Продавец", never "Покупатель". Extract the full legal name.
+- "supplier_inn" is the supplier INN (ИНН), never the buyer INN. Return a string or empty.
+- "invoice_number" is the invoice number as a STRING. Preserve every leading zero exactly as printed.
+- "amount" is the total amount (Итого / Всего к оплате) as a number with kopecks, without currency symbols.`;
+    const itemRules = `- "article" is the part number / SKU / артикул
 - "name" is the product/item name
 - "quantity" is the quantity (default 1 if not specified)
-Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON object.`;
+- "unit" is the unit of measure (единица измерения), for example "шт", "кг", "м", "упак"
+- "price" is the unit price as a number with kopecks, or null if not found`;
 
-    const userPrompt = isFinanceMode
-      ? "Extract the contractor name, invoice number, and total amount from this document:"
-      : "Extract all line items (article, name, quantity) from this document:";
+    const systemPrompt = isAllMode
+      ? `You are an invoice/receipt parser for Russian documents. Return ONLY a JSON object:
+{"contractor": "string or empty", "supplier_inn": "string or empty", "invoice_number": "string or empty", "amount": number or null, "items": [{"article": "string or empty", "name": "string", "quantity": number, "unit": "string or empty", "price": number or null}]}
+${financeRules}
+${itemRules}
+Do NOT include markdown, code fences, or extra text.`
+      : isFinanceMode
+      ? `You are an invoice/receipt parser for Russian documents. Return ONLY a JSON object:
+{"contractor": "string or empty", "supplier_inn": "string or empty", "invoice_number": "string or empty", "amount": number or null}
+${financeRules}
+Do NOT include markdown, code fences, or extra text.`
+      : `You are an invoice/receipt parser. Extract line items. Return ONLY a JSON object:
+{"items": [{"article": "string or empty", "name": "string", "quantity": number, "unit": "string or empty", "price": number or null}]}
+${itemRules}
+Do NOT include markdown, code fences, or extra text.`;
+
+    const userPrompt = isAllMode
+      ? "Extract the supplier, invoice number, total amount and every line item from this document:"
+      : isFinanceMode
+      ? "Extract the contractor name, supplier INN, invoice number, and total amount from this document:"
+      : "Extract all line items with article, name, quantity, unit and price from this document:";
 
     const messages: any[] = [
       { role: "system", content: systemPrompt },
@@ -80,7 +93,7 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
     }
 
 
-    console.log("Sending request to AI gateway, mimeType:", mimeType, "isPdf:", isPdf, "mode:", mode || "items");
+    console.log("Sending request to AI gateway, mimeType:", mimeType, "isPdf:", isPdf, "mode:", mode || "items", "all:", isAllMode);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -109,6 +122,7 @@ Do NOT include any markdown, code fences, or extra text. Return ONLY the JSON ob
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : isFinanceMode ? {} : { items: [] };
+      if (isAllMode && parsed && !Array.isArray(parsed.items)) parsed.items = [];
     } catch {
       parsed = isFinanceMode ? {} : { items: [] };
     }

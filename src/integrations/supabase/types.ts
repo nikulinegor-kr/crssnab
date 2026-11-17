@@ -3293,6 +3293,7 @@ export type Database = {
           price: number
           quantity: number
           request_id: string
+          unit: string | null
         }
         Insert: {
           article?: string | null
@@ -3303,6 +3304,7 @@ export type Database = {
           price?: number
           quantity?: number
           request_id: string
+          unit?: string | null
         }
         Update: {
           article?: string | null
@@ -3313,6 +3315,7 @@ export type Database = {
           price?: number
           quantity?: number
           request_id?: string
+          unit?: string | null
         }
         Relationships: [
           {

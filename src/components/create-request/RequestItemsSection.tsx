@@ -3,14 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormSectionCard } from "./FormSectionCard";
 import { Package, Plus, Trash2, ScanText, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
+import { mergeRecognizedItems, normalizeRecognizedItems, type RequestItem } from "@/lib/invoiceAutofill";
 
-export interface RequestItem {
-  article: string;
-  name: string;
-  quantity: number;
-}
+export type { RequestItem } from "@/lib/invoiceAutofill";
 
 interface RequestItemsSectionProps {
   items: RequestItem[];
@@ -28,14 +25,14 @@ export const RequestItemsSection = ({
   const { toast } = useToast();
 
   const addItem = () => {
-    onItemsChange([...items, { article: "", name: "", quantity: 1 }]);
+    onItemsChange([...items, { article: "", name: "", quantity: 1, unit: "шт", price: null }]);
   };
 
   const removeItem = (index: number) => {
     onItemsChange(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof RequestItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof RequestItem, value: string | number | null) => {
     const updated = [...items];
     updated[index] = { ...updated[index], [field]: value };
     onItemsChange(updated);
@@ -44,38 +41,17 @@ export const RequestItemsSection = ({
   const handleRecognizeInvoice = async (file: File) => {
     setIsRecognizing(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      const isExcel = ext === "xlsx" || ext === "xls" || ext === "csv" || ext === "ods";
-      let body: any;
+      const data = await recognizeInvoiceFile(file, "items");
+      const recognized = normalizeRecognizedItems(data.items);
+      const merged = mergeRecognizedItems(items, recognized);
 
-      if (isExcel) {
-        const XLSX = await import("xlsx");
-        const data = await file.arrayBuffer();
-        const wb = XLSX.read(data, { type: "array" });
-        const sheets = wb.SheetNames.map((n) => {
-          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[n]);
-          return `# Sheet: ${n}\n${csv}`;
-        }).join("\n\n");
-        body = { textContent: sheets, fileName: file.name };
-      } else {
-        const base64 = await fileToBase64(file);
-        body = { file: base64, fileName: file.name, fileType: file.type };
-      }
-
-      const { data, error } = await supabase.functions.invoke("recognize-invoice", { body });
-
-      if (error) throw error;
-
-      if (data?.items?.length) {
-        const newItems: RequestItem[] = data.items.map((item: any) => ({
-          article: item.article || "",
-          name: item.name || "",
-          quantity: item.quantity || 1,
-        }));
-        onItemsChange([...items, ...newItems]);
+      if (recognized.length) {
+        onItemsChange(merged.items);
         toast({
           title: "Распознано",
-          description: `Добавлено ${newItems.length} позиций из счёта`,
+          description: merged.added
+            ? `Добавлено позиций: ${merged.added}`
+            : "Новых позиций нет — они уже добавлены",
         });
       } else {
         toast({
@@ -96,15 +72,6 @@ export const RequestItemsSection = ({
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   return (
     <FormSectionCard
       title="Позиции заявки"
@@ -116,47 +83,70 @@ export const RequestItemsSection = ({
     >
       <div className="space-y-3">
         <p className="rounded-xl bg-primary/5 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-          Позиции можно заполнить из счёта: выберите файл ниже, и распознавание добавит артикулы, названия и количество.
+          Позиции можно заполнить из счёта: наименование, количество, единица и цена переносятся вместе.
         </p>
         {items.length > 0 && (
           <div className="space-y-2">
-            {/* Header */}
-            <div className="hidden grid-cols-[1fr_1.5fr_80px_32px] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid">
+            <div className="hidden grid-cols-[1fr_1.5fr_72px_68px_104px_32px] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid">
               <span>Артикул</span>
               <span>Наименование</span>
               <span>Кол-во</span>
+              <span>Ед.</span>
+              <span>Цена</span>
               <span />
             </div>
 
-            {/* Rows */}
             {items.map((item, index) => (
-              <div key={index} className="request-mobile-stack grid grid-cols-1 items-center gap-2 rounded-xl border border-border/60 p-2 sm:grid-cols-[1fr_1.5fr_80px_32px] sm:rounded-none sm:border-0 sm:p-0">
+              <div key={index} className="request-mobile-stack grid grid-cols-1 items-center gap-2 rounded-xl border border-border/60 p-2 sm:grid-cols-[1fr_1.5fr_72px_68px_104px_32px] sm:rounded-none sm:border-0 sm:p-0">
                 <Input
+                  aria-label={`Артикул позиции ${index + 1}`}
                   placeholder="Артикул"
                   value={item.article}
                   onChange={(e) => updateItem(index, "article", e.target.value)}
                   disabled={disabled}
-                  className="h-9 text-sm"
+                  className="h-9 min-w-0 text-sm"
                 />
                 <Input
+                  aria-label={`Наименование позиции ${index + 1}`}
                   placeholder="Наименование"
                   value={item.name}
                   onChange={(e) => updateItem(index, "name", e.target.value)}
                   disabled={disabled}
-                  className="h-9 text-sm"
+                  className="h-9 min-w-0 text-sm"
                 />
                 <Input
+                  aria-label={`Количество позиции ${index + 1}`}
                   type="number"
                   min={1}
                   value={item.quantity}
                   onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
                   disabled={disabled}
-                  className="h-9 text-sm"
+                  className="h-9 min-w-0 text-sm"
+                />
+                <Input
+                  aria-label={`Единица позиции ${index + 1}`}
+                  placeholder="шт"
+                  value={item.unit || ""}
+                  onChange={(e) => updateItem(index, "unit", e.target.value)}
+                  disabled={disabled}
+                  className="h-9 min-w-0 text-sm"
+                />
+                <Input
+                  aria-label={`Цена позиции ${index + 1}`}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="0,00"
+                  value={item.price ?? ""}
+                  onChange={(e) => updateItem(index, "price", e.target.value === "" ? null : Number(e.target.value))}
+                  disabled={disabled}
+                  className="h-9 min-w-0 text-sm"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
+                  aria-label={`Удалить позицию ${index + 1}`}
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => removeItem(index)}
                   disabled={disabled}
@@ -187,8 +177,8 @@ export const RequestItemsSection = ({
             accept=".pdf,.xlsx,.xls,.csv,.ods,image/*"
             className="hidden"
             onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleRecognizeInvoice(f);
+              const file = e.target.files?.[0];
+              if (file) void handleRecognizeInvoice(file);
             }}
           />
           <Button
