@@ -37,11 +37,12 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { menuGroups, findItemById, type MenuItem, type MenuGroup } from "@/config/sidebarMenu";
 import { useSidebarPrefs } from "@/hooks/useSidebarPrefs";
-import crssMark from "@/assets/crss-mark.svg";
 
 const OPEN_KEY = "sidebar:groups-open:v1";
 const SCROLL_KEY = "sidebar:scroll-top:v1";
@@ -280,25 +281,17 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="crss-app-sidebar">
       <SidebarHeader
-        className={
-          collapsed && !isMobile
-            ? "flex items-center justify-center p-2"
-            : "border-b border-border/40 p-4"
-        }
+        className={cn("border-b border-border/40", collapsed && !isMobile ? "p-2" : "p-4")}
       >
-        {collapsed && !isMobile ? (
-          <img src={crssMark} alt="CRSS CRM" className="h-8 w-8 shrink-0" />
-        ) : (
-          <>
-            <div className="flex min-h-10 items-center gap-2" aria-label="CRSS CRM">
-              <img src={crssMark} alt="" className="h-8 w-8 shrink-0" />
-              <span className="text-[20px] font-bold leading-none tracking-[0.01em] text-foreground">
-                CRSS<span className="ml-1 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground">CRM</span>
-              </span>
-            </div>
-            <div className="mt-3"><OrganizationSwitcher /></div>
-          </>
-        )}
+        <div
+          className={cn(
+            "flex min-h-8 items-center gap-2",
+            collapsed && !isMobile && "justify-center",
+          )}
+        >
+          <SidebarTrigger className="h-8 w-8 shrink-0 rounded-md text-foreground hover:text-foreground hover:bg-background/10 transition-colors" />
+        </div>
+        {showText && <div className="mt-3"><OrganizationSwitcher /></div>}
       </SidebarHeader>
 
       <SidebarContent ref={contentRef} className="overflow-y-auto overscroll-contain">
