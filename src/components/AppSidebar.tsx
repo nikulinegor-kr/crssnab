@@ -333,9 +333,7 @@ export function AppSidebar() {
                             onMouseEnter={() => setFlyoutGroup(group.key)}
                             onFocus={() => setFlyoutGroup(group.key)}
                           >
-                            <span aria-hidden="true" className="text-xs font-semibold leading-none">
-                              {group.label.slice(0, 2)}
-                            </span>
+                            <group.icon className="h-4 w-4 shrink-0" />
                           </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
