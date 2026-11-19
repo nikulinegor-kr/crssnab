@@ -13,12 +13,14 @@ interface RequestItemsSectionProps {
   items: RequestItem[];
   onItemsChange: (items: RequestItem[]) => void;
   disabled?: boolean;
+  onInvoiceSelected?: (file: File) => void;
 }
 
 export const RequestItemsSection = ({
   items,
   onItemsChange,
   disabled = false,
+  onInvoiceSelected,
 }: RequestItemsSectionProps) => {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,11 +49,13 @@ export const RequestItemsSection = ({
 
       if (recognized.length) {
         onItemsChange(merged.items);
+        onInvoiceSelected?.(file);
+        if (data.preparedFile) onInvoiceSelected?.(data.preparedFile);
         toast({
           title: "Распознано",
-          description: merged.added
+          description: (merged.added
             ? `Добавлено позиций: ${merged.added}`
-            : "Новых позиций нет — они уже добавлены",
+            : "Новых позиций нет — они уже добавлены") + (data.preparationMessage ? `. ${data.preparationMessage}` : ""),
         });
       } else {
         toast({

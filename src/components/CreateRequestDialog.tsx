@@ -765,6 +765,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         <RequestItemsSection
           items={requestItems}
           onItemsChange={setRequestItems}
+          onInvoiceSelected={addDocumentFile}
         />
 
         {/* 7. Logistics: Availability, TK, Dates, TTN */}

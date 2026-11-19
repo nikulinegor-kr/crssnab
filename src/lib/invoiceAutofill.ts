@@ -32,6 +32,7 @@ export interface RecognizedInvoice {
   amount?: unknown;
   total_amount?: unknown;
   items?: RecognizedInvoiceItem[] | null;
+  preparation?: unknown;
 }
 
 export interface InvoiceAutofillResult {

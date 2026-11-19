@@ -1106,6 +1106,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           <RequestItemsSection
             items={requestItems}
             onItemsChange={setRequestItems}
+            onInvoiceSelected={addDocumentFile}
             disabled={isViewer}
           />
           <LogisticsSection

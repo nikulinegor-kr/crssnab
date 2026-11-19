@@ -168,9 +168,10 @@ export const FinanceSection = ({
       }
 
       onInvoiceSelected?.(file);
+      if (data.preparedFile) onInvoiceSelected?.(data.preparedFile);
       toast({
         title: result.missing.length ? "Счёт распознан частично" : "Счёт распознан",
-        description: invoiceAutofillMessage(result, merged.added, result.items.length),
+        description: [invoiceAutofillMessage(result, merged.added, result.items.length), data.preparationMessage].filter(Boolean).join(". "),
       });
     } catch (err: any) {
       toast({ title: "Ошибка распознавания", description: err.message || "Не удалось обработать документ", variant: "destructive" });

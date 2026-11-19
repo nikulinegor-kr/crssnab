@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
+import { INVOICE_PREPARATION_RULES } from "../_shared/invoicePreparationPlan.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
 - "unit" is the unit of measure (единица измерения), for example "шт", "кг", "м", "упак"
 - "price" is the unit price as a number with kopecks, or null if not found`;
 
-    const systemPrompt = isAllMode
+    let systemPrompt = isAllMode
       ? `You are an invoice/receipt parser for Russian documents. Return ONLY a JSON object:
 {"contractor": "string or empty", "supplier_inn": "string or empty", "invoice_number": "string or empty", "amount": number or null, "items": [{"article": "string or empty", "name": "string", "quantity": number, "unit": "string or empty", "price": number or null}]}
 ${financeRules}
@@ -50,6 +52,8 @@ Do NOT include markdown, code fences, or extra text.`
 {"items": [{"article": "string or empty", "name": "string", "quantity": number, "unit": "string or empty", "price": number or null}]}
 ${itemRules}
 Do NOT include markdown, code fences, or extra text.`;
+
+    if (!textContent) systemPrompt += INVOICE_PREPARATION_RULES;
 
     const userPrompt = isAllMode
       ? "Extract the supplier, invoice number, total amount and every line item from this document:"
@@ -104,7 +108,8 @@ Do NOT include markdown, code fences, or extra text.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages,
-        temperature: 0.1,
+        temperature: 0,
+        max_tokens: 24000,
       }),
     });
 
@@ -116,7 +121,6 @@ Do NOT include markdown, code fences, or extra text.`;
 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
-    console.log("AI response content:", content.substring(0, 500));
 
     let parsed;
     try {

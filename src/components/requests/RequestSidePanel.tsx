@@ -481,10 +481,10 @@ export const RequestSidePanel = ({
         try { return decodeURIComponent(url.split("/").pop() || "").replace(/^\d+-/, "") === file.name; }
         catch { return false; }
       });
-      if (!alreadyAttached) await handleUpload([file], "document");
+      await handleUpload([...(alreadyAttached ? [] : [file]), ...(data.preparedFile ? [data.preparedFile] : [])], "document");
       toast({
         title: result.missing.length ? "Счёт распознан частично" : "Счёт распознан",
-        description: invoiceAutofillMessage(result, addedItems, result.items.length),
+        description: [invoiceAutofillMessage(result, addedItems, result.items.length), data.preparationMessage].filter(Boolean).join(". "),
       });
     } catch (error) {
       const progress = [
