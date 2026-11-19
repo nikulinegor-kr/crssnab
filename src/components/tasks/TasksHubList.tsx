@@ -1,36 +1,26 @@
-import { format, startOfDay } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PLANNER_STATUS_LABELS, PRIORITY_META, type PlannerTask } from "@/hooks/usePlannerTasks";
-import type { OrgMember } from "@/hooks/useOrgMembers";
-import { TaskStatusActions } from "./TaskStatusActions";
-import { cn } from "@/lib/utils";
+import { format } from 'date-fns';
+import { ListChecks } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PLANNER_STATUS_LABELS, type PlannerTask } from '@/hooks/usePlannerTasks';
+import type { OrgMember } from '@/hooks/useOrgMembers';
+import { WorkspaceAvatar, WorkspaceEmpty } from '@/components/workspace/WorkspacePanel';
+import { taskGroup, taskTone, type TaskGroup } from '@/lib/taskWorkspace';
 
-export function TasksHubList({ tasks, members, objects, loading, empty, onOpen }: {
-  tasks: PlannerTask[]; members: OrgMember[]; objects: { id: string; name: string }[];
-  loading: boolean; empty: string; onOpen: (task: PlannerTask) => void;
+export function TasksHubList({ tasks, members, objects, loading, empty, onOpen, selectedId }: {
+  tasks: PlannerTask[]; members: OrgMember[]; objects: { id: string; name: string }[]; loading: boolean; empty: string; onOpen: (task: PlannerTask) => void; selectedId?: string;
 }) {
-  const names = new Map(members.map(m => [m.user_id, m.full_name || m.email || "—"]));
-  const objectNames = new Map(objects.map(o => [o.id, o.name]));
-  const due = (task: PlannerTask) => task.due_date ? format(new Date(task.due_date), "dd.MM.yyyy") : "—";
-  const overdue = (task: PlannerTask) => task.status !== "done" && !!task.due_date && new Date(task.due_date) < startOfDay(new Date());
-  if (loading) return <div className="space-y-2">{Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-20 md:h-14" />)}</div>;
-  if (!tasks.length) return <p className="py-16 text-center text-sm text-muted-foreground">{empty}</p>;
-  return <>
-    <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b text-xs text-muted-foreground"><tr>{["Название", "Статус", "Приоритет", "Исполнитель", "Объект", "Срок", "Контролёр", ""].map((label, i) => <th key={i} className="px-3 py-3 font-medium">{label}</th>)}</tr></thead><tbody>
-      {tasks.map(task => <tr key={task.id} className="cursor-pointer border-b border-border hover:bg-accent/40" onClick={() => onOpen(task)}>
-        <td className="min-w-48 max-w-80 px-3 py-3"><Button variant="link" className="h-auto w-full justify-start whitespace-normal p-0 text-left text-foreground" onClick={e => { e.stopPropagation(); onOpen(task); }}>{task.title}</Button></td>
-        <td className="px-3 py-3"><Badge variant="outline" className="whitespace-nowrap">{PLANNER_STATUS_LABELS[task.status]}</Badge></td>
-        <td className="px-3 py-3 whitespace-nowrap">{PRIORITY_META[task.priority]?.label ?? "—"}</td>
-        <td className="px-3 py-3">{names.get(task.assignee_id ?? "") ?? "—"}</td><td className="px-3 py-3">{objectNames.get(task.object_id ?? "") ?? "—"}</td>
-        <td className={cn("px-3 py-3 whitespace-nowrap tabular-nums", overdue(task) && "text-destructive")}>{due(task)}</td><td className="px-3 py-3">{names.get(task.reviewer_id ?? "") ?? "—"}</td><td><TaskStatusActions task={task} menu /></td>
-      </tr>)}
-    </tbody></table></div>
-    <div className="space-y-2 md:hidden">{tasks.map(task => <article key={task.id} className="rounded-md border border-border p-3">
-      <div className="flex items-start justify-between gap-2"><Button variant="link" className="h-auto min-w-0 justify-start whitespace-normal p-0 text-left text-foreground" onClick={() => onOpen(task)}>{task.title}</Button><TaskStatusActions task={task} menu /></div>
-      <div className="mt-2 flex flex-wrap items-center gap-2"><Badge variant="outline">{PLANNER_STATUS_LABELS[task.status]}</Badge><span className="text-xs text-muted-foreground">{PRIORITY_META[task.priority]?.label ?? "—"}</span><span className={cn("ml-auto text-xs tabular-nums", overdue(task) && "text-destructive")}>{due(task)}</span></div>
-      <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs"><dt className="text-muted-foreground">Исполнитель</dt><dd className="break-words">{names.get(task.assignee_id ?? "") ?? "—"}</dd><dt className="text-muted-foreground">Объект</dt><dd className="break-words">{objectNames.get(task.object_id ?? "") ?? "—"}</dd><dt className="text-muted-foreground">Контролёр</dt><dd>{names.get(task.reviewer_id ?? "") ?? "—"}</dd></dl>
-    </article>)}</div>
-  </>;
+  if (loading) return <div className="space-y-2">{Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>;
+  if (!tasks.length) return <WorkspaceEmpty><h2>{empty}</h2><p>Измените фильтры или создайте задачу.</p></WorkspaceEmpty>;
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const groups: { id: TaskGroup; title: string }[] = [{id:'late',title:'Просрочено'},{id:'today',title:'Сегодня'},{id:'later',title:'Позже'},{id:'undated',title:'Без срока'},{id:'done',title:'Выполненные'}];
+  const names = new Map(members.map(m => [m.user_id, m.full_name || m.email || 'Не назначен']));
+  return <>{groups.map(group => { const rows = tasks.filter(t => taskGroup(t, today) === group.id); if (!rows.length) return null;
+    return <section key={group.id} className={`cw-task-group ${group.id === 'late' ? 'late' : ''}`}><h2>{group.title}<small>{rows.length}</small></h2><div className="cw-surface">{rows.map(task => <article className="cw-task-row" key={task.id} data-selected={selectedId === task.id}>
+      <button className={`cw-task-ring ${task.status === 'done' ? 'done' : ''}`} onClick={() => onOpen(task)} aria-label={`Открыть задачу: ${task.title}`} />
+      <div><button className="cw-name" onClick={() => onOpen(task)}>{task.title}</button><div className="cw-task-meta"><span className={`cw-status ${taskTone(task.status)}`}>{PLANNER_STATUS_LABELS[task.status]}</span>
+        <span className={group.id === 'late' ? 'cw-late' : ''}>{task.due_date ? `${task.due_date.slice(8,10)}.${task.due_date.slice(5,7)}${task.due_time ? ` · ${task.due_time.slice(0,5)}` : ''}` : 'Без срока'}</span>
+        {task.object_id && <span>{objects.find(o => o.id === task.object_id)?.name ?? 'Объект не найден'}</span>}
+        {!!task.checklist?.length && <span><ListChecks />{task.checklist.filter(i => i.done).length}/{task.checklist.length}</span>}
+      </div></div><WorkspaceAvatar name={names.get(task.assignee_id ?? '') ?? 'Не назначен'} />
+    </article>)}</div></section>; })}</>;
 }

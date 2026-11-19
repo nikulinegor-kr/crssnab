@@ -1,3 +1,6 @@
+import { warehouseRows } from "@/lib/simpleWarehouse";
+import type { Tables } from "@/integrations/supabase/types";
+import { EquipmentWorkspace } from "@/components/workspace/EquipmentWorkspace";
 import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,31 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
-function CopyString({ equipment }: { equipment: any }) {
-  const [copied, setCopied] = useState(false);
-  const parts = [
-    [equipment.brand, equipment.model].filter(Boolean).join(" "),
-    equipment.year,
-    equipment.vin ? `VIN ${equipment.vin}` : null,
-  ].filter(Boolean);
-  const text = parts.join(" • ");
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
-      <span className="truncate">{text}</span>
-      <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={handleCopy}>
-        {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-      </Button>
-    </div>
-  );
-}
-
 export default function EquipmentPage() {
   const { currentOrgId } = useCurrentOrganization();
   const { toast } = useToast();
@@ -77,17 +55,10 @@ export default function EquipmentPage() {
     enabled: !!historyEquipmentId,
   });
 
-  const { data: equipment = [] } = useQuery({
+  const { data: equipment = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["equipment", currentOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("equipment")
-        .select("*")
-        .eq("organization_id", currentOrgId!)
-        .order("brand")
-        .order("model");
-      if (error) throw error;
-      return data;
+      return warehouseRows<Tables<'equipment'>>((from,to)=>supabase.from('equipment').select('*').eq('organization_id',currentOrgId!).order('brand').order('model').order('id').range(from,to));
     },
     enabled: !!currentOrgId,
   });
@@ -159,7 +130,7 @@ export default function EquipmentPage() {
         const { error } = await supabase
           .from("equipment")
           .update(payload)
-          .eq("id", editingId);
+          .eq("id", editingId).eq("organization_id", currentOrgId!);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("equipment").insert({
@@ -184,7 +155,7 @@ export default function EquipmentPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("equipment").delete().eq("id", id);
+      const { error } = await supabase.from("equipment").delete().eq("id", id).eq("organization_id", currentOrgId!);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -303,185 +274,13 @@ export default function EquipmentPage() {
     }
   };
 
-  return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Справочник техники</h1>
-          <span className="text-muted-foreground text-sm">({equipment.length})</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            className="hidden"
-            onChange={handleImportExcel}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            <Upload className="h-4 w-4 mr-1" />
-            {importing ? "Импорт..." : "Импорт Excel"}
-          </Button>
-          <Button onClick={openCreate} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Добавить технику
-          </Button>
-        </div>
-      </div>
-
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Поиск по марке, модели, VIN, гос номеру..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {uniqueBrands.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
-          <Button
-            variant={brandFilter === null ? "default" : "outline"}
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setBrandFilter(null)}
-          >
-            Все ({equipment.length})
-          </Button>
-          {uniqueBrands.map(([brandName, count]) => (
-              <Button
-                key={brandName}
-                variant={brandFilter === brandName ? "default" : "outline"}
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setBrandFilter(brandFilter === brandName ? null : brandName)}
-              >
-                {brandName} ({count})
-              </Button>
-          ))}
-        </div>
-      )}
-
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
-          <span className="text-sm font-medium">Выбрано: {selectedIds.size}</span>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={bulkDeleting}
-            onClick={async () => {
-              setBulkDeleting(true);
-              try {
-                const ids = Array.from(selectedIds);
-                const { error } = await supabase.from("equipment").delete().in("id", ids);
-                if (error) throw error;
-                queryClient.invalidateQueries({ queryKey: ["equipment"] });
-                setSelectedIds(new Set());
-                toast({ title: `Удалено: ${ids.length}` });
-              } catch {
-                toast({ title: "Ошибка удаления", variant: "destructive" });
-              } finally {
-                setBulkDeleting(false);
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            {bulkDeleting ? "Удаление..." : "Удалить выбранные"}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
-            Снять выделение
-          </Button>
-        </div>
-      )}
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Checkbox
-                  checked={filtered.length > 0 && selectedIds.size === filtered.length}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedIds(new Set(filtered.map((e: any) => e.id)));
-                    } else {
-                      setSelectedIds(new Set());
-                    }
-                  }}
-                />
-              </TableHead>
-              <TableHead>Марка / Модель</TableHead>
-              <TableHead>Гос номер</TableHead>
-              <TableHead>VIN</TableHead>
-              <TableHead>Год</TableHead>
-              <TableHead>Копирование</TableHead>
-              <TableHead className="w-[80px]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  Нет техники
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((e: any) => (
-                <TableRow key={e.id} className={`cursor-pointer hover:bg-muted/50 ${selectedIds.has(e.id) ? "bg-muted/50" : ""}`} onClick={() => navigate(`/equipment/${e.id}`)}>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedIds.has(e.id)}
-                      onCheckedChange={(checked) => {
-                        const next = new Set(selectedIds);
-                        if (checked) next.add(e.id); else next.delete(e.id);
-                        setSelectedIds(next);
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{[e.brand, e.model].filter(Boolean).join(" ")}</TableCell>
-                  <TableCell>
-                    {e.plate_number ? (
-                      <Badge variant="outline">{e.plate_number}</Badge>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{e.vin || "—"}</TableCell>
-                  <TableCell>{e.year || "—"}</TableCell>
-                  <TableCell onClick={(ev) => ev.stopPropagation()}>
-                    <CopyString equipment={e} />
-                  </TableCell>
-                  <TableCell onClick={(ev) => ev.stopPropagation()}>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/equipment/${e.id}`)} title="Аналитика техники">
-                        <FileText className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => deleteMutation.mutate(e.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
+  return <>
+    <EquipmentWorkspace key={currentOrgId} equipment={filtered} objects={objects} orgId={currentOrgId} loading={isLoading} error={isError} retry={() => void refetch()} search={search} onSearch={setSearch} onCreate={openCreate} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} selectedIds={selectedIds} onSelect={(id,value)=>setSelectedIds(previous=>{const next=new Set(previous);if(value)next.add(id);else next.delete(id);return next;})} tools={<>
+      <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel}/><Button variant="outline" onClick={()=>fileInputRef.current?.click()} disabled={importing}><Upload size={16}/>{importing?'Импорт…':'Импорт Excel'}</Button>
+      {selectedIds.size > 0 && <><span className="text-sm">Выбрано: {selectedIds.size}</span><Button variant="outline" onClick={()=>setSelectedIds(new Set())}>Снять выделение</Button><Button variant="destructive" disabled={bulkDeleting} onClick={async()=>{if(!window.confirm(`Удалить выбранную технику (${selectedIds.size})?`))return;setBulkDeleting(true);try{const {error}=await supabase.from('equipment').delete().eq('organization_id',currentOrgId).in('id',Array.from(selectedIds));if(error)throw error;queryClient.invalidateQueries({queryKey:['equipment']});setSelectedIds(new Set());toast({title:'Техника удалена'});}catch{toast({title:'Не удалось удалить технику',variant:'destructive'});}finally{setBulkDeleting(false);}}}>Удалить выбранные</Button></>}
+    </>} />
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="cw-modal" onOpenAutoFocus={e=>e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingId ? "Редактировать технику" : "Новая техника"}</DialogTitle>
           </DialogHeader>
@@ -579,6 +378,5 @@ export default function EquipmentPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+  </>;
 }

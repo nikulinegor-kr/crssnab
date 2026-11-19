@@ -26,7 +26,7 @@ export function useTasksHub(tab: TaskTab, filters: HubFilters, page: number) {
       if (filters.assignee) query = query.eq("assignee_id", filters.assignee);
       if (filters.priority) query = query.eq("priority", filters.priority);
       if (filters.department) query = query.eq("department_id", filters.department);
-      if (tab !== "done") query = query.order("created_at", { ascending: false });
+      if (tab !== "done") query = query.order("due_date", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
       const { data, count, error } = await query.order("id").range(page * 50, page * 50 + 49);
       if (error) throw error;
       return { rows: (data ?? []) as unknown as PlannerTask[], count: count ?? 0 };

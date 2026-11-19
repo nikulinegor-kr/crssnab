@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { warehouseRows } from "@/lib/simpleWarehouse";
+import { SuppliersWorkspace } from "@/components/workspace/SuppliersWorkspace";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ const InlineNomenclatureCell = ({ supplierId, value }: { supplierId: string; val
   );
 };
 
-interface Supplier {
+export interface Supplier {
   id: string;
   name: string;
   contact_person: string | null;
@@ -167,15 +168,10 @@ export default function Suppliers() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Получаем все заявки (включая архивные) для статистики контрагентов
-  const { data: allRequests } = useQuery({
+  const { data: allRequests, isLoading: statsLoading, isError: statsError } = useQuery({
     queryKey: ["all-requests-for-suppliers", currentOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("requests")
-        .select("contractor, amount")
-        .eq("organization_id", currentOrgId!);
-      if (error) throw error;
-      return data;
+      return warehouseRows<{contractor:string|null;amount:number|null}>((from,to)=>supabase.from('requests').select('contractor,amount').eq('organization_id',currentOrgId!).order('id').range(from,to));
     },
     enabled: !!currentOrgId,
   });
@@ -196,17 +192,10 @@ export default function Suppliers() {
   }, [allRequests]);
 
   // Получаем поставщиков
-  const { data: suppliers, isLoading } = useQuery({
+  const { data: suppliers, isLoading, isError, refetch } = useQuery({
     queryKey: ["suppliers", currentOrgId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("suppliers")
-        .select("*")
-        .eq("organization_id", currentOrgId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as Supplier[];
+      return warehouseRows<Supplier>((from,to)=>supabase.from('suppliers').select('*').eq('organization_id',currentOrgId).order('created_at',{ascending:false}).order('id').range(from,to));
     },
     enabled: !!currentOrgId,
     // Directory data — changes only when a contractor is added/edited (invalidated on mutation).
@@ -224,7 +213,7 @@ export default function Suppliers() {
         const { error } = await supabase
           .from("suppliers")
           .update(data)
-          .eq("id", editingSupplier.id);
+          .eq("id", editingSupplier.id).eq("organization_id", currentOrgId);
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -258,9 +247,10 @@ export default function Suppliers() {
       const { error } = await supabase
         .from("suppliers")
         .delete()
-        .eq("id", id);
+        .eq("id", id).eq("organization_id", currentOrgId);
       if (error) throw error;
     },
+    onError: () => toast({title:'Не удалось удалить поставщика',variant:'destructive'}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       toast({
@@ -594,7 +584,7 @@ export default function Suppliers() {
       const q = searchQuery.toLowerCase().trim();
       if (!q) return true;
       return q.split(/\s+/).every((term) =>
-        [supplier.name, supplier.contact_person, supplier.email, supplier.city, supplier.nomenclature, supplier.inn]
+        [supplier.name, supplier.contact_person, supplier.email, supplier.phone, supplier.city, supplier.nomenclature, supplier.inn]
           .some((v) => v?.toLowerCase().includes(term))
       );
     })
@@ -854,19 +844,8 @@ export default function Suppliers() {
   };
 
 
-  return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        {/* Заголовок */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Поставщики</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Управление базой данных поставщиков
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-end">
+  return <>
+    <SuppliersWorkspace key={currentOrgId} suppliers={filteredSuppliers ?? []} loading={isLoading} error={isError} retry={() => void refetch()} search={searchQuery} onSearch={setSearchQuery} onCreate={() => { handleCloseDialog(); handleOpenDialog(); }} onEdit={handleOpenDialog} onDelete={id => deleteMutation.mutate(id)} onSort={() => setSortDirection(value => value === 'asc' ? 'desc' : 'asc')} stats={contractorStats} statsUnavailable={statsLoading || statsError} selectedIds={selectedIds} onSelect={toggleSelected} tools={<>
               {currentOrgId && (
                 <SupplierListsDialog
                   objectName="Общая"
@@ -967,191 +946,10 @@ export default function Suppliers() {
                   Объединить выбранные ({selectedIds.size})
                 </Button>
               )}
-            </div>
-          </div>
-
-          {/* Поиск и фильтры */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Поиск по поставщикам..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              {sortDirection === "asc" ? "А → Я" : "Я → А"}
-            </Button>
-            <div className="flex items-center border rounded-md overflow-hidden">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-none"
-                onClick={() => setTableZoom((z) => Math.max(0.7, +(z - 0.1).toFixed(1)))}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <span className="px-2 text-xs font-medium min-w-[3ch] text-center">{Math.round(tableZoom * 100)}%</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-none"
-                onClick={() => setTableZoom((z) => Math.min(1.3, +(z + 0.1).toFixed(1)))}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Фильтры
-            </Button>
-          </div>
-        </div>
-
-          {/* Таблица поставщиков */}
-          <div className="overflow-x-auto">
-            <Card className="bg-card border-border/40 w-max min-w-full" style={{ transform: `scale(${tableZoom})`, transformOrigin: "top left" }}>
-            <CardHeader className="border-b border-border/40 p-0">
-              <div className="min-w-[1180px] grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] text-xs font-medium text-muted-foreground uppercase">
-                <div className="border-r border-border/40 px-2 py-2 flex items-center justify-center">
-                  <Checkbox
-                    checked={
-                      !!filteredSuppliers?.length &&
-                      filteredSuppliers.every((s) => selectedIds.has(s.id))
-                    }
-                    onCheckedChange={(v) => {
-                      if (!filteredSuppliers) return;
-                      setSelectedIds(v ? new Set(filteredSuppliers.map((s) => s.id)) : new Set());
-                    }}
-                    aria-label="Выбрать всех"
-                  />
-                </div>
-                <div className="border-r border-border/40 px-3 py-2 text-left">Название</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Город</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Номенклатура</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">ИНН</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Телефон / Email</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Заявки</div>
-                <div className="border-r border-border/40 px-3 py-2 text-center">Сумма закупок</div>
-                <div className="px-3 py-2 text-right">Действия</div>
-              </div>
-            </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-8 text-center text-muted-foreground">
-                Загрузка...
-              </div>
-            ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
-              <div className="divide-y divide-border/40 min-w-[1180px]">
-                 {filteredSuppliers.map((supplier, index) => {
-                    const stats = contractorStats.get(supplier.name.toLowerCase().trim());
-                    return (
-                    <div
-                      key={supplier.id}
-                      className={cn(
-                        "grid grid-cols-[40px_2fr_1fr_1.4fr_0.9fr_1.6fr_0.7fr_1.1fr_auto] hover:bg-muted/30 transition-colors items-center",
-                        index % 2 === 1 && "bg-muted/20",
-                        duplicateIds.has(supplier.id) && "bg-warning/5",
-                        selectedIds.has(supplier.id) && "bg-primary/5"
-                      )}
-                    >
-                      <div className="border-r border-border/40 px-2 py-4 flex items-center justify-center">
-                        <Checkbox
-                          checked={selectedIds.has(supplier.id)}
-                          onCheckedChange={(v) => toggleSelected(supplier.id, !!v)}
-                          aria-label={`Выбрать ${supplier.name}`}
-                        />
-                      </div>
-                      <div className="min-w-0 border-r border-border/40 px-3 py-4 text-left">
-                        <button
-                          type="button"
-                          className="font-medium text-foreground text-left hover:text-primary hover:underline inline-flex items-center gap-1"
-                          title="Открыть заявки этого поставщика"
-                          onClick={() => navigate(`/requests?contractor=${encodeURIComponent(supplier.name)}`)}
-                        >
-                          <span className="truncate">{supplier.name}</span>
-                          <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-                        </button>
-                        {supplier.contact_person && (
-                          <div className="text-xs text-muted-foreground mt-0.5 truncate">{supplier.contact_person}</div>
-                        )}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground truncate">{supplier.city || "—"}</div>
-                      <div className="border-r border-border/40 px-1 py-2 min-w-0" title={supplier.nomenclature || ""}>
-                        <InlineNomenclatureCell supplierId={supplier.id} value={supplier.nomenclature} />
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground font-mono">
-                        {supplier.inn || "—"}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm text-muted-foreground min-w-0">
-                        <div className="truncate">{supplier.phone || "—"}</div>
-                        {supplier.email && <div className="text-xs truncate">{supplier.email}</div>}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center">
-                        {stats?.count ? (
-                          <Badge variant="secondary" className="gap-1">
-                            <FileText className="h-3 w-3" />
-                            {stats.count}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
-                      </div>
-                      <div className="border-r border-border/40 px-3 py-4 text-center text-sm font-medium">
-                        {stats?.totalAmount ? (
-                          <span className="text-foreground">
-                            {stats.totalAmount.toLocaleString("ru-RU")} ₽
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
-                      </div>
-                      <div className="px-3 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
-                              Редактировать
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/requests?contractor=${encodeURIComponent(supplier.name)}`)}>
-                              Все заявки поставщика
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => deleteMutation.mutate(supplier.id)}
-                              className="text-destructive"
-                            >
-                              Удалить
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                    );
-                  })}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                {searchQuery ? "Поставщики не найдены" : "Нет поставщиков"}
-              </div>
-            )}
-            </CardContent>
-          </Card>
-          </div>
-
+</>} />
         {/* Диалог создания/редактирования */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={isDialogOpen} onOpenChange={open => { if (!open) handleCloseDialog(); }}>
+          <DialogContent className="cw-modal" onOpenAutoFocus={e => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>
                 {editingSupplier ? "Редактировать поставщика" : "Новый поставщик"}
@@ -1160,7 +958,15 @@ export default function Suppliers() {
                 Заполните информацию о поставщике
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="cw-modal-form">
+              <div className="cw-modal-body space-y-4">
+              <div className="cw-form-grid">{([
+                ['name','Название компании','text',true],['nomenclature','Специализация','text',true],['contact_person','Контактное лицо','text',false],['phone','Телефон','tel',false],['email','Email','email',false],['city','Город','text',false]
+              ] as const).map(([key,label,type,required]) => <div className="cw-form-field" key={key}><Label htmlFor={`supplier-${key}`}>{label}{required ? ' *' : ''}</Label><Input id={`supplier-${key}`} type={type} required={required} value={formData[key]} onChange={e=>setFormData(previous=>({...previous,[key]:e.target.value}))}/></div>)}
+                <div className="cw-form-field"><Label>Категория</Label><Select value={formData.category} onValueChange={value=>setFormData(previous=>({...previous,category:value}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{categories.map(value=><SelectItem value={value} key={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+                <div className="cw-form-field"><Label>Надёжность</Label><Select value={formData.reliability} onValueChange={value=>setFormData(previous=>({...previous,reliability:value}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{reliabilities.map(value=><SelectItem value={value} key={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+              </div>
+              <details><summary>Реквизиты и дополнительные сведения</summary><div className="space-y-4">
               {/* DaData search */}
               <div className="space-y-2 relative">
                 <Label className="flex items-center gap-1.5">
@@ -1224,225 +1030,13 @@ export default function Suppliers() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Название компании *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact_person">Контактное лицо</Label>
-                  <Input
-                    id="contact_person"
-                    value={formData.contact_person}
-                    onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Телефон</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
+                <div className="cw-form-grid">{(['inn','kpp','ogrn','bank_name','bank_account','bik','address'] as const).map(key=><div className="cw-form-field" key={key}><Label htmlFor={`supplier-${key}`}>{{inn:'ИНН',kpp:'КПП',ogrn:'ОГРН',bank_name:'Банк',bank_account:'Расчётный счёт',bik:'БИК',address:'Адрес'}[key]}</Label><Input id={`supplier-${key}`} value={formData[key]} onChange={e=>setFormData(previous=>({...previous,[key]:e.target.value}))}/></div>)}
+                  <div className="cw-form-field"><Label>Статус</Label><Select value={formData.status} onValueChange={value=>setFormData(previous=>({...previous,status:value}))}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{statuses.map(value=><SelectItem value={value} key={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+                </div><div className="cw-form-field"><Label htmlFor="supplier-notes">Заметки</Label><Textarea id="supplier-notes" value={formData.notes} onChange={e=>setFormData(previous=>({...previous,notes:e.target.value}))}/></div>
+              </div></details>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Категория *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Статус *</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reliability">Благонадёжность</Label>
-                <Select
-                  value={formData.reliability}
-                  onValueChange={(value) => setFormData({ ...formData, reliability: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {reliabilities.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="inn">ИНН</Label>
-                  <Input
-                    id="inn"
-                    value={formData.inn}
-                    onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="kpp">КПП</Label>
-                  <Input
-                    id="kpp"
-                    value={formData.kpp}
-                    onChange={(e) => setFormData({ ...formData, kpp: e.target.value })}
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ogrn">ОГРН</Label>
-                  <Input
-                    id="ogrn"
-                    value={formData.ogrn}
-                    onChange={(e) => setFormData({ ...formData, ogrn: e.target.value })}
-                    className="font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">Город</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="Например: Новосибирск"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nomenclature">Номенклатура</Label>
-                  <Input
-                    id="nomenclature"
-                    value={formData.nomenclature}
-                    onChange={(e) => setFormData({ ...formData, nomenclature: e.target.value })}
-                    placeholder="Что поставляет: фильтры, метизы, ГСМ…"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  disabled={isWebLookup || !formData.name.trim()}
-                  onClick={handleWebLookupForm}
-                >
-                  {isWebLookup ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-                  {isWebLookup ? "Ищем в интернете..." : "Найти город и номенклатуру в интернете"}
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Юридический адрес</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bank_name">Банк</Label>
-                  <Input
-                    id="bank_name"
-                    value={formData.bank_name}
-                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bank_account">Расчётный счёт</Label>
-                  <Input
-                    id="bank_account"
-                    value={formData.bank_account}
-                    onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bik">БИК</Label>
-                  <Input
-                    id="bik"
-                    value={formData.bik}
-                    onChange={(e) => setFormData({ ...formData, bik: e.target.value })}
-                    className="font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Примечания</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                  Отменить
-                </Button>
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? "Сохранение..." : editingSupplier ? "Обновить" : "Создать"}
-                </Button>
-              </DialogFooter>
+              <div className="cw-modal-footer"><Button type="button" variant="outline" onClick={handleCloseDialog}>Отмена</Button><Button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Сохраняем…':editingSupplier?'Сохранить':'Добавить поставщика'}</Button></div>
             </form>
           </DialogContent>
         </Dialog>
@@ -1520,7 +1114,5 @@ export default function Suppliers() {
           onOpenChange={setIsPhoneBookOpen}
           suppliers={(suppliers || []).map((s) => ({ id: s.id, name: s.name, phone: s.phone }))}
         />
-      </div>
-    </div>
-  );
+  </>;
 }

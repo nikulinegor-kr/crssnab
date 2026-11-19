@@ -63,6 +63,8 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   task?: PlannerTask | null;
+  workspace?: boolean;
+  defaultEquipmentId?: string | null;
   defaultStatus?: PlannerTaskStatus;
   defaultDueDate?: string;
   defaultObjectId?: string | null;
@@ -76,8 +78,9 @@ interface Props {
 const equipmentLabelLocal = (e: any) =>
   [e.brand, e.model].filter(Boolean).join(" ").trim() || e.plate_number || e.vin || "Техника";
 
-export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId, defaultTitle, defaultDescription, defaultPriority }: Props) {
+export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultAssigneeId, defaultTitle, defaultDescription, defaultPriority, workspace = false, defaultEquipmentId }: Props) {
   const isEdit = !!task;
+  const [fullEditor, setFullEditor] = useState(false);
   const { currentOrgId } = useCurrentOrganization();
   const create = useCreatePlannerTask();
   const update = useUpdatePlannerTask();
@@ -146,7 +149,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setDueTime((task as any)?.due_time?.slice(0, 5) ?? "");
     const initialEq = task?.equipment_ids?.length
       ? task.equipment_ids
-      : (task?.equipment_id ? [task.equipment_id] : []);
+      : (task?.equipment_id ? [task.equipment_id] : defaultEquipmentId ? [defaultEquipmentId] : []);
     setEquipmentIds(initialEq);
     setRequestId(task?.request_id ?? defaultRequestId ?? null);
     setChecklist(task?.checklist ?? []);
@@ -154,12 +157,13 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     setIsPrivate(task?.is_private ?? false);
     setRecurrence(task?.recurrence ?? null);
     setEstimatedHours(task?.estimated_hours?.toString() ?? "");
+    setFullEditor(false);
     setErrors({});
     setTab("details");
     setTemplateId("");
     setOverriddenConflicts(new Set());
     setOnlyFreeEquipment(true);
-  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultTitle, defaultDescription, defaultPriority, defaultAssigneeId]);
+  }, [open, task, defaultStatus, defaultDueDate, defaultObjectId, defaultRequestId, defaultTitle, defaultDescription, defaultPriority, defaultAssigneeId, defaultEquipmentId]);
 
   const filteredStages = stages.filter((s) => !objectId || s.object_id === objectId || !s.object_id);
 
@@ -377,9 +381,33 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
   const errCls = (k: string) => errors[k] ? "border-destructive focus-visible:ring-destructive" : "";
 
+  if (workspace && !fullEditor) return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="cw-modal" aria-describedby={undefined} onOpenAutoFocus={e => e.preventDefault()}>
+    <DialogHeader><DialogTitle>{isEdit ? 'Редактировать задачу' : 'Новая задача'}</DialogTitle></DialogHeader>
+    <div className="cw-modal-body space-y-4">
+    <div className="cw-form-field"><Label htmlFor="cw-task-title">Что нужно сделать *</Label><Textarea id="cw-task-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например, согласовать дату отгрузки" rows={2} className={errCls('title')} /></div>
+    <div className="cw-form-grid"><div className="cw-form-field"><Label>Исполнитель</Label><TaskLookupSelect label="Выберите сотрудника" value={assigneeId} options={assignableMembers.map(m => ({id:m.user_id,name:m.full_name || m.email || 'Сотрудник'}))} onChange={id => { setAssigneeId(id); if (!isEdit && userId) { setRequiresAcceptance(!!id && id !== userId); setReviewerId(id && id !== userId ? userId : null); } }} /></div>
+      <div className="cw-form-field"><Label>Приоритет</Label><Select value={priority} onValueChange={value => setPriority(value as PlannerTaskPriority)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(task && !PRIORITY_CHOICES.includes(task.priority) ? [task.priority,...PRIORITY_CHOICES] : PRIORITY_CHOICES).map(id => <SelectItem value={id} key={id}>{PRIORITY_META[id].label}</SelectItem>)}</SelectContent></Select></div>
+      <div className="cw-form-field"><Label htmlFor="cw-task-due">Срок</Label><Input type="date" id="cw-task-due" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div><div className="cw-form-field"><Label htmlFor="cw-task-time">Время</Label><Input type="time" id="cw-task-time" value={dueTime} onChange={e => setDueTime(e.target.value)} /></div>
+    </div>
+    <label className="flex gap-2 items-start text-sm"><Checkbox checked={requiresAcceptance} disabled={!canConfigureAcceptance} onCheckedChange={checked => { setRequiresAcceptance(checked === true); if (checked && !reviewerId && userId !== assigneeId) setReviewerId(userId); }} />Требует приёмки результата</label>
+    {requiresAcceptance && <TaskLookupSelect label="Кто принимает результат" value={reviewerId} disabled={!canConfigureAcceptance} options={assignableMembers.filter(m => m.user_id !== assigneeId).map(m => ({id:m.user_id,name:m.full_name || m.email || 'Сотрудник'}))} onChange={setReviewerId} />}
+    <details open={isEdit || !!defaultEquipmentId}><summary>Описание, объект и техника</summary><div className="space-y-4">
+      <div className="cw-form-field"><Label htmlFor="cw-task-description">Описание</Label><Textarea id="cw-task-description" value={description} onChange={e => setDescription(e.target.value)} rows={3} /></div>
+      <TaskLookupSelect label="Объект" value={objectId} options={objects} onChange={setObjectId} />
+      <TaskLookupSelect label="Техника" value={equipmentIds[0] ?? null} options={equipmentList.map(e => ({id:e.id,name:equipmentLabelLocal(e)}))} onChange={id => setEquipmentIds(id ? [id] : [])} />
+      {selectedConflicts.size > 0 && <p className="text-sm text-destructive" role="alert">Техника занята в другой задаче. Проверьте конфликты в дополнительных настройках.</p>}
+      <div className="cw-form-field"><Label>Чек-лист</Label>{checklist.map(item => <label className="flex gap-2 text-sm" key={item.id}><Checkbox checked={item.done} onCheckedChange={checked => setChecklist(items => items.map(i => i.id === item.id ? {...i,done:checked === true} : i))} />{item.text}<Button variant="ghost" size="icon" className="ml-auto h-6 w-6" onClick={() => setChecklist(items => items.filter(i => i.id !== item.id))} aria-label={`Удалить пункт ${item.text}`}><X size={14}/></Button></label>)}<div className="flex gap-2"><Input aria-label="Новый пункт чек-листа" placeholder="Добавить пункт" value={newCheckItem} onChange={e => setNewCheckItem(e.target.value)} onKeyDown={e => { if(e.key === 'Enter') { e.preventDefault(); addCheck(); } }} /><Button variant="outline" onClick={addCheck} aria-label="Добавить пункт"><Plus /></Button></div></div>
+      <PlannerAttachmentsField value={attachments} onChange={setAttachments} />
+    </div></details>
+    {needsChangeReason && <div className="cw-form-field"><Label htmlFor="cw-task-reason">Причина изменения</Label><Textarea id="cw-task-reason" value={changeReason} onChange={e => setChangeReason(e.target.value)} placeholder="Почему изменились срок, исполнитель или приоритет" /></div>}
+    <Button variant="ghost" className="justify-start px-0" onClick={() => setFullEditor(true)}>Дополнительные настройки</Button>
+    </div>
+    <div className="cw-modal-footer"><Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button><Button onClick={() => void handleSave()} disabled={!title.trim() || create.isPending || update.isPending}>{create.isPending || update.isPending ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Поставить задачу'}</Button></div>
+  </DialogContent></Dialog>;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto" onOpenAutoFocus={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEdit ? "Редактировать задачу" : "Новая задача"}
@@ -414,7 +442,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
             <div className="space-y-1.5">
               <Label>Название <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" autoFocus className={errCls("title")} />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Что нужно сделать?" className={errCls("title")} />
                 <AiImproveButton value={title} onResult={setTitle} title="Улучшить название через AI" />
               </div>
             </div>
