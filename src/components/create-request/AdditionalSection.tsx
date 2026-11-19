@@ -3,12 +3,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
 import { FormSectionCard } from "./FormSectionCard";
-import { MoreHorizontal, Copy, FileText, Send, Download } from "lucide-react";
+import { MoreHorizontal, Copy, FileText, Send, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
-import { useRef, useState } from "react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readPreparedInvoice, insertZrsIntoPreparedInvoice } from "@/lib/invoicePdf";
+import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
+import { resolveSignedUrl } from "@/lib/storageUrl";
+import { requestFileName } from "@/lib/requestDocuments";
+import { saveImageFile } from "@/lib/saveImage";
 
 interface AdditionalSectionProps {
   form: UseFormReturn<any>;
@@ -17,7 +20,7 @@ interface AdditionalSectionProps {
   photoFiles: File[];
   setPhotoFiles: (files: File[]) => void;
   documentFiles: File[];
-  setDocumentFiles: (files: File[]) => void;
+  setDocumentFiles: Dispatch<SetStateAction<File[]>>;
   disabled?: boolean;
   existingPhotoUrls?: string[];
   onRemoveExistingPhoto?: (url: string) => void;
@@ -45,6 +48,14 @@ export const AdditionalSection = ({
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [lastZrsFile, setLastZrsFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState("");
+  const localSources = documentFiles.filter(file => /\.pdf$/i.test(file.name) && !/-ZRS\.pdf$/i.test(file.name)).map(file => ({ key: `local:${file.name}:${file.lastModified}`, name: file.name, file, url: "" }));
+  const storedSources = [...new Set(existingDocumentUrls ?? [])].filter(url => /\.pdf$/i.test(requestFileName(url)) && !/-ZRS\.pdf$/i.test(requestFileName(url))).map(url => ({ key: url, name: requestFileName(url), file: null as File | null, url }));
+  const allSources = [...localSources, ...storedSources];
+  const preparedNames = new Set(allSources.filter(source => /\.prepared\.pdf$/i.test(source.name)).map(source => source.name.replace(/\.prepared\.pdf$/i, ".pdf")));
+  const sources = allSources.filter(source => !preparedNames.has(source.name));
+  const sourceKey = sources.some(source => source.key === selectedInvoice) ? selectedInvoice : sources.length === 1 ? sources[0].key : "";
 
   // "Под заказ" + указанный срок изготовления показываем в одной строке ЗРС
   const availabilityText = (() => {
@@ -95,100 +106,58 @@ export const AdditionalSection = ({
     ];
   };
 
-  const handleInsertIntoInvoice = () => {
-    pdfInputRef.current?.click();
+  const insertIntoFile = async (originalFile: File, alreadyAttached = true) => {
+    if (disabled || isPreparing) return;
+    setIsPreparing(true);
+    try {
+      let prepared = originalFile;
+      let bytes = new Uint8Array(await prepared.arrayBuffer());
+      if (!await readPreparedInvoice(bytes)) {
+        const result = await recognizeInvoiceFile(originalFile, "all");
+        if (!result.preparedFile) throw new Error(result.preparationMessage || "Не удалось подготовить счёт для ЗРС");
+        prepared = result.preparedFile;
+        bytes = new Uint8Array(await prepared.arrayBuffer());
+      }
+      const response = await fetch('/fonts/Roboto-Regular.ttf');
+      if (!response.ok) throw new Error("Не удалось загрузить шрифт ЗРС");
+      const modifiedPdf = await insertZrsIntoPreparedInvoice(bytes, getZrsLines(), new Uint8Array(await response.arrayBuffer()));
+      const safeName = (formValues.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim().slice(0,80);
+      const modifiedFile = new File([modifiedPdf as BlobPart], `${safeName || "Заявка"}-ZRS.pdf`, { type: "application/pdf" });
+      const additions = [...(!alreadyAttached ? [originalFile] : []), ...(prepared !== originalFile ? [prepared] : [])];
+      // Replace the previous derivative only; retain original and prepared invoice.
+      setDocumentFiles(current => [...current.filter(file => file.name !== modifiedFile.name), ...additions.filter(file => !current.some(existing => existing.name === file.name && existing.size === file.size)), modifiedFile]);
+      setLastZrsFile(modifiedFile);
+      await saveImageFile(modifiedFile, "Счёт с ЗРС");
+      toast({ title: "Готово", description: "ЗРС вставлена после номенклатуры и итогов на последнем листе. Файл готов к сохранению" });
+    } catch (err) {
+      toast({ title: "Не удалось вставить ЗРС", description: err instanceof Error ? err.message : "Не удалось обработать PDF", variant: "destructive" });
+    } finally { setIsPreparing(false); }
+  };
+
+  const handleInsertIntoInvoice = async () => {
+    if (!sources.length) { pdfInputRef.current?.click(); return; }
+    const source = sources.find(item => item.key === sourceKey);
+    if (!source) { toast({ title: "Выберите счёт", description: "В заявке несколько счетов — укажите нужный файл" }); return; }
+    try {
+      if (source.file) await insertIntoFile(source.file);
+      else {
+        setIsPreparing(true);
+        const response = await fetch(await resolveSignedUrl(source.url));
+        if (!response.ok) throw new Error("Не удалось загрузить прикреплённый счёт");
+        const file = new File([await response.blob()], source.name, { type: "application/pdf" });
+        setIsPreparing(false);
+        await insertIntoFile(file);
+      }
+    } catch (err) {
+      setIsPreparing(false);
+      toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Не удалось открыть счёт", variant: "destructive" });
+    }
   };
 
   const handlePdfFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    // Reset input so same file can be re-selected
     e.target.value = "";
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-      pdfDoc.registerFontkit(fontkit);
-      
-      const fontBytes = await fetch('/fonts/Roboto-Regular.ttf').then(r => r.arrayBuffer());
-      const customFont = await pdfDoc.embedFont(fontBytes);
-
-      const pages = pdfDoc.getPages();
-      const firstPage = pages[0];
-      const { width, height } = firstPage.getSize();
-
-      const rawLines = getZrsLines();
-      const fontSize = 9;
-      const lineHeight = 14;
-      // Place text in the bottom-right corner
-      const startX = width * 0.55;
-      const maxWidth = width - startX - 20;
-
-      // Wrap long lines (>1 line) to up to 2 lines
-      const wrapLine = (text: string): string[] => {
-        if (customFont.widthOfTextAtSize(text, fontSize) <= maxWidth) return [text];
-        const words = text.split(" ");
-        let line1 = "";
-        let i = 0;
-        for (; i < words.length; i++) {
-          const test = line1 ? line1 + " " + words[i] : words[i];
-          if (customFont.widthOfTextAtSize(test, fontSize) > maxWidth) break;
-          line1 = test;
-        }
-        if (!line1) { line1 = words[0] ?? text; i = 1; }
-        const line2 = words.slice(i).join(" ");
-        return line2 ? [line1, line2] : [line1];
-      };
-
-      const lines = rawLines.flatMap(wrapLine);
-      let startY = 20 + (lines.length - 1) * lineHeight;
-
-      lines.forEach((line) => {
-        firstPage.drawText(line, {
-          x: startX,
-          y: startY,
-          size: fontSize,
-          font: customFont,
-          color: rgb(0, 0, 0),
-        });
-        startY -= lineHeight;
-      });
-
-      const modifiedPdf = await pdfDoc.save();
-      const blob = new Blob([modifiedPdf.buffer as ArrayBuffer], { type: "application/pdf" });
-      // Filename derived from request description (keeps Cyrillic).
-      // Storage upload sanitizes separately, so this name is safe both for download and upload.
-      const safeName = (formValues.description || "")
-        .replace(/[\\/:*?"<>|\r\n\t]/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 80);
-      const baseName = safeName || `Заявка-${Date.now()}`;
-      const newFileName = `${baseName}-ZRS.pdf`;
-      const modifiedFile = new File([blob], newFileName, { type: "application/pdf" });
-
-      // Add to document files so it appears in the Счёт/КП block below
-      setDocumentFiles([...documentFiles, modifiedFile]);
-      setLastZrsFile(modifiedFile);
-
-      // Automatically download the generated file
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = newFileName;
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      // Revoke later — revoking synchronously can abort the download in
-      // browsers that process the anchor navigation asynchronously.
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-
-      toast({ title: "Готово", description: "Сводка ЗРС вставлена в счёт, файл скачан" });
-    } catch (err) {
-      console.error("PDF insert error:", err);
-      toast({ title: "Ошибка", description: "Не удалось обработать PDF. Убедитесь, что файл не защищён.", variant: "destructive" });
-    }
+    if (file) await insertIntoFile(file, false);
   };
 
   const handleSendToTelegram = async () => {
@@ -255,10 +224,11 @@ export const AdditionalSection = ({
                 variant="outline"
                 size="sm"
                 onClick={handleInsertIntoInvoice}
+                disabled={disabled || isPreparing}
                 className="h-7"
               >
-                <FileText className="h-3 w-3 mr-1" />
-                Вставить в счёт
+                {isPreparing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <FileText className="h-3 w-3 mr-1" />}
+                {isPreparing ? "Подготовка счёта…" : "Вставить ЗРС"}
               </Button>
               <Button
                 type="button"
@@ -276,15 +246,7 @@ export const AdditionalSection = ({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const url = URL.createObjectURL(lastZrsFile);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = lastZrsFile.name;
-                      a.click();
-                      // Defer revocation so the download is not aborted.
-                      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-                    }}
+                    onClick={() => void saveImageFile(lastZrsFile, "Счёт с ЗРС")}
                     className="h-7"
                   >
                     <Download className="h-3 w-3 mr-1" />
@@ -305,6 +267,13 @@ export const AdditionalSection = ({
               )}
             </div>
           </div>
+          {sources.length > 1 && <label className="block text-sm">Счёт для ЗРС
+            <select className="mt-1 w-full min-w-0 rounded-xl border bg-white p-2 text-base" aria-label="Счёт для ЗРС" value={sourceKey} disabled={disabled || isPreparing} onChange={event => setSelectedInvoice(event.target.value)}>
+              <option value="">Выберите счёт</option>
+              {sources.map(source => <option key={source.key} value={source.key}>{source.name}</option>)}
+            </select>
+          </label>}
+          <p className="text-xs text-muted-foreground">{sources.length ? "Используется прикреплённый счёт. Оригинал сохраняется, ЗРС добавляется после всех позиций и итогов." : "Прикрепите и распознайте счёт в разделе «Счета», либо выберите PDF кнопкой «Вставить ЗРС»."}</p>
           <div className="request-zrs-preview" aria-label="Предпросмотр ЗРС">
             {getZrsLines().map((line) => <p key={line}>{line}</p>)}
           </div>
