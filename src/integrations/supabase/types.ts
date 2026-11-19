@@ -6705,6 +6705,21 @@ export type Database = {
         }
         Returns: Json
       }
+      warehouse_issue_and_consume: {
+        Args: {
+          _equipment_id: string
+          _from_warehouse_id: string
+          _note: string
+          _object_id: string
+          _operation_date: string
+          _operation_key: string
+          _quantity: number
+          _recipient: string
+          _recipient_user_id: string
+          _unit_id: string
+        }
+        Returns: Json
+      }
       warehouse_issue_usage: {
         Args: {
           _equipment_id: string
