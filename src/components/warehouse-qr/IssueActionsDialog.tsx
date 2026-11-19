@@ -22,7 +22,7 @@ export function IssueActionsDialog({ issue, unitName, unit, orgId, open, onOpenC
   const [qty, setQty] = useState(''), [wh, setWh] = useState<string | null>(null), [cond, setCond] = useState<'good' | 'damaged'>('good');
   const [eq, setEq] = useState<string | null>(null), [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd')), [note, setNote] = useState('');
   const [key, setKey] = useState(''), [busy, setBusy] = useState(false), [reverse, setReverse] = useState<Hist | null>(null), [reason, setReason] = useState('');
-  useEffect(() => { if (open && issue) { setMode(initial); setQty(''); setWh(issue.warehouse_id); setCond('good'); setEq(issue.equipment_id); setDate(format(new Date(), 'yyyy-MM-dd')); setNote(''); setKey(crypto.randomUUID()); setReverse(null); } }, [open, issue, initial]);
+  useEffect(() => { if (open && issue) { setMode(initial); setQty(initial === 'consume' ? String(issueSplit(issue).outstanding) : ''); setWh(issue.warehouse_id); setCond('good'); setEq(issue.equipment_id); setDate(format(new Date(), 'yyyy-MM-dd')); setNote(''); setKey(crypto.randomUUID()); setReverse(null); } }, [open, issue, initial]);
   const { data: me } = useQuery({ queryKey: ['auth-user'], queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null });
   const { data: refs } = useQuery({ queryKey: ['wh-issue-refs', orgId], enabled: open, queryFn: async () => ({
     warehouses: await warehouseRows<{ id: string; name: string; archived_at: string | null }>((f, t) => supabase.from('warehouses').select('id,name,archived_at').eq('organization_id', orgId).order('name').range(f, t)),
@@ -47,14 +47,14 @@ export function IssueActionsDialog({ issue, unitName, unit, orgId, open, onOpenC
   const save = async () => { setBusy(true); try {
     const { error } = mode === 'return' ? await supabase.rpc('warehouse_return_issue', { _operation_key: key, _issue_id: issue.id, _quantity: q, _warehouse_id: wh ?? '', _condition: cond, _note: note })
       : await supabase.rpc('warehouse_issue_usage', { _operation_key: key, _issue_id: issue.id, _kind: mode, _quantity: q, _equipment_id: mode === 'install' ? (eq ?? null) as unknown as string : (null as unknown as string), _operation_date: date, _note: note });
-    if (error) throw error; await done(mode === 'return' ? 'Возврат проведён' : mode === 'install' ? 'Установка записана' : 'Расход записан'); onOpenChange(false);
+    if (error) throw error; await done(mode === 'return' ? 'Возврат проведён' : mode === 'install' ? 'Установка записана' : 'Списание сохранено'); onOpenChange(false);
   } catch (e) { fail(e); } finally { setBusy(false); } };
   const confirmReceived = async () => { setBusy(true); try { const { error } = await supabase.rpc('confirm_issue_received', { _issue_id: issue.id }); if (error) throw error; await done('Получение подтверждено'); onOpenChange(false); } catch (e) { fail(e); } finally { setBusy(false); } };
   const doReverse = async () => { if (!reverse) return; setBusy(true); try { const { error } = await supabase.rpc('warehouse_reverse_operation', { _operation_key: crypto.randomUUID(), _kind: reverse.kind === 'return' ? 'return' : 'usage', _id: reverse.id, _reason: reason }); if (error) throw error; await done('Исправление проведено'); setReverse(null); setReason(''); } catch (e) { fail(e); } finally { setBusy(false); } };
   const reversed = new Set(hist.flatMap(h => h.reversal_of ? [h.reversal_of] : []));
   const whName = (id?: string) => refs?.warehouses.find(w => w.id === id)?.name ?? '—';
-  const label = (h: Hist) => h.reversal_of ? 'Исправление' : h.kind === 'return' ? (h.condition === 'damaged' ? 'Возврат (повреждено)' : 'Возврат') : h.kind === 'install' ? 'Установлено' : 'Израсходовано';
-  return <Dialog open={open} onOpenChange={v => { if (!busy) onOpenChange(v); }}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
+  const label = (h: Hist) => h.reversal_of ? 'Исправление' : h.kind === 'return' ? (h.condition === 'damaged' ? 'Возврат (повреждено)' : 'Возврат') : h.kind === 'install' ? 'Установлено' : 'Списано';
+  return <Dialog open={open} onOpenChange={v => { if (!busy) onOpenChange(v); }}><DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto wh-issue-actions" onOpenAutoFocus={event => event.preventDefault()}>
     <DialogHeader><DialogTitle className="break-words">{unitName}</DialogTitle></DialogHeader>
     <div className="text-sm space-y-1">
       <p className="text-muted-foreground">Кому: {issue.recipient_name} · {issue.operation_date ?? issue.created_at.slice(0, 10)}</p>
@@ -64,7 +64,7 @@ export function IssueActionsDialog({ issue, unitName, unit, orgId, open, onOpenC
         : <Button variant="outline" className="min-h-11" disabled={busy} onClick={confirmReceived}>{me && me === issue.recipient_user_id ? 'Получил' : 'Получил (за получателя)'}</Button>}
     </div>
     {s.outstanding > 0 && <div className="space-y-3 border-t pt-3">
-      <div className="flex flex-wrap gap-2">{([['return', 'Возврат'], ['install', 'Установка'], ['consume', 'Расход']] as const).map(([k, t]) => <Button key={k} variant={mode === k ? 'default' : 'outline'} className="min-h-11" onClick={() => { setMode(k); setKey(crypto.randomUUID()); }}>{t}</Button>)}</div>
+      <div className="flex flex-wrap gap-2">{([['return', 'Возврат'], ['install', 'Установка'], ['consume', 'Списание']] as const).map(([k, t]) => <Button key={k} variant={mode === k ? 'default' : 'outline'} className="min-h-11" onClick={() => { setMode(k); setKey(crypto.randomUUID()); }}>{t}</Button>)}</div>
       <Label htmlFor="ia-qty">Количество, {unit} (доступно {fmtQty(s.outstanding)})</Label><Input id="ia-qty" inputMode="decimal" className="min-h-11 font-numeric" value={qty} onChange={e => setQty(e.target.value)} />
       {mode === 'return' && <><Label>На склад</Label><TaskLookupSelect label="Склад" value={wh} onChange={setWh} options={(refs?.warehouses ?? []).filter(w => !w.archived_at).map(w => ({ id: w.id, name: w.name }))} />
         <div className="flex gap-2"><Button variant={cond === 'good' ? 'default' : 'outline'} className="min-h-11" onClick={() => setCond('good')}>Исправно</Button><Button variant={cond === 'damaged' ? 'destructive' : 'outline'} className="min-h-11" onClick={() => setCond('damaged')}>Повреждено</Button></div>

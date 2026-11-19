@@ -56,6 +56,7 @@ interface Props {
   onArchive: (warehouse: DirectoryWarehouse) => void;
   onScan: () => void;
   onReceive: () => void;
+  onIssue: () => void;
   onInventory: () => void;
   onUnit: (unit: WhUnit) => void;
   onLabels: (units: WhUnit[]) => void;
@@ -195,7 +196,9 @@ export function WarehouseWorkspace(props: Props) {
         </nav>
       )}
       <header className="wh-heading">
-        <div className="wh-heading-main">
+        <div
+          className={`wh-heading-main ${props.warehouseId ? "wh-detail-heading" : ""}`}
+        >
           <h1>{props.warehouseId ? (warehouse?.name ?? "Склад") : "Склады"}</h1>
           {warehouse && (
             <div className="wh-tags">
@@ -207,14 +210,14 @@ export function WarehouseWorkspace(props: Props) {
               )}
             </div>
           )}
-          {!props.warehouseId && (
+          {
             <div
               className="wh-segments"
               role="tablist"
               aria-label="Разделы склада"
             >
               {[
-                ["stock", "Склады"],
+                ["stock", props.warehouseId ? "Остатки" : "Склады"],
                 ["objects", "Выдано"],
                 ["journal", "Журнал"],
               ].map(([id, label]) => (
@@ -223,7 +226,9 @@ export function WarehouseWorkspace(props: Props) {
                   id={`wh-tab-${id}`}
                   role="tab"
                   aria-selected={tab === id}
-                  aria-controls="wh-panel"
+                  aria-controls={
+                    props.warehouseId ? "wh-detail-panel" : "wh-panel"
+                  }
                   tabIndex={tab === id ? 0 : -1}
                   onClick={() => {
                     setTab(id);
@@ -255,7 +260,7 @@ export function WarehouseWorkspace(props: Props) {
                 </button>
               ))}
             </div>
-          )}
+          }
         </div>
         <div className="wh-actions">
           {!props.warehouseId ? (
@@ -271,10 +276,10 @@ export function WarehouseWorkspace(props: Props) {
               <>
                 <Button
                   disabled={!!warehouse.archived_at}
-                  onClick={props.onReceive}
+                  onClick={tab === "objects" ? props.onIssue : props.onReceive}
                 >
                   <Plus aria-hidden="true" />
-                  Добавить ТМЦ
+                  {tab === "objects" ? "Выдать ТМЦ" : "Добавить ТМЦ"}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -284,6 +289,12 @@ export function WarehouseWorkspace(props: Props) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="wh-menu">
+                    <DropdownMenuItem
+                      disabled={!!warehouse.archived_at}
+                      onSelect={props.onIssue}
+                    >
+                      Выдать ТМЦ
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => props.onEdit(warehouse)}>
                       <Pencil />
                       Редактировать склад
@@ -342,7 +353,7 @@ export function WarehouseWorkspace(props: Props) {
             aria-labelledby={`wh-tab-${tab}`}
           >
             {tab === "objects" ? (
-              <div className="wh-surface wh-existing-view">{props.issued}</div>
+              props.issued
             ) : tab === "journal" ? (
               <div className="wh-surface wh-existing-view">{props.journal}</div>
             ) : (
@@ -482,46 +493,54 @@ export function WarehouseWorkspace(props: Props) {
             </Button>
           </div>
         ) : (
-          <>
+          <section
+            id="wh-detail-panel"
+            role="tabpanel"
+            aria-labelledby={`wh-tab-${tab}`}
+          >
             {warehouse.archived_at && (
               <p className="wh-notice">
                 Склад в архиве. Доступны остатки и история операций.
               </p>
             )}
-            <div className="wh-metrics">
-              <div className="wh-metric">
-                <span>Позиций</span>
-                <strong>{summary.positions}</strong>
+            {tab === "stock" && (
+              <div className="wh-metrics">
+                <div className="wh-metric">
+                  <span>Позиций</span>
+                  <strong>{summary.positions}</strong>
+                </div>
+                <div className="wh-metric">
+                  <span>Всего единиц</span>
+                  <strong className="wh-total">
+                    {summary.amounts.length
+                      ? summary.amounts.map(([unit, quantity]) => (
+                          <span key={unit}>
+                            {fmtQty(quantity)} <small>{unit}</small>
+                          </span>
+                        ))
+                      : "0"}
+                  </strong>
+                </div>
+                <button
+                  className="wh-metric wh-low-metric"
+                  aria-pressed={stock === "low"}
+                  onClick={() => {
+                    setStock(stock === "low" ? "all" : "low");
+                    setLimit(60);
+                  }}
+                >
+                  <span>Мало на складе</span>
+                  <strong>{summary.low}</strong>
+                </button>
+                <div className="wh-metric wh-responsible">
+                  <span>Ответственный</span>
+                  <strong>{details.responsible || "Не назначен"}</strong>
+                </div>
               </div>
-              <div className="wh-metric">
-                <span>Всего единиц</span>
-                <strong className="wh-total">
-                  {summary.amounts.length
-                    ? summary.amounts.map(([unit, quantity]) => (
-                        <span key={unit}>
-                          {fmtQty(quantity)} <small>{unit}</small>
-                        </span>
-                      ))
-                    : "0"}
-                </strong>
-              </div>
-              <button
-                className="wh-metric wh-low-metric"
-                aria-pressed={stock === "low"}
-                onClick={() => {
-                  setStock(stock === "low" ? "all" : "low");
-                  setLimit(60);
-                }}
-              >
-                <span>Мало на складе</span>
-                <strong>{summary.low}</strong>
-              </button>
-              <div className="wh-metric wh-responsible">
-                <span>Ответственный</span>
-                <strong>{details.responsible || "Не назначен"}</strong>
-              </div>
-            </div>
-            {tab === "journal" ? (
+            )}
+            {tab === "objects" ? (
+              props.issued
+            ) : tab === "journal" ? (
               <div className="wh-surface wh-existing-view">
                 <div className="wh-journal-heading">
                   <h2>Журнал склада</h2>
@@ -703,7 +722,7 @@ export function WarehouseWorkspace(props: Props) {
                 </div>
               </>
             )}
-          </>
+          </section>
         ))}
     </div>
   );

@@ -253,6 +253,13 @@
       "when": 1794897915840,
       "tag": "0035_request_max_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794988800000,
+      "tag": "0036_warehouse_issue_and_consume",
+      "breakpoints": true
     }
   ]
 }
