@@ -34,8 +34,26 @@ suite('Full warehouse cycle on disposable PostgreSQL', () => {
       INSERT INTO warehouses(id,organization_id,name) VALUES('${WHA}','${ORG}','Склад А'),('${WHB}','${ORG}','Склад Б');
       INSERT INTO requests(id,organization_id,status,request_number,description) VALUES('${REQ}','${ORG}','В пути','R-1','Фильтры'),('${REQ0}','${ORG}','Доставлено','R-0','Рации без позиций');
       INSERT INTO request_items VALUES('${ITEM}','${ORG}','${REQ}','Фильтр масляный',10);`);
+    sql(readFileSync('drizzle/migrations/0036_warehouse_issue_and_consume.sql', 'utf8'));
     sql('GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;');
   }, 120000);
+
+  test('immediate expense keeps manual recipient and retries without another stock debit', () => {
+    const doc = scalar(as(`SELECT manual_warehouse_receipt('${key()}','${WHA}','Расходные перчатки','batch',20,'шт',NULL,NULL)->>'document_id';`));
+    const u = scalar(`SELECT unit_id FROM warehouse_document_lines WHERE document_id='${doc}';`);
+    const k = key();
+    const issue = (qty = 6, name = 'Введённый вручную сотрудник') => as(`SELECT warehouse_issue_and_consume('${k}','${u}','${WHA}',${qty},'${name}',NULL,'2026-11-18',NULL,NULL,'на смену');`);
+    sql(issue()); sql(issue());
+    expect(stock(u, WHA)).toBe('14');
+    expect(scalar(`SELECT sum(consumed_qty)::int FROM warehouse_issues WHERE unit_id='${u}';`)).toBe('6');
+    expect(scalar(`SELECT sum(issued_qty-returned_qty-installed_qty-consumed_qty)::int FROM warehouse_issues WHERE unit_id='${u}';`)).toBe('0');
+    expect(scalar(`SELECT recipient_name FROM warehouse_issues WHERE unit_id='${u}';`)).toBe('Введённый вручную сотрудник');
+    expect(() => sql(issue(7))).toThrow(/Количество отличается/);
+    expect(() => sql(issue(6, 'Другой получатель'))).toThrow(/другими параметрами/);
+    expect(stock(u, WHA)).toBe('14');
+    expect(() => sql(as(`SELECT warehouse_issue_and_consume('${key()}','${u}','${WHA}',1,'Чужой',NULL,'2026-11-18',NULL,NULL,'');`, STRANGER))).toThrow();
+    expect(stock(u, WHA)).toBe('14');
+  });
 
   test('partial receipt 8 of 10 then 2: never above expected, discrepancy must be confirmed', () => {
     expect(() => sql(partial(key(), `[{"item_id":"${ITEM}","accepted":8,"unit":"шт"}]`, false))).toThrow(/подтвердите/);
