@@ -35,5 +35,18 @@ export async function recognizeInvoiceFile(file: File, mode: "all" | "items" = "
   const { data, error } = await supabase.functions.invoke("recognize-invoice", { body });
   if (error) throw new Error(await getFunctionErrorMessage(error, "Не удалось обработать документ"));
   if (data?.error) throw new Error(data.error);
-  return data as RecognizedInvoice;
+  let preparedFile: File | null = null;
+  let preparationMessage = "";
+  if (extension === "pdf" || file.type === "application/pdf") {
+    try {
+      const { prepareInvoiceInBrowser } = await import("./invoicePdfBrowser");
+      const prepared = await prepareInvoiceInBrowser(file, data.preparation, Array.isArray(data.items) ? data.items : []);
+      preparedFile = prepared.file;
+      const removed = prepared.metadata.sourcePages - prepared.metadata.keptPages.length;
+      preparationMessage = `Счёт подготовлен для ЗРС${removed ? `; убрано страниц: ${removed}` : ""}. Оригинал сохранён`;
+    } catch (error) {
+      preparationMessage = error instanceof Error ? error.message : "Не удалось подготовить PDF. Оригинал сохранён";
+    }
+  }
+  return { ...data as RecognizedInvoice, preparedFile, preparationMessage };
 }
