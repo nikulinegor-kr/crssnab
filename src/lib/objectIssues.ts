@@ -34,9 +34,9 @@ export function positionTotals(rows: IssueRow[], units: IssueUnit[]): PositionTo
   return [...out.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 }
 
-export const issueDate = (r: IssueRow) => r.operation_date ?? r.created_at.slice(0, 10);
+export const issueDate = (r: Pick<IssueRow, 'operation_date' | 'created_at'>) => r.operation_date ?? r.created_at.slice(0, 10);
 
-export function filterIssues(rows: IssueRow[], opts: { from?: string; to?: string; search?: string; text: (r: IssueRow) => string }): IssueRow[] {
+export function filterIssues<T extends Pick<IssueRow, 'operation_date' | 'created_at'>>(rows: T[], opts: { from?: string; to?: string; search?: string; text: (r: T) => string }): T[] {
   const terms = (opts.search ?? '').toLowerCase().split(/\s+/).filter(Boolean);
   return rows.filter(r => {
     const d = issueDate(r);
