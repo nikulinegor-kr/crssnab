@@ -8,7 +8,7 @@ import { overdueDays, sortAttention, sortEvents, sortObjects, type ExecAttention
 const closedFilter = `(${CLOSED_REQUEST_STATUSES.map(s => `"${s}"`).join(",")})`;
 const staleTime = 60_000;
 
-async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+export async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
   const result: T[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await page(from, from + 999);
@@ -40,13 +40,13 @@ export function useExecutivePanel() {
     if (error) throw error; return count ?? 0;
   }});
   const overdueDeliveries = useQuery({ ...options, queryKey: ["executive", orgId, "overdue-deliveries", day], queryFn: async () => {
-    const { count, error } = await supabase.from("requests").select("id", { count: "exact", head: true }).eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).lt("planned_delivery_date", day).is("actual_arrival_date", null);
+    const { count, error } = await supabase.from("requests").select("id", { count: "exact", head: true }).eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).or(`planned_delivery_date.lt.${day},and(planned_delivery_date.is.null,delivery_date.lt.${day})`).is("actual_arrival_date", null);
     if (error) throw error; return count ?? 0;
   }});
 
   const requestAttention = useQuery({ ...options, queryKey: ["executive", orgId, "request-attention", day], queryFn: async () => {
-    // Fetch the registry universe, including closed statuses that the unchanged isStale predicate allows.
-    const requests = await allRows((from, to) => supabase.from("requests").select("id,request_number,description,status,priority,created_at,updated_at,planned_delivery_date,actual_arrival_date,object:request_objects(name)").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).order("id").range(from, to));
+    // Current open requests feed operational decisions and financial totals.
+    const requests = await allRows((from, to) => supabase.from("requests").select("id,request_number,description,status,priority,created_at,updated_at,executor,amount,amount_2,amount_3,invoice_number,invoice_number_2,invoice_number_3,payment_percent,payment_status,planned_delivery_date,delivery_date,actual_arrival_date,transport_company,object:request_objects(name)").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).order("id").range(from, to));
     const stale: ExecAttentionItem[] = [];
     const deliveries: ExecAttentionItem[] = [];
     let oldNew = 0;
@@ -54,24 +54,24 @@ export function useExecutivePanel() {
       const input = { ...r, created_at: r.created_at ?? r.updated_at ?? "" };
       const item = { id: r.id, kind: "request" as const, title: r.description, reference: r.request_number.replace(/^REQ-/, ""), objectName: r.object?.name ?? null, priority: r.priority };
       if (isStale(input, today)) stale.push({ ...item, days: getStaleDays(input, today) });
-      if (isOverdueDelivery(r, today)) deliveries.push({ ...item, days: overdueDays(r.planned_delivery_date ?? "", today) });
+      if (isOverdueDelivery(r, today)) deliveries.push({ ...item, days: overdueDays(r.planned_delivery_date || r.delivery_date || "", today) });
       if (isOldNewRequest(r, today)) oldNew++;
     }
-    return { stale: sortAttention(stale), staleCount: stale.length, deliveries: sortAttention(deliveries), oldNew };
+    return { requests, stale: sortAttention(stale), staleCount: stale.length, deliveries: sortAttention(deliveries), oldNew };
   }});
   const taskAttention = useQuery({ ...options, queryKey: ["executive", orgId, "task-attention", day], queryFn: async () => {
     const tasks = await allRows((from, to) => supabase.from("planner_tasks").select("id,title,priority,due_date,assignee_name,object:request_objects(name)").eq("organization_id", orgId ?? "").is("archived_at", null).eq("hidden_auto", false).neq("status", "done").lt("due_date", today.toISOString()).order("id").range(from, to));
-    return sortAttention(tasks.map(t => ({ id: t.id, kind: "task" as const, title: t.title, objectName: t.object?.name ?? null, assigneeName: t.assignee_name, priority: t.priority, days: overdueDays(t.due_date ?? "", today) })));
+    return sortAttention(tasks.map(t => ({ id: t.id, kind: "task" as const, title: t.title, objectName: t.object?.name ?? null, assigneeName: t.assignee_name, priority: t.priority, days: overdueDays(t.due_date ?? "", today) })), Number.MAX_SAFE_INTEGER);
   }});
 
   const objects = useQuery({ ...options, queryKey: ["executive", orgId, "objects", day], queryFn: async () => {
     const [objects, requests, tasks] = await Promise.all([
       allRows((from, to) => supabase.from("request_objects").select("id,name").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_active", true).order("id").range(from, to)),
-      allRows((from, to) => supabase.from("requests").select("object_id,amount,id").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).order("id").range(from, to)),
+      allRows((from, to) => supabase.from("requests").select("object_id,amount,amount_2,amount_3,id").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).order("id").range(from, to)),
       allRows((from, to) => supabase.from("planner_tasks").select("object_id,id").eq("organization_id", orgId ?? "").is("archived_at", null).eq("hidden_auto", false).neq("status", "done").lt("due_date", today.toISOString()).order("id").range(from, to)),
     ]);
     const map = new Map<string, ExecObjectLoad>(objects.map(o => [o.id, { ...o, requests: 0, amount: 0, overdueTasks: 0 }]));
-    for (const r of requests) { const o = r.object_id ? map.get(r.object_id) : undefined; if (o) { o.requests++; o.amount += r.amount ?? 0; } }
+    for (const r of requests) { const o = r.object_id ? map.get(r.object_id) : undefined; if (o) { o.requests++; o.amount += (r.amount ?? 0) + (r.amount_2 ?? 0) + (r.amount_3 ?? 0); } }
     for (const t of tasks) { const o = t.object_id ? map.get(t.object_id) : undefined; if (o) o.overdueTasks++; }
     return sortObjects([...map.values()]);
   }});
@@ -104,5 +104,5 @@ export function useExecutivePanel() {
     { key: "staleRequests", title: "Заявки без движения", count: staleRequests.data ?? 0, items: requestAttention.data?.stale ?? [], overdue: false },
   ];
   const attention = { groups: attentionGroups, isLoading: requestAttention.isLoading || taskAttention.isLoading || overdueTasks.isLoading || overdueDeliveries.isLoading, isError: requestAttention.isError || taskAttention.isError || overdueTasks.isError || overdueDeliveries.isError };
-  return { orgId, activeTasks, newRequests, oldNewRequests, openRequests, staleRequests, overdueTasks, overdueDeliveries, attention, objects, events };
+  return { requestAttention, taskAttention, orgId, activeTasks, newRequests, oldNewRequests, openRequests, staleRequests, overdueTasks, overdueDeliveries, attention, objects, events };
 }

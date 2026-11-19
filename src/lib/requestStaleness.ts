@@ -1,4 +1,4 @@
-import { differenceInDays, startOfToday } from "date-fns";
+import { differenceInDays, startOfToday, parseISO, startOfDay } from "date-fns";
 
 export const CLOSED_REQUEST_STATUSES = ["Выполнено", "Доставлено", "Закрыто", "Отменено", "Отмена"];
 
@@ -24,8 +24,10 @@ export function isOpenRequest(request: { status: string }): boolean {
   return !CLOSED_REQUEST_STATUSES.includes(request.status);
 }
 
-export function isOverdueDelivery(request: { status: string; planned_delivery_date?: string | null; actual_arrival_date?: string | null }, today = startOfToday()): boolean {
-  if (!isOpenRequest(request) || request.actual_arrival_date || !request.planned_delivery_date) return false;
-  const planned = new Date(request.planned_delivery_date);
-  return !Number.isNaN(planned.getTime()) && planned < today;
+export function isOverdueDelivery(request: { status: string; planned_delivery_date?: string | null; delivery_date?: string | null; actual_arrival_date?: string | null }, today = startOfToday()): boolean {
+  if (!isOpenRequest(request) || request.actual_arrival_date) return false;
+  const value = request.planned_delivery_date || request.delivery_date;
+  if (!value) return false;
+  const planned = parseISO(value);
+  return !Number.isNaN(planned.getTime()) && startOfDay(planned) < startOfDay(today);
 }
