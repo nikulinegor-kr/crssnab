@@ -204,7 +204,7 @@ export const AdditionalSection = ({
       sectionId="req-sec-zrs"
       icon={<MoreHorizontal className="h-4 w-4 text-muted-foreground" />}
       collapsible
-      defaultCollapsed
+      defaultCollapsed={false}
     >
       <div className="space-y-3 sm:space-y-4">
         {/* ZRS Summary */}
