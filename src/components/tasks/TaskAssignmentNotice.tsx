@@ -58,7 +58,7 @@ export function TaskAssignmentNotice() {
   };
 
   if (!notices.length) return null;
-  return <div className="fixed bottom-4 right-4 z-[70] w-[min(92vw,380px)] space-y-3">
+  return <div className="fixed top-20 right-4 z-[70] w-[min(92vw,380px)] space-y-3">
     {notices.map(notice => <Card key={notice.id} className="border-primary/30 shadow-xl">
       <CardHeader className="pb-2"><div className="flex items-center justify-between gap-2"><CardTitle className="text-base">{notice.title}</CardTitle><Badge>Новая задача</Badge></div></CardHeader>
       <CardContent className="space-y-3"><p className="text-sm text-muted-foreground">{notice.message}</p><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => notice.link && navigate(normalizeNotificationLink(notice.link))}>Открыть</Button><Button size="sm" disabled={pendingId !== null} onClick={() => void accept(notice)}><CheckCircle2 className="mr-1 h-4 w-4" />Принять задачу</Button></div></CardContent>
