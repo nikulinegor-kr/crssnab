@@ -709,6 +709,19 @@ export const RequestSidePanel = ({
       toast({ title: "Отправлено в Макс", description: "ЗРС повторно отправлена в группу поставок" });
     } catch { toast({ title: "Ошибка отправки", description: "Не удалось отправить ЗРС в Макс", variant: "destructive" }); }
   };
+  const sendRequestToMax = async () => {
+    try {
+      const { data: textData, error: textError } = await supabase.rpc("build_request_message_by_id", { _request_id: request.id });
+      if (textError) throw textError;
+      const { data, error } = await supabase.functions.invoke("max-direct-send", {
+        body: { chat_id: "-75086506652357", text: String(textData || ""), organization_id: request.organization_id, mode: "auto", request_id: request.id },
+      });
+      if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
+      toast({ title: "Отправлено в Макс", description: "Заявка повторно отправлена в группу поставок" });
+    } catch {
+      toast({ title: "Ошибка отправки", description: "Не удалось отправить заявку в Макс", variant: "destructive" });
+    }
+  };
   const invoiceBlock = (
     <div className="mt-2 border-t border-border pt-2">
       <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
@@ -1386,6 +1399,9 @@ export const RequestSidePanel = ({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => sendRequestToAppleReminders(request as any)}>
               В Напоминания Apple
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void sendRequestToMax()}>
+              Повторно отправить в Макс
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
