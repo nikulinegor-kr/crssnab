@@ -642,6 +642,7 @@ export const RequestSidePanel = ({
               <RequestInlineField
                 label="Транспортная компания"
                 value={request.transport_company}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3"
                 readOnly={readOnly}
                 onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}
                 onSave={(v) => saveField("transport_company", v)}
