@@ -30,6 +30,7 @@ export function TaskStatusActions({ task, menu = false, primary = false, onUpdat
       completed_at: choice.status === "done" ? new Date().toISOString() : null,
       ...(choice.dialog === "waiting" ? { blocked_reason: reason.trim(), blocked_until: until || null } : {}),
       ...(choice.dialog === "rework" ? { change_reason: reason.trim() } : {}),
+      ...(choice.status === "accepted" ? { accepted_at: new Date().toISOString() } : {}),
     };
     try {
       const { data, error } = await supabase.from("planner_tasks").update(patch).eq("id", task.id).eq("organization_id", task.organization_id).select("*").single();

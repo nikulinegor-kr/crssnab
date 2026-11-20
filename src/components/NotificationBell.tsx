@@ -20,7 +20,7 @@ export function NotificationBell() {
   const navigate = useNavigate();
 
   const handleNotificationClick = (notification: any) => {
-    markAsRead(notification.id);
+    if (notification.type !== "task_assigned") markAsRead(notification.id);
     if (notification.link) {
       navigate(normalizeNotificationLink(notification.link));
     }

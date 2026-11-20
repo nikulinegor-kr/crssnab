@@ -10,6 +10,7 @@ import { PermissionRoute } from "./PermissionRoute";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { QuickRequestFab } from "./quick-request/QuickRequestFab";
 import { QuickAddErpMenu } from "./erp/QuickAddErpMenu";
+import { TaskAssignmentNotice } from "./tasks/TaskAssignmentNotice";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
 import { useLocation } from "react-router-dom";
@@ -104,6 +105,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
         {/* AI chat panel removed from default layout per user preference. */}
         {!isMobile && pathname !== "/requests" && pathname !== "/executive" && pathname !== "/tasks" && !pathname.startsWith("/me") && <QuickRequestFab className="hidden md:flex" />}
         <MobileBottomNav />
+        <TaskAssignmentNotice />
       </div>
     </SidebarProvider>
   );

@@ -6,7 +6,7 @@ import { normalizeNotificationLink } from "@/lib/notificationLinks";
 import { useAuthUserId } from "./useOrgMembership";
 import { useEffect, useCallback } from "react";
 
-interface Notification {
+export interface Notification {
   id: string;
   type: string;
   title: string;
@@ -115,6 +115,7 @@ export const useNotifications = () => {
     const channel = supabase.channel(`notifications:${userId}`).on('postgres_changes', {event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${userId}`}, payload => {
       void queryClient.invalidateQueries({queryKey:["notifications"]});
       void queryClient.invalidateQueries({queryKey:["my-notifications"]});
+      void queryClient.invalidateQueries({queryKey:["task-assignment-notices"]});
       const notification = payload.new as Notification;
       toast({title:notification.title,description:notification.message});
       void showBrowserNotification(notification.title,notification.message,notification.link,notification.id);
@@ -135,6 +136,7 @@ export const useNotifications = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["task-assignment-notices"] });
     },
   });
 
@@ -149,12 +151,14 @@ export const useNotifications = () => {
         .update({ is_read: true })
         .eq("user_id", user.id)
         .eq("organization_id", currentOrgId)
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .neq("type", "task_assigned");
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["task-assignment-notices"] });
     },
   });
 
