@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode, buttons, request_id } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons, request_id, document_url, file_name } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
         const docUrls: string[] = !isInvoiceStatus ? [] : (
           Array.isArray((reqRow as any)?.document_urls) && (reqRow as any).document_urls.length > 0
             ? (reqRow as any).document_urls
-            : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : [])
+            : ((reqRow as any)?.document_url ? [(reqRow as any).document_url] : (document_url ? [document_url] : []))
         );
         for (const docUrl of docUrls) {
           if (!docUrl || !(docUrl.startsWith("http://") || docUrl.startsWith("https://"))) continue;
@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
           try {
             const u = new URL(docUrl);
             const parts = u.pathname.split("/");
-            fileName = decodeURIComponent(parts[parts.length - 1] || "document.pdf");
+            fileName = file_name || decodeURIComponent(parts[parts.length - 1] || "document.pdf");
             const idx = parts.findIndex((p) => p === "request-documents");
             if (idx !== -1) {
               const filePath = parts.slice(idx + 1).join("/");
