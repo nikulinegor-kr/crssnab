@@ -41,10 +41,10 @@ export function buildExecutiveSnapshot(requests:ExecutiveRequest[],tasks:ExecAtt
  return{open,finance,quality,decisions,upcoming};
 }
 export function buildExecutiveTeam(open:ExecutiveRequest[],completed:ExecutiveRequest[],tasks:ExecAttentionItem[]){
- const teams=new Map<string,{key:string;name:string;open:number;overdueTasks:number;completed:number;assessed:number;onTime:number}>();
- const get=(name?:string|null)=>{const key=employeeKey(name);if(!teams.has(key))teams.set(key,{key,name:name?.trim()||"Без исполнителя",open:0,overdueTasks:0,completed:0,assessed:0,onTime:0});return teams.get(key)!;};
+ const teams=new Map<string,{key:string;name:string;open:number;overdueTasks:number;completed:number;completedAmount:number;assessed:number;onTime:number}>();
+ const get=(name?:string|null)=>{const key=employeeKey(name);if(!teams.has(key))teams.set(key,{key,name:name?.trim()||"Без исполнителя",open:0,overdueTasks:0,completed:0,completedAmount:0,assessed:0,onTime:0});return teams.get(key)!;};
  for(const r of open.filter(isOpenRequest))get(r.executor).open++;
  for(const t of tasks)get(t.assigneeName).overdueTasks++;
- for(const r of completed){if(!["Доставлено","Выполнено"].includes(r.status))continue;const a=dateKey(r.actual_arrival_date),p=plannedArrival(r),c=dateKey(r.created_at);if(!a)continue;const m=get(r.executor);m.completed++;if(p&&(!c||a>=c)&&(!c||p>=c)){m.assessed++;if(a<=p)m.onTime++;}}
+ for(const r of completed){if(!["Доставлено","Выполнено"].includes(r.status))continue;const a=dateKey(r.actual_arrival_date),p=plannedArrival(r),c=dateKey(r.created_at);if(!a)continue;const m=get(r.executor);m.completed++;m.completedAmount+=invoiceTotal(r);if(p&&(!c||a>=c)&&(!c||p>=c)){m.assessed++;if(a<=p)m.onTime++;}}
  return[...teams.values()].sort((a,b)=>b.overdueTasks-a.overdueTasks||b.open-a.open||a.name.localeCompare(b.name,"ru"));
 }
