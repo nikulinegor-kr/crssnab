@@ -123,9 +123,8 @@ export const AdditionalSection = ({
       const modifiedPdf = await insertZrsIntoPreparedInvoice(bytes, getZrsLines(), new Uint8Array(await response.arrayBuffer()));
       const safeName = (formValues.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim().slice(0,80);
       const modifiedFile = new File([modifiedPdf as BlobPart], `${safeName || "Заявка"}-ZRS.pdf`, { type: "application/pdf" });
-      const additions = !alreadyAttached ? [originalFile] : [];
-      // Промежуточный prepared-файл нужен только для обработки и не прикрепляется к заявке.
-      setDocumentFiles(current => [...current.filter(file => !/\.prepared\.pdf$/i.test(file.name) && file.name !== modifiedFile.name), ...additions.filter(file => !current.some(existing => existing.name === file.name && existing.size === file.size)), modifiedFile]);
+      // К заявке прикрепляем только итоговый PDF с ЗРС: оригинал и промежуточный prepared-файл не нужны.
+      setDocumentFiles(current => [...current.filter(file => file.name !== originalFile.name && !/\.prepared\.pdf$/i.test(file.name) && file.name !== modifiedFile.name), modifiedFile]);
       setLastZrsFile(modifiedFile);
       await saveImageFile(modifiedFile, "Счёт с ЗРС");
       toast({ title: "Готово", description: "ЗРС вставлена после номенклатуры и итогов на последнем листе. Файл готов к сохранению" });
