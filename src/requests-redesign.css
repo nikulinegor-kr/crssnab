@@ -714,6 +714,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel { line-height: 1.35; }
 .request-side-panel :is(p, span, button, summary, label) { line-height: inherit; }
 .request-side-panel .request-panel-field { line-height: 1.35; }
+.request-side-panel .request-panel-field { align-items: center; }
+.request-side-panel .request-panel-field > div:first-child { line-height: 1.25; }
+.request-side-panel .request-panel-field > div:last-of-type { display: flex; align-items: center; min-height: 32px; line-height: 1.25; }
 @container (min-width: 650px) {
   .request-card-meta { grid-template-columns: repeat(4, minmax(0, max-content)) minmax(0, 1fr); }
 }
@@ -726,7 +729,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-side-card > .text-muted-foreground { letter-spacing: .01em; }
 .request-side-panel .request-card-comment-block { padding-bottom: 4px; }
 .request-side-panel details > summary { padding: 2px 0; color: var(--requests-text); }
-.request-side-panel .request-panel-field { align-items: flex-start; }
+.request-side-panel .request-panel-field { align-items: center; }
 .request-side-panel .request-panel-field > div:last-of-type { min-width: 0; align-self: stretch; }
 .request-side-panel .request-panel-field .group\/pf { align-items: flex-start; }
 .request-side-panel .request-panel-field .group\/pf > span { padding-top: 3px; padding-bottom: 3px; }
@@ -783,6 +786,15 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-invoice-document-row { display: grid; grid-template-columns: auto minmax(0, 1fr) repeat(4, auto); align-items: center; gap: 10px; }
 .request-side-panel .request-invoice-document-row > span { grid-column: 2 / -1; min-width: 0; width: auto; max-width: 100%; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-overflow: ellipsis; overflow-wrap: anywhere; }
 .request-side-panel .request-invoice-document-row > button { grid-row: 2; white-space: nowrap; }
+.request-side-panel .request-invoice-document-row button {
+  min-height: 38px; height: 38px; border: 1px solid var(--requests-border); border-radius: 11px;
+  background: var(--requests-surface); color: var(--requests-text); padding: 0 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; line-height: 1;
+}
+.request-side-panel .request-invoice-document-row button:hover { background: var(--requests-indigo-soft); border-color: var(--requests-indigo); }
+.request-side-panel .request-invoice-document-row button.text-destructive,
+.request-side-panel .request-invoice-document-row button[class*="text-destructive"] { color: #c93238; border-color: #e7b6b8; }
+.request-side-panel .request-invoice-document-row button[class*="text-destructive"]:hover { background: #fff3f3; border-color: #c93238; }
 .request-side-panel details > summary:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 3px; border-radius: 8px; }
 
 .request-quick-view__body { padding: 14px 18px 18px; }
