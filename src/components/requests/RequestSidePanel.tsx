@@ -723,7 +723,7 @@ export const RequestSidePanel = ({
       const { data: textData, error: textError } = await supabase.rpc("build_request_message_by_id", { _request_id: request.id });
       if (textError) throw textError;
       const { data, error } = await supabase.functions.invoke("max-direct-send", {
-        body: { chat_id: "-75086506652357", text: String(textData || ""), organization_id: request.organization_id, mode: "auto", request_id: request.id },
+        body: { chat_id: "-75086506652357", text: String(textData || ""), organization_id: request.organization_id, mode: "auto", request_id: request.id, document_url: mainInvoiceDoc || undefined, file_name: mainInvoiceDoc ? docFileName(mainInvoiceDoc) : undefined },
       });
       if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
       toast({ title: "Отправлено в Макс", description: "Заявка повторно отправлена в группу поставок" });
@@ -856,7 +856,7 @@ export const RequestSidePanel = ({
                 onSave={(v) => saveField("payment_percent", Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0)))}
               />
               {!readOnly && (
-                <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">
+                <div className="relative -mt-12 flex flex-wrap items-center justify-end gap-1.5 pb-1">
                   <Button
                     type="button"
                     size="sm"
