@@ -702,6 +702,13 @@ export const RequestSidePanel = ({
       return "Документ";
     }
   };
+  const resendZrsToMax = async (url: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("notify-telegram", { body: { action: "send_zrs_document", organization_id: request.organization_id, document_url: url, file_name: docFileName(url), caption: `📋 ЗРС — Счёт\n\nЗаявка: ${request.description || request.request_number}` } });
+      if (error) throw error;
+      toast({ title: "Отправлено в Макс", description: "ЗРС повторно отправлена в группу поставок" });
+    } catch { toast({ title: "Ошибка отправки", description: "Не удалось отправить ЗРС в Макс", variant: "destructive" }); }
+  };
   const invoiceBlock = (
     <div className="mt-2 border-t border-border pt-2">
       <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
@@ -730,6 +737,7 @@ export const RequestSidePanel = ({
               <Download className="mr-1 h-3.5 w-3.5" />
               Скачать
             </Button>
+            {docFileName(mainInvoiceDoc).toLowerCase().includes("zrs") && <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void resendZrsToMax(mainInvoiceDoc)}>В Макс</Button>}
             <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
           </div>
           {invoiceDocs.length > 1 && (
@@ -747,6 +755,7 @@ export const RequestSidePanel = ({
                   >
                     Скачать
                   </button>
+                  {docFileName(url).toLowerCase().includes("zrs") && <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void resendZrsToMax(url)}>В Макс</Button>}
                   <RequestDocumentDeleteButton request={request} url={url} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
                 </div>
               ))}
