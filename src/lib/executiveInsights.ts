@@ -31,7 +31,7 @@ export function buildExecutiveSnapshot(requests:ExecutiveRequest[],tasks:ExecAtt
   if(total&&pct!==null){finance.paid+=total-balance;finance.outstanding+=balance;if(balance>0)finance.payableRequests++;}
   if(!plannedArrival(r)&&!r.actual_arrival_date)quality[0].rows.push(r);
   if(!r.executor?.trim())quality[1].rows.push(r);
-  const late=isOverdueDelivery(r,today),input={...r,created_at:r.created_at??r.updated_at??""},stale=isStale(input,today);
+  const late=isOverdueDelivery(r,today),input={...r,created_at:r.created_at??r.updated_at??""},inTransit=["В пути","Доставлено в ТК","Отгружено"].includes(r.status),stale=!inTransit&&isStale(input,today);
   const days=late?differenceInCalendarDays(today,parseISO(plannedArrival(r)!)):stale?getStaleDays(input,today):0;
   const kind=late?"delivery":balance>0?"payment":stale?"stale":null;
   if(kind)decisions.push({id:`request-${r.id}`,requestId:r.id,kinds:[...(late?["delivery" as const]:[]),...(balance>0?["payment" as const]:[]),...(stale?["stale" as const]:[])],balance,kind,title:r.description,reason:late?`Доставка задерживается: ${days} дн.`:kind==="payment"?"Остаток к оплате":`Без изменений: ${days} дн.`,meta:[r.object?.name,r.executor||"Не назначен",kind==="payment"?`${balance.toLocaleString("ru-RU",{maximumFractionDigits:2})} ₽`:r.transport_company].filter(Boolean).join(" · "),days,urgent:["Аварийно","critical","urgent"].includes(r.priority??"")});

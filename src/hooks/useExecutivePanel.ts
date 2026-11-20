@@ -53,7 +53,8 @@ export function useExecutivePanel() {
     for (const r of requests) {
       const input = { ...r, created_at: r.created_at ?? r.updated_at ?? "" };
       const item = { id: r.id, kind: "request" as const, title: r.description, reference: r.request_number.replace(/^REQ-/, ""), objectName: r.object?.name ?? null, priority: r.priority };
-      if (isStale(input, today)) stale.push({ ...item, days: getStaleDays(input, today) });
+      const inTransit = ["В пути", "Доставлено в ТК", "Отгружено"].includes(r.status);
+      if (!inTransit && isStale(input, today)) stale.push({ ...item, days: getStaleDays(input, today) });
       if (isOverdueDelivery(r, today)) deliveries.push({ ...item, days: overdueDays(r.planned_delivery_date || r.delivery_date || "", today) });
       if (isOldNewRequest(r, today)) oldNew++;
     }
