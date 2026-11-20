@@ -115,6 +115,7 @@ export const RequestSidePanel = ({
   const isPhone = useIsMobile();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
+  const [positionsOpen, setPositionsOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
@@ -1305,14 +1306,17 @@ export const RequestSidePanel = ({
                     {itemsBlock}
                   </div>
                 ) : (
+                  <>
                   <button
                     type="button"
-                    onClick={() => setIsFullscreen(true)}
+                    onClick={() => setPositionsOpen((v) => !v)}
                     className="mt-3 flex min-h-9 w-full items-center justify-between rounded border border-border px-2 py-1.5 text-sm hover:bg-muted/60"
                   >
                     <span>Позиции: {items?.length || 0}</span>
-                    <span className="text-primary">Открыть на полный экран</span>
+                    <span className="text-primary">{positionsOpen ? "Скрыть" : "Показать"}</span>
                   </button>
+                  {positionsOpen && <div className={cardClass}>{itemsBlock}</div>}
+                  </>
                 )}
                 <div className={cardClass}>{linkedTasksBlock}</div>
                 {movementBlock}
