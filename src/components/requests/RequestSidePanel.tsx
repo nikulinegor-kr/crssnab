@@ -704,8 +704,6 @@ export const RequestSidePanel = ({
             />
     </>
   );
-  const invoiceDocs = documentUrls;
-  const mainInvoiceDoc = invoiceDocs[0];
   const docFileName = (url: string) => {
     try {
       return decodeURIComponent(url.split("/").pop() || "Документ").replace(/^\d+-/, "");
@@ -713,6 +711,11 @@ export const RequestSidePanel = ({
       return "Документ";
     }
   };
+  // В блоке счёта показываем только финальную редакцию ЗРС, если она есть.
+  const zrsDocs = documentUrls.filter((url) => /-ZRS\.pdf$/i.test(docFileName(url)));
+  const invoiceDocs = zrsDocs.length ? [zrsDocs[zrsDocs.length - 1]] : documentUrls.slice(-1);
+  const mainInvoiceDoc = invoiceDocs[0];
+  const displayInvoiceName = `${(request.description || request.request_number || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`;
   const resendZrsToMax = async (url: string) => {
     try {
       const { error } = await supabase.functions.invoke("notify-telegram", { body: { action: "send_zrs_document", organization_id: request.organization_id, document_url: url, file_name: docFileName(url), caption: `📋 ЗРС — Счёт\n\nЗаявка: ${request.description || request.request_number}` } });
@@ -740,8 +743,8 @@ export const RequestSidePanel = ({
         <>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-[160px] flex-1 break-words text-sm" title={docFileName(mainInvoiceDoc)}>
-              {docFileName(mainInvoiceDoc)}
+            <span className="min-w-[160px] flex-1 break-words text-sm" title={displayInvoiceName}>
+              {displayInvoiceName}
             </span>
             <Button
               variant="ghost"
@@ -756,7 +759,7 @@ export const RequestSidePanel = ({
               variant="outline"
               size="sm"
               className="h-9 px-2 text-[13px]"
-              onClick={() => void downloadStoredFile(mainInvoiceDoc, docFileName(mainInvoiceDoc))}
+              onClick={() => void downloadStoredFile(mainInvoiceDoc, displayInvoiceName)}
             >
               <Download className="mr-1 h-3.5 w-3.5" />
               Скачать
