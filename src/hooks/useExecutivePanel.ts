@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { CLOSED_REQUEST_STATUSES, getStaleDays, isStale, isOverdueDelivery } from "@/lib/requestStaleness";
 import { overdueDays, sortAttention, sortEvents, sortObjects, type ExecAttentionItem, type ExecEvent, type ExecObjectLoad, type ExecAttentionGroup, isOldNewRequest, isExecEventVisible, describeExecEvent } from "@/lib/executivePanel";
+import { invoiceTotal } from "@/lib/executiveSnapshot";
 
 const closedFilter = `(${CLOSED_REQUEST_STATUSES.map(s => `"${s}"`).join(",")})`;
 const staleTime = 60_000;
@@ -74,7 +75,7 @@ export function useExecutivePanel() {
       allRows((from, to) => supabase.from("planner_tasks").select("object_id,id").eq("organization_id", orgId ?? "").is("archived_at", null).eq("hidden_auto", false).neq("status", "done").lt("due_date", today.toISOString()).order("id").range(from, to)),
     ]);
     const map = new Map<string, ExecObjectLoad>(objects.map(o => [o.id, { ...o, requests: 0, amount: 0, overdueTasks: 0 }]));
-    for (const r of requests) { const o = r.object_id ? map.get(r.object_id) : undefined; if (o) { o.requests++; o.amount += (r.amount ?? 0) + (r.amount_2 ?? 0) + (r.amount_3 ?? 0); } }
+    for (const r of requests) { const o = r.object_id ? map.get(r.object_id) : undefined; if (o) { o.requests++; o.amount += invoiceTotal(r) ?? 0; } }
     for (const t of tasks) { const o = t.object_id ? map.get(t.object_id) : undefined; if (o) o.overdueTasks++; }
     return sortObjects([...map.values()]);
   }});
