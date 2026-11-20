@@ -1,4 +1,3 @@
-import { formatRequestPublicNumber } from "@/lib/requestPublicNumber";
 import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
@@ -1265,7 +1264,6 @@ export const RequestSidePanel = ({
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
         />
-        <span className="hidden font-numeric md:inline" title={request.request_number || undefined}>{formatRequestPublicNumber(request) ?? request.request_number}</span>
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
         {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
