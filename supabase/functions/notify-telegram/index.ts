@@ -390,8 +390,10 @@ serve(async (req) => {
       }
 
       const org = await getTelegramSettings(organization_id);
+      // ЗРС направляем в рабочую группу поставок, если она настроена.
+      const zrsChatId = org?.telegram_procurement_chat_id || org?.telegram_chat_id;
 
-      if (!org?.telegram_bot_token || !org?.telegram_chat_id) {
+      if (!org?.telegram_bot_token || !zrsChatId) {
         return new Response(
           JSON.stringify({ error: "Telegram не настроен для организации" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -405,7 +407,7 @@ serve(async (req) => {
           const bytes = new Uint8Array(binStr.length);
           for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
           const fd = new FormData();
-          fd.append("chat_id", String(org.telegram_chat_id));
+          fd.append("chat_id", String(zrsChatId));
           fd.append("caption", caption || `📋 ${file_name || "Счёт с ЗРС"}`);
           fd.append("parse_mode", "HTML");
           fd.append("document", new Blob([bytes], { type: file_mime || "application/pdf" }), file_name || "document.pdf");
@@ -443,7 +445,7 @@ serve(async (req) => {
       }
 
       const result = await sendTelegramRequest(org.telegram_bot_token, "sendDocument", {
-        chat_id: org.telegram_chat_id,
+        chat_id: zrsChatId,
         document: signedDocUrl,
         caption: caption || `📋 ${file_name || "Счёт с ЗРС"}`,
         parse_mode: "HTML",
