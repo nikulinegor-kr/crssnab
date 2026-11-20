@@ -51,7 +51,7 @@ export function LinkedPlannerTasks({ requestId, organizationId, requestTitle, ob
   const openCount = tasks.filter((t) => t.status !== "done").length;
 
   return (
-    <Card className="glassmorphism border-border/40">
+    <Card className="request-linked-tasks-card glassmorphism border-border/40">
       <CardHeader className="pb-3 flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base font-semibold flex items-center gap-2 whitespace-nowrap">
           <ClipboardList className="h-4 w-4 shrink-0 text-primary" />

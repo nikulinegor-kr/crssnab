@@ -1311,7 +1311,7 @@ export const RequestSidePanel = ({
                   {positionsOpen && <div className={cardClass}>{itemsBlock}</div>}
                   </>
                 )}
-                <details className={cardClass}>
+                <details className={cn(cardClass, "request-tasks-disclosure")}>
                   <summary className="cursor-pointer list-none font-semibold">Задачи по заявке</summary>
                   <div className="mt-3">{linkedTasksBlock}</div>
                 </details>
