@@ -638,7 +638,7 @@ export const RequestSidePanel = ({
     </details>
   );
   const logisticsBlock = (
-    <div className={cardClass}>
+    <div className={cn(cardClass, "request-logistics-card")}>
       <div className={cardTitleClass}>Логистика</div>
               <RequestInlineField
                 label="Транспортная компания"
