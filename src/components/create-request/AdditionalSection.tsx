@@ -160,7 +160,7 @@ export const AdditionalSection = ({
     if (file) await insertIntoFile(file, false);
   };
 
-  const handleSendToTelegram = async () => {
+  const handleSendToMax = async () => {
     if (!lastZrsFile || !organizationId) return;
     setIsSending(true);
     try {
@@ -187,10 +187,10 @@ export const AdditionalSection = ({
         },
       });
       if (error) throw error;
-      toast({ title: "Отправлено", description: "Счёт с ЗРС отправлен в Telegram" });
+      toast({ title: "Отправлено в Макс", description: "Счёт с ЗРС повторно отправлен в группу «Макс СахаРесурс | Поставка ТМЦ»" });
     } catch (err) {
       console.error("Send ZRS error:", err);
-      toast({ title: "Ошибка", description: "Не удалось отправить в Telegram", variant: "destructive" });
+      toast({ title: "Ошибка отправки", description: "Не удалось отправить счёт в Макс", variant: "destructive" });
     } finally {
       setIsSending(false);
     }
@@ -256,12 +256,12 @@ export const AdditionalSection = ({
                     type="button"
                     variant="default"
                     size="sm"
-                    onClick={handleSendToTelegram}
+                    onClick={handleSendToMax}
                     disabled={isSending}
                     className="h-7"
                   >
                     <Send className="h-3 w-3 mr-1" />
-                    {isSending ? "Отправка..." : "Отправить"}
+                    {isSending ? "Отправка..." : "Отправить в Макс"}
                   </Button>
                 </>
               )}
