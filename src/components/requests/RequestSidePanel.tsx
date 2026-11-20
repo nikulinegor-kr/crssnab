@@ -1223,6 +1223,7 @@ export const RequestSidePanel = ({
           label="Комментарий"
           type="textarea"
           value={request.comments}
+          className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"
           display={<span className="request-card-comment">{request.comments || "—"}</span>}
           readOnly={readOnly}
           onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
