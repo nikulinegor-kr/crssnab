@@ -1318,7 +1318,10 @@ export const RequestSidePanel = ({
                   {positionsOpen && <div className={cardClass}>{itemsBlock}</div>}
                   </>
                 )}
-                <div className={cardClass}>{linkedTasksBlock}</div>
+                <details className={cardClass}>
+                  <summary className="cursor-pointer list-none font-semibold">Задачи по заявке</summary>
+                  <div className="mt-3">{linkedTasksBlock}</div>
+                </details>
                 {movementBlock}
                 <div className={cardClass}>{docsBlock}</div>
                 <div className={cardClass}><div className={sectionTitleClass}>История</div>{historyBlock}</div>
