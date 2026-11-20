@@ -742,7 +742,7 @@ export const RequestSidePanel = ({
       <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
       {mainInvoiceDoc ? (
         <>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="request-invoice-document-row mt-2 flex flex-wrap items-center gap-2">
             <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="min-w-[160px] flex-1 break-words text-sm" title={displayInvoiceName}>
               {displayInvoiceName}

@@ -688,7 +688,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .request-side-panel .request-side-card { border-radius: 16px; padding: 12px 14px; }
 .request-side-panel .request-side-card { box-shadow: 0 1px 2px rgb(15 23 42 / 3%); }
-.request-side-panel__title { max-width: 38ch; font-size: clamp(18px, 2.4vw, 24px); line-height: 1.18; letter-spacing: -.02em; }
+.request-side-panel__title { display: block; max-width: 32ch; font-size: clamp(20px, 2vw, 30px) !important; font-weight: 650; line-height: 1.12; letter-spacing: -.025em; }
+.request-side-panel .request-inline-field--title .request-inline-field__display { justify-content: flex-start; align-items: flex-start; }
+.request-side-panel .request-card-comment-block { max-width: 58rem; }
 .request-side-panel .request-side-card > .request-side-card__title,
 .request-side-panel .request-side-card > .text-muted-foreground { letter-spacing: .01em; }
 .request-side-panel .request-card-comment-block { padding-bottom: 4px; }
@@ -741,12 +743,16 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .request-side-panel .request-panel-field > div:last-of-type { width: 100%; }
 .request-side-panel .request-side-card { padding: 16px 18px; }
-.request-side-panel .request-card-meta { column-gap: 22px; }
+.request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto auto; column-gap: 18px; align-items: end; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { padding-left: 0; padding-right: 0; }
 .request-side-panel .request-payment-row { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 16px; }
 .request-side-panel .request-payment-row > * { min-width: 0; }
 .request-side-panel .request-finance-total { display: flex; justify-content: flex-end; min-width: 0; font-variant-numeric: tabular-nums; }
 .request-side-panel .request-finance-total strong { max-width: 100%; text-align: right; overflow-wrap: anywhere; }
+.request-side-panel .request-invoice-document-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 10px; }
+.request-side-panel .request-invoice-document-row > span { min-width: 0; line-height: 1.35; }
+.request-side-panel .request-invoice-document-row > button { white-space: nowrap; }
+.request-side-panel details > summary:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 3px; border-radius: 8px; }
 
 .request-quick-view__body { padding: 14px 18px 18px; }
 .request-quick-view__section { margin-top: 12px; padding-top: 12px; }
@@ -808,6 +814,8 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-files-grid { grid-template-columns: minmax(0, 1fr); }
   .request-card-two-columns { grid-template-columns: minmax(0, 1fr); }
   .request-side-panel .request-panel-field { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 10px; }
+  .request-side-panel .request-invoice-document-row { grid-template-columns: auto minmax(0, 1fr); }
+  .request-side-panel .request-invoice-document-row > button { justify-self: start; }
   .request-inline-field__display { min-height: 40px; }
   .request-inline-field__display > svg { opacity: .8; }
   .request-inline-field__editor :is(input, textarea, select) { min-height: 44px; font-size: 16px; }
