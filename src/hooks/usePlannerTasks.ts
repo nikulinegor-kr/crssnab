@@ -230,7 +230,7 @@ export const useCreatePlannerTask = () => {
         .select()
         .single();
       if (error) throw error;
-      if (data?.assignee_id && data.assignee_id !== user?.id) {
+      if (data?.assignee_id) {
         const { error: notificationError } = await supabase.from("notifications").insert({
           user_id: data.assignee_id,
           organization_id: currentOrgId,
