@@ -588,8 +588,9 @@ export const RequestSidePanel = ({
   const cardClass = "request-side-card mt-3 w-full min-w-0 rounded-[16px] border border-border bg-card px-3 py-2.5 break-words";
   const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
-    <div className={cardClass}>
-      <div className={cardTitleClass}>Объект и ответственные</div>
+    <details className={cn(cardClass, "request-people-disclosure")}>
+      <summary>Объект и ответственные</summary>
+      <div className="mt-3">
               <PanelField
               label="Объект"
               type="select"
@@ -633,7 +634,8 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("executor", v)}
             />
-    </div>
+      </div>
+    </details>
   );
   const logisticsBlock = (
     <div className={cardClass}>
@@ -1278,10 +1280,10 @@ export const RequestSidePanel = ({
               {docsBlock}
               <div>{linkedTasksBlock}</div>
               <div>{movementBlock}</div>
-              <div>
-                <div className={sectionTitleClass}>История</div>
-                {historyBlock}
-              </div>
+                <details className="request-history-disclosure">
+                  <summary>История</summary>
+                  <div className="mt-3">{historyBlock}</div>
+                </details>
             </div>
           </div>
         ) : (
@@ -1299,7 +1301,7 @@ export const RequestSidePanel = ({
                   <button
                     type="button"
                     onClick={() => setPositionsOpen((v) => !v)}
-                    className="mt-3 flex min-h-9 w-full items-center justify-between rounded border border-border px-2 py-1.5 text-sm hover:bg-muted/60"
+                    className="request-positions-toggle mt-3 flex min-h-9 w-full items-center justify-between rounded border border-border px-2 py-1.5 text-sm hover:bg-muted/60"
                   >
                     <span>Позиции: {items?.length || 0}</span>
                     <span className="text-primary">{positionsOpen ? "Скрыть" : "Показать"}</span>
@@ -1319,7 +1321,7 @@ export const RequestSidePanel = ({
                   <summary className="cursor-pointer list-none font-semibold">Файлы и документы</summary>
                   <div className="mt-3">{docsBlock}</div>
                 </details>
-                <div className={cardClass}><div className={sectionTitleClass}>История</div>{historyBlock}</div>
+                <details className={cn(cardClass, "request-history-disclosure")}><summary>История</summary><div className="mt-3">{historyBlock}</div></details>
               </>
             )}
           </div>
