@@ -966,6 +966,7 @@ export const RequestSidePanel = ({
             requestNumber={request.request_number}
             photoUrls={photoUrls}
             documentUrls={visibleDocumentUrls}
+            documentDisplayName={`${(request.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`}
             documentUrl={request.document_url}
             photoUrl={request.photo_url}
             readOnly={readOnly}
@@ -1324,8 +1325,14 @@ export const RequestSidePanel = ({
                   <summary className="cursor-pointer list-none font-semibold">Задачи по заявке</summary>
                   <div className="mt-3">{linkedTasksBlock}</div>
                 </details>
-                {movementBlock}
-                <div className={cardClass}>{docsBlock}</div>
+                <details className={cardClass}>
+                  <summary className="cursor-pointer list-none font-semibold">Движение</summary>
+                  <div className="mt-3">{movementBlock}</div>
+                </details>
+                <details className={cardClass}>
+                  <summary className="cursor-pointer list-none font-semibold">Файлы и документы</summary>
+                  <div className="mt-3">{docsBlock}</div>
+                </details>
                 <div className={cardClass}><div className={sectionTitleClass}>История</div>{historyBlock}</div>
               </>
             )}

@@ -128,6 +128,7 @@ interface PanelDocumentsProps {
   requestNumber: string;
   photoUrls: string[];
   documentUrls: string[];
+  documentDisplayName?: string;
   documentUrl?: string | null;
   photoUrl?: string | null;
   readOnly?: boolean;
@@ -144,6 +145,7 @@ export const PanelDocuments = ({
   requestNumber,
   photoUrls,
   documentUrls,
+  documentDisplayName,
   documentUrl,
   photoUrl,
   readOnly,
@@ -255,7 +257,7 @@ export const PanelDocuments = ({
 
 
       {urls.map((url) => {
-        const name = fileNameFromUrl(url);
+        const name = documentDisplayName && /-ZRS\.pdf$/i.test(url) ? documentDisplayName : fileNameFromUrl(url);
         const info = meta[name];
         return (
           <DocFileRow
