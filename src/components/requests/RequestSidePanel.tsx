@@ -665,6 +665,15 @@ export const RequestSidePanel = ({
                 onEditingChange={(editing) => setActiveEditor(editing ? "shipment" : null)}
                 onSave={(v) => saveField("shipment_date", v)}
               />
+              <RequestInlineField
+                label="Дата доставки"
+                type="date"
+                value={request.delivery_date}
+                display={dt(request.delivery_date) || "—"}
+                readOnly={readOnly}
+                onEditingChange={(editing) => setActiveEditor(editing ? "delivery" : null)}
+                onSave={(v) => saveField("delivery_date", v)}
+              />
     </div>
   );
   const invoiceNumberField = (
