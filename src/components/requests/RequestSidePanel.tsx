@@ -1160,17 +1160,9 @@ export const RequestSidePanel = ({
           <ArrowLeft className="h-4 w-4" />Назад
         </Button>
       </div>
-      <div className={cn("flex flex-none items-start gap-2 px-4 pt-3", containerClass)}>
-        <RequestInlineField
-          label="Название заявки"
-          type="textarea"
-          hideLabel
-          value={request.description}
-          display={<span className="request-side-panel__title">{request.description || "Заявка"}</span>}
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
-          onSave={(value) => saveField("description", value.trim())}
-        />
+      <div className={cn("flex flex-none flex-col gap-3 px-4 pt-3", containerClass)}>
+        <div className="request-panel-toolbar self-end">
+          <div className="flex shrink-0 items-center gap-0.5">
         <div className="flex shrink-0 items-center gap-0.5 max-md:hidden">
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
             <ArrowUp className="h-3.5 w-3.5" />
@@ -1201,6 +1193,18 @@ export const RequestSidePanel = ({
             <X className="h-4 w-4" />
           </Button>
         </div>
+          </div>
+        </div>
+        <RequestInlineField
+          label="Название заявки"
+          type="textarea"
+          hideLabel
+          value={request.description}
+          display={<span className="request-side-panel__title">{request.description || "Заявка"}</span>}
+          readOnly={readOnly}
+          onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
+          onSave={(value) => saveField("description", value.trim())}
+        />
       </div>
 
       <div className={cn("request-card-comment-block px-4 pt-1", containerClass)}>
@@ -1223,7 +1227,7 @@ export const RequestSidePanel = ({
         />
       </div>
 
-      <div className={cn("request-card-meta flex-none gap-2 max-md:!hidden px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
+      <div className={cn("request-summary-block request-card-meta flex-none gap-2 max-md:!hidden px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <RequestInlineField
           label="Статус"
           type="select"
@@ -1253,7 +1257,7 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {!assistantOpen && !isPhone && <div className="flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      {!assistantOpen && !isPhone && <div className="request-summary-actions flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
