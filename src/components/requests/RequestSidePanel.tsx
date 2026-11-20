@@ -656,6 +656,7 @@ export const RequestSidePanel = ({
               copyLabel="Номер ТТН скопирован"
               extraAction={<TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} />}
             />
+              <div className="grid grid-cols-2 gap-3">
               <RequestInlineField
                 label="Дата отгрузки"
                 type="date"
@@ -674,6 +675,7 @@ export const RequestSidePanel = ({
                 onEditingChange={(editing) => setActiveEditor(editing ? "delivery" : null)}
                 onSave={(v) => saveField("delivery_date", v)}
               />
+              </div>
     </div>
   );
   const invoiceNumberField = (
