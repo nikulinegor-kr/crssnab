@@ -85,7 +85,11 @@ const TeamPerformancePage = () => {
         return new Date(r.delivery_date) < new Date();
       }).length;
       const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-      const totalAmount = reqs.reduce((sum, r) => sum + (r.amount || 0), 0);
+      // Financial KPI reflects completed requests only; active work must not
+      // inflate the amount already delivered.
+      const totalAmount = reqs
+        .filter(r => FINAL_STATUSES.includes(r.status))
+        .reduce((sum, r) => sum + Number(r.amount || 0) + Number(r.amount_2 || 0) + Number(r.amount_3 || 0), 0);
 
       // Avg time (days from created to last completed status)
       const completedReqs = reqs.filter(r => FINAL_STATUSES.includes(r.status));
@@ -202,7 +206,7 @@ const TeamPerformancePage = () => {
                       <p className="font-semibold text-lg">{stat.avgDays} дн.</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Сумма</p>
+                      <p className="text-muted-foreground">Сумма выполненных</p>
                       <p className="font-semibold text-lg">{stat.totalAmount.toLocaleString("ru-RU")} ₽</p>
                     </div>
                   </div>
@@ -224,7 +228,7 @@ const TeamPerformancePage = () => {
                 { title: "Просрочено", value: selectedStats.overdue, icon: AlertTriangle, color: selectedStats.overdue > 0 ? "text-destructive" : "text-foreground", filter: "overdue" },
                 { title: "% выполн.", value: `${selectedStats.completionRate}%`, icon: TrendingUp, color: "text-foreground" },
                 { title: "Ср. время", value: `${selectedStats.avgDays} дн.`, icon: Timer, color: "text-foreground" },
-                { title: "Сумма", value: `${selectedStats.totalAmount.toLocaleString("ru-RU")} ₽`, icon: DollarSign, color: "text-foreground" },
+                { title: "Сумма выполненных", value: `${selectedStats.totalAmount.toLocaleString("ru-RU")} ₽`, icon: DollarSign, color: "text-foreground" },
               ].map((card, i) => (
                 <Card
                   key={i}
