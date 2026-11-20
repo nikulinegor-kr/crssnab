@@ -60,7 +60,7 @@ export default function ExecutivePanelPage() {
   {!panel.orgId ? <p className="exec-empty">Выберите организацию</p> : <>
    <section className="exec-snapshot" aria-label="Текущая ситуация"><div className="exec-snapshot-label"><h2>Сейчас</h2><p>Все открытые заявки</p></div><div className="exec-summary">
     <Link to={EXEC_LINKS.openRequests}><span>В работе</span><strong>{metric(panel.openRequests)} <small>заявок</small></strong></Link>
-    <a href="#exec-finance"><span>Остаток по отметкам</span><strong>{panel.requestAttention.isLoading || panel.requestAttention.isError ? "—" : snapshot.finance.unknownPayment > 0 && snapshot.finance.paid + snapshot.finance.outstanding === 0 ? "Нет данных" : formatExecAmount(snapshot.finance.outstanding)}</strong>{snapshot.finance.unknownPayment > 0 && <small>Без {snapshot.finance.unknownPayment} заявок с неизвестной оплатой</small>}</a>
+    <a href="#exec-finance"><span>Счётов на оплату</span><strong>{panel.requestAttention.isLoading || panel.requestAttention.isError ? "—" : snapshot.finance.unknownPayment > 0 && snapshot.finance.paid + snapshot.finance.outstanding === 0 ? "Нет данных" : formatExecAmount(snapshot.finance.outstanding)}</strong>{snapshot.finance.unknownPayment > 0 && <small>Без {snapshot.finance.unknownPayment} заявок с неизвестной оплатой</small>}</a>
     <Link to={EXEC_LINKS.overdueDeliveries}><span>Задержки поставок</span><strong className="exec-warning">{metric(panel.overdueDeliveries)} <small>заявок</small></strong></Link>
     <Link to={EXEC_LINKS.overdueTasks}><span>Просроченные задачи</span><strong className="exec-danger">{metric(panel.overdueTasks)} <small>задач</small></strong></Link>
    </div></section>
