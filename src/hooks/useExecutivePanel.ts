@@ -67,8 +67,10 @@ export function useExecutivePanel() {
 
   const objects = useQuery({ ...options, queryKey: ["executive", orgId, "objects", day], queryFn: async () => {
     const [objects, requests, tasks] = await Promise.all([
-      allRows((from, to) => supabase.from("request_objects").select("id,name").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_active", true).order("id").range(from, to)),
-      allRows((from, to) => supabase.from("requests").select("object_id,amount,amount_2,amount_3,id").eq("organization_id", orgId ?? "").eq("archived", false).eq("is_project", false).not("status", "in", closedFilter).order("id").range(from, to)),
+      // Include archived/inactive objects and closed requests: this block is a cost view,
+      // not an operational workload queue.
+      allRows((from, to) => supabase.from("request_objects").select("id,name").eq("organization_id", orgId ?? "").order("id").range(from, to)),
+      allRows((from, to) => supabase.from("requests").select("object_id,amount,amount_2,amount_3,id").eq("organization_id", orgId ?? "").eq("is_project", false).order("id").range(from, to)),
       allRows((from, to) => supabase.from("planner_tasks").select("object_id,id").eq("organization_id", orgId ?? "").is("archived_at", null).eq("hidden_auto", false).neq("status", "done").lt("due_date", today.toISOString()).order("id").range(from, to)),
     ]);
     const map = new Map<string, ExecObjectLoad>(objects.map(o => [o.id, { ...o, requests: 0, amount: 0, overdueTasks: 0 }]));

@@ -7,9 +7,9 @@ import { formatExecAmount, formatExecFullAmount, execObjectRequestsLink, execObj
 
 export function ExecObjectsLoad({ items, loading, error }: { items: ExecObjectLoad[]; loading: boolean; error: boolean }) {
   const max = Math.max(0, ...items.map(item => item.amount));
-  return <section className="min-w-0 rounded-lg border border-border bg-card p-4 sm:p-4"><h2 className="mb-2 text-[15px] font-semibold">Нагрузка по объектам</h2>
+  return <section className="min-w-0 rounded-lg border border-border bg-card p-4 sm:p-4"><h2 className="mb-2 text-[15px] font-semibold">Затраты на объекты</h2>
     {loading ? <div>{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="my-2.5 h-[76px] sm:h-[60px]" />)}</div> : error ?
-      <p className="py-4 text-sm text-muted-foreground">Не удалось загрузить объекты</p> : !items.length ? <p className="py-4 text-sm text-muted-foreground">Нет объектов с открытыми заявками или просроченными задачами</p> :
+      <p className="py-4 text-sm text-muted-foreground">Не удалось загрузить объекты</p> : !items.length ? <p className="py-4 text-sm text-muted-foreground">Нет объектов с заявками или просроченными задачами</p> :
       <div>{items.map(item => <div key={item.id} className="min-w-0 py-2.5">
         <Link to={execObjectRequestsLink(item.id)} className="flex min-h-11 sm:min-h-5 min-w-0 items-center justify-between gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${item.name}: ${item.requests} ${pluralRu(item.requests,["заявка","заявки","заявок"])}`}>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.name}</span>
