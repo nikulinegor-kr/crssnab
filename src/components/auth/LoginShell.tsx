@@ -46,6 +46,7 @@ export default function LoginShell({
       </aside>
 
       <main className="crss-login__main">
+        <div className="crss-login__mobile-brand"><CrssLogo /></div>
         <div className="crss-login__form">
           <div>
             <h1 className="crss-login__title">{title}</h1>
