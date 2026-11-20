@@ -1236,8 +1236,6 @@ export const RequestSidePanel = ({
         <RequestRoute
           request={request}
           readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "route-date" : null)}
-          onDeliverySave={(value) => saveField("delivery_date", value)}
         />
       </div>
 

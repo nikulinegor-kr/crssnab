@@ -1,16 +1,14 @@
 import { Request } from "@/hooks/useRequests";
 import { getRequestRouteStage, isRequestRouteStepDone, REQUEST_ROUTE_LABELS } from "@/lib/requestCard";
 import { cn } from "@/lib/utils";
-import { RequestInlineField } from "./RequestInlineField";
 
 interface RequestRouteProps {
   request: Request;
   readOnly?: boolean;
-  onDeliverySave: (value: string) => Promise<void> | void;
   onEditingChange?: (editing: boolean) => void;
 }
 
-export function RequestRoute({ request, readOnly, onDeliverySave, onEditingChange }: RequestRouteProps) {
+export function RequestRoute({ request }: RequestRouteProps) {
   const current = getRequestRouteStage(request);
   return (
     <div className="request-route-block">
@@ -29,16 +27,6 @@ export function RequestRoute({ request, readOnly, onDeliverySave, onEditingChang
           );
         })}
       </ol>
-      <RequestInlineField
-        label="Дата доставки"
-        type="date"
-        value={request.delivery_date}
-        display={request.delivery_date ? new Date(`${request.delivery_date}T00:00:00`).toLocaleDateString("ru-RU") : "Указать дату"}
-        onSave={onDeliverySave}
-        readOnly={readOnly}
-        onEditingChange={onEditingChange}
-        className="request-route__date"
-      />
     </div>
   );
 }
