@@ -861,35 +861,19 @@ export const RequestSidePanel = ({
                 onEditingChange={(editing) => setActiveEditor(editing ? "payment" : null)}
                 onSave={(v) => saveField("payment_percent", Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0)))}
               />
-              {!readOnly && (
+              {!readOnly && paid < 100 && (
                 <div className="relative -mt-12 flex flex-wrap items-center justify-end gap-1.5 pb-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="default"
-                    className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90"
-                    onClick={async () => {
-                      await saveField("payment_percent", 50);
-                      setPendingPaymentPercent(50);
-                      setStatusPromptOpen(true);
-                    }}
-                  >
-                    {paid >= 50 && paid < 100 ? "Доплата 50%" : "Оплачено 50%"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="default"
-                    disabled={paid >= 100}
-                    className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={async () => {
-                      await saveField("payment_percent", 100);
-                      setPendingPaymentPercent(100);
-                      setStatusPromptOpen(true);
-                    }}
-                  >
-                    Оплачено 100%
-                  </Button>
+                  {paid <= 0 && <>
+                    <Button type="button" size="sm" variant="default" className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90" onClick={async () => { await saveField("payment_percent", 50); setPendingPaymentPercent(50); setStatusPromptOpen(true); }}>
+                      Оплачено 50%
+                    </Button>
+                    <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={async () => { await saveField("payment_percent", 100); setPendingPaymentPercent(100); setStatusPromptOpen(true); }}>
+                      Оплачено 100%
+                    </Button>
+                  </>}
+                  {paid > 0 && paid < 100 && <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={async () => { await saveField("payment_percent", 100); setPendingPaymentPercent(100); setStatusPromptOpen(true); }}>
+                    Доплата 50%
+                  </Button>}
                 </div>
               )}
             </div>
