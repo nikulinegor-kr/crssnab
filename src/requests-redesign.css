@@ -749,9 +749,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-payment-row > * { min-width: 0; }
 .request-side-panel .request-finance-total { display: flex; justify-content: flex-end; min-width: 0; font-variant-numeric: tabular-nums; }
 .request-side-panel .request-finance-total strong { max-width: 100%; text-align: right; overflow-wrap: anywhere; }
-.request-side-panel .request-invoice-document-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
-.request-side-panel .request-invoice-document-row > span { min-width: 0; flex: 1 1 auto; width: auto; max-width: min(48ch, 100%); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-overflow: ellipsis; overflow-wrap: anywhere; }
-.request-side-panel .request-invoice-document-row > button { white-space: nowrap; }
+.request-side-panel .request-invoice-document-row { display: grid; grid-template-columns: auto minmax(0, 1fr) repeat(4, auto); align-items: center; gap: 10px; }
+.request-side-panel .request-invoice-document-row > span { min-width: 0; width: auto; max-width: 100%; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-overflow: ellipsis; overflow-wrap: anywhere; }
+.request-side-panel .request-invoice-document-row > button { grid-row: 2; white-space: nowrap; }
 .request-side-panel details > summary:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 3px; border-radius: 8px; }
 
 .request-quick-view__body { padding: 14px 18px 18px; }
@@ -814,9 +814,8 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-files-grid { grid-template-columns: minmax(0, 1fr); }
   .request-card-two-columns { grid-template-columns: minmax(0, 1fr); }
   .request-side-panel .request-panel-field { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 10px; }
-  .request-side-panel .request-invoice-document-row { flex-wrap: wrap; }
-  .request-side-panel .request-invoice-document-row > span { flex-basis: calc(100% - 30px); -webkit-line-clamp: 2; }
-  .request-side-panel .request-invoice-document-row > button { flex: 0 0 auto; }
+  .request-side-panel .request-invoice-document-row { grid-template-columns: auto minmax(0, 1fr) repeat(4, auto); }
+  .request-side-panel .request-invoice-document-row > span { -webkit-line-clamp: 2; }
   .request-inline-field__display { min-height: 40px; }
   .request-inline-field__display > svg { opacity: .8; }
   .request-inline-field__editor :is(input, textarea, select) { min-height: 44px; font-size: 16px; }
