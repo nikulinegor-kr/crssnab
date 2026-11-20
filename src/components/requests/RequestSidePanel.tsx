@@ -1157,6 +1157,7 @@ export const RequestSidePanel = ({
 
       {/* Header */}
       {!assistantOpen && <>
+      <div className="request-header-block">
       <div className="flex-none px-4 pt-3 md:hidden">
         <Button type="button" variant="ghost" size="sm" className="-ml-2 h-10 gap-1 px-2 text-sm text-primary" onClick={onClose}>
           <ArrowLeft className="h-4 w-4" />Назад
@@ -1260,6 +1261,7 @@ export const RequestSidePanel = ({
       </div>
 
       {!assistantOpen && !isPhone && <div className="request-summary-actions flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      </div>
       {/* Body */}
       </>}
       {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>

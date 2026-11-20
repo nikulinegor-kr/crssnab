@@ -678,6 +678,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .request-panel-toolbar { display: inline-flex; align-items: center; padding: 4px; border: 1px solid var(--requests-border); border-radius: 12px; background: var(--requests-bg); box-shadow: 0 1px 2px rgb(15 23 42 / 4%); }
 .request-panel-toolbar button { border-radius: 8px; }
+.request-header-block { margin: 12px 16px 0; padding: 4px 0 8px; border: 1px solid var(--requests-border); border-radius: 20px; background: var(--requests-surface); box-shadow: 0 1px 2px rgb(15 23 42 / 3%); overflow: hidden; }
+.request-header-block > .request-summary-block { margin-top: 10px; }
+.request-header-block > .request-summary-actions { margin-left: 16px; margin-right: 16px; }
 .request-summary-block { margin: 10px 16px 0; padding: 14px 16px; border: 1px solid var(--requests-border); border-radius: 16px; background: var(--requests-bg); }
 .request-summary-actions { margin: 0 16px; padding: 12px 16px; border: 1px solid var(--requests-border); border-radius: 16px; background: var(--requests-surface); }
 .request-summary-actions > * { min-width: 0; }
