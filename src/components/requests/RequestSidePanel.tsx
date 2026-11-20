@@ -856,7 +856,7 @@ export const RequestSidePanel = ({
                 onSave={(v) => saveField("payment_percent", Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0)))}
               />
               {!readOnly && (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">
                   <Button
                     type="button"
                     size="sm"
@@ -868,20 +868,21 @@ export const RequestSidePanel = ({
                       setStatusPromptOpen(true);
                     }}
                   >
-                    50%
+                    {paid >= 50 && paid < 100 ? "Доплата 50%" : "Оплачено 50%"}
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     variant="default"
-                    className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90"
+                    disabled={paid >= 100}
+                    className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={async () => {
                       await saveField("payment_percent", 100);
                       setPendingPaymentPercent(100);
                       setStatusPromptOpen(true);
                     }}
                   >
-                    100%
+                    Оплачено 100%
                   </Button>
                 </div>
               )}
