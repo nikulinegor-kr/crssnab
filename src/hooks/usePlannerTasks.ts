@@ -230,6 +230,17 @@ export const useCreatePlannerTask = () => {
         .select()
         .single();
       if (error) throw error;
+      if (data?.assignee_id && data.assignee_id !== user?.id) {
+        const { error: notificationError } = await supabase.from("notifications").insert({
+          user_id: data.assignee_id,
+          organization_id: currentOrgId,
+          type: "task_assigned",
+          title: "🔔 Вам назначена задача",
+          message: data.title,
+          link: `/planner?task=${data.id}`,
+        });
+        if (notificationError) console.warn("Не удалось создать уведомление о задаче", notificationError);
+      }
       return data;
     },
     onSuccess: () => {
