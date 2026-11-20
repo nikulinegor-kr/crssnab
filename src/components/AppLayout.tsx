@@ -80,7 +80,7 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
 
 
           <main id="main-content" className={cn(
-            "min-w-0 min-h-0 h-full overflow-x-hidden",
+            "min-w-0 min-h-0 h-full overflow-x-auto",
             fullBleed ? "overflow-y-hidden" : "overflow-y-auto overscroll-contain"
           )}>
             {fullBleed ? (
