@@ -46,6 +46,7 @@ export function RequestDocumentDeleteButton({
   if (readOnly) return null;
 
   const label = kind === "photo" ? "Удалить фото" : "Удалить документ";
+  const buttonLabel = "Удалить";
   const name = requestFileName(url);
 
   const remove = async () => {
@@ -82,7 +83,7 @@ export function RequestDocumentDeleteButton({
         onClick={() => setOpen(true)}
       >
         <Trash2 className="h-3.5 w-3.5" />
-        {label}
+        {buttonLabel}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>

@@ -755,7 +755,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-finance-total { display: flex; justify-content: flex-end; min-width: 0; font-variant-numeric: tabular-nums; }
 .request-side-panel .request-finance-total strong { max-width: 100%; text-align: right; overflow-wrap: anywhere; }
 .request-side-panel .request-invoice-document-row { display: grid; grid-template-columns: auto minmax(0, 1fr) repeat(4, auto); align-items: center; gap: 10px; }
-.request-side-panel .request-invoice-document-row > span { min-width: 0; width: auto; max-width: 100%; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-overflow: ellipsis; overflow-wrap: anywhere; }
+.request-side-panel .request-invoice-document-row > span { grid-column: 2 / -1; min-width: 0; width: auto; max-width: 100%; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; text-overflow: ellipsis; overflow-wrap: anywhere; }
 .request-side-panel .request-invoice-document-row > button { grid-row: 2; white-space: nowrap; }
 .request-side-panel details > summary:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 3px; border-radius: 8px; }
 
