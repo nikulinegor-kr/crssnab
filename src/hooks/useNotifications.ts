@@ -104,7 +104,12 @@ export const useNotifications = () => {
         .limit(50);
 
       if (error) throw error;
-      return data as Notification[];
+      const unique = new Map<string, Notification>();
+      for (const item of (data as Notification[])) {
+        const key = `${item.type}|${item.link ?? ""}|${item.title}|${item.message}`;
+        if (!unique.has(key)) unique.set(key, item);
+      }
+      return [...unique.values()];
     },
     enabled: !!currentOrgId,
   });
