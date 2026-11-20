@@ -702,7 +702,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-tasks-disclosure .request-linked-tasks-card { border: 0; box-shadow: none; background: transparent; }
 .request-tasks-disclosure .request-linked-tasks-card .text-base { display: none; }
 .request-tasks-disclosure .request-linked-tasks-card [class*="CardHeader"] { justify-content: flex-end; padding: 0 0 10px; }
-.request-logistics-card .request-panel-field { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: center; }
+.request-logistics-card .request-panel-field { grid-template-columns: var(--panel-label-col) minmax(0, 1fr); column-gap: calc(var(--panel-unit) * 2); align-items: center; }
 .request-logistics-card .request-panel-field > div:first-child { text-align: left; }
 .request-logistics-card .request-panel-field > div:last-of-type { text-align: center; }
 .request-logistics-card > .grid.grid-cols-2 { align-items: start; }
