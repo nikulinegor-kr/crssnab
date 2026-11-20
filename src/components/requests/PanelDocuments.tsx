@@ -257,7 +257,7 @@ export const PanelDocuments = ({
 
 
       {urls.map((url) => {
-        const name = documentDisplayName && /-ZRS\.pdf$/i.test(url) ? documentDisplayName : fileNameFromUrl(url);
+        const name = documentDisplayName && /-ZRS\.pdf$/i.test(decodeURIComponent(url)) ? documentDisplayName : fileNameFromUrl(url);
         const info = meta[name];
         return (
           <DocFileRow
