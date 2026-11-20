@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ColumnVisibility, DEFAULT_COLUMN_VISIBILITY } from "@/components/requests/TableColumnSettings";
 
 const STORAGE_KEY = "requests_table_columns_v2";
 
 export const useTableColumnVisibility = (userId?: string | null) => {
   const storageKey = userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY;
+  const hydratedKey = useRef<string | null>(null);
   const [visibility, setVisibility] = useState<ColumnVisibility>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -20,9 +21,11 @@ export const useTableColumnVisibility = (userId?: string | null) => {
   });
 
   useEffect(() => {
+    hydratedKey.current = null;
     try {
       const saved = localStorage.getItem(storageKey);
       setVisibility(saved ? { ...DEFAULT_COLUMN_VISIBILITY, ...JSON.parse(saved) } : DEFAULT_COLUMN_VISIBILITY);
+      hydratedKey.current = storageKey;
     } catch (e) {
       console.error("Failed to load column visibility:", e);
       setVisibility(DEFAULT_COLUMN_VISIBILITY);
@@ -30,6 +33,7 @@ export const useTableColumnVisibility = (userId?: string | null) => {
   }, [storageKey]);
 
   useEffect(() => {
+    if (hydratedKey.current !== storageKey) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(visibility));
     } catch (e) {
