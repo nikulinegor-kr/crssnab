@@ -83,7 +83,7 @@ export function PlannerTaskActions({ task, className }: Props) {
             aria-label="Действия с задачей"
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "h-6 w-6 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity",
+              "h-6 w-6 shrink-0 text-muted-foreground opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity",
               className
             )}
           >
