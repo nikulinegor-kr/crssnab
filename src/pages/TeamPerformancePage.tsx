@@ -91,10 +91,14 @@ const TeamPerformancePage = () => {
         .filter(r => FINAL_STATUSES.includes(r.status))
         .reduce((sum, r) => sum + Number(r.amount || 0) + Number(r.amount_2 || 0) + Number(r.amount_3 || 0), 0);
 
-      // Avg time (days from created to last completed status)
+      // Average completion time: creation -> actual arrival (the real finish
+      // event), never the technical updated_at timestamp.
       const completedReqs = reqs.filter(r => FINAL_STATUSES.includes(r.status));
       const avgDays = completedReqs.length > 0
-        ? Math.round(completedReqs.reduce((sum, r) => sum + differenceInDays(new Date(r.updated_at), new Date(r.created_at)), 0) / completedReqs.length)
+        ? Math.round(completedReqs.reduce((sum, r) => {
+            const finishedAt = r.actual_arrival_date || r.delivery_date || r.updated_at;
+            return sum + Math.max(0, differenceInDays(new Date(finishedAt), new Date(r.created_at)));
+          }, 0) / completedReqs.length)
         : 0;
 
       return { name, total, completed, inProgress, overdue, completionRate, totalAmount, avgDays };
