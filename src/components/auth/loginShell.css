@@ -24,7 +24,10 @@
 .crss-login__main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; position: relative; }
 .crss-login__mobile-brand { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 24px; }
 .crss-login__mobile-brand-mark { width: 64px; height: 64px; }
-.crss-login__mobile-brand-title { margin: 0; color: var(--cl-text); font-size: 30px; font-weight: 700; line-height: 1.04; letter-spacing: -0.025em; text-align: left; }
+.crss-login__mobile-brand-copy { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.crss-login__mobile-brand-name { color: var(--cl-text); font-size: 24px; font-weight: 750; line-height: 1; letter-spacing: -0.02em; }
+.crss-login__mobile-brand-name span { color: var(--cl-muted); font-size: 14px; font-weight: 700; letter-spacing: .06em; }
+.crss-login__mobile-brand-title { margin: 0; color: var(--cl-text); font-size: 26px; font-weight: 700; line-height: 1.04; letter-spacing: -0.025em; }
 @media (min-width: 1024px) { .crss-login__main { padding: 48px; } }
 @media (min-width: 1024px) { .crss-login__mobile-brand { display: none; } }
 .crss-login__form { width: 100%; max-width: 405px; display: flex; flex-shrink: 0; flex-direction: column; gap: 20px; border: 1px solid var(--cl-border); border-radius: 24px; background: var(--cl-surface); padding: 28px; box-shadow: 0 12px 32px rgb(29 29 31 / .06); }
