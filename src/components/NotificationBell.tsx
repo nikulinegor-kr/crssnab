@@ -51,7 +51,7 @@ export function NotificationBell() {
               onClick={() => markAllAsRead()}
               className="h-auto p-1 text-xs"
             >
-              Отметить все
+              Очистить
             </Button>
           )}
         </div>

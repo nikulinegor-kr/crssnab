@@ -100,6 +100,7 @@ export const useNotifications = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("organization_id", currentOrgId)
+        .eq("is_read", false)
         .order("created_at", { ascending: false })
         .limit(50);
 
