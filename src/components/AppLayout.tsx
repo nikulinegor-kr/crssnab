@@ -9,7 +9,6 @@ import { PermissionRoute } from "./PermissionRoute";
 // FloatingAiChat is intentionally not rendered by default — accessible via specific pages/dialogs when needed.
 import { MobileBottomNav } from "./MobileBottomNav";
 import { QuickRequestFab } from "./quick-request/QuickRequestFab";
-import { QuickAddErpMenu } from "./erp/QuickAddErpMenu";
 import { TaskAssignmentNotice } from "./tasks/TaskAssignmentNotice";
 import { cn } from "@/lib/utils";
 import { useOrgBranding } from "@/hooks/useOrgBranding";
@@ -75,7 +74,6 @@ export function AppLayout({ children, fullBleed, hideSubscriptionBanner }: AppLa
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-1">
-              {!isMobile && <div className="hidden md:block"><QuickAddErpMenu /></div>}
               <NotificationBell />
             </div>
           </header>
