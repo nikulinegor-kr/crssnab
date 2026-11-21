@@ -24,6 +24,19 @@ describe("request document removal", () => {
     });
   });
 
+  it("keeps a legacy-only contract when another document is removed", () => {
+    const request = {
+      id: "r1",
+      document_url: "legacy-contract.pdf",
+      document_urls: ["invoice.pdf", "delivery-note.pdf"],
+    };
+    expect(getRequestFileUrls(request, "document")).toEqual(["invoice.pdf", "delivery-note.pdf", "legacy-contract.pdf"]);
+    expect(getRequestFileRemovalPatch(request, "invoice.pdf", "document")).toEqual({
+      document_urls: ["delivery-note.pdf", "legacy-contract.pdf"],
+      document_url: "legacy-contract.pdf",
+    });
+  });
+
   it("does not duplicate a legacy document in the visible list", () => {
     expect(getRequestFileUrls({ id: "r1", document_url: "a", document_urls: ["a"] }, "document")).toEqual(["a"]);
   });

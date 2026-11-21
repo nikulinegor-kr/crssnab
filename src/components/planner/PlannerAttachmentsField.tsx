@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import type { PlannerAttachment } from "@/hooks/usePlannerTasks";
+import { removePlannerAttachment } from "@/lib/plannerAttachments";
 
 interface Props {
   value: PlannerAttachment[];
@@ -52,7 +53,7 @@ export function PlannerAttachmentsField({ value, onChange }: Props) {
 
   const remove = async (att: PlannerAttachment) => {
     if (att.path) await supabase.storage.from(BUCKET).remove([att.path]);
-    onChange(value.filter((a) => a.path !== att.path && a.url !== att.url));
+    onChange(removePlannerAttachment(value, att));
   };
 
   return (

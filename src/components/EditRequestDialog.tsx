@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
+import { getRequestFileUrls } from "@/lib/requestDocuments";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
@@ -464,10 +465,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         equipment_id: (request as any).equipment_id || "",
       });
       
-      const photoUrlsArr = request.photo_urls || (request.photo_url ? [request.photo_url] : []);
-      const docUrlsArr = request.document_urls || (request.document_url ? [request.document_url] : []);
-      setExistingPhotoUrls(photoUrlsArr);
-      setExistingDocumentUrls(docUrlsArr);
+      setExistingPhotoUrls(getRequestFileUrls(request, "photo"));
+      setExistingDocumentUrls(getRequestFileUrls(request, "document"));
       setPhotoFiles([]);
       setDocumentFiles([]);
       setServerUpdatedAt(request.updated_at || null);
