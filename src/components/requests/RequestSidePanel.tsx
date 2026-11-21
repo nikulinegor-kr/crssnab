@@ -944,17 +944,14 @@ export const RequestSidePanel = ({
             }}
           />
   );
-  const finalDocumentUrls = documentUrls.filter((url) => /-ZRS\.pdf/i.test(url));
-  const visibleDocumentUrls = finalDocumentUrls.length ? finalDocumentUrls.slice(-1) : documentUrls.slice(-1);
   const docsBlock = (
           <PanelDocuments
+            request={request}
             requestId={request.id}
             requestNumber={request.request_number}
             photoUrls={photoUrls}
-            documentUrls={visibleDocumentUrls}
+            documentUrls={documentUrls}
             documentDisplayName={`${(request.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`}
-            documentUrl={request.document_url}
-            photoUrl={request.photo_url}
             readOnly={readOnly}
             uploads={uploads}
             onUpload={handleUpload}

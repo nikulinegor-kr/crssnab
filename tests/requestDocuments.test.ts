@@ -12,6 +12,18 @@ describe("request document removal", () => {
     expect(getRequestFileRemovalPatch(request, "a", "document")).toEqual({ document_urls: ["b"], document_url: "b" });
   });
 
+  it("keeps invoices, contracts and delivery notes when the last document is deleted", () => {
+    const request = {
+      id: "r1",
+      document_url: "invoice.pdf",
+      document_urls: ["invoice.pdf", "contract.pdf", "delivery-note.pdf", "invoice-ZRS.pdf"],
+    };
+    expect(getRequestFileRemovalPatch(request, "invoice-ZRS.pdf", "document")).toEqual({
+      document_urls: ["invoice.pdf", "contract.pdf", "delivery-note.pdf"],
+      document_url: "invoice.pdf",
+    });
+  });
+
   it("does not duplicate a legacy document in the visible list", () => {
     expect(getRequestFileUrls({ id: "r1", document_url: "a", document_urls: ["a"] }, "document")).toEqual(["a"]);
   });

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { downloadStoredFile, openStoredFile, useSignedUrl } from "@/lib/storageUrl";
-import { deleteRequestFile, getRequestFileRemovalPatch, requestFileName } from "@/lib/requestDocuments";
+import { deleteRequestFile, getRequestFileRemovalPatch, requestFileName, type RequestDocumentRecord } from "@/lib/requestDocuments";
 
 export type DocKind = "photo" | "document";
 
@@ -124,13 +124,12 @@ export interface UploadTask {
 }
 
 interface PanelDocumentsProps {
+  request: RequestDocumentRecord;
   requestId: string;
   requestNumber: string;
   photoUrls: string[];
   documentUrls: string[];
   documentDisplayName?: string;
-  documentUrl?: string | null;
-  photoUrl?: string | null;
   readOnly?: boolean;
   uploads: UploadTask[];
   onUpload: (files: File[]) => void;
@@ -141,13 +140,12 @@ const fileNameFromUrl = (url: string) => decodeURIComponent(url.split("/").pop()
 
 /** Фото и документы заявки: загрузка, просмотр, скачивание, удаление. */
 export const PanelDocuments = ({
+  request,
   requestId,
   requestNumber,
   photoUrls,
   documentUrls,
   documentDisplayName,
-  documentUrl,
-  photoUrl,
   readOnly,
   uploads,
   onUpload,
@@ -184,20 +182,8 @@ export const PanelDocuments = ({
     const { url, kind } = pendingDelete;
     setDeleting(true);
     try {
-      await deleteRequestFile({
-        id: requestId,
-        photo_url: photoUrl,
-        photo_urls: photoUrls,
-        document_url: documentUrl,
-        document_urls: documentUrls,
-      }, url, kind);
-      const patch = getRequestFileRemovalPatch({
-        id: requestId,
-        photo_url: photoUrl,
-        photo_urls: photoUrls,
-        document_url: documentUrl,
-        document_urls: documentUrls,
-      }, url, kind);
+      await deleteRequestFile(request, url, kind);
+      const patch = getRequestFileRemovalPatch(request, url, kind);
       queryClient.setQueriesData({ queryKey: ["requests"] }, (old: unknown) =>
         Array.isArray(old) ? old.map((item) => item?.id === requestId ? { ...item, ...patch } : item) : old
       );
