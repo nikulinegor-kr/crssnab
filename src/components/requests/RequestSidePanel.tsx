@@ -1160,8 +1160,8 @@ export const RequestSidePanel = ({
           <ArrowLeft className="h-4 w-4" />Назад
         </Button>
       </div>
-      <div className={cn("flex flex-none flex-col gap-3 px-4 pt-3", containerClass)}>
-        <div className="request-panel-toolbar self-end">
+      <div className={cn("request-header-main flex flex-none flex-col gap-3 px-4 pt-3", containerClass)}>
+        <div className="request-panel-toolbar">
           <div className="flex shrink-0 items-center gap-0.5">
         <div className="flex shrink-0 items-center gap-0.5 max-md:hidden">
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
@@ -1196,6 +1196,7 @@ export const RequestSidePanel = ({
           </div>
         </div>
         <RequestInlineField
+          className="request-header-title-field"
           label="Название заявки"
           type="textarea"
           hideLabel
