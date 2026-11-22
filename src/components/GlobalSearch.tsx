@@ -194,7 +194,7 @@ export function GlobalSearch() {
             type: "invoice",
             id: r.id,
             title: `Счёт ${r.invoice_number}`,
-            subtitle: `Заявка #${r.request_number}`,
+            subtitle: r.description || "Заявка",
             url: `/requests/${r.id}`,
           });
         }

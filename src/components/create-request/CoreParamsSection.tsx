@@ -140,7 +140,7 @@ export const CoreParamsSection = ({
                     <SelectItem value="none">Самостоятельная заявка</SelectItem>
                     {projectOptions.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.description || p.request_number}
+                        {p.description || "Без названия"}
                       </SelectItem>
                     ))}
                   </SelectContent>

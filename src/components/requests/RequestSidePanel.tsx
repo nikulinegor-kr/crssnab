@@ -150,7 +150,7 @@ export const RequestSidePanel = ({
     },
     [onFullscreenChange]
   );
-  const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1100);
+  const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1280);
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -180,7 +180,7 @@ export const RequestSidePanel = ({
 
 
   useEffect(() => {
-    const onResize = () => setViewportWide(window.innerWidth >= 1100);
+    const onResize = () => setViewportWide(window.innerWidth >= 1280);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -1115,8 +1115,8 @@ export const RequestSidePanel = ({
     </div>
   );
   const wideFullscreen = isFullscreen && viewportWide;
-  const containerClass = isFullscreen ? "mx-auto w-[min(1440px,100%-96px)]" : undefined;
-  const columnClass = "flex h-full min-w-0 flex-col rounded-[16px] border border-border bg-card p-5";
+  const containerClass = isFullscreen && !isPhone ? "mx-auto w-[min(1440px,100%-96px)]" : "w-full";
+  const columnClass = "request-fullscreen-column flex h-full min-w-0 flex-col rounded-[16px] border border-border bg-card p-5";
   const sectionTitleClass = "mb-3 text-[15px] font-semibold text-foreground";
 
 
@@ -1128,7 +1128,7 @@ export const RequestSidePanel = ({
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
           ? cn(
-              "request-fullscreen fixed inset-0 h-[100vh] w-[100vw] border-0 overflow-hidden bg-background",
+              "request-fullscreen fixed inset-0 h-[100dvh] w-[100vw] border-0 overflow-hidden bg-background",
               editorOpen ? "z-[40]" : "z-[200]"
             )
 
@@ -1308,7 +1308,7 @@ export const RequestSidePanel = ({
         {isPhone ? mobileBody : wideFullscreen ? (
           <div
             className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
-            style={{ gridTemplateColumns: "440px minmax(0, 1fr) 400px" }}
+            style={{ gridTemplateColumns: "minmax(280px, .9fr) minmax(360px, 1.25fr) minmax(280px, .9fr)" }}
           >
             <div className={cn(columnClass, "overflow-y-auto")}>
               {fieldsBlock}
@@ -1372,7 +1372,7 @@ export const RequestSidePanel = ({
 
 
       {/* Footer */}
-      <div className="flex-none border-t border-border bg-card px-4 py-2.5">
+      <div className="request-side-panel__footer flex-none border-t border-border bg-card px-4 py-2.5">
         <div className={cn("flex flex-wrap items-center gap-3", containerClass)}>
         {editMode ? (
           <>

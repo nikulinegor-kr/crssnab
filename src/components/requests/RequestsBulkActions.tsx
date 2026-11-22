@@ -645,7 +645,7 @@ export const RequestsBulkActions = ({
                 </DropdownMenuItem>
                 {projectOptions.map((p) => (
                   <DropdownMenuItem key={p.id} onClick={() => handleAttachToProject(p.id)}>
-                    {p.description || p.request_number}
+                    {p.description || "Без названия"}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem onClick={() => handleAttachToProject(null)}>

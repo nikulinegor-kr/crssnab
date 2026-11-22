@@ -346,7 +346,7 @@ export const RequestsTable = ({
   const { data: projectOptions = [] } = useProjectOptions();
   const projectNames = useMemo(() => {
     const m = new Map<string, string>();
-    for (const p of projectOptions) m.set(p.id, p.description || p.request_number);
+    for (const p of projectOptions) m.set(p.id, p.description || "Без названия");
     return m;
   }, [projectOptions]);
 

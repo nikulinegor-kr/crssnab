@@ -1052,3 +1052,128 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .requests-registry table tbody td .group\/ttn { position: relative; justify-content: center; }
 .requests-registry table tbody td .group\/ttn > .flex-1 { flex: 0 1 auto; }
 .requests-registry table tbody td .group\/ttn > button { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); }
+
+/* Адаптация по доступной ширине формы и карточки, а не только по viewport. */
+.request-invoice-card__actions {
+  grid-column: 2 / -1;
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.request-invoice-card__actions > button {
+  min-width: 0;
+  flex: 0 1 auto;
+  white-space: normal;
+}
+.request-form-redesign .request-form-body {
+  container-name: request-form;
+  container-type: inline-size;
+  min-width: 0;
+  scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+}
+.request-edit-workspace__mobile-nav { display: none; }
+.request-items-grid-header { display: none; }
+.request-items-grid { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.request-items-grid > * { min-width: 0; }
+.request-side-panel { container-type: inline-size; }
+.request-side-panel__footer { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.request-fullscreen-column { container-type: inline-size; }
+.requests-registry .requests-table-scroll { width: 100%; max-width: 100%; overflow: auto; }
+
+@container request-form (max-width: 900px) {
+  .request-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "ctx ctx" "date priority" "applicant object" "status executor" "proj proj";
+  }
+  .request-finance-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container request-form (max-width: 560px) {
+  .request-top {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+    grid-template-areas: "ctx" "date" "object" "priority" "applicant" "status" "executor" "proj";
+  }
+  .request-mobile-stack { grid-template-columns: minmax(0, 1fr) !important; }
+  .request-files-grid { grid-template-columns: minmax(0, 1fr); }
+  .request-section__header { padding: 14px 16px; }
+  .request-section__body { padding: 0 16px 16px; }
+}
+
+@container request-form (min-width: 721px) {
+  .request-items-grid-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) 72px 68px 104px 32px;
+  }
+  .request-items-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) 72px 68px 104px 32px;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+}
+
+@container (max-width: 640px) {
+  .request-side-panel .request-invoice-document-row { display: flex; flex-wrap: wrap; }
+  .request-side-panel .request-invoice-document-row > span {
+    display: block;
+    flex: 1 1 calc(100% - 32px);
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+  .request-side-panel .request-invoice-document-row > button {
+    min-width: 0;
+    flex: 1 1 auto;
+    white-space: normal;
+  }
+}
+
+@container (max-width: 480px) {
+  .request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1fr); }
+  .request-side-panel .request-summary-actions { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container (max-width: 420px) {
+  .request-side-panel .request-panel-field {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .request-side-panel .request-panel-field > div:last-of-type {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .request-side-panel .request-inline-field__editor select { min-width: 0; }
+  .request-card-comment-block .request-inline-field { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+@media (max-width: 1100px) {
+  .request-edit-workspace { flex-direction: column; }
+  .request-edit-workspace__nav { display: none; }
+  .request-edit-workspace__mobile-nav { display: block; flex-shrink: 0; }
+  .request-edit-workspace__mobile-nav .request-form-nav { border-top: 0; }
+}
+
+@media (max-width: 767px) {
+  .requests-filter-search-row { flex-wrap: wrap; }
+  .requests-filter-search-field { flex: 1 0 100%; }
+  .requests-filter-search-row > [aria-label="Активные фильтры"] {
+    max-width: 100%;
+    flex: 1 1 0;
+  }
+  .request-form-redesign .request-form-actions {
+    flex-shrink: 0;
+    max-width: 100%;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+  .request-form-redesign .request-form-actions button { white-space: normal; }
+}
+
+@media (max-width: 480px) {
+  .request-form-redesign .request-form-body {
+    padding: 12px !important;
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom)) !important;
+  }
+  .request-invoice-card__actions { width: 100%; }
+  .request-invoice-card__actions > button { flex: 1 1 calc(50% - 8px); min-height: 40px; }
+}

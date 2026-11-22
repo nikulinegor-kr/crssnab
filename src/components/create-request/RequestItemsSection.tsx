@@ -91,7 +91,7 @@ export const RequestItemsSection = ({
         </p>
         {items.length > 0 && (
           <div className="space-y-2">
-            <div className="hidden grid-cols-[1fr_1.5fr_72px_68px_104px_32px] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid">
+            <div className="request-items-grid-header gap-2 px-1 text-xs font-medium text-muted-foreground">
               <span>Артикул</span>
               <span>Наименование</span>
               <span>Кол-во</span>
@@ -101,7 +101,7 @@ export const RequestItemsSection = ({
             </div>
 
             {items.map((item, index) => (
-              <div key={index} className="request-mobile-stack grid grid-cols-1 items-center gap-2 rounded-xl border border-border/60 p-2 sm:grid-cols-[1fr_1.5fr_72px_68px_104px_32px] sm:rounded-none sm:border-0 sm:p-0">
+              <div key={index} className="request-items-grid grid items-center gap-2 rounded-xl border border-border/60 p-2">
                 <Input
                   aria-label={`Артикул позиции ${index + 1}`}
                   placeholder="Артикул"

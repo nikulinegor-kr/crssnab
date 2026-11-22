@@ -699,7 +699,7 @@ export default function RequestDetail() {
 
         {/* Sticky Header - Always visible */}
         <RequestStickyHeader
-          requestNumber={request.request_number || request.description}
+          requestTitle={request.description || "Заявка"}
           status={request.status}
           priority={request.priority}
           shipmentDate={request.shipment_date}
@@ -713,9 +713,7 @@ export default function RequestDetail() {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
               {request.description}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
-              <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{request.request_number}</span>
-              <span>•</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground/70">
               <span>{format(new Date(request.created_at || Date.now()), "dd.MM.yyyy, HH:mm", { locale: ru })}</span>
               {request.applicant && (
                 <>
@@ -1142,7 +1140,7 @@ export default function RequestDetail() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Переместить в архив?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Заявка #{request.request_number} будет перемещена в архив.
+                          Заявка «{request.description || "Без названия"}» будет перемещена в архив.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

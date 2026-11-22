@@ -6,7 +6,7 @@ import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 interface RequestStickyHeaderProps {
-  requestNumber: string;
+  requestTitle: string;
   status: string;
   priority: string | null;
   shipmentDate: string | null;
@@ -15,7 +15,7 @@ interface RequestStickyHeaderProps {
 }
 
 export function RequestStickyHeader({
-  requestNumber,
+  requestTitle,
   status,
   priority,
   shipmentDate,
@@ -65,10 +65,10 @@ export function RequestStickyHeader({
   return (
     <div className="sticky top-0 z-40 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-background/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
       <div className="flex flex-wrap items-center gap-3 md:gap-4">
-        {/* Request number */}
-        <div className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-muted-foreground" />
-          <span className="font-semibold text-foreground">#{requestNumber}</span>
+        {/* Request title */}
+        <div className="flex min-w-0 items-center gap-2">
+          <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 break-words font-semibold text-foreground">{requestTitle}</span>
         </div>
 
         <Separator orientation="vertical" className="h-5 hidden sm:block" />

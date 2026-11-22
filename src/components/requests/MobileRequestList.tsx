@@ -18,14 +18,14 @@ export const MobileRequestRow = ({ request, onOpen, arrivalLabel = "Приход
   const overdue = isArrivalOverdue(request);
   return (
     <li className="border-b border-border last:border-b-0">
-      <button type="button" onClick={() => onOpen(request)} className="block w-full min-w-0 px-0 py-3 text-left">
+      <button type="button" onClick={() => onOpen(request)} className="block w-full min-w-0 px-0 py-3 text-left [overflow-wrap:anywhere]">
         <span className="block break-words text-[15px] font-medium leading-snug text-foreground">{request.description || "—"}</span>
-        <span className="mt-1.5 flex min-w-0 items-center justify-between gap-3 text-[13px]">
+        <span className="mt-1.5 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[13px]">
           <span className="flex min-w-0 items-center gap-1.5">
             <i className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} aria-hidden="true" />
             <span className="break-words" style={{ color: getStatusColor(request.status) }}>{request.status || "—"}</span>
           </span>
-          <span className={cn("shrink-0 font-numeric whitespace-nowrap", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+          <span className={cn("ml-auto shrink-0 font-numeric whitespace-nowrap", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
             {arrivalLabel} {formatArrival(mobileArrivalDate(request))}
           </span>
         </span>
@@ -48,7 +48,7 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
 
   const groups = grouped ? groupMobileRequests(requests) : [{ stage: 0, label: "", items: requests }];
   return (
-    <div ref={ref} onScroll={(e) => { savedScroll = e.currentTarget.scrollTop; }} className="mobile-request-list min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-card px-4 pb-24 max-[340px]:px-3">
+    <div ref={ref} onScroll={(e) => { savedScroll = e.currentTarget.scrollTop; }} className="mobile-request-list min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-card px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] max-[340px]:px-3">
       {groups.map((g) => (
         <section key={g.stage} aria-label={g.label || undefined}>
           {g.label && (

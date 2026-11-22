@@ -110,7 +110,7 @@ const Requests = () => {
       const used = new Set<string>();
       for (const r of rows as any[]) {
         const urls: string[] = Array.isArray(r.document_url) ? r.document_url : [r.document_url];
-        const base = sanitize(r.description) || `Заявка-${r.request_number}`;
+        const base = sanitize(r.description) || "Заявка";
         for (let i = 0; i < urls.length; i++) {
           try {
             const signed = await resolveSignedUrl(urls[i]);

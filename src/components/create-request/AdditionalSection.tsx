@@ -121,7 +121,7 @@ export const AdditionalSection = ({
       const response = await fetch('/fonts/Roboto-Regular.ttf');
       if (!response.ok) throw new Error("Не удалось загрузить шрифт ЗРС");
       const modifiedPdf = await insertZrsIntoPreparedInvoice(bytes, getZrsLines(), new Uint8Array(await response.arrayBuffer()));
-      const sourceName = formValues.description || (formValues as any).request_number || "Заявка";
+      const sourceName = formValues.description || "Заявка";
       const safeName = String(sourceName).replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim().slice(0,80) || "Заявка";
       const modifiedFile = new File([modifiedPdf as BlobPart], `${safeName || "Заявка"}-ZRS.pdf`, { type: "application/pdf" });
       // К заявке прикрепляем только итоговый PDF с ЗРС: оригинал и промежуточный prepared-файл не нужны.

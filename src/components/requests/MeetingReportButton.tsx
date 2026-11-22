@@ -99,7 +99,7 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
       const { XLSX } = await loadExportLibs();
 
       const rows = data.map((r) => ({
-        "Заявка": r.description || r.request_number || "—",
+        "Заявка": r.description || "—",
         "Статус": r.status || "—",
         "Факт оплаты, %": r.payment_percentage ?? 0,
         "Отгрузка": formatDate(r.shipment_date),
@@ -197,7 +197,7 @@ export function MeetingReportButton({ requests, filteredRequests }: MeetingRepor
       const totalSum = data.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 
       const body = data.map((r) => [
-        r.description || r.request_number || "—",
+        r.description || "—",
         r.status || "—",
         `${r.payment_percentage ?? 0}%`,
         formatDate(r.shipment_date),

@@ -229,8 +229,8 @@ export const RequestsFilters = ({
   return (
     <div className="requests-filter-surface flex flex-col gap-1.5 border border-border bg-card p-2">
       {/* === Search + Filter button row === */}
-      <div className="flex gap-2">
-        <div className="relative flex-1 min-w-0">
+      <div className="requests-filter-search-row flex gap-2">
+        <div className="requests-filter-search-field relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Поиск заявок, артикулов, поставщиков..."
