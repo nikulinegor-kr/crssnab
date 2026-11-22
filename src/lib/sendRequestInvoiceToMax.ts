@@ -6,7 +6,7 @@ import {
   type RequestInvoiceMaxInput,
 } from "@/lib/requestInvoiceMax";
 
-export async function sendRequestInvoiceToMax(request: RequestInvoiceMaxInput, documentUrl: string) {
+export async function sendRequestInvoiceToMax(request: RequestInvoiceMaxInput, documentUrl: string, fileName?: string) {
   if (!request.id || !request.organization_id) {
     throw new Error("Не удалось определить заявку или организацию");
   }
@@ -15,7 +15,7 @@ export async function sendRequestInvoiceToMax(request: RequestInvoiceMaxInput, d
   }
 
   const { data, error } = await supabase.functions.invoke("max-direct-send", {
-    body: buildRequestInvoiceMaxPayload(request, documentUrl),
+    body: buildRequestInvoiceMaxPayload(request, documentUrl, fileName),
   });
 
   if (error) {

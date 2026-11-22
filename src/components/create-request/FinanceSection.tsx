@@ -26,6 +26,8 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { downloadStoredFile, openStoredFile } from "@/lib/storageUrl";
+import { downloadBlob } from "@/lib/saveImage";
+import { sendRequestInvoiceToMax } from "@/lib/sendRequestInvoiceToMax";
 import { requestFileName } from "@/lib/requestDocuments";
 import { getInvoiceDeletePatch, getInvoiceResetPatch, getRequestInvoiceRequisites, hasInvoiceRequisites, type RequestInvoiceSlot } from "@/lib/requestInvoices";
 import { RequestInvoiceRequisites } from "@/components/requests/RequestInvoiceActions";
@@ -199,23 +201,29 @@ export const FinanceSection = ({
   };
 
   const sendInvoiceToMax = async (fileName: string) => {
-    if (!invoiceUrl || !requestId || !currentOrgId) return;
-    try {
-      const { data, error } = await supabase.functions.invoke("max-direct-send", {
-        body: {
-          chat_id: "-75086506652357",
-          text: `Счёт по заявке: ${form.getValues("description") || "Заявка"}`,
-          organization_id: currentOrgId,
-          mode: "auto",
-          request_id: requestId,
-          document_url: invoiceUrl,
-          file_name: fileName,
-        },
+    if (invoiceFile || !invoiceUrl || !requestId || !currentOrgId) {
+      toast({
+        title: "Сначала сохраните заявку",
+        description: "Новый файл будет доступен для отправки в MAX после сохранения заявки",
       });
-      if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
+      return;
+    }
+    setIsSendingToMax(true);
+    try {
+      await sendRequestInvoiceToMax({
+        id: requestId,
+        organization_id: currentOrgId,
+        description: form.getValues("description") || "Заявка",
+      }, invoiceUrl, fileName);
       toast({ title: "Счёт отправлен в MAX" });
-    } catch {
-      toast({ title: "Не удалось отправить счёт в MAX", variant: "destructive" });
+    } catch (error) {
+      toast({
+        title: "Не удалось отправить счёт в MAX",
+        description: error instanceof Error ? error.message : "Попробуйте ещё раз",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingToMax(false);
     }
   };
 
@@ -241,52 +249,24 @@ export const FinanceSection = ({
                 <div>{name}</div>
                 <div className="mt-0.5 text-xs font-normal text-muted-foreground">{format}</div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1.5 px-2 text-primary"
-                onClick={() => {
-                  if (invoiceFile) {
-                    const url = URL.createObjectURL(invoiceFile);
-                    window.open(url, "_blank", "noopener,noreferrer");
-                    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-                  } else if (invoiceUrl) {
-                    void openStoredFile(invoiceUrl);
-                  }
-                }}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Открыть
-              </Button>
-              {invoiceUrl && (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 shrink-0 gap-1.5 px-2"
-                    onClick={() => void downloadStoredFile(invoiceUrl, name)}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Скачать
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 shrink-0 gap-1.5 px-2"
-                    onClick={() => void sendInvoiceToMax(name)}
-                    disabled={!requestId}
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    В MAX
-                  </Button>
-                </>
-              )}
-              {invoiceUrl && onRemoveInvoiceDocument && (
-                <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-destructive hover:text-destructive" onClick={() => setDocumentDeleteOpen(true)} disabled={disabled}>
-                  <X className="h-3.5 w-3.5" />Удалить документ
+              <div className="request-invoice-card__actions">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2 text-primary"
+                  onClick={() => {
+                    if (invoiceFile) {
+                      const url = URL.createObjectURL(invoiceFile);
+                      window.open(url, "_blank", "noopener,noreferrer");
+                      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                    } else if (invoiceUrl) {
+                      void openStoredFile(invoiceUrl);
+                    }
+                  }}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Открыть
                 </Button>
                 <Button
                   type="button"
@@ -307,7 +287,7 @@ export const FinanceSection = ({
                   size="sm"
                   className="h-8 gap-1.5 px-2"
                   disabled={isSendingToMax}
-                  onClick={() => void handleSendToMax()}
+                  onClick={() => void sendInvoiceToMax(name)}
                 >
                   {isSendingToMax ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   {isSendingToMax ? "Отправка…" : "Отправить в MAX"}

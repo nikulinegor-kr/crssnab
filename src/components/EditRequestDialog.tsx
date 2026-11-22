@@ -51,7 +51,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
 import { selectRequestInvoiceUrl } from "@/lib/requestInvoiceMax";
-import { sendRequestInvoiceToMax } from "@/lib/sendRequestInvoiceToMax";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
@@ -1030,6 +1029,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           {!isViewer && <SaveIndicator />}
         </div>
         <p className="hidden text-sm text-muted-foreground md:block">
+          {request?.description || "Без названия"}
           {!isViewer && (
             <span className="ml-2 text-xs opacity-70">
               Ctrl+Enter — сохранить, Esc — закрыть
@@ -1077,15 +1077,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   };
 
   const invoiceUrl = selectRequestInvoiceUrl(existingDocumentUrls);
-  const handleSendInvoiceToMax = async () => {
-    if (!request || !invoiceUrl) throw new Error("Сохранённый файл счёта не найден");
-    await sendRequestInvoiceToMax({
-      id: request.id,
-      organization_id: request.organization_id || "",
-      description: request.description,
-    }, invoiceUrl);
-    toast({ title: "Счёт отправлен в MAX", description: request.description || "Заявка" });
-  };
 
   const formContent = (
     <Form {...form}>
@@ -1130,12 +1121,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             recentContractors={recentContractors}
             disabled={isViewer}
             invoiceFile={documentFiles[documentFiles.length - 1] || null}
-            invoiceUrl={existingDocumentUrls[0] || request?.document_url || null}
+            invoiceUrl={invoiceUrl}
             requestId={request?.id}
             items={requestItems}
             onItemsChange={setRequestItems}
             onInvoiceSelected={addDocumentFile}
-            onSendToMax={handleSendInvoiceToMax}
             onRemoveInvoiceDocument={() => {
               if (invoiceUrl) setExistingDocumentUrls((current) => current.filter((item) => item !== invoiceUrl));
             }}

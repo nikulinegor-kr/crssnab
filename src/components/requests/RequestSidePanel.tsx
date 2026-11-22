@@ -47,6 +47,8 @@ import { RequestInlineField } from "./RequestInlineField";
 import { RequestRoute } from "./RequestRoute";
 import { getRequestObjectLabel, getRequestRouteStage, isRequestDeliveryConfirmed, REQUEST_ROUTE_LABELS } from "@/lib/requestCard";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
+import { selectRequestInvoiceUrl } from "@/lib/requestInvoiceMax";
+import { sendRequestInvoiceToMax } from "@/lib/sendRequestInvoiceToMax";
 import { RequestDocumentDeleteButton } from "./RequestDocumentDeleteButton";
 import { RequestInvoiceActions } from "./RequestInvoiceActions";
 import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
@@ -153,6 +155,7 @@ export const RequestSidePanel = ({
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [isRecognizingInvoice, setIsRecognizingInvoice] = useState(false);
+  const [isSendingInvoiceToMax, setIsSendingInvoiceToMax] = useState(false);
   const [preserveInvoiceAmount, setPreserveInvoiceAmount] = useState(false);
   const [recognizedSupplier, setRecognizedSupplier] = useState<{ name: string; inn: string | null } | null>(null);
   const [activeEditor, setActiveEditor] = useState<string | null>(null);
@@ -732,28 +735,28 @@ export const RequestSidePanel = ({
       return "Документ";
     }
   };
-  // В блоке счёта показываем только финальную редакцию ЗРС, если она есть.
-  const zrsDocs = documentUrls.filter((url) => /-ZRS\.pdf$/i.test(docFileName(url)));
-  const invoiceDocs = zrsDocs.length ? [zrsDocs[zrsDocs.length - 1]] : documentUrls.slice(-1);
-  const mainInvoiceDoc = invoiceDocs[0];
-  const displayInvoiceName = `${(request.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`;
+  // В карточке и редакторе выбран один и тот же сохранённый файл счёта.
+  const mainInvoiceDoc = selectRequestInvoiceUrl(documentUrls);
+  const invoiceDocs = mainInvoiceDoc ? [mainInvoiceDoc] : [];
+  const displayInvoiceName = mainInvoiceDoc ? docFileName(mainInvoiceDoc) : "Счёт";
   const sendInvoiceToMax = async (url: string) => {
+    if (isSendingInvoiceToMax) return;
+    setIsSendingInvoiceToMax(true);
     try {
-      const { data, error } = await supabase.functions.invoke("max-direct-send", {
-        body: {
-          chat_id: "-75086506652357",
-          text: `Счёт по заявке: ${request.description || "Заявка"}`,
-          organization_id: request.organization_id,
-          mode: "auto",
-          request_id: request.id,
-          document_url: url,
-          file_name: docFileName(url),
-        },
+      await sendRequestInvoiceToMax({
+        id: request.id,
+        organization_id: request.organization_id || "",
+        description: request.description || "Заявка",
+      }, url, docFileName(url));
+      toast({ title: "Счёт отправлен в MAX", description: request.description || "Заявка" });
+    } catch (error) {
+      toast({
+        title: "Не удалось отправить счёт в MAX",
+        description: error instanceof Error ? error.message : "Попробуйте ещё раз",
+        variant: "destructive",
       });
-      if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
-      toast({ title: "Счёт отправлен в MAX" });
-    } catch {
-      toast({ title: "Не удалось отправить счёт в MAX", variant: "destructive" });
+    } finally {
+      setIsSendingInvoiceToMax(false);
     }
   };
   const sendRequestToMax = async () => {
@@ -797,7 +800,10 @@ export const RequestSidePanel = ({
               <Download className="mr-1 h-3.5 w-3.5" />
               Скачать
             </Button>
-            <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void sendInvoiceToMax(mainInvoiceDoc)}>В MAX</Button>
+            <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" disabled={isSendingInvoiceToMax} onClick={() => void sendInvoiceToMax(mainInvoiceDoc)}>
+              {isSendingInvoiceToMax && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}
+              {isSendingInvoiceToMax ? "Отправка…" : "Отправить в MAX"}
+            </Button>
             <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
           </div>
           {invoiceDocs.length > 1 && (
@@ -815,7 +821,7 @@ export const RequestSidePanel = ({
                   >
                     Скачать
                   </button>
-                  <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void sendInvoiceToMax(url)}>В MAX</Button>
+                  <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" disabled={isSendingInvoiceToMax} onClick={() => void sendInvoiceToMax(url)}>Отправить в MAX</Button>
                   <RequestDocumentDeleteButton request={request} url={url} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
                 </div>
               ))}
