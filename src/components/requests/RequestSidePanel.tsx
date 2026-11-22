@@ -156,7 +156,7 @@ export const RequestSidePanel = ({
   const [isRecognizingInvoice, setIsRecognizingInvoice] = useState(false);
   const [preserveInvoiceAmount, setPreserveInvoiceAmount] = useState(false);
   const [recognizedSupplier, setRecognizedSupplier] = useState<{ name: string; inn: string | null } | null>(null);
-  const [, setActiveEditor] = useState<string | null>(null);
+  const [activeEditor, setActiveEditor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
@@ -1258,7 +1258,7 @@ export const RequestSidePanel = ({
           value={request.status}
           options={STATUSES.map((value) => ({ value, label: value }))}
           display={<span className="request-card-status"><i style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
-          readOnly={readOnly}
+          readOnly={readOnly || (!!activeEditor && activeEditor !== "status")}
           onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
           onSave={(value) => saveField("status", value)}
         />
@@ -1270,7 +1270,7 @@ export const RequestSidePanel = ({
           value={request.priority || "Планово"}
           options={PRIORITIES.map((value) => ({ value, label: value }))}
           display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
-          readOnly={readOnly}
+          readOnly={readOnly || (!!activeEditor && activeEditor !== "priority")}
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
         />
