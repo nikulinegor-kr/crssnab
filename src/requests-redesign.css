@@ -651,9 +651,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .request-finance-doc { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
 .request-finance-doc > .flex { display: flex; flex-wrap: wrap; gap: 8px; }
-.request-finance-doc > .flex > button { flex: 1 1 140px; min-width: 0; white-space: normal; }
+.request-finance-doc > .flex > button { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
 .request-invoice-card--empty { color: var(--requests-muted); }
-.request-payment-row { margin-top: 16px; align-items: end; }
+.request-payment-row { margin-top: 12px; align-items: end; }
 .request-payment-row > * { min-width: 0; }
 
 .request-form-redesign :is(p, span, div, label, button) { overflow-wrap: anywhere; }
