@@ -1254,7 +1254,6 @@ export const RequestSidePanel = ({
           onSave={(value) => saveField("priority", value)}
         />
         <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
-        {position && requestCount ? <span className="ml-auto font-numeric">{position} / {requestCount}</span> : null}
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 

@@ -788,7 +788,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 .request-side-panel .request-panel-field > div:last-of-type { width: 100%; }
 .request-side-panel .request-side-card { padding: 16px 18px; }
-.request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto auto; column-gap: 18px; align-items: end; }
+.request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; column-gap: 18px; align-items: end; }
 .request-side-panel .request-card-meta-field { min-height: 40px; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { min-height: 40px; align-items: center; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { padding-left: 0; padding-right: 0; }
