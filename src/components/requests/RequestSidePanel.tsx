@@ -1085,6 +1085,10 @@ export const RequestSidePanel = ({
           onSave={(v) => saveField("executor", v)}
         />
       </div>
+      <div className="mt-3 flex flex-wrap gap-2 px-1">
+        <RequestQrWorkflow key={`mobile-workflow-${request.id}`} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal} />
+        <RequestQrButton key={`mobile-qr-${request.id}`} request={request} />
+      </div>
       <details className={mobileDetailsClass}>
         <summary className={mobileSummaryClass}>Счёт и оплата<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
         <div className="px-3 pb-3">
@@ -1100,7 +1104,6 @@ export const RequestSidePanel = ({
         <div className="px-3 pb-3 [&>.request-side-card]:mt-0 [&>.request-side-card]:border-0 [&>.request-side-card]:px-1">
           {logisticsBlock}
           {peopleBlock}
-          <div className="flex flex-wrap gap-2 px-1 pt-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/></div>
           {movementBlock}
         </div>
       </details>
@@ -1272,7 +1275,7 @@ export const RequestSidePanel = ({
         />
       </div>
 
-      <div className={cn("request-next-step max-md:hidden", containerClass)}>
+      {/* Следующий шаг убран из компактного вида карточки. */}{false && <div className={cn("request-next-step max-md:hidden", containerClass)}>
         <div>
           <div className="request-next-step__label">Следующий шаг</div>
           <div className="request-next-step__title">{paid < 100 ? "Проверить счёт и подтвердить оплату" : "Подтвердить готовность к отгрузке"}</div>
@@ -1280,10 +1283,10 @@ export const RequestSidePanel = ({
         <Button type="button" variant="outline" className="request-next-step__button" onClick={() => document.getElementById("request-invoice-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
           Открыть счёт
         </Button>
-      </div>
+      </div>}
 
       <nav className={cn("request-detail-tabs max-md:hidden", containerClass)} aria-label="Разделы заявки">
-        {[["overview", "Обзор"], ["invoice", "Счёт"], ["logistics", "Логистика"], ["positions", "Позиции"], ["tasks", "Задачи"], ["history", "История"]].map(([id, label]) => (
+        {[["overview", "Обзор"], ["invoice", "Счёт"], ["logistics", "Логистика"], ["positions", "Позиции"], ["history", "История"]].map(([id, label]) => (
           <button key={id} type="button" className={cn("request-detail-tab", id === "overview" && "is-active")} onClick={() => document.getElementById(`request-${id}-section`)?.scrollIntoView({ behavior: "smooth", block: "start" })}>{label}</button>
         ))}
       </nav>
