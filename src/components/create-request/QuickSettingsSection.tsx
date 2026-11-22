@@ -85,8 +85,8 @@ export const QuickSettingsSection = ({
       icon={<Settings2 className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="space-y-3 sm:space-y-4">
-        {/* Date, Object, Estimated days row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+        {/* Date and Object row */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3">
           <FormField
             control={form.control}
             name="request_date"
@@ -125,27 +125,6 @@ export const QuickSettingsSection = ({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="estimated_delivery_days"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Срок (дней)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    className="h-9 text-sm"
-                    placeholder=""
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         {/* Status & Priority row */}

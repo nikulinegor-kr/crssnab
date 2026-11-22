@@ -1262,7 +1262,7 @@ export const RequestSidePanel = ({
       </div>
 
       <div className={cn("request-design-subtitle max-md:hidden px-4", containerClass)}>
-        {request.request_number || `REQ-${String(request.id).slice(0, 6)}`} · создана {dt(request.request_date) || "—"} · {request.priority || "Планово"}
+        Создана {dt(request.request_date) || "—"} · {request.priority || "Планово"}
       </div>
 
       <div className={cn("px-4 pt-2 max-md:hidden", containerClass)}>

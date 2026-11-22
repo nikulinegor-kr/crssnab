@@ -116,32 +116,7 @@ export const LogisticsSection = ({
               />
             </div>
 
-            <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-              <FormField
-                control={form.control}
-                name="estimated_delivery_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Срок (дней)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        className="h-9 text-sm"
-                        placeholder=""
-                        disabled={disabled}
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(e.target.value ? parseInt(e.target.value) : null)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               <FormField
                 control={form.control}
                 name="shipment_date"

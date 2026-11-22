@@ -12,6 +12,7 @@ import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
 import { resolveSignedUrl } from "@/lib/storageUrl";
 import { requestFileName } from "@/lib/requestDocuments";
 import { saveImageFile } from "@/lib/saveImage";
+import { buildRequestZrsLines } from "@/lib/requestZrs";
 
 interface AdditionalSectionProps {
   form: UseFormReturn<any>;
@@ -57,28 +58,8 @@ export const AdditionalSection = ({
   const sources = allSources.filter(source => !preparedNames.has(source.name));
   const sourceKey = sources.some(source => source.key === selectedInvoice) ? selectedInvoice : sources.length === 1 ? sources[0].key : "";
 
-  // "Под заказ" + указанный срок изготовления показываем в одной строке ЗРС
-  const availabilityText = (() => {
-    const av = formValues.availability_delivery_time || "";
-    const days = formValues.order_days;
-    const isOrder = /заказ/i.test(av);
-    if (isOrder && days) return `${av} (${days} дн.)`;
-    return av || "-";
-  })();
-
   const handleCopyZRS = async () => {
-    const reqDate = formValues.request_date
-      ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
-      : "-";
-    const zrsText = `Дата заявки: ${reqDate}
-Объект: ${objectsData?.find(o => o.id === formValues.object_id)?.name || "-"}
-Заявка: ${formValues.description || "-"}
-Заявитель: ${formValues.applicant || "-"}
-Приоритет: ${formValues.priority || "-"}
-Наличие: ${availabilityText}
-Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}
-Оплата: ${formValues.payment_percentage ?? 0}%
-Исполнил: ${formValues.executor || "-"}`;
+    const zrsText = getZrsLines().join("\n");
     
     try {
       await navigator.clipboard.writeText(zrsText);
@@ -88,23 +69,10 @@ export const AdditionalSection = ({
     }
   };
 
-  const getZrsLines = () => {
-    const objectName = objectsData?.find(o => o.id === formValues.object_id)?.name || "-";
-    const reqDate = formValues.request_date
-      ? new Date(formValues.request_date).toLocaleDateString("ru-RU")
-      : "-";
-    return [
-      `Дата заявки: ${reqDate}`,
-      `Объект: ${objectName}`,
-      `Заявка: ${formValues.description || "-"}`,
-      `Заявитель: ${formValues.applicant || "-"}`,
-      `Приоритет: ${formValues.priority || "-"}`,
-      `Наличие: ${availabilityText}`,
-      `Срок доставки: ${formValues.estimated_delivery_days ? `${formValues.estimated_delivery_days} дн.` : "-"}`,
-      `Оплата: ${formValues.payment_percentage ?? 0}%`,
-      `Исполнил: ${formValues.executor || "-"}`,
-    ];
-  };
+  const getZrsLines = () => buildRequestZrsLines(
+    formValues,
+    objectsData?.find(o => o.id === formValues.object_id)?.name,
+  );
 
   const insertIntoFile = async (originalFile: File, alreadyAttached = true) => {
     if (disabled || isPreparing) return;
