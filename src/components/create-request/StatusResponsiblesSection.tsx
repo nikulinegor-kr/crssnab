@@ -57,7 +57,7 @@ export const StatusResponsiblesSection = ({
             render={({ field }) => (
               <FormItem className="req-a-status">
                 <FormLabel className="text-xs">Статус *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
+                <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Выберите статус" />
@@ -79,7 +79,7 @@ export const StatusResponsiblesSection = ({
             render={({ field }) => (
               <FormItem className="req-a-priority min-w-0 w-full max-w-full">
                 <FormLabel className="text-xs">Приоритет *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
+                <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Выберите приоритет" />
