@@ -41,7 +41,6 @@ import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDoc
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
 import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
-import { TrustLetterButton } from "./TrustLetterDialog";
 import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 import { RequestInlineField } from "./RequestInlineField";
@@ -1081,7 +1080,7 @@ export const RequestSidePanel = ({
         <div className="px-3 pb-3 [&>.request-side-card]:mt-0 [&>.request-side-card]:border-0 [&>.request-side-card]:px-1">
           {logisticsBlock}
           {peopleBlock}
-          <div className="flex flex-wrap gap-2 px-1 pt-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>
+          <div className="flex flex-wrap gap-2 px-1 pt-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/></div>
           {movementBlock}
         </div>
       </details>
@@ -1278,7 +1277,7 @@ export const RequestSidePanel = ({
         {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
       </div>
 
-      {!assistantOpen && !isPhone && <div className="request-summary-actions flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/><TrustLetterButton requestIds={[request.id]} organizationId={request.organization_id}/></div>}
+      {!assistantOpen && !isPhone && <div className="request-summary-actions flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/></div>}
       </div>
       {/* Body */}
       </>}
