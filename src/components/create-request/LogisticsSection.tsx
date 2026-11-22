@@ -44,7 +44,7 @@ export const LogisticsSection = ({
   return (
     <FormSectionCard
       title="Логистика"
-      summary="Перевозчик, ТТН и сроки"
+      summary="Перевозчик, ТТН и даты"
       sectionId="req-sec-logistics"
       collapsible
       defaultCollapsed
