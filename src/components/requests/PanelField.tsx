@@ -193,15 +193,15 @@ export const PanelField = ({
 
   return (
     <div className="request-panel-field flex min-h-8 items-start gap-3 py-[2px]">
-      <div className="w-[8.125rem] shrink-0 pt-1.5 text-[13px] leading-5 text-muted-foreground">{label}</div>
-      <div className="min-w-0 flex-1">
-        {editing || forced ? editor : staticView}
+      <div className="request-panel-field__label">{label}</div>
+      <div className="request-panel-field__value">
+        <div className="min-w-0 flex-1">{editing || forced ? editor : staticView}</div>
+        {suffix && <span className="shrink-0 text-[13px] text-muted-foreground">{suffix}</span>}
+        {copyable && value != null && String(value).trim() !== "" && (
+          <CopyValueButton value={String(value)} label={copyLabel} />
+        )}
+        {extraAction}
       </div>
-      {suffix && <span className="shrink-0 text-[13px] text-muted-foreground">{suffix}</span>}
-      {copyable && value != null && String(value).trim() !== "" && (
-        <CopyValueButton value={String(value)} label={copyLabel} />
-      )}
-      {extraAction}
     </div>
 
   );

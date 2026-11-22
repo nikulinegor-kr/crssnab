@@ -42,9 +42,11 @@ export function RequestInlineField({
   const [draft, setDraft] = useState(String(value ?? ""));
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
+  const editingChangeRef = useRef(onEditingChange);
 
   useEffect(() => setDraft(String(value ?? "")), [value]);
-  useEffect(() => onEditingChange?.(editing), [editing, onEditingChange]);
+  useEffect(() => { editingChangeRef.current = onEditingChange; }, [onEditingChange]);
+  useEffect(() => { editingChangeRef.current?.(editing); }, [editing]);
   useEffect(() => {
     if (editing) inputRef.current?.focus();
   }, [editing]);

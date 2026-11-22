@@ -2,7 +2,7 @@ import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValid
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
 import { RequestInlineField } from "./RequestInlineField";
 import { RequestRoute } from "./RequestRoute";
-import { getRequestObjectLabel, getRequestRouteStage, isRequestDeliveryConfirmed, REQUEST_ROUTE_LABELS } from "@/lib/requestCard";
+import { getRequestObjectLabel } from "@/lib/requestCard";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
 import { selectRequestInvoiceUrl } from "@/lib/requestInvoiceMax";
 import { sendRequestInvoiceToMax } from "@/lib/sendRequestInvoiceToMax";
@@ -80,6 +80,37 @@ interface RequestSidePanelProps {
 const DEFAULT_PANEL_WIDTH = 560;
 const MIN_PANEL_WIDTH = 360;
 const MAX_PANEL_WIDTH = 720;
+const VIEW_SECTIONS = [
+  { id: "overview", label: "Обзор" },
+  { id: "invoice", label: "Счёт" },
+  { id: "logistics", label: "Логистика" },
+  { id: "items", label: "Позиции" },
+  { id: "history", label: "История" },
+] as const;
+type ViewSection = typeof VIEW_SECTIONS[number]["id"] | "docs" | "tasks";
+
+function RequestViewSection({ section, title, children, defaultOpen, onToggle }: {
+  section?: ViewSection;
+  title: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+  onToggle?: (open: boolean) => void;
+}) {
+  return (
+    <details
+      className="request-view-section"
+      data-request-view-section={section}
+      open={defaultOpen}
+      onToggle={onToggle ? (event) => onToggle(event.currentTarget.open) : undefined}
+    >
+      <summary>
+        {title}
+        <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+      </summary>
+      <div className="request-view-section__content">{children}</div>
+    </details>
+  );
+}
 
 const money = (v: number) =>
   new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
@@ -114,8 +145,23 @@ export const RequestSidePanel = ({
   const STATUSES = useOrgStatuses();
   const isPhone = useIsMobile();
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [tab, setTab] = useState<"overview" | "items" | "docs" | "history" | "tasks">("overview");
+  const [activeSection, setActiveSection] = useState<ViewSection>(initialTab);
   const [positionsOpen, setPositionsOpen] = useState(false);
+  const viewScrollRef = useRef<HTMLDivElement>(null);
+  const goToSection = useCallback((section: ViewSection, behavior: ScrollBehavior = "smooth") => {
+    const scroll = viewScrollRef.current;
+    if (!scroll) return;
+    setActiveSection(section);
+    if (section === "items") setPositionsOpen(true);
+    const target = scroll.querySelector<HTMLElement>(`[data-request-view-section="${section}"]`);
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => {
+      const navHeight = scroll.querySelector<HTMLElement>(".request-view-nav")?.offsetHeight ?? 0;
+      const top = target ? target.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop - navHeight - 12 : 0;
+      scroll.scrollTo({ top: Math.max(0, top), behavior: smooth ? behavior : "auto" });
+    });
+  }, []);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
@@ -150,7 +196,6 @@ export const RequestSidePanel = ({
     },
     [onFullscreenChange]
   );
-  const [viewportWide, setViewportWide] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1280);
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -178,12 +223,6 @@ export const RequestSidePanel = ({
   );
 
 
-
-  useEffect(() => {
-    const onResize = () => setViewportWide(window.innerWidth >= 1280);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   const applyWidth = useCallback(
     (next: number) => {
@@ -258,11 +297,15 @@ export const RequestSidePanel = ({
     setEditDirty(false);
     setReceiptOpenSignal(0);
     setActiveEditor(null);
-    setTab(initialTab);
+    setPositionsOpen(false);
     setUploads([]);
     setRecognizedSupplier(null);
     setPreserveInvoiceAmount(false);
   }, [request?.id, open, initialTab]);
+
+  useEffect(() => {
+    if (open) goToSection(initialTab, "auto");
+  }, [open, initialTab, request?.id, goToSection]);
 
   const applyLocalRequestPatch = useCallback((patch: Record<string, unknown>) => {
     setLocalRequestPatch((previous) => ({ ...previous, ...patch }));
@@ -396,7 +439,6 @@ export const RequestSidePanel = ({
 
   const photoUrls = useMemo(() => request ? getRequestFileUrls(request, "photo") : [], [request]);
   const documentUrls = useMemo(() => request ? getRequestFileUrls(request, "document") : [], [request]);
-  const docsCount = photoUrls.length + documentUrls.length;
 
   /** Загрузка файлов: свой прогресс и своя ошибка у каждого файла. */
   const handleUpload = useCallback(
@@ -441,7 +483,7 @@ export const RequestSidePanel = ({
           clearInterval(tick);
         }
       }
-      if (files.length) setTab("docs");
+      if (files.length) goToSection("docs");
     },
     [applyLocalRequestPatch, documentUrls, photoUrls, queryClient, readOnly, request]
   );
@@ -592,24 +634,10 @@ export const RequestSidePanel = ({
 
   if (!request || (!open && !editorOpen)) return null;
 
-  // Боковая панель — только быстрая правка: поля и файлы.
-  // Позиции, история и прочее тяжёлое живут в полном экране.
-  const tabs = [
-    { id: "overview", label: "Обзор" },
-    { id: "tasks", label: "Задачи" },
-    { id: "docs", label: `Документы ${docsCount || ""}`.trim() },
-    { id: "history", label: "История" },
-  ] as const;
-
-
   const asOverlay = !inline || isFullscreen;
 
-  const cardClass = "request-side-card mt-3 w-full min-w-0 rounded-[16px] border border-border bg-card px-3 py-2.5 break-words";
-  const cardTitleClass = "mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground";
   const peopleBlock = (
-    <details className={cn(cardClass, "request-people-disclosure")}>
-      <summary>Объект и ответственные</summary>
-      <div className="mt-3">
+    <div className="request-view-field-grid">
               <PanelField
               label="Объект"
               type="select"
@@ -621,8 +649,8 @@ export const RequestSidePanel = ({
               onSave={(v) => saveField("object_id", v)}
             />
       {(/ремонт|восстановлен/i.test((request as any).object_name || "") || (request as any).equipment_id) && (
-        <div className="flex min-h-9 items-center gap-2 py-1">
-          <span className="w-[120px] shrink-0 text-[13px] text-muted-foreground">Техника</span>
+        <div className="request-view-equipment">
+          <span className="request-view-field-label">Техника</span>
           <div className="min-w-0 flex-1">
             <EquipmentSelectWithAdd
               value={(request as any).equipment_id || ""}
@@ -653,18 +681,15 @@ export const RequestSidePanel = ({
               alwaysEdit={editMode}
               onSave={(v) => saveField("executor", v)}
             />
-      </div>
-    </details>
+    </div>
   );
   const logisticsBlock = (
-    <div className={cn(cardClass, "request-logistics-card")}>
-      <div className={cardTitleClass}>Логистика</div>
+    <div className="request-view-field-grid">
               <RequestInlineField
                 label="Транспортная компания"
                 type="combobox"
                 options={transportCompanies.map((name) => ({ value: name, label: name }))}
                 value={request.transport_company}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3"
                 readOnly={readOnly}
                 onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}
                 onSave={(v) => saveField("transport_company", v)}
@@ -680,7 +705,6 @@ export const RequestSidePanel = ({
               copyLabel="Номер ТТН скопирован"
               extraAction={<TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} />}
             />
-              <div className="grid grid-cols-2 gap-3">
               <RequestInlineField
                 label="Дата отгрузки"
                 type="date"
@@ -699,11 +723,19 @@ export const RequestSidePanel = ({
                 onEditingChange={(editing) => setActiveEditor(editing ? "delivery" : null)}
                 onSave={(v) => saveField("delivery_date", v)}
               />
-              </div>
+              {(request.actual_arrival_date || (request.planned_delivery_date && request.planned_delivery_date !== request.delivery_date)) && <RequestInlineField
+                label={request.actual_arrival_date ? "Приход (факт)" : "Приход (план)"}
+                type="date"
+                value={request.actual_arrival_date || request.delivery_date}
+                display={dt(request.actual_arrival_date || request.planned_delivery_date || request.delivery_date) || "—"}
+                readOnly={readOnly}
+                onEditingChange={(editing) => setActiveEditor(editing ? "route-date" : null)}
+                onSave={(value) => saveField(request.actual_arrival_date ? "actual_arrival_date" : "delivery_date", value)}
+              />}
     </div>
   );
   const invoiceNumberField = (
-    <>
+    <div className="request-view-field-grid">
               <PanelField
               label="№ счёта"
               type="text"
@@ -726,7 +758,7 @@ export const RequestSidePanel = ({
                 </Button>
               ) : undefined}
             />
-    </>
+    </div>
   );
   const docFileName = (url: string) => {
     try {
@@ -737,7 +769,6 @@ export const RequestSidePanel = ({
   };
   // В карточке и редакторе выбран один и тот же сохранённый файл счёта.
   const mainInvoiceDoc = selectRequestInvoiceUrl(documentUrls);
-  const invoiceDocs = mainInvoiceDoc ? [mainInvoiceDoc] : [];
   const displayInvoiceName = mainInvoiceDoc ? docFileName(mainInvoiceDoc) : "Счёт";
   const sendInvoiceToMax = async (url: string) => {
     if (isSendingInvoiceToMax) return;
@@ -773,15 +804,15 @@ export const RequestSidePanel = ({
     }
   };
   const invoiceBlock = (
-    <div className="mt-2 border-t border-border pt-2">
-      <div className="text-[13px] font-semibold text-muted-foreground">Файл счёта</div>
+    <div className="request-view-invoice">
+      <div className="request-view-field-label">Файл счёта</div>
       {mainInvoiceDoc ? (
-        <>
-          <div className="request-invoice-document-row mt-2 flex flex-wrap items-center gap-2">
-            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-[160px] flex-1 break-words text-sm" title={displayInvoiceName}>
-              {displayInvoiceName}
-            </span>
+        <div className="request-view-invoice__card">
+          <div className="request-view-invoice__file">
+            <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
+            <span title={displayInvoiceName}>{displayInvoiceName}</span>
+          </div>
+          <div className="request-view-invoice__actions">
             <Button
               variant="ghost"
               size="sm"
@@ -806,28 +837,7 @@ export const RequestSidePanel = ({
             </Button>
             <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
           </div>
-          {invoiceDocs.length > 1 && (
-            <div className="mt-1.5 space-y-1">
-              {invoiceDocs.slice(1).map((url) => (
-                <div key={url} className="flex flex-wrap items-center gap-2">
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground" title={docFileName(url)}>
-                    {docFileName(url)}
-                  </span>
-                  <button
-                    type="button"
-                    className="min-h-9 shrink-0 px-1 text-[13px] text-primary"
-                    onClick={() => void downloadStoredFile(url, docFileName(url))}
-                  >
-                    Скачать
-                  </button>
-                  <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" disabled={isSendingInvoiceToMax} onClick={() => void sendInvoiceToMax(url)}>Отправить в MAX</Button>
-                  <RequestDocumentDeleteButton request={request} url={url} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+        </div>
       ) : (
         <div className="mt-2 flex items-center gap-2">
           <span className="min-w-0 flex-1 text-sm text-muted-foreground">Файл счёта не прикреплён</span>
@@ -859,8 +869,8 @@ export const RequestSidePanel = ({
     </div>
   );
   const totalsBlock = (
-    <div className="w-full min-w-0">
-            <div className="mt-2 rounded bg-muted/60 px-3 py-2.5">
+    <div className="request-view-totals">
+            <div className="request-view-amounts">
               <PanelField
                 label="Товар"
                 type="number"
@@ -879,13 +889,13 @@ export const RequestSidePanel = ({
                 alwaysEdit={editMode}
                 onSave={(v) => saveField("amount_2", Number(v.replace(",", ".")) || 0)}
               />
-              <div className="mt-2 flex items-end justify-between border-t border-border pt-2">
+              <div className="request-view-total">
                 <span className="text-[0.8125rem] text-muted-foreground">Всего</span>
                 <span className="font-numeric text-[1.375rem] font-semibold tracking-tight">{money(total)} ₽</span>
               </div>
             </div>
             {/* Оплата — отдельной строкой под блоком сумм */}
-            <div className="mt-2 px-3">
+            <div className="request-view-payment">
               <RequestInlineField
                 label="Факт оплаты, %"
                 type="number"
@@ -900,7 +910,7 @@ export const RequestSidePanel = ({
                 onSave={(v) => saveField("payment_percent", Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0)))}
               />
               {!readOnly && paid < 100 && (
-                <div className="relative -mt-12 flex flex-wrap items-center justify-end gap-1.5 pb-1">
+                <div className="request-view-payment__actions">
                   {paid <= 0 && <>
                     <Button type="button" size="sm" variant="default" className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90" onClick={async () => { await saveField("payment_percent", 50); setPendingPaymentPercent(50); setStatusPromptOpen(true); }}>
                       Оплачено 50%
@@ -916,20 +926,6 @@ export const RequestSidePanel = ({
               )}
             </div>
     </div>
-  );
-
-  const fieldsBlock = (
-    <>
-      <div className={cardClass}>
-        <div className={cardTitleClass}>Финансы и счёт</div>
-        {invoiceNumberField}
-        <RequestInvoiceActions request={request} readOnly={readOnly} onUpdated={applyLocalRequestPatch} />
-        {totalsBlock}
-        {invoiceBlock}
-      </div>
-      {logisticsBlock}
-      {peopleBlock}
-    </>
   );
 
   const movementBlock = (
@@ -974,7 +970,7 @@ export const RequestSidePanel = ({
             onRecognizeInvoice={readOnly ? undefined : () => invoiceInputRef.current?.click()}
             recognizing={isRecognizingInvoice}
             onTotalChange={(itemsTotal) => {
-              if (!preserveInvoiceAmount && itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
+              if (!readOnly && !preserveInvoiceAmount && itemsTotal > 0 && Math.abs(itemsTotal - goods) > 0.009) {
                 void saveField("amount", itemsTotal, { silent: true });
               }
             }}
@@ -1007,126 +1003,44 @@ export const RequestSidePanel = ({
             ))}
           </div>
   );
-  const mobileDetailsClass = "group mt-3 w-full min-w-0 rounded-[16px] border border-border bg-card";
-  const mobileSummaryClass = "flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-semibold text-foreground [&::-webkit-details-marker]:hidden";
-  const MOBILE_PHASE_COLORS = ["#485B9B", "#905019", "#466637", "#24714E"];
-  const mobileStage = getRequestRouteStage(request);
-  const mobileArrival = request.actual_arrival_date || request.planned_delivery_date || request.delivery_date;
-  const mobileBody = (
-    <div className="w-full min-w-0 px-4 pb-4">
-      <div className="mobile-phase-panel rounded-[16px] p-[14px]">
-        <RequestInlineField
-          label="Статус"
-          type="select"
-          hideLabel
-          value={request.status}
-          options={STATUSES.map((value) => ({ value, label: value }))}
-          display={<span className="inline-flex items-center gap-2 text-[15px] font-semibold"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
-          saveOnChange
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
-          onSave={(value) => saveField("status", value)}
-        />
-        <ol className="mt-3 grid grid-cols-4 gap-1" aria-label="Этапы заявки">
-          {REQUEST_ROUTE_LABELS.map((label, index) => {
-            const reached = index < mobileStage || index === mobileStage && (index < 3 || isRequestDeliveryConfirmed(request));
-            const color = MOBILE_PHASE_COLORS[index];
-            return (
-              <li key={label} className="relative flex min-w-0 flex-col items-center text-center" aria-current={index === mobileStage ? "step" : undefined}>
-                {index > 0 && <span className="absolute right-1/2 top-[6px] h-px w-full bg-border" aria-hidden="true" />}
-                <span className="relative h-3 w-3 rounded-full border-2" style={reached ? { backgroundColor: color, borderColor: color } : { borderColor: color, backgroundColor: "transparent" }} aria-hidden="true" />
-                <span className={cn("mt-1 break-words text-[11px] leading-tight", reached ? "text-foreground font-medium" : "text-muted-foreground")}>{label}</span>
-                <span className="sr-only">{reached ? "пройден" : "не пройден"}</span>
-              </li>
-            );
-          })}
-        </ol>
-        <div className="mt-3 grid gap-1 border-t border-border pt-2 text-[14px]">
-          <RequestInlineField
-            label={request.actual_arrival_date ? "Приход (факт)" : "Приход (план)"}
-            type="date"
-            value={request.actual_arrival_date || request.delivery_date}
-            display={<span className="font-numeric">{dt(mobileArrival) || "—"}</span>}
-            readOnly={readOnly}
-            onEditingChange={(editing) => setActiveEditor(editing ? "route-date" : null)}
-            onSave={(v) => saveField(request.actual_arrival_date ? ("actual_arrival_date" as any) : "delivery_date", v)}
-          />
-          <RequestInlineField
-            label="ТК"
-            type="combobox"
-            options={transportCompanies.map((name) => ({ value: name, label: name }))}
-            value={request.transport_company}
-            readOnly={readOnly}
-            onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}
-            onSave={(v) => saveField("transport_company", v)}
-          />
-        </div>
-      </div>
-      <div className="mt-3 grid gap-1 px-1 text-[14px]">
-        <RequestInlineField
-          label="Приоритет"
-          type="select"
-          value={request.priority || "Планово"}
-          options={PRIORITIES.map((value) => ({ value, label: value }))}
-          display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
-          saveOnChange
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
-          onSave={(value) => saveField("priority", value)}
-        />
-        <PanelField
-          label="Исполнитель"
-          type="select"
-          options={executorOptions}
-          value={request.executor}
-          display={formatPersonName(request.executor)}
-          readOnly={readOnly}
-          alwaysEdit={editMode}
-          onSave={(v) => saveField("executor", v)}
-        />
-      </div>
-      <div className="request-mobile-quick-actions mt-3 flex flex-wrap gap-2 px-1">
-        <RequestQrWorkflow key={`mobile-workflow-${request.id}`} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal} />
-        <RequestQrButton key={`mobile-qr-${request.id}`} request={request} />
-      </div>
-      <details className={mobileDetailsClass}>
-        <summary className={mobileSummaryClass}>Счёт и оплата<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
-        <div className="px-3 pb-3">
-          {invoiceNumberField}
-          <RequestInvoiceActions request={request} readOnly={readOnly} onUpdated={applyLocalRequestPatch} />
-          {totalsBlock}
-          {invoiceBlock}
-          <div className="mt-3"><div className="mb-3 text-[15px] font-semibold text-foreground">Позиции</div>{itemsBlock}</div>
-        </div>
-      </details>
-      <details className={mobileDetailsClass}>
-        <summary className={mobileSummaryClass}>Логистика<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
-        <div className="px-3 pb-3 [&>.request-side-card]:mt-0 [&>.request-side-card]:border-0 [&>.request-side-card]:px-1">
-          {logisticsBlock}
-          {peopleBlock}
-          {movementBlock}
-        </div>
-      </details>
-      <details className={mobileDetailsClass}>
-        <summary className={mobileSummaryClass}>Документы<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
-        <div className="px-3 pb-3">{docsBlock}<div className="mt-3"><div className="mb-3 text-[15px] font-semibold text-foreground">История</div>{historyBlock}</div></div>
-      </details>
-      <details className={mobileDetailsClass}>
-        <summary className={mobileSummaryClass}>Задачи<ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
-        <div className="px-3 pb-3">{linkedTasksBlock}</div>
-      </details>
+  const containerClass = "request-view-width";
+
+  const sectionContent = (
+    <div className={cn("request-view-sections", containerClass)} key={request.id}>
+      <RequestViewSection section="invoice" title="Счёт и оплата" defaultOpen={!isPhone}>
+        {invoiceNumberField}
+        <RequestInvoiceActions request={request} readOnly={readOnly} onUpdated={applyLocalRequestPatch} />
+        {totalsBlock}
+        {invoiceBlock}
+      </RequestViewSection>
+      <RequestViewSection section="logistics" title="Логистика" defaultOpen={!isPhone}>
+        {logisticsBlock}
+      </RequestViewSection>
+      <RequestViewSection title="Объект и ответственные">
+        {peopleBlock}
+      </RequestViewSection>
+      <RequestViewSection section="items" title={`Позиции · ${items?.length || 0}`} onToggle={setPositionsOpen}>
+        {positionsOpen && itemsBlock}
+      </RequestViewSection>
+      <RequestViewSection section="tasks" title="Задачи по заявке">
+        {linkedTasksBlock}
+      </RequestViewSection>
+      <RequestViewSection title="Движение">
+        {movementBlock}
+      </RequestViewSection>
+      <RequestViewSection section="docs" title="Файлы и документы">
+        {docsBlock}
+      </RequestViewSection>
+      <RequestViewSection section="history" title="История">
+        {historyBlock}
+      </RequestViewSection>
     </div>
   );
-  const wideFullscreen = isFullscreen && viewportWide;
-  const containerClass = isFullscreen && !isPhone ? "mx-auto w-[min(1440px,100%-96px)]" : "w-full";
-  const columnClass = "request-fullscreen-column flex h-full min-w-0 flex-col rounded-[16px] border border-border bg-card p-5";
-  const sectionTitleClass = "mb-3 text-[15px] font-semibold text-foreground";
-
 
   const content = (
     <aside
       className={cn(
-        "request-side-panel requests-registry mobile-brand flex min-h-0 flex-col border-l border-border bg-card",
+        "request-side-panel request-view requests-registry mobile-brand flex min-h-0 flex-col border-l border-border bg-card",
         assistantOpen && "max-sm:!fixed max-sm:!inset-0 max-sm:!z-[220] max-sm:!h-[100dvh] max-sm:!w-screen",
         dragActive && "ring-2 ring-inset ring-primary",
         isFullscreen
@@ -1179,7 +1093,7 @@ export const RequestSidePanel = ({
           if (file) void handleRecognizeInvoice(file);
         }}
       />
-      {!isFullscreen && (
+      {!isFullscreen && !isPhone && (
 
         <div
           role="separator"
@@ -1195,208 +1109,120 @@ export const RequestSidePanel = ({
         />
       )}
 
-      {/* Header */}
-      {!assistantOpen && <>
-      <div className="request-header-block">
-      <div className="flex-none px-4 pt-3 md:hidden">
-        <Button type="button" variant="ghost" size="sm" className="-ml-2 h-10 gap-1 px-2 text-sm text-primary" onClick={onClose}>
-          <ArrowLeft className="h-4 w-4" />Назад
-        </Button>
-      </div>
-      <div className={cn("request-header-main flex flex-none flex-col gap-3 px-4 pt-3", containerClass)}>
-        <div className="request-panel-toolbar">
-          <div className="flex shrink-0 items-center gap-0.5">
-        <div className="flex shrink-0 items-center gap-0.5 max-md:hidden">
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
-            <ArrowUp className="h-3.5 w-3.5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
-            <ArrowDown className="h-3.5 w-3.5" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setLabelOpen(true)} aria-label="Этикетка" title="Этикетка">
-            <Tag className="h-3.5 w-3.5" />
-          </Button>
-          <LabelPrintDialog
-            open={labelOpen}
-            onOpenChange={setLabelOpen}
-            description={request.description || null}
-            applicant={request.applicant || null}
-          />
-          {isFullscreen ? (
-            <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-sm" onClick={() => setIsFullscreen(false)} title="Вернуться к реестру">
-              <Minimize2 className="h-3.5 w-3.5" />
-              Свернуть к реестру
-            </Button>
-          ) : (
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={() => setIsFullscreen(true)} aria-label="Развернуть на весь экран" title="Развернуть на весь экран">
-              <Maximize2 className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Закрыть">
-            <X className="h-4 w-4" />
-          </Button>
+      {assistantOpen ? (
+        <div className="min-h-0 flex-1">
+          <ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)} />
         </div>
-          </div>
+      ) : <>
+        <div className="request-view-scroll" ref={viewScrollRef}>
+          <header className={cn("request-view-header", containerClass)}>
+            <div className="request-view-heading">
+              {isPhone && (
+                <Button type="button" variant="ghost" size="sm" className="request-view-back" onClick={onClose}>
+                  <ArrowLeft className="h-4 w-4" />Назад
+                </Button>
+              )}
+              <div className="request-view-title-group">
+                <RequestInlineField
+                  label="Название заявки"
+                  type="textarea"
+                  hideLabel
+                  value={request.description}
+                  display={<span className="request-side-panel__title">{request.description || "Заявка"}</span>}
+                  readOnly={readOnly}
+                  onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
+                  onSave={(value) => saveField("description", value.trim())}
+                />
+              </div>
+              {request.request_date && <p className="request-view-created">Создана {dt(request.request_date)}</p>}
+              {!isPhone && (
+                <div className="request-view-toolbar" aria-label="Действия с заявкой">
+                  <Button type="button" variant="ghost" size="icon" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setLabelOpen(true)} aria-label="Этикетка" title="Этикетка">
+                    <Tag className="h-4 w-4" />
+                  </Button>
+                  <LabelPrintDialog open={labelOpen} onOpenChange={setLabelOpen} description={request.description || null} applicant={request.applicant || null} />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Вернуться к реестру" : "Развернуть на весь экран"}>
+                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Закрыть">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <RequestRoute request={request} />
+
+            <div className="request-view-field-grid request-view-meta">
+              <RequestInlineField
+                label="Статус"
+                type="select"
+                value={request.status}
+                options={STATUSES.map((value) => ({ value, label: value }))}
+                display={<span className="request-card-status"><i aria-hidden="true" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+                saveOnChange
+                readOnly={readOnly || (!!activeEditor && activeEditor !== "status")}
+                onEditingChange={(editing) => setActiveEditor((current) => editing ? "status" : current === "status" ? null : current)}
+                onSave={(value) => saveField("status", value)}
+              />
+              <RequestInlineField
+                label="Приоритет"
+                type="select"
+                value={request.priority || "Планово"}
+                options={PRIORITIES.map((value) => ({ value, label: value }))}
+                display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
+                saveOnChange
+                readOnly={readOnly || (!!activeEditor && activeEditor !== "priority")}
+                onEditingChange={(editing) => setActiveEditor((current) => editing ? "priority" : current === "priority" ? null : current)}
+                onSave={(value) => saveField("priority", value)}
+              />
+            </div>
+
+            <div className="request-view-quick-actions">
+              <RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal} />
+              <RequestQrButton key={`qr-${request.id}`} request={request} />
+              {savingField && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" role="status" aria-label="Сохранение" />}
+            </div>
+
+            <RequestInlineField
+              label="Комментарий"
+              type="textarea"
+              value={request.comments}
+              className="request-view-comment"
+              display={<span className="whitespace-pre-wrap">{request.comments || "—"}</span>}
+              readOnly={readOnly}
+              onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
+              onSave={(value) => saveField("comments", value)}
+            />
+          </header>
+
+          <nav className={cn("request-view-nav", containerClass)} aria-label="Разделы заявки">
+            {VIEW_SECTIONS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className="request-view-nav__item"
+                aria-current={activeSection === id ? "location" : undefined}
+                onClick={() => goToSection(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          {sectionContent}
         </div>
-        <RequestInlineField
-          className="request-header-title-field"
-          label="Название заявки"
-          type="textarea"
-          hideLabel
-          value={request.description}
-          display={<span className="request-side-panel__title">{request.description || "Заявка"}</span>}
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "description" : null)}
-          onSave={(value) => saveField("description", value.trim())}
-        />
-      </div>
 
-      <div className={cn("request-card-comment-block px-4 pt-1", containerClass)}>
-        <RequestInlineField
-          label="Комментарий"
-          type="textarea"
-          value={request.comments}
-          className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"
-          display={<span className="request-card-comment">{request.comments || "—"}</span>}
-          readOnly={readOnly}
-          onEditingChange={(editing) => setActiveEditor(editing ? "comments" : null)}
-          onSave={(value) => saveField("comments", value)}
-        />
-      </div>
-
-      <div className={cn("request-design-subtitle max-md:hidden px-4", containerClass)}>
-        Создана {dt(request.request_date) || "—"} · {request.priority || "Планово"}
-      </div>
-
-      <div className={cn("px-4 pt-2 max-md:hidden", containerClass)}>
-        <RequestRoute
-          request={request}
-          readOnly={readOnly}
-        />
-      </div>
-
-      {/* Следующий шаг убран из компактного вида карточки. */}{false && <div className={cn("request-next-step max-md:hidden", containerClass)}>
-        <div>
-          <div className="request-next-step__label">Следующий шаг</div>
-          <div className="request-next-step__title">{paid < 100 ? "Проверить счёт и подтвердить оплату" : "Подтвердить готовность к отгрузке"}</div>
-        </div>
-        <Button type="button" variant="outline" className="request-next-step__button" onClick={() => document.getElementById("request-invoice-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-          Открыть счёт
-        </Button>
-      </div>}
-
-      <nav className={cn("request-detail-tabs max-md:hidden", containerClass)} aria-label="Разделы заявки">
-        {[["overview", "Обзор"], ["invoice", "Счёт"], ["logistics", "Логистика"], ["positions", "Позиции"], ["history", "История"]].map(([id, label]) => (
-          <button key={id} type="button" className={cn("request-detail-tab", id === "overview" && "is-active")} onClick={() => document.getElementById(`request-${id}-section`)?.scrollIntoView({ behavior: "smooth", block: "start" })}>{label}</button>
-        ))}
-      </nav>
-
-      <div className={cn("request-summary-block request-card-meta flex-none gap-2 max-md:!hidden px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
-        <RequestInlineField
-          label="Статус"
-          type="select"
-          hideLabel
-          className="request-card-meta-field"
-          value={request.status}
-          options={STATUSES.map((value) => ({ value, label: value }))}
-          display={<span className="request-card-status"><i style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
-          saveOnChange
-          readOnly={readOnly || (!!activeEditor && activeEditor !== "status")}
-          onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
-          onSave={(value) => saveField("status", value)}
-        />
-        <RequestInlineField
-          label="Приоритет"
-          type="select"
-          hideLabel
-          className="request-card-meta-field"
-          value={request.priority || "Планово"}
-          options={PRIORITIES.map((value) => ({ value, label: value }))}
-          display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
-          saveOnChange
-          readOnly={readOnly || (!!activeEditor && activeEditor !== "priority")}
-          onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
-          onSave={(value) => saveField("priority", value)}
-        />
-        <span className="font-numeric">{dt(request.request_date) ?? "—"}</span>
-        {savingField && savingField !== "description" && <Loader2 className="h-3 w-3 animate-spin" />}
-      </div>
-
-      {!assistantOpen && !isPhone && <div className="request-summary-actions flex flex-none flex-wrap gap-2 px-4 py-2"><RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal}/><RequestQrButton key={`qr-${request.id}`} request={request}/></div>}
-      </div>
-      {/* Body */}
-      </>}
-      {assistantOpen ? <div className="min-h-0 flex-1"><ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)}/></div> : <>
-      <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain py-3", isFullscreen ? "px-0" : "px-4")}>
-        {isPhone ? mobileBody : wideFullscreen ? (
-          <div
-            className="mx-auto grid h-full w-[min(1440px,100%-96px)] items-stretch gap-6"
-            style={{ gridTemplateColumns: "minmax(280px, .9fr) minmax(360px, 1.25fr) minmax(280px, .9fr)" }}
-          >
-            <div className={cn(columnClass, "overflow-y-auto")}>
-              {fieldsBlock}
-            </div>
-            <div className={cn(columnClass, "overflow-y-auto")}>
-              <div className={sectionTitleClass}>Позиции</div>
-              {itemsBlock}
-            </div>
-            <div className={cn(columnClass, "gap-5 overflow-y-auto")}>
-              {docsBlock}
-              <div>{linkedTasksBlock}</div>
-              <div>{movementBlock}</div>
-                <details className="request-history-disclosure">
-                  <summary>История</summary>
-                  <div className="mt-3">{historyBlock}</div>
-                </details>
-            </div>
-          </div>
-        ) : (
-          <div className={cn("w-full min-w-0", containerClass, isFullscreen && "px-0")}>
-            {(
-              <>
-                <div id="request-invoice-section">{fieldsBlock}</div>
-                {isFullscreen ? (
-                  <div className={cardClass}>
-                    <div className={sectionTitleClass}>Позиции</div>
-                    {itemsBlock}
-                  </div>
-                ) : (
-                  <>
-                  <button
-                    type="button"
-                    onClick={() => setPositionsOpen((v) => !v)}
-                    className="request-positions-toggle mt-3 flex min-h-9 w-full items-center justify-between rounded border border-border px-2 py-1.5 text-sm hover:bg-muted/60"
-                  >
-                    <span>Позиции: {items?.length || 0}</span>
-                    <span className="text-primary">{positionsOpen ? "Скрыть" : "Показать"}</span>
-                  </button>
-                  {positionsOpen && <div id="request-positions-section" className={cardClass}>{itemsBlock}</div>}
-                  </>
-                )}
-                <details id="request-tasks-section" className={cn(cardClass, "request-tasks-disclosure")}>
-                  <summary className="cursor-pointer list-none font-semibold">Задачи по заявке</summary>
-                  <div className="mt-3">{linkedTasksBlock}</div>
-                </details>
-                <details id="request-logistics-section" className={cardClass}>
-                  <summary className="cursor-pointer list-none font-semibold">Движение</summary>
-                  <div className="mt-3">{movementBlock}</div>
-                </details>
-                <details id="request-files-section" className={cardClass}>
-                  <summary className="cursor-pointer list-none font-semibold">Файлы и документы</summary>
-                  <div className="mt-3">{docsBlock}</div>
-                </details>
-                <details id="request-history-section" className={cn(cardClass, "request-history-disclosure")}><summary>История</summary><div className="mt-3">{historyBlock}</div></details>
-              </>
-            )}
-          </div>
-        )}
-
-      </div>
 
 
       {/* Footer */}
-      <div className="request-side-panel__footer flex-none border-t border-border bg-card px-4 py-2.5">
-        <div className={cn("flex flex-wrap items-center gap-3", containerClass)}>
+      <div className="request-side-panel__footer flex-none border-t border-border bg-card">
+        <div className={cn("request-view-footer-actions", containerClass)}>
         {editMode ? (
           <>
             <Button
@@ -1477,7 +1303,7 @@ export const RequestSidePanel = ({
             >
               Скопировать ссылку
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={readOnly} onClick={() => setTab("docs")}>
+            <DropdownMenuItem disabled={readOnly} onClick={() => goToSection("docs")}>
               Добавить файлы
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => sendRequestToAppleReminders(request as any)}>
