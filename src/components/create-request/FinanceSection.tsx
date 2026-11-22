@@ -254,27 +254,6 @@ export const FinanceSection = ({
         )}
         {/* Оба действия используют существующие обработчики файла и OCR. */}
         <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={String(selectedSlot)}
-            onValueChange={(value) => {
-              const slot = Number(value) as RequestInvoiceSlot;
-              setSelectedSlot(slot);
-              if (slot > 1) {
-                setVisibleInvoiceSlots((current) => current.includes(slot) ? current : [...current, slot]);
-                form.setValue(`_showInv${slot}`, true, { shouldDirty: true });
-              }
-            }}
-            disabled={disabled || isRecognizing}
-          >
-            <SelectTrigger aria-label="Счёт для заполнения" className="h-9 w-[132px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Счёт №1</SelectItem>
-              <SelectItem value="2">Счёт №2</SelectItem>
-              <SelectItem value="3">Счёт №3</SelectItem>
-            </SelectContent>
-          </Select>
           <input
             ref={fileInputRef}
             type="file"
@@ -470,59 +449,6 @@ export const FinanceSection = ({
           );
         })()}
 
-        {/* Availability row */}
-        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-          <FormField
-            control={form.control}
-            name="availability_delivery_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Наличие</FormLabel>
-                <Select
-                  value={field.value || ""}
-                  onValueChange={field.onChange}
-                  disabled={disabled}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Выбрать..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="В наличии">В наличии</SelectItem>
-                    <SelectItem value="Под заказ">Под заказ</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {form.watch("availability_delivery_time") === "Под заказ" && (
-            <FormField
-              control={form.control}
-              name="order_days"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Заказ (дней)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="кол-во дней"
-                      className="h-9 select-all min-w-0 text-sm"
-                      title="Срок изготовления/поставки под заказ (не срок доставки ТК)"
-                      disabled={disabled}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
           </div>
         </div>
         {/* Actual payment */}
