@@ -66,7 +66,7 @@ import { AdditionalSection } from "./create-request/AdditionalSection";
 
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
-import { FormSectionCard } from "./create-request/FormSectionCard";
+import { FormSectionCard, REQUEST_SECTION_OPEN_EVENT } from "./create-request/FormSectionCard";
 import { RequestFormNav } from "./create-request/RequestFormNav";
 
 const requestSchema = z.object({
@@ -1044,6 +1044,35 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     </div>
   );
 
+  const quickActions = (
+    <div className="request-edit-quick-actions" aria-label="Быстрые переходы">
+      <span className="request-edit-quick-actions__label">Быстрый доступ</span>
+      {[
+        ["req-sec-invoice", "Счёт"],
+        ["req-sec-items", "Позиции"],
+        ["req-sec-logistics", "Логистика"],
+        ["req-sec-files", "Файлы"],
+      ].map(([sectionId, label]) => (
+        <button
+          key={sectionId}
+          type="button"
+          className="request-edit-quick-actions__item"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent(REQUEST_SECTION_OPEN_EVENT, { detail: sectionId }));
+            const root = document.querySelector<HTMLElement>('[data-state="open"].request-form-redesign');
+            const body = root?.querySelector<HTMLElement>(".request-form-body");
+            const target = root?.querySelector<HTMLElement>(`[data-request-section="${sectionId}"]`);
+            if (!body || !target) return;
+            const top = target.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 12;
+            body.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
   const handleOpenAutoFocus = (event: Event) => {
     if (!isMobile) return;
     event.preventDefault();
@@ -1295,6 +1324,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
               {headerContent}
             </SheetHeader>
+            {quickActions}
             <RequestFormNav />
             <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
             <SheetDescription className="sr-only">Изменение данных заявки</SheetDescription>
@@ -1328,6 +1358,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           <SheetHeader className="request-form-header text-left px-6 pt-6 pb-4 pr-16 flex-shrink-0">
             {headerContent}
           </SheetHeader>
+          {quickActions}
           <RequestFormNav />
           <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
           <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
