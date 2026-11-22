@@ -4,16 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-} from "@/components/ui/drawer";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -55,6 +45,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
 import { useContractorSuggestions } from "@/hooks/useContractorSuggestions";
+import { cn } from "@/lib/utils";
 
 // Section components (shared with CreateRequestDialog)
 import { ContextSection } from "./create-request/ContextSection";
@@ -66,7 +57,7 @@ import { AdditionalSection } from "./create-request/AdditionalSection";
 
 import { RequestItemsSection, type RequestItem } from "./create-request/RequestItemsSection";
 import { MultiFileDropZone } from "@/components/MultiFileDropZone";
-import { FormSectionCard, REQUEST_SECTION_OPEN_EVENT } from "./create-request/FormSectionCard";
+import { FormSectionCard } from "./create-request/FormSectionCard";
 import { RequestFormNav } from "./create-request/RequestFormNav";
 
 const requestSchema = z.object({
@@ -937,7 +928,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         return (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Save className="h-3 w-3" />
-            Черновик
+            Черновик сохранён
           </span>
         );
       }
@@ -1021,57 +1012,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     }
   };
 
-  const headerContent = (
-    <div className="flex items-center justify-between flex-wrap gap-2">
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</h2>
-          {!isViewer && <SaveIndicator />}
-        </div>
-        <p className="hidden text-sm text-muted-foreground md:block">
-          {request?.description || "Без названия"}
-          {!isViewer && (
-            <span className="ml-2 text-xs opacity-70">
-              Ctrl+Enter — сохранить, Esc — закрыть
-            </span>
-          )}
-        </p>
-      </div>
-
-    </div>
-  );
-
-  const quickActions = (
-    <div className="request-edit-quick-actions" aria-label="Быстрые переходы">
-      <span className="request-edit-quick-actions__label">Быстрый доступ</span>
-      {[
-        ["req-sec-invoice", "Счёт"],
-        ["req-sec-items", "Позиции"],
-        ["req-sec-logistics", "Логистика"],
-        ["req-sec-files", "Файлы"],
-      ].map(([sectionId, label]) => (
-        <button
-          key={sectionId}
-          type="button"
-          className="request-edit-quick-actions__item"
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent(REQUEST_SECTION_OPEN_EVENT, { detail: sectionId }));
-            const root = document.querySelector<HTMLElement>('[data-state="open"].request-form-redesign');
-            const body = root?.querySelector<HTMLElement>(".request-form-body");
-            const target = root?.querySelector<HTMLElement>(`[data-request-section="${sectionId}"]`);
-            if (!body || !target) return;
-            const top = target.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 12;
-            body.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-          }}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-
   const handleOpenAutoFocus = (event: Event) => {
-    if (!isMobile) return;
     event.preventDefault();
     (event.currentTarget as HTMLElement).focus({ preventScroll: true });
   };
@@ -1091,28 +1032,31 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
 
         <div className="request-form-stack">
           <section id="req-sec-main" data-request-section="req-sec-main" className="request-top">
-          <ContextSection
-            form={form}
-            draftSaveState={draftSaveState}
-            autoFocus={!isViewer && !isMobile}
-            disabled={isViewer}
-          />
-          <CoreParamsSection
-            showProjectField
-            form={form}
-            objectsData={objectsData}
-            currentOrgId={request?.organization_id || null}
-            disabled={isViewer}
-          />
-          <StatusResponsiblesSection
-            form={form}
-            statuses={statuses}
-            priorities={priorities}
-            applicants={applicants}
-            executors={executors}
-            currentOrgId={request?.organization_id || null}
-            disabled={isViewer}
-          />
+            <ContextSection
+              form={form}
+              draftSaveState={draftSaveState}
+              showDraftStatus={false}
+              autoFocus={false}
+              disabled={isViewer}
+            />
+            <div className="request-edit-details">
+              <CoreParamsSection
+                showProjectField
+                form={form}
+                objectsData={objectsData}
+                currentOrgId={request?.organization_id || null}
+                disabled={isViewer}
+              />
+              <StatusResponsiblesSection
+                form={form}
+                statuses={statuses}
+                priorities={priorities}
+                applicants={applicants}
+                executors={executors}
+                currentOrgId={request?.organization_id || null}
+                disabled={isViewer}
+              />
+            </div>
           </section>
           <FinanceSection
             defaultOpen
@@ -1204,20 +1148,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   );
 
   const footerActions = (
-    <div className="request-form-actions flex flex-col-reverse justify-between gap-3 border-t bg-card px-3 py-3 sm:flex-row sm:px-5">
+    <div className="request-form-actions request-edit-footer">
       {canEdit && (
         <Button
           type="button"
-          variant="destructive"
+          variant="ghost"
           onClick={() => setShowDeleteDialog(true)}
           disabled={isSubmitting || isDeleting}
-          className="gap-2"
+          className="request-edit-footer__delete gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          aria-label="Удалить заявку"
         >
           <Trash2 className="h-4 w-4" />
-          Удалить
+          <span>Удалить</span>
         </Button>
       )}
-      <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row">
+      <div className="request-edit-footer__actions">
         <Button
           type="button"
           variant="outline"
@@ -1308,69 +1253,38 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     </AlertDialog>
   );
 
-  if (isMobile) {
-    return (
-      <>
-        <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
-          <SheetContent
-            side="bottom"
-            className="request-form-redesign p-0 mt-0 h-[100dvh] max-h-[100dvh] w-full max-w-full rounded-t-xl flex flex-col"
-            tabIndex={-1}
-            onOpenAutoFocus={handleOpenAutoFocus}
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
-          >
-            <SheetHeader className="text-left border-b pb-3 pt-3 pl-4 pr-14 flex-shrink-0 flex-row items-center justify-between space-y-0">
-              {headerContent}
-            </SheetHeader>
-            {quickActions}
-            <RequestFormNav />
-            <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
-            <SheetDescription className="sr-only">Изменение данных заявки</SheetDescription>
-            <div
-              className="request-form-body flex-1 min-h-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
-              style={{
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain'
-              }}
-            >
-              {formContent}
-            </div>
-            {footerActions}
-          </SheetContent>
-        </Sheet>
-        {deleteDialogContent}
-        {closeConfirmDialogContent}
-        {conflictDialogContent}
-      </>
-    );
-  }
-
   return (
     <>
       <Sheet open={open} onOpenChange={(o) => o ? onOpenChange(o) : handleClose()}>
         <SheetContent
-          side="right"
-          className="request-form-redesign request-form-window p-0 gap-0 flex flex-col bg-card"
+          side={isMobile ? "bottom" : "right"}
+          className={cn(
+            "request-form-redesign request-edit-dialog flex flex-col gap-0 bg-card p-0",
+            isMobile ? "h-dvh max-h-dvh w-full max-w-full rounded-t-xl" : "request-form-window",
+          )}
+          tabIndex={-1}
+          onOpenAutoFocus={handleOpenAutoFocus}
           onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={isMobile ? (e) => e.preventDefault() : undefined}
         >
-          <SheetHeader className="request-form-header text-left px-6 pt-6 pb-4 pr-16 flex-shrink-0">
-            {headerContent}
-          </SheetHeader>
-          {quickActions}
-          <div className="request-edit-workspace">
-            <aside className="request-edit-workspace__nav" aria-label="Разделы заявки">
-              <RequestFormNav />
-            </aside>
-            <div className="request-edit-workspace__mobile-nav">
-              <RequestFormNav />
+          <SheetHeader className="request-edit-header space-y-0">
+            <div className="request-edit-header__title">
+              <SheetTitle>{isViewer ? "Просмотр заявки" : "Редактировать заявку"}</SheetTitle>
+              {!isViewer && <SaveIndicator />}
             </div>
-            <div className="request-form-body flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 py-5">
+            <p className="request-edit-header__description">
+              {request?.description || "Без названия"}
+            </p>
+            <SheetDescription className="sr-only">Изменение данных заявки</SheetDescription>
+          </SheetHeader>
+          <div className="request-edit-layout">
+            <div className="request-edit-layout__nav">
+              <RequestFormNav includeFiles />
+            </div>
+            <div className="request-form-body request-edit-scroll">
               {formContent}
             </div>
           </div>
-          <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
-          <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
           {footerActions}
         </SheetContent>
       </Sheet>

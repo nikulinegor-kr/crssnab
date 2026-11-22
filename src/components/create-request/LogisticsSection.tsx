@@ -70,8 +70,7 @@ export const LogisticsSection = ({
           title="Логистика · Обычная доставка"
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
         >
-          <div className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          <div className="request-logistics-fields grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               <FormField
                 control={form.control}
                 name="transport_company"
@@ -114,9 +113,6 @@ export const LogisticsSection = ({
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               <FormField
                 control={form.control}
                 name="shipment_date"
@@ -156,7 +152,6 @@ export const LogisticsSection = ({
                   </FormItem>
                 )}
               />
-            </div>
           </div>
         </FormSectionCard>
       ) : (

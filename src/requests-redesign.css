@@ -575,28 +575,6 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
 .request-form-nav__item:hover { background: var(--requests-indigo-soft); color: var(--requests-indigo); }
 .request-form-nav__item:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 1px; }
 
-/* Режим редактирования: быстрые переходы отделены от навигации формы. */
-.request-edit-quick-actions {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  flex-shrink: 0; padding: 10px 24px; border-bottom: 1px solid var(--requests-border);
-  background: var(--requests-surface);
-}
-.request-edit-quick-actions__label {
-  margin-right: 4px; color: var(--requests-muted); font-size: 12px; font-weight: 600;
-  letter-spacing: .04em; text-transform: uppercase;
-}
-.request-edit-quick-actions__item {
-  min-height: 34px; padding: 0 12px; border: 1px solid var(--requests-border);
-  border-radius: 10px; background: var(--requests-surface); color: var(--requests-text);
-  font-size: 13px; font-weight: 600; transition: background .15s, border-color .15s, color .15s;
-}
-.request-edit-quick-actions__item:hover { border-color: var(--requests-indigo); background: var(--requests-indigo-soft); color: var(--requests-indigo); }
-.request-edit-quick-actions__item:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 2px; }
-.request-edit-workspace { display: flex; min-height: 0; flex: 1; background: var(--requests-bg); }
-.request-edit-workspace__nav { width: 196px; flex: 0 0 196px; padding: 20px 12px; border-right: 1px solid var(--requests-border); background: var(--requests-surface); }
-.request-edit-workspace__nav .request-form-nav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; background: transparent; overflow: visible; }
-.request-edit-workspace__nav .request-form-nav__item { width: 100%; justify-content: flex-start; padding: 0 12px; text-align: left; }
-
 .request-form-redesign .request-form-body { background: var(--requests-bg); }
 .request-form-redesign .request-form-stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .request-form-redesign .request-form-body > form { width: min(100%, 980px); margin-inline: auto; }
@@ -673,7 +651,6 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-form-redesign .request-form-actions { justify-content: flex-end; }
 
 @media (max-width: 900px) {
-  .request-edit-workspace__nav { display: none; }
   .request-form-redesign .request-top {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas: "ctx ctx" "date priority" "applicant object" "status executor" "proj proj";
@@ -688,10 +665,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-section__header { padding: 14px 16px; }
   .request-section__body { padding: 0 16px 16px; }
   .request-form-nav { padding: 6px 8px; }
-  .request-edit-quick-actions { padding: 8px 12px; gap: 6px; }
-  .request-edit-quick-actions__label { width: 100%; margin: 0 0 1px; }
-  .request-edit-quick-actions__item { flex: 1 1 calc(50% - 6px); }
-  .request-form-redesign .request-form-body { padding: 12px !important; padding-bottom: 24px !important; }
+  .request-form-redesign:not(.request-edit-dialog) .request-form-body { padding: 12px !important; padding-bottom: 24px !important; }
 }
 
 /* ===== Быстрые карточки заявки: единые поля, маршрут и отсчёт ===== */
@@ -1095,7 +1069,6 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   min-width: 0;
   scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom));
 }
-.request-edit-workspace__mobile-nav { display: none; }
 .request-items-grid-header { display: none; }
 .request-items-grid { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .request-items-grid > * { min-width: 0; }
@@ -1170,13 +1143,6 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-card-comment-block .request-inline-field { grid-template-columns: minmax(0, 1fr) !important; }
 }
 
-@media (max-width: 1100px) {
-  .request-edit-workspace { flex-direction: column; }
-  .request-edit-workspace__nav { display: none; }
-  .request-edit-workspace__mobile-nav { display: block; flex-shrink: 0; }
-  .request-edit-workspace__mobile-nav .request-form-nav { border-top: 0; }
-}
-
 @media (max-width: 767px) {
   .requests-filter-search-row { flex-wrap: wrap; }
   .requests-filter-search-field { flex: 1 0 100%; }
@@ -1193,10 +1159,212 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 }
 
 @media (max-width: 480px) {
-  .request-form-redesign .request-form-body {
+  .request-form-redesign:not(.request-edit-dialog) .request-form-body {
     padding: 12px !important;
     padding-bottom: calc(8rem + env(safe-area-inset-bottom)) !important;
   }
   .request-invoice-card__actions { width: 100%; }
   .request-invoice-card__actions > button { flex: 1 1 calc(50% - 8px); min-height: 40px; }
+}
+
+/* Request editor: one reading order, with the content grid driven by its own width. */
+.request-edit-dialog {
+  --edit-gutter: 24px;
+  --edit-section-inset: 20px;
+  --edit-field-height: 40px;
+  --edit-field-gap: 16px;
+}
+
+.request-edit-dialog .request-edit-header {
+  display: grid;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 16px calc(var(--edit-gutter) + 44px) 16px var(--edit-gutter);
+  border-bottom: 1px solid var(--requests-border);
+  text-align: left;
+}
+.request-edit-dialog .request-edit-header > * { margin: 0; }
+.request-edit-header__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.request-edit-header__title h2 { font-size: 22px; line-height: 1.25; }
+.request-edit-header__description {
+  max-width: 72ch;
+  overflow: hidden;
+  color: var(--requests-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.request-edit-dialog > button.absolute.right-4.top-4 { top: 12px; right: var(--edit-gutter); }
+
+.request-edit-layout {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: 152px minmax(0, 1fr);
+  background: var(--requests-bg);
+}
+.request-edit-layout__nav {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 12px;
+  border-right: 1px solid var(--requests-border);
+  background: var(--requests-surface);
+}
+.request-edit-layout__nav .request-form-nav {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+}
+.request-edit-layout__nav .request-form-nav__item {
+  min-width: 0;
+  min-height: var(--edit-field-height);
+  padding: 4px 12px;
+  text-align: left;
+  white-space: normal;
+}
+.request-edit-layout__nav .request-form-nav__item[aria-current="location"] {
+  background: var(--requests-indigo-soft);
+  color: var(--requests-indigo);
+}
+.request-edit-dialog .request-edit-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px var(--edit-gutter) 24px;
+  scroll-padding-block: 16px;
+  scrollbar-gutter: stable;
+}
+.request-edit-dialog .request-form-stack { gap: 16px; }
+.request-edit-dialog :is(#req-sec-files, #req-sec-zrs) { order: initial; }
+.request-edit-dialog :is(.request-top, .request-section) { border-radius: 16px; }
+.request-edit-dialog .request-section__header { padding: 16px var(--edit-section-inset) 12px; }
+.request-edit-dialog .request-section__body { padding: 0 var(--edit-section-inset) var(--edit-section-inset); }
+.request-edit-dialog .request-top {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: none;
+  gap: var(--edit-section-inset);
+  padding: var(--edit-section-inset);
+}
+.request-edit-dialog .request-top .req-a-ctx { grid-area: auto; }
+.request-edit-details {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "date object" "proj proj" "status priority" "applicant executor";
+  gap: 12px var(--edit-field-gap);
+  align-items: start;
+}
+.request-edit-dialog .request-top .req-a-ctx .request-disclosure { margin-top: 8px !important; }
+.request-edit-dialog .request-top .request-description-input { line-height: 1.5; }
+.request-edit-dialog .request-top .req-a-proj {
+  padding-block: 2px 6px;
+  border-bottom: 1px solid var(--requests-border);
+}
+.request-edit-dialog .request-edit-scroll label {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.request-edit-dialog .request-edit-scroll :is(input:not([type="file"], [type="checkbox"], [type="radio"]), [role="combobox"]) {
+  min-width: 0;
+  min-height: var(--edit-field-height);
+}
+.request-edit-dialog .request-top :is(input, [role="combobox"]) { height: var(--edit-field-height); }
+.request-edit-dialog .request-finance-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--edit-field-gap);
+}
+.request-edit-dialog .request-invoice-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 8px;
+  padding: 12px;
+}
+.request-edit-dialog .request-invoice-card__name > div:first-child {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.request-edit-dialog :is(.request-invoice-card__actions, .request-finance-doc > .flex) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.request-edit-dialog .request-invoice-card__actions { grid-column: 1 / -1; }
+.request-edit-dialog .request-invoice-card__actions > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.request-edit-dialog :is(.request-invoice-card__actions, .request-finance-doc > .flex) > button {
+  height: auto;
+  min-height: var(--edit-field-height);
+  padding: 6px 8px;
+  line-height: 1.35;
+  white-space: normal;
+}
+.request-edit-dialog .request-invoice-fields,
+.request-edit-dialog .request-logistics-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px var(--edit-field-gap);
+}
+.request-edit-dialog .request-invoice-fields--removable {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) var(--edit-field-height);
+  column-gap: 8px;
+}
+.request-edit-dialog .request-invoice-fields__remove {
+  width: var(--edit-field-height);
+  height: var(--edit-field-height);
+}
+.request-edit-dialog .request-payment-row {
+  gap: 12px var(--edit-field-gap);
+  padding-top: 12px;
+  border-top: 1px solid var(--requests-border);
+}
+.request-edit-dialog .request-payment-status { height: auto; min-height: var(--edit-field-height); }
+.request-edit-dialog .request-edit-footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px var(--edit-gutter) max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--requests-border);
+}
+.request-edit-footer__actions { display: flex; margin-inline-start: auto; gap: 8px; }
+.request-edit-footer button { min-height: var(--edit-field-height); }
+
+@container request-form (width < 700px) {
+  .request-edit-dialog .request-finance-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@container request-form (width >= 760px) {
+  .request-edit-dialog .request-top { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+}
+@container request-form (width < 540px) {
+  .request-edit-details {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "date" "object" "proj" "status" "priority" "applicant" "executor";
+  }
+  .request-edit-dialog .request-logistics-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .request-edit-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .request-edit-layout__nav {
+    padding: 8px var(--edit-gutter);
+    border-right: 0;
+    border-bottom: 1px solid var(--requests-border);
+  }
+  .request-edit-layout__nav .request-form-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .request-edit-layout__nav .request-form-nav__item { padding-inline: 4px; text-align: center; }
+}
+@media (max-width: 639px) {
+  .request-edit-dialog { --edit-gutter: 12px; --edit-section-inset: 16px; --edit-field-height: 44px; }
+  .request-edit-header__title h2 { font-size: 18px; }
+  .request-edit-layout__nav .request-form-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .request-edit-dialog .request-edit-scroll { scrollbar-gutter: auto; }
+  .request-edit-dialog .request-edit-footer { flex-wrap: nowrap; }
+  .request-edit-footer__delete { flex: none; width: 44px; padding: 0; }
+  .request-edit-footer__delete span { display: none; }
+  .request-edit-footer__actions { min-width: 0; }
+  .request-edit-footer__actions button { height: auto; padding-inline: 12px; }
+}
+@media (pointer: coarse) {
+  .request-edit-dialog { --edit-field-height: 44px; }
 }

@@ -246,7 +246,7 @@ export const FinanceSection = ({
             <div className="request-invoice-card">
               <FileText className="h-5 w-5 shrink-0 text-primary" />
               <div className="request-invoice-card__name">
-                <div>{name}</div>
+                <div title={name}>{name}</div>
                 <div className="mt-0.5 text-xs font-normal text-muted-foreground">{format}</div>
               </div>
               <div className="request-invoice-card__actions">
@@ -419,7 +419,10 @@ export const FinanceSection = ({
             onRemove?: () => void,
           ) => (
             <div
-              className="request-mobile-stack grid grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1fr_auto] sm:gap-3"
+              className={cn(
+                "request-invoice-fields request-mobile-stack grid grid-cols-1 items-end gap-2 sm:gap-3",
+                onRemove ? "request-invoice-fields--removable sm:grid-cols-[1fr_1fr_auto]" : "sm:grid-cols-2",
+              )}
               onFocusCapture={() => setSelectedSlot(slot)}
             >
               <FormField
@@ -454,12 +457,10 @@ export const FinanceSection = ({
                   </FormItem>
                 )}
               />
-              {onRemove ? (
-                <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={onRemove} disabled={disabled} title="Удалить счёт">
+              {onRemove && (
+                <Button type="button" variant="ghost" size="icon" className="request-invoice-fields__remove h-9 w-9" onClick={onRemove} disabled={disabled} aria-label={`Удалить счёт №${slot}`}>
                   <X className="h-4 w-4" />
                 </Button>
-              ) : (
-                <div className="w-9" />
               )}
             </div>
           );
@@ -516,7 +517,9 @@ export const FinanceSection = ({
                 <FormLabel className="text-xs">Наличие</FormLabel>
                 <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Выберите наличие" /></SelectTrigger>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Выберите наличие">{field.value || undefined}</SelectValue>
+                    </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="В наличии">В наличии</SelectItem>

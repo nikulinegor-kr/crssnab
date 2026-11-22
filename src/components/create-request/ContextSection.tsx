@@ -17,12 +17,13 @@ import { useToast } from "@/hooks/use-toast";
 interface ContextSectionProps {
   form: UseFormReturn<any>;
   draftSaveState: 'idle' | 'saving' | 'saved';
+  showDraftStatus?: boolean;
   autoFocus?: boolean;
   disabled?: boolean;
 }
 
 export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProps>(
-  ({ form, draftSaveState, autoFocus = true, disabled = false }, descriptionRef) => {
+  ({ form, draftSaveState, showDraftStatus = true, autoFocus = true, disabled = false }, descriptionRef) => {
     const [showCommentField, setShowCommentField] = useState(false);
     const [isImprovingDescription, setIsImprovingDescription] = useState(false);
     const { toast } = useToast();
@@ -99,19 +100,17 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
       <div className="req-a-ctx request-context">
         {/* Description - Primary, Autofocus */}
         <div className="p-3.5 sm:p-5 pb-2 sm:pb-3">
-          <div className="flex items-center justify-between mb-2">
-            <FormLabel className="text-sm sm:text-base font-medium text-foreground">
-              Описание заявки *
-            </FormLabel>
-            <div className="flex items-center gap-2">
-              <DraftIndicator />
-            </div>
-          </div>
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <FormLabel className="text-sm sm:text-base font-medium text-foreground">
+                    Описание заявки *
+                  </FormLabel>
+                  {showDraftStatus && <DraftIndicator />}
+                </div>
                 <FormControl>
                   <Textarea
                     ref={descriptionRef}

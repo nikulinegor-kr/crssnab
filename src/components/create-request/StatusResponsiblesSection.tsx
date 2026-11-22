@@ -60,7 +60,7 @@ export const StatusResponsiblesSection = ({
                 <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Выберите статус" />
+                      <SelectValue placeholder="Выберите статус">{field.value || undefined}</SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -82,7 +82,7 @@ export const StatusResponsiblesSection = ({
                 <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Выберите приоритет" />
+                      <SelectValue placeholder="Выберите приоритет">{field.value || undefined}</SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
