@@ -80,6 +80,7 @@ export const FinanceSection = ({
   defaultOpen = false,
 }: FinanceSectionProps) => {
   const rawContractor = form.watch("contractor");
+  const isUnderOrder = form.watch("availability_delivery_time") === "Под заказ";
   const summaryContractor = suppliers?.find((x) => x.id === rawContractor)?.name || rawContractor;
   const summaryAmount = form.watch("amount");
   const summaryText = summaryContractor || summaryAmount
@@ -508,7 +509,7 @@ export const FinanceSection = ({
           );
         })()}
 
-        <div className="request-availability-row">
+        <div className={cn("request-mobile-stack grid grid-cols-1 gap-3", isUnderOrder && "sm:grid-cols-2")}>
           <FormField
             control={form.control}
             name="availability_delivery_time"
@@ -530,6 +531,33 @@ export const FinanceSection = ({
               </FormItem>
             )}
           />
+          {isUnderOrder && (
+            <FormField
+              control={form.control}
+              name="order_days"
+              render={({ field }) => (
+                <FormItem className="min-w-0">
+                  <FormLabel className="text-xs">Срок под заказ, дней</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
+                      className="h-9 min-w-0 text-sm"
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(
+                        event.currentTarget.value === "" ? null : event.currentTarget.valueAsNumber
+                      )}
+                      disabled={disabled}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
           </div>

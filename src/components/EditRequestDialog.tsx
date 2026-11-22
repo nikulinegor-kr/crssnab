@@ -87,6 +87,7 @@ const requestSchema = z.object({
     .optional()
     .nullable(),
   order_days: z.number()
+    .int("Укажите целое число дней")
     .min(0, "Не может быть отрицательным")
     .optional()
     .nullable(),
