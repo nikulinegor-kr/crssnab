@@ -376,10 +376,9 @@
   font-weight: 500;
 }
 .request-invoice-card__name > div:first-child {
-  display: -webkit-box;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .request-invoice-card > .request-invoice-card__name { grid-column: 2; }
 .request-invoice-card > button { grid-row: 2; white-space: nowrap; }

@@ -208,7 +208,7 @@ export const FinanceSection = ({
           <div className="request-finance-doc">
         {(invoiceFile || invoiceUrl) && (() => {
           const storageName = invoiceUrl ? decodeURIComponent(invoiceUrl.split("/").pop() || "Счёт") : "";
-          const name = invoiceFile?.name || storageName.replace(/^\d+-/, "") || "Счёт";
+          const name = invoiceFile?.name || storageName.replace(/^[^\p{L}\p{N}]+/u, "") || "Счёт";
           const format = name.includes(".") ? name.split(".").pop()?.toUpperCase() : "ФАЙЛ";
           return (
             <div className="request-invoice-card">
