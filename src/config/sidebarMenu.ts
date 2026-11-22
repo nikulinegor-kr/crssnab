@@ -42,6 +42,13 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { id: "requests", title: "Заявки", url: "/requests", icon: FileText },
       { id: "tasks", title: "Задачи", url: "/tasks", icon: ListChecks },
+    ],
+  },
+  {
+    key: "logistics",
+    label: "Логистика",
+    icon: Truck,
+    items: [
       { id: "shipments", title: "Поставки", url: "/shipments", icon: Truck },
       { id: "warehouse", title: "Склад", url: "/warehouse", icon: Warehouse },
     ],
