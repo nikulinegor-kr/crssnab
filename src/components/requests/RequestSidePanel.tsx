@@ -1085,7 +1085,7 @@ export const RequestSidePanel = ({
           onSave={(v) => saveField("executor", v)}
         />
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 px-1">
+      <div className="request-mobile-quick-actions mt-3 flex flex-wrap gap-2 px-1">
         <RequestQrWorkflow key={`mobile-workflow-${request.id}`} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal} />
         <RequestQrButton key={`mobile-qr-${request.id}`} request={request} />
       </div>
