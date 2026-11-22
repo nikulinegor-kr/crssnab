@@ -352,10 +352,11 @@
 }
 
 .request-invoice-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   min-width: 0;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   border: 1px solid var(--requests-border);
   border-radius: var(--requests-field-radius);
   background: var(--requests-bg);
@@ -364,12 +365,17 @@
 
 .request-invoice-card__name {
   min-width: 0;
-  flex: 1;
-  overflow-wrap: break-word;
+  width: 100%;
+  overflow-wrap: anywhere;
   word-break: normal;
   font-size: 13px;
   font-weight: 500;
 }
+.request-invoice-card > .request-invoice-card__name { grid-column: 2; }
+.request-invoice-card > button { grid-row: 2; white-space: nowrap; }
+.request-invoice-card > button:first-of-type { grid-column: 2; justify-self: start; }
+.request-invoice-card > button:last-of-type { grid-column: 3; justify-self: start; }
+.request-finance-doc > .flex { align-items: center; }
 
 .request-payment-status {
   display: flex;
