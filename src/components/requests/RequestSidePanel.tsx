@@ -1261,12 +1261,32 @@ export const RequestSidePanel = ({
         />
       </div>
 
+      <div className={cn("request-design-subtitle max-md:hidden px-4", containerClass)}>
+        {request.request_number || `REQ-${String(request.id).slice(0, 6)}`} · создана {dt(request.request_date) || "—"} · {request.priority || "Планово"}
+      </div>
+
       <div className={cn("px-4 pt-2 max-md:hidden", containerClass)}>
         <RequestRoute
           request={request}
           readOnly={readOnly}
         />
       </div>
+
+      <div className={cn("request-next-step max-md:hidden", containerClass)}>
+        <div>
+          <div className="request-next-step__label">Следующий шаг</div>
+          <div className="request-next-step__title">{paid < 100 ? "Проверить счёт и подтвердить оплату" : "Подтвердить готовность к отгрузке"}</div>
+        </div>
+        <Button type="button" variant="outline" className="request-next-step__button" onClick={() => document.getElementById("request-invoice-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+          Открыть счёт
+        </Button>
+      </div>
+
+      <nav className={cn("request-detail-tabs max-md:hidden", containerClass)} aria-label="Разделы заявки">
+        {[["overview", "Обзор"], ["invoice", "Счёт"], ["logistics", "Логистика"], ["positions", "Позиции"], ["tasks", "Задачи"], ["history", "История"]].map(([id, label]) => (
+          <button key={id} type="button" className={cn("request-detail-tab", id === "overview" && "is-active")} onClick={() => document.getElementById(`request-${id}-section`)?.scrollIntoView({ behavior: "smooth", block: "start" })}>{label}</button>
+        ))}
+      </nav>
 
       <div className={cn("request-summary-block request-card-meta flex-none gap-2 max-md:!hidden px-4 pt-1.5 text-[0.8125rem] text-muted-foreground font-numeric", containerClass)}>
         <RequestInlineField
@@ -1331,7 +1351,7 @@ export const RequestSidePanel = ({
           <div className={cn("w-full min-w-0", containerClass, isFullscreen && "px-0")}>
             {(
               <>
-                {fieldsBlock}
+                <div id="request-invoice-section">{fieldsBlock}</div>
                 {isFullscreen ? (
                   <div className={cardClass}>
                     <div className={sectionTitleClass}>Позиции</div>
@@ -1347,22 +1367,22 @@ export const RequestSidePanel = ({
                     <span>Позиции: {items?.length || 0}</span>
                     <span className="text-primary">{positionsOpen ? "Скрыть" : "Показать"}</span>
                   </button>
-                  {positionsOpen && <div className={cardClass}>{itemsBlock}</div>}
+                  {positionsOpen && <div id="request-positions-section" className={cardClass}>{itemsBlock}</div>}
                   </>
                 )}
-                <details className={cn(cardClass, "request-tasks-disclosure")}>
+                <details id="request-tasks-section" className={cn(cardClass, "request-tasks-disclosure")}>
                   <summary className="cursor-pointer list-none font-semibold">Задачи по заявке</summary>
                   <div className="mt-3">{linkedTasksBlock}</div>
                 </details>
-                <details className={cardClass}>
+                <details id="request-logistics-section" className={cardClass}>
                   <summary className="cursor-pointer list-none font-semibold">Движение</summary>
                   <div className="mt-3">{movementBlock}</div>
                 </details>
-                <details className={cardClass}>
+                <details id="request-files-section" className={cardClass}>
                   <summary className="cursor-pointer list-none font-semibold">Файлы и документы</summary>
                   <div className="mt-3">{docsBlock}</div>
                 </details>
-                <details className={cn(cardClass, "request-history-disclosure")}><summary>История</summary><div className="mt-3">{historyBlock}</div></details>
+                <details id="request-history-section" className={cn(cardClass, "request-history-disclosure")}><summary>История</summary><div className="mt-3">{historyBlock}</div></details>
               </>
             )}
           </div>

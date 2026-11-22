@@ -503,6 +503,12 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
 }
 
 @media (max-width: 480px) {
+  .request-form-redesign :is(input:not([type="file"]), textarea, [role="combobox"]) {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px !important;
+  }
   .request-form-redesign .request-date-object {
     display: grid; grid-template-columns: minmax(0, 1fr) !important; row-gap: 12px;
   }
@@ -721,6 +727,15 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel__title {
   display: block; font-size: 18px; font-weight: 600; line-height: 24px; overflow-wrap: anywhere;
 }
+.request-design-subtitle { color: var(--requests-muted); font-size: 15px; line-height: 22px; padding-top: 2px; }
+.request-next-step { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 18px; padding: 16px 24px; border-top: 1px solid var(--requests-border); border-bottom: 1px solid var(--requests-border); background: #f3f6fd; }
+.request-next-step__label { color: var(--requests-muted); font-size: 14px; line-height: 20px; }
+.request-next-step__title { color: var(--requests-text); font-size: 18px; font-weight: 700; line-height: 26px; }
+.request-next-step__button { min-height: 42px; border-color: #d6e0f5; background: #edf2fc; color: #3f5c9b; font-weight: 700; }
+.request-detail-tabs { display: flex; align-items: center; gap: 8px; margin-top: 0; padding: 12px 24px; border-bottom: 1px solid var(--requests-border); }
+.request-detail-tab { min-height: 38px; border: 0; border-radius: 10px; background: transparent; padding: 0 14px; color: var(--requests-muted); font-size: 15px; font-weight: 600; }
+.request-detail-tab:hover { background: var(--requests-bg); color: var(--requests-text); }
+.request-detail-tab.is-active { background: #edf2fc; color: #3f5c9b; }
 .request-panel-toolbar { display: inline-flex; align-items: center; padding: 4px; border: 1px solid var(--requests-border); border-radius: 12px; background: var(--requests-bg); box-shadow: 0 1px 2px rgb(15 23 42 / 4%); }
 .request-panel-toolbar button { border-radius: 8px; }
 .request-header-block { margin: 12px 16px; padding: 0 0 10px; border: 1px solid var(--requests-border); border-radius: 20px; background: var(--requests-surface); box-shadow: 0 1px 2px rgb(15 23 42 / 3%); overflow: hidden; }
@@ -792,6 +807,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-panel-field .group\/pf > span { padding-top: 3px; padding-bottom: 3px; }
 .request-side-panel .font-numeric { font-variant-numeric: tabular-nums; }
 .request-side-panel .request-side-card + .request-side-card { margin-top: calc(var(--panel-unit) * 1.5); }
+.request-side-panel:not(.request-fullscreen) .request-side-card { border-radius: 0; border-width: 0 0 1px; box-shadow: none; padding: 24px 8px; }
+.request-side-panel:not(.request-fullscreen) .request-side-card + .request-side-card { margin-top: 0; }
+.request-side-panel:not(.request-fullscreen) .request-side-card__title { font-size: 18px; }
 .request-side-panel .request-card-comment-block { margin-bottom: 4px; }
 .request-side-panel .request-route-block { padding: 9px 12px; gap: 8px; }
 .request-side-panel .request-route__step { font-size: 10px; line-height: 13px; }
@@ -938,8 +956,9 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-card-two-columns { grid-template-columns: minmax(0, 1fr); }
   .request-side-panel { --panel-gutter: 12px; --panel-label-col: 128px; }
   .request-side-panel .request-panel-field { grid-template-columns: var(--panel-label-col) minmax(0, 1fr); column-gap: var(--panel-unit); }
-  .request-side-panel .request-invoice-document-row { grid-template-columns: auto minmax(0, 1fr) repeat(4, auto); }
-  .request-side-panel .request-invoice-document-row > span { -webkit-line-clamp: 2; }
+  .request-side-panel .request-invoice-document-row { display: flex; flex-wrap: wrap; align-items: center; }
+  .request-side-panel .request-invoice-document-row > span { flex: 1 1 calc(100% - 28px); min-width: 0; -webkit-line-clamp: 2; }
+  .request-side-panel .request-invoice-document-row > button { flex: 1 1 calc(50% - 6px); min-width: 0; min-height: 40px; white-space: normal; }
   .request-inline-field__display { min-height: 40px; }
   .request-inline-field__display > svg { opacity: .8; }
   .request-inline-field__editor :is(input, textarea, select) { min-height: 44px; font-size: 16px; }
