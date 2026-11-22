@@ -857,7 +857,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-panel-field > div:last-of-type { width: 100%; }
 .request-side-panel .request-people-disclosure .request-panel-field > div:last-of-type { justify-content: flex-start; text-align: left; }
 .request-side-panel .request-side-card { padding: 16px 18px; }
-.request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1.35fr) minmax(0, .9fr) auto; column-gap: 20px; align-items: center; padding: 10px 20px; }
+.request-side-panel .request-card-meta { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(92px, auto); column-gap: 24px; align-items: center; padding: 10px 20px; }
 .request-side-panel .request-card-meta > span.font-numeric { justify-self: end; white-space: nowrap; }
 .request-side-panel .request-card-meta-field { min-height: 40px; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { min-height: 40px; align-items: center; }
