@@ -119,14 +119,6 @@ export const RowContextMenu = ({
           В Напоминания Apple
         </ContextMenuItem>
         <ContextMenuItem onSelect={onOpenCard}>Открыть карточку</ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            navigator.clipboard.writeText(requestNumber);
-            toast({ title: "Номер скопирован", description: requestNumber });
-          }}
-        >
-          Копировать номер
-        </ContextMenuItem>
       </ContextMenuContent>
       {taskDialogOpen && (
         <PlannerTaskDialog

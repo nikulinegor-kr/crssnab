@@ -736,13 +736,25 @@ export const RequestSidePanel = ({
   const zrsDocs = documentUrls.filter((url) => /-ZRS\.pdf$/i.test(docFileName(url)));
   const invoiceDocs = zrsDocs.length ? [zrsDocs[zrsDocs.length - 1]] : documentUrls.slice(-1);
   const mainInvoiceDoc = invoiceDocs[0];
-  const displayInvoiceName = `${(request.description || request.request_number || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`;
-  const resendZrsToMax = async (url: string) => {
+  const displayInvoiceName = `${(request.description || "Заявка").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/\s+/g, " ").trim() || "Заявка"}-ZRS.pdf`;
+  const sendInvoiceToMax = async (url: string) => {
     try {
-      const { error } = await supabase.functions.invoke("notify-telegram", { body: { action: "send_zrs_document", organization_id: request.organization_id, document_url: url, file_name: docFileName(url), caption: `📋 ЗРС — Счёт\n\nЗаявка: ${request.description || request.request_number}` } });
-      if (error) throw error;
-      toast({ title: "Отправлено в Макс", description: "ЗРС повторно отправлена в группу поставок" });
-    } catch { toast({ title: "Ошибка отправки", description: "Не удалось отправить ЗРС в Макс", variant: "destructive" }); }
+      const { data, error } = await supabase.functions.invoke("max-direct-send", {
+        body: {
+          chat_id: "-75086506652357",
+          text: `Счёт по заявке: ${request.description || "Заявка"}`,
+          organization_id: request.organization_id,
+          mode: "auto",
+          request_id: request.id,
+          document_url: url,
+          file_name: docFileName(url),
+        },
+      });
+      if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
+      toast({ title: "Счёт отправлен в MAX" });
+    } catch {
+      toast({ title: "Не удалось отправить счёт в MAX", variant: "destructive" });
+    }
   };
   const sendRequestToMax = async () => {
     try {
@@ -785,7 +797,7 @@ export const RequestSidePanel = ({
               <Download className="mr-1 h-3.5 w-3.5" />
               Скачать
             </Button>
-            {docFileName(mainInvoiceDoc).toLowerCase().includes("zrs") && <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void resendZrsToMax(mainInvoiceDoc)}>В Макс</Button>}
+            <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void sendInvoiceToMax(mainInvoiceDoc)}>В MAX</Button>
             <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
           </div>
           {invoiceDocs.length > 1 && (
@@ -803,7 +815,7 @@ export const RequestSidePanel = ({
                   >
                     Скачать
                   </button>
-                  {docFileName(url).toLowerCase().includes("zrs") && <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void resendZrsToMax(url)}>В Макс</Button>}
+                  <Button type="button" variant="outline" size="sm" className="h-9 px-2 text-[13px]" onClick={() => void sendInvoiceToMax(url)}>В MAX</Button>
                   <RequestDocumentDeleteButton request={request} url={url} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
                 </div>
               ))}

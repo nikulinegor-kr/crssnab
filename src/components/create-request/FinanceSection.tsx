@@ -19,13 +19,13 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 import { Button } from "@/components/ui/button";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
-import { Banknote, ScanText, Loader2, Plus, X, FileText, Upload, ExternalLink } from "lucide-react";
+import { Banknote, ScanText, Loader2, Plus, X, FileText, Upload, ExternalLink, Download, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { openStoredFile } from "@/lib/storageUrl";
+import { downloadStoredFile, openStoredFile } from "@/lib/storageUrl";
 import { requestFileName } from "@/lib/requestDocuments";
 import { getInvoiceDeletePatch, getInvoiceResetPatch, getRequestInvoiceRequisites, hasInvoiceRequisites, type RequestInvoiceSlot } from "@/lib/requestInvoices";
 import { RequestInvoiceRequisites } from "@/components/requests/RequestInvoiceActions";
@@ -59,6 +59,7 @@ interface FinanceSectionProps {
   onItemsChange?: (items: RequestItem[]) => void;
   onInvoiceSelected?: (file: File) => void;
   onRemoveInvoiceDocument?: () => void;
+  requestId?: string;
   defaultOpen?: boolean;
 }
 
@@ -73,6 +74,7 @@ export const FinanceSection = ({
   onItemsChange,
   onInvoiceSelected,
   onRemoveInvoiceDocument,
+  requestId,
   defaultOpen = false,
 }: FinanceSectionProps) => {
   const rawContractor = form.watch("contractor");
@@ -195,6 +197,27 @@ export const FinanceSection = ({
     setInvoiceAction(null);
   };
 
+  const sendInvoiceToMax = async (fileName: string) => {
+    if (!invoiceUrl || !requestId || !currentOrgId) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("max-direct-send", {
+        body: {
+          chat_id: "-75086506652357",
+          text: `Счёт по заявке: ${form.getValues("description") || "Заявка"}`,
+          organization_id: currentOrgId,
+          mode: "auto",
+          request_id: requestId,
+          document_url: invoiceUrl,
+          file_name: fileName,
+        },
+      });
+      if (error || !(data?.ok || data?.delivered)) throw error || new Error("not delivered");
+      toast({ title: "Счёт отправлен в MAX" });
+    } catch {
+      toast({ title: "Не удалось отправить счёт в MAX", variant: "destructive" });
+    }
+  };
+
   return (
     <FormSectionCard 
       title="Счета и оплата"
@@ -235,6 +258,31 @@ export const FinanceSection = ({
                 <ExternalLink className="h-3.5 w-3.5" />
                 Открыть
               </Button>
+              {invoiceUrl && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 gap-1.5 px-2"
+                    onClick={() => void downloadStoredFile(invoiceUrl, name)}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Скачать
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 gap-1.5 px-2"
+                    onClick={() => void sendInvoiceToMax(name)}
+                    disabled={!requestId}
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    В MAX
+                  </Button>
+                </>
+              )}
               {invoiceUrl && onRemoveInvoiceDocument && (
                 <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-destructive hover:text-destructive" onClick={() => setDocumentDeleteOpen(true)} disabled={disabled}>
                   <X className="h-3.5 w-3.5" />Удалить документ

@@ -1,4 +1,3 @@
-import { formatRequestPublicNumber } from "@/lib/requestPublicNumber";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1029,10 +1028,6 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
           {!isViewer && <SaveIndicator />}
         </div>
         <p className="hidden text-sm text-muted-foreground md:block">
-          {isViewer 
-            ? `Просмотр заявки ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}` 
-            : `Заявка ${request ? formatRequestPublicNumber(request) ?? request.request_number : ''}`
-          }
           {!isViewer && (
             <span className="ml-2 text-xs opacity-70">
               Ctrl+Enter — сохранить, Esc — закрыть
@@ -1123,6 +1118,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             disabled={isViewer}
             invoiceFile={documentFiles[documentFiles.length - 1] || null}
             invoiceUrl={existingDocumentUrls[0] || request?.document_url || null}
+            requestId={request?.id}
             items={requestItems}
             onItemsChange={setRequestItems}
             onInvoiceSelected={addDocumentFile}
@@ -1245,7 +1241,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         <AlertDialogHeader>
           <AlertDialogTitle>Удалить заявку?</AlertDialogTitle>
           <AlertDialogDescription>
-            Это действие нельзя отменить. Заявка {request?.request_number} будет удалена навсегда.
+            Это действие нельзя отменить. Заявка «{request?.description || "Без названия"}» будет удалена навсегда.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
