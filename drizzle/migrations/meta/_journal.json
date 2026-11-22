@@ -267,6 +267,13 @@
       "when": 1795078401335,
       "tag": "0037_warehouse_issue_and_consume",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795331751333,
+      "tag": "0038_restrict_client_error_logs_insert",
+      "breakpoints": true
     }
   ]
 }

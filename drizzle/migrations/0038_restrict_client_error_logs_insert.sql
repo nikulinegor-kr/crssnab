@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can insert error logs" ON public.client_error_logs;
