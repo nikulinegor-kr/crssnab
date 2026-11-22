@@ -827,6 +827,12 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-side-panel .request-card-meta-field { min-height: 40px; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { min-height: 40px; align-items: center; }
 .request-side-panel .request-card-meta-field .request-inline-field__display { padding-left: 0; padding-right: 0; }
+.request-side-panel .request-card-meta-field .request-inline-field__editor {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px;
+}
+.request-side-panel .request-card-meta-field .request-inline-field__editor select { min-width: 0; height: 36px; }
+.request-side-panel .request-card-meta-field .request-inline-field__actions { flex-wrap: nowrap; gap: 4px; }
+.request-side-panel .request-card-meta-field .request-inline-field__actions button { min-height: 34px; padding-inline: 9px; font-size: 12px; }
 .request-side-panel .request-payment-row { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: calc(var(--panel-unit) * 2); }
 .request-side-panel .request-payment-row > * { min-width: 0; }
 .request-side-panel .request-finance-total { display: flex; justify-content: flex-end; min-width: 0; font-variant-numeric: tabular-nums; }
