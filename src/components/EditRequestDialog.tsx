@@ -1359,12 +1359,16 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             {headerContent}
           </SheetHeader>
           {quickActions}
-          <RequestFormNav />
+          <div className="request-edit-workspace">
+            <aside className="request-edit-workspace__nav" aria-label="Разделы заявки">
+              <RequestFormNav />
+            </aside>
+            <div className="request-form-body flex-1 min-h-0 overflow-y-auto px-6 py-5">
+              {formContent}
+            </div>
+          </div>
           <SheetTitle className="sr-only">Редактировать заявку</SheetTitle>
           <SheetDescription className="sr-only">Изменение данных заявки без выхода из реестра</SheetDescription>
-          <div className="request-form-body flex-1 min-h-0 overflow-y-auto px-6 py-5">
-            {formContent}
-          </div>
           {footerActions}
         </SheetContent>
       </Sheet>

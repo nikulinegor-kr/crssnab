@@ -365,7 +365,8 @@
 .request-invoice-card__name {
   min-width: 0;
   flex: 1;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
   font-size: 13px;
   font-weight: 500;
 }
@@ -568,6 +569,10 @@ body:has(.requests-registry) [data-radix-popper-content-wrapper] [data-highlight
 }
 .request-edit-quick-actions__item:hover { border-color: var(--requests-indigo); background: var(--requests-indigo-soft); color: var(--requests-indigo); }
 .request-edit-quick-actions__item:focus-visible { outline: 2px solid var(--requests-indigo); outline-offset: 2px; }
+.request-edit-workspace { display: flex; min-height: 0; flex: 1; background: var(--requests-bg); }
+.request-edit-workspace__nav { width: 196px; flex: 0 0 196px; padding: 20px 12px; border-right: 1px solid var(--requests-border); background: var(--requests-surface); }
+.request-edit-workspace__nav .request-form-nav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; background: transparent; overflow: visible; }
+.request-edit-workspace__nav .request-form-nav__item { width: 100%; justify-content: flex-start; padding: 0 12px; text-align: left; }
 
 .request-form-redesign .request-form-body { background: var(--requests-bg); }
 .request-form-redesign .request-form-stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -631,7 +636,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 
 /* Invoices */
 .request-finance-grid {
-  display: grid; gap: 16px; grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr); align-items: start;
+  display: grid; gap: 16px; grid-template-columns: minmax(300px, .95fr) minmax(0, 1.4fr); align-items: start;
 }
 .request-finance-doc { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
 .request-finance-doc > .flex { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -645,6 +650,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-form-redesign .request-form-actions { justify-content: flex-end; }
 
 @media (max-width: 900px) {
+  .request-edit-workspace__nav { display: none; }
   .request-form-redesign .request-top {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas: "ctx ctx" "date priority" "applicant object" "status executor" "proj proj";
