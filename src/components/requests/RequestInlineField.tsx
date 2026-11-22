@@ -97,8 +97,11 @@ export function RequestInlineField({
                   const next = event.target.value;
                   setDraft(next);
                   if (saveOnChange) {
+                    // Сразу возвращаем компактный вид поля после выбора.
+                    // Сохранение выполняется асинхронно в фоне.
+                    setEditing(false);
                     setSaving(true);
-                    void Promise.resolve(onSave(next)).then(() => setEditing(false)).finally(() => setSaving(false));
+                    void Promise.resolve(onSave(next)).finally(() => setSaving(false));
                   }
                 }}
                 onKeyDown={(event) => {
