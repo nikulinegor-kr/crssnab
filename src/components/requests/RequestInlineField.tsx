@@ -22,6 +22,7 @@ interface RequestInlineFieldProps {
   hideLabel?: boolean;
   className?: string;
   onEditingChange?: (editing: boolean) => void;
+  saveOnChange?: boolean;
 }
 
 export function RequestInlineField({
@@ -35,6 +36,7 @@ export function RequestInlineField({
   hideLabel = false,
   className,
   onEditingChange,
+  saveOnChange = false,
 }: RequestInlineFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
@@ -91,7 +93,14 @@ export function RequestInlineField({
               <select
                 ref={inputRef as React.RefObject<HTMLSelectElement>}
                 value={draft}
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setDraft(next);
+                  if (saveOnChange) {
+                    setSaving(true);
+                    void Promise.resolve(onSave(next)).then(() => setEditing(false)).finally(() => setSaving(false));
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") cancel();
                   if (event.key === "Enter") void save();
@@ -130,13 +139,13 @@ export function RequestInlineField({
                 aria-label={label}
               />
             )}
-            <div className="request-inline-field__actions">
+            {!saveOnChange && <div className="request-inline-field__actions">
               <Button type="button" size="sm" onClick={() => void save()} disabled={saving}>
                 {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Сохранить
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={cancel} disabled={saving}>Отмена</Button>
-            </div>
+            </div>}
           </div>
         ) : (
           <button

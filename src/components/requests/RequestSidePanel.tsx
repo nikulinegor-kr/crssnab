@@ -1004,6 +1004,7 @@ export const RequestSidePanel = ({
           value={request.status}
           options={STATUSES.map((value) => ({ value, label: value }))}
           display={<span className="inline-flex items-center gap-2 text-[15px] font-semibold"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+          saveOnChange
           readOnly={readOnly}
           onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
           onSave={(value) => saveField("status", value)}
@@ -1050,6 +1051,7 @@ export const RequestSidePanel = ({
           value={request.priority || "Планово"}
           options={PRIORITIES.map((value) => ({ value, label: value }))}
           display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
+          saveOnChange
           readOnly={readOnly}
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
@@ -1257,6 +1259,7 @@ export const RequestSidePanel = ({
           value={request.status}
           options={STATUSES.map((value) => ({ value, label: value }))}
           display={<span className="request-card-status"><i style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+          saveOnChange
           readOnly={readOnly || (!!activeEditor && activeEditor !== "status")}
           onEditingChange={(editing) => setActiveEditor(editing ? "status" : null)}
           onSave={(value) => saveField("status", value)}
@@ -1269,6 +1272,7 @@ export const RequestSidePanel = ({
           value={request.priority || "Планово"}
           options={PRIORITIES.map((value) => ({ value, label: value }))}
           display={<span style={{ color: getPriorityColor(request.priority || "Планово") }}>{request.priority || "Планово"}</span>}
+          saveOnChange
           readOnly={readOnly || (!!activeEditor && activeEditor !== "priority")}
           onEditingChange={(editing) => setActiveEditor(editing ? "priority" : null)}
           onSave={(value) => saveField("priority", value)}
