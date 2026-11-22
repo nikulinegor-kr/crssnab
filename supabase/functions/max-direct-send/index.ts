@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { chat_id, text, organization_id, mode, buttons, request_id, document_url, file_name } = await req.json();
+    const { chat_id, text, organization_id, mode, buttons, request_id, document_url, file_name, document_only } = await req.json();
     if (!chat_id) {
       return new Response(JSON.stringify({ error: "chat_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -123,6 +123,73 @@ Deno.serve(async (req) => {
     const messageText = text || "🔧 Direct MAX API test from CRSS CRM";
 
     const attempts: any[] = [];
+
+    // Explicit invoice action: send only the selected file already attached to a request
+    // visible to the authenticated user. Existing text/auto flows stay unchanged.
+    if (document_only) {
+      if (!request_id || !organization_id || !document_url) {
+        return new Response(JSON.stringify({ ok: false, error: "request_id, organization_id and document_url are required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof document_url !== "string" || !(document_url.startsWith("http://") || document_url.startsWith("https://"))) {
+        return new Response(JSON.stringify({ ok: false, error: "document_url must be an HTTP(S) URL" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: ownedRequest, error: requestAccessError } = await supabase
+        .from("requests")
+        .select("id, description, organization_id, document_url, document_urls")
+        .eq("id", request_id)
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      const attachedUrls = ownedRequest
+        ? [...(Array.isArray(ownedRequest.document_urls) ? ownedRequest.document_urls : []), ...(ownedRequest.document_url ? [ownedRequest.document_url] : [])]
+        : [];
+      if (requestAccessError || !ownedRequest || !attachedUrls.includes(document_url)) {
+        return new Response(JSON.stringify({ ok: false, error: "Invoice is not attached to an accessible request" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      let finalUrl = document_url;
+      let finalFileName = typeof file_name === "string" && file_name.trim() ? file_name.trim() : "invoice.pdf";
+      try {
+        const parts = new URL(document_url).pathname.split("/");
+        if (!file_name) finalFileName = decodeURIComponent(parts[parts.length - 1] || finalFileName);
+        const bucketIndex = parts.findIndex((part) => part === "request-documents");
+        if (bucketIndex !== -1) {
+          const filePath = parts.slice(bucketIndex + 1).join("/");
+          const { data: signed, error: signError } = await admin.storage
+            .from("request-documents")
+            .createSignedUrl(filePath, 3600);
+          if (signError) throw signError;
+          if (signed?.signedUrl) finalUrl = signed.signedUrl;
+        }
+      } catch (signingError: any) {
+        return new Response(JSON.stringify({ ok: false, error: `Could not prepare invoice: ${signingError?.message || signingError}` }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const caption = `📄 ${String(ownedRequest.description || "Счёт").slice(0, 100)}`.trim();
+      const docRes = await sendMaxDocument(chatIdStr, finalUrl, finalFileName, caption, botToken);
+      const attempt = {
+        mode: "document",
+        endpoint: "uploads+messages",
+        request_payload: { request_id, organization_id, document_url, file_name: finalFileName },
+        delivered: docRes.ok,
+        http_status: docRes.status,
+        response_body: docRes.body,
+        duration_ms: 0,
+      };
+      return finish(attempt, [attempt], chatIdStr, ownedRequest.organization_id, caption);
+    }
 
     const doFetch = async (
       label: string,

@@ -87,6 +87,7 @@ export const FinanceSection = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRecognizing, setIsRecognizing] = useState(false);
+  const [isSendingToMax, setIsSendingToMax] = useState(false);
   const [invoiceAction, setInvoiceAction] = useState<{ action: "reset" | "delete"; slot: RequestInvoiceSlot } | null>(null);
   const [documentDeleteOpen, setDocumentDeleteOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<RequestInvoiceSlot>(1);
@@ -287,7 +288,36 @@ export const FinanceSection = ({
                 <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-destructive hover:text-destructive" onClick={() => setDocumentDeleteOpen(true)} disabled={disabled}>
                   <X className="h-3.5 w-3.5" />Удалить документ
                 </Button>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2"
+                  onClick={() => {
+                    if (invoiceFile) downloadBlob(invoiceFile, invoiceFile.name);
+                    else if (invoiceUrl) void downloadStoredFile(invoiceUrl, name);
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Скачать
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2"
+                  disabled={isSendingToMax}
+                  onClick={() => void handleSendToMax()}
+                >
+                  {isSendingToMax ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  {isSendingToMax ? "Отправка…" : "Отправить в MAX"}
+                </Button>
+                {invoiceUrl && onRemoveInvoiceDocument && (
+                  <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-destructive hover:text-destructive" onClick={() => setDocumentDeleteOpen(true)} disabled={disabled}>
+                    <X className="h-3.5 w-3.5" />Удалить документ
+                  </Button>
+                )}
+              </div>
             </div>
           );
         })()}

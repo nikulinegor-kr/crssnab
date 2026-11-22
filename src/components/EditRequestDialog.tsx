@@ -50,6 +50,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Request } from "@/hooks/useRequests";
 import { getRequestFileUrls } from "@/lib/requestDocuments";
+import { selectRequestInvoiceUrl } from "@/lib/requestInvoiceMax";
+import { sendRequestInvoiceToMax } from "@/lib/sendRequestInvoiceToMax";
 import { useUserRole } from "@/hooks/useUserRole";
 import { notifyTelegram } from "@/lib/telegram";
 import { useEditRequestDraft } from "@/hooks/useEditRequestDraft";
@@ -1074,6 +1076,17 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     (event.currentTarget as HTMLElement).focus({ preventScroll: true });
   };
 
+  const invoiceUrl = selectRequestInvoiceUrl(existingDocumentUrls);
+  const handleSendInvoiceToMax = async () => {
+    if (!request || !invoiceUrl) throw new Error("Сохранённый файл счёта не найден");
+    await sendRequestInvoiceToMax({
+      id: request.id,
+      organization_id: request.organization_id || "",
+      description: request.description,
+    }, invoiceUrl);
+    toast({ title: "Счёт отправлен в MAX", description: request.description || "Заявка" });
+  };
+
   const formContent = (
     <Form {...form}>
       <form
@@ -1122,9 +1135,9 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             items={requestItems}
             onItemsChange={setRequestItems}
             onInvoiceSelected={addDocumentFile}
+            onSendToMax={handleSendInvoiceToMax}
             onRemoveInvoiceDocument={() => {
-              const url = existingDocumentUrls[0] || request?.document_url;
-              if (url) setExistingDocumentUrls((current) => current.filter((item) => item !== url));
+              if (invoiceUrl) setExistingDocumentUrls((current) => current.filter((item) => item !== invoiceUrl));
             }}
           />
           <RequestItemsSection
@@ -1359,7 +1372,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             <aside className="request-edit-workspace__nav" aria-label="Разделы заявки">
               <RequestFormNav />
             </aside>
-            <div className="request-form-body flex-1 min-h-0 overflow-y-auto px-6 py-5">
+            <div className="request-edit-workspace__mobile-nav">
+              <RequestFormNav />
+            </div>
+            <div className="request-form-body flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 py-5">
               {formContent}
             </div>
           </div>

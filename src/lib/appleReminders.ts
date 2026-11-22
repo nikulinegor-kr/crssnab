@@ -28,13 +28,16 @@ interface ReminderRequest {
   contractor?: string | null;
 }
 
-/** Request reminder: title plus status/supplier, no date and no link. */
-export function sendRequestToAppleReminders(r: ReminderRequest) {
-  const title = r.description?.trim() || r.request_number || "Заявка";
+export function buildRequestReminderText(r: ReminderRequest): string {
+  const title = r.description?.trim() || "Заявка";
   const notes = [
-    r.request_number && `№ ${r.request_number}`,
     r.status && `Статус: ${r.status}`,
     r.contractor && `Поставщик: ${r.contractor}`,
   ].filter(Boolean).join("\n");
-  runShortcut([title, notes].filter(Boolean).join("\n"));
+  return [title, notes].filter(Boolean).join("\n");
+}
+
+/** Request reminder: title plus status/supplier, no public number, date or link. */
+export function sendRequestToAppleReminders(r: ReminderRequest) {
+  runShortcut(buildRequestReminderText(r));
 }
