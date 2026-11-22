@@ -366,8 +366,11 @@
 .request-invoice-card__name {
   min-width: 0;
   width: 100%;
-  overflow-wrap: anywhere;
-  word-break: normal;
+  overflow: hidden;
+  overflow-wrap: normal;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
 }
@@ -376,6 +379,8 @@
 .request-invoice-card > button:first-of-type { grid-column: 2; justify-self: start; }
 .request-invoice-card > button:last-of-type { grid-column: 3; justify-self: start; }
 .request-finance-doc > .flex { align-items: center; }
+.request-finance-doc { min-width: 0; }
+.request-finance-doc > .flex > button { white-space: nowrap; }
 
 .request-payment-status {
   display: flex;
@@ -642,7 +647,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 
 /* Invoices */
 .request-finance-grid {
-  display: grid; gap: 16px; grid-template-columns: minmax(300px, .95fr) minmax(0, 1.4fr); align-items: start;
+  display: grid; gap: 16px; grid-template-columns: minmax(360px, 1fr) minmax(0, 1.25fr); align-items: start;
 }
 .request-finance-doc { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
 .request-finance-doc > .flex { display: flex; flex-wrap: wrap; gap: 8px; }
