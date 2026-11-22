@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ComboboxInput } from "@/components/ui/combobox-input";
 import { cn } from "@/lib/utils";
 
 export interface RequestInlineOption {
@@ -14,7 +15,7 @@ interface RequestInlineFieldProps {
   label: string;
   value: string | number | null | undefined;
   onSave: (value: string) => Promise<void> | void;
-  type?: "text" | "textarea" | "number" | "date" | "select";
+  type?: "text" | "textarea" | "number" | "date" | "select" | "combobox";
   options?: RequestInlineOption[];
   display?: React.ReactNode;
   readOnly?: boolean;
@@ -75,7 +76,18 @@ export function RequestInlineField({
       <div className="request-inline-field__value">
         {editing && !readOnly ? (
           <div className="request-inline-field__editor" data-active-editor>
-            {type === "select" ? (
+            {type === "combobox" ? (
+              <ComboboxInput
+                value={draft}
+                onChange={setDraft}
+                options={options}
+                placeholder="Выберите или введите ТК"
+                searchPlaceholder="Поиск ТК или введите новую"
+                emptyMessage="Введите название вручную"
+                allowCustomValue
+                disabled={saving}
+              />
+            ) : type === "select" ? (
               <select
                 ref={inputRef as React.RefObject<HTMLSelectElement>}
                 value={draft}

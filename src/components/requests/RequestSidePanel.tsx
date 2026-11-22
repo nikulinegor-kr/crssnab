@@ -121,6 +121,23 @@ export const RequestSidePanel = ({
   const { canEdit } = useUserRole();
   const { data: applicantsDir = [] } = useRequestParticipants("applicant", currentOrgId);
   const { data: executorsDir = [] } = useRequestParticipants("executor", currentOrgId);
+  const { data: transportCompanies = [] } = useQuery({
+    queryKey: ["request-transport-companies", currentOrgId],
+    enabled: !!currentOrgId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("requests")
+        .select("transport_company")
+        .eq("organization_id", currentOrgId!)
+        .not("transport_company", "is", null)
+        .neq("transport_company", "")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return Array.from(new Set((data || []).map((row) => row.transport_company?.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
+    },
+  });
   const [savingField, setSavingField] = useState<string | null>(null);
   const [localFullscreen, setLocalFullscreen] = useState(false);
   const [labelOpen, setLabelOpen] = useState(false);
@@ -642,6 +659,8 @@ export const RequestSidePanel = ({
       <div className={cardTitleClass}>Логистика</div>
               <RequestInlineField
                 label="Транспортная компания"
+                type="combobox"
+                options={transportCompanies.map((name) => ({ value: name, label: name }))}
                 value={request.transport_company}
                 className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3"
                 readOnly={readOnly}
@@ -1016,6 +1035,8 @@ export const RequestSidePanel = ({
           />
           <RequestInlineField
             label="ТК"
+            type="combobox"
+            options={transportCompanies.map((name) => ({ value: name, label: name }))}
             value={request.transport_company}
             readOnly={readOnly}
             onEditingChange={(editing) => setActiveEditor(editing ? "carrier" : null)}

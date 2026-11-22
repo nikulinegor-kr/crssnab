@@ -367,12 +367,19 @@
   min-width: 0;
   width: 100%;
   overflow: hidden;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   word-break: break-word;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.35;
   font-size: 13px;
   font-weight: 500;
+}
+.request-invoice-card__name > div:first-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .request-invoice-card > .request-invoice-card__name { grid-column: 2; }
 .request-invoice-card > button { grid-row: 2; white-space: nowrap; }

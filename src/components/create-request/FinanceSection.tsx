@@ -449,6 +449,50 @@ export const FinanceSection = ({
           );
         })()}
 
+        <div className="request-mobile-stack grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 request-availability-row">
+          <FormField
+            control={form.control}
+            name="availability_delivery_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Наличие</FormLabel>
+                <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
+                  <FormControl>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Выберите наличие" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="В наличии">В наличии</SelectItem>
+                    <SelectItem value="Под заказ">Под заказ</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="order_days"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs">Срок под заказ, дней</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-9 select-all min-w-0 text-sm"
+                    placeholder="Не указан"
+                    disabled={disabled || form.watch("availability_delivery_time") !== "Под заказ"}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value, 10))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
           </div>
         </div>
         {/* Actual payment */}
