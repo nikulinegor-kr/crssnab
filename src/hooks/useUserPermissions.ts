@@ -81,6 +81,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/shipments": "erp.shipments",
   
   "/dashboard": "analytics.dashboard",
+  "/director": "analytics.executive",
   "/executive": "analytics.executive",
   "/agent-report": "analytics.reports",
   "/agent-act-report": "analytics.reports",

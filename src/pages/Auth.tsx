@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import BiometricLoginButton from "@/components/native/BiometricLoginButton";
 import LoginShell from "@/components/auth/LoginShell";
-import { parseAuthMode, safeNext, type AuthMode } from "@/lib/authNavigation";
+import { parseAuthMode, safeNext, preferredAuthDestination, type AuthMode } from "@/lib/authNavigation";
 
 import { CONSENT_PATH, CONSENT_VERSION, PRIVACY_PATH } from "@/lib/personalDataConsent";
 
@@ -59,6 +59,7 @@ export default function Auth() {
   const [recoverySent, setRecoverySent] = useState(false);
   const { toast } = useToast();
   const [params, setParams] = useSearchParams();
+  const explicitDestination = params.has("next");
   const next = safeNext(params.get("next"));
   const mode = parseAuthMode(params.get("mode"));
 
@@ -74,13 +75,13 @@ export default function Auth() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && mode !== "reset") window.location.href = next;
+      if (session && mode !== "reset") window.location.href = explicitDestination ? next : preferredAuthDestination(next, session.user.id, localStorage.getItem("currentOrganizationId"));
     });
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && mode !== "reset") window.location.href = next;
+      if (session && mode !== "reset") window.location.href = explicitDestination ? next : preferredAuthDestination(next, session.user.id, localStorage.getItem("currentOrganizationId"));
     });
     return () => subscription.unsubscribe();
-  }, [mode, next]);
+  }, [mode, next, explicitDestination]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -170,7 +171,7 @@ export default function Auth() {
       const { error } = await supabase.auth.updateUser({ password: data.password });
       if (error) throw error;
       toast({ title: "Пароль обновлён", description: "Выполняется вход в CRSS CRM." });
-      window.location.href = next;
+      window.location.href = explicitDestination ? next : preferredAuthDestination(next, session.user.id, localStorage.getItem("currentOrganizationId"));
     } catch (error: any) {
       showError(error, "Не удалось обновить пароль", () => resetForm.handleSubmit(onReset)());
     } finally {

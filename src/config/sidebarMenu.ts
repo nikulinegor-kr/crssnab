@@ -58,6 +58,7 @@ export const menuGroups: MenuGroup[] = [
     label: "Руководителю",
     icon: Gauge,
     items: [
+      { id: "director", title: "Руководитель", url: "/director", icon: ShieldCheck },
       { id: "executive", title: "Панель руководителя", url: "/executive", icon: Gauge },
     ],
   },

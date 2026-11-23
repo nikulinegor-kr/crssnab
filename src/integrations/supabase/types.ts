@@ -1899,6 +1899,12 @@ export type Database = {
           },
         ]
       }
+      director_invoice_decisions: {
+        Row: { id: string; request_id: string; organization_id: string; decided_by: string | null; signer_name: string; action: string; comment: string | null; document_path: string | null; decided_at: string; notification_id: string | null }
+        Insert: { id?: string; request_id: string; organization_id: string; decided_by?: string | null; signer_name: string; action: string; comment?: string | null; document_path?: string | null; decided_at?: string; notification_id?: string | null }
+        Update: Partial<Database["public"]["Tables"]["director_invoice_decisions"]["Insert"]>
+        Relationships: [{ foreignKeyName: "director_invoice_decisions_request_id_fkey"; columns: ["request_id"]; isOneToOne: false; referencedRelation: "requests"; referencedColumns: ["id"] }]
+      }
       max_groups: {
         Row: {
           chat_type: string | null
@@ -6322,6 +6328,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_approve_crss_invoices: { Args: { org_id: string }; Returns: boolean }
+      decide_crss_invoice: {
+        Args: { request_key: string; decision: string; source_document: string | null; stamped_path: string | null; revision_comment: string | null }
+        Returns: string
+      }
       _priority_emoji: { Args: { _p: string }; Returns: string }
       _status_emoji: { Args: { _s: string }; Returns: string }
       build_assigned_message: {
