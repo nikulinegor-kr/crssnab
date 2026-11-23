@@ -229,7 +229,7 @@ export default function DirectorInvoicesPage() {
               {preview.data && <Button variant="outline" asChild><a target="_blank" rel="noopener" href={preview.data}>Открыть файл</a></Button>}
               {preview.isError && <p className="text-sm text-destructive">Нет доступа к файлу.</p>}
             </div>
-            <div className="sticky bottom-0 z-10 order-last flex flex-wrap items-center gap-2 [&>button]:min-h-11 rounded-b-xl border-t bg-card px-4 py-3 md:static md:order-none md:rounded-none sm:px-6">
+            <div className="flex flex-wrap items-center gap-2 rounded-b-xl border-t bg-card px-4 py-3 sm:px-6 [&>button]:min-h-11 [&:not(:last-child)]:rounded-b-none">
               {proposals ? <>
                 <Button variant="outline" className="text-destructive" onClick={() => setAction("reject")}>Отклонить</Button>
                 <Button variant="outline" onClick={() => setAction("alternative")}>Найти альтернативу</Button>
