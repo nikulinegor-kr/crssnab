@@ -805,7 +805,7 @@ export const RequestSidePanel = ({
           </div>
           <div className="request-view-invoice__actions">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               className="h-9 px-2 text-[13px]"
               onClick={() => void openStoredFile(mainInvoiceDoc)}
@@ -826,7 +826,13 @@ export const RequestSidePanel = ({
               {isSendingInvoiceToMax && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}
               {isSendingInvoiceToMax ? "Отправка…" : "Отправить в MAX"}
             </Button>
-            <RequestDocumentDeleteButton request={request} url={mainInvoiceDoc} readOnly={readOnly} onDeleted={applyLocalRequestPatch} />
+            <RequestDocumentDeleteButton
+              request={request}
+              url={mainInvoiceDoc}
+              readOnly={readOnly}
+              onDeleted={applyLocalRequestPatch}
+              className="border border-destructive/40"
+            />
           </div>
         </div>
       ) : (
