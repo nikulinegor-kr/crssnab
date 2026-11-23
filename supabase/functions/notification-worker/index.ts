@@ -210,10 +210,12 @@ Deno.serve(async (req) => {
     });
   }
 
-  await supabase
+  const { data: claimed } = await supabase
     .from("notification_queue")
     .update({ status: "sending" })
-    .in("id", items.map((i) => i.id));
+    .in("id", items.map((i) => i.id))
+    .eq("status", "queued")
+    .select("id");
 
   const tgTokenCache = new Map<string, string | null>();
   async function getTgToken(orgId: string): Promise<string | null> {
@@ -239,7 +241,9 @@ Deno.serve(async (req) => {
       .replace(/\n{3,}/g, "\n\n")                       // collapse blank lines
       .trim();
 
+  const claimedIds = new Set((claimed ?? []).map(row => row.id));
   for (const row of items) {
+    if (!claimedIds.has(row.id)) continue;
     const rawText = String(row.payload?.text ?? "");
     const text = removeInternalIds(rawText);
     const buttons = Array.isArray(row.payload?.buttons) ? (row.payload!.buttons as Button[]) : [];
@@ -292,7 +296,14 @@ Deno.serve(async (req) => {
 
     let result: SendResult;
     try {
-      if (row.platform === "max") {
+      const directorPath = row.payload?.director_document_path;
+      if (row.platform === "max" && typeof directorPath === "string" && directorPath) {
+        const path = decodeURIComponent(directorPath);
+        const { data, error } = await supabase.storage.from("request-documents").createSignedUrl(path, 300);
+        result = error || !data
+          ? { ok: false, status: 0, body: "Approved invoice is unavailable" }
+          : await sendMaxDocument(row.group_id, data.signedUrl, "Счёт.pdf", text);
+      } else if (row.platform === "max") {
         const attachments = buttons.length > 0 && (requestId || buttons.every((b) => b.data))
           ? buildMaxAttachments(requestId, buttons)
           : undefined;
