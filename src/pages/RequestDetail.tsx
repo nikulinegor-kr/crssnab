@@ -49,6 +49,7 @@ import { notifyTelegram, notifyTelegramInvoiceChat } from "@/lib/telegram";
 import { RequestStickyHeader } from "@/components/request/RequestStickyHeader";
 import { RequestLogisticsCard } from "@/components/request/RequestLogisticsCard";
 import { RequestShipmentsSummary } from "@/components/request/RequestShipmentsSummary";
+import { RequestWarehouseMovement } from "@/components/request/RequestWarehouseMovement";
 import { RequestActivityFeed } from "@/components/request/RequestActivityFeed";
 import { RequestQuickActionsCard } from "@/components/request/RequestQuickActionsCard";
 import { ReceivedByDialog } from "@/components/request/ReceivedByDialog";
@@ -824,6 +825,14 @@ export default function RequestDetail() {
               onUpdate={handleUpdate}
             />
             <RequestShipmentsSummary requestId={request.id} />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Движение</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RequestWarehouseMovement requestId={request.id} organizationId={request.organization_id} />
+              </CardContent>
+            </Card>
             {/* Linked personal planner tasks */}
             <LinkedPlannerTasks
               requestId={request.id}

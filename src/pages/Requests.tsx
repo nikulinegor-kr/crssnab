@@ -158,7 +158,7 @@ const Requests = () => {
 
   // Dialog state
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
-  const [panelInitialTab, setPanelInitialTab] = useState<"overview" | "docs" | "tasks" | "history">("overview");
+  const [panelInitialTab, setPanelInitialTab] = useState<"overview" | "docs" | "tasks" | "movement">("overview");
   const [panelOpen, setPanelOpen] = useState(false);
   const location = useLocation();
   const [qrRequestId, setQrRequestId] = useState<string | null>(null);

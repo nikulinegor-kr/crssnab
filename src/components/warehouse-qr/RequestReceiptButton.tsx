@@ -112,7 +112,6 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
     <Button variant={fullyDone ? 'outline' : 'default'} className="min-h-11 h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs" onClick={() => { setOpen(true); setLabelDoc(null); }}>
       <PackageCheck className="h-4 w-4 shrink-0" />{fullyDone ? 'Принято на склад' : batches.length ? `Принять остаток${leftFromState ? ` · ${leftFromState}` : ''}` : 'Осуществить приёмку'}
     </Button>
-    {legacy && <p className="text-xs text-muted-foreground break-words mt-1">{legacy.receiver_name} · {format(new Date(legacy.received_at), 'dd.MM.yyyy HH:mm')} · {whName(legacy.warehouse_id)}</p>}
     <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
       <DialogHeader><DialogTitle className="break-words">Приёмка · {request.description || '—'}</DialogTitle><p className="text-sm text-muted-foreground">{request.request_number.replace(/^REQ-/, '')}</p></DialogHeader>
       {(warehouseError || stateError) && <p role="alert" className="text-destructive">Не удалось загрузить данные приёмки: {(warehouseError ?? stateError)?.message}</p>}

@@ -40,6 +40,7 @@ import { PanelItemsTable } from "./PanelItemsTable";
 import { PanelDocuments, UploadTask, detectKind, validateFile } from "./PanelDocuments";
 import { EditRequestDialog } from "@/components/EditRequestDialog";
 import { LinkedPlannerTasks } from "@/components/request/LinkedPlannerTasks";
+import { RequestWarehouseMovement } from "@/components/request/RequestWarehouseMovement";
 import { ClaudeRequestAssistant } from "./ClaudeRequestAssistant";
 import { RequestQrWorkflow } from "@/components/warehouse-qr/RequestQrWorkflow";
 import { RequestQrButton } from '@/components/warehouse-qr/RequestQrButton';
@@ -57,7 +58,7 @@ import { buildInvoiceAutofill, invoiceAutofillMessage, mergeRecognizedItems, nor
 interface RequestSidePanelProps {
   request: (Request & { object_name?: string | null }) | null;
   open: boolean;
-  initialTab?: "overview" | "docs" | "tasks" | "history";
+  initialTab?: "overview" | "docs" | "tasks" | "movement";
   qrEntry?: boolean;
   onClose: () => void;
   onPrevious?: () => void;
@@ -85,7 +86,7 @@ const VIEW_SECTIONS = [
   { id: "invoice", label: "Счёт" },
   { id: "logistics", label: "Логистика" },
   { id: "items", label: "Позиции" },
-  { id: "history", label: "История" },
+  { id: "movement", label: "Движение" },
 ] as const;
 type ViewSection = typeof VIEW_SECTIONS[number]["id"] | "docs" | "tasks";
 
@@ -147,13 +148,16 @@ export const RequestSidePanel = ({
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ViewSection>(initialTab);
   const [positionsOpen, setPositionsOpen] = useState(false);
+  const [movementRequestId, setMovementRequestId] = useState<string | null>(null);
   const viewScrollRef = useRef<HTMLDivElement>(null);
+  const alignMovementAfterLoad = useRef(false);
   const goToSection = useCallback((section: ViewSection, behavior: ScrollBehavior = "smooth") => {
     const scroll = viewScrollRef.current;
     if (!scroll) return;
     setActiveSection(section);
     if (section === "items") setPositionsOpen(true);
     const target = scroll.querySelector<HTMLElement>(`[data-request-view-section="${section}"]`);
+    alignMovementAfterLoad.current = section === "movement" && target instanceof HTMLDetailsElement && !target.open;
     if (target instanceof HTMLDetailsElement) target.open = true;
     const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     requestAnimationFrame(() => {
@@ -162,6 +166,9 @@ export const RequestSidePanel = ({
       scroll.scrollTo({ top: Math.max(0, top), behavior: smooth ? behavior : "auto" });
     });
   }, []);
+  const onMovementReady = useCallback(() => {
+    if (alignMovementAfterLoad.current) goToSection("movement", "auto");
+  }, [goToSection]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentOrgId } = useCurrentOrganization();
@@ -298,6 +305,7 @@ export const RequestSidePanel = ({
     setReceiptOpenSignal(0);
     setActiveEditor(null);
     setPositionsOpen(false);
+    setMovementRequestId(null);
     setUploads([]);
     setRecognizedSupplier(null);
     setPreserveInvoiceAmount(false);
@@ -418,23 +426,6 @@ export const RequestSidePanel = ({
       return data || [];
     },
     enabled: !!currentOrgId && open,
-  });
-
-  const { data: history } = useQuery({
-    queryKey: ["request-audit", request?.id],
-    queryFn: async () => {
-      const requestId = request?.id;
-      if (!requestId) return [];
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("id, action, created_at")
-        .eq("entity_id", requestId)
-        .order("created_at", { ascending: false })
-        .limit(30);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!request?.id && open,
   });
 
   const photoUrls = useMemo(() => request ? getRequestFileUrls(request, "photo") : [], [request]);
@@ -930,8 +921,8 @@ export const RequestSidePanel = ({
 
   const movementBlock = (
     <>
-            <div className="mt-4">
-              <div className="mb-3 text-[15px] font-semibold text-foreground">Движение</div>
+            <div className="border-t border-border pt-3">
+              <h3 className="mb-2 text-sm font-semibold text-foreground">Доставка по заявке</h3>
 
               <div className="space-y-2.5">
                 {movement.map((m, i) => (
@@ -990,19 +981,6 @@ export const RequestSidePanel = ({
             onDeleted={applyLocalRequestPatch}
           />
   );
-  const historyBlock = (
-          <div className="space-y-1">
-            {(history || []).length === 0 && <div className="text-sm text-muted-foreground">Записей нет</div>}
-            {(history || []).map((h: any) => (
-              <div key={h.id} className="flex items-center justify-between gap-2 border-b border-border/70 py-1.5">
-                <span className="min-w-0 break-words text-sm leading-5">{h.action}</span>
-                <span className="font-numeric shrink-0 text-xs leading-4 text-muted-foreground">
-                  {h.created_at ? format(new Date(h.created_at), "dd.MM.yy HH:mm") : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-  );
   const containerClass = "request-view-width";
 
   const sectionContent = (
@@ -1025,14 +1003,20 @@ export const RequestSidePanel = ({
       <RequestViewSection section="tasks" title="Задачи по заявке">
         {linkedTasksBlock}
       </RequestViewSection>
-      <RequestViewSection title="Движение">
+      <RequestViewSection section="movement" title="Движение" onToggle={expanded => {
+        if (!expanded) alignMovementAfterLoad.current = false;
+        setMovementRequestId(expanded ? request.id : null);
+      }}>
+        <RequestWarehouseMovement
+          requestId={request.id}
+          organizationId={request.organization_id}
+          enabled={movementRequestId === request.id && open}
+          onReady={onMovementReady}
+        />
         {movementBlock}
       </RequestViewSection>
       <RequestViewSection section="docs" title="Файлы и документы">
         {docsBlock}
-      </RequestViewSection>
-      <RequestViewSection section="history" title="История">
-        {historyBlock}
       </RequestViewSection>
     </div>
   );
@@ -1114,7 +1098,12 @@ export const RequestSidePanel = ({
           <ClaudeRequestAssistant key={request.id} requestId={request.id} requestNumber={request.request_number} organizationId={request.organization_id} onBack={() => setAssistantOpen(false)} />
         </div>
       ) : <>
-        <div className="request-view-scroll" ref={viewScrollRef}>
+        <div
+          className="request-view-scroll"
+          ref={viewScrollRef}
+          onWheel={() => { alignMovementAfterLoad.current = false; }}
+          onTouchMove={() => { alignMovementAfterLoad.current = false; }}
+        >
           <header className={cn("request-view-header", containerClass)}>
             <div className="request-view-heading">
               {isPhone && (
