@@ -14,6 +14,7 @@ import { Truck, Info, Boxes } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRequestShipments } from "@/hooks/useRequestShipments";
 import { RequestShipmentsPanel } from "@/components/requests/RequestShipmentsPanel";
+import { RecognizeWaybillButton } from "@/components/requests/RecognizeWaybillButton";
 
 interface LogisticsSectionProps {
   form: UseFormReturn<any>;
@@ -70,6 +71,19 @@ export const LogisticsSection = ({
           title="Логистика · Обычная доставка"
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
         >
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">Загрузите фото или PDF накладной — поля заполнятся сами</span>
+            <RecognizeWaybillButton
+              disabled={disabled}
+              onRecognized={(d) => {
+                const opts = { shouldDirty: true, shouldValidate: true };
+                if (d.transport_company) form.setValue("transport_company", d.transport_company, opts);
+                if (d.waybill_number) form.setValue("waybill_number", d.waybill_number, opts);
+                if (d.shipment_date) form.setValue("shipment_date", d.shipment_date, opts);
+                if (d.delivery_date) form.setValue("delivery_date", d.delivery_date, opts);
+              }}
+            />
+          </div>
           <div className="request-logistics-fields grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               <FormField
                 control={form.control}

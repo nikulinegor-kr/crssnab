@@ -1,6 +1,7 @@
 import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
+import { RecognizeWaybillButton } from "./RecognizeWaybillButton";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -660,6 +661,18 @@ export const RequestSidePanel = ({
   );
   const logisticsBlock = (
     <div className="request-view-field-grid">
+              {!readOnly && (
+                <div className="col-span-full flex justify-end">
+                  <RecognizeWaybillButton
+                    onRecognized={async (d) => {
+                      if (d.transport_company) await saveField("transport_company", d.transport_company, { silent: true });
+                      if (d.waybill_number) await saveField("waybill_number", d.waybill_number, { silent: true });
+                      if (d.shipment_date) await saveField("shipment_date", d.shipment_date, { silent: true });
+                      if (d.delivery_date) await saveField("delivery_date", d.delivery_date, { silent: true });
+                    }}
+                  />
+                </div>
+              )}
               <RequestInlineField
                 label="Транспортная компания"
                 type="combobox"
