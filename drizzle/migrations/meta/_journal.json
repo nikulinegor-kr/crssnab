@@ -274,6 +274,20 @@
       "when": 1795331751333,
       "tag": "0038_restrict_client_error_logs_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795446757355,
+      "tag": "0039_request_applicant_justification",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795446789798,
+      "tag": "0040_director_invoice_approval",
+      "breakpoints": true
     }
   ]
 }

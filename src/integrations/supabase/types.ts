@@ -1080,6 +1080,67 @@ export type Database = {
         }
         Relationships: []
       }
+      director_invoice_decisions: {
+        Row: {
+          action: string
+          comment: string | null
+          decided_at: string
+          decided_by: string | null
+          document_path: string | null
+          id: string
+          notification_id: string | null
+          organization_id: string
+          request_id: string
+          signer_name: string
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          document_path?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id: string
+          request_id: string
+          signer_name: string
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          document_path?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id?: string
+          request_id?: string
+          signer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "director_invoice_decisions_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notification_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "director_invoice_decisions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "director_invoice_decisions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           brand: string
@@ -3689,6 +3750,7 @@ export type Database = {
           amount_2: number | null
           amount_3: number | null
           applicant: string | null
+          applicant_justification: string | null
           applicant_user_id: string | null
           archived: boolean
           availability_delivery_time: string | null
@@ -3751,6 +3813,7 @@ export type Database = {
           amount_2?: number | null
           amount_3?: number | null
           applicant?: string | null
+          applicant_justification?: string | null
           applicant_user_id?: string | null
           archived?: boolean
           availability_delivery_time?: string | null
@@ -3813,6 +3876,7 @@ export type Database = {
           amount_2?: number | null
           amount_3?: number | null
           applicant?: string | null
+          applicant_justification?: string | null
           applicant_user_id?: string | null
           archived?: boolean
           availability_delivery_time?: string | null
@@ -6349,6 +6413,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: string
       }
+      can_approve_crss_invoices: { Args: { org_id: string }; Returns: boolean }
       can_use_trust_letters: {
         Args: { _org: string; _user: string }
         Returns: boolean
@@ -6376,6 +6441,16 @@ export type Database = {
         Returns: Json
       }
       create_arrival_check_tasks: { Args: never; Returns: number }
+      decide_crss_invoice: {
+        Args: {
+          decision: string
+          request_key: string
+          revision_comment: string
+          source_document: string
+          stamped_path: string
+        }
+        Returns: string
+      }
       enqueue_notification: {
         Args: {
           _dedup_suffix?: string
