@@ -1,6 +1,7 @@
 export interface RequestZrsValues {
   request_date?: string | null;
   description?: string | null;
+  applicant_justification?: string | null;
   applicant?: string | null;
   priority?: string | null;
   availability_delivery_time?: string | null;
@@ -20,6 +21,9 @@ export function buildRequestZrsLines(values: RequestZrsValues, objectName?: stri
     `Объект: ${objectName || "-"}`,
     `Заявка: ${values.description || "-"}`,
     `Заявитель: ${values.applicant || "-"}`,
+    ...(values.applicant_justification?.trim()
+      ? [`Обоснование заявителя: ${values.applicant_justification.trim()}`]
+      : []),
     `Приоритет: ${values.priority || "-"}`,
     `Наличие: ${values.availability_delivery_time || "-"}`,
     `Срок доставки: ${values.estimated_delivery_days ? `${values.estimated_delivery_days} дн.` : "-"}`,

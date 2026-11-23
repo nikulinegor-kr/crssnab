@@ -6,6 +6,7 @@ export interface Request {
   request_number: string;
   request_date: string;
   description: string;
+  applicant_justification?: string | null;
   status: string;
   priority: string;
   applicant: string | null;
@@ -43,7 +44,7 @@ export interface Request {
 // Keep list loading separate from volatile delivery/integration metadata that no list consumer reads.
 // Full request dialogs still receive every field used by their forms, while PostgREST no longer serializes SELECT *.
 const REQUEST_LIST_SELECT = [
-  "id", "request_number", "request_date", "description", "status", "priority",
+  "id", "request_number", "request_date", "description", "applicant_justification", "status", "priority",
   "applicant", "applicant_user_id", "created_by", "executor", "object_id",
   "estimated_delivery_days", "order_days", "availability_delivery_time", "contractor",
   "invoice_number", "invoice_number_2", "invoice_number_3", "invoice_date",

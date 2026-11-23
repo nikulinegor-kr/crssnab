@@ -127,6 +127,29 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
           />
         </div>
 
+        <div className="px-3.5 pb-3 sm:px-5">
+          <FormField
+            control={form.control}
+            name="applicant_justification"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Обоснование заявителя</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    value={field.value ?? ""}
+                    disabled={disabled}
+                    maxLength={2000}
+                    placeholder="Зачем нужна закупка?"
+                    className="min-h-[64px] resize-y text-sm leading-relaxed"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* Comment - disclosure, opened automatically when it has content */}
         <details className="request-disclosure mx-3.5 sm:mx-5 mb-3" open={showCommentField || undefined} onToggle={(e) => setShowCommentField((e.currentTarget as HTMLDetailsElement).open)}>
           <summary>Комментарий</summary>

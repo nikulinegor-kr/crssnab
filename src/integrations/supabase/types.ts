@@ -3684,6 +3684,7 @@ export type Database = {
       }
       requests: {
         Row: {
+          applicant_justification: string | null
           actual_arrival_date: string | null
           amount: number | null
           amount_2: number | null
@@ -3746,6 +3747,7 @@ export type Database = {
           waybill_number: string | null
         }
         Insert: {
+          applicant_justification?: string | null
           actual_arrival_date?: string | null
           amount?: number | null
           amount_2?: number | null
@@ -3808,6 +3810,7 @@ export type Database = {
           waybill_number?: string | null
         }
         Update: {
+          applicant_justification?: string | null
           actual_arrival_date?: string | null
           amount?: number | null
           amount_2?: number | null
