@@ -288,6 +288,13 @@
       "when": 1795446789798,
       "tag": "0040_director_invoice_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795447900308,
+      "tag": "0041_director_accounting_and_proposals",
+      "breakpoints": true
     }
   ]
 }

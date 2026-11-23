@@ -6451,6 +6451,10 @@ export type Database = {
         }
         Returns: string
       }
+      decide_crss_proposal: {
+        Args: { decision: string; request_key: string }
+        Returns: undefined
+      }
       enqueue_notification: {
         Args: {
           _dedup_suffix?: string
