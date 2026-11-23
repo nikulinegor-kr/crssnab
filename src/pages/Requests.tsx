@@ -246,20 +246,18 @@ const Requests = () => {
     }
   };
 
-  // Состояние карточки в адресной строке: ?request=<id>&view=full
+  // Состояние карточки в адресной строке: ?request=<id>
   const [searchParams, setSearchParams] = useSearchParams();
   const urlRequestId = searchParams.get("request");
-  const isFullView = searchParams.get("view") === "full";
 
   const setRequestParams = useCallback(
-    (requestId: string | null, full: boolean) => {
+    (requestId: string | null) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           if (requestId) next.set("request", requestId);
           else next.delete("request");
-          if (requestId && full) next.set("view", "full");
-          else next.delete("view");
+          if (next.get("view") === "full") next.delete("view");
           return next;
         },
         { replace: true }
@@ -273,7 +271,7 @@ const Requests = () => {
     setPanelInitialTab("overview");
     setSelectedRequest(request);
     setPanelOpen(true);
-    setRequestParams(request.id, isFullView);
+    setRequestParams(request.id);
   };
 
   const closePanel = useCallback(() => {
@@ -281,7 +279,7 @@ const Requests = () => {
     setPanelOpen(false);
     setSelectedRequest(null);
     setPanelInitialTab("overview");
-    setRequestParams(null, false);
+    setRequestParams(null);
   }, [setRequestParams]);
 
   const closePanelFromTable = useCallback(() => {
@@ -301,7 +299,7 @@ const Requests = () => {
     const next = panelRequestOrder[selectedRequestIndex + offset];
     if (next) {
       setSelectedRequest(next);
-      setRequestParams(next.id, isFullView);
+      setRequestParams(next.id);
     }
   };
 
@@ -896,8 +894,6 @@ const Requests = () => {
               hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
               position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
               requestCount={panelRequestOrder.length}
-              fullscreen={isFullView}
-              onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
             />
           )}
         </div>
@@ -937,8 +933,6 @@ const Requests = () => {
           hasNext={selectedRequestIndex >= 0 && selectedRequestIndex < panelRequestOrder.length - 1}
           position={selectedRequestIndex >= 0 ? selectedRequestIndex + 1 : undefined}
           requestCount={panelRequestOrder.length}
-          fullscreen={isFullView}
-          onFullscreenChange={(v) => setRequestParams(selectedRequest?.id ?? null, v)}
         />
       )}
 

@@ -7,8 +7,7 @@ import { createPortal } from "react-dom";
 import { EquipmentSelectWithAdd } from "@/components/EquipmentSelectWithAdd";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { X, Maximize2, Minimize2, Loader2, ArrowUp, ArrowLeft, ArrowDown, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, Tag, ChevronDown } from "lucide-react";
-import { LabelPrintDialog } from "@/components/request/LabelPrintDialog";
+import { X, Loader2, ArrowLeft, MoreVertical, PackageCheck, FileText, Download, ExternalLink, Paperclip, ChevronDown } from "lucide-react";
 import { openStoredFile, downloadStoredFile } from "@/lib/storageUrl";
 import { supabase } from "@/integrations/supabase/client";
 import { Request } from "@/hooks/useRequests";
@@ -72,8 +71,6 @@ interface RequestSidePanelProps {
   width?: number;
   onWidthChange?: (width: number) => void;
   /** Полноэкранный режим — состояние хранится снаружи (в адресной строке). */
-  fullscreen?: boolean;
-  onFullscreenChange?: (value: boolean) => void;
   onRequestPatch?: (patch: Record<string, unknown>) => void;
 }
 
@@ -135,8 +132,6 @@ export const RequestSidePanel = ({
   inline = false,
   width,
   onWidthChange,
-  fullscreen,
-  onFullscreenChange,
   onRequestPatch,
 }: RequestSidePanelProps) => {
   const [editingRequest, setEditingRequest] = useState<RequestSidePanelProps["request"]>(null);
@@ -193,16 +188,6 @@ export const RequestSidePanel = ({
     },
   });
   const [savingField, setSavingField] = useState<string | null>(null);
-  const [localFullscreen, setLocalFullscreen] = useState(false);
-  const [labelOpen, setLabelOpen] = useState(false);
-  const isFullscreen = fullscreen ?? localFullscreen;
-  const setIsFullscreen = useCallback(
-    (value: boolean) => {
-      if (onFullscreenChange) onFullscreenChange(value);
-      else setLocalFullscreen(value);
-    },
-    [onFullscreenChange]
-  );
   const [localWidth, setLocalWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [uploads, setUploads] = useState<UploadTask[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -281,7 +266,6 @@ export const RequestSidePanel = ({
       if (event.key === "Escape") {
         event.preventDefault();
         if (editMode) exitEditMode(true);
-        else if (isFullscreen) setIsFullscreen(false);
         else onClose();
       } else if (event.key === "ArrowUp" && hasPrevious) {
         event.preventDefault();
@@ -293,7 +277,7 @@ export const RequestSidePanel = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editMode, exitEditMode, hasNext, hasPrevious, isFullscreen, onClose, onNext, onPrevious, open, setIsFullscreen]);
+  }, [editMode, exitEditMode, hasNext, hasPrevious, onClose, onNext, onPrevious, open]);
 
 
 
@@ -625,7 +609,7 @@ export const RequestSidePanel = ({
 
   if (!request || (!open && !editorOpen)) return null;
 
-  const asOverlay = !inline || isFullscreen;
+  const asOverlay = !inline;
 
   const peopleBlock = (
     <div className="request-view-field-grid">
@@ -1034,26 +1018,18 @@ export const RequestSidePanel = ({
         "request-side-panel request-view requests-registry mobile-brand flex min-h-0 flex-col border-l border-border bg-card",
         assistantOpen && "max-sm:!fixed max-sm:!inset-0 max-sm:!z-[220] max-sm:!h-[100dvh] max-sm:!w-screen",
         dragActive && "ring-2 ring-inset ring-primary",
-        isFullscreen
-          ? cn(
-              "request-fullscreen fixed inset-0 h-[100dvh] w-[100vw] border-0 overflow-hidden bg-background",
-              editorOpen ? "z-[40]" : "z-[200]"
-            )
-
-          : asOverlay
-            ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] max-md:!w-screen max-md:!inset-x-0 max-md:border-l-0 overflow-hidden shadow-panel motion-reduce:animate-none"
-            : "h-full w-full overflow-hidden"
+        asOverlay
+          ? "fixed inset-y-0 right-0 z-50 h-[100dvh] max-w-[100vw] max-md:!w-screen max-md:!inset-x-0 max-md:border-l-0 overflow-hidden shadow-panel motion-reduce:animate-none"
+          : "h-full w-full overflow-hidden"
       )}
       style={
-        isFullscreen
-          ? undefined
-          : asOverlay
-            ? {
-                width: `min(${panelWidth}px, 92vw)`,
-                transition: "width var(--dur) var(--ease), transform 300ms var(--ease)",
-                animation: "slide-in-right var(--dur) var(--ease)",
-              }
-            : { transition: "transform 300ms var(--ease)" }
+        asOverlay
+          ? {
+              width: `min(${panelWidth}px, 92vw)`,
+              transition: "width var(--dur) var(--ease), transform 300ms var(--ease)",
+              animation: "slide-in-right var(--dur) var(--ease)",
+            }
+          : { transition: "transform 300ms var(--ease)" }
       }
 
       aria-label="Карточка заявки"
@@ -1084,7 +1060,7 @@ export const RequestSidePanel = ({
           if (file) void handleRecognizeInvoice(file);
         }}
       />
-      {!isFullscreen && !isPhone && (
+      {!isPhone && (
 
         <div
           role="separator"
@@ -1133,19 +1109,6 @@ export const RequestSidePanel = ({
               {request.request_date && <p className="request-view-created">Создана {dt(request.request_date)}</p>}
               {!isPhone && (
                 <div className="request-view-toolbar" aria-label="Действия с заявкой">
-                  <Button type="button" variant="ghost" size="icon" onClick={onPrevious} disabled={!hasPrevious} aria-label="Предыдущая заявка">
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={onNext} disabled={!hasNext} aria-label="Следующая заявка">
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setLabelOpen(true)} aria-label="Этикетка" title="Этикетка">
-                    <Tag className="h-4 w-4" />
-                  </Button>
-                  <LabelPrintDialog open={labelOpen} onOpenChange={setLabelOpen} description={request.description || null} applicant={request.applicant || null} />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setIsFullscreen(!isFullscreen)} aria-label={isFullscreen ? "Вернуться к реестру" : "Развернуть на весь экран"}>
-                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </Button>
                   <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Закрыть">
                     <X className="h-4 w-4" />
                   </Button>

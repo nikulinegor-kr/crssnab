@@ -1219,7 +1219,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-edit-dialog { --edit-field-height: 44px; }
 }
 
-/* Request view, shared between the registry panel and fullscreen. */
+/* Request view in the registry panel. */
 .request-view {
   container-name: request-view;
   --view-gutter: 16px;
