@@ -20,10 +20,14 @@ export function extractStoragePath(url: string | null | undefined): { bucket: st
  * Resolve any stored storage URL (public or signed) to a fresh signed URL.
  * Falls back to the original URL if it can't be parsed.
  */
-export async function resolveSignedUrl(url: string, expiresIn = 60 * 60): Promise<string> {
+export async function resolveSignedUrl(url: string, expiresIn = 60 * 60, requireSignedUrl = false): Promise<string> {
   const parsed = extractStoragePath(url);
-  if (!parsed) return url;
+  if (!parsed) {
+    if (requireSignedUrl) throw new Error("Счёт должен находиться в хранилище CRM");
+    return url;
+  }
   const { data } = await supabase.storage.from(parsed.bucket).createSignedUrl(parsed.path, expiresIn);
+  if (requireSignedUrl && !data?.signedUrl) throw new Error("Нет доступа к файлу");
   return data?.signedUrl ?? url;
 }
 

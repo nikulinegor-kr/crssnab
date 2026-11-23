@@ -36,6 +36,14 @@ export const SIDEBAR_STRUCTURE_VERSION = 2;
 
 export const menuGroups: MenuGroup[] = [
   {
+    key: "management",
+    label: "Руководителю",
+    icon: Gauge,
+    items: [
+      { id: "executive", title: "Панель руководителя", url: "/executive", icon: Gauge },
+    ],
+  },
+  {
     key: "work",
     label: "Работа",
     icon: FileText,
@@ -51,14 +59,6 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { id: "shipments", title: "Поставки", url: "/shipments", icon: Truck },
       { id: "warehouse", title: "Склад", url: "/warehouse", icon: Warehouse },
-    ],
-  },
-  {
-    key: "management",
-    label: "Руководителю",
-    icon: Gauge,
-    items: [
-      { id: "executive", title: "Панель руководителя", url: "/executive", icon: Gauge },
     ],
   },
   {

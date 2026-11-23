@@ -23,3 +23,13 @@ export function safeNext(raw: string | null): string {
 export function parseAuthMode(raw: string | null): AuthMode {
   return raw === "signup" || raw === "forgot" || raw === "reset" ? raw : "login";
 }
+
+
+export const directorLandingKey = (userId: string, orgId: string) => `crss:director:${orgId}:${userId}:landing`;
+
+export function preferredAuthDestination(next: string, userId: string, orgId: string | null) {
+  try {
+    if (next === DEFAULT_AUTH_DESTINATION && orgId && localStorage.getItem(directorLandingKey(userId, orgId)) === "true") return "/executive";
+  } catch { /* Storage may be unavailable. */ }
+  return next;
+}
