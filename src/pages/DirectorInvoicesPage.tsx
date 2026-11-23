@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,12 +15,14 @@ import { directorLandingKey } from "@/lib/authNavigation";
 import { formatExecFullAmount } from "@/lib/executivePanel";
 
 type Action = "pay" | "service" | "rework";
-type Widget = "overdue" | "urgent" | "tasks" | "recent";
+type Widget = "overdue" | "urgent" | "tasks" | "recent" | "analytics";
+const ExecutiveAnalytics = lazy(() => import("./ExecutivePanelPage"));
 const WIDGETS: { id: Widget; label: string }[] = [
   { id: "overdue", label: "Просроченные поставки" },
   { id: "urgent", label: "Аварийные заявки" },
   { id: "tasks", label: "Мои задачи" },
   { id: "recent", label: "Последние решения" },
+  { id: "analytics", label: "Аналитика руководителя" },
 ];
 const LABELS: Record<Action, string> = { pay: "В оплату", service: "В ТО", rework: "На доработку" };
 const money = (amount: number | null) => amount == null ? "Не указана" : formatExecFullAmount(amount);
@@ -82,13 +84,14 @@ export default function DirectorInvoicesPage() {
     queryFn: () => resolveSignedUrl(document!, 300, true),
   });
 
+  const dataWidgets = widgets.filter(widget => widget !== "analytics");
   const widgetData = useQuery({
-    queryKey: ["director-widgets", org, userId, widgets],
-    enabled: access.data === true && widgets.length > 0,
+    queryKey: ["director-widgets", org, userId, dataWidgets],
+    enabled: access.data === true && dataWidgets.length > 0,
     queryFn: async () => {
       const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Novosibirsk" });
       const data: Partial<Record<Widget, Row[]>> = {};
-      await Promise.all(widgets.map(async widget => {
+      await Promise.all(dataWidgets.map(async widget => {
         if (widget === "recent") {
           const result = await supabase.from("director_invoice_decisions").select("id,request_id,action,signer_name,requests(description)")
             .eq("organization_id", org!).order("decided_at", { ascending: false }).limit(6);
@@ -149,7 +152,7 @@ export default function DirectorInvoicesPage() {
     } finally { setBusy(false); }
   }
 
-  if (!org) return <Navigate to="/select-organization?next=/director" replace />;
+  if (!org) return <Navigate to="/select-organization?next=/executive" replace />;
   if (access.isError) return <p className="p-6" role="alert">Не удалось проверить доступ.</p>;
   if (access.data === false) return <Navigate to="/requests" replace />;
   if (!access.data) return <p className="p-6" role="status">Проверяем доступ…</p>;
@@ -157,7 +160,7 @@ export default function DirectorInvoicesPage() {
   return (
     <main className="mx-auto grid w-full max-w-[1420px] gap-5 px-4 py-6 lg:px-8">
       <header className={`flex flex-wrap items-start justify-between gap-3 ${mobileOpen ? "hidden md:flex" : ""}`}>
-        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Счета на согласование</h1><p className="mt-1 text-muted-foreground">Заявки со статусом «Счёт на оплату»</p></div>
+        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Решения по счетам</h1><p className="mt-1 text-muted-foreground">Заявки со статусом «Счёт на оплату»</p></div>
         <Button variant="outline" onClick={() => { setPreferences(widgets); setPreferLanding(landing); setSettings(true); }}>Настроить страницу</Button>
       </header>
       <div className="grid items-start gap-4 md:grid-cols-[minmax(230px,0.7fr)_minmax(0,1.5fr)]">
@@ -194,12 +197,15 @@ export default function DirectorInvoicesPage() {
           </article>
         </div>}
       </div>
-      {!!widgets.length && <div className={`grid gap-4 sm:grid-cols-2 ${mobileOpen ? "hidden md:grid" : ""}`}>{WIDGETS.filter(widget => widgets.includes(widget.id)).map(widget => <section key={widget.id} className="rounded-xl border bg-card p-4">
+      {!!dataWidgets.length && <div className={`grid gap-4 sm:grid-cols-2 ${mobileOpen ? "hidden md:grid" : ""}`}>{WIDGETS.filter(widget => widget.id !== "analytics" && widgets.includes(widget.id)).map(widget => <section key={widget.id} className="rounded-xl border bg-card p-4">
         <h2 className="font-semibold">{widget.label}</h2>
         {widgetData.isError ? <p className="mt-2 text-destructive">Не удалось загрузить данные.</p> : widgetData.isLoading ? <p className="mt-2 text-muted-foreground">Загрузка…</p> : widgetData.data?.[widget.id]?.length
           ? <ul className="mt-2 divide-y">{widgetData.data[widget.id]!.map(row => <li key={row.id} className="py-2"><Link className="hover:underline" to={row.link!}>{row.title}</Link></li>)}</ul>
           : <p className="mt-2 text-muted-foreground">Пока нет записей.</p>}
       </section>)}</div>}
+      {widgets.includes("analytics") && <div className={mobileOpen ? "hidden md:block" : ""}>
+        <Suspense fallback={<p role="status">Загружаем аналитику…</p>}><ExecutiveAnalytics /></Suspense>
+      </div>}
       <Dialog open={action !== null} onOpenChange={open => { if (!open && !busy) setAction(null); }}>
         <DialogContent><DialogHeader><DialogTitle>{action === "pay" ? "Точно отправить счёт в оплату?" : action === "service" ? "Направить счёт в ТО?" : "Вернуть на доработку"}</DialogTitle>
           <DialogDescription>{action === "rework" ? "Комментарий получит группа «Поставка ТМЦ»." : `${current?.contractor || "Счёт"} · ${money(current?.amount ?? null)}. Получатель в MAX — «СахаРесурс | Счета на оплату».`}</DialogDescription></DialogHeader>
@@ -210,7 +216,7 @@ export default function DirectorInvoicesPage() {
         </DialogContent>
       </Dialog>
       <Dialog open={settings} onOpenChange={setSettings}>
-        <DialogContent><DialogHeader><DialogTitle>Настроить страницу</DialogTitle><DialogDescription>Счета на согласование видны всегда.</DialogDescription></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>Настроить страницу</DialogTitle><DialogDescription>Решения по счетам видны всегда.</DialogDescription></DialogHeader>
           <fieldset className="grid divide-y">{WIDGETS.map(widget => <label key={widget.id} className="flex min-h-11 items-center justify-between gap-4">{widget.label}<input aria-label={widget.label} className="size-5 accent-primary" type="checkbox" checked={preferences.includes(widget.id)} onChange={event => setPreferences(current => event.target.checked ? [...current, widget.id] : current.filter(key => key !== widget.id))} /></label>)}
             <label className="flex min-h-11 items-center justify-between gap-4">Открывать после входа<input className="size-5 accent-primary" type="checkbox" checked={preferLanding} onChange={event => setPreferLanding(event.target.checked)} /></label></fieldset>
           <DialogFooter><Button variant="outline" onClick={() => setSettings(false)}>Отмена</Button><Button onClick={() => {

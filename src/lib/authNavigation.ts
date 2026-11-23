@@ -29,7 +29,7 @@ export const directorLandingKey = (userId: string, orgId: string) => `crss:direc
 
 export function preferredAuthDestination(next: string, userId: string, orgId: string | null) {
   try {
-    if (next === DEFAULT_AUTH_DESTINATION && orgId && localStorage.getItem(directorLandingKey(userId, orgId)) === "true") return "/director";
+    if (next === DEFAULT_AUTH_DESTINATION && orgId && localStorage.getItem(directorLandingKey(userId, orgId)) === "true") return "/executive";
   } catch { /* Storage may be unavailable. */ }
   return next;
 }

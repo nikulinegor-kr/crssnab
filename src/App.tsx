@@ -22,7 +22,6 @@ import { useMobileKeyboardFocus } from "./hooks/useMobileKeyboardFocus";
 // Lazy load all pages with retry mechanism for code splitting
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const DirectorInvoicesPage = lazyWithRetry(() => import("./pages/DirectorInvoicesPage"));
-const ExecutivePanelPage = lazyWithRetry(() => import("./pages/ExecutivePanelPage"));
 const ImportData = lazyWithRetry(() => import("./pages/ImportData"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
@@ -144,13 +143,13 @@ const App = () => {
               }
             />
             <Route path="/dashboard" element={<ProtectedRoute><LegacyRouteRedirect /></ProtectedRoute>} />
-            <Route path="/director" element={<ProtectedRoute><AppLayout><DirectorInvoicesPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/director" element={<Navigate to="/executive" replace />} />
             <Route
               path="/executive"
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <ExecutivePanelPage />
+                    <DirectorInvoicesPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
