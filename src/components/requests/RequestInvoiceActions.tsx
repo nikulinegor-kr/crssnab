@@ -84,7 +84,7 @@ export function RequestInvoiceActions({ request, readOnly, onUpdated }: RequestI
       <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-2 text-xs" disabled={!hasInvoiceRequisites(request)} onClick={() => setAction("reset")}>
         <RotateCcw className="h-3.5 w-3.5" />Сбросить реквизиты
       </Button>
-      <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={!hasInvoiceRequisites(request)} onClick={() => setAction("delete")}>
+      <Button type="button" variant="outline" size="sm" className="ms-auto h-8 gap-1.5 border-destructive/40 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={!hasInvoiceRequisites(request)} onClick={() => setAction("delete")}>
         <Trash2 className="h-3.5 w-3.5" />Удалить счёт
       </Button>
       <AlertDialog open={!!action} onOpenChange={(open) => !open && setAction(null)}>
