@@ -21,6 +21,7 @@ interface PanelFieldProps {
   /** Возвращает промис — пока он идёт, в поле крутится тонкий индикатор. */
   onSave: (next: string) => Promise<void> | void;
   readOnly?: boolean;
+  align?: "start" | "end";
   accent?: boolean;
   suffix?: string;
   /** Режим правки: поле всегда показано как редактор. */
@@ -41,6 +42,7 @@ export const PanelField = ({
   options,
   onSave,
   readOnly = false,
+  align = "start",
   accent,
   suffix,
   alwaysEdit = false,
@@ -91,7 +93,8 @@ export const PanelField = ({
       onClick={() => !readOnly && setEditing(true)}
       title={readOnly ? "Нет прав на изменение" : shown ? "Клик — изменить" : "Добавить"}
       className={cn(
-        "group/pf flex min-h-8 w-full items-center gap-1 rounded px-1 -mx-1 text-left text-[15px] leading-5 text-foreground",
+        "group/pf flex min-h-8 w-full items-center gap-1 rounded px-1 -mx-1 text-[15px] leading-5 text-foreground",
+        align === "end" ? "text-right" : "text-left",
         readOnly ? "cursor-default" : "cursor-text hover:bg-[hsl(var(--surface-3))]",
         accent ? "text-primary" : "text-foreground"
       )}
@@ -118,16 +121,17 @@ export const PanelField = ({
           <button
             type="button"
             className={cn(
-              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-left text-[15px] text-foreground",
+              "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-1.5 text-[15px] text-foreground",
+              align === "end" ? "text-right" : "text-left",
               !shown && "text-muted-foreground"
             )}
           >
-            <span className="min-w-0 truncate">{shown ?? "—"}</span>
+            <span className={cn("min-w-0 truncate", align === "end" && "flex-1")}>{shown ?? "—"}</span>
             <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-[260px] p-1 z-[130]" align="start">
+        <PopoverContent className="w-[260px] p-1 z-[130]" align={align}>
           <div className="flex items-center gap-1.5 border-b border-border px-1.5 pb-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -192,10 +196,10 @@ export const PanelField = ({
   }
 
   return (
-    <div className="request-panel-field flex min-h-8 items-start gap-3 py-[2px]">
+    <div className={cn("request-panel-field flex min-h-8 items-start gap-3 py-[2px]", align === "end" && "text-right")}>
       <div className="request-panel-field__label">{label}</div>
-      <div className="request-panel-field__value">
-        <div className="min-w-0 flex-1">{editing || forced ? editor : staticView}</div>
+      <div className={cn("request-panel-field__value", align === "end" && "justify-end")}>
+        <div className={cn("min-w-0 flex-1", align === "end" && extraAction && "basis-full")}>{editing || forced ? editor : staticView}</div>
         {suffix && <span className="shrink-0 text-[13px] text-muted-foreground">{suffix}</span>}
         {copyable && value != null && String(value).trim() !== "" && (
           <CopyValueButton value={String(value)} label={copyLabel} />

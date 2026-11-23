@@ -737,6 +737,7 @@ export const RequestSidePanel = ({
             />
               <PanelField
               label="Контрагент"
+              align="end"
               type="select"
               options={supplierOptions}
               value={request.contractor}
