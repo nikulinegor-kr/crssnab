@@ -2,7 +2,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { wrapPdfText } from "./invoicePdf";
 
-export const APPROVAL_STATUSES = ["Счёт на оплату", "Счет на оплату"];
+export const APPROVAL_STATUSES = ["Счёт в бухгалтерии", "Счёт в Бухгалтерии", "Счет в бухгалтерии", "Счет в Бухгалтерии", "Счёт на оплату", "Счет на оплату"];
 export const directorPreferenceKey = (userId: string, orgId: string) => `crss:director:${orgId}:${userId}`;
 
 
