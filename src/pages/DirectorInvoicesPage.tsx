@@ -69,7 +69,7 @@ export default function DirectorInvoicesPage() {
     enabled: access.data === true,
     queryFn: async () => {
       const { data, error } = await supabase.from("requests")
-        .select("id,description,applicant,applicant_justification,contractor,amount,invoice_number,invoice_date,payment_percentage,document_url,document_urls,status,objects(name)")
+        .select("id,description,applicant,applicant_justification,contractor,amount,invoice_number,invoice_date,payment_percentage,document_url,document_urls,status,request_objects(name)")
         .eq("organization_id", org!).in("status", APPROVAL_STATUSES).is("invoice_routing", null)
         .order("created_at", { ascending: true }).limit(200);
       if (error) throw error;
@@ -180,7 +180,7 @@ export default function DirectorInvoicesPage() {
           <article className="flex min-w-0 flex-col rounded-xl border bg-card">
             <header className="px-4 py-4 sm:px-6"><h2 className="break-words text-xl font-semibold">{current.description}</h2><Link className="text-sm text-primary underline-offset-4 hover:underline" to={`/requests?request=${current.id}`}>Открыть заявку</Link></header>
             <dl className="mx-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-4 sm:mx-6 lg:grid-cols-3">
-              {[["Контрагент", current.contractor], ["Сумма счёта", money(current.amount)], ["Номер и дата счёта", [current.invoice_number, current.invoice_date].filter(Boolean).join(" · ")], ["Объект", current.objects?.name], ["Заявитель", current.applicant], ["Предоплата", current.payment_percentage == null ? null : `${current.payment_percentage}%`]].map(([label,value]) => <div key={label}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold">{value || "Не указано"}</dd></div>)}
+              {[["Контрагент", current.contractor], ["Сумма счёта", money(current.amount)], ["Номер и дата счёта", [current.invoice_number, current.invoice_date].filter(Boolean).join(" · ")], ["Объект", current.request_objects?.name], ["Заявитель", current.applicant], ["Предоплата", current.payment_percentage == null ? null : `${current.payment_percentage}%`]].map(([label,value]) => <div key={label}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold">{value || "Не указано"}</dd></div>)}
             </dl>
             <section className="mx-4 border-b py-3 sm:mx-6"><h3 className="font-semibold">Обоснование заявителя</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{current.applicant_justification || "Не указано"}</p></section>
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
