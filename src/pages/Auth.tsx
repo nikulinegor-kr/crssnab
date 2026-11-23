@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,6 +13,8 @@ import BiometricLoginButton from "@/components/native/BiometricLoginButton";
 import LoginShell from "@/components/auth/LoginShell";
 import { parseAuthMode, safeNext, type AuthMode } from "@/lib/authNavigation";
 
+import { CONSENT_PATH, CONSENT_VERSION, PRIVACY_PATH } from "@/lib/personalDataConsent";
+
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
   password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
@@ -25,6 +27,7 @@ const signupSchema = z.object({
   phone: z.string().min(10, "Введите корректный номер телефона"),
   password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
   confirmPassword: z.string(),
+  personalDataConsent: z.boolean().refine(Boolean, "Подтвердите согласие для регистрации"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Пароли не совпадают",
   path: ["confirmPassword"],
@@ -85,7 +88,7 @@ export default function Auth() {
   });
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { organizationName: "", inn: "", email: "", phone: "", password: "", confirmPassword: "" },
+    defaultValues: { organizationName: "", inn: "", email: "", phone: "", password: "", confirmPassword: "", personalDataConsent: false },
   });
   const forgotForm = useForm<ForgotFormData>({
     resolver: zodResolver(forgotSchema),
@@ -131,7 +134,7 @@ export default function Auth() {
         password: data.password,
         options: {
           emailRedirectTo: `${window.location.origin}${next}`,
-          data: { organization_name: data.organizationName, inn: data.inn, phone: data.phone },
+          data: { organization_name: data.organizationName, inn: data.inn, phone: data.phone, personal_data_consent_version: CONSENT_VERSION },
         },
       });
       if (error) throw error;
@@ -246,6 +249,16 @@ export default function Auth() {
             <Input id="confirmPassword" type="password" autoComplete="new-password" placeholder="••••••••" className="crss-field text-sm" {...signupForm.register("confirmPassword")} />
             {signupForm.formState.errors.confirmPassword && <p className="text-xs text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>}
           </div>
+          <div className="space-y-2 text-sm leading-relaxed">
+            <div className="flex items-start gap-3">
+              <input id="personal-data-consent" type="checkbox" className="mt-1 size-4 shrink-0 accent-primary" aria-invalid={!!signupForm.formState.errors.personalDataConsent} aria-describedby="personal-data-consent-text" {...signupForm.register("personalDataConsent")} />
+              <label htmlFor="personal-data-consent">Даю согласие на обработку персональных данных для регистрации в CRSS</label>
+            </div>
+            <div id="personal-data-consent-text" className="pl-7">
+              <Link className="crss-link" to={CONSENT_PATH} target="_blank" rel="noopener">Текст согласия</Link>
+              {signupForm.formState.errors.personalDataConsent && <p role="alert" className="text-destructive">{signupForm.formState.errors.personalDataConsent.message}</p>}
+            </div>
+          </div>
           <Button type="submit" className="w-full crss-submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Создать аккаунт
           </Button>
@@ -291,6 +304,7 @@ export default function Auth() {
       {(mode === "forgot" || mode === "reset") && (
         <button type="button" className="crss-link text-sm" onClick={() => setMode("login")}>Вернуться ко входу</button>
       )}
+      <Link to={PRIVACY_PATH} target="_blank" rel="noopener" className="mt-4 inline-block crss-link text-sm">Политика обработки персональных данных</Link>
     </LoginShell>
   );
 }

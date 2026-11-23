@@ -33,6 +33,7 @@ const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
 const MePage = lazyWithRetry(() => import("./pages/MePage"));
 const MeNotificationsPage = lazyWithRetry(() => import("./pages/MeNotificationsPage"));
 const MeProfilePage = lazyWithRetry(() => import("./pages/MeProfilePage"));
+const PersonalDataDocument = lazyWithRetry(() => import("./pages/PersonalDataDocument"));
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
 const SelectOrganization = lazyWithRetry(() => import("./pages/SelectOrganization"));
 const OrganizationSettings = lazyWithRetry(() => import("./pages/OrganizationSettings"));
@@ -124,6 +125,8 @@ const App = () => {
             <Route path="/" element={<Auth />} />
             <Route path="/landing" element={<HomePage />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/privacy" element={<PersonalDataDocument />} />
+            <Route path="/consent/2026-11-23" element={<PersonalDataDocument consent />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/employee-login" element={<Auth />} />
             <Route path="/demo" element={<Demo />} />
