@@ -4,6 +4,7 @@ export interface RequestZrsValues {
   applicant?: string | null;
   priority?: string | null;
   availability_delivery_time?: string | null;
+  estimated_delivery_days?: number | null;
   payment_percentage?: number | null;
   executor?: string | null;
 }
@@ -21,6 +22,7 @@ export function buildRequestZrsLines(values: RequestZrsValues, objectName?: stri
     `Заявитель: ${values.applicant || "-"}`,
     `Приоритет: ${values.priority || "-"}`,
     `Наличие: ${values.availability_delivery_time || "-"}`,
+    `Срок доставки: ${values.estimated_delivery_days ? `${values.estimated_delivery_days} дн.` : "-"}`,
     `Оплата: ${values.payment_percentage ?? 0}%`,
     `Исполнил: ${values.executor || "-"}`,
   ];

@@ -129,6 +129,28 @@ export const LogisticsSection = ({
               />
               <FormField
                 control={form.control}
+                name="estimated_delivery_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Срок доставки (дней)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        className="h-9 min-w-0 text-sm"
+                        disabled={disabled}
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="shipment_date"
                 render={({ field }) => (
                   <FormItem>
