@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DocumentPagePreview } from "@/components/request/DocumentPagePreview";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -183,38 +184,43 @@ export default function DirectorInvoicesPage() {
   if (!access.data) return <p className="p-6" role="status">Проверяем доступ…</p>;
 
   return (
-    <main className="mx-auto grid w-full max-w-[1420px] gap-5 px-4 py-6 lg:px-8">
-      <header className={`flex flex-wrap items-start justify-between gap-3 ${mobileOpen ? "hidden md:flex" : ""}`}>
-        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{proposals ? "Коммерческие предложения" : "Счета на согласование в оплату"}</h1><p className="mt-1 text-muted-foreground">{proposals ? "Предложения поставщиков для ознакомления" : "Заявки со статусом «Счёт в бухгалтерии» или «Счёт на оплату»"}</p></div>
-        <Button variant="outline" onClick={() => { setPreferences(widgets); setPreferLanding(landing); setSettings(true); }}>Настроить страницу</Button>
-      </header>
-      <nav aria-label="Разделы панели руководителя" className={mobileOpen ? "hidden md:flex" : "flex flex-wrap gap-2"}>
-        {[["", "Счета на согласование в оплату"], ["proposals", "Коммерческие предложения"]].map(([section, label]) => {
-          const active = proposals === Boolean(section);
-          return <Button key={label} variant={active ? "default" : "outline"} aria-current={active ? "page" : undefined} onClick={() => {
-            setSelected("");
-            setMobileOpen(false);
-            setParams(section ? { section } : {});
-          }}>{label}</Button>;
-        })}
-      </nav>
-      <div className="grid items-start gap-4 md:grid-cols-[minmax(230px,0.7fr)_minmax(0,1.5fr)]">
-        <section className={`min-w-0 rounded-xl border bg-card ${mobileOpen ? "hidden md:block" : ""}`}>
+    <div className="mx-auto grid w-full min-w-0 max-w-[1600px] grid-cols-[minmax(0,1fr)] gap-4 px-3 py-4 sm:gap-5 sm:px-6 sm:py-6 xl:px-8">
+      <div className={`min-w-0 overflow-hidden rounded-xl border bg-card ${mobileOpen ? "hidden lg:block" : ""}`}>
+        <header className="flex flex-wrap items-start justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight sm:text-3xl">{proposals ? "Коммерческие предложения" : "Счета на согласование в оплату"}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{proposals ? "Предложения поставщиков для ознакомления" : "Заявки со статусом «Счёт в бухгалтерии» или «Счёт на оплату»"}</p>
+          </div>
+          <Button className="min-h-11" variant="outline" onClick={() => { setPreferences(widgets); setPreferLanding(landing); setSettings(true); }}>Настроить страницу</Button>
+        </header>
+        <nav aria-label="Разделы панели руководителя" className="flex flex-wrap gap-2 border-t px-3 py-2 sm:px-5">
+          {[["", "Счета на оплату"], ["proposals", "Коммерческие предложения"]].map(([section, label]) => {
+            const active = proposals === Boolean(section);
+            return <Button key={label} className="h-auto min-h-11 whitespace-normal px-3 text-left" variant={active ? "secondary" : "ghost"} aria-current={active ? "page" : undefined} onClick={() => {
+              setSelected("");
+              setMobileOpen(false);
+              setParams(section ? { section } : {});
+            }}>{label}</Button>;
+          })}
+        </nav>
+      </div>
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(230px,1fr)_minmax(0,2.25fr)]">
+        <section className={`min-w-0 rounded-xl border bg-card lg:min-h-[65svh] ${mobileOpen ? "hidden lg:block" : ""}`}>
           <header className="flex justify-between border-b px-4 py-3 font-semibold"><h2>{proposals ? "Для ознакомления" : "Ожидают решения"}</h2><span>{queue.data?.length ?? "—"}</span></header>
           {queue.isLoading ? <p className="p-4">Загрузка…</p> : queue.isError ? <p className="p-4" role="alert">{proposals ? "Не удалось загрузить предложения." : "Не удалось загрузить счета."}</p> : !queue.data?.length ? <p className="p-4 text-muted-foreground">{proposals ? "Нет коммерческих предложений для ознакомления." : "На согласовании пока нет счетов."}</p> : (
             <ul className="space-y-1 p-2">{queue.data.map(row => <li key={row.id}>
-              <button type="button" aria-current={row.id === current?.id} className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-3 text-left hover:bg-muted ${row.id === current?.id ? "bg-primary/10" : ""}`} onClick={() => { setSelected(row.id); setMobileOpen(true); }}>
+              <button type="button" aria-current={row.id === current?.id} className={`grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-3 text-left hover:bg-muted ${row.id === current?.id ? "bg-primary/10 ring-1 ring-inset ring-primary/20" : ""}`} onClick={() => { setSelected(row.id); setMobileOpen(true); }}>
                 <span className="min-w-0 break-words"><strong className="block">{row.description}</strong><small className="text-muted-foreground">{row.contractor || "Контрагент не указан"}</small></span>
-                <strong className="tabular-nums">{money(row.amount)}</strong>
+                <strong className="max-w-[9rem] break-words text-right text-sm tabular-nums">{money(row.amount)}</strong>
               </button>
             </li>)}</ul>
           )}
         </section>
-        {current && <div className={mobileOpen ? "" : "hidden md:block"}>
-          <Button variant="outline" className="mb-3 md:hidden" onClick={() => setMobileOpen(false)}>К списку</Button>
+        {current && <div className={mobileOpen ? "min-w-0" : "hidden min-w-0 lg:block"}>
+          <Button variant="outline" className="mb-3 min-h-11 lg:hidden" onClick={() => setMobileOpen(false)}>К списку</Button>
           <article className="flex min-w-0 flex-col rounded-xl border bg-card">
             <header className="px-4 py-4 sm:px-6"><h2 className="break-words text-xl font-semibold">{current.description}</h2><Link className="text-sm text-primary underline-offset-4 hover:underline" to={`/requests?request=${current.id}`}>Открыть заявку</Link></header>
-            <dl className="mx-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-4 sm:mx-6 lg:grid-cols-3">
+            <dl className="mx-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-4 sm:mx-6 xl:grid-cols-3">
               {[["Контрагент", current.contractor], [proposals ? "Сумма предложения" : "Сумма счёта", money(current.amount)], [proposals ? "Номер и дата предложения" : "Номер и дата счёта", [current.invoice_number, current.invoice_date].filter(Boolean).join(" · ")], ["Объект", current.request_objects?.name], ["Заявитель", current.applicant], ["Статус", current.status], ["Предоплата", current.payment_percentage == null ? null : `${current.payment_percentage}%`]].map(([label,value]) => <div key={label}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold">{value || "Не указано"}</dd></div>)}
             </dl>
             <section className="mx-4 border-b py-3 sm:mx-6"><h3 className="font-semibold">Обоснование заявителя</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{current.applicant_justification || "Не указано"}</p></section>
@@ -223,7 +229,7 @@ export default function DirectorInvoicesPage() {
               {preview.data && <Button variant="outline" asChild><a target="_blank" rel="noopener" href={preview.data}>Открыть файл</a></Button>}
               {preview.isError && <p className="text-sm text-destructive">Нет доступа к файлу.</p>}
             </div>
-            <div className="sticky bottom-0 z-10 order-last flex flex-wrap items-center gap-2 rounded-b-xl border-t bg-card px-4 py-3 md:static md:order-none md:rounded-none sm:px-6">
+            <div className="sticky bottom-0 z-10 order-last flex flex-wrap items-center gap-2 [&>button]:min-h-11 rounded-b-xl border-t bg-card px-4 py-3 lg:static lg:order-none lg:rounded-none sm:px-6">
               {proposals ? <>
                 <Button variant="outline" className="text-destructive" onClick={() => setAction("reject")}>Отклонить</Button>
                 <Button variant="outline" onClick={() => setAction("alternative")}>Найти альтернативу</Button>
@@ -234,18 +240,18 @@ export default function DirectorInvoicesPage() {
               <Button className={`ml-auto ${paymentClass}`} disabled={!preview.data} onClick={() => setAction("pay")}>В оплату</Button>
               </>}
             </div>
-            {preview.data && <iframe className="mx-4 mb-4 h-[520px] w-[calc(100%-2rem)] rounded-lg border bg-muted sm:mx-6 sm:w-[calc(100%-3rem)]" src={preview.data} title="Предпросмотр документа" />}
+            {preview.data && document && <DocumentPagePreview url={preview.data} filename={requestFileName(document)} />}
           </article>
         </div>}
       </div>
-      {!!dataWidgets.length && <div className={`grid gap-4 sm:grid-cols-2 ${mobileOpen ? "hidden md:grid" : ""}`}>{WIDGETS.filter(widget => widget.id !== "analytics" && widgets.includes(widget.id)).map(widget => <section key={widget.id} className="rounded-xl border bg-card p-4">
+      {!!dataWidgets.length && <div className={`grid gap-4 sm:grid-cols-2 ${mobileOpen ? "hidden lg:grid" : ""}`}>{WIDGETS.filter(widget => widget.id !== "analytics" && widgets.includes(widget.id)).map(widget => <section key={widget.id} className="rounded-xl border bg-card p-4">
         <h2 className="font-semibold">{widget.label}</h2>
         {widgetData.isError ? <p className="mt-2 text-destructive">Не удалось загрузить данные.</p> : widgetData.isLoading ? <p className="mt-2 text-muted-foreground">Загрузка…</p> : widgetData.data?.[widget.id]?.length
           ? <ul className="mt-2 divide-y">{widgetData.data[widget.id]!.map(row => <li key={row.id} className="py-2"><Link className="hover:underline" to={row.link!}>{row.title}</Link></li>)}</ul>
           : <p className="mt-2 text-muted-foreground">Пока нет записей.</p>}
       </section>)}</div>}
-      {widgets.includes("analytics") && <div className={mobileOpen ? "hidden md:block" : ""}>
-        <Suspense fallback={<p role="status">Загружаем аналитику…</p>}><ExecutiveAnalytics /></Suspense>
+      {widgets.includes("analytics") && <div className={mobileOpen ? "hidden lg:block" : ""}>
+        <Suspense fallback={<p role="status">Загружаем аналитику…</p>}><ExecutiveAnalytics embedded /></Suspense>
       </div>}
       <Dialog open={action !== null} onOpenChange={open => { if (!open && !busy) setAction(null); }}>
         <DialogContent><DialogHeader><DialogTitle>{proposalAction?.title ?? (action === "pay" ? "Точно отправить счёт в оплату?" : action === "service" ? "Направить счёт в ТО?" : "Вернуть на доработку")}</DialogTitle>
@@ -268,6 +274,6 @@ export default function DirectorInvoicesPage() {
           }}>Сохранить настройки</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   );
 }

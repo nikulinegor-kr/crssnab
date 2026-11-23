@@ -26,7 +26,7 @@ function SectionHead({ title, caption, children }: { title: string; caption?: st
 function LoadState({ loading, error, empty, children }: { loading: boolean; error: boolean; empty?: boolean; children: ReactNode }) {
  return loading ? <Skeleton className="h-28 w-full rounded-xl" /> : error ? <p role="alert" className="exec-error">Не удалось загрузить данные. Нажмите «Обновить данные».</p> : empty ? <p className="exec-empty">Записей с этими условиями нет.</p> : <>{children}</>;
 }
-export default function ExecutivePanelPage() {
+export default function ExecutivePanelPage({ embedded = false }: { embedded?: boolean }) {
  const panel = useExecutivePanel(), qc = useQueryClient(), { hasRouteAccess } = useUserPermissions();
  const [now, setNow] = useState(() => new Date());
  // Refresh the calendar boundary without polling the database while the tab is idle.
@@ -55,8 +55,8 @@ export default function ExecutivePanelPage() {
  const docs = events.warehouse.data ?? [];
  const warehouseRows = [{ label: "Приходы", count: docs.filter(d => d.doc_type === "receipt").length }, { label: "Выдачи сотрудникам", count: docs.filter(d => d.doc_type === "issue").length }, { label: "Перемещения", count: docs.filter(d => ["move", "transfer"].includes(d.doc_type)).length }];
  const otherDocs = docs.length - warehouseRows.reduce((n, r) => n + r.count, 0);
- return <div className="exec-panel" aria-busy={openingTask}>
-  <header className="exec-title"><div><h1>Панель руководителя</h1><p>{format(now, "d MMMM, EEEE", { locale: ru })}{panel.requestAttention.dataUpdatedAt > 0 && <> · Заявки обновлены в {format(panel.requestAttention.dataUpdatedAt, "HH:mm")}</>}</p></div><button className="exec-button" aria-label="Обновить данные" onClick={refresh} disabled={refreshing}><RefreshCw size={15} className={refreshing ? "animate-spin" : ""} /><span>{refreshing ? "Обновление…" : "Обновить данные"}</span></button></header>
+ return <div className={embedded ? "exec-panel exec-panel-embedded" : "exec-panel"} aria-busy={openingTask}>
+  <header className="exec-title"><div>{embedded ? <h2>Аналитика руководителя</h2> : <h1>Панель руководителя</h1>}<p>{format(now, "d MMMM, EEEE", { locale: ru })}{panel.requestAttention.dataUpdatedAt > 0 && <> · Заявки обновлены в {format(panel.requestAttention.dataUpdatedAt, "HH:mm")}</>}</p></div><button className="exec-button" aria-label="Обновить данные" onClick={refresh} disabled={refreshing}><RefreshCw size={15} className={refreshing ? "animate-spin" : ""} /><span>{refreshing ? "Обновление…" : "Обновить данные"}</span></button></header>
   {!panel.orgId ? <p className="exec-empty">Выберите организацию</p> : <>
    <section className="exec-snapshot" aria-label="Текущая ситуация"><div className="exec-snapshot-label"><h2>Сейчас</h2><p>Все открытые заявки</p></div><div className="exec-summary">
     <Link to={EXEC_LINKS.openRequests}><span>В работе</span><strong>{metric(panel.openRequests)} <small>заявок</small></strong></Link>

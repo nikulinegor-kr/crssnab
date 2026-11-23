@@ -23,3 +23,6 @@
   .exec-period-head>label{display:flex;justify-content:space-between;margin-top:12px}
   .exec-team{font-size:12px}
 }
+
+.exec-panel.exec-panel-embedded { margin: 0; padding: 0; }
+.exec-panel-embedded .exec-title { padding: 0; }
