@@ -160,7 +160,7 @@ export default function DirectorInvoicesPage() {
   return (
     <main className="mx-auto grid w-full max-w-[1420px] gap-5 px-4 py-6 lg:px-8">
       <header className={`flex flex-wrap items-start justify-between gap-3 ${mobileOpen ? "hidden md:flex" : ""}`}>
-        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Решения по счетам</h1><p className="mt-1 text-muted-foreground">Заявки со статусом «Счёт на оплату»</p></div>
+        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Счета на согласование в оплату</h1><p className="mt-1 text-muted-foreground">Заявки со статусом «Счёт на оплату»</p></div>
         <Button variant="outline" onClick={() => { setPreferences(widgets); setPreferLanding(landing); setSettings(true); }}>Настроить страницу</Button>
       </header>
       <div className="grid items-start gap-4 md:grid-cols-[minmax(230px,0.7fr)_minmax(0,1.5fr)]">
@@ -216,7 +216,7 @@ export default function DirectorInvoicesPage() {
         </DialogContent>
       </Dialog>
       <Dialog open={settings} onOpenChange={setSettings}>
-        <DialogContent><DialogHeader><DialogTitle>Настроить страницу</DialogTitle><DialogDescription>Решения по счетам видны всегда.</DialogDescription></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>Настроить страницу</DialogTitle><DialogDescription>Счета на согласование в оплату видны всегда.</DialogDescription></DialogHeader>
           <fieldset className="grid divide-y">{WIDGETS.map(widget => <label key={widget.id} className="flex min-h-11 items-center justify-between gap-4">{widget.label}<input aria-label={widget.label} className="size-5 accent-primary" type="checkbox" checked={preferences.includes(widget.id)} onChange={event => setPreferences(current => event.target.checked ? [...current, widget.id] : current.filter(key => key !== widget.id))} /></label>)}
             <label className="flex min-h-11 items-center justify-between gap-4">Открывать после входа<input className="size-5 accent-primary" type="checkbox" checked={preferLanding} onChange={event => setPreferLanding(event.target.checked)} /></label></fieldset>
           <DialogFooter><Button variant="outline" onClick={() => setSettings(false)}>Отмена</Button><Button onClick={() => {
