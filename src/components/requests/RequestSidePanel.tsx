@@ -1168,6 +1168,7 @@ export const RequestSidePanel = ({
               />
               <RequestInlineField
                 label="Приоритет"
+                className="request-view-priority"
                 type="select"
                 value={request.priority || "Планово"}
                 options={PRIORITIES.map((value) => ({ value, label: value }))}

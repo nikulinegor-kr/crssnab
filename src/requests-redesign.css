@@ -1285,7 +1285,14 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   padding-top: 12px;
 }
 .request-view .request-view-meta {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.request-view-priority,
+.request-view-priority .request-inline-field__display {
+  text-align: end;
+}
+.request-view-priority .request-inline-field__display {
+  justify-content: flex-end;
 }
 .request-view .request-view-field-grid .request-panel-field {
   grid-template-columns: minmax(0, 1fr);
