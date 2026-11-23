@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useToast } from "./use-toast";
 import { normalizeNotificationLink } from "@/lib/notificationLinks";
+import { NOTIFICATION_BELL_FILTER, NOTIFICATION_BELL_READ_FILTER } from "@/lib/notificationBell";
 import { useAuthUserId } from "./useOrgMembership";
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 export interface Notification {
   id: string;
@@ -88,19 +89,19 @@ export const useNotifications = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Получаем уведомления пользователя
+  // Limit the bell's unread list before pagination so other events cannot crowd it out.
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications", userId, currentOrgId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!userId || !currentOrgId) return [];
 
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("organization_id", currentOrgId)
         .eq("is_read", false)
+        .or(NOTIFICATION_BELL_FILTER)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -112,7 +113,7 @@ export const useNotifications = () => {
       }
       return [...unique.values()];
     },
-    enabled: !!currentOrgId,
+    enabled: !!currentOrgId && !!userId,
   });
 
   // Подписываемся на новые уведомления
@@ -149,16 +150,15 @@ export const useNotifications = () => {
   // Отметить все как прочитанные
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!userId || !currentOrgId) return;
 
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("organization_id", currentOrgId)
         .eq("is_read", false)
-        .neq("type", "task_assigned");
+        .or(NOTIFICATION_BELL_READ_FILTER);
 
       if (error) throw error;
     },
