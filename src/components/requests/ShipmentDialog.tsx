@@ -10,6 +10,7 @@ import {
   SHIPMENT_STATUSES,
   TRANSPORT_TYPES,
   type RequestShipment,
+  type ShipmentMode,
   type ShipmentItem,
   type ShipmentStatus,
   type TransportType,
@@ -28,6 +29,7 @@ interface Props {
   requestId: string;
   organizationId: string;
   shipment?: RequestShipment | null;
+  mode?: ShipmentMode;
 }
 
 interface DraftItem {
@@ -37,7 +39,8 @@ interface DraftItem {
   unit: string;
 }
 
-export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment }: Props) {
+export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment, mode }: Props) {
+  const shipmentMode = shipment ? shipment.shipment_mode : mode;
   const upsert = useUpsertShipment();
   const upsertItem = useUpsertShipmentItem();
   const deleteItem = useDeleteShipmentItem();
@@ -193,6 +196,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
         request_id: requestId,
         organization_id: organizationId,
         transport_type: transportType,
+        shipment_mode: shipmentMode ?? null,
         transport_company: transportCompany.trim() || null,
         origin_city: originCity.trim() || null,
         destination_city: destinationCity.trim() || null,
@@ -220,7 +224,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
       <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {shipment ? `Перевозка №${shipment.sequence_number}` : "Новая перевозка"}
+            {shipment ? `Перевозка №${shipment.sequence_number}` : shipmentMode === "carrier" ? "Отгрузка через ТК" : "Новая перевозка"}
           </DialogTitle>
         </DialogHeader>
 
@@ -292,8 +296,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
           </div>
 
           <div className="space-y-1">
-            <Label>Госномер автомобиля</Label>
-            <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder="А123БВ77" />
+            <Label>{transportType === "container" ? "Номер контейнера" : transportType === "rail" ? "Номер вагона" : "Госномер автомобиля"}</Label>
+            <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder={transportType === "auto" ? "А123БВ77" : undefined} />
           </div>
           <div className="space-y-1">
             <Label>Прицеп</Label>

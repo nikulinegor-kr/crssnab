@@ -18,6 +18,8 @@ export const SHIPMENT_STATUSES: ShipmentStatus[] = [
   "Завершена",
 ];
 
+export type ShipmentMode = "carrier" | "dedicated";
+
 export type TransportType = "auto" | "container" | "rail" | "air" | "sea";
 
 export const TRANSPORT_TYPES: { value: TransportType; label: string; emoji: string }[] = [
@@ -34,6 +36,7 @@ export interface RequestShipment {
   request_id: string;
   sequence_number: number;
   transport_type: TransportType;
+  shipment_mode: ShipmentMode | null;
   transport_company: string | null;
   origin_city: string | null;
   destination_city: string | null;
@@ -76,7 +79,7 @@ export interface ShipmentItem {
 
 const sb: any = supabase;
 
-const SHIPMENT_SELECT = "id,organization_id,request_id,sequence_number,transport_type,transport_company,origin_city,destination_city,vehicle_number,trailer_number,driver_name,driver_phone,waybill_number,load_date,planned_arrival_date,actual_arrival_date,status,comment,document_urls,created_at,updated_at";
+const SHIPMENT_SELECT = "id,organization_id,request_id,sequence_number,transport_type,shipment_mode,transport_company,origin_city,destination_city,vehicle_number,trailer_number,driver_name,driver_phone,waybill_number,load_date,planned_arrival_date,actual_arrival_date,status,comment,document_urls,created_at,updated_at";
 const SHIPMENT_ITEM_SELECT = "id,organization_id,shipment_id,product_id,material_name,quantity,unit";
 
 export function useRequestShipments(requestId: string | null | undefined) {

@@ -37,17 +37,14 @@ export const LogisticsSection = ({
   const invoiceRequired = hasAddedInvoice(form.watch(), hasInvoiceFile);
   const datesRequired = form.watch("status") === "В пути";
   const { data: existingShipments = [] } = useRequestShipments(requestId);
-  const [mode, setMode] = useState<"single" | "multi">("single");
-  const [autoApplied, setAutoApplied] = useState(false);
-
-  const hasSeparateRoutes = existingShipments.length > 1 || existingShipments.some(shipment => shipment.origin_city || shipment.destination_city);
-
-  useEffect(() => {
-    if (!autoApplied && requestId && hasSeparateRoutes) {
-      setMode("multi");
-      setAutoApplied(true);
-    }
-  }, [autoApplied, requestId, hasSeparateRoutes]);
+  const [selectedMode, setSelectedMode] = useState<"single" | "carrier" | "dedicated">();
+  useEffect(() => setSelectedMode(undefined), [requestId]);
+  const hasRoutes = existingShipments.length > 1 || existingShipments.some(shipment =>
+    shipment.shipment_mode || shipment.origin_city || shipment.destination_city);
+  const savedMode = hasRoutes
+    ? existingShipments.every(shipment => shipment.shipment_mode === "dedicated") ? "dedicated" : "carrier"
+    : "single";
+  const mode = selectedMode ?? savedMode;
 
   return (
     <FormSectionCard
@@ -60,14 +57,11 @@ export const LogisticsSection = ({
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <span className="text-xs text-muted-foreground">Тип доставки</span>
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "single" | "multi")}>
-          <TabsList className="h-8">
-            <TabsTrigger type="button" value="single" className="text-xs px-3" disabled={disabled}>
-              Обычная доставка
-            </TabsTrigger>
-            <TabsTrigger type="button" value="multi" className="text-xs px-3" disabled={disabled}>
-              Несколько перевозок
-            </TabsTrigger>
+        <Tabs value={mode} onValueChange={(value) => setSelectedMode(value as typeof mode)}>
+          <TabsList className="h-auto flex-wrap justify-start">
+            <TabsTrigger type="button" value="single" className="min-h-9 px-3 text-xs">1 ТК</TabsTrigger>
+            <TabsTrigger type="button" value="carrier" className="min-h-9 px-3 text-xs">Несколько ТК</TabsTrigger>
+            <TabsTrigger type="button" value="dedicated" className="min-h-9 px-3 text-xs">Машины, контейнеры и вагоны</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -143,7 +137,7 @@ export const LogisticsSection = ({
       {mode === "single" ? (
         <FormSectionCard
           bare
-          title="Логистика · Обычная доставка"
+          title="Логистика · 1 ТК"
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
         >
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -207,7 +201,7 @@ export const LogisticsSection = ({
       ) : (
         <FormSectionCard
           bare
-          title="Логистика · Несколько перевозок"
+          title="Отдельные отгрузки"
           icon={<Boxes className="h-4 w-4 text-muted-foreground" />}
         >
           {requestId && organizationId ? (
@@ -215,6 +209,7 @@ export const LogisticsSection = ({
               requestId={requestId}
               organizationId={organizationId}
               canEdit={!disabled}
+              mode={mode}
             />
           ) : (
             <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">

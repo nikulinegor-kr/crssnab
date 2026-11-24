@@ -10,6 +10,7 @@ import {
   useDeleteShipmentItem,
   useRequestShipments,
   formatShipmentRoute,
+  type ShipmentMode,
   useShipmentItems,
   useUpsertShipmentItem,
   type RequestShipment,
@@ -140,9 +141,10 @@ interface PanelProps {
   requestId: string;
   organizationId: string;
   canEdit?: boolean;
+  mode?: ShipmentMode;
 }
 
-export function RequestShipmentsPanel({ requestId, organizationId, canEdit = true }: PanelProps) {
+export function RequestShipmentsPanel({ requestId, organizationId, canEdit = true, mode }: PanelProps) {
   const { data: shipments = [], isLoading } = useRequestShipments(requestId);
   const del = useDeleteShipment();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -163,11 +165,11 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
 
   return (
     <div className="bg-muted/30 border-l-4 border-primary/50 p-3 space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm font-semibold">Перевозки по заявке</div>
         {canEdit && (
           <Button type="button" size="sm" variant="default" onClick={openCreate}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Добавить перевозку
+            <Plus className="h-3.5 w-3.5 mr-1" /> {mode === "carrier" ? "Добавить отгрузку через ТК" : "Добавить перевозку"}
           </Button>
         )}
       </div>
@@ -176,7 +178,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
         <div className="text-xs text-muted-foreground">Загрузка…</div>
       ) : shipments.length === 0 ? (
         <div className="text-sm text-muted-foreground italic py-4 text-center">
-          Перевозок ещё нет. Нажмите «Добавить перевозку», чтобы создать первую.
+          Перевозок ещё нет.
         </div>
       ) : (
         <div className="space-y-2">
@@ -186,6 +188,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 <div className="flex items-center gap-2 flex-wrap">
                   <TypeIcon type={s.transport_type} className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-sm">№{s.sequence_number}</span>
+                  {s.shipment_mode && <span className="text-xs text-muted-foreground">{s.shipment_mode === "carrier" ? "Через ТК" : "Цельная перевозка"}</span>}
                   {formatShipmentRoute(s) && <span className="text-sm">{formatShipmentRoute(s)}</span>}
                   {s.transport_company && <span className="text-sm text-muted-foreground">{s.transport_company}</span>}
                   {s.vehicle_number && (
@@ -241,6 +244,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
         requestId={requestId}
         organizationId={organizationId}
         shipment={editing}
+        mode={mode}
       />
     </div>
   );
