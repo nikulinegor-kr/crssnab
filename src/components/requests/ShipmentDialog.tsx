@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Package, Sparkles, Loader2 } from "lucide-react";
 import {
   SHIPMENT_STATUSES,
+  CARRIER_SHIPMENT_STATUSES,
   carrierShipmentStatus,
   TRANSPORT_TYPES,
   type RequestShipment,
@@ -185,16 +187,16 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const handleSave = async () => {
     if (saving) return;
     const inTransit = status === "В пути" || status === "Загружена";
-    const arrived = ["Прибыла", "Разгружена", "Завершена"].includes(status);
+    const arrived = ["Доставлено", "Прибыла", "Разгружена", "Завершена"].includes(status);
     const error = inTransit && (!loadDate || !plannedDate)
       ? "Укажите дату отгрузки и плановую дату доставки перевозки."
-      : !carrierForm && arrived && (!loadDate || !actualDate)
-        ? "Укажите дату отгрузки и фактическую дату доставки перевозки."
+      : arrived && (!actualDate || (!carrierForm && !loadDate))
+        ? (carrierForm ? "Укажите фактическую дату доставки." : "Укажите дату отгрузки и фактическую дату доставки перевозки.")
         : loadDate && ((plannedDate && plannedDate < loadDate) || (actualDate && actualDate < loadDate))
           ? "Дата доставки не может быть раньше даты отгрузки."
           : null;
-    if (error) {
-      toast({ title: "Проверьте даты перевозки", description: error, variant: "destructive" });
+    if (error || (carrierForm && actualDate > format(new Date(), "yyyy-MM-dd"))) {
+      toast({ title: "Проверьте даты перевозки", description: error || "Фактическая дата доставки не может быть в будущем.", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -216,7 +218,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
         waybill_number: waybillNumber || null,
         load_date: loadDate || null,
         planned_arrival_date: plannedDate || null,
-        actual_arrival_date: actualDate || null,
+        actual_arrival_date: carrierForm && !arrived ? null : actualDate || null,
         status,
         comment: comment || null,
       } as any);
@@ -271,6 +273,27 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+          {carrierForm && shipment && (
+            <div className="space-y-1">
+              <Label htmlFor="carrier-shipment-status">Статус</Label>
+              <Select value={status} onValueChange={value => {
+                setStatus(value as ShipmentStatus);
+                setActualDate(previous => value === "Доставлено" ? previous || format(new Date(), "yyyy-MM-dd") : "");
+              }}>
+                <SelectTrigger id="carrier-shipment-status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CARRIER_SHIPMENT_STATUSES.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {carrierForm && status === "Доставлено" && (
+            <div className="space-y-1">
+              <Label htmlFor="carrier-actual-date">Фактическая дата доставки</Label>
+              <Input id="carrier-actual-date" type="date" value={actualDate} min={loadDate || undefined}
+                max={format(new Date(), "yyyy-MM-dd")} onChange={event => setActualDate(event.target.value)} />
+            </div>
+          )}
           {!carrierForm && <>
           <div className="space-y-1">
             <Label>Статус</Label>

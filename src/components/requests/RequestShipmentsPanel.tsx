@@ -1,4 +1,4 @@
-import { CarrierShipmentStatus } from "./CarrierShipmentStatus";
+import { CarrierShipmentRow } from "./CarrierShipmentRow";
 import { type MouseEvent, useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -195,8 +195,26 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
     setDialogOpen(true);
   };
 
+  const shipmentActions = (shipment: RequestShipment) => canEdit && (
+    <div className="flex shrink-0 gap-0.5">
+      <Button type="button" size="icon" variant="ghost" className="size-9" aria-label={`Редактировать перевозку №${shipment.sequence_number}`}
+        onClick={event => openEdit(shipment, event)}>
+        <Pencil className="size-4" />
+      </Button>
+      <Button type="button" size="icon" variant="ghost" className="size-9 text-destructive hover:text-destructive"
+        aria-label={`Удалить перевозку №${shipment.sequence_number}`}
+        onClick={() => {
+          if (confirm(`Удалить перевозку №${shipment.sequence_number}?`)) {
+            del.mutate({ id: shipment.id, request_id: requestId });
+          }
+        }}>
+        <Trash2 className="size-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="bg-muted/30 border-l-4 border-primary/50 p-3 space-y-2">
+    <div className="space-y-3 rounded-lg border bg-card p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm font-semibold">Перевозки по заявке</div>
         {canEdit && (
@@ -213,8 +231,10 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
           Перевозок ещё нет.
         </div>
       ) : (
-        <div className="space-y-2">
-          {shipments.map((s) => (
+        <div className="request-shipments-tree__branches">
+          {shipments.map((s) => s.shipment_mode === "carrier" ? (
+            <CarrierShipmentRow key={s.id} shipment={s} canEdit={canEdit} actions={shipmentActions(s)} />
+          ) : (
             <div key={s.id} className="bg-background rounded-md border border-border p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -226,30 +246,9 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                   {s.vehicle_number && (
                     <Badge variant="outline" className="font-mono text-[11px]">{s.vehicle_number}</Badge>
                   )}
-                  {s.shipment_mode === "carrier"
-                    ? <CarrierShipmentStatus shipment={s} canEdit={canEdit} />
-                    : <Badge variant="outline" className={`text-[11px] ${statusBadgeClass(s.status)}`}>{s.status}</Badge>}
+                  <Badge variant="outline" className={`text-[11px] ${statusBadgeClass(s.status)}`}>{s.status}</Badge>
                 </div>
-                {canEdit && (
-                  <div className="flex gap-1">
-                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={(event) => openEdit(s, event)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => {
-                        if (confirm(`Удалить перевозку №${s.sequence_number}?`)) {
-                          del.mutate({ id: s.id, request_id: requestId });
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
+                {shipmentActions(s)}
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-xs mt-2">
@@ -266,7 +265,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 <div className="text-xs text-muted-foreground mt-1 italic">{s.comment}</div>
               )}
 
-              {s.shipment_mode !== "carrier" && <ShipmentItemsBlock shipment={s} organizationId={organizationId} canEdit={canEdit} />}
+              <ShipmentItemsBlock shipment={s} organizationId={organizationId} canEdit={canEdit} />
             </div>
           ))}
         </div>

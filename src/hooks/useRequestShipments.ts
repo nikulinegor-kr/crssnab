@@ -188,8 +188,11 @@ export function useUpsertShipment() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data: any) => {
-      qc.invalidateQueries({ queryKey: ["request-shipments", data.request_id] });
+    onSuccess: (data: RequestShipment) => {
+      const key = ["request-shipments", data.request_id];
+      qc.setQueryData<RequestShipment[]>(key, previous =>
+        previous?.map(shipment => shipment.id === data.id ? { ...shipment, ...data } : shipment));
+      qc.invalidateQueries({ queryKey: key });
       qc.invalidateQueries({ queryKey: ["shipments-summary"] });
     },
   });
