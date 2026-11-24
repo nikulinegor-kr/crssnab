@@ -459,58 +459,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
       const date = new Date(data.request_date);
       const requestNumber = `REQ-${date.getFullYear()}-${Date.now()}`;
 
-      let photoUrls: string[] = [];
-      let documentUrls: string[] = [];
-
-      const sanitizeFilename = (filename: string): string => {
-        const extension = filename.split('.').pop() || '';
-        const sanitized = filename
-          .replace(/[^\x00-\x7F]/g, '')
-          .replace(/[^a-zA-Z0-9.-]/g, '_')
-          .replace(/_{2,}/g, '_')
-          .replace(/^_+|_+$/g, '');
-        
-        if (!sanitized || sanitized === `.${extension}`) {
-          return `file_${Date.now()}.${extension}`;
-        }
-        
-        return sanitized;
-      };
-
-      // Upload photos
-      for (const photoFile of photoFiles) {
-        const sanitizedPhotoName = sanitizeFilename(photoFile.name);
-        const photoPath = `${requestNumber}/${Date.now()}-${sanitizedPhotoName}`;
-        const { error: photoError } = await supabase.storage
-          .from("request-photos")
-          .upload(photoPath, photoFile);
-
-        if (photoError) throw photoError;
-
-        const { data: photoData } = supabase.storage
-          .from("request-photos")
-          .getPublicUrl(photoPath);
-        
-        photoUrls.push(photoData.publicUrl);
-      }
-
-      // Upload documents
-      for (const documentFile of documentFiles) {
-        const sanitizedDocName = sanitizeFilename(documentFile.name);
-        const documentPath = `${requestNumber}/${Date.now()}-${sanitizedDocName}`;
-        const { error: documentError } = await supabase.storage
-          .from("request-documents")
-          .upload(documentPath, documentFile);
-
-        if (documentError) throw documentError;
-
-        const { data: documentData } = supabase.storage
-          .from("request-documents")
-          .getPublicUrl(documentPath);
-        
-        documentUrls.push(documentData.publicUrl);
-      }
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
@@ -561,10 +509,6 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         planned_delivery_date: data.planned_delivery_date || null,
         reserve_on_warehouse: data.reserve_on_warehouse || false,
         equipment_id: data.equipment_id || null,
-        photo_url: photoUrls[0] || null,
-        document_url: documentUrls[0] || null,
-        photo_urls: photoUrls,
-        document_urls: documentUrls,
         organization_id: currentOrgId,
         created_by: user.id,
       };
@@ -577,10 +521,54 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
       if (error) throw error;
 
-      toast({
-        title: "Успешно",
-        description: "Заявка создана",
-      });
+      const sanitizeFilename = (filename: string): string => {
+        const extension = filename.split('.').pop() || '';
+        const sanitized = filename
+          .replace(/[^\x00-\x7F]/g, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/_{2,}/g, '_')
+          .replace(/^_+|_+$/g, '');
+
+        if (!sanitized || sanitized === `.${extension}`) {
+          return `file_${Date.now()}.${extension}`;
+        }
+
+        return sanitized;
+      };
+
+      // Storage checks organization access against the saved request.
+      const uploadAttachments = (bucket: "request-photos" | "request-documents", files: File[]) =>
+        Promise.allSettled(files.map(async (file, index) => {
+          const path = `${newRequest.request_number}/${Date.now()}${index}-${sanitizeFilename(file.name)}`;
+          const storage = supabase.storage.from(bucket);
+          const { error: uploadError } = await storage.upload(path, file);
+          if (uploadError) throw uploadError;
+          return storage.getPublicUrl(path).data.publicUrl;
+        }));
+
+      const [photos, documents] = await Promise.all([
+        uploadAttachments("request-photos", photoFiles),
+        uploadAttachments("request-documents", documentFiles),
+      ]);
+      const photoUrls = photos.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
+      const documentUrls = documents.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
+      let attachmentsFailed = photoUrls.length !== photoFiles.length || documentUrls.length !== documentFiles.length;
+
+      if (photoUrls.length || documentUrls.length) {
+        const { error: attachmentError } = await supabase.from("requests").update({
+          photo_url: photoUrls[0] ?? null,
+          document_url: documentUrls[0] ?? null,
+          photo_urls: photoUrls,
+          document_urls: documentUrls,
+        }).eq("id", newRequest.id).eq("organization_id", currentOrgId).select("id").single();
+        attachmentsFailed ||= Boolean(attachmentError);
+      }
+
+      toast(attachmentsFailed ? {
+        title: "Заявка создана, часть файлов не прикрепилась",
+        description: `Откройте заявку ${newRequest.request_number} и добавьте отсутствующие файлы.`,
+        variant: "destructive",
+      } : { title: "Успешно", description: "Заявка создана" });
 
       // Send Telegram notification if auto-send is enabled
       if (newRequest) {
