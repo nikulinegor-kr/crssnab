@@ -302,6 +302,13 @@
       "when": 1795501193093,
       "tag": "0042_require_payment_and_transit_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1795513300890,
+      "tag": "0043_add_request_shipment_cities",
+      "breakpoints": true
     }
   ]
 }

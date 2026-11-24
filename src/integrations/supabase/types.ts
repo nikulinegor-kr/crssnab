@@ -3631,12 +3631,14 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string | null
+          destination_city: string | null
           document_urls: Json
           driver_name: string | null
           driver_phone: string | null
           id: string
           load_date: string | null
           organization_id: string
+          origin_city: string | null
           planned_arrival_date: string | null
           request_id: string
           sequence_number: number
@@ -3653,12 +3655,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          destination_city?: string | null
           document_urls?: Json
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
           load_date?: string | null
           organization_id: string
+          origin_city?: string | null
           planned_arrival_date?: string | null
           request_id: string
           sequence_number?: number
@@ -3675,12 +3679,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          destination_city?: string | null
           document_urls?: Json
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
           load_date?: string | null
           organization_id?: string
+          origin_city?: string | null
           planned_arrival_date?: string | null
           request_id?: string
           sequence_number?: number
