@@ -133,8 +133,8 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
             control={form.control}
             name="justification_not_required"
             render={({ field }) => (
-              <label className="mb-2 flex min-h-9 items-center gap-2 text-sm">
-                <input type="checkbox" className="size-4 accent-primary" checked={field.value === true}
+              <label className="mb-2 inline-flex min-h-9 w-fit cursor-pointer items-center gap-2 text-sm">
+                <input type="checkbox" className="request-justification-checkbox accent-primary" checked={field.value === true}
                   disabled={disabled} onChange={event => {
                     field.onChange(event.target.checked);
                     if (event.target.checked) form.clearErrors("applicant_justification");

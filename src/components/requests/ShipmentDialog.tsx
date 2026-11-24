@@ -93,7 +93,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
       if (data?.waybill_number) setWaybillNumber(data.waybill_number);
       if (data?.load_date) setLoadDate(data.load_date);
       if (data?.planned_arrival_date) setPlannedDate(data.planned_arrival_date);
-      if (Array.isArray(data?.items) && data.items.length) {
+      if (!carrierForm && Array.isArray(data?.items) && data.items.length) {
         const recognized: DraftItem[] = data.items
           .filter((i: any) => i?.material_name)
           .map((i: any) => ({
@@ -187,7 +187,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
     const arrived = ["Прибыла", "Разгружена", "Завершена"].includes(status);
     const error = inTransit && (!loadDate || !plannedDate)
       ? "Укажите дату отгрузки и плановую дату доставки перевозки."
-      : arrived && (!loadDate || !actualDate)
+      : !carrierForm && arrived && (!loadDate || !actualDate)
         ? "Укажите дату отгрузки и фактическую дату доставки перевозки."
         : loadDate && ((plannedDate && plannedDate < loadDate) || (actualDate && actualDate < loadDate))
           ? "Дата доставки не может быть раньше даты отгрузки."
@@ -219,7 +219,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
         status,
         comment: comment || null,
       } as any);
-      await saveItems((saved as any).id);
+      if (!carrierForm) await saveItems((saved as any).id);
       toast({ title: shipment ? "Перевозка обновлена" : "Перевозка добавлена" });
       onOpenChange(false);
     } catch (e: any) {
@@ -270,6 +270,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+          {!carrierForm && <>
           <div className="space-y-1">
             <Label>Статус</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as ShipmentStatus)}>
@@ -289,6 +290,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             <Input id="shipment-destination-city" value={destinationCity} maxLength={120} onChange={e => setDestinationCity(e.target.value)} />
           </div>
 
+          </>}
+
           <div className="space-y-1">
             <Label>Транспортная компания</Label>
             <ComboboxInput value={transportCompany} onChange={setTransportCompany}
@@ -306,15 +309,15 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             <Input type="date" value={loadDate} onChange={(e) => setLoadDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Плановая дата доставки</Label>
+            <Label>{carrierForm ? "Дата прихода" : "Плановая дата доставки"}</Label>
             <Input type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
           </div>
+          {!carrierForm && <>
           <div className="space-y-1">
             <Label>Фактическая дата доставки</Label>
             <Input type="date" value={actualDate} onChange={(e) => setActualDate(e.target.value)} />
           </div>
 
-          {!carrierForm && <>
           <div className="space-y-1">
             <Label>Тип перевозки</Label>
             <Select value={transportType} onValueChange={(v) => setTransportType(v as TransportType)}>
@@ -346,7 +349,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
 
           </>}
 
-          <details open={!carrierForm} className="sm:col-span-2 rounded-md border px-3 py-2">
+          {!carrierForm && <details open className="sm:col-span-2 rounded-md border px-3 py-2">
             <summary className="cursor-pointer text-sm font-medium">Комментарий и материалы{items.length > 0 ? ` (${items.length})` : ""}</summary>
             <div className="mt-3 space-y-3">
           <div className="space-y-1 sm:col-span-2">
@@ -404,7 +407,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             )}
           </div>
             </div>
-          </details>
+          </details>}
         </div>
 
         <DialogFooter>

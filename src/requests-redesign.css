@@ -1492,3 +1492,12 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-view-heading { grid-template-columns: minmax(0, 1fr); }
   .request-view .request-view-nav__item { min-height: 44px; }
 }
+
+/* Keep the waiver compact within the full-width request form controls. */
+.request-form-redesign .request-top input.request-justification-checkbox {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  flex: none;
+  margin: 0;
+}
