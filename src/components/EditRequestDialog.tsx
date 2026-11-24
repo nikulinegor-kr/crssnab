@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
+import { revealRequestErrors, validateRequiredZrsFields } from "./create-request/requiredZrsFields";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
@@ -142,7 +143,7 @@ const requestSchema = z.object({
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
   equipment_id: z.string().optional(),
-});
+}).superRefine(validateRequiredZrsFields);
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
@@ -364,7 +365,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       amount_2: (request as any).amount_2 ?? null,
       invoice_number_3: (request as any).invoice_number_3 || "",
       amount_3: (request as any).amount_3 ?? null,
-      payment_percentage: request.payment_percentage ?? 0,
+      payment_percentage: request.payment_percentage ?? null,
       payment_percent: (request as any).payment_percent ?? 0,
       shipment_date: request.shipment_date || "",
       delivery_date: request.delivery_date || "",
@@ -534,7 +535,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: data.executor || null,
         object_id: data.object_id || null,
         parent_request_id: data.parent_request_id || null,
-        estimated_delivery_days: data.estimated_delivery_days || null,
+        estimated_delivery_days: data.estimated_delivery_days ?? null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
@@ -615,7 +616,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        form.handleSubmit(onSubmit)();
+        form.handleSubmit(onSubmit, revealRequestErrors)();
       }
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -755,7 +756,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         executor: data.executor || null,
         object_id: data.object_id || null,
         parent_request_id: data.parent_request_id || null,
-        estimated_delivery_days: data.estimated_delivery_days || null,
+        estimated_delivery_days: data.estimated_delivery_days ?? null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
@@ -1031,7 +1032,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
     <Form {...form}>
       <form
         id={formId}
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, revealRequestErrors)}
         className="request-form-stack"
         onFocus={handleInputFocus as any}
       >

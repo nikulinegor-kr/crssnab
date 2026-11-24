@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { revealRequestErrors, validateRequiredZrsFields } from "./create-request/requiredZrsFields";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
@@ -143,7 +144,7 @@ const requestSchema = z.object({
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
   equipment_id: z.string().optional(),
-});
+}).superRefine(validateRequiredZrsFields);
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
@@ -529,7 +530,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         executor: data.executor || null,
         object_id: data.object_id || null,
         parent_request_id: data.parent_request_id || null,
-        estimated_delivery_days: data.estimated_delivery_days || null,
+        estimated_delivery_days: data.estimated_delivery_days ?? null,
         order_days: data.order_days ?? null,
         availability_delivery_time: data.availability_delivery_time || null,
         contractor: data.contractor || null,
@@ -722,7 +723,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
     <Form {...form}>
       <form
         id={formId}
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, revealRequestErrors)}
         className="request-form-stack"
         onFocus={handleInputFocus as any}
       >
@@ -934,7 +935,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           <DialogHeader className="request-form-header shrink-0 px-6 pt-6 pb-4 pr-16 text-left">
             <DialogTitle>Новая заявка</DialogTitle>
             <DialogDescription>
-              Заполните поля со звёздочкой. Счёт и доставку можно добавить позже.
+              Заполните поля со звёздочкой. Файл счёта можно прикрепить позже.
             </DialogDescription>
           </DialogHeader>
           <RequestFormNav />

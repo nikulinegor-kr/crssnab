@@ -26,8 +26,8 @@ export function buildRequestZrsLines(values: RequestZrsValues, objectName?: stri
       : []),
     `Приоритет: ${values.priority || "-"}`,
     `Наличие: ${values.availability_delivery_time || "-"}`,
-    `Срок доставки: ${values.estimated_delivery_days ? `${values.estimated_delivery_days} дн.` : "-"}`,
-    `Оплата: ${values.payment_percentage ?? 0}%`,
+    `Срок доставки: ${values.estimated_delivery_days != null ? `${values.estimated_delivery_days} дн.` : "-"}`,
+    `Оплата: ${values.payment_percentage != null ? `${values.payment_percentage}%` : "-"}`,
     `Исполнил: ${values.executor || "-"}`,
   ];
 }

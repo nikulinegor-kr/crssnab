@@ -12,6 +12,7 @@ import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
 import { resolveSignedUrl } from "@/lib/storageUrl";
 import { requestFileName } from "@/lib/requestDocuments";
 import { saveImageFile } from "@/lib/saveImage";
+import { revealRequestErrors } from "./requiredZrsFields";
 import { buildRequestZrsLines } from "@/lib/requestZrs";
 
 interface AdditionalSectionProps {
@@ -103,6 +104,12 @@ export const AdditionalSection = ({
   };
 
   const handleInsertIntoInvoice = async () => {
+    const fields = ["description", "applicant", "priority", "availability_delivery_time", "estimated_delivery_days", "payment_percentage", "executor"];
+    if (!await form.trigger(fields)) {
+      revealRequestErrors(Object.fromEntries(fields.map(name => [name, form.getFieldState(name).error])));
+      toast({ title: "Заполните обязательные поля ЗРС", description: "Проверьте поля со звёздочкой в заявке, счетах и логистике.", variant: "destructive" });
+      return;
+    }
     if (!sources.length) { pdfInputRef.current?.click(); return; }
     const source = sources.find(item => item.key === sourceKey);
     if (!source) { toast({ title: "Выберите счёт", description: "В заявке несколько счетов — укажите нужный файл" }); return; }

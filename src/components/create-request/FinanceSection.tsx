@@ -515,7 +515,7 @@ export const FinanceSection = ({
             name="availability_delivery_time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Наличие</FormLabel>
+                <FormLabel className="text-xs">Наличие *</FormLabel>
                 <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
@@ -569,7 +569,7 @@ export const FinanceSection = ({
                 name="payment_percentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">% предоплаты</FormLabel>
+                    <FormLabel className="text-xs">% предоплаты *</FormLabel>
                     <Select
                       value={field.value != null ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}

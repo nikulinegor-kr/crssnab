@@ -65,6 +65,32 @@ export const LogisticsSection = ({
         </Tabs>
       </div>
 
+      <div className="sm:max-w-64">
+        <FormField
+          control={form.control}
+          name="estimated_delivery_days"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Срок доставки (дней) *</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  step="1"
+                  className="h-9 min-w-0 text-sm"
+                  disabled={disabled}
+                  {...field}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
       {mode === "single" ? (
         <FormSectionCard
           bare
@@ -121,28 +147,6 @@ export const LogisticsSection = ({
                         title="Номер товарно-транспортной накладной"
                         disabled={disabled}
                         {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="estimated_delivery_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Срок доставки (дней)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        inputMode="numeric"
-                        className="h-9 min-w-0 text-sm"
-                        disabled={disabled}
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                       />
                     </FormControl>
                     <FormMessage />

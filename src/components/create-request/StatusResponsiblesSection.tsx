@@ -151,7 +151,7 @@ export const StatusResponsiblesSection = ({
             name="executor"
             render={({ field }) => (
               <FormItem className="req-a-executor">
-                <FormLabel className="text-xs">Исполнитель</FormLabel>
+                <FormLabel className="text-xs">Исполнитель *</FormLabel>
                 <FormControl>
                   <ParticipantSelect
                     value={field.value || ""}
