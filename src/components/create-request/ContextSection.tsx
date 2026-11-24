@@ -133,12 +133,13 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
             name="applicant_justification"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Обоснование заявителя</FormLabel>
+                <FormLabel>Обоснование заявителя *</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
                     value={field.value ?? ""}
                     disabled={disabled}
+                    aria-required="true"
                     maxLength={2000}
                     placeholder="Зачем нужна закупка?"
                     className="min-h-[64px] resize-y text-sm leading-relaxed"

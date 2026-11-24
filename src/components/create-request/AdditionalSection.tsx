@@ -117,7 +117,7 @@ export const AdditionalSection = ({
   };
 
   const handleInsertIntoInvoice = async () => {
-    const fields = ["description", "applicant", "priority", "availability_delivery_time", "estimated_delivery_days", "payment_percentage", "executor"];
+    const fields = ["description", "applicant", "applicant_justification", "priority", "availability_delivery_time", "estimated_delivery_days", "payment_percentage", "executor"];
     if (!await form.trigger(fields)) {
       revealRequestErrors(Object.fromEntries(fields.map(name => [name, form.getFieldState(name).error])));
       toast({ title: "Заполните обязательные поля ЗРС", description: "Проверьте поля со звёздочкой в заявке, счетах и логистике.", variant: "destructive" });

@@ -66,7 +66,7 @@ const requestSchema = z.object({
   request_date: z.string()
     .min(1, "Дата заявки обязательна")
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты"),
-  applicant_justification: z.string().trim().max(2000, "До 2000 символов").optional().nullable(),
+  applicant_justification: z.string().trim().min(1, "Укажите обоснование заявки").max(2000, "До 2000 символов"),
   description: z.string()
     .trim()
     .min(3, "Описание должно содержать минимум 3 символа")
