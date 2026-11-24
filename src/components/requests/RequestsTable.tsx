@@ -951,6 +951,7 @@ export const RequestsTable = ({
                             size="icon"
                             className="h-6 w-6 shrink-0"
                             onClick={(e) => { e.stopPropagation(); toggleExpand(request.id); }}
+                            aria-expanded={expandedRows.has(request.id)}
                             aria-label={expandedRows.has(request.id) ? "Свернуть перевозки" : "Раскрыть перевозки"}
                           >
                             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedRows.has(request.id) ? '' : '-rotate-90'}`} />
@@ -1184,12 +1185,19 @@ export const RequestsTable = ({
                   )}
                   {visibility.transport_company && (
                     <TableCell data-align="center" data-row-action onClick={(e) => e.stopPropagation()} className="px-3 py-2 border-b overflow-hidden text-[14px]">
-                      <InlineCarrierCell
-                        requestId={request.id}
-                        organizationId={request.organization_id}
-                        value={request.transport_company || null}
-                        searchQuery={searchQuery}
-                      />
+                      {(shipmentsSummary?.[request.id]?.total ?? 0) > 1 ? (
+                        <Button type="button" variant="ghost" size="sm" className="h-7 px-1 text-xs"
+                          aria-expanded={expandedRows.has(request.id)} onClick={() => toggleExpand(request.id)}>
+                          Перевозки ({shipmentsSummary?.[request.id].total})
+                        </Button>
+                      ) : (
+                        <InlineCarrierCell
+                          requestId={request.id}
+                          organizationId={request.organization_id}
+                          value={request.transport_company || null}
+                          searchQuery={searchQuery}
+                        />
+                      )}
                     </TableCell>
                   )}
 

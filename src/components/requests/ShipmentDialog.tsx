@@ -46,6 +46,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const { data: existingItems = [] } = useShipmentItems(shipment?.id ?? null);
 
   const [transportType, setTransportType] = useState<TransportType>("auto");
+  const [originCity, setOriginCity] = useState("");
+  const [destinationCity, setDestinationCity] = useState("");
   const [transportCompany, setTransportCompany] = useState("");
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [trailerNumber, setTrailerNumber] = useState("");
@@ -106,6 +108,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
     if (!open) return;
     setTransportType((shipment?.transport_type ?? "auto") as TransportType);
     setTransportCompany(shipment?.transport_company ?? "");
+    setOriginCity(shipment?.origin_city ?? "");
+    setDestinationCity(shipment?.destination_city ?? "");
     setVehicleNumber(shipment?.vehicle_number ?? "");
     setTrailerNumber(shipment?.trailer_number ?? "");
     setDriverName(shipment?.driver_name ?? "");
@@ -170,13 +174,28 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   };
 
   const handleSave = async () => {
+    const inTransit = status === "В пути" || status === "Загружена";
+    const arrived = ["Прибыла", "Разгружена", "Завершена"].includes(status);
+    const error = inTransit && (!loadDate || !plannedDate)
+      ? "Укажите дату отгрузки и плановую дату доставки перевозки."
+      : arrived && (!loadDate || !actualDate)
+        ? "Укажите дату отгрузки и фактическую дату доставки перевозки."
+        : loadDate && ((plannedDate && plannedDate < loadDate) || (actualDate && actualDate < loadDate))
+          ? "Дата доставки не может быть раньше даты отгрузки."
+          : null;
+    if (error) {
+      toast({ title: "Проверьте даты перевозки", description: error, variant: "destructive" });
+      return;
+    }
     try {
       const saved = await upsert.mutateAsync({
         id: shipment?.id,
         request_id: requestId,
         organization_id: organizationId,
         transport_type: transportType,
-        transport_company: transportCompany || null,
+        transport_company: transportCompany.trim() || null,
+        origin_city: originCity.trim() || null,
+        destination_city: destinationCity.trim() || null,
         vehicle_number: vehicleNumber || null,
         trailer_number: trailerNumber || null,
         driver_name: driverName || null,
@@ -258,6 +277,15 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             </Select>
           </div>
 
+          <div className="space-y-1">
+            <Label htmlFor="shipment-origin-city">Город отправления</Label>
+            <Input id="shipment-origin-city" value={originCity} maxLength={120} onChange={e => setOriginCity(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="shipment-destination-city">Город назначения</Label>
+            <Input id="shipment-destination-city" value={destinationCity} maxLength={120} onChange={e => setDestinationCity(e.target.value)} />
+          </div>
+
           <div className="space-y-1 sm:col-span-2">
             <Label>Транспортная компания</Label>
             <Input value={transportCompany} onChange={(e) => setTransportCompany(e.target.value)} />
@@ -287,15 +315,15 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
           </div>
 
           <div className="space-y-1">
-            <Label>Дата погрузки</Label>
+            <Label>Дата отгрузки</Label>
             <Input type="date" value={loadDate} onChange={(e) => setLoadDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Плановая дата прибытия</Label>
+            <Label>Плановая дата доставки</Label>
             <Input type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Фактическая дата прибытия</Label>
+            <Label>Фактическая дата доставки</Label>
             <Input type="date" value={actualDate} onChange={(e) => setActualDate(e.target.value)} />
           </div>
 

@@ -35,6 +35,8 @@ export interface RequestShipment {
   sequence_number: number;
   transport_type: TransportType;
   transport_company: string | null;
+  origin_city: string | null;
+  destination_city: string | null;
   vehicle_number: string | null;
   trailer_number: string | null;
   driver_name: string | null;
@@ -50,6 +52,18 @@ export interface RequestShipment {
   updated_at: string;
 }
 
+export function hasShipmentArrived(shipment: Pick<RequestShipment, "status" | "actual_arrival_date">) {
+  return Boolean(shipment.actual_arrival_date) || ["Прибыла", "Разгружена", "Завершена"].includes(shipment.status);
+}
+
+export function formatShipmentRoute(shipment: Pick<RequestShipment, "origin_city" | "destination_city">) {
+  const origin = shipment.origin_city?.trim();
+  const destination = shipment.destination_city?.trim();
+  if (origin && destination) return `${origin} → ${destination}`;
+  if (origin) return `Из города: ${origin}`;
+  return destination ? `В город: ${destination}` : "";
+}
+
 export interface ShipmentItem {
   id: string;
   organization_id: string;
@@ -62,7 +76,7 @@ export interface ShipmentItem {
 
 const sb: any = supabase;
 
-const SHIPMENT_SELECT = "id,organization_id,request_id,sequence_number,transport_type,transport_company,vehicle_number,trailer_number,driver_name,driver_phone,waybill_number,load_date,planned_arrival_date,actual_arrival_date,status,comment,document_urls,created_at,updated_at";
+const SHIPMENT_SELECT = "id,organization_id,request_id,sequence_number,transport_type,transport_company,origin_city,destination_city,vehicle_number,trailer_number,driver_name,driver_phone,waybill_number,load_date,planned_arrival_date,actual_arrival_date,status,comment,document_urls,created_at,updated_at";
 const SHIPMENT_ITEM_SELECT = "id,organization_id,shipment_id,product_id,material_name,quantity,unit";
 
 export function useRequestShipments(requestId: string | null | undefined) {
@@ -115,7 +129,7 @@ export function useShipmentsSummary(requestIds: string[]) {
       for (const r of (data ?? []) as any[]) {
         const s = map[r.request_id] ?? (map[r.request_id] = { total: 0, delivered: 0, inTransit: 0, overdue: 0 });
         s.total += 1;
-        const isDone = r.status === "Завершена" || r.status === "Разгружена" || !!r.actual_arrival_date;
+        const isDone = hasShipmentArrived(r);
         if (isDone) s.delivered += 1;
         else {
           if (r.status === "В пути" || r.status === "Загружена") s.inTransit += 1;

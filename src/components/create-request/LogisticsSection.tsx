@@ -40,12 +40,14 @@ export const LogisticsSection = ({
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [autoApplied, setAutoApplied] = useState(false);
 
+  const hasSeparateRoutes = existingShipments.length > 1 || existingShipments.some(shipment => shipment.origin_city || shipment.destination_city);
+
   useEffect(() => {
-    if (!autoApplied && requestId && existingShipments.length >= 2) {
+    if (!autoApplied && requestId && hasSeparateRoutes) {
       setMode("multi");
       setAutoApplied(true);
     }
-  }, [autoApplied, requestId, existingShipments.length]);
+  }, [autoApplied, requestId, hasSeparateRoutes]);
 
   return (
     <FormSectionCard

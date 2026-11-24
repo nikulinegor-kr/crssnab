@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useRequestShipments, TRANSPORT_TYPES, type ShipmentItem } from "@/hooks/useRequestShipments";
+import { useRequestShipments, formatShipmentRoute, TRANSPORT_TYPES, type ShipmentItem } from "@/hooks/useRequestShipments";
 import { Boxes, User, Phone, CalendarDays, Truck, Package } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -78,6 +78,7 @@ export function RequestShipmentsSummary({ requestId }: Props) {
                 <span className="text-sm font-semibold">
                   {tt?.emoji ?? "🚛"} №{s.sequence_number}
                 </span>
+                {formatShipmentRoute(s) && <span className="text-sm">{formatShipmentRoute(s)}</span>}
                 {s.vehicle_number && (
                   <span className="text-sm font-medium">{s.vehicle_number}</span>
                 )}
@@ -111,7 +112,7 @@ export function RequestShipmentsSummary({ requestId }: Props) {
                 <div className="flex items-center gap-1.5 min-w-0">
                   <CalendarDays className="h-3.5 w-3.5 text-success shrink-0" />
                   <span className="truncate">
-                    Приход: {fmt(s.actual_arrival_date || s.planned_arrival_date)}
+                    План: {fmt(s.planned_arrival_date)} · Факт: {fmt(s.actual_arrival_date)}
                   </span>
                 </div>
               </div>

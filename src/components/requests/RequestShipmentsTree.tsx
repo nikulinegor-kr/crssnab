@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   useRequestShipments,
   useShipmentItems,
+  formatShipmentRoute,
   type RequestShipment,
   type TransportType,
 } from "@/hooks/useRequestShipments";
@@ -46,6 +47,7 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
     <div className="rounded-md border bg-card">
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="w-full flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 px-2 hover:bg-muted/40 text-left rounded-md"
       >
@@ -53,7 +55,8 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
           className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
         />
         <TypeIcon type={shipment.transport_type} className="h-3.5 w-3.5 shrink-0 text-primary" />
-        <span className="text-xs font-semibold">Машина №{shipment.sequence_number}</span>
+        <span className="text-xs font-semibold">Перевозка №{shipment.sequence_number}</span>
+        {formatShipmentRoute(shipment) && <span className="text-xs">{formatShipmentRoute(shipment)}</span>}
         {shipment.vehicle_number && (
           <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0">
             {shipment.vehicle_number}
@@ -64,6 +67,7 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
             {shipment.transport_company}
           </span>
         )}
+        {shipment.waybill_number && <span className="text-xs text-muted-foreground">ТТН {shipment.waybill_number}</span>}
         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusBadgeClass(shipment.status)}`}>
           {shipment.status}
         </Badge>
@@ -71,15 +75,13 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
           {shipment.load_date && (
             <span>Отправка: <span className="text-foreground">{fmt(shipment.load_date)}</span></span>
           )}
-          {(shipment.actual_arrival_date || shipment.planned_arrival_date) && (
+          {shipment.planned_arrival_date && <span>План доставки: {fmt(shipment.planned_arrival_date)}</span>}
+          {shipment.actual_arrival_date && (
             <span>
-              Приход:{" "}
+              Факт доставки:{" "}
               <span className={shipment.actual_arrival_date ? "text-success" : "text-foreground"}>
-                {fmt(shipment.actual_arrival_date ?? shipment.planned_arrival_date)}
+                {fmt(shipment.actual_arrival_date)}
               </span>
-              {!shipment.actual_arrival_date && shipment.planned_arrival_date && (
-                <span className="text-muted-foreground/70"> (план)</span>
-              )}
             </span>
           )}
         </div>
@@ -156,10 +158,10 @@ export function ShipmentsProgressChip({
           ? "bg-success/15 text-success"
           : "bg-warning/15 text-warning"
       }`}
-      title="Прибывшие машины из общего числа"
+      title="Доставленные перевозки из общего числа"
     >
       <Truck className="h-3 w-3" />
-      {delivered}/{total} {done ? "прибыло" : "прибыло"}
+      {delivered > 0 && !done ? "Частично доставлено" : "Доставлено"} {delivered} из {total}
     </span>
   );
 }
