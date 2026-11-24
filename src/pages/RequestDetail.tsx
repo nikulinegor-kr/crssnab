@@ -217,7 +217,7 @@ export default function RequestDetail() {
       setIsSaving(false);
       toast({
         title: "Ошибка",
-        description: "Не удалось обновить заявку",
+        description: error?.message || "Не удалось обновить заявку",
         variant: "destructive",
       });
       console.error("Update error:", error);

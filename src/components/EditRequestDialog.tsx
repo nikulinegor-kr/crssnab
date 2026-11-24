@@ -143,7 +143,7 @@ const requestSchema = z.object({
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
   equipment_id: z.string().optional(),
-}).superRefine(validateRequiredZrsFields);
+});
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
@@ -303,8 +303,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
+  const hasInvoiceFile = documentFiles.length > 0 || existingDocumentUrls.length > 0;
+  const workflowSchema = requestSchema.superRefine((values, context) => validateRequiredZrsFields(values, context, hasInvoiceFile));
   const form = useForm<RequestFormData>({
-    resolver: zodResolver(requestSchema),
+    resolver: zodResolver(workflowSchema),
     defaultValues: {
       request_date: "",
       description: "",
@@ -519,7 +521,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   const saveToServer = useCallback(async (data: RequestFormData) => {
     if (!request || !canEdit) return;
     
-    const result = requestSchema.safeParse(data);
+    const result = requestSchema.superRefine((values, context) => validateRequiredZrsFields(values, context, hasInvoiceFile)).safeParse(data);
     if (!result.success) return;
     
     setServerSaveState('saving');
@@ -602,7 +604,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       console.error("Auto-save error:", error);
       setServerSaveState('error');
     }
-  }, [request, canEdit, queryClient]);
+  }, [request, canEdit, queryClient, hasInvoiceFile]);
 
   // ⚠️ Серверное автосохранение отключено намеренно: смена статуса и отправка
   // уведомлений в Telegram/MAX должны происходить ТОЛЬКО после нажатия кнопки
@@ -1090,6 +1092,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
             disabled={isViewer}
           />
           <LogisticsSection
+          hasInvoiceFile={hasInvoiceFile}
             form={form}
             recentTransportCompanies={recentTransportCompanies}
             disabled={isViewer}

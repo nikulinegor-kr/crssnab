@@ -144,7 +144,7 @@ const requestSchema = z.object({
   planned_delivery_date: z.string().optional().or(z.literal("")),
   reserve_on_warehouse: z.boolean().optional(),
   equipment_id: z.string().optional(),
-}).superRefine(validateRequiredZrsFields);
+});
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
@@ -344,8 +344,10 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const statuses = statusesData?.map((s) => s.name) || [];
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
+  const hasInvoiceFile = documentFiles.length > 0;
+  const workflowSchema = requestSchema.superRefine((values, context) => validateRequiredZrsFields(values, context, hasInvoiceFile));
   const form = useForm<RequestFormData>({
-    resolver: zodResolver(requestSchema),
+    resolver: zodResolver(workflowSchema),
     defaultValues: {
       request_date: new Date().toISOString().split("T")[0],
       description: initialData?.description || "",
@@ -776,6 +778,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
         {/* 7. Logistics: Availability, TK, Dates, TTN */}
         <LogisticsSection
+          hasInvoiceFile={hasInvoiceFile}
           form={form}
           recentTransportCompanies={recentTransportCompanies}
           organizationId={currentOrgId}

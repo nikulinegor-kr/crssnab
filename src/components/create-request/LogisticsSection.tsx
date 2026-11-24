@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ComboboxInput } from "@/components/ui/combobox-input";
+import { hasAddedInvoice } from "./requiredZrsFields";
 import { FormSectionCard } from "./FormSectionCard";
 import { Truck, Info, Boxes } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +18,7 @@ import { RequestShipmentsPanel } from "@/components/requests/RequestShipmentsPan
 import { RecognizeWaybillButton } from "@/components/requests/RecognizeWaybillButton";
 
 interface LogisticsSectionProps {
+  hasInvoiceFile?: boolean;
   form: UseFormReturn<any>;
   recentTransportCompanies: string[];
   disabled?: boolean;
@@ -26,11 +28,14 @@ interface LogisticsSectionProps {
 
 export const LogisticsSection = ({
   form,
+  hasInvoiceFile = false,
   recentTransportCompanies,
   disabled = false,
   requestId,
   organizationId,
 }: LogisticsSectionProps) => {
+  const invoiceRequired = hasAddedInvoice(form.watch(), hasInvoiceFile);
+  const datesRequired = form.watch("status") === "В пути";
   const { data: existingShipments = [] } = useRequestShipments(requestId);
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [autoApplied, setAutoApplied] = useState(false);
@@ -71,7 +76,7 @@ export const LogisticsSection = ({
           name="estimated_delivery_days"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">Срок доставки (дней) *</FormLabel>
+              <FormLabel className="text-xs">Срок доставки (дней){invoiceRequired && " *"}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -83,6 +88,48 @@ export const LogisticsSection = ({
                   {...field}
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="shipment_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Дата отгрузки{datesRequired && " *"}</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  className="h-9 min-w-0 text-sm"
+                  title="Когда отправят товар"
+                  disabled={disabled}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="delivery_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Дата доставки{datesRequired && " *"}</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  className="h-9 min-w-0 text-sm"
+                  title="Ожидаемая дата получения"
+                  disabled={disabled}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -145,45 +192,6 @@ export const LogisticsSection = ({
                         placeholder="Трек-номер"
                         className="h-9 min-w-0"
                         title="Номер товарно-транспортной накладной"
-                        disabled={disabled}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="shipment_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Дата отгрузки</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        className="h-9 min-w-0 text-sm"
-                        title="Когда отправят товар"
-                        disabled={disabled}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="delivery_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Дата доставки</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        className="h-9 min-w-0 text-sm"
-                        title="Ожидаемая дата получения"
                         disabled={disabled}
                         {...field}
                       />

@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { DecimalInput } from "@/components/ui/decimal-input";
 import { Button } from "@/components/ui/button";
+import { hasAddedInvoice, PAYMENT_REQUIRED_STATUSES } from "./requiredZrsFields";
 import { FormSectionCard } from "./FormSectionCard";
 import { ContractorSelect } from "@/components/ContractorSelect";
 import { Banknote, ScanText, Loader2, Plus, X, FileText, Upload, ExternalLink, Download, Send } from "lucide-react";
@@ -80,6 +81,8 @@ export const FinanceSection = ({
   defaultOpen = false,
 }: FinanceSectionProps) => {
   const rawContractor = form.watch("contractor");
+  const invoiceRequired = hasAddedInvoice(form.watch(), Boolean(invoiceFile || invoiceUrl));
+  const paymentRequired = PAYMENT_REQUIRED_STATUSES.has(form.watch("status"));
   const isUnderOrder = form.watch("availability_delivery_time") === "Под заказ";
   const summaryContractor = suppliers?.find((x) => x.id === rawContractor)?.name || rawContractor;
   const summaryAmount = form.watch("amount");
@@ -371,7 +374,7 @@ export const FinanceSection = ({
           name="contractor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs">Контрагент</FormLabel>
+              <FormLabel className="text-xs">Контрагент{invoiceRequired && " *"}</FormLabel>
               <FormControl>
                 <ContractorSelect
                   value={field.value || ""}
@@ -431,7 +434,7 @@ export const FinanceSection = ({
                 name={numField}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">{label}</FormLabel>
+                    <FormLabel className="text-xs">{label}{invoiceRequired && slot === 1 && " *"}</FormLabel>
                     <FormControl>
                       <Input placeholder="Сч. 123" className="h-9 select-all min-w-0 text-sm" disabled={disabled} {...field} value={field.value ?? ""} />
                     </FormControl>
@@ -444,7 +447,7 @@ export const FinanceSection = ({
                 name={amtField}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">Стоимость (₽)</FormLabel>
+                    <FormLabel className="text-xs">Стоимость (₽){invoiceRequired && slot === 1 && " *"}</FormLabel>
                     <FormControl>
                       <DecimalInput
                         placeholder=""
@@ -569,7 +572,7 @@ export const FinanceSection = ({
                 name="payment_percentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs">% предоплаты *</FormLabel>
+                    <FormLabel className="text-xs">% предоплаты{invoiceRequired && " *"}</FormLabel>
                     <Select
                       value={field.value != null ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(v === "" ? null : parseInt(v, 10))}
@@ -600,7 +603,7 @@ export const FinanceSection = ({
               const underpaid = prepay > 0 && val < prepay;
               return (
                 <FormItem>
-                  <FormLabel className="text-xs">Факт оплаты (%)</FormLabel>
+                  <FormLabel className="text-xs">Факт оплаты (%){paymentRequired && " *"}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

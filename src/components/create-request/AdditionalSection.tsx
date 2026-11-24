@@ -12,7 +12,8 @@ import { recognizeInvoiceFile } from "@/lib/recognizeInvoice";
 import { resolveSignedUrl } from "@/lib/storageUrl";
 import { requestFileName } from "@/lib/requestDocuments";
 import { saveImageFile } from "@/lib/saveImage";
-import { revealRequestErrors } from "./requiredZrsFields";
+import { z } from "zod";
+import { revealRequestErrors, validateRequiredZrsFields } from "./requiredZrsFields";
 import { buildRequestZrsLines } from "@/lib/requestZrs";
 
 interface AdditionalSectionProps {
@@ -77,6 +78,18 @@ export const AdditionalSection = ({
 
   const insertIntoFile = async (originalFile: File, alreadyAttached = true) => {
     if (disabled || isPreparing) return;
+    const validation = z.object({}).passthrough().superRefine((values, context) => validateRequiredZrsFields(values, context, true)).safeParse(form.getValues());
+    if (!validation.success) {
+      const errors = Object.fromEntries(validation.error.issues.map(issue => {
+        const field = String(issue.path[0]);
+        const error = { type: "required", message: issue.message };
+        form.setError(field, error);
+        return [field, error];
+      }));
+      revealRequestErrors(errors);
+      toast({ title: "Заполните данные заявки и счёта", description: "Проверьте поля со звёздочкой перед вставкой ЗРС.", variant: "destructive" });
+      return;
+    }
     setIsPreparing(true);
     try {
       let prepared = originalFile;
