@@ -3,7 +3,7 @@ import type { Request } from "@/hooks/useRequests";
 import { getStatusColor } from "@/hooks/useRequestsFilters";
 import { formatArrival, isArrivalOverdue, mobileArrivalDate } from "@/lib/mobileRequestList";
 import { ChevronDown } from "lucide-react";
-import { groupRequestsByPhase } from "@/lib/requestPhases";
+import { DEFAULT_COLLAPSED_REQUEST_PHASES, groupRequestsByPhase } from "@/lib/requestPhases";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -43,7 +43,7 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
   const [activePhase, setActivePhase] = useState<string | null>();
   const [limits, setLimits] = useState<Record<string, number>>({});
   const groups = useMemo(() => groupRequestsByPhase(requests), [requests]);
-  const expandedPhase = activePhase === null || groups.some(phase => phase.key === activePhase) ? activePhase : groups[0]?.key;
+  const expandedPhase = activePhase === null || groups.some(phase => phase.key === activePhase) ? activePhase : groups.find(phase => !DEFAULT_COLLAPSED_REQUEST_PHASES.has(phase.key))?.key;
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = savedScroll;

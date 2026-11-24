@@ -1,7 +1,7 @@
 import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
-import { groupRequestsByPhase } from "@/lib/requestPhases";
+import { DEFAULT_COLLAPSED_REQUEST_PHASES, groupRequestsByPhase } from "@/lib/requestPhases";
 import { sortRequestsByDateDesc } from "@/lib/requestRegistry";
 import { calculateRequestTableLayout } from "@/lib/requestTableLayout";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
@@ -309,7 +309,9 @@ export const RequestsTable = ({
   }, [updateWidth]);
 
   // Group by object
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState(() =>
+    new Set([...DEFAULT_COLLAPSED_REQUEST_PHASES].map(key => `phase-${key}`)),
+  );
   const PHASE_STEP = 30;
   const [phaseLimits, setPhaseLimits] = useState<Record<string, number>>({});
   const showMorePhase = useCallback((key: string) => {
