@@ -309,6 +309,13 @@
       "when": 1795513300890,
       "tag": "0043_add_request_shipment_cities",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795513603262,
+      "tag": "0044_add_request_shipment_mode",
+      "breakpoints": true
     }
   ]
 }

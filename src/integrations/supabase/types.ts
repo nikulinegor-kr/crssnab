@@ -3642,6 +3642,7 @@ export type Database = {
           planned_arrival_date: string | null
           request_id: string
           sequence_number: number
+          shipment_mode: string | null
           status: string
           trailer_number: string | null
           transport_company: string | null
@@ -3666,6 +3667,7 @@ export type Database = {
           planned_arrival_date?: string | null
           request_id: string
           sequence_number?: number
+          shipment_mode?: string | null
           status?: string
           trailer_number?: string | null
           transport_company?: string | null
@@ -3690,6 +3692,7 @@ export type Database = {
           planned_arrival_date?: string | null
           request_id?: string
           sequence_number?: number
+          shipment_mode?: string | null
           status?: string
           trailer_number?: string | null
           transport_company?: string | null
