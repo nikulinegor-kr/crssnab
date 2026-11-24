@@ -142,9 +142,10 @@ interface PanelProps {
   organizationId: string;
   canEdit?: boolean;
   mode?: ShipmentMode;
+  transportCompanies?: string[];
 }
 
-export function RequestShipmentsPanel({ requestId, organizationId, canEdit = true, mode }: PanelProps) {
+export function RequestShipmentsPanel({ requestId, organizationId, canEdit = true, mode, transportCompanies = [] }: PanelProps) {
   const { data: shipments = [], isLoading } = useRequestShipments(requestId);
   const del = useDeleteShipment();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -245,6 +246,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
         organizationId={organizationId}
         shipment={editing}
         mode={mode}
+        transportCompanies={[...new Set([...transportCompanies, ...shipments.flatMap(shipment => shipment.transport_company ? [shipment.transport_company] : [])])]}
       />
     </div>
   );

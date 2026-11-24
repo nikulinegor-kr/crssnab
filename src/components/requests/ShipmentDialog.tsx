@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ComboboxInput } from "@/components/ui/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +31,7 @@ interface Props {
   organizationId: string;
   shipment?: RequestShipment | null;
   mode?: ShipmentMode;
+  transportCompanies?: string[];
 }
 
 interface DraftItem {
@@ -39,8 +41,9 @@ interface DraftItem {
   unit: string;
 }
 
-export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment, mode }: Props) {
-  const shipmentMode = shipment ? shipment.shipment_mode : mode;
+export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment, mode, transportCompanies = [] }: Props) {
+  const shipmentMode = shipment?.shipment_mode ?? mode;
+  const carrierForm = shipmentMode === "carrier";
   const upsert = useUpsertShipment();
   const upsertItem = useUpsertShipmentItem();
   const deleteItem = useDeleteShipmentItem();
@@ -221,16 +224,16 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
+      <DialogContent className={`max-h-[90dvh] overflow-y-auto ${carrierForm ? "max-w-xl" : "max-w-2xl"}`}>
         <DialogHeader>
           <DialogTitle>
             {shipment ? `Перевозка №${shipment.sequence_number}` : shipmentMode === "carrier" ? "Отгрузка через ТК" : "Новая перевозка"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
           <div className="text-xs text-muted-foreground">
-            Загрузите ТТН/накладную — данные о машине, водителе и материалах заполнятся автоматически
+            {carrierForm ? "Загрузите фото или PDF накладной, чтобы заполнить ТК, ТТН и даты." : "Загрузите ТТН или накладную, чтобы заполнить данные транспорта и материалов."}
           </div>
           <input
             ref={fileInputRef}
@@ -254,23 +257,12 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             ) : (
               <Sparkles className="h-3.5 w-3.5 mr-1" />
             )}
-            Распознать из файла
+            Распознать ТТН
           </Button>
         </div>
 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
-          <div className="space-y-1">
-            <Label>Тип перевозки</Label>
-            <Select value={transportType} onValueChange={(v) => setTransportType(v as TransportType)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TRANSPORT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.emoji} {t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div className="space-y-1">
             <Label>Статус</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as ShipmentStatus)}>
@@ -290,11 +282,43 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             <Input id="shipment-destination-city" value={destinationCity} maxLength={120} onChange={e => setDestinationCity(e.target.value)} />
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
+          <div className="space-y-1">
             <Label>Транспортная компания</Label>
-            <Input value={transportCompany} onChange={(e) => setTransportCompany(e.target.value)} />
+            <ComboboxInput value={transportCompany} onChange={setTransportCompany}
+              options={transportCompanies.map(company => ({ value: company, label: company }))}
+              placeholder="Введите или выберите..." searchPlaceholder="Поиск ТК..."
+              emptyMessage="Введите название вручную" allowCustomValue />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="shipment-waybill">Номер ТТН</Label>
+            <Input id="shipment-waybill" placeholder="Трек-номер" value={waybillNumber} onChange={e => setWaybillNumber(e.target.value)} />
           </div>
 
+          <div className="space-y-1">
+            <Label>Дата отгрузки</Label>
+            <Input type="date" value={loadDate} onChange={(e) => setLoadDate(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Плановая дата доставки</Label>
+            <Input type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Фактическая дата доставки</Label>
+            <Input type="date" value={actualDate} onChange={(e) => setActualDate(e.target.value)} />
+          </div>
+
+          {!carrierForm && <>
+          <div className="space-y-1">
+            <Label>Тип перевозки</Label>
+            <Select value={transportType} onValueChange={(v) => setTransportType(v as TransportType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {TRANSPORT_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.emoji} {t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1">
             <Label>{transportType === "container" ? "Номер контейнера" : transportType === "rail" ? "Номер вагона" : "Госномер автомобиля"}</Label>
             <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder={transportType === "auto" ? "А123БВ77" : undefined} />
@@ -313,24 +337,11 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
             <Input value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label>№ ТТН</Label>
-            <Input value={waybillNumber} onChange={(e) => setWaybillNumber(e.target.value)} />
-          </div>
+          </>}
 
-          <div className="space-y-1">
-            <Label>Дата отгрузки</Label>
-            <Input type="date" value={loadDate} onChange={(e) => setLoadDate(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Плановая дата доставки</Label>
-            <Input type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Фактическая дата доставки</Label>
-            <Input type="date" value={actualDate} onChange={(e) => setActualDate(e.target.value)} />
-          </div>
-
+          <details open={!carrierForm} className="sm:col-span-2 rounded-md border px-3 py-2">
+            <summary className="cursor-pointer text-sm font-medium">Комментарий и материалы{items.length > 0 ? ` (${items.length})` : ""}</summary>
+            <div className="mt-3 space-y-3">
           <div className="space-y-1 sm:col-span-2">
             <Label>Комментарий</Label>
             <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
@@ -385,6 +396,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
               </div>
             )}
           </div>
+            </div>
+          </details>
         </div>
 
         <DialogFooter>

@@ -210,6 +210,7 @@ export const LogisticsSection = ({
               organizationId={organizationId}
               canEdit={!disabled}
               mode={mode}
+              transportCompanies={recentTransportCompanies}
             />
           ) : (
             <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
