@@ -1,3 +1,4 @@
+import { CarrierShipmentStatus } from "./CarrierShipmentStatus";
 import { type MouseEvent, useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -177,7 +178,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
       load_date: data.shipment_date,
       planned_arrival_date: data.delivery_date,
       actual_arrival_date: data.actual_arrival_date,
-      status: data.actual_arrival_date ? "Прибыла" : data.status === "В пути" ? "В пути" : "Ожидает погрузки",
+      status: data.actual_arrival_date || data.status === "Доставлено" ? "Доставлено" : data.status === "Доставлено в ТК" ? "Доставлено в ТК" : "В пути",
     });
   }
 
@@ -225,7 +226,9 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                   {s.vehicle_number && (
                     <Badge variant="outline" className="font-mono text-[11px]">{s.vehicle_number}</Badge>
                   )}
-                  <Badge variant="outline" className={`text-[11px] ${statusBadgeClass(s.status)}`}>{s.status}</Badge>
+                  {s.shipment_mode === "carrier"
+                    ? <CarrierShipmentStatus shipment={s} canEdit={canEdit} />
+                    : <Badge variant="outline" className={`text-[11px] ${statusBadgeClass(s.status)}`}>{s.status}</Badge>}
                 </div>
                 {canEdit && (
                   <div className="flex gap-1">
@@ -263,7 +266,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 <div className="text-xs text-muted-foreground mt-1 italic">{s.comment}</div>
               )}
 
-              <ShipmentItemsBlock shipment={s} organizationId={organizationId} canEdit={canEdit} />
+              {s.shipment_mode !== "carrier" && <ShipmentItemsBlock shipment={s} organizationId={organizationId} canEdit={canEdit} />}
             </div>
           ))}
         </div>

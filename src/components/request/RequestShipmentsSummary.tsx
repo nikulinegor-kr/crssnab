@@ -1,3 +1,4 @@
+import { CarrierShipmentStatus } from "@/components/requests/CarrierShipmentStatus";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +39,7 @@ interface Props {
 
 export function RequestShipmentsSummary({ requestId }: Props) {
   const { data: shipments = [] } = useRequestShipments(requestId);
-  const ids = shipments.map((s) => s.id);
+  const ids = shipments.filter(s => s.shipment_mode !== "carrier").map(s => s.id);
 
   const { data: items = [] } = useQuery({
     queryKey: ["shipment-items-bulk", ids.slice().sort().join(",")],
@@ -85,9 +86,9 @@ export function RequestShipmentsSummary({ requestId }: Props) {
                 {s.trailer_number && (
                   <span className="text-xs text-muted-foreground">/ {s.trailer_number}</span>
                 )}
-                <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${statusTone(s.status)}`}>
-                  {s.status}
-                </Badge>
+                {s.shipment_mode === "carrier" ? <CarrierShipmentStatus shipment={s} canEdit={false} /> : (
+                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${statusTone(s.status)}`}>{s.status}</Badge>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1.5 text-xs">

@@ -5,6 +5,8 @@ export type ShipmentStatus =
   | "Ожидает погрузки"
   | "Загружена"
   | "В пути"
+  | "Доставлено в ТК"
+  | "Доставлено"
   | "Прибыла"
   | "Разгружена"
   | "Завершена";
@@ -55,8 +57,16 @@ export interface RequestShipment {
   updated_at: string;
 }
 
+export const CARRIER_SHIPMENT_STATUSES = ["В пути", "Доставлено в ТК", "Доставлено"] as const;
+export type CarrierShipmentStatus = typeof CARRIER_SHIPMENT_STATUSES[number];
+
+export function carrierShipmentStatus(shipment: Pick<RequestShipment, "status" | "actual_arrival_date">): CarrierShipmentStatus {
+  if (shipment.status === "Доставлено в ТК") return shipment.status;
+  return hasShipmentArrived(shipment) ? "Доставлено" : "В пути";
+}
+
 export function hasShipmentArrived(shipment: Pick<RequestShipment, "status" | "actual_arrival_date">) {
-  return Boolean(shipment.actual_arrival_date) || ["Прибыла", "Разгружена", "Завершена"].includes(shipment.status);
+  return shipment.status !== "Доставлено в ТК" && (Boolean(shipment.actual_arrival_date) || ["Доставлено", "Прибыла", "Разгружена", "Завершена"].includes(shipment.status));
 }
 
 export function formatShipmentRoute(shipment: Pick<RequestShipment, "origin_city" | "destination_city">) {
@@ -121,14 +131,14 @@ export function useShipmentsSummary(requestIds: string[]) {
     queryKey: ["shipments-summary", key],
     enabled: requestIds.length > 0,
     queryFn: async () => {
-      const rows: Pick<RequestShipment, "request_id" | "status" | "planned_arrival_date" | "actual_arrival_date">[] = [];
+      const rows: Pick<RequestShipment, "request_id" | "status" | "shipment_mode" | "planned_arrival_date" | "actual_arrival_date">[] = [];
       for (let offset = 0; offset < requestIds.length; offset += 100) {
         const ids = requestIds.slice(offset, offset + 100);
         const pageSize = 500;
         for (let start = 0; ; start += pageSize) {
           const { data, error } = await sb
             .from("request_shipments")
-            .select("request_id,status,planned_arrival_date,actual_arrival_date")
+            .select("request_id,status,shipment_mode,planned_arrival_date,actual_arrival_date")
             .in("request_id", ids)
             .order("id")
             .range(start, start + pageSize - 1);
@@ -146,7 +156,7 @@ export function useShipmentsSummary(requestIds: string[]) {
         const isDone = hasShipmentArrived(r);
         if (isDone) s.delivered += 1;
         else {
-          if (r.status === "В пути" || r.status === "Загружена") s.inTransit += 1;
+          if (r.shipment_mode === "carrier" ? carrierShipmentStatus(r) === "В пути" : r.status === "В пути" || r.status === "Загружена") s.inTransit += 1;
           if (r.planned_arrival_date) {
             const d = new Date(r.planned_arrival_date); d.setHours(0, 0, 0, 0);
             if (d < today) s.overdue += 1;

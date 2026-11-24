@@ -1,3 +1,4 @@
+import { CarrierShipmentStatus } from "./CarrierShipmentStatus";
 import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -176,7 +177,18 @@ export function RequestShipmentsTree({ request }: { request: Request }) {
     <div className="bg-muted/20 border-l-4 border-primary/40 py-2 px-3">
       <div className="max-w-3xl space-y-1.5">
         {shipments.map((s) => (
-          <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />
+          s.shipment_mode === "carrier" ? (
+            <div key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card px-3 py-1.5 text-xs">
+              <Truck className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="font-semibold">Перевозка №{s.sequence_number}</span>
+              {s.transport_company && <span>{s.transport_company}</span>}
+              {s.waybill_number && <span>ТТН {s.waybill_number}</span>}
+              {s.load_date && <span className="text-muted-foreground">Отправка {fmt(s.load_date)}</span>}
+              {s.planned_arrival_date && <span className="text-muted-foreground">План {fmt(s.planned_arrival_date)}</span>}
+              {s.actual_arrival_date && <span className="text-success">Факт {fmt(s.actual_arrival_date)}</span>}
+              <CarrierShipmentStatus shipment={s} canEdit={canEdit} />
+            </div>
+          ) : <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />
         ))}
         {shipments.some(hasShipmentArrived) && <RequestReceiptButton request={request} />}
       </div>

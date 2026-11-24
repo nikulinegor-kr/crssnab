@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Package, Sparkles, Loader2 } from "lucide-react";
 import {
   SHIPMENT_STATUSES,
+  carrierShipmentStatus,
   TRANSPORT_TYPES,
   type RequestShipment,
   type ShipmentMode,
@@ -50,7 +51,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const deleteItem = useDeleteShipmentItem();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { data: existingItems = [] } = useShipmentItems(shipment?.id ?? null);
+  const { data: existingItems = [] } = useShipmentItems(open && !carrierForm ? shipment?.id : null);
 
   const [transportType, setTransportType] = useState<TransportType>("auto");
   const [originCity, setOriginCity] = useState("");
@@ -64,7 +65,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const [loadDate, setLoadDate] = useState("");
   const [plannedDate, setPlannedDate] = useState("");
   const [actualDate, setActualDate] = useState("");
-  const [status, setStatus] = useState<ShipmentStatus>("Ожидает погрузки");
+  const [status, setStatus] = useState<ShipmentStatus>(carrierForm ? "В пути" : "Ожидает погрузки");
   const [comment, setComment] = useState("");
   const [items, setItems] = useState<DraftItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -126,10 +127,10 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
     setLoadDate(shipment?.load_date ?? "");
     setPlannedDate(shipment?.planned_arrival_date ?? "");
     setActualDate(shipment?.actual_arrival_date ?? "");
-    setStatus((shipment?.status ?? "Ожидает погрузки") as ShipmentStatus);
+    setStatus(carrierForm ? (shipment ? carrierShipmentStatus(shipment) : "В пути") : shipment?.status ?? "Ожидает погрузки");
     setComment(shipment?.comment ?? "");
     setDeletedIds([]);
-  }, [open, shipment]);
+  }, [open, shipment, carrierForm]);
 
   useEffect(() => {
     if (!open) return;
