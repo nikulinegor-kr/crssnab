@@ -853,7 +853,9 @@ export const RequestsTable = ({
                 const request = it.request;
                 const index = it.index;
                 const isChildRow = it.child === true;
-                const overdue = Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
+                const shipmentProgress = shipmentsSummary?.[request.id];
+                const partiallyDelivered = isPartiallyDelivered(shipmentProgress);
+                const overdue = shipmentProgress?.total ? shipmentProgress.overdue > 0 : Boolean(request.delivery_date && !DELIVERED_ST.includes(request.status) && isBefore(new Date(request.delivery_date), startOfToday()));
                 const isNewRequest = request.status === "Новая заявка";
                 const isShippingToday = Boolean(
                   request.shipment_date &&
@@ -1006,7 +1008,7 @@ export const RequestsTable = ({
                                 </button>
                                 {shipmentsSummary?.[request.id] && (
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    {(!visibility.status || !isPartiallyDelivered(shipmentsSummary[request.id])) &&
+                                    {(!visibility.status || !partiallyDelivered) &&
                                       <ShipmentsProgressChip {...shipmentsSummary[request.id]} />}
                                     <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
                                   </div>
@@ -1066,7 +1068,7 @@ export const RequestsTable = ({
                         value={request.status}
                         open={openMenu?.id === request.id && openMenu.field === "status"}
                         onOpenChange={(o) => setOpenMenu(o ? { id: request.id, field: "status" } : null)}
-                        badge={
+                        badge={partiallyDelivered && shipmentProgress ? <ShipmentsProgressChip {...shipmentProgress} /> : (
                           <span className={cn(
                             "inline-flex min-h-6 cursor-pointer items-center gap-2 rounded-md px-1.5 hover:bg-muted",
                             overdue && "bg-destructive-soft text-destructive hover:bg-destructive-soft"
@@ -1074,11 +1076,8 @@ export const RequestsTable = ({
                             <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", overdue ? "bg-destructive" : statusDotClass(request.status))} />
                             {overdue ? "Просрочено" : request.status}
                           </span>
-                        }
+                        )}
                       />
-                      {shipmentsSummary?.[request.id] && isPartiallyDelivered(shipmentsSummary[request.id]) && (
-                        <div className="mt-1"><ShipmentsProgressChip {...shipmentsSummary[request.id]} /></div>
-                      )}
                     </TableCell>
                   )}
 
@@ -1346,7 +1345,7 @@ export const RequestsTable = ({
 
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={totalColCount} className="p-0 border-b">
+                    <TableCell colSpan={totalColCount} data-align="left" className="p-0 border-b">
                       <RequestShipmentsTree request={request} />
                     </TableCell>
                   </TableRow>

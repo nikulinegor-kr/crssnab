@@ -22,7 +22,7 @@ type BatchLine = { id: string; request_item_id: string | null; expected_qty: num
 type Batch = { id: string; document_id: string | null; warehouse_id: string; receiver_name: string; created_at: string; warehouse_receipt_batch_lines: BatchLine[] };
 
 /** Partial request receipt: lines, actual quantity, defect with note and private photos, remaining to receive. */
-export function RequestReceiptButton({ request, openSignal = 0 }: { request: RequestInfo; openSignal?: number }) {
+export function RequestReceiptButton({ request, openSignal = 0, compact = false }: { request: RequestInfo; openSignal?: number; compact?: boolean }) {
   const org = request.organization_id;
   const [open, setOpen] = useState(false);
   const [warehouse, setWarehouse] = useState<string | null>(null);
@@ -109,8 +109,8 @@ export function RequestReceiptButton({ request, openSignal = 0 }: { request: Req
   const whLabel = (w: typeof warehouses[number]) => [w.request_objects?.name, w.name].filter(Boolean).join(' — ');
   const discrepancy = hasDiscrepancy(lines);
   return <div data-row-action onClick={e => e.stopPropagation()} className="min-w-0">
-    <Button variant={fullyDone ? 'outline' : 'default'} className="min-h-11 h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs" onClick={() => { setOpen(true); setLabelDoc(null); }}>
-      <PackageCheck className="h-4 w-4 shrink-0" />{fullyDone ? 'Принято на склад' : batches.length ? `Принять остаток${leftFromState ? ` · ${leftFromState}` : ''}` : 'Осуществить приёмку'}
+    <Button size={compact ? "sm" : "default"} variant={fullyDone ? 'outline' : 'default'} className={`${compact ? "min-h-8" : "min-h-11"} h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs`} onClick={() => { setOpen(true); setLabelDoc(null); }}>
+      <PackageCheck className="h-4 w-4 shrink-0" />{fullyDone ? 'Принято на склад' : batches.length ? `Принять остаток${leftFromState ? ` · ${leftFromState}` : ''}` : compact ? 'Приёмка' : 'Осуществить приёмку'}
     </Button>
     <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
       <DialogHeader><DialogTitle className="break-words">Приёмка · {request.description || '—'}</DialogTitle><p className="text-sm text-muted-foreground">{request.request_number.replace(/^REQ-/, '')}</p></DialogHeader>

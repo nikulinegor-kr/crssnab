@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -33,11 +34,15 @@ export function CarrierShipmentStatus({ shipment, canEdit }: { shipment: Request
     }
   }
 
-  if (!canEdit) return <Badge variant="outline">{status}</Badge>;
+  const tone = status === "Доставлено" ? "border-success/25 bg-success/10 text-success"
+    : status === "Доставлено в ТК" ? "border-warning/25 bg-warning/10 text-warning"
+    : "border-primary/25 bg-primary/10 text-primary";
+
+  if (!canEdit) return <Badge variant="outline" className={tone}>{status}</Badge>;
   return (
     <select
       aria-label={`Статус перевозки №${shipment.sequence_number}`}
-      className="h-8 max-w-full rounded-md border border-input bg-background px-2 text-xs font-medium"
+      className={cn("h-8 max-w-full rounded-full border px-2.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", tone)}
       value={status}
       disabled={update.isPending}
       onChange={event => void save(event.target.value as Status)}

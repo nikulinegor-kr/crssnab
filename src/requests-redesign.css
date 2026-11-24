@@ -1511,3 +1511,47 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   flex: none;
   margin: 0;
 }
+
+/* Shipment subrows follow the left edge of their registry entry. */
+.request-shipments-tree {
+  padding: 10px 16px 12px clamp(16px, 4vw, 128px);
+  background: hsl(var(--muted) / 0.45);
+}
+.request-shipments-tree__content {
+  width: 100%;
+  max-width: 68rem;
+  border-inline-start: 2px solid hsl(var(--primary) / 0.25);
+  padding-inline-start: 12px;
+}
+.request-shipments-tree__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 1.2fr) 9.5rem;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  font-size: 13px;
+}
+.request-shipments-tree__dates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.request-shipments-tree__dates dt {
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+}
+.request-shipments-tree__status { justify-self: end; }
+.request-shipments-tree__status select { width: 9.5rem; }
+@media (max-width: 800px) {
+  .request-shipments-tree__row { grid-template-columns: minmax(0, 1fr) auto; }
+  .request-shipments-tree__dates { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 420px) {
+  .request-shipments-tree__row { grid-template-columns: minmax(0, 1fr); }
+  .request-shipments-tree__status { justify-self: start; }
+}

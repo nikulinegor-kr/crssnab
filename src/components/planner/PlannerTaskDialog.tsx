@@ -381,7 +381,13 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
   const errCls = (k: string) => errors[k] ? "border-destructive focus-visible:ring-destructive" : "";
 
-  if (workspace && !fullEditor) return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="cw-modal" aria-describedby={undefined} onOpenAutoFocus={e => e.preventDefault()}>
+  const dismissalProps = isEdit ? undefined : {
+    hideCloseButton: true,
+    onEscapeKeyDown: (event: KeyboardEvent) => event.preventDefault(),
+    onInteractOutside: (event: Event) => event.preventDefault(),
+  };
+
+  if (workspace && !fullEditor) return <Dialog open={open} onOpenChange={isEdit ? onOpenChange : undefined}><DialogContent {...dismissalProps} className="cw-modal" aria-describedby={undefined} onOpenAutoFocus={e => e.preventDefault()}>
     <DialogHeader><DialogTitle>{isEdit ? 'Редактировать задачу' : 'Новая задача'}</DialogTitle></DialogHeader>
     <div className="cw-modal-body space-y-4">
     <div className="cw-form-field"><Label htmlFor="cw-task-title">Что нужно сделать *</Label><Textarea id="cw-task-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например, согласовать дату отгрузки" rows={2} className={errCls('title')} /></div>
@@ -403,12 +409,12 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     {needsChangeReason && <div className="cw-form-field"><Label htmlFor="cw-task-reason">Причина изменения</Label><Textarea id="cw-task-reason" value={changeReason} onChange={e => setChangeReason(e.target.value)} placeholder="Почему изменились срок, исполнитель или приоритет" /></div>}
     <Button variant="ghost" className="justify-start px-0" onClick={() => setFullEditor(true)}>Дополнительные настройки</Button>
     </div>
-    <div className="cw-modal-footer"><Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button><Button onClick={() => void handleSave()} disabled={!title.trim() || create.isPending || update.isPending}>{create.isPending || update.isPending ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Поставить задачу'}</Button></div>
+    <div className="cw-modal-footer"><Button variant="outline" disabled={create.isPending || update.isPending} onClick={() => onOpenChange(false)}>Отмена</Button><Button onClick={() => void handleSave()} disabled={!title.trim() || create.isPending || update.isPending}>{create.isPending || update.isPending ? 'Сохраняем…' : isEdit ? 'Сохранить' : 'Поставить задачу'}</Button></div>
   </DialogContent></Dialog>;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto" onOpenAutoFocus={e => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={isEdit ? onOpenChange : undefined}>
+      <DialogContent {...dismissalProps} className="max-w-2xl max-h-[90dvh] overflow-y-auto" onOpenAutoFocus={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEdit ? "Редактировать задачу" : "Новая задача"}
@@ -514,7 +520,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             </CommandItem>
                           ))}
                         </CommandGroup>
-                        <CommandGroup>
+                        {isEdit && <CommandGroup>
                           <CommandItem
                             value="__add_new_employee__"
                             onSelect={() => {
@@ -526,7 +532,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             <Plus className="mr-2 h-4 w-4" />
                             Добавить сотрудника
                           </CommandItem>
-                        </CommandGroup>
+                        </CommandGroup>}
                       </CommandList>
                     </Command>
                   </PopoverContent>
@@ -665,7 +671,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                               );
                             })}
                         </CommandGroup>
-                        <CommandGroup>
+                        {isEdit && <CommandGroup>
                           <CommandItem
                             value="__add_new_equipment__"
                             onSelect={() => {
@@ -677,7 +683,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             <Plus className="mr-2 h-4 w-4" />
                             Добавить новую технику
                           </CommandItem>
-                        </CommandGroup>
+                        </CommandGroup>}
                       </CommandList>
                     </Command>
                   </PopoverContent>
@@ -727,7 +733,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                             <div className="text-muted-foreground">…и ещё задач: {conflicts.length - 3}</div>
                           )}
                           <div className="flex flex-wrap gap-2 pt-1">
-                            <Button
+                            {isEdit && <Button
                               type="button"
                               size="sm"
                               variant="outline"
@@ -736,7 +742,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                               title="Закрыть и перейти к задачам техники"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" /> Открыть занятую задачу
-                            </Button>
+                            </Button>}
                             <Button
                               type="button"
                               size="sm"
@@ -949,7 +955,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
             </div>
           ) : <span />}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+            <Button variant="outline" disabled={create.isPending || update.isPending} onClick={() => onOpenChange(false)}>Отмена</Button>
             <Button onClick={handleSave} disabled={create.isPending || update.isPending}>
               {isEdit ? "Сохранить" : "Создать"}
             </Button>

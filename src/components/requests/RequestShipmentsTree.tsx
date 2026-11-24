@@ -174,24 +174,35 @@ export function RequestShipmentsTree({ request }: { request: Request }) {
   }
 
   return (
-    <div className="bg-muted/20 border-l-4 border-primary/40 py-2 px-3">
-      <div className="max-w-3xl space-y-1.5">
-        {shipments.map((s) => (
-          s.shipment_mode === "carrier" ? (
-            <div key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card px-3 py-1.5 text-xs">
-              <Truck className="h-3.5 w-3.5 shrink-0 text-primary" />
-              <span className="font-semibold">Перевозка №{s.sequence_number}</span>
-              {s.transport_company && <span>{s.transport_company}</span>}
-              {s.waybill_number && <span>ТТН {s.waybill_number}</span>}
-              {s.load_date && <span className="text-muted-foreground">Отправка {fmt(s.load_date)}</span>}
-              {s.planned_arrival_date && <span className="text-muted-foreground">План {fmt(s.planned_arrival_date)}</span>}
-              {s.actual_arrival_date && <span className="text-success">Факт {fmt(s.actual_arrival_date)}</span>}
-              <CarrierShipmentStatus shipment={s} canEdit={canEdit} />
+    <div className="request-shipments-tree">
+      <section aria-label="Перевозки по заявке" className="request-shipments-tree__content">
+        <div className="space-y-1.5">
+          {shipments.map((s) => s.shipment_mode === "carrier" ? (
+            <div key={s.id} className="request-shipments-tree__row">
+              <div className="flex min-w-0 items-start gap-2">
+                <Truck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="font-medium break-words">{s.transport_company || `Перевозка №${s.sequence_number}`}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground break-words">
+                    №{s.sequence_number}{s.waybill_number && ` · ТТН ${s.waybill_number}`}
+                  </p>
+                </div>
+              </div>
+              <dl className="request-shipments-tree__dates">
+                <div><dt>Отгрузка</dt><dd>{fmt(s.load_date)}</dd></div>
+                <div><dt>Ожидается</dt><dd>{fmt(s.planned_arrival_date)}</dd></div>
+                <div><dt>Доставлено</dt><dd className={s.actual_arrival_date ? "text-success" : undefined}>{fmt(s.actual_arrival_date)}</dd></div>
+              </dl>
+              <div className="request-shipments-tree__status">
+                <CarrierShipmentStatus shipment={s} canEdit={canEdit} />
+              </div>
             </div>
-          ) : <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />
-        ))}
-        {shipments.some(hasShipmentArrived) && <RequestReceiptButton request={request} />}
-      </div>
+          ) : <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />)}
+        </div>
+        {shipments.some(hasShipmentArrived) && (
+          <div className="mt-2 flex justify-start"><RequestReceiptButton request={request} compact /></div>
+        )}
+      </section>
     </div>
   );
 }
