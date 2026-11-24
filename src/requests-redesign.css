@@ -1304,6 +1304,14 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   gap: 4px;
   padding-block: 0;
 }
+.request-view .request-view-invoice-details,
+.request-view .request-view-invoice-details .request-panel-field {
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.request-view .request-view-invoice-details .request-panel-field__value {
+  align-self: start;
+}
 .request-view :is(.request-view-field-label, .request-panel-field__label, .request-inline-field__label) {
   margin: 0;
   color: var(--requests-muted);
@@ -1454,6 +1462,8 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .request-view-section[open] > summary > svg { transform: rotate(180deg); }
 .request-view-section__content {
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 12px;
   min-width: 0;
   padding: 0 var(--view-inset) var(--view-inset);

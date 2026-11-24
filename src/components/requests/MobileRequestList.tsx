@@ -4,6 +4,8 @@ import { getStatusColor } from "@/hooks/useRequestsFilters";
 import { formatArrival, isArrivalOverdue, mobileArrivalDate } from "@/lib/mobileRequestList";
 import { ChevronDown } from "lucide-react";
 import { DEFAULT_COLLAPSED_REQUEST_PHASES, groupRequestsByPhase } from "@/lib/requestPhases";
+import { useShipmentsSummary } from "@/hooks/useRequestShipments";
+import { isPartiallyDelivered, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -16,7 +18,7 @@ interface Props {
 
 let savedScroll = 0;
 
-export const MobileRequestRow = ({ request, onOpen, arrivalLabel = "Приход" }: { request: Request; onOpen: (r: Request) => void; arrivalLabel?: string }) => {
+export const MobileRequestRow = ({ request, onOpen, arrivalLabel = "Приход", shipmentProgress }: { request: Request; onOpen: (r: Request) => void; arrivalLabel?: string; shipmentProgress?: { total: number; delivered: number } }) => {
   const overdue = isArrivalOverdue(request);
   return (
     <li className="border-b border-border last:border-b-0">
@@ -31,6 +33,9 @@ export const MobileRequestRow = ({ request, onOpen, arrivalLabel = "Приход
             {arrivalLabel} {formatArrival(mobileArrivalDate(request))}
           </span>
         </span>
+        {shipmentProgress && isPartiallyDelivered(shipmentProgress) && (
+          <span className="mt-1 block"><ShipmentsProgressChip {...shipmentProgress} /></span>
+        )}
         <span className="mt-1 block break-words text-[13px] text-muted-foreground">ТК {request.transport_company?.trim() || "—"}</span>
       </button>
     </li>
@@ -44,6 +49,10 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
   const [limits, setLimits] = useState<Record<string, number>>({});
   const groups = useMemo(() => groupRequestsByPhase(requests), [requests]);
   const expandedPhase = activePhase === null || groups.some(phase => phase.key === activePhase) ? activePhase : groups.find(phase => !DEFAULT_COLLAPSED_REQUEST_PHASES.has(phase.key))?.key;
+  const visibleRequests = grouped
+    ? (groups.find(phase => phase.key === expandedPhase)?.items ?? []).slice(0, expandedPhase ? limits[expandedPhase] ?? 8 : 8)
+    : requests;
+  const { data: shipmentProgress } = useShipmentsSummary(visibleRequests.map(request => request.id));
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = savedScroll;
@@ -56,7 +65,7 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
   return (
     <div ref={ref} onScroll={(e) => { savedScroll = e.currentTarget.scrollTop; }} className="mobile-request-list min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-card pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {!grouped ? (
-        <ul className="px-4">{requests.map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} />)}</ul>
+        <ul className="px-4">{requests.map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} shipmentProgress={shipmentProgress?.[request.id]} />)}</ul>
       ) : groups.map(phase => {
         const expanded = expandedPhase === phase.key;
         const limit = limits[phase.key] ?? 8;
@@ -79,7 +88,7 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
             </h2>
             <div id={contentId} hidden={!expanded} className="px-4">
               {expanded && <>
-                <ul>{phase.items.slice(0, limit).map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} />)}</ul>
+                <ul>{phase.items.slice(0, limit).map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} shipmentProgress={shipmentProgress?.[request.id]} />)}</ul>
                 {phase.items.length > limit && <button type="button" className="min-h-11 w-full border-t text-sm font-medium text-primary" onClick={() => setLimits(current => ({ ...current, [phase.key]: limit + 20 }))}>Показать ещё ({phase.items.length - limit})</button>}
               </>}
             </div>

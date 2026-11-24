@@ -1,3 +1,5 @@
+import { hasShipmentArrived, useRequestShipments } from "@/hooks/useRequestShipments";
+import { isPartiallyDelivered, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
@@ -608,6 +610,12 @@ export const RequestSidePanel = ({
     return steps;
   }, [request]);
 
+  const { data: requestShipments } = useRequestShipments(open ? request?.id : null);
+  const shipmentProgress = {
+    total: requestShipments?.length ?? 0,
+    delivered: requestShipments?.filter(hasShipmentArrived).length ?? 0,
+  };
+
   if (!request || (!open && !editorOpen)) return null;
 
   const asOverlay = !inline;
@@ -723,7 +731,7 @@ export const RequestSidePanel = ({
     </div>
   );
   const invoiceNumberField = (
-    <div className="request-view-field-grid">
+    <div className="request-view-field-grid request-view-invoice-details">
               <PanelField
               label="№ счёта"
               type="text"
@@ -1137,7 +1145,12 @@ export const RequestSidePanel = ({
                 type="select"
                 value={request.status}
                 options={STATUSES.map((value) => ({ value, label: value }))}
-                display={<span className="request-card-status"><i aria-hidden="true" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>}
+                display={
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <span className="request-card-status"><i aria-hidden="true" style={{ backgroundColor: getStatusColor(request.status) }} />{request.status}</span>
+                    {isPartiallyDelivered(shipmentProgress) && <ShipmentsProgressChip {...shipmentProgress} />}
+                  </span>
+                }
                 saveOnChange
                 readOnly={readOnly || (!!activeEditor && activeEditor !== "status")}
                 onEditingChange={(editing) => setActiveEditor((current) => editing ? "status" : current === "status" ? null : current)}

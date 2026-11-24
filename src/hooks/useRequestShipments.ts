@@ -121,15 +121,26 @@ export function useShipmentsSummary(requestIds: string[]) {
     queryKey: ["shipments-summary", key],
     enabled: requestIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await sb
-        .from("request_shipments")
-        .select("request_id,status,planned_arrival_date,actual_arrival_date")
-        .in("request_id", requestIds);
-      if (error) throw error;
+      const rows: Pick<RequestShipment, "request_id" | "status" | "planned_arrival_date" | "actual_arrival_date">[] = [];
+      for (let offset = 0; offset < requestIds.length; offset += 100) {
+        const ids = requestIds.slice(offset, offset + 100);
+        const pageSize = 500;
+        for (let start = 0; ; start += pageSize) {
+          const { data, error } = await sb
+            .from("request_shipments")
+            .select("request_id,status,planned_arrival_date,actual_arrival_date")
+            .in("request_id", ids)
+            .order("id")
+            .range(start, start + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data ?? []));
+          if (!data || data.length < pageSize) break;
+        }
+      }
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const map: Record<string, { total: number; delivered: number; inTransit: number; overdue: number }> = {};
       for (const id of requestIds) map[id] = { total: 0, delivered: 0, inTransit: 0, overdue: 0 };
-      for (const r of (data ?? []) as any[]) {
+      for (const r of rows) {
         const s = map[r.request_id] ?? (map[r.request_id] = { total: 0, delivered: 0, inTransit: 0, overdue: 0 });
         s.total += 1;
         const isDone = hasShipmentArrived(r);

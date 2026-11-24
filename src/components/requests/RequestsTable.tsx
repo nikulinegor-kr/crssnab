@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Star, MoreVertical, ExternalLink, Pencil, Copy, ShoppingCart, ChevronDown, MapPin, Tag, FolderOpen, Loader2, ClipboardList } from "lucide-react";
 import { ShipmentsSummaryChips } from "./RequestShipmentsPanel";
-import { RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
+import { isPartiallyDelivered, RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { useShipmentsSummary } from "@/hooks/useRequestShipments";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1006,10 +1006,8 @@ export const RequestsTable = ({
                                 </button>
                                 {shipmentsSummary?.[request.id] && (
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <ShipmentsProgressChip
-                                      total={shipmentsSummary[request.id].total}
-                                      delivered={shipmentsSummary[request.id].delivered}
-                                    />
+                                    {(!visibility.status || !isPartiallyDelivered(shipmentsSummary[request.id])) &&
+                                      <ShipmentsProgressChip {...shipmentsSummary[request.id]} />}
                                     <ShipmentsSummaryChips {...shipmentsSummary[request.id]} />
                                   </div>
                                 )}
@@ -1078,6 +1076,9 @@ export const RequestsTable = ({
                           </span>
                         }
                       />
+                      {shipmentsSummary?.[request.id] && isPartiallyDelivered(shipmentsSummary[request.id]) && (
+                        <div className="mt-1"><ShipmentsProgressChip {...shipmentsSummary[request.id]} /></div>
+                      )}
                     </TableCell>
                   )}
 

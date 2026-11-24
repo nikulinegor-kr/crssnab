@@ -185,7 +185,10 @@ export function RequestShipmentsTree({ request }: { request: Request }) {
 }
 
 
-/** Progress chip: X/Y машин прибыло */
+export function isPartiallyDelivered(summary?: { total: number; delivered: number }) {
+  return Boolean(summary && summary.delivered > 0 && summary.delivered < summary.total);
+}
+
 export function ShipmentsProgressChip({
   total,
   delivered,
@@ -205,7 +208,7 @@ export function ShipmentsProgressChip({
       title="Доставленные перевозки из общего числа"
     >
       <Truck className="h-3 w-3" />
-      {delivered > 0 && !done ? "Частично доставлено" : "Доставлено"} {delivered} из {total}
+      {isPartiallyDelivered({ total, delivered }) ? "Частично доставлено" : "Доставлено"} {delivered} из {total}
     </span>
   );
 }
