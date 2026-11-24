@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import { Truck } from "lucide-react";
-import type { RequestShipment } from "@/hooks/useRequestShipments";
+import { useState, type ReactNode } from "react";
+import { Pencil, Truck } from "lucide-react";
+import { carrierShipmentStatus, type RequestShipment } from "@/hooks/useRequestShipments";
 import { CarrierShipmentStatus } from "./CarrierShipmentStatus";
 
 function displayDate(value: string | null) {
@@ -12,6 +12,9 @@ export function CarrierShipmentRow({ shipment, canEdit, actions }: {
   canEdit: boolean;
   actions?: ReactNode;
 }) {
+  const [dateDialogOpen, setDateDialogOpen] = useState(false);
+  const delivered = carrierShipmentStatus(shipment) === "Доставлено";
+
   return (
     <div className="request-shipments-tree__row">
       <div className="request-shipments-tree__identity">
@@ -26,9 +29,20 @@ export function CarrierShipmentRow({ shipment, canEdit, actions }: {
       <dl className="request-shipments-tree__dates">
         <div><dt>Отгрузка</dt><dd>{displayDate(shipment.load_date)}</dd></div>
         <div><dt>План доставки</dt><dd>{displayDate(shipment.planned_arrival_date)}</dd></div>
-        <div><dt>Факт доставки</dt><dd className={shipment.actual_arrival_date ? "text-success" : undefined}>{displayDate(shipment.actual_arrival_date)}</dd></div>
+        <div>
+          <dt>Факт доставки</dt>
+          <dd className={shipment.actual_arrival_date ? "text-success" : undefined}>
+            {canEdit && delivered ? (
+              <button type="button" className="inline-flex items-center gap-1 rounded text-left hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Изменить фактическую дату перевозки №${shipment.sequence_number}`}
+                onClick={() => setDateDialogOpen(true)}>
+                {shipment.actual_arrival_date ? displayDate(shipment.actual_arrival_date) : "Указать"} <Pencil aria-hidden="true" className="size-3 shrink-0" />
+              </button>
+            ) : displayDate(shipment.actual_arrival_date)}
+          </dd>
+        </div>
       </dl>
-      <div className="request-shipments-tree__status"><CarrierShipmentStatus shipment={shipment} canEdit={canEdit} />{actions}</div>
+      <div className="request-shipments-tree__status"><CarrierShipmentStatus shipment={shipment} canEdit={canEdit} dateDialogOpen={dateDialogOpen} onDateDialogOpenChange={setDateDialogOpen} />{actions}</div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,13 +15,20 @@ import {
   type RequestShipment,
 } from "@/hooks/useRequestShipments";
 
-export function CarrierShipmentStatus({ shipment, canEdit }: { shipment: RequestShipment; canEdit: boolean }) {
+export function CarrierShipmentStatus({ shipment, canEdit, dateDialogOpen = false, onDateDialogOpenChange }: {
+  shipment: RequestShipment;
+  canEdit: boolean;
+  dateDialogOpen?: boolean;
+  onDateDialogOpenChange?: (open: boolean) => void;
+}) {
   const update = useUpsertShipment();
   const { toast } = useToast();
   const status = carrierShipmentStatus(shipment);
-  const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [arrivalDate, setArrivalDate] = useState("");
   const today = format(new Date(), "yyyy-MM-dd");
+  useEffect(() => {
+    if (dateDialogOpen) setArrivalDate(shipment.actual_arrival_date || today);
+  }, [dateDialogOpen, shipment.actual_arrival_date, today]);
 
   async function save(next: Status, actualDate: string | null = null) {
     if (actualDate && shipment.load_date && actualDate < shipment.load_date) {
@@ -36,7 +43,7 @@ export function CarrierShipmentStatus({ shipment, canEdit }: { shipment: Request
         status: next,
         actual_arrival_date: actualDate,
       });
-      setDateDialogOpen(false);
+      onDateDialogOpenChange?.(false);
     } catch (error) {
       toast({ title: "Не удалось изменить статус перевозки", description: (error as Error).message, variant: "destructive" });
     }
@@ -57,8 +64,7 @@ export function CarrierShipmentStatus({ shipment, canEdit }: { shipment: Request
         onChange={event => {
           const next = event.target.value;
           if (next === "Доставлено" || next === "edit-arrival-date") {
-            setArrivalDate(shipment.actual_arrival_date || today);
-            setDateDialogOpen(true);
+            onDateDialogOpenChange?.(true);
           } else {
             void save(next as Status);
           }
@@ -67,16 +73,16 @@ export function CarrierShipmentStatus({ shipment, canEdit }: { shipment: Request
         {CARRIER_SHIPMENT_STATUSES.map(option => <option key={option}>{option}</option>)}
         {status === "Доставлено" && <option value="edit-arrival-date">Изменить дату доставки</option>}
       </select>
-      <Dialog open={dateDialogOpen} onOpenChange={open => { if (!update.isPending) setDateDialogOpen(open); }}>
+      <Dialog open={dateDialogOpen} onOpenChange={open => { if (!update.isPending) onDateDialogOpenChange?.(open); }}>
         <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>Доставка перевозки №{shipment.sequence_number}</DialogTitle></DialogHeader>
           <Label htmlFor={`carrier-arrival-${shipment.id}`}>Фактическая дата доставки</Label>
           <Input id={`carrier-arrival-${shipment.id}`} type="date" min={shipment.load_date ?? undefined} max={today}
             value={arrivalDate} onChange={event => setArrivalDate(event.target.value)} />
           <DialogFooter>
-            <Button type="button" variant="outline" disabled={update.isPending} onClick={() => setDateDialogOpen(false)}>Отмена</Button>
+            <Button type="button" variant="outline" disabled={update.isPending} onClick={() => onDateDialogOpenChange?.(false)}>Отмена</Button>
             <Button type="button" disabled={update.isPending || !arrivalDate || arrivalDate > today || Boolean(shipment.load_date && arrivalDate < shipment.load_date)}
-              onClick={() => void save("Доставлено", arrivalDate)}>{update.isPending ? "Сохраняем…" : "Отметить доставку"}</Button>
+              onClick={() => void save("Доставлено", arrivalDate)}>{update.isPending ? "Сохраняем…" : "Сохранить дату"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
