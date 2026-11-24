@@ -666,7 +666,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         request_date: data.request_date,
         description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
         applicant_justification: data.applicant_justification ?? "",
-        justification_not_required: data.justification_not_required ?? false,
+        justification_not_required: (data.applicant_justification ?? "").trim() === "",
         status: data.status,
         priority: data.priority,
         applicant: data.applicant || "",
