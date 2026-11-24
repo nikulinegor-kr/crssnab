@@ -223,7 +223,7 @@ export default function DirectorInvoicesPage() {
             <dl className="mx-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-4 sm:mx-6 xl:grid-cols-3">
               {[["Контрагент", current.contractor], [proposals ? "Сумма предложения" : "Сумма счёта", money(current.amount)], [proposals ? "Номер и дата предложения" : "Номер и дата счёта", [current.invoice_number, current.invoice_date].filter(Boolean).join(" · ")], ["Объект", current.request_objects?.name], ["Заявитель", current.applicant], ["Статус", current.status], ["Предоплата", current.payment_percentage == null ? null : `${current.payment_percentage}%`]].map(([label,value]) => <div key={label}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-semibold">{value || "Не указано"}</dd></div>)}
             </dl>
-            <section className="mx-4 border-b py-3 sm:mx-6"><h3 className="font-semibold">Обоснование заявителя</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{current.applicant_justification || "Не указано"}</p></section>
+            <section className="mx-4 border-b py-3 sm:mx-6"><h3 className="font-semibold">Обоснование заявителя</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{current.applicant_justification === "" ? "Не требуется" : current.applicant_justification || "Не указано"}</p></section>
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
               <span className="min-w-0 break-all text-sm font-medium">{document ? requestFileName(document) : "Файл не прикреплён"}</span>
               {preview.data && <Button variant="outline" asChild><a target="_blank" rel="noopener" href={preview.data}>Открыть файл</a></Button>}

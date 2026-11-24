@@ -29,6 +29,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
     const { toast } = useToast();
 
     // Show comment field if there's existing content
+    const justificationNotRequired = form.watch("justification_not_required") === true;
     const commentsValue = form.watch("comments");
     useEffect(() => {
       if (commentsValue && typeof commentsValue === 'string' && commentsValue.trim()) {
@@ -130,16 +131,30 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
         <div className="px-3.5 pb-3 sm:px-5">
           <FormField
             control={form.control}
+            name="justification_not_required"
+            render={({ field }) => (
+              <label className="mb-2 flex min-h-9 items-center gap-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" checked={field.value === true}
+                  disabled={disabled} onChange={event => {
+                    field.onChange(event.target.checked);
+                    if (event.target.checked) form.clearErrors("applicant_justification");
+                  }} />
+                Обоснование не требуется
+              </label>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="applicant_justification"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Обоснование заявителя *</FormLabel>
+                <FormLabel>Обоснование заявителя{!justificationNotRequired && " *"}</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
                     value={field.value ?? ""}
-                    disabled={disabled}
-                    aria-required="true"
+                    disabled={disabled || justificationNotRequired}
+                    aria-required={!justificationNotRequired}
                     maxLength={2000}
                     placeholder="Зачем нужна закупка?"
                     className="min-h-[64px] resize-y text-sm leading-relaxed"

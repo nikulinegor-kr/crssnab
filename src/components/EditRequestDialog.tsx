@@ -65,7 +65,8 @@ const requestSchema = z.object({
   request_date: z.string()
     .min(1, "Дата заявки обязательна")
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Неверный формат даты"),
-  applicant_justification: z.string().trim().min(1, "Укажите обоснование заявки").max(2000, "До 2000 символов"),
+  applicant_justification: z.string().trim().max(2000, "До 2000 символов"),
+  justification_not_required: z.boolean().optional(),
   description: z.string()
     .trim()
     .min(3, "Описание должно содержать минимум 3 символа")
@@ -311,6 +312,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       request_date: "",
       description: "",
       applicant_justification: "",
+      justification_not_required: false,
       status: "Новая заявка",
       priority: "Планово",
       applicant: "",
@@ -351,6 +353,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       request_date: request.request_date,
       description: request.description,
       applicant_justification: request.applicant_justification ?? "",
+      justification_not_required: request.applicant_justification === "",
       status: request.status,
       priority: request.priority,
       applicant: request.applicant || "",
@@ -427,6 +430,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         request_date: request.request_date,
         description: request.description,
         applicant_justification: request.applicant_justification ?? "",
+        justification_not_required: request.applicant_justification === "",
         status: request.status,
         priority: request.priority,
         applicant: request.applicant || "",
@@ -530,7 +534,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       const requestData = {
         request_date: data.request_date,
         description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
-        applicant_justification: data.applicant_justification?.trim() || null,
+        applicant_justification: data.justification_not_required ? "" : data.applicant_justification.trim(),
         status: data.status,
         priority: data.priority,
         applicant: data.applicant,
@@ -661,7 +665,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       form.reset({
         request_date: data.request_date,
         description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
-        applicant_justification: data.applicant_justification?.trim() || null,
+        applicant_justification: data.applicant_justification ?? "",
+        justification_not_required: data.justification_not_required ?? false,
         status: data.status,
         priority: data.priority,
         applicant: data.applicant || "",
@@ -751,7 +756,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       const requestData = {
         request_date: data.request_date,
         description: data.description ? data.description.charAt(0).toUpperCase() + data.description.slice(1) : data.description,
-        applicant_justification: data.applicant_justification?.trim() || null,
+        applicant_justification: data.justification_not_required ? "" : data.applicant_justification.trim(),
         status: data.status,
         priority: data.priority,
         applicant: data.applicant,

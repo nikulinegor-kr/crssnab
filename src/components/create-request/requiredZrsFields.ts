@@ -28,6 +28,7 @@ export function hasAddedInvoice(values: RequestValidationValues, hasFile: boolea
 
 export function validateRequiredZrsFields(values: RequestValidationValues, ctx: RefinementCtx, hasFile: boolean) {
   const required = [
+    ["applicant_justification", !values.justification_not_required && !values.applicant_justification?.trim(), "Укажите обоснование заявки"],
     ["executor", !values.executor?.trim(), "Укажите исполнителя"],
     ["availability_delivery_time", !values.availability_delivery_time?.trim(), "Выберите наличие"],
   ] as const;
