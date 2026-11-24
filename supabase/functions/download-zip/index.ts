@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import JSZip from "https://esm.sh/jszip@3.10.1";
+// esm.sh не объявляет default-экспорт в типах JSZip, поэтому читаем пространство имён
+import * as JSZipNS from "https://esm.sh/jszip@3.10.1";
+const JSZip: any = (JSZipNS as any).default ?? JSZipNS;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -117,7 +119,7 @@ serve(async (req) => {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

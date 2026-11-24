@@ -1,5 +1,5 @@
 // MAX Bot webhook — receives updates from platform-api.max.ru
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const MAX_API = "https://platform-api.max.ru";
 
@@ -8,7 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type SupaClient = ReturnType<typeof createClient>;
+// Клиент создаётся ниже без явных дженериков схемы, поэтому тип задаём
+// напрямую: ReturnType<typeof createClient> разворачивает таблицы в never.
+type SupaClient = SupabaseClient<any, "public", "public", any, any>;
 let LAST_AUTH_MODE: "bearer" | "query" = "bearer";
 
 async function maxFetch(
