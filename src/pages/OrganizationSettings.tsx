@@ -24,6 +24,7 @@ import { DeadlineReminderSettings } from "@/components/settings/DeadlineReminder
 import { ObjectsManagement } from "@/components/settings/ObjectsManagement";
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import ErrorLogsPage from "@/pages/ErrorLogsPage";
+import { OrganizationDataExport } from "@/components/settings/OrganizationDataExport";
 import { Button } from "@/components/ui/button";
 
 const OrganizationSettings = () => {
@@ -37,7 +38,7 @@ const OrganizationSettings = () => {
 
   const isEditor = role === "editor";
   const visibleTabs = isAdmin
-    ? ["profile", "general", "access", "notifications", "subscription", "errorlogs"]
+    ? ["profile", "general", "access", "notifications", "subscription", "data-export", "errorlogs"]
     : isEditor
       ? ["profile", "notifications"]
       : ["profile"];
@@ -130,6 +131,11 @@ const OrganizationSettings = () => {
             {visibleTabs.includes("subscription") && (
               <TabsTrigger value="subscription" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5 transition-all duration-200">
                 <CreditCard className="h-4 w-4" /><span className="hidden sm:inline">Подписка</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes("data-export") && (
+              <TabsTrigger value="data-export" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4 gap-1.5">
+                <FileText className="h-4 w-4" />Выгрузка данных
               </TabsTrigger>
             )}
             {visibleTabs.includes("errorlogs") && (
@@ -233,6 +239,14 @@ const OrganizationSettings = () => {
           <TabsContent value="subscription">
             <SettingsSection title="Подписка" description="Управление тарифным планом" icon={CreditCard}>
               <SubscriptionSettings organizationId={currentOrgId!} />
+            </SettingsSection>
+          </TabsContent>
+        )}
+
+        {visibleTabs.includes("data-export") && currentOrgId && (
+          <TabsContent value="data-export">
+            <SettingsSection title="Выгрузка данных" description="Скачайте копию данных текущей организации" icon={FileText}>
+              <OrganizationDataExport organizationId={currentOrgId} />
             </SettingsSection>
           </TabsContent>
         )}
