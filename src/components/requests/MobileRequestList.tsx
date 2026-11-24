@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Request } from "@/hooks/useRequests";
 import { getStatusColor } from "@/hooks/useRequestsFilters";
-import { formatArrival, groupMobileRequests, isArrivalOverdue, mobileArrivalDate } from "@/lib/mobileRequestList";
+import { formatArrival, isArrivalOverdue, mobileArrivalDate } from "@/lib/mobileRequestList";
+import { ChevronDown } from "lucide-react";
+import { groupRequestsByPhase } from "@/lib/requestPhases";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -37,6 +39,11 @@ export const MobileRequestRow = ({ request, onOpen, arrivalLabel = "Приход
 
 export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true, arrivalLabel }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
+  const listId = useId();
+  const [activePhase, setActivePhase] = useState<string | null>();
+  const [limits, setLimits] = useState<Record<string, number>>({});
+  const groups = useMemo(() => groupRequestsByPhase(requests), [requests]);
+  const expandedPhase = activePhase === null || groups.some(phase => phase.key === activePhase) ? activePhase : groups[0]?.key;
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = savedScroll;
@@ -46,19 +53,39 @@ export const MobileRequestList = ({ requests, isLoading, onOpen, grouped = true,
   if (isLoading) return <p className="px-4 py-8 text-center text-sm text-muted-foreground">Загрузка…</p>;
   if (requests.length === 0) return <p className="px-4 py-8 text-center text-sm text-muted-foreground">Заявки не найдены</p>;
 
-  const groups = grouped ? groupMobileRequests(requests) : [{ stage: 0, label: "", items: requests }];
   return (
-    <div ref={ref} onScroll={(e) => { savedScroll = e.currentTarget.scrollTop; }} className="mobile-request-list min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-card px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] max-[340px]:px-3">
-      {groups.map((g) => (
-        <section key={g.stage} aria-label={g.label || undefined}>
-          {g.label && (
-            <h2 className="sticky top-0 z-[1] -mx-4 bg-muted px-4 py-1.5 text-xs font-semibold text-muted-foreground max-[340px]:-mx-3 max-[340px]:px-3">
-              {g.label} · <span className="font-numeric">{g.items.length}</span>
+    <div ref={ref} onScroll={(e) => { savedScroll = e.currentTarget.scrollTop; }} className="mobile-request-list min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-card pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      {!grouped ? (
+        <ul className="px-4">{requests.map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} />)}</ul>
+      ) : groups.map(phase => {
+        const expanded = expandedPhase === phase.key;
+        const limit = limits[phase.key] ?? 8;
+        const contentId = `${listId}-${phase.key}`;
+        return (
+          <section key={phase.key} className="border-b border-border last:border-b-0">
+            <h2 className="sticky top-0 z-[1] bg-card">
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={contentId}
+                onClick={() => setActivePhase(expanded ? null : phase.key)}
+                className={cn("flex min-h-12 w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-semibold", expanded && "bg-muted")}
+              >
+                <span className={cn("size-2 shrink-0 rounded-full", phase.accent)} aria-hidden="true" />
+                <span className="min-w-0 flex-1 break-words">{phase.name}</span>
+                <span className="rounded-md bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{phase.items.length}</span>
+                <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground", expanded && "rotate-180")} aria-hidden="true" />
+              </button>
             </h2>
-          )}
-          <ul>{g.items.map((r) => <MobileRequestRow key={r.id} request={r} onOpen={onOpen} arrivalLabel={arrivalLabel} />)}</ul>
-        </section>
-      ))}
+            <div id={contentId} hidden={!expanded} className="px-4">
+              {expanded && <>
+                <ul>{phase.items.slice(0, limit).map(request => <MobileRequestRow key={request.id} request={request} onOpen={onOpen} arrivalLabel={arrivalLabel} />)}</ul>
+                {phase.items.length > limit && <button type="button" className="min-h-11 w-full border-t text-sm font-medium text-primary" onClick={() => setLimits(current => ({ ...current, [phase.key]: limit + 20 }))}>Показать ещё ({phase.items.length - limit})</button>}
+              </>}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 };

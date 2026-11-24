@@ -42,7 +42,6 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileRequestList } from "@/components/requests/MobileRequestList";
 import { MobileAttentionChips } from "@/components/requests/MobileAttentionChips";
-import { applyMobileHideDelivered } from "@/lib/mobileRequestList";
 
 const Requests = () => {
   const { toast } = useToast();
@@ -178,6 +177,10 @@ const Requests = () => {
   const [groupByPhase, setGroupByPhase] = useState(true);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent("requests-group-by-phase-change", { detail: groupByPhase }));
+  }, [groupByPhase]);
+
+  useEffect(() => {
     localStorage.setItem("requests-group-by-phase", "1");
     localStorage.setItem("requests-group-by-object", "0");
     localStorage.setItem("requests-group-by-project", "0");
@@ -216,6 +219,7 @@ const Requests = () => {
 
   const viewControls = (
     <RequestsViewControls
+      mobile={isMobile}
       groupByObject={groupByObject}
       groupByPhase={groupByPhase}
       onGroupByObject={changeGroupByObject}
@@ -711,8 +715,9 @@ const Requests = () => {
           {isMobile ? (
             <div className="requests-table-surface flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <MobileRequestList
-                requests={applyMobileHideDelivered(visibleRequests, filters.hideDelivered, filters.statusFilter)}
+                requests={visibleRequests}
                 isLoading={isLoading}
+                grouped={groupByPhase}
                 onOpen={handleEditClick}
               />
             </div>

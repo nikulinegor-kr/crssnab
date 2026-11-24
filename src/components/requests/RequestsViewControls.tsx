@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TableColumnSettings, type ColumnVisibility } from "./TableColumnSettings";
 
 export interface RequestsViewControlsProps {
+  mobile?: boolean;
   groupByObject: boolean;
   groupByPhase: boolean;
   onGroupByObject: (value: boolean) => void;
@@ -15,6 +16,7 @@ export interface RequestsViewControlsProps {
 }
 
 export function RequestsViewControls({
+  mobile = false,
   groupByObject,
   groupByPhase,
   onGroupByObject,
@@ -23,6 +25,18 @@ export function RequestsViewControls({
   onVisibilityChange,
   onResetColumns,
 }: RequestsViewControlsProps) {
+  if (mobile) return (
+    <Toggle
+      pressed={groupByPhase}
+      onPressedChange={onGroupByPhase}
+      size="sm"
+      aria-label="Группировать по фазам"
+      className="min-h-9 shrink-0 gap-1.5 border border-input px-2 text-xs data-[state=on]:border-primary/25 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+    >
+      <ListTree className="size-3.5" aria-hidden="true" />По фазам
+    </Toggle>
+  );
+
   const groupToggles = (compact = false) => (
     <>
       <Toggle
