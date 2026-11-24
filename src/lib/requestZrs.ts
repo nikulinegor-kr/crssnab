@@ -21,9 +21,7 @@ export function buildRequestZrsLines(values: RequestZrsValues, objectName?: stri
     `Объект: ${objectName || "-"}`,
     `Заявка: ${values.description || "-"}`,
     `Заявитель: ${values.applicant || "-"}`,
-    ...(values.applicant_justification?.trim()
-      ? [`Обоснование заявителя: ${values.applicant_justification.trim()}`]
-      : []),
+    `Обоснование заявителя: ${values.applicant_justification?.trim() || "-"}`,
     `Приоритет: ${values.priority || "-"}`,
     `Наличие: ${values.availability_delivery_time || "-"}`,
     `Срок доставки: ${values.estimated_delivery_days != null ? `${values.estimated_delivery_days} дн.` : "-"}`,

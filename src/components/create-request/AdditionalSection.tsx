@@ -71,9 +71,9 @@ export const AdditionalSection = ({
     }
   };
 
-  const getZrsLines = () => buildRequestZrsLines(
-    formValues,
-    objectsData?.find(o => o.id === formValues.object_id)?.name,
+  const getZrsLines = (values = form.getValues()) => buildRequestZrsLines(
+    values,
+    objectsData?.find(o => o.id === values.object_id)?.name,
   );
 
   const insertIntoFile = async (originalFile: File, alreadyAttached = true) => {
