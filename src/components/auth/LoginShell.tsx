@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Shield, Users } from "lucide-react";
+import { PRIVACY_PATH } from "@/lib/personalDataConsent";
 import crssMark from "@/assets/crss-mark.svg";
 import "./loginShell.css";
 
@@ -73,6 +74,9 @@ export default function LoginShell({
             </nav>
           )}
           {children}
+          <footer className="crss-login__privacy">
+            <Link to={PRIVACY_PATH} className="crss-link">Политика конфиденциальности</Link>
+          </footer>
         </div>
       </main>
     </div>

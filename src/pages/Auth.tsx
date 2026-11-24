@@ -13,7 +13,7 @@ import BiometricLoginButton from "@/components/native/BiometricLoginButton";
 import LoginShell from "@/components/auth/LoginShell";
 import { parseAuthMode, safeNext, preferredAuthDestination, type AuthMode } from "@/lib/authNavigation";
 
-import { CONSENT_PATH, CONSENT_VERSION, PRIVACY_PATH } from "@/lib/personalDataConsent";
+import { CONSENT_PATH, CONSENT_VERSION } from "@/lib/personalDataConsent";
 
 const loginSchema = z.object({
   email: z.string().email("Неверный формат email"),
@@ -305,7 +305,6 @@ export default function Auth() {
       {(mode === "forgot" || mode === "reset") && (
         <button type="button" className="crss-link text-sm" onClick={() => setMode("login")}>Вернуться ко входу</button>
       )}
-      <Link to={PRIVACY_PATH} target="_blank" rel="noopener" className="mt-4 inline-block crss-link text-sm">Политика обработки персональных данных</Link>
     </LoginShell>
   );
 }

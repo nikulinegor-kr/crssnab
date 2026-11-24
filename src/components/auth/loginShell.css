@@ -43,6 +43,8 @@
 .crss-login .crss-muted { color: var(--cl-muted); }
 .crss-login .crss-link { color: var(--cl-accent); font-weight: 500; }
 .crss-login .crss-link:hover { color: var(--cl-accent-hover); }
+.crss-login__privacy { border-top: 1px solid var(--cl-border); padding-top: 12px; font-size: 14px; }
+.crss-login__privacy a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: underline; text-underline-offset: 3px; }
 .crss-login .crss-submit { height: 44px; border-radius: 11px; background: var(--cl-accent); color: #fff; font-weight: 600; }
 .crss-login .crss-submit:hover { background: var(--cl-accent-hover); }
 .crss-login button[role="checkbox"] { min-height: 0; min-width: 0; height: 16px; width: 16px; border-radius: 4px; }
