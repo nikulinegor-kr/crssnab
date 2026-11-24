@@ -32,6 +32,7 @@ interface Props {
   shipment?: RequestShipment | null;
   mode?: ShipmentMode;
   transportCompanies?: string[];
+  beforeCreate?: () => Promise<void>;
 }
 
 interface DraftItem {
@@ -41,7 +42,7 @@ interface DraftItem {
   unit: string;
 }
 
-export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment, mode, transportCompanies = [] }: Props) {
+export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, shipment, mode, transportCompanies = [], beforeCreate }: Props) {
   const shipmentMode = shipment?.shipment_mode ?? mode;
   const carrierForm = shipmentMode === "carrier";
   const upsert = useUpsertShipment();
@@ -67,6 +68,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   const [comment, setComment] = useState("");
   const [items, setItems] = useState<DraftItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -180,6 +182,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
   };
 
   const handleSave = async () => {
+    if (saving) return;
     const inTransit = status === "В пути" || status === "Загружена";
     const arrived = ["Прибыла", "Разгружена", "Завершена"].includes(status);
     const error = inTransit && (!loadDate || !plannedDate)
@@ -193,7 +196,9 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
       toast({ title: "Проверьте даты перевозки", description: error, variant: "destructive" });
       return;
     }
+    setSaving(true);
     try {
+      if (!shipment) await beforeCreate?.();
       const saved = await upsert.mutateAsync({
         id: shipment?.id,
         request_id: requestId,
@@ -219,6 +224,8 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
       onOpenChange(false);
     } catch (e: any) {
       toast({ title: "Ошибка", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -402,7 +409,7 @@ export function ShipmentDialog({ open, onOpenChange, requestId, organizationId, 
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
-          <Button type="button" onClick={handleSave} disabled={upsert.isPending}>
+          <Button type="button" onClick={handleSave} disabled={saving || upsert.isPending}>
             {shipment ? "Сохранить" : "Добавить"}
           </Button>
         </DialogFooter>

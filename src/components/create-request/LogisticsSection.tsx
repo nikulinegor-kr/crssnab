@@ -37,13 +37,10 @@ export const LogisticsSection = ({
   const invoiceRequired = hasAddedInvoice(form.watch(), hasInvoiceFile);
   const datesRequired = form.watch("status") === "В пути";
   const { data: existingShipments = [] } = useRequestShipments(requestId);
-  const [selectedMode, setSelectedMode] = useState<"single" | "carrier" | "dedicated">();
+  const [selectedMode, setSelectedMode] = useState<"carrier" | "dedicated">();
   useEffect(() => setSelectedMode(undefined), [requestId]);
-  const hasRoutes = existingShipments.length > 1 || existingShipments.some(shipment =>
-    shipment.shipment_mode || shipment.origin_city || shipment.destination_city);
-  const savedMode = hasRoutes
-    ? existingShipments.every(shipment => shipment.shipment_mode === "dedicated") ? "dedicated" : "carrier"
-    : "single";
+  const savedMode = existingShipments.length > 0 && existingShipments.every(shipment => shipment.shipment_mode === "dedicated")
+    ? "dedicated" : "carrier";
   const mode = selectedMode ?? savedMode;
 
   return (
@@ -59,8 +56,7 @@ export const LogisticsSection = ({
         <span className="text-xs text-muted-foreground">Тип доставки</span>
         <Tabs value={mode} onValueChange={(value) => setSelectedMode(value as typeof mode)}>
           <TabsList className="h-auto flex-wrap justify-start">
-            <TabsTrigger type="button" value="single" className="min-h-9 px-3 text-xs">1 ТК</TabsTrigger>
-            <TabsTrigger type="button" value="carrier" className="min-h-9 px-3 text-xs">Несколько ТК</TabsTrigger>
+            <TabsTrigger type="button" value="carrier" className="min-h-9 px-3 text-xs">Транспортная компания</TabsTrigger>
             <TabsTrigger type="button" value="dedicated" className="min-h-9 px-3 text-xs">Машины, контейнеры и вагоны</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -134,10 +130,10 @@ export const LogisticsSection = ({
         />
       </div>
 
-      {mode === "single" ? (
+      {mode === "carrier" && (
         <FormSectionCard
           bare
-          title="Логистика · 1 ТК"
+          title="Основная отгрузка через ТК"
           icon={<Truck className="h-4 w-4 text-muted-foreground" />}
         >
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -198,8 +194,8 @@ export const LogisticsSection = ({
               />
           </div>
         </FormSectionCard>
-      ) : (
-        <FormSectionCard
+      )}
+      <FormSectionCard
           bare
           title="Отдельные отгрузки"
           icon={<Boxes className="h-4 w-4 text-muted-foreground" />}
@@ -216,14 +212,11 @@ export const LogisticsSection = ({
             <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <Info className="h-4 w-4 mt-0.5 shrink-0" />
               <div>
-                Сначала сохраните заявку, после чего здесь появится возможность добавлять
-                перевозки. Каждая перевозка содержит свой список материалов, водителя, ТТН и
-                даты. Данные можно распознать из ТТН/накладной автоматически.
+                Сохраните заявку, чтобы добавить отдельные отгрузки с ТК, ТТН и датами.
               </div>
             </div>
           )}
         </FormSectionCard>
-      )}
     </div>
     </FormSectionCard>
   );

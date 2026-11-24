@@ -1346,7 +1346,7 @@ export const RequestsTable = ({
                 {expandedRows.has(request.id) && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={totalColCount} className="p-0 border-b">
-                      <RequestShipmentsTree requestId={request.id} />
+                      <RequestShipmentsTree request={request} />
                     </TableCell>
                   </TableRow>
                 )}

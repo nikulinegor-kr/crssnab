@@ -13,9 +13,11 @@ import {
   type ShipmentMode,
   useShipmentItems,
   useUpsertShipmentItem,
+  useUpsertShipment,
   type RequestShipment,
   type TransportType,
 } from "@/hooks/useRequestShipments";
+import { supabase } from "@/integrations/supabase/client";
 import { ShipmentDialog } from "./ShipmentDialog";
 
 function TypeIcon({ type, className }: { type: TransportType; className?: string }) {
@@ -148,8 +150,36 @@ interface PanelProps {
 export function RequestShipmentsPanel({ requestId, organizationId, canEdit = true, mode, transportCompanies = [] }: PanelProps) {
   const { data: shipments = [], isLoading } = useRequestShipments(requestId);
   const del = useDeleteShipment();
+  const upsert = useUpsertShipment();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RequestShipment | null>(null);
+
+  async function preservePrimaryShipment() {
+    if (mode !== "carrier" || shipments.length) return;
+    const { data: existing, error: existingError } = await supabase.from("request_shipments")
+      .select("id").eq("request_id", requestId).limit(1);
+    if (existingError) throw existingError;
+    if (existing?.length) return;
+    const { data, error } = await supabase.from("requests")
+      .select("transport_company,waybill_number,shipment_date,delivery_date,actual_arrival_date,status")
+      .eq("id", requestId).eq("organization_id", organizationId).single();
+    if (error) throw error;
+    if (!data.transport_company && !data.waybill_number) return;
+
+    await upsert.mutateAsync({
+      request_id: requestId,
+      organization_id: organizationId,
+      sequence_number: 1,
+      shipment_mode: "carrier",
+      transport_type: "auto",
+      transport_company: data.transport_company,
+      waybill_number: data.waybill_number,
+      load_date: data.shipment_date,
+      planned_arrival_date: data.delivery_date,
+      actual_arrival_date: data.actual_arrival_date,
+      status: data.actual_arrival_date ? "Прибыла" : data.status === "В пути" ? "В пути" : "Ожидает погрузки",
+    });
+  }
 
   const openCreate = (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -170,7 +200,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
         <div className="text-sm font-semibold">Перевозки по заявке</div>
         {canEdit && (
           <Button type="button" size="sm" variant="default" onClick={openCreate}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> {mode === "carrier" ? "Добавить отгрузку через ТК" : "Добавить перевозку"}
+            <Plus className="h-3.5 w-3.5 mr-1" /> {mode === "carrier" ? "Добавить отгрузку" : "Добавить перевозку"}
           </Button>
         )}
       </div>
@@ -246,6 +276,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
         organizationId={organizationId}
         shipment={editing}
         mode={mode}
+        beforeCreate={preservePrimaryShipment}
         transportCompanies={[...new Set([...transportCompanies, ...shipments.flatMap(shipment => shipment.transport_company ? [shipment.transport_company] : [])])]}
       />
     </div>

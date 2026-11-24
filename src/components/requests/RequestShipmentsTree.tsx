@@ -2,11 +2,19 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ChevronDown, Truck, Package, Train, Plane, Ship } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import type { Request } from "@/hooks/useRequests";
+import { RequestReceiptButton } from "@/components/warehouse-qr/RequestReceiptButton";
 import { Badge } from "@/components/ui/badge";
 import {
   useRequestShipments,
   useShipmentItems,
   formatShipmentRoute,
+  hasShipmentArrived,
+  useUpsertShipment,
   type RequestShipment,
   type TransportType,
 } from "@/hooks/useRequestShipments";
@@ -39,9 +47,29 @@ function statusBadgeClass(status: string) {
 
 const fmt = (d: string | null) => (d ? format(new Date(d), "dd.MM.yyyy", { locale: ru }) : "—");
 
-function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
+function ShipmentRow({ shipment, canEdit }: { shipment: RequestShipment; canEdit: boolean }) {
   const [open, setOpen] = useState(false);
   const { data: items = [], isLoading } = useShipmentItems(open ? shipment.id : null);
+  const [arrivalDate, setArrivalDate] = useState("");
+  const updateShipment = useUpsertShipment();
+  const { toast } = useToast();
+  async function confirmArrival() {
+    if (!arrivalDate || updateShipment.isPending) return;
+    try {
+      await updateShipment.mutateAsync({
+        id: shipment.id,
+        request_id: shipment.request_id,
+        organization_id: shipment.organization_id,
+        actual_arrival_date: arrivalDate,
+        status: "Прибыла",
+      });
+      setArrivalDate("");
+      toast({ title: "Прибытие отмечено" });
+    } catch (error) {
+      toast({ title: "Не удалось отметить прибытие", description: (error as { message?: string }).message, variant: "destructive" });
+    }
+  }
+
 
   return (
     <div className="rounded-md border bg-card">
@@ -89,6 +117,20 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
 
       {open && (
         <div className="pl-8 pr-3 py-1.5 bg-muted/20 border-t border-border/30 rounded-b-md">
+          {canEdit && !hasShipmentArrived(shipment) && (
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {arrivalDate ? <>
+                <Input type="date" aria-label="Фактическая дата доставки" min={shipment.load_date ?? undefined}
+                  max={format(new Date(), "yyyy-MM-dd")} value={arrivalDate}
+                  onChange={event => setArrivalDate(event.target.value)} className="h-9 w-auto" />
+                <Button type="button" size="sm" disabled={updateShipment.isPending || Boolean(shipment.load_date && arrivalDate < shipment.load_date) || arrivalDate > format(new Date(), "yyyy-MM-dd")}
+                  onClick={() => void confirmArrival()}>Подтвердить прибытие</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setArrivalDate("")}>Отмена</Button>
+              </> : (
+                <Button type="button" variant="outline" size="sm" onClick={() => setArrivalDate(format(new Date(), "yyyy-MM-dd"))}>Отметить, что прибыло</Button>
+              )}
+            </div>
+          )}
           {isLoading ? (
             <div className="text-[11px] text-muted-foreground">Загрузка материалов…</div>
           ) : items.length === 0 ? (
@@ -115,8 +157,9 @@ function ShipmentRow({ shipment }: { shipment: RequestShipment }) {
   );
 }
 
-export function RequestShipmentsTree({ requestId }: { requestId: string }) {
-  const { data: shipments = [], isLoading } = useRequestShipments(requestId);
+export function RequestShipmentsTree({ request }: { request: Request }) {
+  const { canEdit } = useUserRole();
+  const { data: shipments = [], isLoading } = useRequestShipments(request.id);
 
   if (isLoading) {
     return <div className="px-3 py-2 text-xs text-muted-foreground">Загрузка перевозок…</div>;
@@ -133,8 +176,9 @@ export function RequestShipmentsTree({ requestId }: { requestId: string }) {
     <div className="bg-muted/20 border-l-4 border-primary/40 py-2 px-3">
       <div className="max-w-3xl space-y-1.5">
         {shipments.map((s) => (
-          <ShipmentRow key={s.id} shipment={s} />
+          <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />
         ))}
+        {shipments.some(hasShipmentArrived) && <RequestReceiptButton request={request} />}
       </div>
     </div>
   );
