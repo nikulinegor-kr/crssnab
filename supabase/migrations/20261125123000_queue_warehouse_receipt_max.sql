@@ -57,7 +57,6 @@ $$;
 
 revoke all on function public.queue_warehouse_receipt_max() from public, anon, authenticated;
 
-drop trigger if exists queue_warehouse_receipt_max on public.warehouse_receipt_batches;
-create trigger queue_warehouse_receipt_max
+create or replace trigger queue_warehouse_receipt_max
 after insert on public.warehouse_receipt_batches
 for each row execute function public.queue_warehouse_receipt_max();
