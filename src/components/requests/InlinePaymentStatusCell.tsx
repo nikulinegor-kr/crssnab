@@ -66,6 +66,12 @@ export const InlinePaymentStatusCell = ({ requestId, paymentPercent }: Props) =>
         }
       }
 
+      if (newPercent === paymentPercent && newPercent >= 50) {
+        setOpen(false);
+        openRequestLogistics({ requestId, percent: newPercent });
+        return;
+      }
+
       const paymentStatus =
         option.value === "not_paid"
           ? "Не оплачено"
@@ -86,10 +92,10 @@ export const InlinePaymentStatusCell = ({ requestId, paymentPercent }: Props) =>
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast({
         title: "Статус оплаты обновлён",
-        description: `${option.label} (${newPercent}%)`,
+        description: option.value === "not_paid" ? option.label : `${option.label} (${newPercent}%)`,
       });
       setOpen(false);
-      if (newPercent >= 50 && newPercent !== paymentPercent) openRequestLogistics({ requestId, percent: newPercent });
+      if (newPercent >= 50) openRequestLogistics({ requestId, percent: newPercent });
     } catch (e) {
       console.error(e);
       toast({
