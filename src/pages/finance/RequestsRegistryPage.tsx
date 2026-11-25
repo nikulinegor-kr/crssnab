@@ -705,7 +705,7 @@ export default function RequestsRegistryPage() {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={22} className="p-6 text-center text-muted-foreground">
+                  <td colSpan={21} className="p-6 text-center text-muted-foreground">
                     Нет заявок за выбранный период
                   </td>
                 </tr>

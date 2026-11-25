@@ -66,7 +66,7 @@ export function requestQueue(open: ExecRequestRow[], today: Date): QueueItem[] {
     const tags = requestTags(r, today); if (!tags.length) return [];
     const overdue = tags.includes("overdue");
     const reason = [overdue ? `просрочка ${differenceInCalendarDays(startOfDay(today), startOfDay(new Date(r.planned_delivery_date!)))} дн.` : tags.includes("delivery") ? "приход скоро" : "", tags.includes("payment") ? "ждёт оплаты" : ""].filter(Boolean).join(" · ");
-    return [{ key: `r:${r.id}`, kind: "request" as const, id: r.id, title: r.description, comment: r.comments, reference: null, objectName: r.object?.name ?? null, owner: r.executor, date: arrival(r), reason, tags, amountLeft: paymentLeft(r) }];
+    return [{ key: `r:${r.id}`, kind: "request" as const, id: r.id, title: r.description, comment: r.comments, reference: "", objectName: r.object?.name ?? null, owner: r.executor, date: arrival(r), reason, tags, amountLeft: paymentLeft(r) }];
   });
 }
 export const sortQueue = (items: QueueItem[]) => [...items].sort((a, b) => Number(b.tags.includes("overdue")) - Number(a.tags.includes("overdue")) || (a.date ?? "9999").localeCompare(b.date ?? "9999"));

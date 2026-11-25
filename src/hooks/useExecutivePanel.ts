@@ -82,7 +82,7 @@ export function useExecutivePanel() {
 
   const events = useQuery({ ...options, queryKey: ["executive", orgId, "events"], queryFn: async () => {
     const [requests, tasks] = await Promise.all([
-      supabase.from("request_activities").select("id,request_id,user_id,description,action,old_value,new_value,created_at,request:requests(request_number)").eq("organization_id", orgId ?? "").not("created_at", "is", null).not("action", "like", "reminder_%").not("action", "like", "%reminder%").not("description", "is", null).neq("description", "").order("created_at", { ascending: false }).limit(6),
+      supabase.from("request_activities").select("id,request_id,user_id,description,action,old_value,new_value,created_at,request:requests(description)").eq("organization_id", orgId ?? "").not("created_at", "is", null).not("action", "like", "reminder_%").not("action", "like", "%reminder%").not("description", "is", null).neq("description", "").order("created_at", { ascending: false }).limit(6),
       supabase.from("planner_task_activity").select("id,task_id,user_id,description,action,old_value,new_value,created_at,task:planner_tasks(title)").eq("organization_id", orgId ?? "").not("action", "like", "reminder_%").not("action", "like", "%reminder%").not("description", "is", null).neq("description", "").order("created_at", { ascending: false }).limit(6),
     ]);
     if (requests.error) throw requests.error;
