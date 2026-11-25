@@ -1613,3 +1613,14 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
 .requests-registry table tbody .requests-phase-row td > div {
   justify-content: flex-start;
 }
+
+
+.requests-registry table tbody td[data-col="waybill_number"] > .request-waybill-layout {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 3px;
+}
+.request-waybill-layout > button {
+  flex: 0 0 24px;
+}

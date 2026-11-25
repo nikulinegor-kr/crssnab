@@ -1203,6 +1203,8 @@ export const RequestsTable = ({
 
                   {visibility.waybill_number && (
                     <TableCell data-col="waybill_number" data-align="center" className="px-2 py-1.5 border-b overflow-hidden text-xs font-mono" data-numeric>
+                      <div className="request-waybill-layout">
+                        <div className="min-w-0 flex-1">
                       <InlineEditCell
                         requestId={request.id}
                         field="waybill_number"
@@ -1218,11 +1220,7 @@ export const RequestsTable = ({
                                 label="Номер ТТН скопирован"
                                 className="h-6 w-6 shrink-0"
                               />
-                              <TrackCargoButton
-                                carrier={request.transport_company}
-                                ttn={request.waybill_number}
-                                className="h-6 w-6 shrink-0 text-primary"
-                              />
+
 
                             </div>
                           ) : (
@@ -1230,6 +1228,9 @@ export const RequestsTable = ({
                           )
                         }
                       />
+                        </div>
+                        <TrackCargoButton carrier={request.transport_company} ttn={request.waybill_number} className="h-6 w-6 shrink-0 text-primary" />
+                      </div>
                     </TableCell>
                   )}
                   {visibility.applicant && (
