@@ -110,7 +110,8 @@ const DENSITY_STORAGE_KEY = "requests-table-density";
 
 type RowDensity = "compact" | "normal" | "roomy";
 
-const statusDotClass = (status: string) => {
+const statusDotClass = (value: string) => {
+  const status = value.trim().replace(/\s+/g, " ");
   if (["Доставлено", "Выполнено", "Доставлено в ТК"].includes(status)) return "bg-success";
   if (["В пути"].includes(status)) return "bg-primary";
   if (["Готов к отгрузке", "На согласовании", "В работе"].includes(status)) return "bg-info";

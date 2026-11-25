@@ -58,7 +58,7 @@ const FINAL_STATUSES = ["Доставлено", "Выполнено", "Отме�
 const FILTERS_STORAGE_KEY = "requests_filters";
 
 export const getStatusColor = (status: string) => {
-  switch (status) {
+  switch (status.trim().replace(/\s+/g, " ")) {
     case "Новая заявка":
       return "#6b7280"; // Серый (нейтральный)
     case "В работе":
@@ -354,7 +354,7 @@ export const useRequestsFilters = (
       // Full-text search across all fields
       const matchesSearch = matchesFullTextSearch(request, searchQuery);
       const matchesStatus =
-        statusFilter.length === 0 || statusFilter.includes(request.status);
+        statusFilter.length === 0 || statusFilter.includes((request.status ?? "").trim().replace(/\s+/g, " "));
       const matchesPriority =
         priorityFilter === "all" || request.priority === priorityFilter;
       const matchesYear = (() => {

@@ -2,7 +2,7 @@ import { RECENT_ARRIVAL_DAYS, isRecentArrival } from "./requestArrivals";
 
 const REQUEST_PHASES = [
   { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
-  { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в Бухгалтерии", "Счёт в бухгалтерии"], accent: "bg-warning" },
+  { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в бухгалтерии"], accent: "bg-warning" },
   { key: "working", name: "В работе", statuses: ["КП", "Счёт", "В работе"], accent: "bg-info" },
   { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
@@ -16,12 +16,13 @@ export function groupRequestsByPhase<T extends PhaseRequest>(rows: T[]) {
   const buckets = new Map<string, T[]>();
   const statusPhases = new Map<string, string>();
   for (const phase of REQUEST_PHASES) {
-    for (const status of phase.statuses) statusPhases.set(status, phase.key);
+    for (const status of phase.statuses) statusPhases.set(status.toLowerCase(), phase.key);
   }
   for (const row of rows) {
-    const phase = row.status === "Выполнено" ? "completed-tasks"
-      : row.status === "Доставлено" ? isRecentArrival(row) ? "recent-arrivals" : "delivered"
-      : statusPhases.get(row.status ?? "") ?? "other";
+    const status = row.status?.trim().replace(/\s+/g, " ").toLowerCase();
+    const phase = status === "выполнено" ? "completed-tasks"
+      : status === "доставлено" ? isRecentArrival(row) ? "recent-arrivals" : "delivered"
+      : statusPhases.get(status ?? "") ?? "other";
     const items = buckets.get(phase);
     if (items) items.push(row);
     else buckets.set(phase, [row]);

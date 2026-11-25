@@ -91,7 +91,7 @@ export const InlineEditCell = ({
       console.error("Error saving:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось сохранить изменения",
+        description: (error as { message?: string } | null)?.message || "Не удалось сохранить изменения",
         variant: "destructive",
       });
     } finally {
