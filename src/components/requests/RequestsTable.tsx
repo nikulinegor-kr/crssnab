@@ -1,4 +1,4 @@
-import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
+import { interceptRequestStatus, requiresLogistics } from "@/lib/requestDeliveryReceipt";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { Bell } from "lucide-react";
 import { DEFAULT_COLLAPSED_REQUEST_PHASES, groupRequestsByPhase } from "@/lib/requestPhases";
@@ -201,18 +201,15 @@ export const RequestsTable = ({
 
 
   const applyBulk = useCallback(async (field: "status" | "priority" | "executor", value: string) => {
-    let ids = Array.from(selectedRequestIds);
+    const ids = Array.from(selectedRequestIds);
     if (!ids.length) return;
+    if (field === "status" && (value.trim() === "Доставлено" || requiresLogistics(value))) {
+      if (ids.length === 1) interceptRequestStatus(ids[0], value);
+      else toast({ title: "Откройте заявки по одной", description: "Для этого статуса нужно заполнить логистику или приёмку в каждой заявке." });
+      return;
+    }
     setBulkSaving(true);
     try {
-      if (field === "status" && value === DELIVERED_STATUS) {
-        const missing = new Set(await findRequestsMissingDeliveryDates(ids));
-        if (missing.size) {
-          toast({ title: "Часть заявок пропущена", description: `Без даты выхода/прихода: ${missing.size}`, variant: "destructive" });
-        }
-        ids = ids.filter((id) => !missing.has(id));
-        if (!ids.length) return;
-      }
       const { error } = await supabase.from("requests").update({ [field]: value }).in("id", ids);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["requests"] });
@@ -769,7 +766,7 @@ export const RequestsTable = ({
                           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", it.accent)} />
                           <span className="font-semibold text-foreground">{it.name}</span>
-                          <span className="ml-auto font-mono text-muted-foreground">{it.items.length} заявок · {moneyShort(amount)}</span>
+                          <span className="ml-2 font-mono text-muted-foreground">{it.items.length} заявок · {moneyShort(amount)}</span>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1212,19 +1209,19 @@ export const RequestsTable = ({
                         value={request.waybill_number || ""}
                         displayValue={
                           request.waybill_number ? (
-                            <div className="group/ttn flex items-center gap-1">
+                            <div className="request-waybill flex min-w-0 items-center gap-1">
                               <div className="line-clamp-2 min-w-0 flex-1 text-foreground leading-snug">
                                 <HighlightText text={request.waybill_number} searchQuery={searchQuery} />
                               </div>
                               <CopyValueButton
                                 value={request.waybill_number}
                                 label="Номер ТТН скопирован"
-                                className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
+                                className="h-6 w-6 shrink-0"
                               />
                               <TrackCargoButton
                                 carrier={request.transport_company}
                                 ttn={request.waybill_number}
-                                className="h-6 w-6 opacity-0 group-hover/ttn:opacity-100 focus-visible:opacity-100"
+                                className="h-6 w-6 shrink-0 text-primary"
                               />
 
                             </div>

@@ -9,6 +9,7 @@ interface CarrierRule {
 const enc = encodeURIComponent;
 
 const RULES: CarrierRule[] = [
+  { match: /\bdpd\b|дпд/i, url: () => "https://www.dpd.ru/private", direct: false },
   { match: /делов|dellin/i, url: (t) => `https://www.dellin.ru/tracker/?rwID=${enc(t)}`, direct: true },
   { match: /тройк|troyka/i, url: () => "https://troyka-dv.ru/poiskpottn.html", direct: false },
   { match: /слтк|sltk/i, url: () => "https://xn--j1abrf.xn--p1ai/trek-nomer", direct: false },
