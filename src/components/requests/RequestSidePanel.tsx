@@ -1,6 +1,6 @@
+import { interceptRequestStatus, openRequestDeliveryReceipt, openRequestLogistics } from "@/lib/requestDeliveryReceipt";
 import { hasShipmentArrived, useRequestShipments } from "@/hooks/useRequestShipments";
 import { isPartiallyDelivered, ShipmentsProgressChip } from "./RequestShipmentsTree";
-import { DELIVERED_STATUS, deliveryDatesError } from "@/lib/requestDeliveryValidation";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
 import { RecognizeWaybillButton } from "./RecognizeWaybillButton";
@@ -27,7 +27,6 @@ import { ToastAction } from "@/components/ui/toast";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -202,9 +201,6 @@ export const RequestSidePanel = ({
   const [editMode, setEditMode] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editDirty, setEditDirty] = useState(false);
-  const [statusPromptOpen, setStatusPromptOpen] = useState(false);
-  const [receiptOpenSignal, setReceiptOpenSignal] = useState(0);
-  const [pendingPaymentPercent, setPendingPaymentPercent] = useState<number | null>(null);
   const panelWidth = width ?? localWidth;
   const readOnly = !canEdit;
 
@@ -289,7 +285,6 @@ export const RequestSidePanel = ({
     setEditMode(false);
     setAssistantOpen(false);
     setEditDirty(false);
-    setReceiptOpenSignal(0);
     setActiveEditor(null);
     setPositionsOpen(false);
     setMovementRequestId(null);
@@ -311,13 +306,7 @@ export const RequestSidePanel = ({
   const saveField = useCallback(
     async (field: string, value: string | number | null, options?: { silent?: boolean }) => {
       if (!request) return;
-      if (field === "status" && value === DELIVERED_STATUS && request.status !== DELIVERED_STATUS) {
-        const err = deliveryDatesError(request as any);
-        if (err) {
-          toast({ title: "Нельзя поставить «Доставлено»", description: err, variant: "destructive" });
-          return;
-        }
-      }
+      if (field === "status" && typeof value === "string" && value !== request.status && interceptRequestStatus(request.id, value)) return;
       const previous = (request as any)[field] ?? null;
       let next: any = value;
       if (field === "description" && typeof next === "string" && next) {
@@ -340,8 +329,8 @@ export const RequestSidePanel = ({
       try {
         const { error } = await supabase.from("requests").update(updateData).eq("id", request.id);
         if (error) throw error;
-        if (field === "status" && next === DELIVERED_STATUS && previous !== DELIVERED_STATUS) {
-          setReceiptOpenSignal(n => n + 1);
+        if (field === "payment_percent" && Number(next) >= 50 && Number(next) !== Number(previous)) {
+          openRequestLogistics({ requestId: request.id, percent: Number(next) });
         }
         if (!options?.silent) {
           toast({
@@ -915,14 +904,14 @@ export const RequestSidePanel = ({
               {!readOnly && paid < 100 && (
                 <div className="request-view-payment__actions">
                   {paid <= 0 && <>
-                    <Button type="button" size="sm" variant="default" className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90" onClick={async () => { await saveField("payment_percent", 50); setPendingPaymentPercent(50); setStatusPromptOpen(true); }}>
+                    <Button type="button" size="sm" variant="default" className="h-8 bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90" onClick={() => void saveField("payment_percent", 50)}>
                       Оплачено 50%
                     </Button>
-                    <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={async () => { await saveField("payment_percent", 100); setPendingPaymentPercent(100); setStatusPromptOpen(true); }}>
+                    <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={() => void saveField("payment_percent", 100)}>
                       Оплачено 100%
                     </Button>
                   </>}
-                  {paid > 0 && paid < 100 && <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={async () => { await saveField("payment_percent", 100); setPendingPaymentPercent(100); setStatusPromptOpen(true); }}>
+                  {paid > 0 && paid < 100 && <Button type="button" size="sm" variant="default" className="h-8 bg-success px-3 text-sm text-success-foreground hover:bg-success/90" onClick={() => void saveField("payment_percent", 100)}>
                     Доплата 50%
                   </Button>}
                 </div>
@@ -1171,7 +1160,7 @@ export const RequestSidePanel = ({
             </div>
 
             <div className="request-view-quick-actions">
-              <RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={receiptOpenSignal} />
+              <RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} />
               {savingField && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" role="status" aria-label="Сохранение" />}
               <div className="ms-auto min-w-0">
                 <RequestQrButton key={`qr-${request.id}`} request={request} />
@@ -1251,21 +1240,7 @@ export const RequestSidePanel = ({
           className="h-9 gap-1 px-3 text-sm"
           disabled={readOnly || request.status === "Доставлено"}
           onClick={() => {
-            if (!request.shipment_date) {
-              toast({ title: "Нельзя отметить приход", description: "Сначала укажите дату выхода (отгрузки)", variant: "destructive" });
-              return;
-            }
-            const today = new Date().toISOString().slice(0, 10);
-            void saveField("actual_arrival_date" as any, today);
-            void (async () => {
-              const { error } = await supabase.from("requests").update({ status: "Доставлено", actual_arrival_date: today } as any).eq("id", request.id);
-              if (error) {
-                toast({ title: "Не удалось отметить приход", description: error.message, variant: "destructive" });
-                return;
-              }
-              setReceiptOpenSignal(n => n + 1);
-              queryClient.invalidateQueries({ queryKey: ["requests"] });
-            })();
+            openRequestDeliveryReceipt(request.id);
           }}
         >
           <PackageCheck className="h-3.5 w-3.5" />
@@ -1310,14 +1285,6 @@ export const RequestSidePanel = ({
 
   const panelBody = open ? content : null;
 
-  const handleStatusFromPrompt = async (status: string) => {
-    setStatusPromptOpen(false);
-    if (status && status !== request?.status) {
-      await saveField("status", status);
-    }
-    setPendingPaymentPercent(null);
-  };
-
   return (
     <>
       {asOverlay ? createPortal(panelBody, document.body) : panelBody}
@@ -1333,46 +1300,7 @@ export const RequestSidePanel = ({
           }
         }}
       />
-      <Dialog open={statusPromptOpen} onOpenChange={setStatusPromptOpen}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>Оплата обновлена</DialogTitle>
-            <DialogDescription>
-              {pendingPaymentPercent === 100
-                ? "Заявка оплачена полностью. Сменить статус?"
-                : "Заявка оплачена частично. Сменить статус?"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 py-2">
-            <Button
-              variant="outline"
-              className="justify-start px-3 text-left"
-              onClick={() => handleStatusFromPrompt("В работе")}
-            >
-              <span className="mr-2 h-2 w-2 rounded-full" style={{ backgroundColor: getStatusColor("В работе") }} />
-              В работе
-            </Button>
-            <Button
-              variant="outline"
-              className="justify-start px-3 text-left"
-              onClick={() => handleStatusFromPrompt("Готов к отгрузке")}
-            >
-              <span
-                className="mr-2 h-2 w-2 rounded-full"
-                style={{ backgroundColor: getStatusColor("Готов к отгрузке") }}
-              />
-              Готов к отгрузке
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start px-3 text-left text-muted-foreground"
-              onClick={() => handleStatusFromPrompt(request?.status || "")}
-            >
-              Не менять статус
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
     </>
   );
 };

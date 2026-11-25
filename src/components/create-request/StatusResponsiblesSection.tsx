@@ -28,6 +28,7 @@ interface StatusResponsiblesSectionProps {
   executors: Array<{ id: string; name: string }>;
   currentOrgId: string | null;
   disabled?: boolean;
+  onStatusChange?: (status: string) => boolean;
 }
 
 export const StatusResponsiblesSection = ({
@@ -38,6 +39,7 @@ export const StatusResponsiblesSection = ({
   executors,
   currentOrgId,
   disabled = false,
+  onStatusChange,
 }: StatusResponsiblesSectionProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,7 +59,7 @@ export const StatusResponsiblesSection = ({
             render={({ field }) => (
               <FormItem className="req-a-status">
                 <FormLabel className="text-xs">Статус *</FormLabel>
-                <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
+                <Select value={field.value || ""} onValueChange={status => { if (onStatusChange?.(status) !== false) field.onChange(status); }} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Выберите статус">{field.value || undefined}</SelectValue>

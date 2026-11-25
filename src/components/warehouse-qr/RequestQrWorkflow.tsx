@@ -1,3 +1,4 @@
+import { openRequestDeliveryReceipt } from "@/lib/requestDeliveryReceipt";
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -64,6 +65,12 @@ export function RequestQrWorkflow({ request, qrEntry, receiptOpenSignal }: { req
     if (busy || !org || !permission.data) return;
     const problem = delivery ? (!actual ? 'Укажите фактическую дату прихода' : actual < (current.shipment_date ?? '') ? 'Приход не раньше отгрузки' : actual > format(new Date(),'yyyy-MM-dd') ? 'Дата не может быть в будущем' : null) : shipmentDatesError(carrier,shipment,arrival);
     if (problem) { setError(problem); return; }
+    if (delivery) {
+      openRequestDeliveryReceipt(request.id, actual);
+      setOpen(false);
+      setDelivery(false);
+      return;
+    }
     setBusy(true); setError('');
     try {
       const { data, error } = await supabase.rpc('confirm_request_qr_logistics', { _request_id: request.id, _organization_id: org, _action: delivery ? 'deliver' : 'ship', _carrier: carrier, _shipment_date: shipment || null, _planned_arrival: arrival || null, _actual_arrival: delivery ? actual : null });

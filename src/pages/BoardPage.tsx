@@ -1,3 +1,4 @@
+import { interceptRequestStatus } from "@/lib/requestDeliveryReceipt";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -164,6 +165,7 @@ export default function BoardPage() {
     const targetCol = getColumnById(targetColId)!;
     const newStatus = targetCol.targetStatus;
 
+    if (interceptRequestStatus(dragged.id, newStatus)) return;
     queryClient.setQueryData<any[]>(["requests", false], (old) =>
       old?.map((r) => (r.id === dragged.id ? { ...r, status: newStatus } : r))
     );

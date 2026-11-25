@@ -1,3 +1,4 @@
+import { interceptRequestStatus } from "@/lib/requestDeliveryReceipt";
 import { useOrgStatuses } from "@/hooks/useOrgStatuses";
 import { useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
@@ -7,7 +8,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -90,18 +90,7 @@ export const QuickBadgeSelect = ({
   const handleSelect = async (next: string) => {
     setOpen(false);
     if (next === value) return;
-    if (field === "status" && next === DELIVERED_STATUS) {
-      try {
-        const missing = await findRequestsMissingDeliveryDates([requestId]);
-        if (missing.length) {
-          toast({ title: "Нельзя поставить «Доставлено»", description: "Сначала укажите дату выхода (отгрузки) и дату прихода", variant: "destructive" });
-          return;
-        }
-      } catch {
-        toast({ title: "Не удалось проверить даты", variant: "destructive" });
-        return;
-      }
-    }
+    if (field === "status" && interceptRequestStatus(requestId, next)) return;
     void persist(next, value, true);
   };
 

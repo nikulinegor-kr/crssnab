@@ -1,6 +1,6 @@
 /** Pure partial-receipt math shared by the receipt form and tests. The server re-checks every rule. */
-export const RECEIPT_STATUSES = ['В пути', 'Доставлено в ТК', 'Доставлено'] as const;
-export const canReceiveStatus = (status: string) => (RECEIPT_STATUSES as readonly string[]).includes(status);
+export const RECEIPT_STATUSES = ['В работе', 'Готов к отгрузке', 'В пути', 'Доставлено в ТК', 'Доставлено'] as const;
+export const canReceiveStatus = (status: string) => (RECEIPT_STATUSES as readonly string[]).includes(status.trim());
 
 export interface ReceivedLine { request_item_id: string | null; expected_qty: number; accepted_qty: number; defect_qty: number }
 export interface ExpectedItem { id: string | null; name: string; expected: number | null }

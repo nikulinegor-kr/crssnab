@@ -1,7 +1,9 @@
+import { RequestLogisticsPrompt } from "@/components/warehouse-qr/RequestLogisticsPrompt";
 import { Suspense, useState } from "react";
 import NativeShell from "@/components/native/NativeShell";
 import "@/hooks/useUiScale";
 
+import { RequestDeliveryReceipt } from "@/components/warehouse-qr/RequestDeliveryReceipt";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -119,6 +121,8 @@ const App = () => {
           <BrowserRouter>
           <QuickRequestProvider>
           <NativeShell />
+          <RequestDeliveryReceipt />
+          <RequestLogisticsPrompt />
 
           <Suspense fallback={<PageLoader />}>
           <Routes>

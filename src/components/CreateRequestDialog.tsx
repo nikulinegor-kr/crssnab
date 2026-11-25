@@ -745,6 +745,11 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           applicants={applicants}
           executors={executors}
           currentOrgId={currentOrgId}
+          onStatusChange={status => {
+            if (status !== "Доставлено") return true;
+            toast({ title: "Необходимо осуществить приёмку", description: "Сначала создайте заявку, затем откройте приёмку." });
+            return false;
+          }}
         />
 
         {/* 4. Счёт и оплата */}

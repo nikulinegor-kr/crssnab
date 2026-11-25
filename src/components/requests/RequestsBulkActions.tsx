@@ -22,7 +22,7 @@ import {
 
 import { Request } from "@/hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
-import { DELIVERED_STATUS, findRequestsMissingDeliveryDates } from "@/lib/requestDeliveryValidation";
+import { interceptRequestStatus, requiresLogistics, openRequestLogistics } from "@/lib/requestDeliveryReceipt";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
@@ -182,19 +182,14 @@ export const RequestsBulkActions = ({
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
     if (selectedRequestIds.size === 0) return;
+    const ids = Array.from(selectedRequestIds);
+    if (newStatus === "Доставлено" || requiresLogistics(newStatus)) {
+      if (ids.length === 1) interceptRequestStatus(ids[0], newStatus);
+      else toast({ title: "Откройте заявки по одной", description: "Для этого статуса нужно заполнить логистику или приёмку в каждой заявке." });
+      return;
+    }
     setIsSending(true);
     try {
-      let ids = Array.from(selectedRequestIds);
-      let skipped = 0;
-      if (newStatus === DELIVERED_STATUS) {
-        const missing = new Set(await findRequestsMissingDeliveryDates(ids));
-        skipped = missing.size;
-        ids = ids.filter((id) => !missing.has(id));
-        if (!ids.length) {
-          toast({ title: "Нельзя поставить «Доставлено»", description: "У выбранных заявок не указаны дата выхода и/или дата прихода", variant: "destructive" });
-          return;
-        }
-      }
       const { error } = await supabase
         .from("requests")
         .update({ status: newStatus })
@@ -202,7 +197,7 @@ export const RequestsBulkActions = ({
       if (error) throw error;
       toast({
         title: "Статус обновлён",
-        description: `Обновлено заявок: ${ids.length}${skipped ? ` · пропущено без дат выхода/прихода: ${skipped}` : ""}`,
+        description: `Обновлено заявок: ${ids.length}`,
       });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       setSelectedRequestIds(new Set());
@@ -263,6 +258,9 @@ export const RequestsBulkActions = ({
       if (error) throw error;
       toast({ title: "Оплата обновлена", description: `Обновлено заявок: ${selectedRequestIds.size}` });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
+      if (percent >= 50) {
+        for (const requestId of selectedRequestIds) openRequestLogistics({ requestId, percent });
+      }
       setSelectedRequestIds(new Set());
     } catch (err: any) {
       toast({ title: "Ошибка", description: err.message, variant: "destructive" });

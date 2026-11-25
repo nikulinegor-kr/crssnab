@@ -1,3 +1,4 @@
+import { openRequestLogistics } from "@/lib/requestDeliveryReceipt";
 import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import {
@@ -88,6 +89,7 @@ export const InlinePaymentStatusCell = ({ requestId, paymentPercent }: Props) =>
         description: `${option.label} (${newPercent}%)`,
       });
       setOpen(false);
+      if (newPercent >= 50 && newPercent !== paymentPercent) openRequestLogistics({ requestId, percent: newPercent });
     } catch (e) {
       console.error(e);
       toast({

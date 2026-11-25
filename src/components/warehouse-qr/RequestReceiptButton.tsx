@@ -1,3 +1,4 @@
+import type { DeliveryReceiptIntent } from "@/lib/requestDeliveryReceipt";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PackageCheck, Loader2, Camera, X } from 'lucide-react';
@@ -16,15 +17,17 @@ import { LabelExporter } from './LabelExporter';
 import { RECEIPT_UNITS } from '@/lib/receiptDraft';
 import { canReceiveStatus, canSubmit, fallbackExpected, hasDiscrepancy, lineErrors, payload, receivedByItem, remaining, type DraftLine } from '@/lib/partialReceipt';
 
-type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string; description?: string | null };
+type RequestInfo = { id: string; status: string; organization_id: string | null; request_number: string; description?: string | null; shipment_date?: string | null; actual_arrival_date?: string | null };
 type Legacy = { document_id: string; warehouse_id: string; receiver_name: string; received_at: string };
 type BatchLine = { id: string; request_item_id: string | null; expected_qty: number; accepted_qty: number; defect_qty: number; unit: string; note: string | null; photo_paths: string[] };
 type Batch = { id: string; document_id: string | null; warehouse_id: string; receiver_name: string; created_at: string; warehouse_receipt_batch_lines: BatchLine[] };
 
 /** Partial request receipt: lines, actual quantity, defect with note and private photos, remaining to receive. */
-export function RequestReceiptButton({ request, openSignal = 0, compact = false }: { request: RequestInfo; openSignal?: number; compact?: boolean }) {
+export function RequestReceiptButton({ request, openSignal = 0, compact = false, deliveryIntent, onDeliveryClose }: { request: RequestInfo; openSignal?: number; compact?: boolean; deliveryIntent?: DeliveryReceiptIntent; onDeliveryClose?: () => void }) {
   const org = request.organization_id;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(deliveryIntent));
+  const [actualDate, setActualDate] = useState(deliveryIntent?.actualDate || request.actual_arrival_date || format(new Date(), "yyyy-MM-dd"));
+  const [deliveryError, setDeliveryError] = useState("");
   const [warehouse, setWarehouse] = useState<string | null>(null);
   const [receiver, setReceiver] = useState<string | null>(null);
   const [lines, setLines] = useState<DraftLine[]>([]);
@@ -33,7 +36,7 @@ export function RequestReceiptButton({ request, openSignal = 0, compact = false 
   const [key, setKey] = useState(() => crypto.randomUUID());
   const [labelDoc, setLabelDoc] = useState<string | null>(null);
   const qc = useQueryClient(); const { toast } = useToast();
-  const { data: allowed = false } = useQuery({ queryKey: ['wh-receipt-permission', org], enabled: !!org, queryFn: async () => {
+  const { data: allowed = false, isPending: permissionPending } = useQuery({ queryKey: ['wh-receipt-permission', org], enabled: !!org, queryFn: async () => {
     if (!org) return false; const { data: { user } } = await supabase.auth.getUser(); if (!user) return false;
     const { data, error } = await supabase.rpc('user_has_org_access', { _user_id: user.id, _org_id: org }); if (error) throw error; return data === true;
   } });
@@ -63,7 +66,7 @@ export function RequestReceiptButton({ request, openSignal = 0, compact = false 
   const fbExpected = fallbackExpected(received);
   const totalLeft = details ? (details.items.length ? details.items.reduce((s, i) => s + remaining(i.quantity, receivedByItem(received).get(i.id) ?? 0), 0) : fbExpected == null ? 1 : remaining(fbExpected, receivedByItem(received).get(null) ?? 0)) : null;
   const leftFromState = useMemo(() => { if (!batches.length) return null; const exp = new Map<string | null, number>(); received.forEach(l => exp.set(l.request_item_id, Number(l.expected_qty))); const done = receivedByItem(received); let s = 0; exp.forEach((e, k) => s += remaining(e, done.get(k) ?? 0)); return s; }, [batches, received]);
-  const fullyDone = !!legacy || (totalLeft ?? leftFromState) === 0;
+  const fullyDone = !!legacy || (deliveryIntent ? !!state && !!details && !!batches.length && totalLeft === 0 : (totalLeft ?? leftFromState) === 0);
 
   useEffect(() => {
     if (!details || !open) return;
@@ -104,20 +107,53 @@ export function RequestReceiptButton({ request, openSignal = 0, compact = false 
   const docForLabels = labelDoc ?? legacy?.document_id ?? null;
   const { data: labels = [], error: labelError } = useQuery({ queryKey: ['wh-receipt-labels', docForLabels], enabled: open && !!docForLabels, queryFn: () => loadReceiptLabels(docForLabels ?? '') });
 
-  if (!allowed || (!legacy && !batches.length && !canReceiveStatus(request.status))) return null;
+  const closeReceipt = (value: boolean) => {
+    if (busy) return;
+    setOpen(value);
+    if (!value) onDeliveryClose?.();
+  };
+
+  const finishDelivery = async () => {
+    if (!fullyDone || busy || !actualDate) return;
+    setBusy(true);
+    setDeliveryError("");
+    try {
+      const { data, error } = await supabase.from("requests")
+        .update({ status: "Доставлено", actual_arrival_date: actualDate })
+        .eq("id", request.id).select("id,status,actual_arrival_date,updated_at").single();
+      if (error) throw error;
+      qc.setQueriesData({ queryKey: ["requests"] }, (previous: unknown) =>
+        Array.isArray(previous) ? previous.map(row => row.id === data.id ? { ...row, ...data } : row) : previous);
+      void qc.invalidateQueries({ queryKey: ["requests"] });
+      void qc.invalidateQueries({ queryKey: ["request", request.id] });
+      void qc.invalidateQueries({ queryKey: ["request-qr-workflow"] });
+      deliveryIntent?.onSaved?.(data);
+      toast({ title: "Статус «Доставлено» установлен" });
+      onDeliveryClose?.();
+    } catch (error) {
+      setDeliveryError((error as { message?: string })?.message || "Не удалось установить статус");
+    } finally { setBusy(false); }
+  };
+
+  if (!deliveryIntent && (!allowed || (!legacy && !batches.length && !canReceiveStatus(request.status)))) return null;
+  const receiptUnavailable = deliveryIntent && !fullyDone && (!allowed || !canReceiveStatus(request.status));
   const whName = (id: string) => warehouses.find(w => w.id === id)?.name ?? '—';
   const whLabel = (w: typeof warehouses[number]) => [w.request_objects?.name, w.name].filter(Boolean).join(' — ');
   const discrepancy = hasDiscrepancy(lines);
   return <div data-row-action onClick={e => e.stopPropagation()} className="min-w-0">
-    <Button size={compact ? "sm" : "default"} variant={fullyDone ? 'outline' : 'default'} className={`${compact ? "min-h-8" : "min-h-11"} h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs`} onClick={() => { setOpen(true); setLabelDoc(null); }}>
+    {!deliveryIntent && <Button size={compact ? "sm" : "default"} variant={fullyDone ? 'outline' : 'default'} className={`${compact ? "min-h-8" : "min-h-11"} h-auto max-w-full whitespace-normal text-left justify-start gap-2 text-xs`} onClick={() => { setOpen(true); setLabelDoc(null); }}>
       <PackageCheck className="h-4 w-4 shrink-0" />{fullyDone ? 'Принято на склад' : batches.length ? `Принять остаток${leftFromState ? ` · ${leftFromState}` : ''}` : compact ? 'Приёмка' : 'Осуществить приёмку'}
-    </Button>
-    <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
-      <DialogHeader><DialogTitle className="break-words">Приёмка · {request.description || '—'}</DialogTitle></DialogHeader>
+    </Button>}
+    <Dialog open={open} onOpenChange={closeReceipt}><DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto max-sm:inset-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none">
+      <DialogHeader><DialogTitle className="break-words">{deliveryIntent ? "Необходимо осуществить приёмку" : `Приёмка · ${request.description || "—"}`}</DialogTitle></DialogHeader>
+      {deliveryIntent && <p className="text-sm text-muted-foreground">{request.description}. Статус можно установить после полной приёмки.</p>}
+      {receiptUnavailable && <p role="status" className="text-sm text-muted-foreground">
+        {permissionPending ? "Проверяем доступ…" : !allowed ? "Приёмка недоступна для вашей учётной записи." : "Приёмка доступна для заявок в работе, готовых к отгрузке и находящихся в доставке."}
+      </p>}
       {(warehouseError || stateError) && <p role="alert" className="text-destructive">Не удалось загрузить данные приёмки: {(warehouseError ?? stateError)?.message}</p>}
       {legacy ? <div className="space-y-3"><p className="font-medium text-success">Принято на склад</p><p>{legacy.receiver_name} · {format(new Date(legacy.received_at), 'dd.MM.yyyy HH:mm')}</p><p>{whName(legacy.warehouse_id)}</p></div> : <>
         {batches.length > 0 && <div className="space-y-2 border-b pb-3"><h3 className="text-sm font-medium">Уже принято</h3>{batches.map(b => <div key={b.id} className="text-sm space-y-0.5"><p className="text-muted-foreground">{format(new Date(b.created_at), 'dd.MM.yyyy HH:mm')} · {b.receiver_name} · {whName(b.warehouse_id)}</p>{b.warehouse_receipt_batch_lines.map(l => <p key={l.id} className="font-numeric break-words">{(details?.items.find(i => i.id === l.request_item_id)?.name ?? request.description) || '—'}: принято {Number(l.accepted_qty)}{Number(l.defect_qty) > 0 ? `, брак ${Number(l.defect_qty)}` : ''} {l.unit}{l.note ? ` · ${l.note}` : ''}{l.photo_paths.length ? ` · фото ${l.photo_paths.length}` : ''}</p>)}<Button variant="link" className="h-auto p-0 text-xs" disabled={!b.document_id} onClick={() => setLabelDoc(b.document_id)}>Наклейки этой приёмки</Button></div>)}</div>}
-        {!fullyDone && (isLoading ? <Loader2 className="animate-spin" /> : error ? <p className="text-destructive">Не удалось загрузить позиции и сотрудников</p> : <div className="space-y-4">
+        {!fullyDone && !receiptUnavailable && (isLoading ? <Loader2 className="animate-spin" /> : error ? <p className="text-destructive">Не удалось загрузить позиции и сотрудников</p> : <div className="space-y-4">
           <Label>Склад</Label><TaskLookupSelect label="Выберите склад" value={warehouse} onChange={setWarehouse} options={activeWarehouses.map(w => ({ id: w.id, name: whLabel(w) }))} />
           <Label>Кто принял</Label><TaskLookupSelect label="Сотрудник" value={receiver} onChange={setReceiver} options={(details?.members ?? []).map(m => ({ id: m.user_id, name: m.name }))} />
           <p className="text-sm text-muted-foreground">Дата: {format(new Date(), 'dd.MM.yyyy')}</p>
@@ -136,8 +172,16 @@ export function RequestReceiptButton({ request, openSignal = 0, compact = false 
           </div>; })}
           {discrepancy && lines.some(l => Number(l.accepted) || Number(l.defect)) && <label className="flex items-start gap-2 text-sm"><Checkbox checked={confirmed} onCheckedChange={v => setConfirmed(v === true)} className="mt-0.5" /><span>Подтверждаю расхождение: недостача или брак. Остаток можно принять позже.</span></label>}
         </div>)}
-        {!fullyDone && <DialogFooter className="gap-2"><Button className="min-h-11" disabled={busy || uploading || !warehouse || !receiver || !canSubmit(lines, confirmed)} onClick={save}>{busy ? 'Сохранение…' : 'Подтвердить приёмку'}</Button></DialogFooter>}
+        {!fullyDone && !receiptUnavailable && <DialogFooter className="gap-2"><Button className="min-h-11" disabled={busy || uploading || !warehouse || !receiver || !canSubmit(lines, confirmed)} onClick={save}>{busy ? 'Сохранение…' : 'Подтвердить приёмку'}</Button></DialogFooter>}
       </>}
+      {deliveryIntent && fullyDone && <div className="space-y-2">
+        <Label htmlFor="request-final-arrival">Фактическая дата прихода</Label>
+        <Input id="request-final-arrival" type="date" value={actualDate} min={request.shipment_date || undefined}
+          max={format(new Date(), "yyyy-MM-dd")} onChange={event => setActualDate(event.target.value)} />
+        {deliveryError && <p role="alert" className="text-sm text-destructive">{deliveryError}</p>}
+        <DialogFooter><Button type="button" disabled={busy || !actualDate || actualDate > format(new Date(), "yyyy-MM-dd") || (!!request.shipment_date && actualDate < request.shipment_date)}
+          onClick={() => void finishDelivery()}>Установить «Доставлено»</Button></DialogFooter>
+      </div>}
       {docForLabels && (labelError ? <p role="alert" className="text-destructive">Не удалось загрузить наклейки: {labelError.message}</p> : labels.length ? <LabelExporter labels={labels} /> : <p>Загрузка наклеек…</p>)}
     </DialogContent></Dialog>
   </div>;

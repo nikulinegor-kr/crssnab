@@ -1,3 +1,4 @@
+import { interceptRequestStatus, openRequestLogistics, requiresLogistics, type RequestWorkflowPatch } from "@/lib/requestDeliveryReceipt";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { revealRequestErrors, validateRequiredZrsFields } from "./create-request/requiredZrsFields";
@@ -522,6 +523,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
   }, [open, request?.id, serverUpdatedAt, hasUnsavedChanges]);
 
   // Auto-save to server with debounce
+  const applyWorkflowPatch = (patch: RequestWorkflowPatch) => {
+    setServerUpdatedAt(patch.updated_at);
+    form.setValue("status", patch.status);
+    if (patch.shipment_date !== undefined) form.setValue("shipment_date", patch.shipment_date || "");
+    if (patch.delivery_date !== undefined) form.setValue("delivery_date", patch.delivery_date || "");
+    if (patch.transport_company !== undefined) form.setValue("transport_company", patch.transport_company || "");
+  };
+
+  const lastPromptedPayment = useRef<{ id: string; percent: number } | null>(null);
   const saveToServer = useCallback(async (data: RequestFormData) => {
     if (!request || !canEdit) return;
     
@@ -584,6 +594,15 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .single();
 
       if (error) throw error;
+
+      const nextPayment = Number(data.payment_percent);
+      if (nextPayment >= 50 && nextPayment !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
+          (lastPromptedPayment.current?.id !== request.id || lastPromptedPayment.current.percent !== nextPayment)) {
+        lastPromptedPayment.current = { id: request.id, percent: nextPayment };
+        openRequestLogistics({ requestId: request.id, percent: nextPayment, onSaved: applyWorkflowPatch });
+      } else if (nextPayment < 50) {
+        lastPromptedPayment.current = null;
+      }
 
       setServerUpdatedAt(updatedData.updated_at);
       lastServerSaveRef.current = Date.now().toString();
@@ -804,6 +823,10 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .eq("id", request.id);
 
       if (error) throw error;
+      if (Number(data.payment_percent) >= 50 && Number(data.payment_percent) !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
+          (lastPromptedPayment.current?.id !== request.id || lastPromptedPayment.current.percent !== Number(data.payment_percent))) {
+        openRequestLogistics({ requestId: request.id, percent: Number(data.payment_percent) });
+      }
 
       // Save request items: delete old, insert new
       if (request.organization_id) {
@@ -1071,6 +1094,12 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 executors={executors}
                 currentOrgId={request?.organization_id || null}
                 disabled={isViewer}
+                onStatusChange={status => {
+                  if (!request || request.status === status) return true;
+                  if (requiresLogistics(status) && form.getValues("shipment_date") &&
+                    (status !== "В пути" || (form.getValues("delivery_date") && form.getValues("transport_company")?.trim()))) return true;
+                  return !interceptRequestStatus(request.id, status, applyWorkflowPatch);
+                }}
               />
             </div>
           </section>

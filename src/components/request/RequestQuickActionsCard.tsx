@@ -1,3 +1,4 @@
+import { interceptRequestStatus } from "@/lib/requestDeliveryReceipt";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,7 +76,7 @@ export function RequestQuickActionsCard({
           {canEdit ? (
             <Select
               value={request.status}
-              onValueChange={(value) => onUpdate({ status: value })}
+              onValueChange={value => { if (value !== request.status && !interceptRequestStatus(request.id, value)) onUpdate({ status: value }); }}
             >
               <SelectTrigger className={cn(
                 "w-full transition-colors",
