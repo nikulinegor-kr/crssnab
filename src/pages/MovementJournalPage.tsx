@@ -179,7 +179,7 @@ export default function MovementJournalPage() {
                         className="text-primary hover:underline text-sm"
                         onClick={() => navigate(`/requests/${m.request_id}`)}
                       >
-                        #{m.requests.request_number} — {m.requests.description?.slice(0, 30) || ""}
+                        {m.requests.description || "Заявка"}
                       </button>
                     ) : "—"}
                   </TableCell>

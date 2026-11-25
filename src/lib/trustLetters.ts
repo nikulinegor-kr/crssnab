@@ -4,7 +4,7 @@ export const LETTER_TAGS=["addressee_position","addressee_orgs","addressee_name"
 export type InvoiceExtract={supplier_name:string|null;supplier_inn:string|null;invoice_number:string|null;invoice_date:string|null;total_amount:number|null;director_position:string|null;director_name:string|null;director_name_dative:string|null;items:{name:string|null;qty:number|null;unit:string|null}[]};
 export type LetterGroup={supplier:string;items:{name:string;qty:number|string;unit:string}[];invoice_number:string;invoice_date:string;amount:string};
 export type LetterPayload={addressee_position:string;addressee_orgs:string;addressee_name:string;suppliers_list:string;groups:LetterGroup[];carrier:string;destination:string};
-export type LetterSource={requestId:string;requestNumber:string;carrier:string;extracted:InvoiceExtract;fromInvoice:boolean};
+export type LetterSource={requestId:string;requestTitle:string;carrier:string;extracted:InvoiceExtract;fromInvoice:boolean};
 export type LetterDraft={key:string;requestIds:string[];payload:LetterPayload};
 export function carrierName(value:string|null|undefined){const text=value?.trim()??"";return text?/^ТК/i.test(text)?text:`ТК ${text}`:"";}
 export function letterAmount(n:number|null){return n===null?"":new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n).replace(/\u00a0|\u202f/g," ");}
@@ -12,7 +12,7 @@ export function letterDate(date:string|null){if(!date)return "";const m=date.mat
 const normalized=(v:string|null)=>v?.trim().toLocaleLowerCase("ru").replace(/\s+/g," ")??"";
 export function groupTrustLetters(sources:LetterSource[],destination="терминала г. Нерюнгри"):LetterDraft[]{
  const letters=new Map<string,LetterDraft>();
- for(const source of sources){const carrier=carrierName(source.carrier);if(!carrier)throw new Error(`Выберите ТК в заявке ${source.requestNumber}`);const x=source.extracted;
+ for(const source of sources){const carrier=carrierName(source.carrier);if(!carrier)throw new Error(`Выберите ТК в заявке ${source.requestTitle}`);const x=source.extracted;
   // Missing directors must never merge distinct suppliers on an invented identity.
   const director=normalized(x.director_name)||normalized(x.director_name_dative)||`unknown:${x.supplier_inn||normalized(x.supplier_name)||source.requestId}`;
   const key=JSON.stringify([normalized(carrier),director]);let draft=letters.get(key);

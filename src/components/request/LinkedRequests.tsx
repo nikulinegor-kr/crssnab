@@ -158,9 +158,7 @@ export function LinkedRequests({ requestId, canEdit }: LinkedRequestsProps) {
                     {request.description}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {request.request_number}
-                    </span>
+
                     <Badge variant="outline" className="text-xs">
                       {request.status}
                     </Badge>
@@ -218,9 +216,7 @@ export function LinkedRequests({ requestId, canEdit }: LinkedRequestsProps) {
                         <p className="text-sm font-medium truncate">
                           {request.description}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {request.request_number}
-                        </p>
+
                       </div>
                       <Button
                         size="sm"

@@ -95,7 +95,7 @@ const Demo = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         <DemoBanner />
-        
+
         <div className="flex flex-col gap-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Демонстрация системы</h1>
@@ -165,7 +165,7 @@ const Demo = () => {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-medium text-sm">
-                          #{request.request_number}
+
                         </span>
                         <Badge variant="outline" className={getStatusBadgeColor(request.status)}>
                           {request.status}

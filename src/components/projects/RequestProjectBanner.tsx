@@ -72,7 +72,7 @@ export function RequestProjectBanner({
       >
         <FolderOpen className="h-3.5 w-3.5 text-primary" />
         <span className="text-muted-foreground">Проект:</span>
-        <span className="font-medium">{parent.description || parent.request_number}</span>
+        <span className="font-medium">{parent.description || "Проект"}</span>
       </Link>
     );
   }
@@ -113,7 +113,7 @@ export function RequestProjectBanner({
               <span className="mt-0.5 text-muted-foreground/60">├─</span>
               <div className="min-w-0 flex-1">
                 <Link to={`/requests/${c.id}`} className="text-sm font-medium hover:underline">
-                  {c.description || c.request_number}
+                  {c.description || "Заявка"}
                 </Link>
                 <div className="text-[11px] text-muted-foreground">
                   {c.contractor || "—"} · Счёт: {c.invoice_number || "—"} ·{" "}

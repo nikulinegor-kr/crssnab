@@ -283,7 +283,7 @@ const TeamPerformancePage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Номер</TableHead>
+
                       <TableHead>Описание</TableHead>
                       <TableHead>Статус</TableHead>
                       <TableHead>Приоритет</TableHead>
@@ -306,7 +306,7 @@ const TeamPerformancePage = () => {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => navigate(`/requests/${req.id}`)}
                         >
-                          <TableCell className="font-medium text-primary">{req.request_number}</TableCell>
+
                           <TableCell className="max-w-[300px] truncate">{req.description}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{req.status}</Badge>

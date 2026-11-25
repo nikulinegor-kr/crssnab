@@ -42,7 +42,6 @@ function fmt(d: string | null | undefined): string {
 
 function buildMessage(type: NotifType, r: any): string {
   const lines: string[] = [];
-  const num = r.request_number ?? r.id;
   const desc = r.description || "—";
   const obj = r.object_name || r.object?.name || null;
   const contractor = r.contractor || null;
@@ -65,7 +64,6 @@ function buildMessage(type: NotifType, r: any): string {
 
   lines.push(header);
   lines.push("");
-  lines.push(`🧾 Заявка #${num}`);
   if (desc) lines.push(`📝 ${desc}`);
   if (obj) lines.push(`🏗 Объект — ${obj}`);
   if (contractor) lines.push(`🏢 Контрагент — ${contractor}`);
@@ -211,7 +209,7 @@ async function processOrg(orgId: string, opts: { requestId?: string; force?: boo
             arrival_today: "✅ Сегодня прибытие",
             overdue: "❌ Просрочка доставки",
           };
-          const shortBody = `Заявка #${r.request_number}${r.description ? " — " + r.description : ""}`;
+          const shortBody = r.description || "Заявка";
           const link = `/requests?request=${r.id}`;
 
           const { data: members } = await supabase

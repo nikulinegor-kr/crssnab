@@ -209,7 +209,7 @@ const DocumentsPage = () => {
                         className="text-sm text-primary hover:underline max-w-[200px] truncate block text-left"
                         title={doc.requestDescription}
                       >
-                        {doc.requestDescription || `#${doc.requestNumber}`}
+                        {doc.requestDescription || "Заявка"}
                       </button>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

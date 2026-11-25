@@ -645,7 +645,7 @@ function PurchaseHistory({ productId, orgId }: { productId: string; orgId: strin
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>№</TableHead>
+
             <TableHead>Описание</TableHead>
             <TableHead>Контрагент</TableHead>
             <TableHead>Сумма</TableHead>
@@ -655,7 +655,7 @@ function PurchaseHistory({ productId, orgId }: { productId: string; orgId: strin
         <TableBody>
           {requests.map((r: any) => (
             <TableRow key={r.id}>
-              <TableCell className="font-medium text-sm">{r.request_number}</TableCell>
+
               <TableCell className="text-sm truncate max-w-[200px]">{r.description}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{r.contractor || "—"}</TableCell>
               <TableCell className="text-sm">{r.amount ? `${r.amount.toLocaleString()} ₽` : "—"}</TableCell>

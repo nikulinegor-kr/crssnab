@@ -647,7 +647,6 @@ export function WarehouseWorkspace(props: Props) {
                                 to={`/requests?request=${encodeURIComponent(row.unit.source_request_id)}`}
                               >
                                 {row.unit.request_title ||
-                                  row.unit.request_number ||
                                   "Открыть заявку"}
                               </Link>
                             ) : (

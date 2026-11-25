@@ -31,7 +31,6 @@ export function ExportButton({ requests }: ExportButtonProps) {
     }
 
     const headers = [
-      "Номер заявки",
       "Дата",
       "Описание",
       "Статус",
@@ -46,7 +45,6 @@ export function ExportButton({ requests }: ExportButtonProps) {
     const csvContent = [
       headers.join(","),
       ...requests.map(r => [
-        `"${r.request_number}"`,
         format(new Date(r.request_date), "dd.MM.yyyy"),
         `"${r.description.replace(/"/g, '""')}"`,
         `"${r.status}"`,

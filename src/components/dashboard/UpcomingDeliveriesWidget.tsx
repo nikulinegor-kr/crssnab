@@ -53,7 +53,7 @@ export function UpcomingDeliveriesWidget({ requests, onRequestClick }: UpcomingD
               >
                 <div className="flex-1 min-w-0 mr-2">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {request.request_number}
+                    {request.description || "Заявка"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {request.description}

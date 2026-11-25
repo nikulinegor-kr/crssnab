@@ -124,7 +124,7 @@ export default function EquipmentDetailPage() {
         items.forEach((item) => {
           rows.push({
             date: r.created_at || "",
-            requestNumber: r.request_number,
+            requestTitle: r.description || "Заявка",
             requestId: r.id,
             itemName: item.name,
             quantity: item.quantity,
@@ -134,7 +134,7 @@ export default function EquipmentDetailPage() {
       } else {
         rows.push({
           date: r.created_at || "",
-          requestNumber: r.request_number,
+          requestTitle: r.description || "Заявка",
           requestId: r.id,
           itemName: r.description?.slice(0, 60) || "—",
           quantity: 1,
@@ -325,7 +325,7 @@ export default function EquipmentDetailPage() {
                             {row.date ? format(new Date(row.date), "dd.MM.yyyy") : "—"}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="font-mono text-xs">{row.requestNumber}</Badge>
+                            <Badge variant="outline" className="font-mono text-xs">{row.requestTitle}</Badge>
                           </TableCell>
                           <TableCell className="max-w-[250px] truncate">{row.itemName}</TableCell>
                           <TableCell className="text-right font-numeric">{row.quantity}</TableCell>

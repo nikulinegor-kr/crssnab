@@ -168,7 +168,7 @@ export default function SupplyDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>№</TableHead>
+
                     <TableHead>Описание</TableHead>
                     <TableHead>Контрагент</TableHead>
                     <TableHead>Статус</TableHead>
@@ -178,7 +178,7 @@ export default function SupplyDashboardPage() {
                 <TableBody>
                   {stats.emergency.slice(0, 5).map((r: any) => (
                     <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/requests/${r.id}`)}>
-                      <TableCell className="font-medium text-sm">{r.request_number}</TableCell>
+
                       <TableCell className="text-sm truncate max-w-[250px]">{r.description}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{r.contractor || "—"}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs">{r.status}</Badge></TableCell>
@@ -211,7 +211,7 @@ export default function SupplyDashboardPage() {
                   onClick={() => navigate(`/requests/${r.id}`)}
                 >
                   <div>
-                    <p className="text-sm font-medium">{r.request_number} — {r.description?.slice(0, 50)}</p>
+                    <p className="text-sm font-medium">{r.description || "Заявка"}</p>
                     <p className="text-xs text-muted-foreground">{r.contractor || "—"}</p>
                   </div>
                   <Badge variant="outline">{r.status}</Badge>
@@ -237,7 +237,7 @@ export default function SupplyDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>№</TableHead>
+
                     <TableHead>Описание</TableHead>
                     <TableHead>Контрагент</TableHead>
                     <TableHead>Дата доставки</TableHead>
@@ -247,7 +247,7 @@ export default function SupplyDashboardPage() {
                 <TableBody>
                   {stats.inTransit.slice(0, 10).map((r: any) => (
                     <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/requests/${r.id}`)}>
-                      <TableCell className="font-medium text-sm">{r.request_number}</TableCell>
+
                       <TableCell className="text-sm truncate max-w-[250px]">{r.description}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{r.contractor || "—"}</TableCell>
                       <TableCell className="text-sm">{r.delivery_date ? new Date(r.delivery_date).toLocaleDateString("ru-RU") : "—"}</TableCell>
@@ -280,7 +280,7 @@ export default function SupplyDashboardPage() {
                   onClick={() => navigate(`/requests/${r.id}`)}
                 >
                   <div>
-                    <p className="text-sm font-medium">{r.request_number} — {r.description?.slice(0, 50)}</p>
+                    <p className="text-sm font-medium">{r.description || "Заявка"}</p>
                     <p className="text-xs text-muted-foreground">Ожидалось: {new Date(r.delivery_date).toLocaleDateString("ru-RU")}</p>
                   </div>
                   <Badge variant="destructive" className="text-xs">{r.status}</Badge>

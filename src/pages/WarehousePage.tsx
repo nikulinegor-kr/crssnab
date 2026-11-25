@@ -666,8 +666,8 @@ export default function WarehousePage() {
                                   )}
                                   onClick={() => {
                                     setMovProductId("");
-                                    setMovProductLabel(`${r.description?.slice(0, 50) || "Заявка"} (#${r.request_number})`);
-                                    setMovProductFromRequest({ requestId: r.id, description: r.description || `Заявка #${r.request_number}` });
+                                    setMovProductLabel(r.description?.slice(0, 50) || "Заявка");
+                                    setMovProductFromRequest({ requestId: r.id, description: r.description || "Заявка" });
                                     setMovRequestId(r.id);
                                     setProductPopoverOpen(false);
                                     setProductSearchQuery("");
@@ -675,7 +675,7 @@ export default function WarehousePage() {
                                 >
                                   {movProductFromRequest?.requestId === r.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
                                   <span className={movProductFromRequest?.requestId !== r.id ? "ml-5" : ""}>
-                                    #{r.request_number} — {r.description?.slice(0, 50) || "Без описания"}
+                                    {r.description?.slice(0, 50) || "Без описания"}
                                   </span>
                                 </button>
                               ))}
@@ -794,7 +794,7 @@ export default function WarehousePage() {
                     {movRequestId
                       ? (() => {
                           const r = requests.find((r: any) => r.id === movRequestId);
-                          return r ? `#${r.request_number} — ${r.description?.slice(0, 40) || ""}` : "Выберите заявку";
+                          return r ? r.description?.slice(0, 40) || "Заявка" : "Выберите заявку";
                         })()
                       : "Не выбрана"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -837,7 +837,7 @@ export default function WarehousePage() {
                         >
                           {movRequestId === r.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
                           <span className={movRequestId !== r.id ? "ml-5" : ""}>
-                            #{r.request_number} — {r.description?.slice(0, 50) || "Без описания"}
+                            {r.description?.slice(0, 50) || "Без описания"}
                           </span>
                         </button>
                       ))}

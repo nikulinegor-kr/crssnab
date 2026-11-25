@@ -407,7 +407,6 @@ export default function RequestsRegistryPage() {
   const exportRows = () =>
     filtered.map((r, i) => ({
       "№ п/п": i + 1,
-      "№ заявки": r.request_number ?? "—",
       "Дата создания": fmtDate(r.request_date ?? r.created_at),
       "Объект": r.object_name ?? "—",
       "Описание": r.description ?? "—",
@@ -485,11 +484,10 @@ export default function RequestsRegistryPage() {
       autoTable(doc, {
         startY: 75,
         head: [[
-          "№ заявки", "Создана", "Объект", "Описание", "Поставщик", "Сумма",
+          "Создана", "Объект", "Описание", "Поставщик", "Сумма",
           "%", "Оплата", "Отгрузка", "Доставка", "Статус", "В отчёт",
         ]],
         body: filtered.map((r) => [
-          r.request_number ?? "—",
           fmtDate(r.request_date ?? r.created_at),
           r.object_name ?? "—",
           r.description ?? "—",
@@ -682,7 +680,6 @@ export default function RequestsRegistryPage() {
             <thead className="bg-muted/60 sticky top-0 z-10">
               <tr className="text-left [&>th]:px-3 [&>th]:py-2 [&>th]:whitespace-nowrap [&>th]:font-medium">
                 <th></th>
-                <th>№ заявки</th>
                 <th>Создана</th>
                 <th>Объект</th>
                 <th>Описание</th>
@@ -719,7 +716,6 @@ export default function RequestsRegistryPage() {
                   className={`border-t [&>td]:px-3 [&>td]:py-2 [&>td]:whitespace-nowrap ${TONE_STYLE[r.tone]}`}
                 >
                   <td>{TONE_DOT[r.tone]}</td>
-                  <td className="font-numeric">{r.request_number ?? "—"}</td>
                   <td className="font-numeric">{fmtDate(r.request_date ?? r.created_at)}</td>
                   <td className="max-w-[180px] truncate" title={r.object_name ?? ""}>{r.object_name ?? "—"}</td>
                   <td className="max-w-[280px] truncate whitespace-normal">
@@ -781,7 +777,7 @@ export default function RequestsRegistryPage() {
             .map((r) => (
               <Link key={r.id} to={`/requests/${r.id}`} className="block py-2 hover:bg-muted/40 rounded px-2">
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="truncate">{r.description ?? r.request_number ?? "—"}</span>
+                  <span className="truncate">{r.description ?? "—"}</span>
                   <span className="font-numeric whitespace-nowrap">{money(r.total)}</span>
                 </div>
                 <div className="text-xs text-muted-foreground">

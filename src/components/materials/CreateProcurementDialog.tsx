@@ -100,7 +100,7 @@ export function CreateProcurementDialog({
 
       queryClient.invalidateQueries({ queryKey: ["material-items"] });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
-      toast({ title: "Заявка создана", description: `${requestNumber}: ${availableItems.length} материалов` });
+      toast({ title: "Заявка создана", description: `Материалов: ${availableItems.length}` });
       onOpenChange(false);
       navigate(`/requests/${newRequest.id}`);
     } catch (e: any) {

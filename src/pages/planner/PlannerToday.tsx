@@ -384,7 +384,7 @@ function RequestRow({ r, meta }: { r: AnalyticsRequest; meta?: string }) {
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate">{r.description || r.request_number || "Без названия"}</div>
+          <div className="text-sm font-medium truncate">{r.description || "Без названия"}</div>
           <div className="text-[11px] text-muted-foreground truncate">
             {[r.contractor, r.status].filter(Boolean).join(" • ")}
           </div>

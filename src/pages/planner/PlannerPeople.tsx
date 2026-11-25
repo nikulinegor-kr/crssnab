@@ -148,7 +148,7 @@ export default function PlannerPeople() {
     if (dragged?.type === "request") {
       const r: RequestWithoutTask = dragged.request;
       const created: any = await create.mutateAsync({
-        title: r.description || r.request_number || "Задача по заявке",
+        title: r.description || "Задача по заявке",
         assignee_id: targetUserId,
         request_id: r.id,
         object_id: r.object_id,

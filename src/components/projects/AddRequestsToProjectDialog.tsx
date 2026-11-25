@@ -106,7 +106,7 @@ export function AddRequestsToProjectDialog({ open, onOpenChange, projectId, proj
                   <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggle(r.id)} />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">
-                      {r.description || r.request_number}
+                      {r.description || "Заявка"}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
                       {r.contractor || "—"}

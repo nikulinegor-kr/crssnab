@@ -125,7 +125,6 @@ async function notifyGroupAboutStatusChange(request: any, status: string, userna
 
   const message = `🔔 Изменен статус заявки\n\n` +
     `🧾 Заявка: ${escapeHtml(request.description)}\n` +
-    `📋 Номер: ${escapeHtml(request.request_number)}\n` +
     `✅ Новый статус: ${escapeHtml(status)}\n` +
     `👤 Изменил: ${escapeHtml(username || fullName)}\n` +
     `📅 ${new Date().toLocaleString("ru-RU")}`;
@@ -347,7 +346,7 @@ async function handleArchiveCommand(chatId: number, page: number = 0) {
     const shortDesc = req.description.length > 30 
       ? req.description.substring(0, 30) + "..." 
       : req.description;
-    messageText += `${offset + index + 1}. ${statusEmoji} *${req.request_number}*\n`;
+    messageText += `${offset + index + 1}. ${statusEmoji}\n`;
     messageText += `   ${shortDesc}\n`;
     messageText += `   📅 ${date} | ${req.status}\n\n`;
   });
@@ -359,12 +358,12 @@ async function handleArchiveCommand(chatId: number, page: number = 0) {
   for (let i = 0; i < requests.length; i += 2) {
     const row = [];
     row.push({
-      text: `📋 ${requests[i].request_number}`,
+      text: `📋 ${requests[i].description?.slice(0, 30) || "Заявка"}`,
       callback_data: `archive_detail_${requests[i].id.substring(0, 20)}`
     });
     if (requests[i + 1]) {
       row.push({
-        text: `📋 ${requests[i + 1].request_number}`,
+        text: `📋 ${requests[i + 1].description?.slice(0, 30) || "Заявка"}`,
         callback_data: `archive_detail_${requests[i + 1].id.substring(0, 20)}`
       });
     }
@@ -536,7 +535,7 @@ async function handleCallbackQuery(callbackQuery: any) {
     }
 
     // Build detailed message
-    let detailText = `📋 *Заявка ${request.request_number}*\n\n`;
+    let detailText = `📋 *Заявка*\n\n`;
     detailText += `📝 ${request.description}\n`;
     detailText += `📊 Статус: ${request.status}\n`;
     
@@ -1691,7 +1690,7 @@ async function handleMessage(message: any) {
     // Confirm in chat
     await sendTelegramRequest("sendMessage", {
       chat_id: chatId,
-      text: `✅ Несоответствие зафиксировано для заявки ${request.request_number}\n\n📋 Тип: ${discrepancyType}\n📝 Описание: ${text || "(только фото)"}${photoUrl ? "\n📷 Фото приложено" : ""}`,
+      text: `✅ Несоответствие зафиксировано для заявки ${request.description || "без названия"}\n\n📋 Тип: ${discrepancyType}\n📝 Описание: ${text || "(только фото)"}${photoUrl ? "\n📷 Фото приложено" : ""}`,
     });
     
     return;

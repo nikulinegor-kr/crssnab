@@ -28,7 +28,7 @@ export function UnassignedRequestCard({
       <div className="flex items-start gap-2">
         <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
         <div className="flex-1 text-sm leading-snug line-clamp-3">
-          {request.description || request.request_number || "Без описания"}
+          {request.description || "Без описания"}
         </div>
         <button
           {...attributes}

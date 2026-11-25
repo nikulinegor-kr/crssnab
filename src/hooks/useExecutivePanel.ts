@@ -53,7 +53,7 @@ export function useExecutivePanel() {
     let oldNew = 0;
     for (const r of requests) {
       const input = { ...r, created_at: r.created_at ?? r.updated_at ?? "" };
-      const item = { id: r.id, kind: "request" as const, title: r.description, reference: r.request_number.replace(/^REQ-/, ""), objectName: r.object?.name ?? null, priority: r.priority };
+      const item = { id: r.id, kind: "request" as const, title: r.description, reference: "—", objectName: r.object?.name ?? null, priority: r.priority };
       const inTransit = ["В пути", "Доставлено в ТК", "Отгружено"].includes(r.status);
       if (!inTransit && isStale(input, today)) stale.push({ ...item, days: getStaleDays(input, today) });
       if (isOverdueDelivery(r, today)) deliveries.push({ ...item, days: overdueDays(r.planned_delivery_date || r.delivery_date || "", today) });
@@ -95,7 +95,7 @@ export function useExecutivePanel() {
       for (const p of data ?? []) names.set(p.id, p.full_name ?? "—");
     }
     const items: ExecEvent[] = [
-      ...(requests.data ?? []).filter(isExecEventVisible).map(e => ({ id: `request-${e.id}`, kind: "request" as const, entityId: e.request_id, description: describeExecEvent(e, "request", names), reference: e.request?.request_number.replace(/^REQ-/, "") ?? "—", actor: names.get(e.user_id ?? "") ?? "—", createdAt: e.created_at })),
+      ...(requests.data ?? []).filter(isExecEventVisible).map(e => ({ id: `request-${e.id}`, kind: "request" as const, entityId: e.request_id, description: describeExecEvent(e, "request", names), reference: e.request?.description ?? "—", actor: names.get(e.user_id ?? "") ?? "—", createdAt: e.created_at })),
       ...(tasks.data ?? []).filter(isExecEventVisible).map(e => ({ id: `task-${e.id}`, kind: "task" as const, entityId: e.task_id, description: describeExecEvent(e, "task", names), reference: e.task?.title ?? "—", actor: names.get(e.user_id ?? "") ?? "—", createdAt: e.created_at })),
     ];
     return sortEvents(items);

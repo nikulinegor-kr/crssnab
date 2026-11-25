@@ -176,7 +176,7 @@ export default function BoardPage() {
     } else {
       toast({
         title: `→ ${targetCol.title}`,
-        description: dragged.description || `Заявка ${dragged.request_number}`,
+        description: dragged.description || "Заявка",
       });
     }
   };
@@ -233,14 +233,13 @@ export default function BoardPage() {
             <>
               <SheetHeader className="px-5 py-4 border-b">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="text-[10px]">#{openRequest.request_number}</Badge>
                   <Badge className="text-[10px]">{openRequest.status}</Badge>
                   {openRequest.priority && (
                     <Badge variant="secondary" className="text-[10px]">{openRequest.priority}</Badge>
                   )}
                 </div>
                 <SheetTitle className="text-left text-base leading-snug">
-                  {openRequest.description || `Заявка ${openRequest.request_number}`}
+                  {openRequest.description || "Заявка"}
                 </SheetTitle>
                 {openRequest.contractor && (
                   <SheetDescription className="text-left">{openRequest.contractor}</SheetDescription>

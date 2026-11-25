@@ -80,7 +80,7 @@ export function CalendarWidget({ requests }: CalendarWidgetProps) {
                   className="p-2 rounded-md border border-border/40 bg-muted/30"
                 >
                   <p className="text-sm font-medium text-foreground">
-                    {request.request_number}
+                    {request.description || "Заявка"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {request.description}

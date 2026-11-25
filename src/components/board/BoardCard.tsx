@@ -67,7 +67,7 @@ export function BoardCard({ request, overlay, onOpen }: Props) {
   const noSupplier = !request.contractor;
   const paid = request.payment_status === "Оплачено" || (request.payment_percent ?? 0) >= 100;
 
-  const title = request.description?.trim() || `Заявка #${request.request_number}`;
+  const title = request.description?.trim() || "Заявка";
 
   const copyTitle = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -244,7 +244,6 @@ export const ProcurementDetail = ({ procurementId, onBack }: ProcurementDetailPr
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">{r.request_number}</span>
                       {r.amount > 0 && (
                         <span className="text-xs text-muted-foreground">{r.amount.toLocaleString("ru-RU")} ₽</span>
                       )}

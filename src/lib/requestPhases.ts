@@ -3,7 +3,8 @@ import { RECENT_ARRIVAL_DAYS, isRecentArrival } from "./requestArrivals";
 const REQUEST_PHASES = [
   { key: "unworked", name: "Не отработано", statuses: ["Новая заявка", "На согласовании"], accent: "bg-muted-foreground" },
   { key: "accounting", name: "Счёт в бухгалтерии", statuses: ["Счёт в бухгалтерии"], accent: "bg-warning" },
-  { key: "working", name: "В работе", statuses: ["КП", "Счёт", "В работе"], accent: "bg-info" },
+  { key: "proposals", name: "Коммерческие предложения", statuses: ["КП", "Коммерческое предложение", "Запрос КП", "Ожидание КП"], accent: "bg-warning" },
+  { key: "working", name: "В работе", statuses: ["Счёт", "В работе"], accent: "bg-info" },
   { key: "ready", name: "Готов к отгрузке", statuses: ["Готов к отгрузке"], accent: "bg-warning" },
   { key: "transit", name: "В пути", statuses: ["В пути", "Доставлено в ТК"], accent: "bg-primary" },
 ] as const;

@@ -116,19 +116,6 @@ export const ViewSettings = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex items-center space-x-3">
               <Checkbox
-                id="showRequestNumber"
-                checked={settings.kanban.showRequestNumber}
-                onCheckedChange={(checked) => 
-                  updateKanbanSettings({ showRequestNumber: !!checked })
-                }
-              />
-              <Label htmlFor="showRequestNumber" className="cursor-pointer">
-                Номер заявки
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <Checkbox
                 id="showPriority"
                 checked={settings.kanban.showPriority}
                 onCheckedChange={(checked) => 

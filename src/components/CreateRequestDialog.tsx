@@ -568,7 +568,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
 
       toast(attachmentsFailed ? {
         title: "Заявка создана, часть файлов не прикрепилась",
-        description: `Откройте заявку ${newRequest.request_number} и добавьте отсутствующие файлы.`,
+        description: "Откройте заявку и добавьте отсутствующие файлы.",
         variant: "destructive",
       } : { title: "Успешно", description: "Заявка создана" });
 

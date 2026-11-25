@@ -353,7 +353,7 @@ export default function EquipmentPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Номер</TableHead>
+
                     <TableHead>Описание</TableHead>
                     <TableHead>Тип</TableHead>
                     <TableHead>Статус</TableHead>
@@ -366,7 +366,7 @@ export default function EquipmentPage() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => navigate(`/requests/${r.id}`)}
                     >
-                      <TableCell className="font-mono text-xs">{r.request_number}</TableCell>
+
                       <TableCell className="max-w-[250px] truncate">{r.description}</TableCell>
                       <TableCell><Badge variant="outline">{r.request_type || "—"}</Badge></TableCell>
                       <TableCell><Badge variant="secondary">{r.status}</Badge></TableCell>

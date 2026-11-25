@@ -38,7 +38,6 @@ export function ExcelExportButton({ requests, filteredRequests }: ExcelExportBut
       const XLSX = await loadXlsx();
 
       const excelData = dataToExport.map(request => ({
-        "Номер заявки": request.request_number,
         "Дата заявки": request.request_date,
         "Описание": request.description,
         "Статус": request.status,

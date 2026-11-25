@@ -295,10 +295,8 @@ function BucketTable({
             key={r.id}
             className="grid grid-cols-12 gap-2 px-3 py-2 text-sm items-center hover:bg-accent/30"
           >
-            <div className="col-span-1 text-xs text-muted-foreground font-numeric truncate">
-              {r.request_number ?? "—"}
-            </div>
-            <div className="col-span-4 min-w-0">
+
+            <div className="col-span-5 min-w-0">
               <Link
                 to={`/requests/${r.id}`}
                 className="text-primary hover:underline underline-offset-2 truncate block"

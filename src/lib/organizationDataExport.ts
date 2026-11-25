@@ -135,7 +135,7 @@ export async function exportOrganizationData(orgId: string, format: ExportFormat
 
   const exportedRecords = Object.fromEntries(Object.entries(records).map(([table, rows]) => [
     table, rows.map(row => Object.fromEntries(Object.entries(row)
-      .filter(([field]) => field !== "qr_token")
+      .filter(([field]) => field !== "qr_token" && field !== "request_number")
       .map(([field, value]) => [field, collect(table, field, value)]))),
   ]));
   const exportedOrganization = { ...organization, logo_url: collect("organizations", "logo_url", organization.logo_url) };

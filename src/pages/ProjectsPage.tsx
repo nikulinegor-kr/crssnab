@@ -88,7 +88,7 @@ function ChildRow({
           to={`/requests/${child.id}`}
           className="text-sm font-medium hover:underline break-words"
         >
-          {child.description || child.request_number}
+          {child.description || "Заявка"}
         </Link>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           <span>Поставщик: <span className="text-foreground">{child.contractor || "—"}</span></span>
@@ -152,7 +152,7 @@ function ProjectCard({
               to={`/requests/${project.id}`}
               className="text-sm font-semibold hover:underline break-words"
             >
-              {project.description || project.request_number}
+              {project.description || "Проект"}
             </Link>
             <Badge variant="outline" className={`text-[10px] ${statusClass(s.computedStatus)}`}>
               {s.computedStatus}
@@ -352,7 +352,7 @@ export default function ProjectsPage() {
           open={!!addTo}
           onOpenChange={(v) => !v && setAddTo(null)}
           projectId={addTo.id}
-          projectName={addTo.description || addTo.request_number}
+          projectName={addTo.description || "Проект"}
         />
       )}
     </div>

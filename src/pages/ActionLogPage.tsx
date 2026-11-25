@@ -27,7 +27,7 @@ interface ActivityLog {
   description: string;
   created_at: string;
   snapshot: any;
-  request_number?: string;
+  request_title?: string;
   user_name?: string;
 }
 
@@ -87,7 +87,7 @@ const ActionLogPage = () => {
       
       let query = supabase
         .from("request_activities")
-        .select("*, requests!inner(request_number)")
+        .select("*, requests!inner(description)")
         .eq("organization_id", currentOrgId)
         .order("created_at", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -109,7 +109,7 @@ const ActionLogPage = () => {
         const profile = profiles?.find(p => p.id === log.user_id);
         return {
           ...log,
-          request_number: log.requests?.request_number || "—",
+          request_title: log.requests?.description || "—",
           user_name: profile?.full_name || profile?.email || "Система",
         };
       }) as ActivityLog[];
@@ -143,7 +143,7 @@ const ActionLogPage = () => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
-      log.request_number?.toLowerCase().includes(term) ||
+      log.request_title?.toLowerCase().includes(term) ||
       log.description?.toLowerCase().includes(term) ||
       log.user_name?.toLowerCase().includes(term)
     );
@@ -218,7 +218,7 @@ const ActionLogPage = () => {
                           onClick={() => navigate(`/requests/${log.request_id}`)}
                           className="text-sm font-medium text-primary hover:underline"
                         >
-                          #{log.request_number}
+                          {log.request_title}
                         </button>
                         {log.field_name && (
                           <span className="text-xs text-muted-foreground">
@@ -260,7 +260,7 @@ const ActionLogPage = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Откатить заявку?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Заявка #{log.request_number} будет возвращена к состоянию на момент{" "}
+                              Заявка {log.request_title} будет возвращена к состоянию на момент{" "}
                               {format(new Date(log.created_at), "d MMM yyyy, HH:mm", { locale: ru })}.
                               Это действие будет записано в журнал.
                             </AlertDialogDescription>

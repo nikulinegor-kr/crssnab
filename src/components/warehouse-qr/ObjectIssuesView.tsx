@@ -79,7 +79,7 @@ export function ObjectIssuesView({ orgId, objectId: fixed }: { orgId: string; ob
         {!rows.length ? <p className="text-muted-foreground py-4">Выдачи не найдены</p> : <div className="divide-y border-y border-border">{rows.map(r => { const u = unit(r.unit_id); const q = req(r.request_id); return <div key={r.id} className="py-2 text-sm space-y-0.5">
           <div className="flex gap-2"><span className="flex-1 min-w-0 font-medium break-words">{u ? <Link className="underline-offset-2 hover:underline" to={`/warehouse?qr=${encodeURIComponent(u.qr_token)}`}>{u.name}</Link> : '—'}</span><span className="font-numeric shrink-0">{fmtQty(Number(r.issued_qty))} {u?.unit}</span></div>
           <div className="text-xs text-muted-foreground break-words">{fmtDate(issueDate(r))} · Кому: {r.recipient_name} · Со склада: {wh(r.warehouse_id)}{r.equipment_id && ` · Техника: ${eq(r.equipment_id) || '—'}`}{Number(r.returned_qty) > 0 && ` · Возвращено ${fmtQty(Number(r.returned_qty))}`}</div>
-          {q && <Link className="text-xs underline-offset-2 hover:underline text-primary" to={`/requests?request=${q.id}`}>Заявка: {q.description || q.request_number}</Link>}
+          {q && <Link className="text-xs underline-offset-2 hover:underline text-primary" to={`/requests?request=${q.id}`}>Заявка: {q.description || "Без названия"}</Link>}
         </div>; })}</div>}
       </section></>}
   </div>;

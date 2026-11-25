@@ -220,7 +220,6 @@ export const ExpenseChart = ({ requests, selectedYear }: ExpenseChartProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>№ Заявки</TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead>Описание</TableHead>
                   <TableHead>Контрагент</TableHead>
@@ -231,7 +230,6 @@ export const ExpenseChart = ({ requests, selectedYear }: ExpenseChartProps) => {
               <TableBody>
                 {monthRequests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.request_number}</TableCell>
                     <TableCell>
                       {new Date(request.request_date).toLocaleDateString("ru-RU")}
                     </TableCell>
@@ -247,7 +245,7 @@ export const ExpenseChart = ({ requests, selectedYear }: ExpenseChartProps) => {
                 ))}
                 {monthRequests.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       Нет заявок за этот месяц
                     </TableCell>
                   </TableRow>
