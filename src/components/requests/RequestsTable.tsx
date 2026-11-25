@@ -761,12 +761,12 @@ export const RequestsTable = ({
                       className="requests-phase-row cursor-pointer border-y border-border bg-muted hover:bg-muted"
                       onClick={() => toggleGroup(`phase-${it.key}`)}
                     >
-                      <TableCell colSpan={totalColCount} className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
-                        <div className="flex items-center gap-2 text-xs">
+                      <TableCell colSpan={totalColCount} data-align="left" className="sticky top-[var(--row-h)] z-10 bg-muted px-2 py-1.5 text-left">
+                        <div className="flex items-center justify-start gap-2 text-xs">
                           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
                           <span className={cn("h-3.5 w-[3px] shrink-0 rounded-full", it.accent)} />
                           <span className="font-semibold text-foreground">{it.name}</span>
-                          <span className="ml-2 font-mono text-muted-foreground">{it.items.length} заявок · {moneyShort(amount)}</span>
+                          <span className="font-mono text-muted-foreground">{it.items.length} заявок · {moneyShort(amount)}</span>
                         </div>
                       </TableCell>
                     </TableRow>

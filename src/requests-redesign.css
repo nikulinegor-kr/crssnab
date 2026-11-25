@@ -1610,8 +1610,8 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-shipments-tree__dates { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
 }
 
-.requests-registry table tbody .requests-phase-row td > div {
-  justify-content: flex-start;
+.requests-registry table tbody tr.requests-phase-row > td[data-align="left"] {
+  padding-inline-start: 4px !important;
 }
 
 
