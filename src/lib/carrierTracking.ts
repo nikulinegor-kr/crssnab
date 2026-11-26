@@ -17,6 +17,7 @@ const RULES: CarrierRule[] = [
   { match: /сдэк|cdek/i, url: (t) => `https://www.cdek.ru/ru/tracking?order_id=${enc(t)}`, direct: true },
   { match: /возовоз|vozovoz/i, url: (t) => `https://vozovoz.ru/tracking/?code=${enc(t)}`, direct: true },
   { match: /энерги|nrg/i, url: () => "https://nrg-tk.ru/client/tracking/", direct: false },
+  { match: /(?:^|[^а-яёa-z0-9])(?:кит|kit|gtd|кашалот)(?=$|[^а-яёa-z0-9])/i, url: () => "https://tk-kit.ru/tracking", direct: false },
   { match: /байкал|baikal/i, url: () => "https://www.baikalsr.ru/tools/tracking/", direct: false },
 ];
 
