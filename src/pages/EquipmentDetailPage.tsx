@@ -111,7 +111,7 @@ export default function EquipmentDetailPage() {
 
     const rows: Array<{
       date: string;
-      requestNumber: string;
+      requestNumber?: string;
       requestTitle?: string;
       requestId: string;
       itemName: string;
