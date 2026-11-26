@@ -64,6 +64,7 @@ interface FinanceSectionProps {
   onRemoveInvoiceDocument?: () => void;
   requestId?: string;
   defaultOpen?: boolean;
+  availabilityRequired?: boolean;
 }
 
 export const FinanceSection = ({
@@ -79,6 +80,7 @@ export const FinanceSection = ({
   onRemoveInvoiceDocument,
   requestId,
   defaultOpen = false,
+  availabilityRequired = true,
 }: FinanceSectionProps) => {
   const rawContractor = form.watch("contractor");
   const invoiceRequired = hasAddedInvoice(form.watch(), Boolean(invoiceFile || invoiceUrl));
@@ -518,7 +520,7 @@ export const FinanceSection = ({
             name="availability_delivery_time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Наличие *</FormLabel>
+                <FormLabel className="text-xs">Наличие{availabilityRequired ? " *" : ""}</FormLabel>
                 <Select value={field.value || ""} onValueChange={field.onChange} disabled={disabled}>
                   <FormControl>
                     <SelectTrigger className="h-9">

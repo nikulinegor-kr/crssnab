@@ -26,11 +26,11 @@ export function hasAddedInvoice(values: RequestValidationValues, hasFile: boolea
     || values.amount != null || values.amount_2 != null || values.amount_3 != null;
 }
 
-export function validateRequiredZrsFields(values: RequestValidationValues, ctx: RefinementCtx, hasFile: boolean) {
+export function validateRequiredZrsFields(values: RequestValidationValues, ctx: RefinementCtx, hasFile: boolean, requireAvailability = true) {
   const required = [
     ["applicant_justification", !values.justification_not_required && !values.applicant_justification?.trim(), "Укажите обоснование заявки"],
     ["executor", !values.executor?.trim(), "Укажите исполнителя"],
-    ["availability_delivery_time", !values.availability_delivery_time?.trim(), "Выберите наличие"],
+    ["availability_delivery_time", requireAvailability && !values.availability_delivery_time?.trim(), "Выберите наличие"],
   ] as const;
   for (const [field, missing, message] of required) {
     if (missing) ctx.addIssue({ code: "custom", path: [field], message });

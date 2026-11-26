@@ -84,7 +84,7 @@ const requestSchema = z.object({
     .trim()
     .max(200, "Максимум 200 символов")
     .optional(),
-  object_id: z.string().optional(),
+  object_id: z.string().trim().min(1, "Выберите объект"),
   parent_request_id: z.string().optional(),
   estimated_delivery_days: z.number()
     .min(0, "Не может быть отрицательным")
@@ -346,7 +346,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
   const priorities = prioritiesData?.map((p) => p.name) || [];
 
   const hasInvoiceFile = documentFiles.length > 0;
-  const workflowSchema = requestSchema.superRefine((values, context) => validateRequiredZrsFields(values, context, hasInvoiceFile));
+  const workflowSchema = requestSchema.superRefine((values, context) => validateRequiredZrsFields(values, context, hasInvoiceFile, false));
   const form = useForm<RequestFormData>({
     resolver: zodResolver(workflowSchema),
     defaultValues: {
@@ -735,6 +735,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
           objectsData={objectsData}
           currentOrgId={currentOrgId}
           showProjectField
+          objectRequired
         />
 
         {/* 3. Статус и исполнитель видимы без прокрутки */}
@@ -755,6 +756,7 @@ export const CreateRequestDialog = ({ children, open: externalOpen, onOpenChange
         {/* 4. Счёт и оплата */}
         </section>
         <FinanceSection
+          availabilityRequired={false}
           form={form}
           suppliers={suppliers}
           recentContractors={recentContractors}

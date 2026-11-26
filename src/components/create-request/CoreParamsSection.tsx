@@ -28,6 +28,7 @@ interface CoreParamsSectionProps {
   objectsData: Array<{ id: string; name: string }> | undefined;
   currentOrgId: string | null;
   disabled?: boolean;
+  objectRequired?: boolean;
   /** Показывать выбор проекта (родительской заявки) */
   showProjectField?: boolean;
 }
@@ -37,6 +38,7 @@ export const CoreParamsSection = ({
   objectsData,
   currentOrgId,
   disabled = false,
+  objectRequired = false,
   showProjectField = false,
 }: CoreParamsSectionProps) => {
   const { data: projectOptions = [] } = useProjectOptions();
@@ -96,7 +98,7 @@ export const CoreParamsSection = ({
           name="object_id"
           render={({ field }) => (
             <FormItem className="req-a-object">
-              <FormLabel className="text-xs">Объект</FormLabel>
+              <FormLabel className="text-xs">Объект{objectRequired ? " *" : ""}</FormLabel>
               <FormControl>
                 <ObjectSelectWithAdd
                   value={field.value || ""}
