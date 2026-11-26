@@ -1,7 +1,6 @@
 import { useState, useEffect, forwardRef } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   FormControl,
   FormField,
@@ -9,10 +8,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, Sparkles, Plus, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, Check } from "lucide-react";
+import { RequestTextPolish } from "./RequestTextPolish";
 
 interface ContextSectionProps {
   form: UseFormReturn<any>;
@@ -25,8 +22,6 @@ interface ContextSectionProps {
 export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProps>(
   ({ form, draftSaveState, showDraftStatus = true, autoFocus = true, disabled = false }, descriptionRef) => {
     const [showCommentField, setShowCommentField] = useState(false);
-    const [isImprovingDescription, setIsImprovingDescription] = useState(false);
-    const { toast } = useToast();
 
     // Show comment field if there's existing content
     const justificationNotRequired = form.watch("justification_not_required") === true;
@@ -36,44 +31,6 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
         setShowCommentField(true);
       }
     }, [commentsValue]);
-
-    const handleImproveDescription = async () => {
-      const currentDescription = form.getValues("description");
-      if (!currentDescription || currentDescription.trim().length < 3) {
-        toast({
-          title: "Введите описание",
-          description: "Сначала введите описание заявки для улучшения",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsImprovingDescription(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("improve-description", {
-          body: { description: currentDescription },
-        });
-
-        if (error) throw error;
-
-        if (data?.improved) {
-          form.setValue("description", data.improved);
-          toast({
-            title: "Описание улучшено",
-            description: "AI переформулировал описание заявки",
-          });
-        }
-      } catch (error: any) {
-        console.error("Error improving description:", error);
-        toast({
-          title: "Ошибка",
-          description: error.message || "Не удалось улучшить описание",
-          variant: "destructive",
-        });
-      } finally {
-        setIsImprovingDescription(false);
-      }
-    };
 
     // Draft indicator component
     const DraftIndicator = () => {
@@ -122,6 +79,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                     {...field}
                   />
                 </FormControl>
+                <RequestTextPolish field="description" value={field.value ?? ""} disabled={disabled} onChange={field.onChange} />
                 <FormMessage />
               </FormItem>
             )}
@@ -160,6 +118,7 @@ export const ContextSection = forwardRef<HTMLTextAreaElement, ContextSectionProp
                     className="min-h-[64px] resize-y text-sm leading-relaxed"
                   />
                 </FormControl>
+                <RequestTextPolish field="applicant_justification" value={field.value ?? ""} disabled={disabled || justificationNotRequired} onChange={field.onChange} />
                 <FormMessage />
               </FormItem>
             )}
