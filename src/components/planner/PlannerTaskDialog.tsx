@@ -124,7 +124,11 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
   const { isAdmin } = useUserRole();
   const { userId } = useTaskHubIdentity();
   const { data: departments = [] } = useDepartments();
-  const canConfigureAcceptance = !!userId && (!task || task.created_by === userId || isAdmin);
+  const taskAuthor = task?.created_by ?? userId;
+  const authorApproval = !!taskAuthor && !!assigneeId && assigneeId !== taskAuthor;
+  const effectiveAcceptance = authorApproval || requiresAcceptance;
+  const effectiveReviewer = authorApproval ? taskAuthor : reviewerId;
+  const canConfigureAcceptance = !authorApproval && !!userId && (!task || task.created_by === userId || isAdmin);
   const needsChangeReason = !!task && (dueDate !== (task.due_date?.slice(0, 10) ?? "") || dueTime !== (task.due_time?.slice(0, 5) ?? "") || assigneeId !== task.assignee_id || priority !== task.priority);
 
   // CRITICAL: reset state whenever dialog opens or task changes.
@@ -301,7 +305,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
     const miss: string[] = [];
     const errs: Record<string, boolean> = {};
     if (!title.trim()) { miss.push("Название"); errs.title = true; }
-    if (requiresAcceptance && (!reviewerId || reviewerId === assigneeId)) { miss.push(!reviewerId ? "Контролёр" : "Контролёр не может быть исполнителем"); errs.reviewerId = true; }
+    if (effectiveAcceptance && (!effectiveReviewer || effectiveReviewer === assigneeId)) { miss.push(!effectiveReviewer ? "Контролёр" : "Контролёр не может быть исполнителем"); errs.reviewerId = true; }
     setErrors(errs);
     return { ok: miss.length === 0, missing: miss };
   };
@@ -337,10 +341,9 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       stage_id: stageId,
       request_id: requestId,
       assignee_id: assigneeId,
-      reviewer_id: reviewerId,
+      ...(!authorApproval || !isEdit ? { reviewer_id: effectiveReviewer, requires_acceptance: effectiveAcceptance } : {}),
       co_assignee_ids: coAssigneeIds,
       department_id: departmentId,
-      requires_acceptance: requiresAcceptance,
       ...(needsChangeReason ? { change_reason: changeReason.trim() || null } : {}),
       start_date: startDate ? new Date(startDate).toISOString() : null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
@@ -395,8 +398,8 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
       <div className="cw-form-field"><Label>Приоритет</Label><Select value={priority} onValueChange={value => setPriority(value as PlannerTaskPriority)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(task && !PRIORITY_CHOICES.includes(task.priority) ? [task.priority,...PRIORITY_CHOICES] : PRIORITY_CHOICES).map(id => <SelectItem value={id} key={id}>{PRIORITY_META[id].label}</SelectItem>)}</SelectContent></Select></div>
       <div className="cw-form-field"><Label htmlFor="cw-task-due">Срок</Label><Input type="date" id="cw-task-due" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div><div className="cw-form-field"><Label htmlFor="cw-task-time">Время</Label><Input type="time" id="cw-task-time" value={dueTime} onChange={e => setDueTime(e.target.value)} /></div>
     </div>
-    <label className="flex gap-2 items-start text-sm"><Checkbox checked={requiresAcceptance} disabled={!canConfigureAcceptance} onCheckedChange={checked => { setRequiresAcceptance(checked === true); if (checked && !reviewerId && userId !== assigneeId) setReviewerId(userId); }} />Требует приёмки результата</label>
-    {requiresAcceptance && <TaskLookupSelect label="Кто принимает результат" value={reviewerId} disabled={!canConfigureAcceptance} options={assignableMembers.filter(m => m.user_id !== assigneeId).map(m => ({id:m.user_id,name:m.full_name || m.email || 'Сотрудник'}))} onChange={setReviewerId} />}
+    <label className="flex gap-2 items-start text-sm"><Checkbox checked={effectiveAcceptance} disabled={!canConfigureAcceptance} onCheckedChange={checked => { setRequiresAcceptance(checked === true); if (checked && !reviewerId && userId !== assigneeId) setReviewerId(userId); }} />{authorApproval ? "Результат принимает постановщик" : "Требует приёмки результата"}</label>
+    {effectiveAcceptance && <TaskLookupSelect label="Кто принимает результат" value={effectiveReviewer} disabled={!canConfigureAcceptance} options={assignableMembers.filter(m => m.user_id !== assigneeId).map(m => ({id:m.user_id,name:m.full_name || m.email || 'Сотрудник'}))} onChange={setReviewerId} />}
     <div className="cw-form-field"><Label>Заявка</Label><Popover><PopoverTrigger asChild><Button type="button" variant="outline" role="combobox" className="w-full justify-between font-normal"><span className="truncate">{selectedRequest ? `${selectedRequest.description || "Без названия"}` : "Прикрепить заявку"}</span><ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" /></Button></PopoverTrigger><PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start"><Command><CommandInput placeholder="Найти заявку…" /><CommandList className="max-h-64"><CommandEmpty>Заявка не найдена</CommandEmpty><CommandGroup><CommandItem value="__none__" onSelect={() => setRequestId(null)}>Без заявки</CommandItem>{(requestsList as any[]).map(r => <CommandItem key={r.id} value={`${r.request_number ?? ""} ${r.description ?? ""} ${r.executor ?? ""} ${r.contractor ?? ""}`} onSelect={() => setRequestId(r.id)}><div className="truncate">{r.description || "Без названия"}</div></CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
     <details open={isEdit || !!defaultEquipmentId}><summary>Описание, объект и техника</summary><div className="space-y-4">
       <div className="cw-form-field"><Label htmlFor="cw-task-description">Описание</Label><Textarea id="cw-task-description" value={description} onChange={e => setDescription(e.target.value)} rows={3} /></div>
@@ -541,7 +544,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
 
               <div className="space-y-1.5">
                 <Label>Контролёр</Label>
-                <TaskLookupSelect label="Выберите контролёра" value={reviewerId} disabled={!canConfigureAcceptance} options={assignableMembers.map(m => ({ id: m.user_id, name: m.full_name || m.email || "—" }))} onChange={id => { setReviewerId(id); if (!id) setRequiresAcceptance(false); }} />
+                <TaskLookupSelect label="Выберите контролёра" value={effectiveReviewer} disabled={!canConfigureAcceptance} options={assignableMembers.map(m => ({ id: m.user_id, name: m.full_name || m.email || "—" }))} onChange={id => { setReviewerId(id); if (!id) setRequiresAcceptance(false); }} />
               </div>
               <div className="space-y-1.5">
                 <Label>Соисполнители</Label>
@@ -549,7 +552,7 @@ export function PlannerTaskDialog({ open, onOpenChange, task, defaultStatus, def
                   <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command filter={(value, search) => search.toLowerCase().split(/\s+/).filter(Boolean).every(term => value.toLowerCase().includes(term)) ? 1 : 0}><CommandInput placeholder="Поиск сотрудника…" /><CommandList><CommandEmpty>Не найдено</CommandEmpty><CommandGroup>{assignableMembers.map(m => <CommandItem key={m.user_id} value={`${m.full_name ?? ""} ${m.email ?? ""}`} onSelect={() => setCoAssigneeIds(previous => previous.includes(m.user_id) ? previous.filter(id => id !== m.user_id) : [...previous, m.user_id])}><Check className={cn("mr-2 h-4 w-4", coAssigneeIds.includes(m.user_id) ? "opacity-100" : "opacity-0")} />{m.full_name || m.email || "—"}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
                 </Popover>
               </div>
-              <label className="flex items-center gap-2 text-sm"><Checkbox checked={requiresAcceptance} disabled={!canConfigureAcceptance || !reviewerId} onCheckedChange={checked => setRequiresAcceptance(checked === true)} />Требует приёмки</label>
+              <label className="flex items-center gap-2 text-sm"><Checkbox checked={effectiveAcceptance} disabled={!canConfigureAcceptance || !reviewerId} onCheckedChange={checked => setRequiresAcceptance(checked === true)} />{authorApproval ? "Результат принимает постановщик" : "Требует приёмки"}</label>
               {departments.length > 0 && <div className="space-y-1.5"><Label>Подразделение</Label><TaskLookupSelect label="Выберите подразделение" value={departmentId} options={departments.filter(d => d.is_active || d.id === departmentId)} onChange={setDepartmentId} /></div>}
               <div className="space-y-1.5">
                 <Label>Объект</Label>

@@ -1,3 +1,4 @@
+import { isDelegatedTask } from "@/lib/taskHub";
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -45,7 +46,7 @@ export function TaskWorkspaceDetail({ task, members, objects, onClose, onEdit, o
       <div><dt>Приоритет</dt><dd>{PRIORITY_META[task.priority]?.label}</dd></div>
       <div><dt>Объект</dt><dd>{objects.find(o => o.id === task.object_id)?.name ?? 'Не указан'}</dd></div>
       {task.equipment_id && <div><dt>Техника</dt><dd>{equipment.isError ? 'Не удалось загрузить' : equipment.data ? <a href={`/equipment/${equipment.data.id}`}>{equipment.data.brand} {equipment.data.model}</a> : 'Загрузка…'}</dd></div>}
-      {task.requires_acceptance && <div><dt>Приёмка</dt><dd>{name(task.reviewer_id)}</dd></div>}
+      {(isDelegatedTask(task) || task.requires_acceptance) && <div><dt>Приёмка</dt><dd>{name(isDelegatedTask(task) ? task.created_by : task.reviewer_id)}</dd></div>}
     </dl></section>
     <section className="cw-detail-section"><h3>Что нужно сделать</h3><p>{task.description || 'Описание не добавлено'}</p>
       {(task.checklist ?? []).map(item => <label className={`cw-check ${item.done ? 'complete' : ''}`} key={item.id}><input type="checkbox" checked={item.done} disabled={!canExecute || task.status === 'done' || update.isPending}

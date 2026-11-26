@@ -29,7 +29,7 @@ export function applyTabFilter<Q>(query: Q, tab: TaskTab, userId: string, todayI
   switch (tab) {
     case "mine": filtered = filtered.or(`assignee_id.eq.${userId},co_assignee_ids.cs.{${userId}}`); break;
     case "created": filtered = filtered.eq("created_by", userId).or(`assignee_id.is.null,assignee_id.neq.${userId}`); break;
-    case "control": filtered = filtered.eq("reviewer_id", userId).eq("status", "review"); break;
+    case "control": filtered = filtered.or(`reviewer_id.eq.${userId},created_by.eq.${userId}`).eq("status", "review"); break;
     case "overdue": filtered = filtered.lt("due_date", todayISO); break;
     case "recurring": filtered = filtered.not("recurrence", "is", null); break;
   }
@@ -55,7 +55,12 @@ export interface TaskTransition {
   dialog?: "waiting" | "rework";
 }
 
+export function isDelegatedTask(task: Pick<TransitionTask, "created_by" | "assignee_id">) {
+  return !!task.created_by && !!task.assignee_id && task.created_by !== task.assignee_id;
+}
+
 export function canReviewTask(task: TransitionTask, userId: string | null, isOrgAdmin: boolean): boolean {
+  if (isDelegatedTask(task)) return task.created_by === userId;
   return !!userId && (isOrgAdmin || task.created_by === userId || task.reviewer_id === userId);
 }
 
@@ -67,7 +72,7 @@ export function getAvailableTransitions(task: TransitionTask, userId: string | n
     if (task.status === "backlog" || task.status === "todo") actions.push({ status: "accepted", label: "Принять" });
     if (task.status === "accepted") actions.push({ status: "in_progress", label: "Начать" });
     if (task.status === "in_progress" || task.status === "rework") {
-      actions.push(task.requires_acceptance
+      actions.push(isDelegatedTask(task) || task.requires_acceptance
         ? { status: "review", label: "Передать на проверку" }
         : { status: "done", label: "Завершить" });
     }
