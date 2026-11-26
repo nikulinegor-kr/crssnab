@@ -16,7 +16,14 @@ export function subscribeToRequestDeliveryReceipt(callback: (intent: DeliveryRec
 
 export const logisticsStatuses = ["В работе", "Готов к отгрузке", "В пути"] as const;
 export const requiresLogistics = (status: string) => (logisticsStatuses as readonly string[]).includes(status.trim());
-export type LogisticsIntent = { requestId: string; status?: string; percent?: number; onSaved?: WorkflowSaved };
+export type LogisticsFields = { status: string; shipment_date: string; delivery_date?: string; transport_company?: string };
+export type LogisticsIntent = {
+  requestId: string;
+  status?: string;
+  percent?: number;
+  onSaved?: WorkflowSaved;
+  draft?: { shipment: string; arrival: string; carrier: string; apply: (fields: LogisticsFields) => Promise<void> };
+};
 const logisticsEvent = "crss:request-logistics";
 export function openRequestLogistics(intent: LogisticsIntent) {
   window.dispatchEvent(new CustomEvent<LogisticsIntent>(logisticsEvent, { detail: intent }));

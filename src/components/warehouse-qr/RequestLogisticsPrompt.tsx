@@ -40,9 +40,9 @@ function LogisticsFields({ request, intent, onClose }: {
   onClose: () => void;
 }) {
   const [status, setStatus] = useState(intent.status);
-  const [shipment, setShipment] = useState(request.shipment_date ?? "");
-  const [arrival, setArrival] = useState(request.delivery_date ?? "");
-  const [carrier, setCarrier] = useState(request.transport_company ?? "");
+  const [shipment, setShipment] = useState(intent.draft?.shipment ?? request.shipment_date ?? "");
+  const [arrival, setArrival] = useState(intent.draft?.arrival ?? request.delivery_date ?? "");
+  const [carrier, setCarrier] = useState(intent.draft?.carrier ?? request.transport_company ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const qc = useQueryClient();
@@ -53,10 +53,17 @@ function LogisticsFields({ request, intent, onClose }: {
     setSaving(true);
     setError("");
     try {
-      const { data, error } = await supabase.from("requests").update({
+      const fields = {
         status, shipment_date: shipment,
         ...(inTransit ? { delivery_date: arrival, transport_company: carrier.trim() } : {}),
-      }).eq("id", request.id).select("id,status,updated_at,shipment_date,delivery_date,transport_company").single();
+      };
+      if (intent.draft) {
+        await intent.draft.apply(fields);
+        onClose();
+        return;
+      }
+      const { data, error } = await supabase.from("requests").update(fields)
+        .eq("id", request.id).select("id,status,updated_at,shipment_date,delivery_date,transport_company").single();
       if (error) throw error;
       qc.setQueriesData({ queryKey: ["requests"] }, (previous: unknown) =>
         Array.isArray(previous) ? previous.map(row => row.id === data.id ? { ...row, ...data } : row) : previous);

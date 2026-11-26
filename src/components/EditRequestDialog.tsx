@@ -596,7 +596,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
       if (error) throw error;
 
       const nextPayment = Number(data.payment_percent);
-      if (nextPayment >= 50 && nextPayment !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
+      if (!requiresLogistics(data.status) && nextPayment >= 50 && nextPayment !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
           (lastPromptedPayment.current?.id !== request.id || lastPromptedPayment.current.percent !== nextPayment)) {
         lastPromptedPayment.current = { id: request.id, percent: nextPayment };
         openRequestLogistics({ requestId: request.id, percent: nextPayment, onSaved: applyWorkflowPatch });
@@ -823,7 +823,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         .eq("id", request.id);
 
       if (error) throw error;
-      if (Number(data.payment_percent) >= 50 && Number(data.payment_percent) !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
+      if (!requiresLogistics(data.status) && Number(data.payment_percent) >= 50 && Number(data.payment_percent) !== Number((request as { payment_percent?: number }).payment_percent ?? 0) &&
           (lastPromptedPayment.current?.id !== request.id || lastPromptedPayment.current.percent !== Number(data.payment_percent))) {
         openRequestLogistics({ requestId: request.id, percent: Number(data.payment_percent) });
       }
@@ -1096,8 +1096,27 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
                 disabled={isViewer}
                 onStatusChange={status => {
                   if (!request || request.status === status) return true;
-                  if (requiresLogistics(status) && form.getValues("shipment_date") &&
-                    (status !== "В пути" || (form.getValues("delivery_date") && form.getValues("transport_company")?.trim()))) return true;
+                  if (requiresLogistics(status)) {
+                    const draft = form.getValues();
+                    if (draft.shipment_date && (status !== "В пути" || (draft.delivery_date && draft.transport_company?.trim()))) return true;
+                    openRequestLogistics({
+                      requestId: request.id,
+                      status: status.trim(),
+                      draft: {
+                        shipment: draft.shipment_date || "",
+                        arrival: draft.delivery_date || "",
+                        carrier: draft.transport_company || "",
+                        apply: async fields => {
+                          form.setValue("status", fields.status, { shouldDirty: true });
+                          form.setValue("shipment_date", fields.shipment_date, { shouldDirty: true });
+                          if (fields.delivery_date !== undefined) form.setValue("delivery_date", fields.delivery_date, { shouldDirty: true });
+                          if (fields.transport_company !== undefined) form.setValue("transport_company", fields.transport_company, { shouldDirty: true });
+                          await form.handleSubmit(onSubmit, revealRequestErrors)();
+                        },
+                      },
+                    });
+                    return false;
+                  }
                   return !interceptRequestStatus(request.id, status, applyWorkflowPatch);
                 }}
               />
