@@ -62,7 +62,7 @@ export async function exportOrganizationData(orgId: string, format: ExportFormat
     const rows: ExportRow[] = [];
     let cursor: string | number | undefined;
     while (true) {
-      let query = supabase.from(table).select("*").eq("organization_id", orgId).order("id").limit(pageSize);
+      let query = (supabase as any).from(table).select("*").eq("organization_id", orgId).order("id").limit(pageSize);
       if (cursor !== undefined) query = query.gt("id", cursor);
       const { data, error } = await query;
       if (error) throw new Error(`Раздел ${table} не выгружен: ${error.message}`);
@@ -82,7 +82,7 @@ export async function exportOrganizationData(orgId: string, format: ExportFormat
     for (let offset = 0; offset < ids.length; offset += 100) {
       let cursor: string | undefined;
       while (true) {
-        let query = supabase.from(table).select("*").in(foreignKey, ids.slice(offset, offset + 100)).order("id").limit(pageSize);
+        let query = (supabase as any).from(table).select("*").in(foreignKey, ids.slice(offset, offset + 100)).order("id").limit(pageSize);
         if (cursor) query = query.gt("id", cursor);
         const { data, error } = await query;
         if (error) throw new Error(`Раздел ${table} не выгружен: ${error.message}`);

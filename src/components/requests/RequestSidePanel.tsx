@@ -1160,7 +1160,7 @@ export const RequestSidePanel = ({
             </div>
 
             <div className="request-view-quick-actions">
-              <RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} />
+              <RequestQrWorkflow key={request.id} request={request} qrEntry={qrEntry} receiptOpenSignal={0} />
               {savingField && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" role="status" aria-label="Сохранение" />}
               <div className="ms-auto min-w-0">
                 <RequestQrButton key={`qr-${request.id}`} request={request} />

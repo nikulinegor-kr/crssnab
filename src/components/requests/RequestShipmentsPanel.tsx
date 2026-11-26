@@ -240,7 +240,7 @@ export function RequestShipmentsPanel({ requestId, organizationId, canEdit = tru
                 <div className="flex items-center gap-2 flex-wrap">
                   <TypeIcon type={s.transport_type} className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-sm">№{s.sequence_number}</span>
-                  {s.shipment_mode && <span className="text-xs text-muted-foreground">{s.shipment_mode === "carrier" ? "Через ТК" : "Цельная перевозка"}</span>}
+                  {s.shipment_mode && <span className="text-xs text-muted-foreground">{(s.shipment_mode as string) === "carrier" ? "Через ТК" : "Цельная перевозка"}</span>}
                   {formatShipmentRoute(s) && <span className="text-sm">{formatShipmentRoute(s)}</span>}
                   {s.transport_company && <span className="text-sm text-muted-foreground">{s.transport_company}</span>}
                   {s.vehicle_number && (
