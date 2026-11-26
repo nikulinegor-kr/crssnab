@@ -1,3 +1,4 @@
+import { isDelegatedTask } from "@/lib/taskHub";
 import { useState } from "react";
 import { Archive, ArchiveRestore, Bell, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react";
 import { APPLE_SHORTCUT_NAME, sendToAppleReminders } from "@/lib/appleReminders";
@@ -41,11 +42,12 @@ export function PlannerTaskActions({ task, className }: Props) {
   const archived = !!task.archived_at;
 
   const markDone = async () => {
+    const nextStatus = (isDelegatedTask(task) || task.requires_acceptance) && task.status !== "review" ? "review" : "done";
     const previousStatus = task.status;
     try {
-      await update.mutateAsync({ id: task.id, patch: { status: "done" } });
+      await update.mutateAsync({ id: task.id, patch: { status: nextStatus } });
       toast({
-        title: "Задача выполнена",
+        title: nextStatus === "review" ? "Передано на проверку" : "Задача выполнена",
         duration: 5000,
         action: (
           <ToastAction

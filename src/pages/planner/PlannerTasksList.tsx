@@ -1,3 +1,4 @@
+import { isDelegatedTask } from "@/lib/taskHub";
 import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,10 @@ export default function PlannerTasksList() {
   };
 
   const bulkComplete = async () => {
+    if (tasks.some(task => selected.has(task.id) && (isDelegatedTask(task) || task.requires_acceptance))) {
+      toast.error("Задачи с приёмкой передаются на проверку по одной", { description: "Откройте задачу и передайте результат постановщику." });
+      return;
+    }
     const ids = [...selected];
     const before = tasks
       .filter((t) => selected.has(t.id))

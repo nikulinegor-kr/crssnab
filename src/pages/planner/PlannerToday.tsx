@@ -1,3 +1,4 @@
+import { isDelegatedTask } from "@/lib/taskHub";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, isThisWeek } from "date-fns";
@@ -58,6 +59,8 @@ import PlannerTodayManual from "./PlannerTodayManual";
 /* -------------------------------------------------------------------------- */
 
 type PlannerRow = {
+  created_by: string | null;
+  requires_acceptance: boolean;
   id: string;
   organization_id: string;
   title: string;
@@ -120,7 +123,7 @@ function usePlannerRows() {
     setLoading(true);
     const { data } = await supabase
       .from("planner_tasks")
-      .select("id,organization_id,title,status,priority,assignee_id,due_date,source,source_rule,request_id,created_at,updated_at")
+      .select("id,organization_id,title,status,priority,assignee_id,created_by,requires_acceptance,due_date,source,source_rule,request_id,created_at,updated_at")
       .eq("organization_id", currentOrgId)
       .eq("source", "auto_rule")
       .neq("status", "done")
@@ -198,15 +201,16 @@ function TaskCard({
   const [comment, setComment] = useState("");
 
   const complete = async () => {
+    const nextStatus = (isDelegatedTask(task) || task.requires_acceptance) && task.status !== "review" ? "review" : "done";
     setBusy("complete");
     const { error } = await supabase
       .from("planner_tasks")
-      .update({ status: "done", completed_at: new Date().toISOString() })
+      .update({ status: nextStatus, completed_at: nextStatus === "done" ? new Date().toISOString() : null })
       .eq("id", task.id);
     setBusy(null);
     if (error) toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     else {
-      toast({ title: "Выполнено" });
+      toast({ title: nextStatus === "review" ? "Передано на проверку" : "Выполнено" });
       onChanged();
     }
   };

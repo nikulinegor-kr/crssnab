@@ -1,3 +1,4 @@
+import { isDelegatedTask } from "@/lib/taskHub";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -158,8 +159,9 @@ function TaskCard({
   const checklistDone = checklist.filter((c) => c.done).length;
 
   const complete = async () => {
-    await update.mutateAsync({ id: task.id, patch: { status: "done" } as any });
-    toast.success("Задача выполнена");
+    const nextStatus = (isDelegatedTask(task) || task.requires_acceptance) && task.status !== "review" ? "review" : "done";
+    await update.mutateAsync({ id: task.id, patch: { status: nextStatus } as any });
+    toast.success(nextStatus === "review" ? "Передано на проверку" : "Задача выполнена");
   };
 
   const postpone = async (days: number) => {
