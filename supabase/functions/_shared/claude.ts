@@ -13,8 +13,9 @@ export async function callClaude(apiKey: string, body: Record<string, unknown>, 
       continue;
     }
     if (!response.ok) {
-      await response.body?.cancel();
-      throw new Error(response.status === 404 ? "Указанная модель Claude недоступна в Anthropic. Требуется проверить её название." : response.status === 401 ? "Anthropic отклонил ключ. Проверьте настройку доступа." : "Claude временно недоступен. Попробуйте позже.");
+      const detail = await response.text().catch(() => "");
+      console.error("Anthropic error", response.status, detail.slice(0, 500));
+      throw new Error(/credit balance/i.test(detail) ? "На счёте Anthropic закончились средства. Пополните баланс в Anthropic Console." : response.status === 404 ? "Указанная модель Claude недоступна в Anthropic. Требуется проверить её название." : response.status === 401 ? "Anthropic отклонил ключ. Проверьте настройку доступа." : "Claude временно недоступен. Попробуйте позже.");
     }
     return await response.json();
   }
