@@ -1217,6 +1217,7 @@ button.request-section__header:focus-visible { outline: 2px solid var(--requests
   .request-edit-footer__delete span { display: none; }
   .request-edit-footer__actions { min-width: 0; }
   .request-edit-footer__actions button { height: auto; padding-inline: 12px; }
+  .request-edit-footer__actions button[type="submit"] { white-space: normal; }
 }
 @media (pointer: coarse) {
   .request-edit-dialog { --edit-field-height: 44px; }

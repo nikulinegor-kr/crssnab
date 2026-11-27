@@ -1239,8 +1239,8 @@ export const EditRequestDialog = ({ request, open, onOpenChange }: EditRequestDi
         {canEdit && (
           <Button type="submit" form={formId} disabled={isSubmitting || isDeleting} className="gap-2">
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            <Save className="h-4 w-4" />
-            Сохранить
+            {!isMobile && <Save className="h-4 w-4" />}
+            {isMobile ? "Сохранить и закрыть" : "Сохранить"}
           </Button>
         )}
       </div>
