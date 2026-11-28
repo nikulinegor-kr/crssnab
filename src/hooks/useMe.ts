@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthUserId } from "./useOrgMembership";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { CLOSED_REQUEST_STATUSES } from "@/lib/requestStaleness";
+import { applyTabFilter } from "@/lib/taskHub";
 import { taskStatistics } from "@/lib/personalCabinet";
 import type { PlannerTask } from "./usePlannerTasks";
 const closed=`(${CLOSED_REQUEST_STATUSES.map(s=>`"${s}"`).join(",")})`;
@@ -12,6 +13,7 @@ async function allRows<T>(page:(from:number,to:number)=>PromiseLike<{data:T[]|nu
 export function useMe(){
  const {data:userId}=useAuthUserId();const {currentOrgId:orgId}=useCurrentOrganization();const qc=useQueryClient();
  const today=startOfToday();const end=addDays(today,7);const options={enabled:!!userId,staleTime:60000};
+ const organizationOptions = { ...options, enabled: !!userId && !!orgId };
  const identity=useQuery({...options,queryKey:["me",userId,orgId,"identity"],queryFn:async()=>{
   if(!userId)return null;
   const {data:profile,error}=await supabase.from("profiles").select("full_name,position,organization_name,telegram_user_id").eq("id",userId).single();if(error)throw error;
@@ -19,17 +21,54 @@ export function useMe(){
   if(orgId){const {data:member,error:membershipError}=await supabase.from("user_organizations").select("department:departments(name),organization:organizations(name)").eq("user_id",userId).eq("organization_id",orgId).maybeSingle();if(membershipError)throw membershipError;department=member?.department?.name??null;organization=member?.organization?.name??organization;}
   return {...profile,department,organization};
  }});
- const tasks=useQuery({...options,queryKey:["me",userId,"tasks",format(today,"yyyy-MM-dd")],queryFn:async()=>{
-  if(!userId)return[];
-  const rows=await allRows((from,to)=>supabase.from("planner_tasks").select("*").is("archived_at",null).eq("hidden_auto",false).neq("status","done").or(`assignee_id.eq.${userId},co_assignee_ids.cs.{${userId}}`).order("due_date",{ascending:true,nullsFirst:false}).order("id").range(from,to));return rows as unknown as PlannerTask[];
- }});
- const createdTasks=useQuery({...options,queryKey:["me",userId,"created-tasks"],queryFn:async()=>{
-  if(!userId)return[];
-  const rows=await allRows((from,to)=>supabase.from("planner_tasks").select("*").is("archived_at",null).eq("hidden_auto",false).eq("created_by",userId).neq("status","done").order("updated_at",{ascending:false}).range(from,to));
-  return rows as unknown as PlannerTask[];
- }});
- const reviews=useQuery({...options,queryKey:["me",userId,"reviews"],queryFn:async()=>{const {count,error}=await supabase.from("planner_tasks").select("id",{count:"exact",head:true}).is("archived_at",null).eq("hidden_auto",false).eq("reviewer_id",userId??"").eq("status","review");if(error)throw error;return count??0;}});
- const requests=useQuery({...options,queryKey:["me",userId,"requests"],queryFn:async()=>{if(!userId)return[];return allRows((from,to)=>supabase.from("requests").select("id,description,request_number,status,updated_at").eq("archived",false).eq("is_project",false).not("status","in",closed).or(`applicant_user_id.eq.${userId},created_by.eq.${userId}`).order("updated_at",{ascending:false}).order("id").range(from,to));}});
+ const tasks = useQuery({
+  ...organizationOptions,
+  queryKey: ["me", userId, orgId, "tasks", format(today, "yyyy-MM-dd")],
+  queryFn: async () => {
+   if (!userId || !orgId) return [];
+   const rows = await allRows((from, to) => applyTabFilter(
+    supabase.from("planner_tasks").select("*").eq("organization_id", orgId),
+    "mine", userId, today.toISOString(),
+   ).order("due_date", { ascending: true, nullsFirst: false }).order("id").range(from, to));
+   return rows as unknown as PlannerTask[];
+  },
+ });
+ const createdTasks = useQuery({
+  ...organizationOptions,
+  queryKey: ["me", userId, orgId, "created-tasks"],
+  queryFn: async () => {
+   if (!userId || !orgId) return [];
+   const rows = await allRows((from, to) => applyTabFilter(
+    supabase.from("planner_tasks").select("*").eq("organization_id", orgId),
+    "created", userId, today.toISOString(),
+   ).order("updated_at", { ascending: false }).order("id").range(from, to));
+   return rows as unknown as PlannerTask[];
+  },
+ });
+ const reviews = useQuery({
+  ...organizationOptions,
+  queryKey: ["me", userId, orgId, "reviews"],
+  queryFn: async () => {
+   if (!userId || !orgId) return 0;
+   const { count, error } = await applyTabFilter(
+    supabase.from("planner_tasks").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    "control", userId, today.toISOString(),
+   );
+   if (error) throw error;
+   return count ?? 0;
+  },
+ });
+ const requests = useQuery({
+  ...organizationOptions,
+  queryKey: ["me", userId, orgId, "requests"],
+  queryFn: async () => {
+   if (!userId || !orgId) return [];
+   return allRows((from, to) => supabase.from("requests").select("id,description,status,updated_at")
+    .eq("organization_id", orgId).eq("archived", false).eq("is_project", false)
+    .not("status", "in", closed).or(`applicant_user_id.eq.${userId},created_by.eq.${userId}`)
+    .order("updated_at", { ascending: false }).order("id").range(from, to));
+  },
+ });
  const calendar=useQuery({...options,queryKey:["me",userId,"calendar",format(today,"yyyy-MM-dd")],queryFn:async()=>{if(!userId)return[];return allRows((from,to)=>supabase.from("calendar_events").select("id,title,start_date,request_id").eq("assignee_id",userId).gte("start_date",today.toISOString()).lt("start_date",end.toISOString()).order("start_date").order("id").range(from,to));}});
  const stats=useQuery({...options,queryKey:["me",userId,"stats",format(today,"yyyy-MM-dd")],queryFn:async()=>{
   if(!userId)return null;const since=subDays(new Date(),30).toISOString();
