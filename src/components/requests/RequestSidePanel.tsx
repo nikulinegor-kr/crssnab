@@ -1,6 +1,6 @@
 import { interceptRequestStatus, openRequestDeliveryReceipt, openRequestLogistics } from "@/lib/requestDeliveryReceipt";
 import { hasShipmentArrived, useRequestShipments } from "@/hooks/useRequestShipments";
-import { isPartiallyDelivered, ShipmentsProgressChip } from "./RequestShipmentsTree";
+import { isPartiallyDelivered, RequestShipmentsTree, ShipmentsProgressChip } from "./RequestShipmentsTree";
 import { sendRequestToAppleReminders } from "@/lib/appleReminders";
 import { TrackCargoButton } from "./TrackCargoButton";
 import { RecognizeWaybillButton } from "./RecognizeWaybillButton";
@@ -992,7 +992,14 @@ export const RequestSidePanel = ({
         {totalsBlock}
         {invoiceBlock}
       </RequestViewSection>
-      <RequestViewSection section="logistics" title="Логистика" defaultOpen={!isPhone}>
+      <RequestViewSection
+        section="logistics"
+        title={isPhone && shipmentProgress.total > 0 ? `Логистика · ${shipmentProgress.total}` : "Логистика"}
+        defaultOpen={!isPhone}
+      >
+        {isPhone && shipmentProgress.total > 0 && (
+          <RequestShipmentsTree request={request} embedded readOnly={readOnly} />
+        )}
         {logisticsBlock}
       </RequestViewSection>
       <RequestViewSection title="Объект и ответственные">

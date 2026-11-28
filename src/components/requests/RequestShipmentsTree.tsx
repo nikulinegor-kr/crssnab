@@ -158,8 +158,17 @@ function ShipmentRow({ shipment, canEdit }: { shipment: RequestShipment; canEdit
   );
 }
 
-export function RequestShipmentsTree({ request }: { request: Request }) {
-  const { canEdit } = useUserRole();
+export function RequestShipmentsTree({
+  request,
+  embedded = false,
+  readOnly = false,
+}: {
+  request: Request;
+  embedded?: boolean;
+  readOnly?: boolean;
+}) {
+  const { canEdit: canEditRole } = useUserRole();
+  const canEdit = canEditRole && !readOnly;
   const { data: shipments = [], isLoading } = useRequestShipments(request.id);
 
   if (isLoading) {
@@ -174,14 +183,14 @@ export function RequestShipmentsTree({ request }: { request: Request }) {
   }
 
   return (
-    <div className="request-shipments-tree">
+    <div className={embedded ? "request-shipments-tree request-shipments-tree--embedded" : "request-shipments-tree"}>
       <section aria-label="Перевозки по заявке" className="request-shipments-tree__content">
         <div className="request-shipments-tree__branches">
           {shipments.map((s) => s.shipment_mode === "carrier" ? (
             <CarrierShipmentRow key={s.id} shipment={s} canEdit={canEdit} />
           ) : <ShipmentRow key={s.id} shipment={s} canEdit={canEdit} />)}
         </div>
-        {shipments.some(hasShipmentArrived) && (
+        {!embedded && shipments.some(hasShipmentArrived) && (
           <div className="mt-2 flex justify-start"><RequestReceiptButton request={request} compact /></div>
         )}
       </section>
